@@ -7,25 +7,26 @@ from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 from time import time
-from typing import NoReturn, TypeAlias, TypeVar
+from typing import Any, Callable, Iterator, NoReturn, ParamSpec, TypeVar
 
 import fnvhash
 
-T: TypeAlias = TypeVar("T")
+P = ParamSpec("P")
+T = TypeVar("T")
 
 PIXEL_SCALE_MULTIPLIER = 5
 
 _exiting = False
 
-timings_stack = []
+timings_stack: list[Any] = []
 _root_timings_stack = timings_stack
-_timing_marks = []
+_timing_marks: list[Any] = []
 _timing_recursion_depth = 0
 
 
-def timing(f):
+def timing(f: Callable[P, T]) -> Callable[P, T]:
     @wraps(f)
-    def wrap(*args, **kw):
+    def wrap(*args: P.args, **kw: P.kwargs) -> T:
         global timings_stack
         global _timing_marks
         global _timing_recursion_depth
@@ -156,12 +157,8 @@ FLATBUFFERS_SRC_DIR = SRC_DIR / "flatbuffers"
 RESOURCES_DIR = PROJECT_DIR / "resources"
 HANDS_GENERATED_DIR = PROJECT_DIR / "codegen" / "hands"
 FLATBUFFERS_GENERATED_DIR = PROJECT_DIR / "codegen" / "flatbuffers"
-if 1:
-    CMAKE_RELEASE_BUILD_TYPE = "RelWithDebInfo"
-else:
-    CMAKE_RELEASE_BUILD_TYPE = "Release"
-CMAKE_DEBUG_BUILD_DIR = Path(".cmake") / "vs17" / "Debug"
-CMAKE_RELEASE_BUILD_DIR = Path(".cmake") / "vs17" / CMAKE_RELEASE_BUILD_TYPE
+# CMAKE_DEBUG_BUILD_DIR = Path(".cmake") / "vs17" / "Debug"
+# CMAKE_RELEASE_BUILD_DIR = Path(".cmake") / "vs17" / "Release"
 CMAKE_TESTS_PATH = Path(".cmake") / "vs17" / "Debug" / "tests.exe"
 
 CLANG_FORMAT_PATH = "C:/Program Files/LLVM/bin/clang-format.exe"
@@ -281,6 +278,6 @@ def hash32_file_utf8(filepath) -> int:
     return hash32_utf8(d)
 
 
-def batched(list_: list[T], n: int) -> list[T]:
+def batched(list_: list[T], n: int) -> Iterator[list[T]]:
     for i in range(0, len(list_), n):
         yield list_[i : i + n]

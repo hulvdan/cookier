@@ -26,6 +26,7 @@ numpy = "^2.2.3"
 ruff = "^0.11.2"
 black = "^25.1.0"
 isort = "^6.0.1"
+mypy = "^1.16.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -93,3 +94,6 @@ testpaths = ["cli"]
 python_files = ["*.py"]
 python_functions = ["test_*"]
 python_classes = ["Test*"]
+
+[tool.mypy]
+ignore_missing_imports = true

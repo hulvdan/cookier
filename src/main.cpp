@@ -98,7 +98,7 @@ int SDL_main(int argc, char* argv[]) {
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   emscripten_set_main_loop(Update, 0, 1);
 #else
-  while (!shouldExit)
+  while (!g_shouldExit)
     Update();
 
   bgfx::shutdown();

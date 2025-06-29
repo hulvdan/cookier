@@ -1,10 +1,12 @@
 import os
+from enum import Enum
+from typing import Callable, ParamSpec
 
 import typer
 from bf_lib import (
-    CMAKE_RELEASE_BUILD_TYPE,
     MSBUILD_PATH,
     PROJECT_DIR,
+    T,
     global_timing_manager_instance,
     hash32,
     run_command,
@@ -12,9 +14,31 @@ from bf_lib import (
     timing,
 )
 
+P = ParamSpec("P")
+
+
+class StrEnum(str, Enum):
+    def __str__(self):
+        return self.value
+
+
+class BuildType(StrEnum):
+    Debug = "Debug"
+    RelWithDebInfo = "RelWithDebInfo"
+    Release = "Release"
+
+
+class BuildPlatform(StrEnum):
+    Win = "Win"
+    Web = "Web"
+
+
+class BuildTarget(StrEnum):
+    game = "game"
+
+
 # ASSETS_DIR,
 # CLANG_TIDY_PATH,
-# CMAKE_RELEASE_BUILD_TYPE,
 # CMAKE_TESTS_PATH,
 # CPPCHECK_PATH,
 # PROJECT_DIR,
@@ -37,57 +61,46 @@ app = typer.Typer(
 
 
 @timing
-def do_build_game() -> None:
-    run_command(
-        rf"""
-        "{MSBUILD_PATH}" .cmake\vs17\game.sln
-        -v:minimal
-        -property:WarningLevel=3
-        -t:game
-        """
-    )
+def do_cmake(platform: BuildPlatform, type_: BuildType) -> None:
+    command = [
+        "cmake",
+        "-DBUILD_SHARED_LIBS=OFF",
+        f"-DPLATFORM={platform}",
+    ]
+
+    match platform:
+        case BuildPlatform.Win:
+            command.append('-G "Visual Studio 17 2022"')
+            command.append(r"-B .cmake\vs17")
+
+        case BuildPlatform.Web:
+            command.insert(0, "emcmake")
+            command.append(rf"-B .cmake\{platform}_{type_}")
+
+        case _:
+            assert False, f"Not supported platform: {platform}"
+
+    run_command(" ".join(command))
 
 
 @timing
-def do_build_game_web() -> None:
-    run_command(r"cmake --build .cmake\web -t game")
+def do_build(target: BuildTarget, platform: BuildPlatform):
+    match platform:
+        case BuildPlatform.Win:
+            run_command(
+                rf"""
+                "{MSBUILD_PATH}" .cmake\vs17\game.sln
+                -v:minimal
+                -property:WarningLevel=3
+                -t:{target}
+                """
+            )
 
+        case BuildPlatform.Web:
+            run_command(rf"cmake --build .cmake\Web -t {target}")
 
-@timing
-def do_cmake_vs_files(*, debug: bool) -> None:
-    if debug:
-        build_type = "Debug"
-    else:
-        build_type = CMAKE_RELEASE_BUILD_TYPE
-
-    run_command(
-        rf"""
-            cmake
-            -G "Visual Studio 17 2022"
-            -B .cmake\vs17
-            -DCMAKE_CONFIGURATION_TYPES={build_type}
-            -DBUILD_SHARED_LIBS=OFF
-            -DPLATFORM=Win
-        """
-    )
-
-
-@timing
-def do_cmake_web_files(*, debug: bool):
-    if debug:
-        build_type = "Debug"
-    else:
-        build_type = "Release"
-
-    run_command(
-        rf"""
-            emcmake
-            cmake
-            -B .cmake\web
-            -DCMAKE_BUILD_TYPE={build_type}
-            -DPLATFORM=Web
-        """
-    )
+        case _:
+            assert False, f"Not supported platform: {platform}"
 
 
 # @timing
@@ -217,18 +230,13 @@ def do_stop_debugger_ahk() -> None:
     run_command(r".nvim-personal\cli.ahk stop_debugger")
 
 
-# exe_name: game.
 @timing
-def do_run_in_debugger_ahk(exe_name: str, *, debug: bool) -> None:
-    build_type = "Debug"
-    if not debug:
-        build_type = CMAKE_RELEASE_BUILD_TYPE
-
-    exe_path = f".cmake/vs17/{build_type}/{exe_name}.exe"
-    run_command(r".nvim-personal\cli.ahk run_in_debugger {}".format(exe_path))
+def do_run_in_debugger_ahk(target: BuildTarget, type_: BuildType) -> None:
+    exe_path = f".cmake/vs17/{type_}/{target}.exe"
+    run_command(rf".nvim-personal\cli.ahk run_in_debugger {exe_path}")
 
 
-def command(f):
+def command(f: Callable[P, T]) -> Callable[P, T]:
     return app.command(f.__name__)(f)
 
 
@@ -283,47 +291,26 @@ def command(f):
 
 
 @command
-def build_game_debug():
-    do_cmake_vs_files(debug=True)
-    do_build_game()
-
-
-# @command
-# def build_game_release():
-#     do_cmake_vs_files(debug=False)
-#
-#     do_build_game()
+def build(target: BuildTarget, platform: BuildPlatform, type_: BuildType):
+    do_cmake(platform, type_)
+    do_build(target, platform)
 
 
 @command
-def build_game_web():
-    do_cmake_web_files(debug=True)
-    do_build_game_web()
+def run_in_debugger(target, type_: BuildType):
+    platform = BuildPlatform.Win
 
-
-@command
-def game_run_in_debugger_debug():
     do_stop_debugger_ahk()
 
-    do_cmake_vs_files(debug=True)
-    do_build_game()
+    do_cmake(platform, type_)
+    do_build(target, platform)
 
-    do_run_in_debugger_ahk("game", debug=True)
+    do_run_in_debugger_ahk(target, type_)
 
 
-# @command
-# def game_run_in_debugger_release():
-#     do_stop_debugger_ahk()
-#
-#     do_cmake_vs_files(debug=False)
-#     do_build_game()
-#
-#     do_run_in_debugger_ahk("game", debug=False)
-#
-#
 # @command
 # def test():
-#     do_cmake_vs_files(debug=True)
+#     do_cmake_vs_files(Debug=True)
 #     do_build_tests()
 #     do_test()
 #
