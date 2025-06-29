@@ -8,6 +8,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(MSVC)
+  add_compile_options(/Zc:__cplusplus /Zc:preprocessor)
+endif()
+
 if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
     add_compile_definitions("BF_DEBUG=1")
 else()
@@ -24,6 +28,7 @@ target_include_directories(vendor INTERFACE "${PROJECT_SOURCE_DIR}/vendor")
 add_library(bgfx STATIC IMPORTED)
 target_include_directories(bgfx INTERFACE "${PROJECT_SOURCE_DIR}/vendor/bgfx/include")
 add_library(bx STATIC IMPORTED)
+target_include_directories(bx INTERFACE "${PROJECT_SOURCE_DIR}/vendor/bx/include")
 add_library(bimg STATIC IMPORTED)
 target_link_libraries(bgfx INTERFACE bx bimg)
 if ("${PLATFORM}" STREQUAL "Win")
@@ -117,7 +122,6 @@ elseif ("${PLATFORM}" STREQUAL "Web")
 else()
     message(FATAL_ERROR "game: Not supported platform: ${PLATFORM}")
 endif()
-
 
 # Windows. Startup project in Visual Studio.
 #-----------------------------------------------------------------------------------

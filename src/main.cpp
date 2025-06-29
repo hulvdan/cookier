@@ -1,8 +1,7 @@
 // #include <windows.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-#include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
+#include <bgfx/c99/bgfx.h>
 
 #include "bf_lib.cpp"
 #include "bf_game.cpp"
@@ -20,12 +19,12 @@ bool g_shouldExit = false;
 void Update() {
   static int counter = 0;
 
-  bgfx::setViewRect(0, 0, 0, uint16_t(1280), uint16_t(720));
-  bgfx::touch(0);
+  bgfx_set_view_rect(0, 0, 0, uint16_t(1280), uint16_t(720));
+  bgfx_touch(0);
   Draw();
-  bgfx::dbgTextClear();
-  bgfx::dbgTextPrintf(0, 1, 0x4f, "Counter: %d", counter++);
-  bgfx::frame();
+  bgfx_dbg_text_clear(0, false);
+  bgfx_dbg_text_printf(0, 1, 0x4f, "Counter: %d", counter++);
+  bgfx_frame(false);
 
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
@@ -66,7 +65,7 @@ int SDL_main(int argc, char* argv[]) {
   );
 
   {
-    bgfx::PlatformData pd{};
+    bgfx_platform_data_t pd{};
 
 #if defined(SDL_PLATFORM_WIN32)
     pd.nwh = SDL_GetPointerProperty(
@@ -103,25 +102,25 @@ int SDL_main(int argc, char* argv[]) {
     pd.context      = NULL;
     pd.backBuffer   = NULL;
     pd.backBufferDS = NULL;
-    bgfx::setPlatformData(pd);
+    bgfx_set_platform_data(&pd);
 
-    bgfx::Init init{};
-    init.type              = bgfx::RendererType::OpenGL;
+    bgfx_init_t init{};
+    init.type              = BGFX_RENDERER_TYPE_OPENGL;
     init.vendorId          = BGFX_PCI_ID_NONE;
     init.platformData.nwh  = pd.nwh;
     init.platformData.ndt  = pd.ndt;
     init.resolution.width  = 1280;
     init.resolution.height = 720;
     init.resolution.reset  = BGFX_RESET_VSYNC;
-    if (!bgfx::init(init)) {
-      LOGE("bgfx::init(init) failed!");
+    if (!bgfx_init(&init)) {
+      LOGE("bgfx_init(init) failed!");
       return 1;
     }
 
-    // bgfx::reset( 1280, 720, BGFX_RESET_VSYNC );
-    bgfx::setDebug(BGFX_DEBUG_TEXT);
-    // bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x303030FF, 1.0f, 0);
+    // bgfx_reset( 1280, 720, BGFX_RESET_VSYNC );
+    bgfx_set_debug(BGFX_DEBUG_TEXT);
+    // bgfx_set_view_clear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
+    bgfx_set_view_clear(0, BGFX_CLEAR_COLOR, 0x303030FF, 1.0f, 0);
   }
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -131,7 +130,7 @@ int SDL_main(int argc, char* argv[]) {
   while (!g_shouldExit)
     Update();
 
-  bgfx::shutdown();
+  bgfx_shutdown();
 
   SDL_DestroyWindow(window);
   SDL_Quit();
