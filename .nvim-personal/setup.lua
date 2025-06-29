@@ -3,42 +3,71 @@ vim.keymap.set("n", "gD", "<C-w>o:vs<CR>gd", opts)
 local opts = { remap = false, silent = true }
 
 function cli_command(cmd)
-    return [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\python.exe cli\cli.py ]] .. cmd
+    return [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && .venv\Scripts\python.exe cli\cli.py ]]
+        .. cmd
 end
 
--- Space + A -> Куча команд.
-vim.g.hulvdan_tasks({
-    -- { "d_recording_drop", [[rm .cmake/vs17/Debug/latest_recording.bin]] },
-    -- {
-    --     "w_recording_setup",
-    --     [[cp .cmake/vs17/Debug/latest_recording_enriched.bin .cmake/vs17/Debug/latest_recording.bin]],
-    -- },
-    { "a_game_build_debug", cli_command("build_game_debug") },
-    -- { "n_game_build_release", cli_command("build_game_release") },
-    { "b_build_game_web", cli_command("build_game_web") },
-    { "e_game_run_in_debugger_debug", cli_command("game_run_in_debugger_debug") },
-    -- { "t_game_run_in_debugger_release", cli_command("game_run_in_debugger_release") },
-    -- { "l_ldtk_decorations", cli_command("ldtk_decorations") },
-    -- { "c_cog", cli_command("cog") },
-    -- { "g_generate", cli_command("generate") },
-    -- { "t_test", cli_command("test") },
-    -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
-    -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
-    -- { "l_lint_cpp", cli_command("lint") },
-    -- { "k_lint_python", [[.venv\Scripts\ruff.exe check cli]] },
-    -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
-    -- { "x_clean_temp", [[del /f/s/q .temp]] },
-    -- { "s_shaders_build_debug", cli_command("build_shaders_debug") },
-    -- { "r_shaders_run_in_debugger_debug", cli_command("shaders_run_in_debugger_debug") },
-    -- ----------
-    -- { "o_deploy_itch", cli_command("deploy_itch") },
-    -- { "boner_build_debug", cli_command("build_boner_debug") },
-    -- { "boner_run_in_debugger_debug", cli_command("boner_run_in_debugger_debug") },
-    -- { "crop_video", cli_command("crop_video") },
-    -- { "export_gif", cli_command("export_gif") },
-})
+target = "game"
+platform = "Win"
+build_type = "Debug"
 
+function select_target()
+    targets = { "game" }
+    build_types = { "Debug", "Release", "RelWithDebInfo" }
+    platforms = { "Win", "Web" }
+
+    function platform_build_type_choose()
+        require("fastaction").select(platforms, {}, function(selected_platform)
+            platform = selected_platform
+
+            require("fastaction").select(build_types, {}, function(selected_build_type)
+                build_type = selected_build_type
+
+                print("Active configuration:", target, platform, build_type)
+                rebuild_tasks()
+            end)
+        end)
+    end
+
+    if #targets > 1 then
+        require("fastaction").select(targets, {}, function(selected_target)
+            target = selected_target
+            platform_build_type_choose()
+        end)
+    else
+        platform_build_type_choose()
+    end
+end
+
+function rebuild_tasks()
+    -- Space + A -> Куча команд.
+    vim.g.hulvdan_tasks({
+        { "a_select_target", select_target },
+        { "e_build", cli_command(string.format("build %s %s %s", target, platform, build_type)) },
+        { "d_debug", cli_command(string.format("run_in_debugger %s Debug", target)) },
+        -- { "t_test", cli_command("test") },
+        -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
+        -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
+        -- { "l_lint_cpp", cli_command("lint") },
+        -- { "k_lint_python", [[.venv\Scripts\ruff.exe check cli]] },
+        -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
+        -- { "x_clean_temp", [[del /f/s/q .temp]] },
+        -- { "s_shaders_build_debug", cli_command("build_shaders_debug") },
+        -- { "r_shaders_run_in_debugger_debug", cli_command("shaders_run_in_debugger_debug") },
+        -- ----------
+        -- { "o_deploy_itch", cli_command("deploy_itch") },
+        -- { "boner_build_debug", cli_command("build_boner_debug") },
+        -- { "boner_run_in_debugger_debug", cli_command("boner_run_in_debugger_debug") },
+        -- { "crop_video", cli_command("crop_video") },
+        -- { "export_gif", cli_command("export_gif") },
+    })
+end
+
+rebuild_tasks()
+
+vim.keymap.set("n", "<F4>", "<leader>aa", { remap = true, silent = true })
 vim.keymap.set("n", "<F5>", "<leader>ae", { remap = true, silent = true })
+vim.keymap.set("n", "<F6>", "<leader>ad", { remap = true, silent = true })
 
 -- Space + M -> настройки игры пользователя.
 vim.keymap.set("n", "<leader>m", function()

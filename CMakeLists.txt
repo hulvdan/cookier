@@ -14,23 +14,23 @@ target_include_directories(bgfx INTERFACE "${PROJECT_SOURCE_DIR}/vendor/bgfx/inc
 add_library(bx STATIC IMPORTED)
 add_library(bimg STATIC IMPORTED)
 target_link_libraries(bgfx INTERFACE bx bimg)
-# if ("${PLATFORM}" STREQUAL "Win")
-#     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
-#         set_target_properties(bgfx PROPERTIES IMPORTED_LOCATION
-#             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bgfxDebug.lib")
-#         set_target_properties(bx PROPERTIES IMPORTED_LOCATION
-#             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bxDebug.lib")
-#         set_target_properties(bimg PROPERTIES IMPORTED_LOCATION
-#             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bimgDebug.lib")
-#     else()
-#         set_target_properties(bgfx PROPERTIES IMPORTED_LOCATION
-#             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bgfxRelease.lib")
-#         set_target_properties(bx PROPERTIES IMPORTED_LOCATION
-#             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bxRelease.lib")
-#         set_target_properties(bimg PROPERTIES IMPORTED_LOCATION
-#             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bimgRelease.lib")
-#     endif()
-# elif ("${PLATFORM}" STREQUAL "Web")
+if ("${PLATFORM}" STREQUAL "Win")
+    if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
+        set_target_properties(bgfx PROPERTIES IMPORTED_LOCATION
+            "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bgfxDebug.lib")
+        set_target_properties(bx PROPERTIES IMPORTED_LOCATION
+            "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bxDebug.lib")
+        set_target_properties(bimg PROPERTIES IMPORTED_LOCATION
+            "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bimgDebug.lib")
+    else()
+        set_target_properties(bgfx PROPERTIES IMPORTED_LOCATION
+            "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bgfxRelease.lib")
+        set_target_properties(bx PROPERTIES IMPORTED_LOCATION
+            "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bxRelease.lib")
+        set_target_properties(bimg PROPERTIES IMPORTED_LOCATION
+            "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bimgRelease.lib")
+    endif()
+elseif ("${PLATFORM}" STREQUAL "Web")
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
         set_target_properties(bgfx PROPERTIES IMPORTED_LOCATION
             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/wasm/bin/bgfxDebug.a")
@@ -46,7 +46,9 @@ target_link_libraries(bgfx INTERFACE bx bimg)
         set_target_properties(bimg PROPERTIES IMPORTED_LOCATION
             "${PROJECT_SOURCE_DIR}/vendor/bgfx/.build/wasm/bin/bimgRelease.a")
     endif()
-# endif()
+else()
+    message(FATAL_ERROR "bgfx: Not supported platform: ${PLATFORM}")
+endif()
 
 # sdl
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/sdl")
@@ -55,7 +57,9 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/sdl")
 add_executable(game "${PROJECT_SOURCE_DIR}/src/main.cpp")
 target_link_libraries(game bgfx SDL3-static)
 
-# if ("${PLATFORM}" STREQUAL "Web")
+
+if ("${PLATFORM}" STREQUAL "Win")
+elseif ("${PLATFORM}" STREQUAL "Web")
     set_target_properties(game PROPERTIES OUTPUT_NAME "index")
     target_compile_options(game PRIVATE
         "-o MIN_WEBGL_VERSION=1"
@@ -65,20 +69,25 @@ target_link_libraries(game bgfx SDL3-static)
         "-sMIN_WEBGL_VERSION=1"
         "-sMAX_WEBGL_VERSION=2"
         "-sALLOW_MEMORY_GROWTH=1"
-        "--shell-file=${PROJECT_SOURCE_DIR}/vendor/minshell.html"
     )
     set_target_properties(game PROPERTIES SUFFIX ".html")
-# endif ()
 
-if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
-    target_link_options(game PRIVATE
-        "-sASSERTIONS=1"
-    )
-    target_compile_options(game PRIVATE
-        "-oASSERTIONS=1"
-    )
+    if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
+        target_link_options(game PRIVATE
+            "-sASSERTIONS=1"
+            "--shell-file=${PROJECT_SOURCE_DIR}/vendor/shell_debug.html"
+        )
+        target_compile_options(game PRIVATE
+            "-oASSERTIONS=1"
+        )
+    else()
+        target_link_options(game PRIVATE
+            "--shell-file=${PROJECT_SOURCE_DIR}/vendor/shell_release.html"
+        )
+    endif()
 else()
-endif ()
+    message(FATAL_ERROR "game: Not supported platform: ${PLATFORM}")
+endif()
 
 
 # add_compile_definitions("$<$<CONFIG:Debug>:BF_DEBUG=1>")
