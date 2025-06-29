@@ -3,16 +3,16 @@
 #include <SDL3/SDL_main.h>
 #include <bgfx/c99/bgfx.h>
 
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+#  include <emscripten.h>
+#endif
+
 #include "bf_lib.cpp"
 #include "bf_game.cpp"
 
 #define LOGI(...) SDL_Log(__VA_ARGS__)
 #define LOGW(...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
 #define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
-
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-#  include <emscripten.h>
-#endif
 
 bool g_shouldExit = false;
 
@@ -53,6 +53,10 @@ EM_JS(void, log_webgl_version, (), {
 int SDL_main(int argc, char* argv[]) {
   SDL_Init(0);
 
+  // #if defined(SDL_PLATFORM_WIN32)
+  //   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11");
+  // #endif
+
   auto window = SDL_CreateWindow(
     "The Game"
 #if BF_DEBUG
@@ -63,6 +67,8 @@ int SDL_main(int argc, char* argv[]) {
     720,
     0
   );
+
+  auto renderer = SDL_CreateRenderer(window, -1, 0);
 
   {
     bgfx_platform_data_t pd{};
@@ -105,7 +111,11 @@ int SDL_main(int argc, char* argv[]) {
     bgfx_set_platform_data(&pd);
 
     bgfx_init_t init{};
-    init.type              = BGFX_RENDERER_TYPE_OPENGL;
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+    init.type = BGFX_RENDERER_TYPE_OPENGL;
+#else
+    init.type = BGFX_RENDERER_TYPE_DIRECT3D11;
+#endif
     init.vendorId          = BGFX_PCI_ID_NONE;
     init.platformData.nwh  = pd.nwh;
     init.platformData.ndt  = pd.ndt;

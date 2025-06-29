@@ -16,6 +16,8 @@ from bf_lib import (
 
 P = ParamSpec("P")
 
+SHADERC_PATH = str(PROJECT_DIR / "vendor/bgfx/.build/win64_vs2022/bin/shadercRelease.exe")
+
 
 class StrEnum(str, Enum):
     def __str__(self):
@@ -31,6 +33,12 @@ class BuildType(StrEnum):
 class BuildPlatform(StrEnum):
     Win = "Win"
     Web = "Web"
+
+
+sdl_platforms_mapping = {
+    BuildPlatform.Win: "SDL_PLATFORM_WIN32",
+    BuildPlatform.Web: "SDL_PLATFORM_EMSCRIPTEN",
+}
 
 
 class BuildTarget(StrEnum):
@@ -58,6 +66,118 @@ def hook_exit():
 app = typer.Typer(
     callback=hook_exit, result_callback=timed_exit, pretty_exceptions_enable=False
 )
+
+
+@timing
+def do_generate() -> None:
+    for platform in BuildPlatform:
+        platform_mapping = {
+            BuildPlatform.Win: [("windows", "s_5_0")],
+            BuildPlatform.Web: [("asm.js", "300_es")],
+        }
+
+        assert platform in platform_mapping, f"Not supported platform: {platform}"
+
+        output_directory = PROJECT_DIR / "codegen" / "shaders"
+
+        base = PROJECT_DIR / "src" / "shaders"
+
+        for shader_type, shaders in (
+            ("vertex", list(base.glob("*_vs.sc"))),
+            ("fragment", list(base.glob("*_fs.sc"))),
+        ):
+            for shaderc_platform_name, profile in platform_mapping[platform]:
+                for shader in shaders:
+                    varyingdef = str(shader).rsplit("_", 1)[0] + "_var.def.sc"
+
+                    out_file = output_directory / (shader.stem + f"_{profile}.bin")
+
+                    run_command(
+                        [
+                            SHADERC_PATH,
+                            "-f",
+                            shader,
+                            "-o",
+                            out_file,
+                            "--type",
+                            shader_type,
+                            "--platform",
+                            shaderc_platform_name,
+                            "--profile",
+                            profile,
+                            "-i",
+                            PROJECT_DIR / "vendor" / "bgfx" / "src",
+                            "--varyingdef",
+                            varyingdef,
+                            "--bin2c",
+                            "-O3",
+                        ]
+                    )
+
+
+# with open(PROJECT_DIR / "codegen" / "codegen.cpp", "w") as codegen_file:
+#
+#     def genline(line: str) -> None:
+#         codegen_file.write(line)
+#         codegen_file.write("\n")
+#
+#     shaders_per_platform = defaultdict(list)
+#
+#     for platform in BuildPlatform.values():
+#         platform_mapping = {
+#             # BGFX_RENDERER_TYPE
+#             BuildPlatform.Win: [
+#                 ("windows", "s_5_0", ["DIRECT3D11", "DIRECT3D12"]),
+#             ],
+#             BuildPlatform.Web: [
+#                 ("asm.js", "100_es", ["OPENGLES"]),
+#                 ("asm.js", "300_es", ["OPENGLES"]),
+#             ],
+#         }
+#
+#         assert platform in platform_mapping, f"Not supported platform: {platform}"
+#
+#         output_directory = PROJECT_DIR / "codegen" / "shaders"
+#
+#         base = PROJECT_DIR / "src" / "shaders"
+#
+#         for shader_type, shaders in (
+#             ("vertex", list(base.glob("*_vs.sc"))),
+#             ("fragment", list(base.glob("*_fs.sc"))),
+#         ):
+#             for shaderc_platform_name, profile, renderers in platform_mapping[
+#                 platform
+#             ]:
+#                 for shader in shaders:
+#                     varyingdef = str(shader).rsplit("_", 1)[0] + "_var.def.sc"
+#
+#                     out_file = output_directory / (
+#                         shader.stem + f"_{platform}_{profile}.bin"
+#                     )
+#
+#                     shaders_per_platform[platform].append(
+#                         (out_file, shader_type, profile, renderers)
+#                     )
+#
+#                     run_command(
+#                         [
+#                             SHADERC_PATH,
+#                             f"-f {shader}",
+#                             f"-o {out_file}",
+#                             f"--type {shader_type}",
+#                             f"--platform {shaderc_platform_name}",
+#                             f"--profile {profile}",
+#                             f'-i {PROJECT_DIR / "vendor" / "bgfx" / "src"}',
+#                             f"--varyingdef {varyingdef}",
+#                             "--bin2c",
+#                             "-O3",
+#                         ]
+#                     )
+#
+#         for platform, d in shaders_per_platform.items():
+#             genline("#ifdef {}".format(sdl_platforms_mapping[platform]))
+#
+#             genline("#endif")
 
 
 @timing
@@ -294,6 +414,7 @@ def command(f: Callable[P, T]) -> Callable[P, T]:
 @command
 def build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
     do_cmake(platform, build_type)
+    do_generate()
     do_build(target, platform, build_type)
 
 
@@ -304,6 +425,7 @@ def run_in_debugger(target, build_type: BuildType):
     do_stop_debugger_ahk()
 
     do_cmake(platform, build_type)
+    do_generate()
     do_build(target, platform, build_type)
 
     do_run_in_debugger_ahk(target, build_type)
