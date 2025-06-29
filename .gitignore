@@ -1,7 +1,8 @@
-.cmake/
+/.cmake/
 /.cache/
 /.idea/
 /.scannerwork/
 /.temp/
+/codegen/
 /compile_commands.json
 __pycache__/

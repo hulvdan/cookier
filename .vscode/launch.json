@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "generate"
+                "build","game","Win","Debug"
                 // "precommit", "src/bf_screen_gameplay.cpp"
             ]
         }

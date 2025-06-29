@@ -3,6 +3,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "shaders/quad_vs_s_5_0.bin"
+#include "shaders/quad_fs_s_5_0.bin"
+
+///
 struct Texture2D {
   int   w    = {};
   int   h    = {};
@@ -11,6 +15,7 @@ struct Texture2D {
   bgfx_texture_handle_t tex = {};
 };
 
+///
 Texture2D LoadTexture(const char* path) {
   Texture2D result{};
   int       channels = 0;
@@ -36,6 +41,7 @@ Texture2D LoadTexture(const char* path) {
   return result;
 }
 
+///
 void UnloadTexture(Texture2D* texture) {
   ASSERT(texture->data);
   bgfx_destroy_texture(texture->tex);
@@ -57,5 +63,13 @@ void Draw() {
     loaded = true;
 
     g.tex = LoadTexture(texturePath);
+
+    // bgfx_shader_handle_t vsh
+    //   = bgfx_create_shader(bgfx_make_ref(quad_vs_s_5_0, sizeof(quad_vs_s_5_0)));
+    // bgfx_shader_handle_t fsh
+    //   = bgfx_create_shader(bgfx_make_ref(quad_fs_s_5_0, sizeof(quad_fs_s_5_0)));
+    // bgfx_program_handle_t program = bgfx_create_program(vsh, fsh, true);
   }
 }
+
+///
