@@ -72,8 +72,11 @@ app = typer.Typer(
 def do_generate() -> None:
     for platform in BuildPlatform:
         platform_mapping = {
-            BuildPlatform.Win: [("windows", "s_5_0")],
-            BuildPlatform.Web: [("asm.js", "300_es")],
+            # BuildPlatform.Win: [("windows", "s_5_0")],
+            BuildPlatform.Win: [("windows", "s_4_0")],
+            # BuildPlatform.Win: [("windows", "300_es")],
+            # BuildPlatform.Win: [("windows", "330")],
+            BuildPlatform.Web: [("asm.js", "100_es")],
         }
 
         assert platform in platform_mapping, f"Not supported platform: {platform}"
@@ -111,6 +114,7 @@ def do_generate() -> None:
                             varyingdef,
                             "--bin2c",
                             "-O3",
+                            "--Werror",
                         ]
                     )
 

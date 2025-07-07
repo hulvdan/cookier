@@ -1,10 +1,13 @@
 #pragma once
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <bgfx/c99/bgfx.h>
+#include "../bf_lib.cpp"
 
-#include "shaders/quad_vs_s_5_0.bin"
-#include "shaders/quad_fs_s_5_0.bin"
+#if BF_ENGINE_IMPLEMENTATION
+#  define BF_ENGINE_EXPORT
+#else
+#  define BF_ENGINE_EXPORT extern
+#endif
 
 ///
 struct Texture2D {
@@ -15,8 +18,19 @@ struct Texture2D {
   bgfx_texture_handle_t tex = {};
 };
 
+BF_ENGINE_EXPORT Texture2D LoadTexture(const char* path);
+BF_ENGINE_EXPORT void      UnloadTexture(Texture2D* texture);
+BF_ENGINE_EXPORT u32       GetTicks();
+
+#ifdef BF_ENGINE_IMPLEMENTATION
+
+#  include <SDL3/SDL.h>
+
+#  define STB_IMAGE_IMPLEMENTATION
+#  include "stb_image.h"
+
 ///
-Texture2D LoadTexture(const char* path) {
+BF_ENGINE_EXPORT Texture2D LoadTexture(const char* path) {
   Texture2D result{};
   int       channels = 0;
   result.data        = stbi_load(path, &result.w, &result.h, &channels, 4);
@@ -42,7 +56,7 @@ Texture2D LoadTexture(const char* path) {
 }
 
 ///
-void UnloadTexture(Texture2D* texture) {
+BF_ENGINE_EXPORT void UnloadTexture(Texture2D* texture) {
   ASSERT(texture->data);
   bgfx_destroy_texture(texture->tex);
   texture->tex = {};
@@ -50,26 +64,11 @@ void UnloadTexture(Texture2D* texture) {
   texture->data = nullptr;
 }
 
-struct GameData {
-  Texture2D tex = {};
-} g = {};
-
-void Draw() {
-  const auto texturePath = "c:/Users/user/dev/home/isaac/assets/tex.png";
-
-  LOCAL_PERSIST bool loaded = false;
-
-  if (!loaded) {
-    loaded = true;
-
-    g.tex = LoadTexture(texturePath);
-
-    // bgfx_shader_handle_t vsh
-    //   = bgfx_create_shader(bgfx_make_ref(quad_vs_s_5_0, sizeof(quad_vs_s_5_0)));
-    // bgfx_shader_handle_t fsh
-    //   = bgfx_create_shader(bgfx_make_ref(quad_fs_s_5_0, sizeof(quad_fs_s_5_0)));
-    // bgfx_program_handle_t program = bgfx_create_program(vsh, fsh, true);
-  }
+///
+BF_ENGINE_EXPORT u32 GetTicks() {
+  return SDL_GetTicks();
 }
+
+#endif  // BF_ENGINE_IMPLEMENTATION
 
 ///
