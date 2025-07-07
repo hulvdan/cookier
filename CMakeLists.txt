@@ -72,35 +72,51 @@ endif()
 #-----------------------------------------------------------------------------------
 add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/sdl")
 
+# engine
+#-----------------------------------------------------------------------------------
+add_library(engine "${PROJECT_SOURCE_DIR}/src/engine/bf_engine.cpp")
+target_link_libraries(engine PRIVATE SDL3-static vendor_and_codegen)
+target_link_libraries(engine PUBLIC bgfx)
+target_compile_definitions(engine PRIVATE BF_ENGINE_IMPLEMENTATION)
+
 # game
 #-----------------------------------------------------------------------------------
-add_executable(game "${PROJECT_SOURCE_DIR}/src/main.cpp")
-target_link_libraries(game bgfx SDL3-static vendor_and_codegen)
+add_library(game "${PROJECT_SOURCE_DIR}/src/game/bf_game.cpp")
+target_link_libraries(game PRIVATE engine)
+target_compile_definitions(game PRIVATE BF_GAME_IMPLEMENTATION)
 
-set_target_properties(game PROPERTIES
-  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-)
+# game_exe
+#-----------------------------------------------------------------------------------
+add_executable(game_exe "${PROJECT_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
+target_link_libraries(game_exe PRIVATE game engine SDL3-static)
+
+# set_target_properties(game PROPERTIES
+#   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+# )
+# set_target_properties(game PROPERTIES
+#   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+# )
 
 if ("${PLATFORM}" STREQUAL "Win")
 elseif ("${PLATFORM}" STREQUAL "Web")
-    set_target_properties(game PROPERTIES OUTPUT_NAME "index")
-    target_compile_options(game PRIVATE
+    set_target_properties(game_exe PROPERTIES OUTPUT_NAME "index")
+    set_target_properties(game_exe PROPERTIES SUFFIX ".html")
+    add_compile_options(
         "-o MIN_WEBGL_VERSION=1"
         "-o MAX_WEBGL_VERSION=2"
     )
-    target_link_options(game PRIVATE
+    add_link_options(
         "-sMIN_WEBGL_VERSION=1"
         "-sMAX_WEBGL_VERSION=2"
         "-sALLOW_MEMORY_GROWTH=1"
     )
-    set_target_properties(game PROPERTIES SUFFIX ".html")
 
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
-        target_compile_options(game PRIVATE
+        add_compile_options(
             "-O0"
             "-oASSERTIONS=2"
         )
-        target_link_options(game PRIVATE
+        add_link_options(
             "-sASSERTIONS=2"
             "-g4"
             "-O0"
@@ -108,11 +124,11 @@ elseif ("${PLATFORM}" STREQUAL "Web")
             "--shell-file=${PROJECT_SOURCE_DIR}/vendor/shell_debug.html"
         )
     else()
-        target_compile_options(game PRIVATE
+        add_compile_options(
             "-O3"
             "-oASSERTIONS=0"
         )
-        target_link_options(game PRIVATE
+        add_link_options(
             "-O3"
             "-sASSERTIONS=0"
             "-sEXIT_RUNTIME=0"
@@ -121,11 +137,11 @@ elseif ("${PLATFORM}" STREQUAL "Web")
         )
     endif()
 else()
-    message(FATAL_ERROR "game: Not supported platform: ${PLATFORM}")
+    message(FATAL_ERROR "Not supported platform: ${PLATFORM}")
 endif()
 
 # Windows. Startup project in Visual Studio.
 #-----------------------------------------------------------------------------------
-set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT game)
+set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT game_exe)
 
 # ///
