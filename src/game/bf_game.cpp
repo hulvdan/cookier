@@ -1,7 +1,5 @@
 #pragma once
 
-#include "bf_game.h"
-
-Update_function(GameUpdate) {
+UpdateFunctionResult GameUpdate() {
   return UpdateFunctionResult_FINISHED_SUCCESSFULLY;
 }

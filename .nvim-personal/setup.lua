@@ -7,12 +7,12 @@ function cli_command(cmd)
         .. cmd
 end
 
-target = "game_exe"
+target = "game"
 platform = "Win"
 build_type = "Debug"
 
 function select_target()
-    targets = { "game_exe" }
+    targets = { "game" }
     build_types = { "Debug", "Release", "RelWithDebInfo" }
     platforms = { "Win", "Web" }
 

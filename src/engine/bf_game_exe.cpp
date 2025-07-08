@@ -4,16 +4,17 @@
 #include <SDL3/SDL_main.h>
 #include <bgfx/c99/bgfx.h>
 
+#include "bf_lib.cpp"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
 #  include <emscripten.h>
 #endif
 
-#include "bf_lib.cpp"
-#include "bf_game.cpp"
-
-#define LOGI(...) SDL_Log(__VA_ARGS__)
-#define LOGW(...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
-#define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+#include "engine/bf_engine.cpp"
+#include "game/bf_game.cpp"
 
 bool g_shouldExit = false;
 
@@ -137,7 +138,7 @@ void capture_frame_impl(
   uint32_t                   _size
 ) {}
 
-int SDL_main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   if (!SDL_Init(0)) {
     LOGE("SDL_Init failed!");
     exit(EXIT_FAILURE);
