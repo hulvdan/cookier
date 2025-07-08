@@ -1,5 +1,6 @@
 #pragma once
 
+#define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <bgfx/c99/bgfx.h>
@@ -16,28 +17,9 @@
 #include "engine/bf_engine.cpp"
 #include "game/bf_game.cpp"
 
-bool g_shouldExit = false;
-
-void Update() {
-  static int counter = 0;
-
-  bgfx_set_view_rect(0, 0, 0, uint16_t(1280), uint16_t(720));
-  bgfx_touch(0);
-  GameUpdate();
-  bgfx_dbg_text_clear(0, false);
-  bgfx_dbg_text_printf(0, 1, 0x4f, "Counter: %d", counter++);
-  bgfx_frame(false);
-
-  SDL_Event event;
-  while (SDL_PollEvent(&event)) {
-    switch (event.type) {
-    case SDL_EVENT_QUIT:
-    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-      g_shouldExit = true;
-      break;
-    }
-  }
-}
+struct EngineAppState {
+  SDL_Window* window = {};
+};
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
 EM_JS(void, log_webgl_version, (), {
@@ -138,26 +120,25 @@ void capture_frame_impl(
   uint32_t                   _size
 ) {}
 
-int main(int argc, char* argv[]) {
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+  log_webgl_version();
+#endif
+
+  auto appstate_ = new EngineAppState();
+  *appstate      = (void*)appstate_;
+
   if (!SDL_Init(0)) {
     LOGE("SDL_Init failed!");
-    exit(EXIT_FAILURE);
+    return SDL_APP_FAILURE;
   }
 
-  auto window = SDL_CreateWindow(
-    "The Game"
-#if BF_DEBUG
-    " [DEBUG]"
-#endif
-    ,
-    1280,
-    720,
-    0
-  );
+  auto window = SDL_CreateWindow(GetWindowTitle(), 1280, 720, 0);
   if (!window) {
     LOGE("SDL_CreateWindow failed!");
-    exit(EXIT_FAILURE);
+    return SDL_APP_FAILURE;
   }
+  appstate_->window = window;
 
   {
     bgfx_platform_data_t pd{};
@@ -248,20 +229,42 @@ int main(int argc, char* argv[]) {
     bgfx_set_view_clear(0, BGFX_CLEAR_COLOR, 0x303030FF, 1.0f, 0);
   }
 
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-  log_webgl_version();
-  emscripten_set_main_loop(Update, 0, 1);
-#else
-  while (!g_shouldExit)
-    Update();
+  return SDL_APP_CONTINUE;
+}
 
+SDL_AppResult SDL_AppIterate(void* appstate) {
+  static int counter = 0;
+
+  bgfx_set_view_rect(0, 0, 0, uint16_t(1280), uint16_t(720));
+  bgfx_touch(0);
+  GameUpdate();
+  bgfx_dbg_text_clear(0, false);
+  bgfx_dbg_text_printf(0, 1, 0x4f, "Counter: %d", counter++);
+  bgfx_frame(false);
+
+  return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
+  switch (event->type) {
+  case SDL_EVENT_QUIT:
+  case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+    return SDL_APP_SUCCESS;
+  }
+
+  return SDL_APP_CONTINUE;
+}
+
+void SDL_AppQuit(void* appstate, SDL_AppResult result) {
   bgfx_shutdown();
 
-  SDL_DestroyWindow(window);
-  SDL_Quit();
-#endif
+  if (appstate)
+    delete appstate;
 
-  return 0;
+  auto appstate_ = (EngineAppState*)appstate;
+
+  SDL_DestroyWindow(appstate_->window);
+  SDL_Quit();
 }
 
 ///
