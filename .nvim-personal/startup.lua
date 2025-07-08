@@ -1,5 +1,5 @@
 vim.defer_fn(function()
-    vim.fn.execute("e src/bf_game_screen.cpp")
+    vim.fn.execute("e src/game/bf_game.cpp")
     vim.api.nvim_input([[<space>n<C-j><C-j>]])
     vim.defer_fn(function()
         vim.api.nvim_input([[<C-j><C-j><A-m><A-q><A-m>]])

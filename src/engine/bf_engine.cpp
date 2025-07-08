@@ -1,13 +1,8 @@
 #pragma once
 
-#include <bgfx/c99/bgfx.h>
-#include "../bf_lib.cpp"
-
-#if BF_ENGINE_IMPLEMENTATION
-#  define BF_ENGINE_EXPORT
-#else
-#  define BF_ENGINE_EXPORT extern
-#endif
+#define LOGI(...) SDL_Log(__VA_ARGS__)
+#define LOGW(...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+#define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
 
 ///
 struct Texture2D {
@@ -18,22 +13,12 @@ struct Texture2D {
   bgfx_texture_handle_t tex = {};
 };
 
-BF_ENGINE_EXPORT Texture2D LoadTexture(const char* path);
-BF_ENGINE_EXPORT void      UnloadTexture(Texture2D* texture);
-BF_ENGINE_EXPORT u32       GetTicks();
-
-#ifdef BF_ENGINE_IMPLEMENTATION
-
-#  include <SDL3/SDL.h>
-
-#  define STB_IMAGE_IMPLEMENTATION
-#  include "stb_image.h"
-
 ///
-BF_ENGINE_EXPORT Texture2D LoadTexture(const char* path) {
+Texture2D LoadTexture(const char* path) {
   Texture2D result{};
-  int       channels = 0;
-  result.data        = stbi_load(path, &result.w, &result.h, &channels, 4);
+
+  int channels = 0;
+  result.data  = stbi_load(path, &result.w, &result.h, &channels, 4);
   ASSERT(result.data);
 
   auto memory = bgfx_copy(result.data, result.w * result.h * 4);
@@ -56,19 +41,26 @@ BF_ENGINE_EXPORT Texture2D LoadTexture(const char* path) {
 }
 
 ///
-BF_ENGINE_EXPORT void UnloadTexture(Texture2D* texture) {
+void UnloadTexture(Texture2D* texture) {
   ASSERT(texture->data);
-  bgfx_destroy_texture(texture->tex);
+
+  static_assert(sizeof(texture->tex) == sizeof(bgfx_texture_handle_t));
+  bgfx_destroy_texture(*(bgfx_texture_handle_t*)&texture->tex);
+
   texture->tex = {};
   stbi_image_free(texture->data);
   texture->data = nullptr;
 }
 
 ///
-BF_ENGINE_EXPORT u32 GetTicks() {
+u64 GetTime() {
   return SDL_GetTicks();
 }
 
-#endif  // BF_ENGINE_IMPLEMENTATION
+enum UpdateFunctionResult {
+  UpdateFunctionResult_NO_ERROR_CONTINUE_RUNNING = -1,
+  UpdateFunctionResult_FINISHED_SUCCESSFULLY     = 0,
+  UpdateFunctionResult_ERR                       = 1,
+};
 
 ///
