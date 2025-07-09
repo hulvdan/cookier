@@ -20,7 +20,7 @@ cd vendor
 cd bgfx
 make
 make wasm
-make tools
+msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
 cd ..
 cd ..
 
