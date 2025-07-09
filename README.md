@@ -15,4 +15,4 @@ git add a.txt
 git commit -m "f"
 git remote add template https://github.com/Hulvdan/game-template.git
 git fetch template
-git rebase template/master
+git rebase template/template
