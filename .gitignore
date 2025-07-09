@@ -1,6 +1,8 @@
-/.cmake/
 /.cache/
+/.cmake/
 /.idea/
+/.mypy_cache/
+/.ruff_cache/
 /.scannerwork/
 /.temp/
 /codegen/
