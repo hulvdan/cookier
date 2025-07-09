@@ -20,6 +20,7 @@ cd vendor
 cd bgfx
 make
 make wasm
+make tools
 cd ..
 cd ..
 
