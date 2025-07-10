@@ -73,17 +73,10 @@ endif()
 #-----------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/sdl")
 
-# flatbuffers
-#-----------------------------------------------------------------------------------
-add_library(flatbuffers INTERFACE)
-target_include_directories(flatbuffers INTERFACE
-    "${PROJECT_SOURCE_DIR}/vendor/flatbuffers/include"
-)
-
 # game
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
-target_link_libraries(game PRIVATE SDL3-static bgfx flatbuffers vendor_and_codegen)
+target_link_libraries(game PRIVATE SDL3-static bgfx vendor_and_codegen)
 target_include_directories(game PRIVATE "${CMAKE_SOURCE_DIR}/src")
 
 if ("${PLATFORM}" STREQUAL "Win")
@@ -97,7 +90,7 @@ elseif ("${PLATFORM}" STREQUAL "Web")
         "-sMIN_WEBGL_VERSION=1"
         "-sMAX_WEBGL_VERSION=2"
         "-sALLOW_MEMORY_GROWTH=1"
-        "--preload-file resources"
+        --preload-file resources
     )
     set_target_properties(game PROPERTIES OUTPUT_NAME "index")
     set_target_properties(game PROPERTIES SUFFIX ".html")
