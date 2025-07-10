@@ -8,4 +8,5 @@
 /codegen/
 /compile_commands.json
 /resources/atlas.png
+/resources/gamelib.bin
 __pycache__/

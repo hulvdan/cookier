@@ -20,7 +20,6 @@ from bf_lib import (
     SRC_DIR,
     TEMP_DIR,
     BuildPlatform,
-    generate_binary_file_header,
     log,
     recursive_mkdir,
     run_command,
@@ -265,9 +264,7 @@ def convert_gamelib_json_to_binary(
     )
 
     intermediate_binary_path = Path(str(intermediate_path).rsplit(".", 1)[0] + ".bin")
-    # shutil.move(intermediate_binary_path, RESOURCES_DIR / "gamelib.bin")
-
-    generate_binary_file_header(genline, intermediate_binary_path, "g_gamelib")
+    shutil.move(intermediate_binary_path, RESOURCES_DIR / "gamelib.bin")
 
 
 @timing
