@@ -1,0 +1,27 @@
+// Example:gamelib
+// https://raw.githubusercontent.com/google/flatbuffers/master/samples/monster.fbs
+
+namespace BFGame;
+
+table Texture {
+    id: uint (key);
+    debug_name: string (required);
+    atlas_x: uint;
+    atlas_y: uint;
+    size_x: uint;
+    size_y: uint;
+    baseline: uint;
+}
+
+table Atlas {
+    size_x: uint;
+    size_y: uint;
+    textures: [Texture] (required);
+}
+
+table GameLibrary {
+    atlas: Atlas;
+}
+
+file_identifier "GLIB";
+root_type GameLibrary;
