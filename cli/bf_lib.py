@@ -14,8 +14,6 @@ import fnvhash
 P = ParamSpec("P")
 T = TypeVar("T")
 
-PIXEL_SCALE_MULTIPLIER = 5
-
 _exiting = False
 
 timings_stack: list[Any] = []
@@ -150,10 +148,8 @@ PROJECT_DIR = Path(__file__).parent.parent
 TEMP_DIR = PROJECT_DIR / ".temp"
 CLI_DIR = Path("cli")
 SRC_DIR = Path("src")
-# SHADERS_DIR = SRC_DIR / "shaders"
 ASSETS_DIR = SRC_DIR / "game" / "assets"
 ART_DIR = ASSETS_DIR / "art"
-# FLATBUFFERS_SRC_DIR = SRC_DIR / "flatbuffers"
 RESOURCES_DIR = PROJECT_DIR / "resources"
 GAME_DIR = PROJECT_DIR / "src" / "game" / "resources"
 HANDS_GENERATED_DIR = PROJECT_DIR / "codegen" / "hands"
@@ -252,8 +248,14 @@ def run_command(cmd: list[str] | str, stdin_input: str | None = None, cwd=None) 
 
 
 def recursive_mkdir(path: Path) -> None:
-    for parent in list(path.parents)[::-1][1:]:
-        parent.mkdir(exist_ok=True)
+    parents = list(path.parents)
+
+    count = len(parents)
+    if path.is_file():
+        count -= 1
+
+    for i in range(count):
+        parents[len(parents) - i - 1].mkdir(exist_ok=True)
 
 
 def eprint(*args, **kwargs):
