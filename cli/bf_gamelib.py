@@ -234,7 +234,7 @@ def convert_gamelib_json_to_binary(
         yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8")) or {}
     )
 
-    gamelib["atlas"] = atlas_data
+    gamelib |= atlas_data
 
     genline("// REMOVE ME")
 
@@ -335,9 +335,9 @@ def make_atlas(path: Path) -> tuple[dict[str, int], dict]:
     )
 
     return texture_name_2_id, {
-        "textures": textures,
-        "size_x": json_data["meta"]["size"]["w"],
-        "size_y": json_data["meta"]["size"]["h"],
+        "atlas_textures": textures,
+        "atlas_size_x": json_data["meta"]["size"]["w"],
+        "atlas_size_y": json_data["meta"]["size"]["h"],
     }
 
 

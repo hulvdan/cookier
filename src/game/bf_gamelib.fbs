@@ -13,17 +13,13 @@ table Texture {
     baseline: uint;
 }
 
-table Atlas {
-    size_x: uint;
-    size_y: uint;
-    textures: [Texture] (required);
-}
-
 // GAME STUFF
 // GAME STUFF END
 
 table GameLibrary {
-    atlas: Atlas;
+    atlas_size_x: uint;
+    atlas_size_y: uint;
+    atlas_textures: [Texture] (required);
 
     // GAME STUFF
     // GAME STUFF END

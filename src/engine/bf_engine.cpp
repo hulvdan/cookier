@@ -1,8 +1,19 @@
 #pragma once
 
+using Vector2 = glm::vec2;
+using Vector3 = glm::vec3;
+using Vector4 = glm::vec4;
+
 #define LOGI(...) SDL_Log(__VA_ARGS__)
 #define LOGW(...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
 #define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+
+struct Color {
+  u8 r = u8_max;
+  u8 g = u8_max;
+  u8 b = u8_max;
+  u8 a = u8_max;
+};
 
 struct Texture2D {
   int   w    = {};
@@ -16,9 +27,8 @@ const BFGame::GameLibrary* glib = nullptr;
 
 struct EngineData {
   struct Meta {
-    Texture2D atlas = {};
-    // gbFileContents gamelib = {};
-    void* gamelib = {};
+    Texture2D atlas        = {};
+    void*     gamelibBytes = {};
   } meta;
 } ge = {};
 
@@ -101,10 +111,53 @@ void UnloadFileData(void* ptr) {
 }
 
 void InitializeEngine() {
-  ge.meta.atlas   = LoadTexture("resources/atlas.png");
-  ge.meta.gamelib = LoadFileData("resources/gamelib.bin");
+  ge.meta.atlas        = LoadTexture("resources/atlas.png");
+  ge.meta.gamelibBytes = LoadFileData("resources/gamelib.bin");
   LOGI("Initialized engine!");
-  glib = BFGame::GetGameLibrary(ge.meta.gamelib);
+  glib = BFGame::GetGameLibrary(ge.meta.gamelibBytes);
+}
+
+struct DrawTextureData {
+  int     texId      = -1;
+  f32     rotation   = {};
+  Vector2 pos        = {};
+  Vector2 anchor     = Vector2Half();
+  Vector2 scale      = {1, 1};
+  Vector2 sourceSize = {1, 1};
+  Color   color      = WHITE;
+
+  // Shader* shader               = nullptr;
+  // int     materialsBufferStart = -1;
+};
+
+void DrawTexture(DrawTextureData data) {
+  ASSERT(data.texId >= 0);
+
+  auto tex = glib->atlas_textures()->Get(data.texId);
+
+  Rectangle sourceRec{
+    (f32)tex->atlas_x(),
+    (f32)tex->atlas_y() + (f32)tex->size_y() * (1 - data.sourceSizeY),
+    (f32)tex->size_x() * SIGN(data.scale.x),
+    (f32)tex->size_y() * data.sourceSizeY * SIGN(data.scale.y),
+  };
+  Rectangle destRec{
+    data.pos.x
+      + (f32)tex->size_x() * (1 - data.sourceSizeX) * abs(data.scale.x) * data.anchor.x,
+    data.pos.y
+      + (f32)tex->size_y() * (1 - data.sourceSizeY) * abs(data.scale.y) * data.anchor.y,
+    (f32)tex->size_x() * data.sourceSizeX * abs(data.scale.x),
+    (f32)tex->size_y() * data.sourceSizeY * abs(data.scale.y),
+  };
+
+  DrawTexturePro(
+    g->meta.atlasTexture,
+    sourceRec,
+    destRec,
+    GetRectangleSize(destRec) * data.anchor,
+    data.rotationDeg,
+    data.color
+  );
 }
 
 ///

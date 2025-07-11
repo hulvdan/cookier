@@ -4,8 +4,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <bgfx/c99/bgfx.h>
-
-#include "bf_lib.cpp"
+#include "glm/glm.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -17,6 +16,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/bf_gamelib_generated.h"
 
+#include "bf_lib.cpp"
 #include "engine/bf_engine.cpp"
 #include "game/bf_game.cpp"
 
