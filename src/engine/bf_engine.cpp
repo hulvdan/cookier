@@ -1,5 +1,9 @@
 #pragma once
 
+#define LOGI(...) SDL_Log(__VA_ARGS__)
+#define LOGW(...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+#define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+
 using Vector2    = glm::vec2;
 using Vector3    = glm::vec3;
 using Vector4    = glm::vec4;
@@ -24,10 +28,6 @@ struct Rect {
   Vector2 pos  = {};
   Vector2 size = {};
 };
-
-#define LOGI(...) SDL_Log(__VA_ARGS__)
-#define LOGW(...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
-#define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
 
 struct Color {
   u8 r = u8_max;
@@ -200,6 +200,24 @@ void InitializeEngine() {
   LOGI("Initialized engine!");
 }
 
+///
+f32 ScaleToFit(Vector2 inner, Vector2 container) {
+  f32 scaleX = container.x / inner.x;
+  f32 scaleY = container.y / inner.y;
+  f32 scale  = (scaleX < scaleY) ? scaleX : scaleY;
+  return scale;
+}
+
+///
+f32 ScaleToCover(Vector2 inner, Vector2 container) {
+  f32 scaleX = container.x / inner.x;
+  f32 scaleY = container.y / inner.y;
+  f32 scale  = (scaleX > scaleY) ? scaleX : scaleY;
+  return scale;
+}
+
+constexpr Vector2Int LOGICAL_RESOLUTION = {1280, 720};
+
 struct DrawTextureData {
   int     texId      = -1;
   f32     rotation   = {};
@@ -211,22 +229,6 @@ struct DrawTextureData {
   // bgfx::ProgramHandle program = {};
   // int materialsBufferStart = -1;
 };
-
-f32 ScaleToFit(Vector2 inner, Vector2 container) {
-  f32 scaleX = container.x / inner.x;
-  f32 scaleY = container.y / inner.y;
-  f32 scale  = (scaleX < scaleY) ? scaleX : scaleY;
-  return scale;
-}
-
-f32 ScaleToCover(Vector2 inner, Vector2 container) {
-  f32 scaleX = container.x / inner.x;
-  f32 scaleY = container.y / inner.y;
-  f32 scale  = (scaleX > scaleY) ? scaleX : scaleY;
-  return scale;
-}
-
-constexpr Vector2Int LOGICAL_RESOLUTION = {1280, 720};
 
 ///
 void DrawTexture(DrawTextureData data) {
