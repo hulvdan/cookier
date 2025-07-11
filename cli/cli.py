@@ -1,5 +1,6 @@
 import os
 import subprocess
+from itertools import product
 from typing import Callable, ParamSpec
 
 import typer
@@ -274,6 +275,13 @@ def build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
     do_cmake(platform, build_type)
     do_generate()
     do_build(target, platform, build_type)
+
+
+@command
+def build_all_and_test():
+    test()
+    for platform, build_type in product(BuildPlatform, BuildType):
+        build(BuildTarget.game, platform, build_type)
 
 
 @command

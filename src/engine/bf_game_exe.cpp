@@ -255,7 +255,7 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result) {
   bgfx::shutdown();
 
   if (appstate)
-    delete appstate;
+    delete (EngineAppState*)appstate;
 
   auto appstate_ = (EngineAppState*)appstate;
 
