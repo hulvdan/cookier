@@ -11,6 +11,14 @@ using Vector2Int = glm::ivec2;
 using Vector3Int = glm::ivec3;
 using Vector4Int = glm::ivec4;
 
+bool Vector2Equals(Vector2 v1, Vector2 v2) {
+  return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y);
+}
+
+bool Vector3Equals(Vector3 v1, Vector3 v2) {
+  return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y) && FloatEquals(v1.z, v2.z);
+}
+
 ///
 constexpr Vector2 Vector2Zero() {
   return Vector2{0, 0};
@@ -208,12 +216,26 @@ f32 ScaleToFit(Vector2 inner, Vector2 container) {
   return scale;
 }
 
+TEST_CASE ("ScaleToFit") {
+  ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 2}), 2));
+  ASSERT(FloatEquals(ScaleToFit({1, 1}, {3, 2}), 2));
+  ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 3}), 2));
+  ASSERT(FloatEquals(ScaleToFit({3, 3}, {2, 3}), 2.0f / 3.0f));
+}
+
 ///
 f32 ScaleToCover(Vector2 inner, Vector2 container) {
   f32 scaleX = container.x / inner.x;
   f32 scaleY = container.y / inner.y;
   f32 scale  = (scaleX > scaleY) ? scaleX : scaleY;
   return scale;
+}
+
+TEST_CASE ("ScaleToCover") {
+  ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 2}), 2));
+  ASSERT(FloatEquals(ScaleToCover({1, 1}, {3, 2}), 3));
+  ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 3}), 3));
+  ASSERT(FloatEquals(ScaleToCover({3, 3}, {2, 3}), 1));
 }
 
 constexpr Vector2Int LOGICAL_RESOLUTION = {1280, 720};
