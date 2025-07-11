@@ -44,9 +44,10 @@ function rebuild_tasks()
     vim.g.hulvdan_tasks({
         { "a_select_target", select_target },
         { "e_build", cli_command(string.format("build %s %s %s", target, platform, build_type)) },
-        { "d_debug", cli_command(string.format("run_in_debugger %s Debug", target)) },
+        { "d_run_in_debugger", cli_command(string.format("run_in_debugger %s Debug", target)) },
         { "u_update_template", cli_command("update_template") },
         { "t_test", cli_command("test") },
+        { "r_build_all_and_test", cli_command("build_all_and_test") },
         -- { "t_test", cli_command("test") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
