@@ -1,8 +1,11 @@
 #pragma once
 
-using Vector2 = glm::vec2;
-using Vector3 = glm::vec3;
-using Vector4 = glm::vec4;
+using Vector2    = glm::vec2;
+using Vector3    = glm::vec3;
+using Vector4    = glm::vec4;
+using Vector2Int = glm::ivec2;
+using Vector3Int = glm::ivec3;
+using Vector4Int = glm::ivec4;
 
 constexpr Vector2 Vector2Zero() {
   return Vector2{0, 0};
@@ -70,6 +73,7 @@ struct EngineData {
     Texture2D           atlas        = {};
     void*               gamelibBytes = {};
     bgfx::ProgramHandle program      = {};
+    Vector2Int          screenSize   = {};
   } meta;
 } ge = {};
 

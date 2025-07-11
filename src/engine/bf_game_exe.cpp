@@ -106,7 +106,14 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
     return SDL_APP_FAILURE;
   }
 
-  auto window = SDL_CreateWindow(GetWindowTitle(), 1280, 720, 0);
+  SDL_WindowFlags flags = 0;
+
+#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_MACOS) \
+  || defined(SDL_PLATFORM_LINUX)
+  flags |= SDL_WINDOW_RESIZABLE;
+#endif
+
+  auto window = SDL_CreateWindow(GetWindowTitle(), 1280, 720, flags);
   if (!window) {
     LOGE("SDL_CreateWindow failed!");
     return SDL_APP_FAILURE;
@@ -207,6 +214,17 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
   case SDL_EVENT_QUIT:
   case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
     return SDL_APP_SUCCESS;
+
+  case SDL_EVENT_WINDOW_RESIZED: {
+    auto window = SDL_GetWindowFromID(event->window.windowID);
+
+    int width  = {};
+    int height = {};
+    SDL_GetWindowSize(window, &width, &height);
+    bgfx::reset(width, height, BGFX_RESET_VSYNC);
+    bgfx::setViewRect(0, 0, 0, width, height);
+    ge.meta.screenSize = {width, height};
+  } break;
   }
 
   return SDL_APP_CONTINUE;
