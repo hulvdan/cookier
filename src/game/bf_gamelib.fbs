@@ -19,8 +19,14 @@ table Atlas {
     textures: [Texture] (required);
 }
 
+// GAME STUFF
+// GAME STUFF END
+
 table GameLibrary {
     atlas: Atlas;
+
+    // GAME STUFF
+    // GAME STUFF END
 }
 
 file_identifier "GLIB";
