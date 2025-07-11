@@ -139,7 +139,6 @@ target_link_libraries(tests PRIVATE SDL3-static bgfx vendor_and_codegen)
 target_include_directories(tests PRIVATE "${CMAKE_SOURCE_DIR}/src")
 target_compile_definitions(tests PRIVATE
     TESTS
-    SDL_MAIN_NOIMPL
     SDL_MAIN_HANDLED
     DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 )
