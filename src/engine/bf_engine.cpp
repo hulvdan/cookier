@@ -19,15 +19,14 @@ bool Vector3Equals(Vector3 v1, Vector3 v2) {
   return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y) && FloatEquals(v1.z, v2.z);
 }
 
-///
 constexpr Vector2 Vector2Zero() {
   return Vector2{0, 0};
 }
-///
+
 constexpr Vector2 Vector2Half() {
   return Vector2{0.5f, 0.5f};
 }
-///
+
 constexpr Vector2 Vector2One() {
   return Vector2{1, 1};
 }
@@ -44,12 +43,15 @@ struct Color {
   u8 a = u8_max;
 };
 
-constexpr Color WHITE = Color{};
-constexpr Color BLACK = Color{0, 0, 0, u8_max};
-constexpr Color GRAY  = Color{u8_max / 2, u8_max / 2, u8_max / 2, u8_max};
-constexpr Color RED   = Color{u8_max / 2, 0, 0, 1};
-constexpr Color GREEN = Color{0, u8_max / 2, 0, u8_max};
-constexpr Color BLUE  = Color{0, 0, u8_max / 2, u8_max};
+constexpr Color WHITE   = Color{};
+constexpr Color BLACK   = Color{0, 0, 0, u8_max};
+constexpr Color GRAY    = Color{u8_max / 2, u8_max / 2, u8_max / 2, u8_max};
+constexpr Color RED     = Color{u8_max / 2, 0, 0, 1};
+constexpr Color GREEN   = Color{0, u8_max / 2, 0, u8_max};
+constexpr Color BLUE    = Color{0, 0, u8_max / 2, u8_max};
+constexpr Color YELLOW  = Color{u8_max / 2, u8_max / 2, 0, u8_max};
+constexpr Color CYAN    = Color{0, u8_max / 2, u8_max / 2, u8_max};
+constexpr Color MAGENTA = Color{u8_max / 2, 0, u8_max / 2, u8_max};
 
 struct Texture2D {
   Vector2Int size = {};
@@ -89,9 +91,9 @@ struct EngineData {
 } ge = {};
 
 void BeginMode2D(Camera camera) {}
+
 void EndMode2D() {}
 
-///
 bgfx::ShaderHandle _LoadShader(const u8* data, u32 size) {
   return bgfx::createShader(bgfx::makeRef(data, size));
 }
@@ -107,7 +109,7 @@ bgfx::ProgramHandle LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 s
 
 ///
 Texture2D LoadTexture(const char* filepath) {
-  LOGI("Loading texture %s...", filepath);
+  LOGI("Loading texture '%s'...", filepath);
 
   Texture2D result{};
 
@@ -131,7 +133,7 @@ Texture2D LoadTexture(const char* filepath) {
     memory
   );
 
-  LOGI("Loaded texture %s!", filepath);
+  LOGI("Loaded texture '%s'!", filepath);
 
   return result;
 }
@@ -146,16 +148,18 @@ void UnloadTexture(Texture2D* texture) {
 
 ///
 void* LoadFileData(const char* filepath, int* out_size = nullptr) {
-  LOGI("Loading file data %s...", filepath);
+  LOGI("Loading file data '%s'...", filepath);
 
   auto fp = fopen(filepath, "rb");
   ASSERT(fp);
   if (!fp) {
-    perror("Failed to open file");
-    LOGE("Failed to open file %s", filepath);
+    LOGE("Failed to open file '%s'", filepath);
     INVALID_PATH;
     return nullptr;
   }
+  DEFER {
+    fclose(fp);
+  };
 
   fseek(fp, 0, SEEK_END);
   auto size = ftell(fp);
@@ -163,32 +167,28 @@ void* LoadFileData(const char* filepath, int* out_size = nullptr) {
 
   auto buffer = malloc(size + 1);
   if (!buffer) {
-    LOGE("Failed to allocate buffer while opening file");
-    fclose(fp);
+    LOGE("Failed to allocate buffer while opening file '%s'", filepath);
     INVALID_PATH;
     return nullptr;
   }
 
   auto read_size = fread(buffer, 1, size, fp);
   if (read_size != size) {
-    LOGE("Failed to read entire file");
+    LOGE("Failed to read entire file '%s'", filepath);
     free(buffer);
-    fclose(fp);
     return nullptr;
   }
 
   ((u8*)buffer)[size] = '\0';
-  fclose(fp);
 
   if (out_size)
     *out_size = size;
 
-  LOGI("Loaded file data %s!", filepath);
+  LOGI("Loaded file data '%s'", filepath);
 
   return buffer;
 }
 
-///
 void UnloadFileData(void* ptr) {
   free(ptr);
 }
@@ -213,7 +213,7 @@ void InitializeEngine() {
       .end();
   }
 
-  LOGI("Initialized engine!");
+  LOGI("Initialized engine");
 }
 
 ///
@@ -224,6 +224,7 @@ f32 ScaleToFit(Vector2 inner, Vector2 container) {
   return scale;
 }
 
+///
 TEST_CASE ("ScaleToFit") {
   ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 2}), 2));
   ASSERT(FloatEquals(ScaleToFit({1, 1}, {3, 2}), 2));
@@ -239,6 +240,7 @@ f32 ScaleToCover(Vector2 inner, Vector2 container) {
   return scale;
 }
 
+///
 TEST_CASE ("ScaleToCover") {
   ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 2}), 2));
   ASSERT(FloatEquals(ScaleToCover({1, 1}, {3, 2}), 3));
@@ -246,7 +248,7 @@ TEST_CASE ("ScaleToCover") {
   ASSERT(FloatEquals(ScaleToCover({3, 3}, {2, 3}), 1));
 }
 
-// constexpr Vector2Int LOGICAL_RESOLUTION = {1280, 720};
+constexpr Vector2Int LOGICAL_RESOLUTION = {1280, 720};
 
 struct DrawTextureData {
   int     texId      = -1;
@@ -307,10 +309,10 @@ void DrawTexture(DrawTextureData data) {
   auto dx1 = destRec.pos.x + destRec.size.x;
   auto dy0 = destRec.pos.y;
   auto dy1 = destRec.pos.y + destRec.size.y;
-  // dx0 /= (LOGICAL_RESOLUTION.x / 2);
-  // dx1 /= (LOGICAL_RESOLUTION.x / 2);
-  // dy0 /= (LOGICAL_RESOLUTION.y / 2);
-  // dy1 /= (LOGICAL_RESOLUTION.y / 2);
+  dx0 /= LOGICAL_RESOLUTION.x / 2;
+  dx1 /= LOGICAL_RESOLUTION.x / 2;
+  dy0 /= LOGICAL_RESOLUTION.y / 2;
+  dy1 /= LOGICAL_RESOLUTION.y / 2;
   // dx0 /= (f32)tex->size_x() / 2;
   // dx1 /= (f32)tex->size_x() / 2;
   // dy0 /= (f32)tex->size_y() / 2;
@@ -355,7 +357,6 @@ void DrawTexture(DrawTextureData data) {
   bgfx::destroy(u_texture);
 }
 
-///
 u64 GetTime() {
   return SDL_GetTicks();
 }

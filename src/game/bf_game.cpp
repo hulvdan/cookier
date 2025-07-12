@@ -16,13 +16,13 @@ SDL_AppResult GameUpdate() {
   // auto    ratio = size * ;
   // ratio /= ge.meta.screenSize;
 
-  auto scale = ScaleToFit(size, ge.meta.screenSize);
-  scale *= (f32)ge.meta.screenSize.x;
-  scale /= (f32)tex->size_x();
+  auto scale = ScaleToFit(size, LOGICAL_RESOLUTION);
+  // scale *= (f32)ge.meta.screenSize.x;
+  // scale /= (f32)tex->size_x();
 
   DrawTexture({
     .texId = texId,
-    // .pos   = {0, 200},
+    .pos   = LOGICAL_RESOLUTION / 2,
     .scale = Vector2One() * scale,
   });
   // .rotation   =0,
