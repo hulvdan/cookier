@@ -407,8 +407,8 @@ void EngineApplyVignetteAndBlackStrips() {
     .pos   = LOGICAL_RESOLUTION / 2,
   });
 
-  f32 stripWidth  = 2;
-  f32 stripHeight = 2;
+  f32 stripWidth  = 2.002f;
+  f32 stripHeight = 2.002f;
 
   const auto color = *(u32*)&BLACK;
 
@@ -417,29 +417,29 @@ void EngineApplyVignetteAndBlackStrips() {
   const auto r = ge.meta.screenToLogicalRatio;
   if (r > 1) {
     // Window is too wide. Draw left and right strips.
-    stripWidth = 1 - 1 / r;
+    stripWidth = 1 - 1 / r + 0.002f;
 
-    quadVertices[0] = {-1, -1, 0, color};               // Top-left.
-    quadVertices[1] = {-1 + stripWidth, -1, 0, color};  // Top-right.
-    quadVertices[2] = {-1, 1, 0, color};                // Bottom-left.
-    quadVertices[3] = {-1 + stripWidth, 1, 0, color};   // Bottom-right.
-    quadVertices[4] = {1 - stripWidth, -1, 0, color};   // Top-left.
-    quadVertices[5] = {1, -1, 0, color};                // Top-right.
-    quadVertices[6] = {1 - stripWidth, 1, 0, color};    // Bottom-left.
-    quadVertices[7] = {1, 1, 0, color};                 // Bottom-right.
+    quadVertices[0] = {-1.001f, -1.001f, 0, color};               // Top-left.
+    quadVertices[1] = {-1.001f + stripWidth, -1.001f, 0, color};  // Top-right.
+    quadVertices[2] = {-1.001f, 1.001f, 0, color};                // Bottom-left.
+    quadVertices[3] = {-1.001f + stripWidth, 1.001f, 0, color};   // Bottom-right.
+    quadVertices[4] = {1.001f - stripWidth, -1.001f, 0, color};   // Top-left.
+    quadVertices[5] = {1.001f, -1.001f, 0, color};                // Top-right.
+    quadVertices[6] = {1.001f - stripWidth, 1.001f, 0, color};    // Bottom-left.
+    quadVertices[7] = {1.001f, 1.001f, 0, color};                 // Bottom-right.
   }
   else if (r < 1) {
     // Window is too high. Draw bottom and top strips.
-    stripHeight = 1 - r;
+    stripHeight = 1 - r + 0.002f;
 
-    quadVertices[0] = {-1, -1, 0, color};                // Top-left.
-    quadVertices[1] = {1, -1, 0, color};                 // Top-right.
-    quadVertices[2] = {-1, -1 + stripHeight, 0, color};  // Bottom-left.
-    quadVertices[3] = {1, -1 + stripHeight, 0, color};   // Bottom-right.
-    quadVertices[4] = {-1, 1, 0, color};                 // Top-left.
-    quadVertices[5] = {1, 1, 0, color};                  // Top-right.
-    quadVertices[6] = {-1, 1 - stripHeight, 0, color};   // Bottom-left.
-    quadVertices[7] = {1, 1 - stripHeight, 0, color};    // Bottom-right.
+    quadVertices[0] = {-1.001f, -1.001f, 0, color};                // Top-left.
+    quadVertices[1] = {1.001f, -1.001f, 0, color};                 // Top-right.
+    quadVertices[2] = {-1.001f, -1.001f + stripHeight, 0, color};  // Bottom-left.
+    quadVertices[3] = {1.001f, -1.001f + stripHeight, 0, color};   // Bottom-right.
+    quadVertices[4] = {-1.001f, 1.001f, 0, color};                 // Top-left.
+    quadVertices[5] = {1.001f, 1.001f, 0, color};                  // Top-right.
+    quadVertices[6] = {-1.001f, 1.001f - stripHeight, 0, color};   // Bottom-left.
+    quadVertices[7] = {1.001f, 1.001f - stripHeight, 0, color};    // Bottom-right.
   }
 
   const u16 quadIndices[] = {0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6};
