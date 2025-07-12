@@ -23,6 +23,7 @@ table GameLibrary {
 
     background_texture_id: int;
     player_texture_id: int;
+    vignette_texture_id: int;
 
     // GAME STUFF
     // GAME STUFF END
