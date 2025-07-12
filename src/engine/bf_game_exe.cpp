@@ -37,6 +37,7 @@ struct EngineAppState {
 };
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
+///
 EM_JS(void, log_webgl_version, (), {
   let canvas = document.createElement('canvas');
   let gl     = canvas.getContext('webgl2') || canvas.getContext('webgl');
@@ -49,6 +50,7 @@ EM_JS(void, log_webgl_version, (), {
 });
 #endif
 
+///
 class BGFXCallbackHandler : public bgfx::CallbackI {
   public:
   void fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code, const char* str)
@@ -101,6 +103,7 @@ class BGFXCallbackHandler : public bgfx::CallbackI {
   void captureFrame(const void* data, uint32_t size) override {}
 };
 
+///
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   log_webgl_version();
@@ -221,6 +224,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
   case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
     return SDL_APP_SUCCESS;
 
+    ///
   case SDL_EVENT_WINDOW_RESIZED: {
     auto window = SDL_GetWindowFromID(event->window.windowID);
 
@@ -230,6 +234,8 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     bgfx::reset(width, height, BGFX_RESET_VSYNC);
     ge.meta.screenSize = {width, height};
   } break;
+
+  ///
   case SDL_EVENT_KEY_DOWN: {
     switch (event->key.key) {
 #if defined(SDL_PLATFORM_DESKTOP)
@@ -247,6 +253,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
   return SDL_APP_CONTINUE;
 }
 
+///
 void SDL_AppQuit(void* appstate, SDL_AppResult result) {
   bgfx::shutdown();
 
