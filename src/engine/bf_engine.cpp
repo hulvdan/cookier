@@ -219,7 +219,7 @@ void InitializeEngine() {
 }
 
 ///
-f32 ScaleToFit(Vector2 inner, Vector2 container) {
+constexpr f32 ScaleToFit(Vector2 inner, Vector2 container) {
   f32 scaleX = container.x / inner.x;
   f32 scaleY = container.y / inner.y;
   f32 scale  = (scaleX < scaleY) ? scaleX : scaleY;
@@ -235,7 +235,7 @@ TEST_CASE ("ScaleToFit") {
 }
 
 ///
-f32 ScaleToCover(Vector2 inner, Vector2 container) {
+constexpr f32 ScaleToCover(Vector2 inner, Vector2 container) {
   f32 scaleX = container.x / inner.x;
   f32 scaleY = container.y / inner.y;
   f32 scale  = (scaleX > scaleY) ? scaleX : scaleY;
