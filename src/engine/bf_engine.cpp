@@ -87,6 +87,8 @@ struct EngineData {
 
     Camera     camera     = {};
     Vector2Int screenSize = {};
+
+    f32 screenToLogicalRatio = {};
   } meta;
 } ge = {};
 
@@ -157,9 +159,6 @@ void* LoadFileData(const char* filepath, int* out_size = nullptr) {
     INVALID_PATH;
     return nullptr;
   }
-  DEFER {
-    fclose(fp);
-  };
 
   fseek(fp, 0, SEEK_END);
   auto size = ftell(fp);
@@ -168,11 +167,13 @@ void* LoadFileData(const char* filepath, int* out_size = nullptr) {
   auto buffer = malloc(size + 1);
   if (!buffer) {
     LOGE("Failed to allocate buffer while opening file '%s'", filepath);
+    fclose(fp);
     INVALID_PATH;
     return nullptr;
   }
 
   auto read_size = fread(buffer, 1, size, fp);
+  fclose(fp);
   if (read_size != size) {
     LOGE("Failed to read entire file '%s'", filepath);
     free(buffer);
@@ -313,17 +314,22 @@ void DrawTexture(DrawTextureData data) {
   dx1 /= LOGICAL_RESOLUTION.x / 2;
   dy0 /= LOGICAL_RESOLUTION.y / 2;
   dy1 /= LOGICAL_RESOLUTION.y / 2;
-  // dx0 /= (f32)tex->size_x() / 2;
-  // dx1 /= (f32)tex->size_x() / 2;
-  // dy0 /= (f32)tex->size_y() / 2;
-  // dy1 /= (f32)tex->size_y() / 2;
+  dx0 -= 2;
+  dx1 -= 2;
+  dy0 -= 2;
+  dy1 -= 2;
 
-  dx0 -= 1;
-  dx1 -= 1;
-  dx1 *= 2;
-  dy0 -= 1;
-  dy1 -= 1;
-  dy1 *= 2;
+  auto r = ge.meta.screenToLogicalRatio;
+  if (r >= 1) {
+    auto d = 1 - (dx1 - dx0) / r / 2;
+    dx0 += d;
+    dx1 -= d;
+  }
+  else {
+    auto d = 1 - (dy1 - dy0) * r / 2;
+    dy0 += d;
+    dy1 -= d;
+  }
 
   // TODO TRANSFORM destRec
   const _PosColorTexVertex quadVertices[] = {
@@ -359,6 +365,13 @@ void DrawTexture(DrawTextureData data) {
 
 u64 GetTime() {
   return SDL_GetTicks();
+}
+
+///
+void EngineOnFrameStart() {
+  auto ratioLogical            = (f32)LOGICAL_RESOLUTION.x / (f32)LOGICAL_RESOLUTION.y;
+  auto ratioActual             = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y;
+  ge.meta.screenToLogicalRatio = ratioActual / ratioLogical;
 }
 
 ///
