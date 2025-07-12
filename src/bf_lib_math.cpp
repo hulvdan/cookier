@@ -201,7 +201,7 @@ TEST_CASE ("GetLesserAngle") {
   ASSERT(FloatEquals(GetLesserAngle(PI / 2, PI * 15 / 8), PI * 15 / 8));
 }
 
-inline f32 Clamp(f32 value, f32 min, f32 max) {
+f32 Clamp(f32 value, f32 min, f32 max) {
   ASSERT(min <= max);
   if (value < min)
     return min;
@@ -210,7 +210,7 @@ inline f32 Clamp(f32 value, f32 min, f32 max) {
   return value;
 }
 
-inline f32 Clamp01(f32 value) {
+f32 Clamp01(f32 value) {
   return Clamp(value, 0, 1);
 }
 
@@ -644,7 +644,7 @@ u32 Hash32_ZeroTerminatedString(const char* key) {
   return hash;
 }
 
-inline void IncrementSetZeroOn(int* value, int mod) {
+void IncrementSetZeroOn(int* value, int mod) {
   *value = *value + 1;
 
   if (*value >= mod)
