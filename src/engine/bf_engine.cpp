@@ -322,17 +322,17 @@ void DrawTexture(DrawTextureData data) {
   dy0 /= LOGICAL_RESOLUTION.y / 2;
   dy1 /= LOGICAL_RESOLUTION.y / 2;
 
-  // auto r = ge.meta.screenToLogicalRatio;
-  // if (r >= 1) {
-  //   auto d = (dx1 - dx0) / r / 2;
-  //   dx0 += d;
-  //   dx1 -= d;
-  // }
-  // else {
-  //   auto d = (dy1 - dy0) * r / 2;
-  //   dy0 += d;
-  //   dy1 -= d;
-  // }
+  auto r = ge.meta.screenToLogicalRatio;
+  if (r >= 1) {
+    auto d = (dx1 - dx0) / 2 - (dx1 - dx0) / r / 2;
+    dx0 += d;
+    dx1 -= d;
+  }
+  else {
+    auto d = (dy1 - dy0) / 2 - (dy1 - dy0) * r / 2;
+    dy0 += d;
+    dy1 -= d;
+  }
 
   auto color = *(u32*)&data.color;
 
