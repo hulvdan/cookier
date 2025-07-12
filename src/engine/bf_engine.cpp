@@ -293,14 +293,12 @@ void DrawTexture(DrawTextureData data) {
       (f32)tex->size_y() * data.sourceSize.y * abs(data.scale.y),
     },
   };
-
-  auto color = *(u32*)&data.color;
+  destRec.pos -= LOGICAL_RESOLUTION / 2;
 
   auto sx0 = sourceRec.pos.x;
   auto sx1 = sx0 + sourceRec.size.x;
   auto sy0 = sourceRec.pos.y;
   auto sy1 = sy0 + sourceRec.size.y;
-
   sx0 /= (f32)ge.meta.atlas.size.x;
   sx1 /= (f32)ge.meta.atlas.size.x;
   sy0 /= (f32)ge.meta.atlas.size.y;
@@ -310,28 +308,35 @@ void DrawTexture(DrawTextureData data) {
   auto dx1 = destRec.pos.x + destRec.size.x;
   auto dy0 = destRec.pos.y;
   auto dy1 = destRec.pos.y + destRec.size.y;
+
+  dx0 -= data.anchor.x * (dx1 - dx0);
+  dx1 -= data.anchor.x * (dx1 - dx0);
+  dy0 -= data.anchor.y * (dy1 - dy0);
+  dy1 -= data.anchor.y * (dy1 - dy0);
+
   dx0 /= LOGICAL_RESOLUTION.x / 2;
   dx1 /= LOGICAL_RESOLUTION.x / 2;
   dy0 /= LOGICAL_RESOLUTION.y / 2;
   dy1 /= LOGICAL_RESOLUTION.y / 2;
-  dx0 -= 2;
-  dx1 -= 2;
-  dy0 -= 2;
-  dy1 -= 2;
+  // dx0 -= 2;
+  // dx1 -= 2;
+  // dy0 -= 2;
+  // dy1 -= 2;
 
   auto r = ge.meta.screenToLogicalRatio;
   if (r >= 1) {
-    auto d = 1 - (dx1 - dx0) / r / 2;
+    auto d = (dx1 - dx0) / r / 2;
     dx0 += d;
     dx1 -= d;
   }
   else {
-    auto d = 1 - (dy1 - dy0) * r / 2;
+    auto d = (dy1 - dy0) * r / 2;
     dy0 += d;
     dy1 -= d;
   }
 
-  // TODO TRANSFORM destRec
+  auto color = *(u32*)&data.color;
+
   const _PosColorTexVertex quadVertices[] = {
     {dx0, dy0, 0.0f, color, sx0, sy0},  // Top-left
     {dx1, dy0, 0.0f, color, sx1, sy0},  // Top-right

@@ -9,22 +9,23 @@ const char* GetWindowTitle() {
 }
 
 SDL_AppResult GameUpdate() {
-  auto texId = glib->background_texture_id();
-  auto tex   = glib->atlas_textures()->Get(texId);
+  auto backgroundTexId = glib->background_texture_id();
+  auto backgroundTex   = glib->atlas_textures()->Get(backgroundTexId);
 
-  Vector2 size{(f32)tex->size_x(), (f32)tex->size_y()};
-  // auto    ratio = size * ;
-  // ratio /= ge.meta.screenSize;
-
-  auto scale = ScaleToFit(size, LOGICAL_RESOLUTION);
-  // scale *= (f32)ge.meta.screenSize.x;
-  // scale /= (f32)tex->size_x();
+  Vector2 size{(f32)backgroundTex->size_x(), (f32)backgroundTex->size_y()};
+  auto    scale = ScaleToFit(size, LOGICAL_RESOLUTION);
 
   DrawTexture({
-    .texId = texId,
+    .texId = backgroundTexId,
     .pos   = LOGICAL_RESOLUTION / 2,
     .scale = Vector2One() * scale,
   });
+
+  DrawTexture({
+    .texId = glib->player_texture_id(),
+    .pos   = LOGICAL_RESOLUTION / 2,
+  });
+
   // .rotation   =0,
   // .pos        ={},
   // .anchor     =Vector2Half(),
