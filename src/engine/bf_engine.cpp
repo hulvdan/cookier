@@ -295,6 +295,7 @@ void DrawTexture(DrawTextureData data) {
   };
   destRec.pos -= LOGICAL_RESOLUTION / 2;
 
+  // TODO: add / subtract epsilon?
   auto sx0 = sourceRec.pos.x;
   auto sx1 = sx0 + sourceRec.size.x;
   auto sy0 = sourceRec.pos.y;
@@ -309,31 +310,29 @@ void DrawTexture(DrawTextureData data) {
   auto dy0 = destRec.pos.y;
   auto dy1 = destRec.pos.y + destRec.size.y;
 
-  dx0 -= data.anchor.x * (dx1 - dx0);
-  dx1 -= data.anchor.x * (dx1 - dx0);
-  dy0 -= data.anchor.y * (dy1 - dy0);
-  dy1 -= data.anchor.y * (dy1 - dy0);
+  auto diffX = (dx1 - dx0);
+  auto diffY = (dy1 - dy0);
+  dx0 -= data.anchor.x * diffX;
+  dx1 -= data.anchor.x * diffX;
+  dy0 -= data.anchor.y * diffY;
+  dy1 -= data.anchor.y * diffY;
 
   dx0 /= LOGICAL_RESOLUTION.x / 2;
   dx1 /= LOGICAL_RESOLUTION.x / 2;
   dy0 /= LOGICAL_RESOLUTION.y / 2;
   dy1 /= LOGICAL_RESOLUTION.y / 2;
-  // dx0 -= 2;
-  // dx1 -= 2;
-  // dy0 -= 2;
-  // dy1 -= 2;
 
-  auto r = ge.meta.screenToLogicalRatio;
-  if (r >= 1) {
-    auto d = (dx1 - dx0) / r / 2;
-    dx0 += d;
-    dx1 -= d;
-  }
-  else {
-    auto d = (dy1 - dy0) * r / 2;
-    dy0 += d;
-    dy1 -= d;
-  }
+  // auto r = ge.meta.screenToLogicalRatio;
+  // if (r >= 1) {
+  //   auto d = (dx1 - dx0) / r / 2;
+  //   dx0 += d;
+  //   dx1 -= d;
+  // }
+  // else {
+  //   auto d = (dy1 - dy0) * r / 2;
+  //   dy0 += d;
+  //   dy1 -= d;
+  // }
 
   auto color = *(u32*)&data.color;
 
