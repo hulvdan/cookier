@@ -11,6 +11,7 @@ if(MSVC)
     add_compile_options(/Zc:__cplusplus /Zc:preprocessor)
 endif()
 
+# Adding BF_DEBUG
 if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
     add_compile_definitions("BF_DEBUG=1")
 else()
@@ -179,6 +180,28 @@ elseif ("${PLATFORM}" STREQUAL "Web")
     endif()
 else()
     message(FATAL_ERROR "Not supported platform: ${PLATFORM}")
+endif()
+
+if (0)
+    # TODO: ASAN
+    if (NOT CMAKE_CONFIGURATION_TYPES STREQUAL "Release")
+        # Enabling Address sanitizer
+        if(MSVC)
+            target_compile_options(game PRIVATE /fsanitize=address)
+            # target_link_options(game PRIVATE /INFERASANLIBS)
+        else()
+            target_compile_options(game PRIVATE "-fsanitize=address" "-fno-omit-frame-pointer")
+            target_link_options(game PRIVATE "-fsanitize=address")
+        endif()
+
+        # Enabling Undefined behaviour sanitizer
+        if (NOT MSVC)
+            # General UBSan flags — tune as needed
+            set(UBSAN_FLAGS "-fsanitize=undefined -fno-sanitize-recover=all -fno-omit-frame-pointer")
+            target_compile_options(game PRIVATE ${UBSAN_FLAGS})
+            target_link_options(game PRIVATE ${UBSAN_FLAGS})
+        endif()
+    endif()
 endif()
 
 add_custom_command(
