@@ -2,7 +2,6 @@
 
 #pragma once
 
-#if 1
 // Based off splitMix32
 GLOBAL_VAR u32 g_frandState = 0;
 
@@ -17,7 +16,6 @@ f32 FRand() {
   u32 result  = z ^ (z >> 16);
   return (f32)((f64)result / (f64)((u64)u32_max + 1));
 }
-#endif
 
 // [a; b]
 int RandInt(int a, int b) {
