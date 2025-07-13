@@ -10,7 +10,6 @@ import typer
 from bf_gamelib import do_generate
 from bf_lib import (
     BUTLER_PATH,
-    # CLANG_CL_PATH,
     CMAKE_TESTS_PATH,
     MSBUILD_PATH,
     PROJECT_DIR,
