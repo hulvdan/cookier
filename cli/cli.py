@@ -323,9 +323,9 @@ def run_in_debugger(target, build_type: BuildType):
 def update_template():
     subprocess.run("git fetch template", check=True, shell=True)
     git_status_process = subprocess.run(
-        "git status --porcelain", check=True, shell=True, capture_output=True
+        "git status --porcelain", check=True, shell=True, capture_output=True, text=True
     )
-    git_status_text = git_status_process.stdout.decode("utf-8").strip()
+    git_status_text = git_status_process.stdout.strip()
     should_stash = bool(git_status_text)
 
     if should_stash:
