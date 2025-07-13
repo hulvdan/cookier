@@ -78,22 +78,29 @@ class BGFXCallbackHandler : public bgfx::CallbackI {
     const char* format,
     va_list     argList
   ) override {}
+
   void profilerBegin(const char* name, uint32_t abgr, const char* filePath, uint16_t line)
     override {}
+
   void profilerBeginLiteral(
     const char* name,
     uint32_t    abgr,
     const char* filePath,
     uint16_t    line
   ) override {}
-  void     profilerEnd() override {}
+
+  void profilerEnd() override {}
+
   uint32_t cacheReadSize(uint64_t id) override {
     return 0;
   }
+
   bool cacheRead(uint64_t id, void* data, uint32_t size) override {
     return false;
   }
+
   void cacheWrite(uint64_t id, const void* data, uint32_t size) override {}
+
   void screenShot(
     const char* filePath,
     uint32_t    width,
@@ -103,6 +110,7 @@ class BGFXCallbackHandler : public bgfx::CallbackI {
     uint32_t    size,
     bool        yflip
   ) override {}
+
   void captureBegin(
     uint32_t                  width,
     uint32_t                  height,
@@ -110,7 +118,9 @@ class BGFXCallbackHandler : public bgfx::CallbackI {
     bgfx::TextureFormat::Enum format,
     bool                      yflip
   ) override {}
+
   void captureEnd() override {}
+
   void captureFrame(const void* data, uint32_t size) override {}
 };
 
