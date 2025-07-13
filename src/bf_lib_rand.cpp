@@ -13,7 +13,7 @@ f32 FRand() {
   z ^= z >> 13;
   z *= 0xc2b2ae35;
   g_frandState = z;  // NOTE: Added by me. Should i just increment g_frandState?
-  u32 result  = z ^ (z >> 16);
+  u32 result   = z ^ (z >> 16);
   return (f32)((f64)result / (f64)((u64)u32_max + 1));
 }
 
