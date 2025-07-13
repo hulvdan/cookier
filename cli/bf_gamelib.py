@@ -7,6 +7,7 @@ from typing import Any, Sequence
 
 import pyjson5 as json
 import yaml
+from bf_game import *  # noqa
 from bf_lib import (
     ART_DIR,
     FLATBUFFERS_GENERATED_DIR,
