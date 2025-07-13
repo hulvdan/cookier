@@ -48,7 +48,7 @@ if ("${PLATFORM}" STREQUAL "Win")
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
         set_target_properties(bgfx
             PROPERTIES
-                IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bgfxDebug.lib
+                IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bgfxDebug.lib"
         )
         set_target_properties(bx
             PROPERTIES
