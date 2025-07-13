@@ -9,6 +9,7 @@ import typer
 from bf_gamelib import do_generate
 from bf_lib import (
     BUTLER_PATH,
+    # CLANG_CL_PATH,
     CMAKE_TESTS_PATH,
     MSBUILD_PATH,
     PROJECT_DIR,
@@ -55,6 +56,11 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
 
     match platform:
         case BuildPlatform.Win:
+            # TODO: ASAN
+            # if build_type != BuildType.Release:
+            #     command.append("-A x64")
+            #     command.append("-T ClangCL")
+
             command.append('-G "Visual Studio 17 2022"')
             command.append(r"-B .cmake\vs17")
 
@@ -76,9 +82,13 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
 def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
     match platform:
         case BuildPlatform.Win:
+            compiler = MSBUILD_PATH
+            # if build_type != BuildType.Release:
+            #     compiler = CLANG_CL_PATH
+
             run_command(
                 rf"""
-                "{MSBUILD_PATH}" .cmake\vs17\game.sln
+                "{compiler}" .cmake\vs17\game.sln
                 -v:minimal
                 -property:WarningLevel=3
                 -t:{target}
