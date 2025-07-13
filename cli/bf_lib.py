@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 from contextlib import contextmanager
+from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
 from pathlib import Path
@@ -11,6 +12,16 @@ from time import time
 from typing import Any, Callable, Iterator, NoReturn, ParamSpec, TypeVar
 
 import fnvhash
+
+
+@dataclass(slots=True)
+class _DataValues:
+    itch_target: str = "hulvdan/game-template"
+
+
+data_values = _DataValues()
+
+from bf_game import *  # noqa
 
 
 class StrEnum(str, Enum):
@@ -185,6 +196,7 @@ CLANG_TIDY_PATH = "C:/Program Files/LLVM/bin/clang-tidy.exe"
 CPPCHECK_PATH = "C:/Program Files/Cppcheck/cppcheck.exe"
 FLATC_PATH = CLI_DIR / "flatc.exe"
 SHADERC_PATH = str(PROJECT_DIR / "vendor/bgfx/.build/win64_vs2022/bin/shadercRelease.exe")
+BUTLER_PATH = "C:/Users/user/Programs/butler/butler.exe"
 
 MSBUILD_PATH = r"c:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\MSBuild.exe"
 

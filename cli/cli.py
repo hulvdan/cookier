@@ -1,18 +1,23 @@
 import os
 import subprocess
+import zipfile
 from itertools import product
+from pathlib import Path
 from typing import Callable, ParamSpec
 
 import typer
 from bf_gamelib import do_generate
 from bf_lib import (
+    BUTLER_PATH,
     CMAKE_TESTS_PATH,
     MSBUILD_PATH,
     PROJECT_DIR,
+    TEMP_DIR,
     BuildPlatform,
     BuildTarget,
     BuildType,
     T,
+    data_values,
     global_timing_manager_instance,
     hash32,
     run_command,
@@ -54,6 +59,10 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
             command.append(r"-B .cmake\vs17")
 
         case BuildPlatform.Web:
+            assert build_type != BuildType.RelWithDebInfo, (
+                "Don't use 'RelWithDebInfo' for 'Web' target"
+            )
+
             command.insert(0, "emcmake")
             command.append(rf"-B .cmake\{platform}_{build_type}")
 
@@ -312,6 +321,27 @@ def test():
     do_cmake(platform, build_type)
     do_build(BuildTarget.tests, platform, build_type)
     do_test()
+
+
+@command
+def deploy_itch():
+    zip_path = TEMP_DIR / "itch.zip"
+
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        base_dir = Path(".cmake/Web_Release")
+
+        for files_pattern in (
+            "index.data",
+            "index.html",
+            "index.js",
+            "index.wasm",
+            "resources/*",
+        ):
+            for filepath in base_dir.rglob(files_pattern):
+                archive.write(filepath, filepath.relative_to(base_dir))
+
+    target = "{}:html".format(data_values.itch_target)
+    run_command([BUTLER_PATH, "push", zip_path, target])
 
 
 # @command

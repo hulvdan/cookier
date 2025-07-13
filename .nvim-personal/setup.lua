@@ -60,17 +60,14 @@ function rebuild_tasks()
                 vim.fn.execute([[term python -m http.server -d .cmake\Web_Release 8001]])
             end,
         },
-        -- { "t_test", cli_command("test") },
+        { "i_deploy_itch", cli_command("deploy_itch") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         -- { "l_lint_cpp", cli_command("lint") },
         -- { "k_lint_python", [[.venv\Scripts\ruff.exe check cli]] },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },
-        -- { "s_shaders_build_debug", cli_command("build_shaders_debug") },
-        -- { "r_shaders_run_in_debugger_debug", cli_command("shaders_run_in_debugger_debug") },
         -- ----------
-        -- { "o_deploy_itch", cli_command("deploy_itch") },
         -- { "boner_build_debug", cli_command("build_boner_debug") },
         -- { "boner_run_in_debugger_debug", cli_command("boner_run_in_debugger_debug") },
         -- { "crop_video", cli_command("crop_video") },
