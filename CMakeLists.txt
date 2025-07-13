@@ -20,9 +20,10 @@ endif()
 # vendor and codegen
 #-----------------------------------------------------------------------------------
 add_library(vendor_and_codegen INTERFACE)
-target_include_directories(vendor_and_codegen INTERFACE
-    "${CMAKE_SOURCE_DIR}/codegen"
-    "${CMAKE_SOURCE_DIR}/vendor"
+target_include_directories(vendor_and_codegen
+    INTERFACE
+        "${CMAKE_SOURCE_DIR}/codegen"
+        "${CMAKE_SOURCE_DIR}/vendor"
 )
 
 # bgfx
@@ -82,44 +83,53 @@ target_compile_definitions(game PRIVATE DOCTEST_CONFIG_DISABLE)
 
 if ("${PLATFORM}" STREQUAL "Win")
 elseif ("${PLATFORM}" STREQUAL "Web")
-    target_compile_options(game PRIVATE
-        "-o MIN_WEBGL_VERSION=1"
-        "-o MAX_WEBGL_VERSION=2"
+    target_compile_options(game
+        PRIVATE
+            "-o MIN_WEBGL_VERSION=1"
+            "-o MAX_WEBGL_VERSION=2"
     )
-    target_link_options(game PRIVATE
-        "-sUSE_WEBGL2=1"
-        "-sMIN_WEBGL_VERSION=1"
-        "-sMAX_WEBGL_VERSION=2"
-        "-sALLOW_MEMORY_GROWTH=1"
-        --preload-file resources
+    target_link_options(game
+        PRIVATE
+            "-sUSE_WEBGL2=1"
+            "-sMIN_WEBGL_VERSION=1"
+            "-sMAX_WEBGL_VERSION=2"
+            "-sALLOW_MEMORY_GROWTH=1"
+            --preload-file resources
     )
-    set_target_properties(game PROPERTIES OUTPUT_NAME "index")
-    set_target_properties(game PROPERTIES SUFFIX ".html")
+    set_target_properties(game
+        PROPERTIES
+            OUTPUT_NAME "index"
+            SUFFIX ".html"
+    )
 
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
-        target_compile_options(game PRIVATE
-            "-O0"
-            "-oASSERTIONS=2"
+        target_compile_options(game
+            PRIVATE
+                "-O0"
+                "-oASSERTIONS=2"
         )
-        target_link_options(game PRIVATE
-            "-sASSERTIONS=2"
-            "-g"
-            "-O0"
-            "-sFORCE_FILESYSTEM=1"
-            "--shell-file=${CMAKE_SOURCE_DIR}/vendor/shell_debug.html"
+        target_link_options(game
+            PRIVATE
+                "-sASSERTIONS=2"
+                "-g"
+                "-O0"
+                "-sFORCE_FILESYSTEM=1"
+                "--shell-file=${CMAKE_SOURCE_DIR}/vendor/shell_debug.html"
         )
     else()
-        target_compile_options(game PRIVATE
-            "-O3"
-            "-oASSERTIONS=0"
+        target_compile_options(game
+            PRIVATE
+                "-O3"
+                "-oASSERTIONS=0"
         )
-        target_link_options(game PRIVATE
-            "-O3"
-            "-sASSERTIONS=0"
-            "-sEXIT_RUNTIME=0"
-            "-sEXPORTED_RUNTIME_METHODS=['ccall']"
-            "--closure 1"
-            "--shell-file=${CMAKE_SOURCE_DIR}/vendor/shell_release.html"
+        target_link_options(game
+            PRIVATE
+                "-O3"
+                "-sASSERTIONS=0"
+                "-sEXIT_RUNTIME=0"
+                "-sEXPORTED_RUNTIME_METHODS=['ccall']"
+                "--closure 1"
+                "--shell-file=${CMAKE_SOURCE_DIR}/vendor/shell_release.html"
         )
     endif()
 else()
@@ -136,12 +146,20 @@ add_custom_command(
 # tests
 #-----------------------------------------------------------------------------------
 add_executable(tests "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
-target_link_libraries(tests PRIVATE SDL3-static bgfx vendor_and_codegen)
-target_include_directories(tests PRIVATE "${CMAKE_SOURCE_DIR}/src")
-target_compile_definitions(tests PRIVATE
-    TESTS
-    SDL_MAIN_HANDLED
-    DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+target_link_libraries(tests
+    PRIVATE
+        SDL3-static
+        bgfx
+        vendor_and_codegen
+)
+target_include_directories(tests
+    PRIVATE
+        "${CMAKE_SOURCE_DIR}/src")
+target_compile_definitions(tests
+    PRIVATE
+        TESTS
+        SDL_MAIN_HANDLED
+        DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 )
 
 # Windows. Startup project in Visual Studio.
