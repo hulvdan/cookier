@@ -2,7 +2,7 @@
 
 #pragma once
 
-GLOBAL_VAR u32 g_randState = 0;
+static u32 g_randState = 0;
 
 // Based off splitMix32
 u32 Rand() {
