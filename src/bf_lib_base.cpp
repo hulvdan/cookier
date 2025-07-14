@@ -42,8 +42,6 @@
 #define INLINE_LAMBDA [&]() BF_FORCE_INLINE_LAMBDA
 
 #define BF_RELEASE (BF_DEBUG == 0)
-#define GLOBAL_VAR static
-#define LOCAL_PERSIST static
 
 #define PTR_FROM_UINT(value) ((void*)((u8*)(nullptr) + (value)))
 #define UINT_FROM_PTR(value) ((uintptr_t)((u8*)(value)))

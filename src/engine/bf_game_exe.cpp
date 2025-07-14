@@ -188,7 +188,7 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
 
     bgfx::Init init{};
 
-    LOCAL_PERSIST BGFXCallbackHandler bgfxCallbacks{};
+    static BGFXCallbackHandler bgfxCallbacks{};
     init.callback = &bgfxCallbacks;
 
     init.type              = bgfx::RendererType::OpenGL;
@@ -238,7 +238,7 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {
   if (result == SDL_APP_CONTINUE) {
     EngineApplyStrips();
 
-    LOCAL_PERSIST u64 frame = 0;
+    static u64 frame = 0;
     bgfx::dbgTextPrintf(0, 1, 0x4f, "Counter: %d", frame++);
     bgfx::frame(false);
   }
