@@ -109,6 +109,14 @@ endif()
 #-----------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/sdl")
 
+# box2d.
+#-----------------------------------------------------------------------------------
+add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/box2d")
+set_target_properties(box2d
+    PROPERTIES
+        COMPILE_WARNING_AS_ERROR OFF
+)
+
 # game
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
@@ -116,6 +124,7 @@ target_link_libraries(game
     PRIVATE
         SDL3-static
         bgfx
+        box2d
         vendor_and_codegen
 )
 target_include_directories(game
@@ -218,6 +227,7 @@ target_link_libraries(tests
     PRIVATE
         SDL3-static
         bgfx
+        box2d
         vendor_and_codegen
 )
 target_include_directories(tests
