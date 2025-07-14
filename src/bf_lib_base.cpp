@@ -30,6 +30,8 @@
 
 #if _WIN32 && !defined(BF_LINT)
 #  define BF_FORCE_INLINE_LAMBDA noexcept [[msvc::forceinline]]
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
+#  define BF_FORCE_INLINE_LAMBDA
 #elif __GNUC__ >= 4
 #  define BF_FORCE_INLINE_LAMBDA noexcept __attribute__((always_inline))
 #else
