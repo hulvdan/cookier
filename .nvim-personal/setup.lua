@@ -45,6 +45,7 @@ function rebuild_tasks()
         { "a_select_target", select_target },
         { "e_build", cli_command(string.format("build %s %s %s", target, platform, build_type)) },
         { "d_run_in_debugger", cli_command(string.format("run_in_debugger %s Debug", target)) },
+        { "f_run_in_debugger_tests", cli_command("run_in_debugger tests Debug") },
         { "u_update_template", cli_command("update_template") },
         { "t_test", cli_command("test") },
         { "r_build_all_and_test", cli_command("build_all_and_test") },
@@ -80,6 +81,7 @@ rebuild_tasks()
 vim.keymap.set("n", "<F4>", "<leader>aa", { remap = true, silent = true })
 vim.keymap.set("n", "<F5>", "<leader>ae", { remap = true, silent = true })
 vim.keymap.set("n", "<F6>", "<leader>ad", { remap = true, silent = true })
+vim.keymap.set("n", "<F7>", "<leader>af", { remap = true, silent = true })
 
 -- Space + M -> настройки игры пользователя.
 vim.keymap.set("n", "<leader>m", function()
