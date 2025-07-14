@@ -116,7 +116,7 @@ def do_build_tests() -> None:
 
 @timing
 def do_test() -> None:
-    run_command(str(CMAKE_TESTS_PATH), timeout_seconds=10)
+    run_command(str(CMAKE_TESTS_PATH), timeout_seconds=5)
 
 
 # @timing
