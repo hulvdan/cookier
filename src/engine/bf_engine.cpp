@@ -497,6 +497,63 @@ void DrawCircleLines(Vector2 center, f32 radius, Color color) {
   DrawCircleLines(center.x, center.y, radius, color);
 }
 
+struct DrawRectLinesData {
+  Vector2 pos    = {};
+  Vector2 size   = {};
+  Vector2 anchor = {};
+  Color   color  = {};
+};
+
+///
+void DrawRectLines(DrawRectLinesData data) {
+  auto    off = data.anchor * data.size;
+  Vector2 points[]{
+    {data.pos.x - off.x, data.pos.y - off.y},
+    {data.pos.x + data.size.x - off.x, data.pos.y - off.y},
+    {data.pos.x + data.size.x - off.x, data.pos.y + data.size.y - off.y},
+    {data.pos.x - off.x, data.pos.y + data.size.y - off.y},
+  };
+
+  for (auto& point : points) {
+    point -= (Vector2)(LOGICAL_RESOLUTION) / 2.0f;
+    point /= (Vector2)(LOGICAL_RESOLUTION) / 2.0f;
+  }
+
+  auto r = ge.meta.screenToLogicalRatio;
+  if (r >= 1) {  // Window is too wide.
+    const auto c = 1 - 1 / r;
+    for (auto& point : points)
+      point.x -= point.x * c;
+  }
+  else {  // Window is too high.
+    const auto c = 1 - r;
+    for (auto& point : points)
+      point.y -= point.y * c;
+  }
+
+  bgfx::TransientVertexBuffer tvb{};
+  bgfx::allocTransientVertexBuffer(&tvb, 5, _PosColorVertex::layout);
+  {
+    auto                  color          = *(u32*)&data.color;
+    const _PosColorVertex quadVertices[] = {
+      {points[0].x, points[0].y, 0.0f, color},
+      {points[1].x, points[1].y, 0.0f, color},
+      {points[2].x, points[2].y, 0.0f, color},
+      {points[3].x, points[3].y, 0.0f, color},
+      {points[0].x, points[0].y, 0.0f, color},
+    };
+
+    memcpy(tvb.data, quadVertices, sizeof(quadVertices));
+
+    bgfx::setVertexBuffer(0, &tvb);
+    bgfx::setState(
+      BGFX_STATE_WRITE_RGB | BGFX_STATE_BLEND_ALPHA | BGFX_STATE_PT_LINESTRIP
+    );
+
+    bgfx::submit(0, ge.meta.programDefaultQuad);
+  }
+}
+
 f64 GetTime() {
   return (f64)SDL_GetTicks() / 1000.0;
 }
