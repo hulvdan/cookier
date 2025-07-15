@@ -196,7 +196,7 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
     init.platformData      = pd;
     init.resolution.width  = ge.meta.screenSize.x;
     init.resolution.height = ge.meta.screenSize.y;
-    // init.resolution.reset  = BGFX_RESET_VSYNC;
+    init.resolution.reset  = BGFX_RESET_VSYNC;
     if (!bgfx::init(init)) {
       LOGE("bgfx::init(init) failed!");
       exit(EXIT_FAILURE);
@@ -239,7 +239,7 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {
     EngineApplyStrips();
 
     static u64 frame = 0;
-    bgfx::dbgTextPrintf(0, 1, 0x4f, "Counter: %d", frame++);
+    bgfx::dbgTextPrintf(0, 1, 0x4f, "frame: %d", frame++);
     bgfx::frame(false);
   }
 
