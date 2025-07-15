@@ -106,6 +106,7 @@ struct EngineData {
     f32         screenScale          = {};
     const bool* keyboardState        = {};
 
+    u64 ticks         = {};
     f64 prevFrameTime = {};
     f64 frameTime     = {};
   } meta;
@@ -554,8 +555,12 @@ void DrawRectLines(DrawRectLinesData data) {
   }
 }
 
+u64 GetTicks() {
+  return ge.meta.ticks;
+}
+
 f64 GetTime() {
-  return (f64)SDL_GetTicks() / 1000.0;
+  return (f64)ge.meta.ticks / 1000.0;
 }
 
 f32 FrameTime() {
@@ -564,6 +569,7 @@ f32 FrameTime() {
 
 ///
 void EngineOnFrameStart() {
+  ge.meta.ticks         = SDL_GetTicks();
   ge.meta.prevFrameTime = ge.meta.frameTime;
   ge.meta.frameTime     = GetTime();
 
