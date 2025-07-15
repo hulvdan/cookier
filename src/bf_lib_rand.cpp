@@ -4,7 +4,7 @@
 
 static u32 g_randState = 0;
 
-// Based off splitMix32
+/// Based off splitMix32
 u32 Rand() {
   u32 z = g_randState + 0x9e3779b9;
   z ^= z >> 15;
@@ -21,12 +21,28 @@ f32 FRand() {
   return (f32)((f64)Rand() / (f64)((u64)u32_max + 1));
 }
 
+TEST_CASE ("FRand") {
+  FOR_RANGE (int, i, 1000) {
+    auto result = FRand();
+    ASSERT(result >= 0);
+    ASSERT(result < 1);
+  }
+}
+
 // [a; b]
 int RandInt(int a, int b) {
   ASSERT(a <= b);
   auto r = (int)(FRand() * (f32)(b - a + 1));
   ASSERT(r >= 0);
   return a + r;
+}
+
+TEST_CASE ("RandInt") {
+  FOR_RANGE (int, i, 1000) {
+    auto result = RandInt(10, 20);
+    ASSERT(result >= 10);
+    ASSERT(result <= 20);
+  }
 }
 
 int RandInt(uint a, uint b) {
@@ -47,19 +63,14 @@ int RandInt(uint b) {
 }
 
 TEST_CASE ("RandInt") {
-  ASSERT(RandInt(1) <= 1);
-  ASSERT(RandInt(1) <= 1);
-  ASSERT(RandInt(1) <= 1);
-  ASSERT(RandInt(1) <= 1);
-  ASSERT(RandInt(1) <= 1);
-  ASSERT(RandInt(1) <= 1);
-  ASSERT(RandInt(1) <= 1);
-  ASSERT(RandInt(1) <= 1);
+  FOR_RANGE (int, i, 1000) {
+    ASSERT(RandInt(1) <= 1);
+  }
 }
 
 struct PerlinParams {
-  int octaves;
-  f32 smoothness;
+  int octaves    = {};
+  f32 smoothness = {};
 };
 
 /*
@@ -166,3 +177,5 @@ void CycledPerlin2D(
   }
 }
 */
+
+///
