@@ -357,16 +357,11 @@ def check_no_excessive_images_in_temp_art_dir() -> None:
         for filepath in (ART_DIR / "textures").rglob("*.png")
     ]
 
-    excessive_images = []
     for temp_filepath in temp_filepaths:
         if temp_filepath not in art_filepaths:
-            excessive_images.append(temp_filepath.as_posix())
-
-    if excessive_images:
-        message = "Excessive images found!\n{}".format(
-            "\n".join("{}) {}".format(i + 1, v) for i, v in enumerate(excessive_images))
-        )
-        raise AssertionError(message)
+            p = TEMP_ART_DIR / temp_filepath
+            log.info("Removing excessive image '{}'...".format(p))
+            p.unlink()
 
 
 @timing
