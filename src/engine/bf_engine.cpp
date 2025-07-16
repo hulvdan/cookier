@@ -11,7 +11,7 @@ using Vector2Int = glm::ivec2;
 using Vector3Int = glm::ivec3;
 using Vector4Int = glm::ivec4;
 
-bool Vector2Length(Vector2 v) {
+f32 Vector2Length(Vector2 v) {
   return glm::length(v);
 }
 
