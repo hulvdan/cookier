@@ -11,26 +11,107 @@ using Vector2Int = glm::ivec2;
 using Vector3Int = glm::ivec3;
 using Vector4Int = glm::ivec4;
 
+///
 f32 Vector2Length(Vector2 v) {
   return glm::length(v);
 }
 
+///
+f32 Vector2LengthSqr(Vector2 v) {
+  return v.x * v.x + v.y * v.y;
+}
+
+///
+f32 Vector2DotProduct(Vector2 v1, Vector2 v2) {
+  return glm::dot(v1, v2);
+}
+
+///
+f32 Vector2Distance(Vector2 v1, Vector2 v2) {
+  return Vector2Length(v2 - v1);
+}
+
+///
+f32 Vector2DistanceSqr(Vector2 v1, Vector2 v2) {
+  return Vector2LengthSqr(v2 - v1);
+}
+
+///
+f32 Vector2Angle(Vector2 v1, Vector2 v2) {
+  auto a1 = atan2f(v1.y, v1.x);
+  auto a2 = atan2f(v2.y, v2.x);
+  return a2 - a1;
+}
+
+///
+Vector2 Vector2Normalize(Vector2 v) {
+  return glm::normalize(v);
+}
+
+///
+Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, f32 amount) {
+  return v1 + (v2 - v1) * amount;
+}
+
+///
+Vector2 Vector2Reflect(Vector2 v, Vector2 normal) {
+  return glm::reflect(v, normal);
+}
+
+///
+Vector2 Vector2Rotate(Vector2 v, f32 angle) {
+  auto c = cosf(angle);
+  auto s = sinf(angle);
+  return {v.x * c + v.y * s, v.x * s + v.y * c};
+}
+
+///
 bool Vector2Equals(Vector2 v1, Vector2 v2) {
   return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y);
 }
 
+///
 bool Vector3Equals(Vector3 v1, Vector3 v2) {
   return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y) && FloatEquals(v1.z, v2.z);
 }
 
+///
+Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, f32 maxDistance) {
+  if (Vector2Equals(v, target))
+    return target;
+
+  auto d = Vector2Normalize(target - v);
+  v.x    = MoveTowards(v.x, target.x, d.x * maxDistance);
+  v.y    = MoveTowards(v.y, target.y, d.y * maxDistance);
+  return v;
+}
+
+///
+Vector2 Vector2Invert(Vector2 v) {
+  return {1.0f / v.x, 1.0f / v.y};
+}
+
+///
+Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) {
+  return glm::clamp(v, min, max);
+}
+
+///
+Vector2 Vector2ClampValue(Vector2 v, f32 min, f32 max) {
+  return glm::clamp(v, min, max);
+}
+
+///
 constexpr Vector2 Vector2Zero() {
   return Vector2{0, 0};
 }
 
+///
 constexpr Vector2 Vector2Half() {
   return Vector2{0.5f, 0.5f};
 }
 
+///
 constexpr Vector2 Vector2One() {
   return Vector2{1, 1};
 }
