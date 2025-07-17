@@ -38,11 +38,18 @@ int RandInt(int a, int b) {
 }
 
 TEST_CASE ("RandInt") {
-  FOR_RANGE (int, i, 1000) {
+  int values_[1000];
+  VIEW_FROM_ARRAY_DANGER(values);
+
+  FOR_RANGE (int, i, values.count) {
     auto result = RandInt(10, 20);
     ASSERT(result >= 10);
     ASSERT(result <= 20);
+    values[i] = result;
   }
+
+  ASSERT(values.Contains(10));
+  ASSERT(values.Contains(20));
 }
 
 int RandInt(uint a, uint b) {
