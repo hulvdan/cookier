@@ -1019,7 +1019,7 @@ void DrawCircleLines(Vector2 center, f32 radius, Color color) {
   DrawCircleLines(center.x, center.y, radius, color);
 }
 
-struct DrawRectLinesData {
+struct DrawRectData {
   Vector2 pos    = {};
   Vector2 size   = {};
   Vector2 anchor = {};
@@ -1027,7 +1027,61 @@ struct DrawRectLinesData {
 };
 
 ///
-void DrawRectLines(DrawRectLinesData data) {
+void DrawRect(DrawRectData data) {
+  auto    off = data.anchor * data.size;
+  Vector2 points[]{
+    {data.pos.x - off.x, data.pos.y + data.size.y - off.y},
+    {data.pos.x + data.size.x - off.x, data.pos.y + data.size.y - off.y},
+    {data.pos.x - off.x, data.pos.y - off.y},
+    {data.pos.x + data.size.x - off.x, data.pos.y - off.y},
+  };
+
+  for (auto& point : points) {
+    point -= (Vector2)(LOGICAL_RESOLUTION) / 2.0f;
+    point /= (Vector2)(LOGICAL_RESOLUTION) / 2.0f;
+  }
+
+  auto r = ge.meta.screenToLogicalRatio;
+  if (r >= 1) {  // Window is too wide.
+    const auto c = 1 - 1 / r;
+    for (auto& point : points)
+      point.x -= point.x * c;
+  }
+  else {  // Window is too high.
+    const auto c = 1 - r;
+    for (auto& point : points)
+      point.y -= point.y * c;
+  }
+
+  {
+    auto                  color          = *(u32*)&data.color;
+    const _PosColorVertex quadVertices[] = {
+      {points[0].x, points[0].y, 0.0f, color},
+      {points[1].x, points[1].y, 0.0f, color},
+      {points[2].x, points[2].y, 0.0f, color},
+      {points[3].x, points[3].y, 0.0f, color},
+    };
+
+    const u16 quadIndices[] = {0, 1, 2, 1, 3, 2};
+
+    bgfx::TransientVertexBuffer tvb{};
+    bgfx::TransientIndexBuffer  tib{};
+    bgfx::allocTransientVertexBuffer(&tvb, 4, _PosColorVertex::layout);
+    bgfx::allocTransientIndexBuffer(&tib, 6);
+
+    memcpy(tvb.data, quadVertices, sizeof(quadVertices));
+    memcpy(tib.data, quadIndices, sizeof(quadIndices));
+
+    bgfx::setVertexBuffer(0, &tvb);
+    bgfx::setIndexBuffer(&tib);
+    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_BLEND_ALPHA);
+
+    bgfx::submit(0, ge.meta.programDefaultQuad);
+  }
+}
+
+///
+void DrawRectLines(DrawRectData data) {
   auto    off = data.anchor * data.size;
   Vector2 points[]{
     {data.pos.x - off.x, data.pos.y - off.y},
