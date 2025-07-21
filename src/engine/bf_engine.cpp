@@ -204,7 +204,7 @@ struct EngineData {
     bool*       keyboardStatePressed  = {};
     bool*       keyboardStateReleased = {};
 
-    u64 ticks         = {};
+    i64 ticks         = {};
     f64 prevFrameTime = {};
     f64 frameTime     = {};
 
@@ -1076,7 +1076,7 @@ void DrawRectLines(DrawRectLinesData data) {
   }
 }
 
-u64 GetTicks() {
+i64 GetTicks() {
   return ge.meta.ticks;
 }
 
@@ -1090,7 +1090,7 @@ f32 FrameTime() {
 
 ///
 void EngineOnFrameStart() {
-  ge.meta.ticks         = SDL_GetTicks();
+  ge.meta.ticks         = (i64)SDL_GetTicks();
   ge.meta.prevFrameTime = ge.meta.frameTime;
   ge.meta.frameTime     = GetTime();
 
