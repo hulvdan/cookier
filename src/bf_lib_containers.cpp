@@ -247,6 +247,13 @@ struct Array {
   T* end() {
     return base + _count;
   }
+
+  View<T> ToView() const {
+    return {
+      .count = _count,
+      .base  = (T*)base,
+    };
+  }
 };
 
 template <typename T>
