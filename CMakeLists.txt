@@ -245,4 +245,10 @@ target_compile_definitions(tests
 #-----------------------------------------------------------------------------------
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT game)
 
+set_target_properties(game PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:game>"
+    VS_DEBUGGER_COMMAND           "$<TARGET_FILE:game>"
+    VS_DEBUGGER_ENVIRONMENT       "PATH=%PATH%;${CMAKE_PREFIX_PATH}/bin"
+)
+
 # ///
