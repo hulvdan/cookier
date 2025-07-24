@@ -20,9 +20,9 @@ git remote add "origin" https://github.com/Hulvdan/NEWGAME.git
 cd vendor
 cd bgfx
 make
-make wasm
 msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
 msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
+make wasm
 cd ..
 cd ..
 
