@@ -458,10 +458,10 @@ Texture2D LoadTexture(const char* filepath) {
   Texture2D result{};
 
   int channels = 0;
-  result.data  = stbi_load(filepath, &result.size.x, &result.size.y, &channels, 4);
+  auto data  = stbi_load(filepath, &result.size.x, &result.size.y, &channels, 4);
   ASSERT(result.data);
 
-  auto memory = bgfx::makeRef(result.data, result.size.x * result.size.y * 4);
+  auto memory = bgfx::makeRef(data, result.size.x * result.size.y * 4);
 
   result.handle = bgfx::createTexture2D(
     result.size.x,
@@ -476,6 +476,8 @@ Texture2D LoadTexture(const char* filepath) {
       | BGFX_SAMPLER_V_CLAMP,
     memory
   );
+
+  stbi_image_free(result.data);
 
   LOGI("Loaded texture '%s'!", filepath);
 

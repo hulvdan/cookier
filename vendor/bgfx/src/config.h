@@ -7,6 +7,7 @@
 #define BGFX_CONFIG_H_HEADER_GUARD
 
 #include <bx/bx.h> // bx::isPowerOf2
+#include "../../../src/vendor_bgfx_config.cpp"
 
 // # Configuration options for bgfx.
 //
