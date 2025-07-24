@@ -238,6 +238,7 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
 SDL_AppResult SDL_AppIterate(void* /* appstate */) {
   bgfx::setViewRect(0, 0, 0, (u16)ge.meta.screenSize.x, (u16)ge.meta.screenSize.y);
   bgfx::touch(0);
+  bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
   EngineOnFrameStart();
 
@@ -245,10 +246,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {
 
   auto result = GameUpdate();
 
-  if (result == SDL_APP_CONTINUE) {
-    EngineApplyStrips();
+  if (result == SDL_APP_CONTINUE)
     bgfx::frame(false);
-  }
 
   return result;
 }
