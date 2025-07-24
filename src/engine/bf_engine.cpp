@@ -459,7 +459,7 @@ Texture2D LoadTexture(const char* filepath) {
   auto data     = stbi_load(filepath, &result.size.x, &result.size.y, &channels, 4);
   ASSERT(data);
 
-  auto memory = bgfx::makeRef(data, result.size.x * result.size.y * 4);
+  auto memory = bgfx::copy(data, result.size.x * result.size.y * 4);
 
   result.handle = bgfx::createTexture2D(
     result.size.x,
