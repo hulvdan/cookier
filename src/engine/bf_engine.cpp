@@ -735,6 +735,8 @@ struct DrawTextureData {
 ///
 void DrawTexture(DrawTextureData data) {
   ASSERT(data.texId >= 0);
+  if ((data.scale.x == 0) || (data.scale.y == 0))
+    return;
 
   auto tex = glib->atlas_textures()->Get(data.texId);
 
