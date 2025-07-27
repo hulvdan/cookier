@@ -250,7 +250,8 @@ struct EngineData {
   } meta;
 
   struct Settings {
-    Color vignetteAndStripsColor = BLACK;
+    Color     vignetteAndStripsColor = BLACK;
+    View<u64> bgfxDisabledCapabilities{};
   } settings;
 } ge = {};
 
