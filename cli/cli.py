@@ -102,6 +102,11 @@ def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType
             assert False, f"Not supported platform: {platform}"
 
 
+@timing
+def do_test() -> None:
+    run_command(str(CMAKE_TESTS_PATH), timeout_seconds=5)
+
+
 # @timing
 # def do_lint() -> None:
 #     files_to_lint = [
@@ -330,7 +335,7 @@ def test():
     do_cmake(platform, build_type)
     do_generate()
     do_build(BuildTarget.tests, platform, build_type)
-    run_command(str(CMAKE_TESTS_PATH), timeout_seconds=5)
+    do_test()
 
 
 @command
