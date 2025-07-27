@@ -252,6 +252,15 @@ struct EngineData {
   struct Settings {
     Color     vignetteAndStripsColor = BLACK;
     View<u64> bgfxDisabledCapabilities{};
+
+    struct {
+      bool                     setup      = {};
+      const char*              build      = {};
+      const char*              gameKey    = {};
+      const char*              gameSecret = {};
+      std::vector<std::string> currencies = {};
+      std::vector<std::string> resources  = {};
+    } gameanalytics;
   } settings;
 } ge = {};
 
@@ -651,6 +660,18 @@ TEST_CASE ("ScaleToCover") {
 
 ///
 void InitializeEngine() {
+#if !defined(SDL_PLATFORM_EMSCRIPTEN)
+  if (ge.settings.gameanalytics.setup) {
+    const auto& a = ge.settings.gameanalytics;
+    gameanalytics::GameAnalytics::setEnabledInfoLog(true);
+    gameanalytics::GameAnalytics::setEnabledVerboseLog(BF_DEBUG);
+    gameanalytics::GameAnalytics::configureBuild(a.build);
+    gameanalytics::GameAnalytics::configureAvailableResourceCurrencies(a.currencies);
+    gameanalytics::GameAnalytics::configureAvailableResourceItemTypes(a.resources);
+    gameanalytics::GameAnalytics::initialize(a.gameKey, a.gameSecret);
+  }
+#endif
+
   basist::basisu_transcoder_init();
 
   ge.meta._touches.Reserve(8);

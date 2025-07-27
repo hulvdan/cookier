@@ -2,6 +2,10 @@
 
 #include "doctest.h"
 
+#if !defined(SDL_PLATFORM_EMSCRIPTEN)
+#  include "GameAnalytics/GameAnalytics.h"
+#endif
+
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
