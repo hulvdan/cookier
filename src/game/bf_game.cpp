@@ -8,6 +8,8 @@ const char* GetWindowTitle() {
     ;
 }
 
+void GamePreInit() {}
+
 SDL_AppResult GameUpdate() {
   return SDL_APP_CONTINUE;
 }

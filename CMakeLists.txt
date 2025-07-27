@@ -27,6 +27,18 @@ target_include_directories(vendor_and_codegen
         "${CMAKE_SOURCE_DIR}/vendor"
 )
 
+# GameAnalytics.
+#-----------------------------------------------------------------------------------
+if ("${PLATFORM}" STREQUAL "Web")
+    add_library(GameAnalytics INTERFACE)
+else()
+    add_subdirectory(vendor/gameanalytics-sdk-cpp)
+endif()
+target_include_directories(GameAnalytics
+    INTERFACE
+        "${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/include"
+)
+
 # bgfx
 #-----------------------------------------------------------------------------------
 add_library(bgfx STATIC IMPORTED)
@@ -111,7 +123,7 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/SDL3")
 
 # box2d.
 #-----------------------------------------------------------------------------------
-add_subdirectory("${PROJECT_SOURCE_DIR}/vendor/box2d")
+add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/box2d")
 set_target_properties(box2d
     PROPERTIES
         COMPILE_WARNING_AS_ERROR OFF
@@ -151,6 +163,7 @@ target_link_libraries(game
         box2d
         vendor_and_codegen
         basisu_transcoder
+        GameAnalytics
 )
 target_include_directories(game
     PRIVATE
@@ -217,6 +230,19 @@ else()
     message(FATAL_ERROR "Not supported platform: ${PLATFORM}")
 endif()
 
+if ("${PLATFORM}" STREQUAL "Win")
+    add_custom_command(
+        TARGET game PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/curl/lib/win64
+            ${CMAKE_BINARY_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/openssl/1.1.1d/libs/win64
+            ${CMAKE_BINARY_DIR}
+        DEPENDS GameAnalytics
+    )
+endif()
+
 if (0)
     # TODO: ASAN
     if (NOT CMAKE_CONFIGURATION_TYPES STREQUAL "Release")
@@ -239,13 +265,6 @@ if (0)
     endif()
 endif()
 
-add_custom_command(
-    TARGET game PRE_BUILD
-    COMMAND ${CMAKE_COMMAND}
-      -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:game>/resources
-    DEPENDS game
-)
-
 # tests
 #-----------------------------------------------------------------------------------
 add_executable(tests "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
@@ -256,6 +275,11 @@ target_link_libraries(tests
         box2d
         vendor_and_codegen
         basisu_transcoder
+        GameAnalytics
+)
+target_link_libraries(tests
+    PRIVATE
+        GameAnalytics
 )
 target_include_directories(tests
     PRIVATE
@@ -266,6 +290,21 @@ target_compile_definitions(tests
         TESTS
         SDL_MAIN_HANDLED
         DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+)
+
+# GameAnalytics post setup.
+#-----------------------------------------------------------------------------------
+add_custom_command(
+    TARGET game PRE_BUILD
+    COMMAND ${CMAKE_COMMAND}
+      -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:game>/resources
+    DEPENDS GameAnalytics
+)
+add_custom_command(
+    TARGET tests PRE_BUILD
+    COMMAND ${CMAKE_COMMAND}
+      -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:tests>/resources
+    DEPENDS GameAnalytics
 )
 
 # Windows. Startup project in Visual Studio.

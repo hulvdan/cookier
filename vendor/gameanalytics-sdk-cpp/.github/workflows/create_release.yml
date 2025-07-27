@@ -1,0 +1,80 @@
+name: Create Release
+run-name: C++ SDK Release ${{ inputs.tag_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build:
+    uses: ./.github/workflows/cmake.yml
+    with:
+      build_type: '"Release"'
+      upload_artifacts: true
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for tags and commits
+
+      - name: Set up Git credentials
+        run: |
+          git config user.name "ga-sdk-release[bot]"
+          git config user.email "ga-sdk-release[bot]@noreply.gameanalytics.com"
+
+      - name: Push tag ${{ inputs.tag_name }}
+        run: |
+          git tag ${{ inputs.tag_name }}
+          git push origin ${{ inputs.tag_name }}
+    
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-artifacts
+
+      - name: Organize release files
+        run: |
+          # Create the base include directory in the final release
+          mkdir -p ./final-release/include
+      
+          # Copy the entire include directory from one of the platform folders (assuming they are the same across platforms)
+          cp -r ./release-artifacts/ga-cpp-sdk-macOS-latest-clang-Release/include/* ./final-release/include/
+      
+          # Dynamically find all platform directories
+          platform_dirs=$(find ./release-artifacts -mindepth 1 -maxdepth 1 -type d)
+      
+          # Iterate over each platform directory and copy the respective binaries
+          for platform in $platform_dirs; do
+            platform_name=$(basename $platform)
+            mkdir -p ./final-release/$platform_name
+            if [[ $platform_name == *"windows"* ]]; then
+              cp $platform/*.lib ./final-release/$platform_name/
+            else
+              cp $platform/*.a ./final-release/$platform_name/
+            fi
+          done
+
+          # Create a zip archive of the final-release directory
+          zip -r ga-sdk-release-${{ inputs.tag_name }}.zip ./final-release
+
+      - name: Show organized release files
+        run: tree ./final-release
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2.0.8
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          name: Release GA-CPP-SDK ${{ inputs.tag_name }}
+          generate_release_notes: true
+          make_latest: true
+          files: ga-sdk-release-${{ inputs.tag_name }}.zip
