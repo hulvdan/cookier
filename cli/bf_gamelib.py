@@ -1,3 +1,4 @@
+import csv
 import os
 import shutil
 import tempfile
@@ -11,6 +12,7 @@ import yaml
 from bf_game import *  # noqa
 from bf_lib import (
     ART_DIR,
+    ASSETS_DIR,
     FLATBUFFERS_GENERATED_DIR,
     FLATC_PATH,
     GAME_DIR,
@@ -22,9 +24,12 @@ from bf_lib import (
     TEMP_ART_DIR,
     TEMP_DIR,
     BuildPlatform,
+    data_values,
     gamelib_processing_functions,
+    hash32_file_utf8,
     log,
     recursive_mkdir,
+    recursive_replace_transform,
     run_command,
     timing,
     timing_mark,
@@ -83,11 +88,80 @@ def degrees_to_radians_recursive_transform(gamelib_recursed) -> None:
                     degrees_to_radians_recursive_transform(v)
 
 
-def index_default_minus_1(list_variable, value):
-    try:
-        return list_variable.index(value)
-    except ValueError:
-        return -1
+def _do_localization(gamelib) -> set[int]:
+    locale_to_index: dict[str, int] = {
+        key: i for i, key in enumerate(gamelib["localization"])
+    }
+    gamelib["localization"] = list(gamelib["localization"].values())
+    gamelib["localizations"] = [{"strings": gamelib.pop("localization")}]
+
+    csv_columns = ("id", "translated", "original", "comment")
+
+    index_to_locale = {i: codename for codename, i in locale_to_index.items()}
+
+    not_russian_languages = [l for l in data_values.languages if l != "russian"]
+
+    codepoints: set[int] = set()
+
+    for language in not_russian_languages:
+        csv_path = ASSETS_DIR / f"localization_{language}.csv"
+        csv_temp_path = TEMP_DIR / f"localization_{language}.csv"
+
+        translated_values: dict[str, str] = {}
+
+        if csv_path.exists():
+            with open(csv_path, newline="", encoding="utf-8-sig") as in_file:
+                for row in csv.DictReader(in_file):
+                    translated_values[row["id"]] = row["translated"]
+                    codepoints.update(ord(c) for c in row["translated"])
+
+        with open(csv_temp_path, "w", newline="", encoding="utf-8-sig") as out_file:
+            writer = csv.writer(out_file)
+            writer.writerow(csv_columns)
+
+            russian_localization: list[str] = gamelib["localizations"][0]["strings"]
+
+            for i in range(len(locale_to_index)):
+                codename = index_to_locale[i]
+                localized = russian_localization[i]
+                writer.writerow(
+                    (
+                        codename,
+                        translated_values.get(codename, "").strip(),
+                        localized.strip(),
+                        "",
+                    )
+                )
+
+        if not csv_path.exists() or hash32_file_utf8(csv_path) != hash32_file_utf8(
+            csv_temp_path
+        ):
+            csv_temp_path.replace(csv_path)
+
+    for language in not_russian_languages:
+        csv_path = ASSETS_DIR / f"localization_{language}.csv"
+
+        translated_values_: dict[str, str] = {}
+        with open(csv_path, newline="", encoding="utf-8-sig") as in_file:
+            for row in csv.DictReader(in_file):
+                translated_values_[row["id"]] = row["translated"]
+
+        strings = []
+
+        for i in range(len(locale_to_index)):
+            codename = index_to_locale[i]
+            translated = translated_values_[codename]
+            if not translated.strip():
+                log.warn(f"Localization: {language}: Translation not found '{codename}'!")
+
+            strings.append(translated)
+            codepoints.update(ord(c) for c in translated)
+
+        gamelib["localizations"].append({"strings": strings})
+
+    recursive_replace_transform(gamelib, "locale", "locales", locale_to_index)
+
+    return codepoints
 
 
 @timing
@@ -100,8 +174,10 @@ def convert_gamelib_json_to_binary(
 
     gamelib |= atlas_data
 
+    localization_codepoints = _do_localization(gamelib)
+
     for gamelib_processing_function in gamelib_processing_functions:
-        gamelib_processing_function(genline, gamelib)
+        gamelib_processing_function(genline, gamelib, localization_codepoints)
 
     transform_texture_id = lambda data, key: transform_to_texture_index(
         data, key, texture_name_2_index=texture_name_2_id
