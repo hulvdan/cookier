@@ -897,6 +897,7 @@ struct Font {
   int* codepoints      = {};
   int  codepointsCount = {};
   int  outlineWidth    = {};
+  f32  outlineAdvance  = {};
 };
 
 ///
@@ -923,7 +924,8 @@ struct LoadFontData {
   int* codepoints      = {};
   int  codepointsCount = {};
 
-  int outlineWidth = 0;  // Optional.
+  int outlineWidth   = 0;  // Optional.
+  f32 outlineAdvance = 0;  // Optional.
 };
 
 ///
@@ -948,6 +950,7 @@ Font LoadFont(LoadFontData data) {
     .codepoints      = data.codepoints,
     .codepointsCount = data.codepointsCount,
     .outlineWidth    = data.outlineWidth,
+    .outlineAdvance  = data.outlineAdvance,
   };
 
   stbtt_InitFont(&font.info, font.fileData, 0);
@@ -1096,6 +1099,7 @@ Font LoadFont(LoadFontData data) {
       c.x1 += data.outlineWidth;
       c.y0 -= data.outlineWidth;
       c.y1 += data.outlineWidth;
+      c.xadvance += data.outlineAdvance;
     }
 
     free(dist_);
