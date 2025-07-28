@@ -658,6 +658,10 @@ TEST_CASE ("ScaleToCover") {
   ASSERT(FloatEquals(ScaleToCover({3, 3}, {2, 3}), 1));
 }
 
+void LoadGamelib() {
+  glib = BFGame::GetGameLibrary(LoadFileData("resources/gamelib.bin"));
+}
+
 ///
 void InitializeEngine() {
 #if !defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -685,7 +689,7 @@ void InitializeEngine() {
   ge.meta._keyboardStateReleased
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._trashArena, bool, ge.meta._keyboardStateCount);
 
-  glib = BFGame::GetGameLibrary(LoadFileData("resources/gamelib.bin"));
+  LoadGamelib();
   ge.meta.atlas
     = LoadTexture("resources/atlas.basis", {glib->atlas_size_x(), glib->atlas_size_y()});
   ge.meta.programDefaultTexture = LoadProgram(
