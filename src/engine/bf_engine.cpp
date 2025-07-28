@@ -247,6 +247,8 @@ struct EngineData {
 
     Vector2 _screenToLogicalScale = {};
     Vector2 _screenToLogicalAdd   = {};
+
+    int localization = 0;
   } meta;
 
   struct Settings {
@@ -1159,16 +1161,16 @@ struct DrawTextData {
   Vector2 pos = {};
   // TODO: Vector2 scale = {1, 1};
   // TODO: Vector2 anchor = {0.5f, 0.5f};
-  const Font* font  = {};
-  const char* text  = {};
-  int         count = {};
-  Color       color = WHITE;
+  const Font* font       = {};
+  const char* text       = {};
+  int         bytesCount = {};
+  Color       color      = WHITE;
   // TODO: Color outlineColor = BLACK + shader.
 };
 
 ///
 void DrawText(DrawTextData data) {
-  ASSERT(data.count > 0);
+  ASSERT(data.bytesCount > 0);
   ASSERT(data.font);
   if (!data.font->loaded) {
     LOGE("DrawText: font is not loaded!");
@@ -1181,13 +1183,17 @@ void DrawText(DrawTextData data) {
 
   u32  codepoint{};
   u32  state{};
-  auto remaining = data.count;
+  auto remaining = data.bytesCount;
 
   auto y = LOGICAL_RESOLUTION.y - data.pos.y;
 
   for (; *p; ++p) {
-    if (utf8_decode(&state, *(u8*)p, &codepoint))
+    if (utf8_decode(&state, *(u8*)p, &codepoint)) {
+      remaining--;
+      if (!remaining)
+        break;
       continue;
+    }
 
     auto glyphIndex
       = ArrayBinaryFind(font->codepoints, font->codepointsCount, (int)codepoint);
