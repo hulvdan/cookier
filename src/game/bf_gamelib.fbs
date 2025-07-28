@@ -13,6 +13,10 @@ table Texture {
     baseline: uint;
 }
 
+table Localization {
+    strings: [string] (required);
+}
+
 // GAME STUFF
 // GAME STUFF END
 
@@ -22,6 +26,8 @@ table GameLibrary {
     atlas_textures: [Texture] (required);
 
     vignette_texture_id: int;
+
+    localizations: [Localization] (required);
 
     // GAME STUFF
     // GAME STUFF END

@@ -4,7 +4,7 @@ import re
 import subprocess
 import sys
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
 from pathlib import Path
@@ -17,6 +17,7 @@ import fnvhash
 @dataclass(slots=True)
 class _DataValues:
     itch_target: str = "hulvdan/game-template"
+    languages: list[str] = field(default_factory=lambda: ["russian", "english"])
 
 
 data_values = _DataValues()
@@ -25,13 +26,8 @@ gamelib_processing_functions = []
 
 
 def gamelib_processor(func):
-    @wraps(func)
-    def wrapper(genline, gamelib):
-        func(genline, gamelib)
-
-    gamelib_processing_functions.append(wrapper)
-
-    return wrapper
+    gamelib_processing_functions.append(func)
+    return func
 
 
 from bf_game import *  # noqa
