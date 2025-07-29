@@ -537,11 +537,10 @@ def git_bump_tag() -> None:
             'git tag -l "v1\\.*"', check=True, shell=True, capture_output=True, text=True
         )
         .stdout.strip()
-        .split("\n")
     )
     next_version = 0
     if version_tags:
-        next_version = max(int(t.split(".")[-1]) for t in version_tags) + 1
+        next_version = max(int(t.split(".")[-1]) for t in version_tags.split("\n")) + 1
 
     run_command(f"git tag v1.{next_version}")
     run_command(f"git push origin v1.{next_version}")
