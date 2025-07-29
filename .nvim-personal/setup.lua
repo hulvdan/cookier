@@ -61,8 +61,7 @@ function rebuild_tasks()
                 vim.fn.execute([[term python -m http.server -d .cmake\Web_Release 8001]])
             end,
         },
-        { "i_deploy_itch", cli_command("deploy_itch") },
-        { "o_build_and_deploy_itch", cli_command("build game Web Release") .. " && " .. cli_command("deploy_itch") },
+        { "o_deploy_itch", cli_command("deploy_itch") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         -- { "l_lint_cpp", cli_command("lint") },
