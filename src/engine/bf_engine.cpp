@@ -598,7 +598,11 @@ Texture2D LoadTexture(const char* filepath, Vector2Int size) {
         false /* _hasMips*/,
         1,
         pair.to,
-        BGFX_TEXTURE_NONE,
+        BGFX_SAMPLER_MIN_ANISOTROPIC      //
+          | BGFX_SAMPLER_MAG_ANISOTROPIC  //
+          | BGFX_SAMPLER_MIP_POINT        //
+          | BGFX_SAMPLER_U_CLAMP          //
+          | BGFX_SAMPLER_V_CLAMP,
         bgfx::copy(outData, outDataSize)
       );
       break;
@@ -745,8 +749,8 @@ void DrawTexture(DrawTextureData data) {
       (f32)tex->atlas_y() + (f32)tex->size_y() * (1 - data.sourceSize.y),
     },
     .size{
-      (f32)tex->size_x() * data.sourceSize.x * SIGN(data.scale.x),
-      (f32)tex->size_y() * data.sourceSize.y * SIGN(data.scale.y),
+      (f32)tex->size_x() * data.sourceSize.x,
+      (f32)tex->size_y() * data.sourceSize.y,
     },
   };
   Rect destRec{
@@ -774,6 +778,16 @@ void DrawTexture(DrawTextureData data) {
   sx1 /= (f32)ge.meta.atlas.size.x;
   sy0 /= (f32)ge.meta.atlas.size.y;
   sy1 /= (f32)ge.meta.atlas.size.y;
+  if (data.scale.x < 0) {
+    auto t = sx0;
+    sx0    = sx1;
+    sx1    = t;
+  }
+  if (data.scale.y < 0) {
+    auto t = sy0;
+    sy0    = sy1;
+    sy1    = t;
+  }
 
   Vector2 topLeft{};
   Vector2 topRight{};
