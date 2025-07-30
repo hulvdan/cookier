@@ -555,3 +555,23 @@ def git_bump_tag() -> None:
 
     run_command(f"git tag v1.{next_version}")
     run_command(f"git push origin v1.{next_version}")
+
+
+def hex_to_rgb_floats(hex_color: str) -> tuple[float, float, float]:
+    hex_color = hex_color.lstrip("#")
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    r_float = r / 255.0
+    g_float = g / 255.0
+    b_float = b / 255.0
+    r_float = min(1, r_float)
+    return (r_float, g_float, b_float)
+
+
+def rgb_floats_to_hex(rgb_floats: tuple[float, float, float]) -> str:
+    r, g, b = rgb_floats
+    r_int = round(r * 255)
+    g_int = round(g * 255)
+    b_int = round(b * 255)
+    return "#{:02X}{:02X}{:02X}".format(r_int, g_int, b_int)

@@ -5,6 +5,7 @@ from itertools import product
 from pathlib import Path
 from typing import Callable, ParamSpec
 
+import bf_swatch
 import typer
 from bf_gamelib import do_generate
 from bf_lib import (
@@ -22,6 +23,8 @@ from bf_lib import (
     git_stash,
     global_timing_manager_instance,
     hash32,
+    hex_to_rgb_floats,
+    rgb_floats_to_hex,
     run_command,
     timed_exit,
     timing,
@@ -343,6 +346,53 @@ def deploy_itch():
 
     target = "{}:html".format(data_values.itch_target)
     run_command([BUTLER_PATH, "push", zip_path, target])
+
+
+@command
+def make_swatch():
+    result = bf_swatch.parse("c:/Users/user/Downloads/woodspark.ase")
+    print(result)
+    colors = [
+        "#f5eeb0",
+        "#fabf61",
+        "#e08d51",
+        "#8a5865",
+        "#452b3f",
+        "#2c5e3b",
+        "#609c4f",
+        "#c6cc54",
+        "#78c2d6",
+        "#5479b0",
+        "#56546e",
+        "#839fa6",
+        "#e0d3c8",
+        "#f05b5b",
+        "#8f325f",
+        "#eb6c98",
+    ]
+
+    DIM = 0.66
+    for i in range(len(colors)):
+        color = hex_to_rgb_floats(colors[i])
+        dimmed_color = (
+            color[0] * DIM,
+            color[1] * DIM,
+            color[2] * DIM,
+        )
+        colors.append(rgb_floats_to_hex(dimmed_color))
+
+    def process_color(color: str) -> dict:
+        return {
+            "name": color,
+            "type": "Global",
+            "data": {
+                "mode": "RGB",
+                "values": hex_to_rgb_floats(color),
+            },
+        }
+
+    swatch_data = [process_color(c) for c in colors]
+    bf_swatch.write(swatch_data, "aboba.ase")
 
 
 # @command

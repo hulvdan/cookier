@@ -62,6 +62,7 @@ function rebuild_tasks()
             end,
         },
         { "o_deploy_itch", cli_command("deploy_itch") },
+        { "i_make_swatch", cli_command("make_swatch") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         -- { "l_lint_cpp", cli_command("lint") },
