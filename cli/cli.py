@@ -28,6 +28,7 @@ from bf_lib import (
     run_command,
     timed_exit,
     timing,
+    transform_color,
 )
 
 P = ParamSpec("P")
@@ -371,15 +372,16 @@ def make_swatch():
         "#eb6c98",
     ]
 
-    DIM = 0.66
     for i in range(len(colors)):
-        color = hex_to_rgb_floats(colors[i])
-        dimmed_color = (
-            color[0] * DIM,
-            color[1] * DIM,
-            color[2] * DIM,
+        colors.append(
+            rgb_floats_to_hex(
+                transform_color(
+                    hex_to_rgb_floats(colors[i]),
+                    saturation_scale=1.2,
+                    value_scale=0.52,
+                )
+            )
         )
-        colors.append(rgb_floats_to_hex(dimmed_color))
 
     def process_color(color: str) -> dict:
         return {
