@@ -1,3 +1,4 @@
+import colorsys
 import json
 import logging
 import re
@@ -575,3 +576,25 @@ def rgb_floats_to_hex(rgb_floats: tuple[float, float, float]) -> str:
     g_int = round(g * 255)
     b_int = round(b * 255)
     return "#{:02X}{:02X}{:02X}".format(r_int, g_int, b_int)
+
+
+def transform_color(
+    rgb: tuple[float, float, float],
+    *,
+    saturation_scale: float = 1,
+    value_scale: float = 1.0,
+) -> tuple[float, float, float]:
+    """
+    Saturate an RGB color (tuple of 3 floats in 0-1) by a given amount.
+
+    :param rgb: (r, g, b) tuple, each component in [0, 1]
+    :param amount: How much to increase saturation (e.g., 1.2 = 20% more saturated)
+    :return: new (r, g, b) tuple
+    """
+    assert saturation_scale >= 0
+    assert value_scale >= 0
+    r, g, b = rgb
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    s = min(s * saturation_scale, 1.0)
+    v = min(v * value_scale, 1.0)
+    return colorsys.hsv_to_rgb(h, s, v)
