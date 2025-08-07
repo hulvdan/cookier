@@ -1,4 +1,5 @@
 import colorsys
+import hashlib
 import json
 import logging
 import re
@@ -558,6 +559,14 @@ def git_bump_tag() -> None:
     run_command(f"git push origin v1.{next_version}")
 
 
+def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
+    hex_color = hex_color.lstrip("#")
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    return (r, g, b)
+
+
 def hex_to_rgb_floats(hex_color: str) -> tuple[float, float, float]:
     hex_color = hex_color.lstrip("#")
     r = int(hex_color[0:2], 16)
@@ -598,3 +607,11 @@ def transform_color(
     s = min(s * saturation_scale, 1.0)
     v = min(v * value_scale, 1.0)
     return colorsys.hsv_to_rgb(h, s, v)
+
+
+def stable_hash(value: str | int) -> int:
+    if isinstance(value, int):
+        value = str(value)
+    if isinstance(value, str):
+        return int(hashlib.md5(value.encode("utf-8")).hexdigest(), 16)
+    assert False, "Not supported type of value"

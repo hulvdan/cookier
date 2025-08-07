@@ -26,14 +26,17 @@ from bf_lib import (
     BuildPlatform,
     data_values,
     gamelib_processing_functions,
+    genenum,
     hash32_file_utf8,
     log,
     recursive_mkdir,
     recursive_replace_transform,
     run_command,
+    stable_hash,
     timing,
     timing_mark,
 )
+from PIL import Image
 
 
 def texture_ids_recursive_transform(
@@ -105,6 +108,7 @@ def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
 
     not_russian_languages = [l for l in data_values.languages if l != "russian"]
 
+    SKIP_CHARACTERS = ("\n", "\t", "\r")
     codepoints: set[int] = set()
 
     for language in not_russian_languages:
@@ -117,7 +121,6 @@ def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
             with open(csv_path, newline="", encoding="utf-8-sig") as in_file:
                 for row in csv.DictReader(in_file):
                     translated_values[row["id"]] = row["translated"]
-                    codepoints.update(ord(c) for c in row["translated"])
 
         with open(csv_temp_path, "w", newline="", encoding="utf-8-sig") as out_file:
             writer = csv.writer(out_file)
@@ -127,14 +130,10 @@ def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
 
             for i in range(len(locale_to_index)):
                 codename = index_to_locale[i]
-                localized = russian_localization[i]
+                localized = russian_localization[i].strip()
+                codepoints.update(ord(c) for c in localized if c not in SKIP_CHARACTERS)
                 writer.writerow(
-                    (
-                        codename,
-                        translated_values.get(codename, "").strip(),
-                        localized.strip(),
-                        "",
-                    )
+                    (codename, translated_values.get(codename, "").strip(), localized, "")
                 )
 
         if not csv_path.exists() or hash32_file_utf8(csv_path) != hash32_file_utf8(
@@ -154,15 +153,13 @@ def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
 
         for i in range(len(locale_to_index)):
             codename = index_to_locale[i]
-            translated = translated_values_[codename]
-            if not translated.strip():
+            translated = translated_values_[codename].strip()
+            if not translated:
                 log.warn(f"Localization: {language}: Translation not found '{codename}'!")
-
-            if translated.strip() == "":
                 translated = "<< LOCALE NOT TRANSLATED >>"
 
             strings.append(translated)
-            codepoints.update(ord(c) for c in translated)
+            codepoints.update(ord(c) for c in translated if c not in SKIP_CHARACTERS)
 
         gamelib["localizations"].append({"strings": strings})
 
@@ -173,11 +170,10 @@ def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
 def convert_gamelib_json_to_binary(
     texture_name_2_id: dict[str, int], genline, atlas_data
 ) -> None:
-    gamelib = (
-        yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8")) or {}
-    )
+    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
 
     gamelib |= atlas_data
+    genenum(genline, "RenderZ", gamelib.pop("render_z"), add_count=True)
 
     localization_codepoints, locale_to_index = _do_localization(gamelib)
 
@@ -214,127 +210,168 @@ def convert_gamelib_json_to_binary(
     shutil.move(intermediate_binary_path, RESOURCES_DIR / "gamelib.bin")
 
 
-@timing
-def make_atlas(path: Path) -> tuple[dict[str, int], dict]:
-    assert str(path).endswith(".ftpp")
+def downscale_images(downscale_factors: list[int]) -> None:
+    assert downscale_factors, downscale_factors
 
-    copy_from_base_dir = ART_DIR / "textures"
-    for filepath in copy_from_base_dir.rglob("*.png"):
-        s1 = filepath.stat()
-        to_path = TEMP_ART_DIR / filepath.relative_to(copy_from_base_dir)
+    images_to_downscale = (ART_DIR / "textures").rglob("*.png")
 
-        if to_path.exists():
-            s2 = to_path.stat()
-            if s1.st_mtime_ns == s2.st_mtime_ns:
-                continue
+    for factor in downscale_factors:
+        assert factor >= 1, factor
 
-        recursive_mkdir(to_path.parent)
+        export_dir = TEMP_ART_DIR / f"d{factor}"
+        recursive_mkdir(export_dir)
 
-        shutil.copy(filepath, to_path)
-        os.utime(to_path, ns=(s1.st_atime_ns, s1.st_mtime_ns))
+        for image_path in images_to_downscale:
+            s1 = image_path.stat()
 
-    cache_filepath = TEMP_DIR / ".atlas.cache"
+            export_image_path = export_dir / image_path.name
 
-    old_cache_value = -1
-    if cache_filepath.exists():
-        old_cache_value = int(cache_filepath.read_text())
-
-    cache_value = 0
-    for filepath in Path(TEMP_ART_DIR).rglob("*.png"):
-        cache_value = hash(cache_value + filepath.stat().st_mtime_ns)
-
-    should_regenerate_atlas = False
-    temp_atlas_path = TEMP_DIR / (path.stem + ".png")
-
-    if (cache_value == old_cache_value) and temp_atlas_path.exists():
-        log.info("Skipped atlas generation - no images changed")
-        timing_mark("skipped png generation")
-    else:
-        # Генерируем атлас из .ftpp файла. Создаются .json спецификация и .png текстура.
-        log.info("Generating atlas...")
-        run_command("free-tex-packer-cli --project {}".format(path))
-
-        cache_filepath.write_text(str(cache_value))
-
-        should_regenerate_atlas = True
-
-    # Подгоняем спецификацию под наш формат.
-    json_path = TEMP_DIR / (path.stem + ".json")
-    with open(json_path) as json_file:
-        json_data = json.load(json_file)
-
-    found_textures: set[str] = set()
-
-    textures: list[Any] = []
-    for name_, data in json_data["frames"].items():
-        name = name_.removeprefix("art/")
-
-        assert name not in found_textures
-        found_textures.add(name)
-
-        texture_data = {
-            "id": -1,
-            "debug_name": name,
-            "size_x": data["frame"]["w"],
-            "size_y": data["frame"]["h"],
-            "atlas_x": data["frame"]["x"],
-            "atlas_y": data["frame"]["y"],
-            "baseline": 0,
-        }
-        textures.append(texture_data)
-
-    texture_name_2_id = {}
-    textures.sort(key=lambda x: (x["debug_name"] != "undefined", x["debug_name"]))
-
-    for i, texture in enumerate(textures):
-        texture["id"] = i
-        name = texture["debug_name"]
-        texture_name_2_id[name] = i
-
-    recursive_mkdir(RESOURCES_DIR)
-
-    out_atlas_path = RESOURCES_DIR / (path.stem + ".basis")
-    if not out_atlas_path.exists() or should_regenerate_atlas:
-        run_command(
-            [
-                PROJECT_DIR / "cli" / "basisu.exe",
-                "-uastc",
-                "-slower",
-                "-file",
-                temp_atlas_path,
-                "-output_file",
-                out_atlas_path,
-            ]
-        )
-
-        run_command(
-            [PROJECT_DIR / "cli" / "basisu.exe", "-validate", "-file", out_atlas_path]
-        )
-    else:
-        timing_mark("skipped optimized copying")
-
-    return texture_name_2_id, {
-        "atlas_textures": textures,
-        "atlas_size_x": json_data["meta"]["size"]["w"],
-        "atlas_size_y": json_data["meta"]["size"]["h"],
-    }
+            if not export_image_path.exists() or (
+                s1.st_mtime_ns != export_image_path.stat().st_mtime_ns
+            ):
+                log.info("Downscaling by {} '{}'".format(factor, export_image_path))
+                im = Image.open(image_path)
+                im.thumbnail(
+                    (im.size[0] // factor, im.size[1] // factor), Image.Resampling.LANCZOS
+                )
+                im.save(export_image_path, "PNG")
+                os.utime(export_image_path, ns=(s1.st_atime_ns, s1.st_mtime_ns))
 
 
 @timing
-def check_no_excessive_images_in_temp_art_dir() -> None:
-    temp_filepaths = [
-        filepath.relative_to(TEMP_ART_DIR) for filepath in TEMP_ART_DIR.rglob("*.png")
-    ]
-    art_filepaths = [
-        filepath.relative_to(ART_DIR / "textures")
-        for filepath in (ART_DIR / "textures").rglob("*.png")
-    ]
+def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dict]]:
+    assert downscale_factors, downscale_factors
 
-    for temp_filepath in temp_filepaths:
-        if temp_filepath not in art_filepaths:
-            p = TEMP_ART_DIR / temp_filepath
-            log.info("Removing excessive image '{}'...".format(p))
-            p.unlink()
+    texture_name_2_id: dict[str, int] = {}
+    atlases_data = []
+
+    for factor in downscale_factors:
+        path = ART_DIR / f"atlas_d{factor}.ftpp"
+
+        cache_filepath = TEMP_DIR / f".atlas_d{factor}.cache"
+
+        old_cache_value = -1
+        if cache_filepath.exists():
+            old_cache_value = int(cache_filepath.read_text())
+
+        cache_value = 0
+        for filepath in Path(TEMP_ART_DIR / f"d{factor}").rglob("*.png"):
+            cache_value = stable_hash(
+                cache_value
+                + stable_hash(filepath.stat().st_mtime_ns)
+                + stable_hash(filepath.name)
+            )
+
+        should_regenerate_atlas = False
+        temp_atlas_path = TEMP_DIR / (path.stem + ".png")
+
+        if (cache_value == old_cache_value) and temp_atlas_path.exists():
+            log.info("Skipped atlas generation - no images changed")
+            timing_mark("skipped png generation")
+        else:
+            # Генерируем атлас из .ftpp файла. Создаются .json спецификация и .png текстура.
+            log.info("Generating atlas...")
+            run_command("free-tex-packer-cli --project {}".format(path))
+
+            cache_filepath.write_text(str(cache_value))
+
+            should_regenerate_atlas = True
+
+        # Подгоняем спецификацию под наш формат.
+        json_path = TEMP_DIR / (path.stem + ".json")
+        with open(json_path) as json_file:
+            json_data = json.load(json_file)
+
+        found_textures: set[str] = set()
+
+        textures: list[Any] = []
+        for name_, data in json_data["frames"].items():
+            name = name_.removeprefix("art/")
+
+            assert name not in found_textures
+            found_textures.add(name)
+
+            texture_data = {
+                "id": -1,
+                "debug_name": name,
+                "size_x": data["frame"]["w"],
+                "size_y": data["frame"]["h"],
+                "atlas_x": data["frame"]["x"],
+                "atlas_y": data["frame"]["y"],
+                "baseline": 0,
+            }
+            textures.append(texture_data)
+
+        textures.sort(key=lambda x: (x["debug_name"] != "undefined", x["debug_name"]))
+
+        if not texture_name_2_id:
+            assert textures, textures
+
+            for i, texture in enumerate(textures):
+                texture["id"] = i
+                name = texture["debug_name"].removeprefix(f"d{factor}/")
+                texture_name_2_id[name] = i
+
+        recursive_mkdir(RESOURCES_DIR)
+
+        out_atlas_path = RESOURCES_DIR / (path.stem + ".basis")
+        if not out_atlas_path.exists() or should_regenerate_atlas:
+            run_command(
+                [
+                    PROJECT_DIR / "cli" / "basisu.exe",
+                    "-uastc",
+                    "-slower",
+                    "-file",
+                    temp_atlas_path,
+                    "-output_file",
+                    out_atlas_path,
+                ],
+                cwd=TEMP_DIR,
+            )
+
+            run_command(
+                [
+                    PROJECT_DIR / "cli" / "basisu.exe",
+                    "-validate",
+                    "-file",
+                    out_atlas_path,
+                ],
+                cwd=TEMP_DIR,
+            )
+
+        else:
+            timing_mark(f"{factor}: skipped optimized copying")
+
+        atlases_data.append(
+            {
+                "atlas_textures": textures,
+                "atlas_size_x": json_data["meta"]["size"]["w"],
+                "atlas_size_y": json_data["meta"]["size"]["h"],
+            }
+        )
+
+    return texture_name_2_id, atlases_data
+
+
+@timing
+def check_no_excessive_images_in_temp_art_dir(downscale_factors: list[int]) -> None:
+    for factor in downscale_factors:
+        TEMP_ART_DOWNSCALED_DIR = TEMP_ART_DIR / f"d{factor}"
+
+        temp_filepaths = [
+            filepath.relative_to(TEMP_ART_DOWNSCALED_DIR)
+            for filepath in TEMP_ART_DOWNSCALED_DIR.rglob("*.png")
+        ]
+        art_filepaths = [
+            filepath.relative_to(ART_DIR / "textures")
+            for filepath in (ART_DIR / "textures").rglob("*.png")
+        ]
+
+        for temp_filepath in temp_filepaths:
+            if temp_filepath not in art_filepaths:
+                p = TEMP_ART_DOWNSCALED_DIR / temp_filepath
+                log.info("Removing excessive image '{}'...".format(p))
+                p.unlink()
 
 
 @timing
@@ -513,8 +550,10 @@ def do_generate() -> None:
 
         remove_intermediate_generation_files()
 
-        check_no_excessive_images_in_temp_art_dir()
-
-        texture_name_2_id, atlas_data = make_atlas(ART_DIR / "atlas.ftpp")
-
-        convert_gamelib_json_to_binary(texture_name_2_id, genline, atlas_data)
+        # TODO: downscale_factors = [1, 2, 4]
+        downscale_factors = [2]
+        check_no_excessive_images_in_temp_art_dir(downscale_factors)
+        downscale_images(downscale_factors)
+        texture_name_2_id, atlases_data = make_atlases(downscale_factors)
+        assert len(downscale_factors) == 1
+        convert_gamelib_json_to_binary(texture_name_2_id, genline, atlases_data[0])
