@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable, ParamSpec
 
 import bf_swatch
+import bf_swatch_aco
 import typer
 from bf_gamelib import do_generate
 from bf_lib import (
@@ -23,6 +24,7 @@ from bf_lib import (
     git_stash,
     global_timing_manager_instance,
     hash32,
+    hex_to_rgb,
     hex_to_rgb_floats,
     rgb_floats_to_hex,
     run_command,
@@ -354,6 +356,7 @@ def make_swatch():
     result = bf_swatch.parse("c:/Users/user/Downloads/woodspark.ase")
     print(result)
     colors = [
+        "#ffffff",
         "#f5eeb0",
         "#fabf61",
         "#e08d51",
@@ -370,18 +373,25 @@ def make_swatch():
         "#f05b5b",
         "#8f325f",
         "#eb6c98",
+        "#000000",
     ]
 
+    new_colors = ["#ffffff", "#000000"]
+
     for i in range(len(colors)):
-        colors.append(
-            rgb_floats_to_hex(
-                transform_color(
-                    hex_to_rgb_floats(colors[i]),
-                    saturation_scale=1.2,
-                    value_scale=0.52,
-                )
+        color = colors[i]
+        if color in ("#000000", "#ffffff"):
+            continue
+        c = rgb_floats_to_hex(
+            transform_color(
+                hex_to_rgb_floats(color),
+                saturation_scale=1.2,
+                value_scale=0.52,
             )
         )
+        new_colors.append(color)
+        new_colors.append(c)
+        colors.append(c)
 
     def process_color(color: str) -> dict:
         return {
@@ -395,6 +405,30 @@ def make_swatch():
 
     swatch_data = [process_color(c) for c in colors]
     bf_swatch.write(swatch_data, "aboba.ase")
+
+    def process_color2(color: str) -> bf_swatch_aco.RawColor:
+        r, g, b = hex_to_rgb(color)
+        r = int(r * 65535 / 255)
+        g = int(g * 65535 / 255)
+        b = int(b * 65535 / 255)
+        assert r < 65536, r
+        assert g < 65536, g
+        assert b < 65536, b
+        assert r >= 0, r
+        assert g >= 0, g
+        assert b >= 0, b
+
+        return bf_swatch_aco.RawColor(
+            name=color,
+            color_space=bf_swatch_aco.ColorSpace.RGB,
+            component_1=r,
+            component_2=g,
+            component_3=b,
+            component_4=65535,
+        )
+
+    with open("aboba.aco", "wb") as out_file:
+        bf_swatch_aco.save_aco_file([process_color2(c) for c in new_colors], out_file)
 
 
 # @command

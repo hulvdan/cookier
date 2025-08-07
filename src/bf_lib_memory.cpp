@@ -6,9 +6,10 @@
 // ============================================================
 
 struct Arena {
-  size_t used = 0;
-  size_t size = 0;
-  u8*    base = nullptr;
+  size_t used    = 0;
+  size_t size    = 0;
+  u8*    base    = nullptr;
+  size_t maxUsed = 0;
 };
 
 Arena MakeArena(size_t size) {
@@ -62,6 +63,7 @@ inline u8* Allocate_(Arena* arena, size_t size) {
 
   u8* result = arena->base + arena->used;
   arena->used += size;
+  arena->maxUsed = MAX(arena->used, arena->maxUsed);
   return result;
 }
 

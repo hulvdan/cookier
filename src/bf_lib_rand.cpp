@@ -50,6 +50,8 @@ TEST_CASE ("RandInt") {
 
   ASSERT(values.Contains(10));
   ASSERT(values.Contains(20));
+
+  ASSERT(RandInt(1, 1) == 1);
 }
 
 int RandInt(uint a, uint b) {
