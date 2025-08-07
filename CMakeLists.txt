@@ -153,6 +153,10 @@ if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
     )
 endif()
 
+# tracy
+#-----------------------------------------------------------------------------------
+add_subdirectory(vendor/tracy)
+
 # game
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
@@ -164,6 +168,7 @@ target_link_libraries(game
         vendor_and_codegen
         basisu_transcoder
         GameAnalytics
+        TracyClient
 )
 target_include_directories(game
     PRIVATE

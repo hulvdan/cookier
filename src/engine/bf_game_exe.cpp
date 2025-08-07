@@ -49,6 +49,17 @@ using Vector4Int = glm::ivec4;
 #define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
 
 #include "bf_lib.cpp"
+
+#if BF_PROFILING && defined(DOCTEST_CONFIG_DISABLE)
+#  define TRACY_ONLY_LOCALHOST
+#  define TRACY_NO_BROADCAST
+#  include "tracy/Tracy.hpp"
+#else
+#  define ZoneScoped
+#  define ZoneScopedN(_)
+#  define FrameMark
+#endif
+
 #include "bf_version.cpp"
 #include "hands/bf_codegen.cpp"
 #include "engine/bf_engine.cpp"
@@ -154,30 +165,41 @@ class BGFXCallbackHandler : public bgfx::CallbackI {
 
 ///
 SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
+  ZoneScopedN("SDL_AppInit");
+
   GamePreInit();
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   js_LogWebGLVersion();
 #endif
 
-  if (!SDL_Init(0)) {
-    LOGE("SDL_Init failed!");
-    return SDL_APP_FAILURE;
+  {
+    ZoneScopedN("SDL. SDL_Init()");
+    if (!SDL_Init(0)) {
+      LOGE("SDL_Init failed!");
+      return SDL_APP_FAILURE;
+    }
   }
 
   SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE;
 
   ge.meta.screenSize = LOGICAL_RESOLUTION;
-  auto window        = SDL_CreateWindow(
-    GetWindowTitle(), ge.meta.screenSize.x, ge.meta.screenSize.y, flags
-  );
-  if (!window) {
-    LOGE("SDL_CreateWindow failed!");
-    return SDL_APP_FAILURE;
+
+  SDL_Window* window = nullptr;
+  {
+    ZoneScopedN("SDL. SDL_CreateWindow()");
+    window = SDL_CreateWindow(
+      GetWindowTitle(), ge.meta.screenSize.x, ge.meta.screenSize.y, flags
+    );
+    if (!window) {
+      LOGE("SDL_CreateWindow failed!");
+      return SDL_APP_FAILURE;
+    }
+    g_appstate.window = window;
   }
-  g_appstate.window = window;
 
   {
+    ZoneScopedN("bgfx. Initializing bgfx");
     bgfx::PlatformData pd{};
 
 #if defined(SDL_PLATFORM_WIN32)
@@ -230,19 +252,16 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
     init.resolution.height = ge.meta.screenSize.y;
     init.resolution.reset  = BGFX_RESET_VSYNC;
 
-    if (!bgfx::init(init)) {
-      LOGE("bgfx::init(init) failed!");
-      exit(EXIT_FAILURE);
+    {
+      ZoneScopedN("bgfx. bgfx::init()");
+      if (!bgfx::init(init)) {
+        LOGE("bgfx::init(init) failed!");
+        exit(EXIT_FAILURE);
+      }
     }
 
-    auto r1 = SDL_GetRenderer(window);
-    auto n2 = SDL_GetRendererName(r1);
-
-    // bgfx_reset( ge.meta.screenSize.x, ge.meta.screenSize.y, BGFX_RESET_VSYNC );
     bgfx::setDebug(BGFX_DEBUG_TEXT);
-    // bgfx_set_view_clear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
-
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR, ge.settings.bgfxFillColor, 1.0f, 0);
+    bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x000000ff, 1.0f, 0);
   }
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -254,19 +273,27 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
 }
 
 SDL_AppResult SDL_AppIterate(void* /* appstate */) {
-  bgfx::setViewRect(0, 0, 0, (u16)ge.meta.screenSize.x, (u16)ge.meta.screenSize.y);
-  bgfx::touch(0);
-  bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
+  SDL_AppResult result{};
 
-  EngineOnFrameStart();
+  {
+    ZoneScopedN("SDL. SDL_AppIterate()");
 
-  bgfx::dbgTextClear(0, false);
+    bgfx::setViewRect(0, 0, 0, (u16)ge.meta.screenSize.x, (u16)ge.meta.screenSize.y);
+    bgfx::touch(0);
+    bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
-  auto result = GameUpdate();
+    EngineOnFrameStart();
 
-  if (result == SDL_APP_CONTINUE)
-    bgfx::frame(false);
+    bgfx::dbgTextClear(0, false);
 
+    result = GameUpdate();
+    if (result == SDL_APP_CONTINUE) {
+      ZoneScopedN("bgfx. bgfx::frame()");
+      bgfx::frame(false);
+    }
+  }
+
+  FrameMark;
   return result;
 }
 
