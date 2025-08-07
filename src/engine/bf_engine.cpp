@@ -390,7 +390,6 @@ struct EngineData {
   struct Settings {
     Color     vignetteAndStripsColor = BLACK;
     View<u64> bgfxDisabledCapabilities{};
-    u32       bgfxFillColor = 0x000000ff;
 
     struct {
       bool                     setup      = {};
@@ -438,13 +437,11 @@ BF_FORCE_INLINE void RenderGroup_CommandTexture(
   RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
 ) {
   if (setSortY == RenderCommandSetSortY_SET_BASELINE) {
-    auto    tex = glib->atlas_textures()->Get(data.texId);
-    Vector2 size{(f32)tex->size_x(), (f32)tex->size_y()};
-    RenderGroup_SetSortY(
-      data.pos.y                                             //
-      - (f32)size.y * (data.anchor.y - 0.5f) * data.scale.y  //
-      + tex->baseline() * (data.anchor.y - 0.5f) * ASSETS_TO_LOGICAL_RATIO
-    );
+    auto tex    = glib->atlas_textures()->Get(data.texId);
+    auto height = (f32)tex->size_y();
+    auto off    = ASSETS_TO_LOGICAL_RATIO * data.scale.y
+               * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
+    RenderGroup_SetSortY(data.pos.y + off);
   }
 
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
@@ -668,6 +665,8 @@ BF_FORCE_INLINE void IterateOverCodepoints(
 
 //
 void FlushRenderCommands() {
+  ZoneScoped;
+
   ASSERT_FALSE(ge.render.flushedThisFrame);
   ge.render.flushedThisFrame = true;
 
@@ -1645,13 +1644,19 @@ bgfx::ProgramHandle LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 s
 
 ///
 Texture2D _LoadTexture(const char* filepath, Vector2Int size) {
+  ZoneScopedN("_LoadTexture()");
   LOGI("Loading texture '%s'...", filepath);
 
   Texture2D result{.size = size};
 
-  int  channels = 0;
-  int  dataSize = 0;
-  auto data     = LoadFileData(filepath, &dataSize);
+  int channels = 0;
+  int dataSize = 0;
+
+  void* data = nullptr;
+  {
+    ZoneScopedN("LoadFileData()");
+    data = LoadFileData(filepath, &dataSize);
+  }
   ASSERT(data);
 
   struct {
@@ -1690,71 +1695,88 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {
   };
 
   auto success = false;
+  {
+    ZoneScopedN("Transcoding texture");
 
-  for (const auto pair : formatPairs) {
-    LOGI(
-      "Trying to transcode '%s' to '%s' format...",
-      filepath,
-      basist::basis_get_format_name(pair.from)
-    );
-
-    if (!bgfx::isTextureValid(1, false, 1, pair.to, 0)) {
+    for (const auto pair : formatPairs) {
       LOGI(
-        "'%s' is not supported on this platform", basist::basis_get_format_name(pair.from)
+        "Trying to transcode '%s' to '%s' format...",
+        filepath,
+        basist::basis_get_format_name(pair.from)
       );
-      continue;
+
+      {
+        ZoneScopedN("bgfx::isTextureValid()");
+
+        if (!bgfx::isTextureValid(1, false, 1, pair.to, 0)) {
+          LOGI(
+            "'%s' is not supported on this platform",
+            basist::basis_get_format_name(pair.from)
+          );
+          continue;
+        }
+      }
+
+      basist::ktx2_transcoder transcoder{};
+      transcoder.init(data, dataSize);
+
+      // if (!transcoder.validate_file_checksums(data, dataSize, false))
+      //   INVALID_PATH;
+      // if (!transcoder.validate_header(data, dataSize))
+      //   INVALID_PATH;
+      if (!transcoder.start_transcoding())
+        INVALID_PATH;
+
+      ASSERT_FALSE(transcoder.is_video());
+
+      basist::ktx2_image_level_info levelInfo{};
+      if (!transcoder.get_image_level_info(levelInfo, 0, 0, 0))
+        INVALID_PATH;
+
+      auto outDataSize = (size_t)levelInfo.m_total_blocks
+                         * (size_t)levelInfo.m_block_width
+                         * (size_t)levelInfo.m_block_height * (size_t)pair.bytesPerPixel
+                         / (size_t)pair.divideBytesPerPixel;
+      auto outData = (u8*)malloc(outDataSize);
+
+      bool ok = false;
+      {
+        ZoneScopedN("basist. transcoder.transcode_image_level()");
+        ok = transcoder.transcode_image_level(
+          0,  // level_index
+          0,  // layer_index
+          0,  // face_index
+          (void*)outData,
+          (u32)outDataSize,
+          pair.from
+        );
+      }
+
+      if (ok) {
+        ZoneScopedN("bgfx. bgfx::createTexture2D()");
+
+        result.handle = bgfx::createTexture2D(
+          size.x,
+          size.y,
+          false /* _hasMips*/,
+          1,
+          pair.to,
+          BGFX_SAMPLER_MIN_ANISOTROPIC      //
+            | BGFX_SAMPLER_MAG_ANISOTROPIC  //
+            | BGFX_SAMPLER_MIP_POINT        //
+            | BGFX_SAMPLER_U_CLAMP          //
+            | BGFX_SAMPLER_V_CLAMP,
+          bgfx::copy(outData, outDataSize)
+        );
+
+        success = true;
+        break;
+      }
+      else
+        INVALID_PATH;
+
+      free(outData);
     }
-
-    basist::ktx2_transcoder transcoder{};
-    transcoder.init(data, dataSize);
-
-    // if (!transcoder.validate_file_checksums(data, dataSize, false))
-    //   INVALID_PATH;
-    // if (!transcoder.validate_header(data, dataSize))
-    //   INVALID_PATH;
-    if (!transcoder.start_transcoding())
-      INVALID_PATH;
-
-    ASSERT_FALSE(transcoder.is_video());
-
-    basist::ktx2_image_level_info levelInfo{};
-    if (!transcoder.get_image_level_info(levelInfo, 0, 0, 0))
-      INVALID_PATH;
-
-    auto outDataSize = (size_t)levelInfo.m_total_blocks * (size_t)levelInfo.m_block_width
-                       * (size_t)levelInfo.m_block_height * (size_t)pair.bytesPerPixel
-                       / (size_t)pair.divideBytesPerPixel;
-    auto outData = (u8*)unmapped_alloc(outDataSize);
-
-    // Transcode to BC7 (basis_transcoder_format::cTFR_BC7)
-    bool ok = transcoder.transcode_image_level(
-      0,  // level_index
-      0,  // layer_index
-      0,  // face_index
-      (void*)outData,
-      (u32)outDataSize,
-      pair.from
-    );
-    ASSERT(ok);
-
-    if (ok) {
-      success       = true;
-      result.handle = bgfx::createTexture2D(
-        size.x,
-        size.y,
-        false /* _hasMips*/,
-        1,
-        pair.to,
-        BGFX_SAMPLER_MIN_ANISOTROPIC      //
-          | BGFX_SAMPLER_MAG_ANISOTROPIC  //
-          | BGFX_SAMPLER_MIP_POINT        //
-          | BGFX_SAMPLER_U_CLAMP          //
-          | BGFX_SAMPLER_V_CLAMP,
-        bgfx::copy(outData, outDataSize)
-      );
-      break;
-    }
-    unmapped_free(outData);
   }
 
   ASSERT(success);
@@ -1810,6 +1832,8 @@ void LoadGamelib() {
 
 ///
 void InitializeEngine() {
+  ZoneScopedN("InitializeEngine");
+
 #if !defined(SDL_PLATFORM_EMSCRIPTEN)
   if (ge.settings.gameanalytics.setup) {
     const auto& a = ge.settings.gameanalytics;
@@ -1822,7 +1846,10 @@ void InitializeEngine() {
   }
 #endif
 
-  basist::basisu_transcoder_init();
+  {
+    ZoneScopedN("basist. basist::basisu_transcoder_init()");
+    basist::basisu_transcoder_init();
+  }
 
   ge.meta._touches.Reserve(8);
   ge.meta._touchIDs.Reserve(8);
@@ -2253,9 +2280,10 @@ void EngineApplyVignette() {
     {
       .texId = glib->vignette_texture_id(),
       .pos   = LOGICAL_RESOLUTION / 2,
+      .scale{4.01f, 4.01f},
       .color = ge.settings.vignetteAndStripsColor,
     },
-    RenderZ_UI
+    RenderZ_VIGNETTE
   );
 }
 

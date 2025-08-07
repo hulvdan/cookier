@@ -5,6 +5,12 @@ const char* GetWindowTitle() {
 #if BF_DEBUG
          " [DEBUG]"
 #endif
+#if BF_PROFILING && defined(DOCTEST_CONFIG_DISABLE)
+         " [PROFILING]"
+#endif
+#if BF_ENABLE_ASSERTS
+         " [ASSERTS]"
+#endif
     ;
 }
 
