@@ -16,6 +16,8 @@
 ```shell
 pre-commit install
 pre-commit install --install-hooks
+poetry install
+poetry run build
 ```
 
 ## Bootstrap a new game
