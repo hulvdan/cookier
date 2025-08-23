@@ -9,11 +9,13 @@
 - Install pyenv
   - `pyenv install 3.11.3`
   - `pyenv global 3.11.3`
-  - `pip install poetry pre-commit`
+  - `choco install ffmpeg`
+  - `choco install llvm`
 
-## Setup game-template
+## Contributing to game-template
 
 ```shell
+pip install poetry pre-commit
 pre-commit install
 pre-commit install --install-hooks
 poetry install
