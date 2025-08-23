@@ -1,0 +1,1 @@
+poetry run python cli\cli.py build game Win Debug
