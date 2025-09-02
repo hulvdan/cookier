@@ -4,8 +4,8 @@
 
 static u32 g_randState = 0;
 
-/// Based off splitMix32
-u32 Rand() {
+// Based off splitMix32.
+u32 Rand() {  ///
   u32 z = g_randState + 0x9e3779b9;
   z ^= z >> 15;
   z *= 0x85ebca6b;
@@ -17,11 +17,11 @@ u32 Rand() {
 }
 
 // [0; 1)
-f32 FRand() {
+f32 FRand() {  ///
   return (f32)((f64)Rand() / (f64)((u64)u32_max + 1));
 }
 
-TEST_CASE ("FRand") {
+TEST_CASE ("FRand") {  ///
   FOR_RANGE (int, i, 1000) {
     auto result = FRand();
     ASSERT(result >= 0);
@@ -30,14 +30,14 @@ TEST_CASE ("FRand") {
 }
 
 // [a; b]
-int RandInt(int a, int b) {
+int RandInt(int a, int b) {  ///
   ASSERT(a <= b);
   auto r = (int)(FRand() * (f32)(b - a + 1));
   ASSERT(r >= 0);
   return a + r;
 }
 
-TEST_CASE ("RandInt") {
+TEST_CASE ("RandInt") {  ///
   int values_[1000];
   VIEW_FROM_ARRAY_DANGER(values);
 
@@ -54,31 +54,31 @@ TEST_CASE ("RandInt") {
   ASSERT(RandInt(1, 1) == 1);
 }
 
-int RandInt(uint a, uint b) {
+int RandInt(uint a, uint b) {  ///
   ASSERT(a <= b);
   int r = (int)(FRand() * (f32)(b - a + 1));
   ASSERT(r >= 0);
   return (int)a + r;
 }
 
-int RandInt(int b) {
+int RandInt(int b) {  ///
   return MIN((int)(FRand() * b), b);
 }
 
-int RandInt(uint b) {
+int RandInt(uint b) {  ///
   auto r = FRand() * (f32)b;
   ASSERT(r >= 0);
   return MIN((int)r, (int)b);
 }
 
-TEST_CASE ("RandInt") {
+TEST_CASE ("RandInt") {  ///
   FOR_RANGE (int, i, 1000) {
     ASSERT(RandInt(1) <= 1);
   }
 }
 
 template <typename T>
-void Shuffle(T* array, size_t n) {
+void Shuffle(T* array, size_t n) {  ///
   if (n > 1) {
     for (size_t i = n - 1; i > 0; i--) {
       size_t j = Rand() % (i + 1);
@@ -90,7 +90,7 @@ void Shuffle(T* array, size_t n) {
   }
 }
 
-TEST_CASE ("Shuffle") {
+TEST_CASE ("Shuffle") {  ///
   int values_[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   VIEW_FROM_ARRAY_DANGER(values);
 

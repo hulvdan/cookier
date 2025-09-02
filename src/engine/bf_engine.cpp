@@ -8,72 +8,59 @@
 constexpr auto SQRT_2        = 1.41421356237f;
 constexpr auto SQRT_2_OVER_2 = 0.70710678f;
 
-///
-f32 Vector2Length(Vector2 v) {
+f32 Vector2Length(Vector2 v) {  ///
   return glm::length(v);
 }
 
-///
-f32 Vector2LengthSqr(Vector2 v) {
+f32 Vector2LengthSqr(Vector2 v) {  ///
   return v.x * v.x + v.y * v.y;
 }
 
-///
-f32 Vector2Dot(Vector2 v1, Vector2 v2) {
+f32 Vector2Dot(Vector2 v1, Vector2 v2) {  ///
   return glm::dot(v1, v2);
 }
 
-///
-f32 Vector2Distance(Vector2 v1, Vector2 v2) {
+f32 Vector2Distance(Vector2 v1, Vector2 v2) {  ///
   return Vector2Length(v2 - v1);
 }
 
-///
-f32 Vector2DistanceSqr(Vector2 v1, Vector2 v2) {
+f32 Vector2DistanceSqr(Vector2 v1, Vector2 v2) {  ///
   return Vector2LengthSqr(v2 - v1);
 }
 
-///
-f32 Vector2Angle(Vector2 v1, Vector2 v2) {
+f32 Vector2Angle(Vector2 v1, Vector2 v2) {  ///
   auto a1 = atan2f(v1.y, v1.x);
   auto a2 = atan2f(v2.y, v2.x);
   return a2 - a1;
 }
 
-///
-Vector2 Vector2Normalize(Vector2 v) {
+Vector2 Vector2Normalize(Vector2 v) {  ///
   return glm::normalize(v);
 }
 
-///
-Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, f32 amount) {
+Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, f32 amount) {  ///
   return v1 + (v2 - v1) * amount;
 }
 
-///
-Vector2 Vector2Reflect(Vector2 v, Vector2 normal) {
+Vector2 Vector2Reflect(Vector2 v, Vector2 normal) {  ///
   return glm::reflect(v, normal);
 }
 
-///
-Vector2 Vector2Rotate(Vector2 v, f32 angle) {
+Vector2 Vector2Rotate(Vector2 v, f32 angle) {  ///
   auto c = cosf(angle);
   auto s = sinf(angle);
   return {v.x * c - v.y * s, v.x * s + v.y * c};
 }
 
-///
-bool Vector2Equals(Vector2 v1, Vector2 v2) {
+bool Vector2Equals(Vector2 v1, Vector2 v2) {  ///
   return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y);
 }
 
-///
-bool Vector3Equals(Vector3 v1, Vector3 v2) {
+bool Vector3Equals(Vector3 v1, Vector3 v2) {  ///
   return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y) && FloatEquals(v1.z, v2.z);
 }
 
-///
-Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, f32 maxDistance) {
+Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, f32 maxDistance) {  ///
   if (Vector2Equals(v, target))
     return target;
 
@@ -83,33 +70,27 @@ Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, f32 maxDistance) {
   return v;
 }
 
-///
-Vector2 Vector2Invert(Vector2 v) {
+Vector2 Vector2Invert(Vector2 v) {  ///
   return {1.0f / v.x, 1.0f / v.y};
 }
 
-///
-Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) {
+Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) {  ///
   return glm::clamp(v, min, max);
 }
 
-///
-Vector2 Vector2ClampValue(Vector2 v, f32 min, f32 max) {
+Vector2 Vector2ClampValue(Vector2 v, f32 min, f32 max) {  ///
   return glm::clamp(v, min, max);
 }
 
-///
-constexpr Vector2 Vector2Zero() {
+constexpr Vector2 Vector2Zero() {  ///
   return Vector2{0, 0};
 }
 
-///
-constexpr Vector2 Vector2Half() {
+constexpr Vector2 Vector2Half() {  ///
   return Vector2{0.5f, 0.5f};
 }
 
-///
-constexpr Vector2 Vector2One() {
+constexpr Vector2 Vector2One() {  ///
   return Vector2{1, 1};
 }
 
@@ -123,7 +104,36 @@ struct Color {
   u8 g = u8_max;
   u8 b = u8_max;
   u8 a = u8_max;
+
+  Color operator*(const Color& v) {  ///
+    Color result{
+      (u8)(v.r * r / 255),
+      (u8)(v.g * g / 255),
+      (u8)(v.b * b / 255),
+      (u8)(v.a * a / 255),
+    };
+    return result;
+  }
 };
+
+Color ColorFromRGB(u32 color) {  ///
+  Color color_{
+    .r = (u8)((color & (0xff << 16)) >> 16),
+    .g = (u8)((color & (0xff << 8)) >> 8),
+    .b = (u8)((color & (0xff << 0)) >> 0),
+    .a = 255,
+  };
+  return color_;
+}
+
+u32 ColorToRGBA(Color color) {  ///
+  u32 value = 0;
+  value += (u32)color.r << 24;
+  value += (u32)color.g << 16;
+  value += (u32)color.b << 8;
+  value += (u32)color.a << 0;
+  return value;
+}
 
 constexpr Color WHITE   = Color{};
 constexpr Color BLACK   = Color{0, 0, 0, u8_max};
@@ -135,8 +145,7 @@ constexpr Color YELLOW  = Color{u8_max, u8_max, 0, u8_max};
 constexpr Color CYAN    = Color{0, u8_max, u8_max, u8_max};
 constexpr Color MAGENTA = Color{u8_max, 0, u8_max, u8_max};
 
-///
-Color Darken(Color value, f32 p) {
+Color Darken(Color value, f32 p) {  ///
   ASSERT(p >= 0);
   ASSERT(p <= 1);
   return {
@@ -147,8 +156,7 @@ Color Darken(Color value, f32 p) {
   };
 }
 
-///
-Color Fade(Color value, f32 p) {
+Color Fade(Color value, f32 p) {  ///
   ASSERT(p >= 0);
   ASSERT(p <= 1);
   value.a = (u8)(255 * Clamp01(p));
@@ -166,8 +174,7 @@ struct Texture2D {
 
 const BFGame::GameLibrary* glib = nullptr;
 
-///
-struct _PosColorTexVertex {
+struct _PosColorTexVertex {  ///
   f32 x, y, z;
   u32 abgr;
   f32 u, v;
@@ -177,8 +184,7 @@ struct _PosColorTexVertex {
 
 bgfx::VertexLayout _PosColorTexVertex::layout;
 
-///
-struct _PosColorVertex {
+struct _PosColorVertex {  ///
   f32 x, y, z;
   u32 abgr;
 
@@ -193,9 +199,10 @@ struct Shader {
   u64                 additionalStateFlags = {};
 };
 
-enum DeviceType {
+enum DeviceType : int {
   DeviceType_DESKTOP,
   DeviceType_MOBILE,
+  DeviceType_COUNT,
 };
 
 struct TouchID {
@@ -229,14 +236,18 @@ struct _TouchData {
   u32     _state      = {};
 };
 
+struct Margins {
+  f32 left, right, top, bottom = {};
+};
+
 struct DrawTextureData {
-  int     texId      = -1;
-  f32     rotation   = {};
-  Vector2 pos        = {};
-  Vector2 anchor     = Vector2Half();
-  Vector2 scale      = {1, 1};
-  Vector2 sourceSize = {1, 1};
-  Color   color      = WHITE;
+  int     texId         = -1;
+  f32     rotation      = {};
+  Vector2 pos           = {};
+  Vector2 anchor        = Vector2Half();
+  Vector2 scale         = {1, 1};
+  Margins sourceMargins = {0, 0};
+  Color   color         = WHITE;
   // bgfx::ProgramHandle program = {};
   // int materialsBufferStart = -1;
 };
@@ -251,7 +262,7 @@ struct DrawCircleData {
 struct DrawRectData {
   Vector2 pos    = {};
   Vector2 size   = {};
-  Vector2 anchor = {};
+  Vector2 anchor = Vector2Half();
   Color   color  = {};
 };
 
@@ -316,30 +327,26 @@ struct RenderCommand {
     DrawTextData    text;
   } _u;
 
-  ///
-  auto& DataTexture() const {
+  auto& DataTexture() const {  ///
     ASSERT(type == RenderCommandType_TEXTURE);
     return _u.texture;
   }
 
-  ///
-  auto& DataCircle() const {
+  auto& DataCircle() const {  ///
     auto allowed
       = (type == RenderCommandType_CIRCLE) || (type == RenderCommandType_CIRCLE_LINES);
     ASSERT(allowed);
     return _u.circle;
   }
 
-  ///
-  auto& DataRect() const {
+  auto& DataRect() const {  ///
     auto allowed
       = (type == RenderCommandType_RECT) || (type == RenderCommandType_RECT_LINES);
     ASSERT(allowed);
     return _u.rect;
   }
 
-  ///
-  auto& DataText() const {
+  auto& DataText() const {  ///
     ASSERT(type == RenderCommandType_TEXT);
     return _u.text;
   }
@@ -377,18 +384,29 @@ struct EngineData {
     f64 prevFrameTime = {};
     f64 frameTime     = {};
 
-    Arena _trashArena = {};
+    Arena _arena = {};
 
     DeviceType deviceType = DeviceType_DESKTOP;
 
     Vector2 _screenToLogicalScale = {};
     Vector2 _screenToLogicalAdd   = {};
 
-    int localization = 0;
+    int localization = 1;  // en.
+
+    struct SoundManager {
+      ma_sound* sounds[ARRAY_COUNT(g_sounds)];
+      int*      soundPlayedIndicesPerVariation[ARRAY_COUNT(g_sounds)];
+      ma_engine engine = {};
+    } _soundManager = {};
+
+    bool ysdkLoaded = false;
+    bool paused     = false;
   } meta;
 
   struct Settings {
-    Color     vignetteAndStripsColor = BLACK;
+    Color     backgroundColor = BLACK;
+    Color     screenFadeColor = BLACK;
+    f32       screenFade      = 0;
     View<u64> bgfxDisabledCapabilities{};
 
     struct {
@@ -399,6 +417,8 @@ struct EngineData {
       std::vector<std::string> currencies = {};
       std::vector<std::string> resources  = {};
     } gameanalytics;
+
+    size_t additionalArenaSize = 0;
   } settings;
 
   struct Render {
@@ -409,15 +429,61 @@ struct EngineData {
   } render;
 } ge = {};
 
-///
-BF_FORCE_INLINE void RenderGroup_Begin(RenderZ z) {
+// clang-format off
+#ifdef BF_PLATFORM_WebYandex
+EM_JS(void, js_YandexReady, (), {
+  window.ysdk.features.LoadingAPI.ready();
+});
+#endif
+// clang-format on
+
+void GameReady() {  ///
+#ifdef BF_PLATFORM_WebYandex
+  js_YandexReady();
+#endif
+}
+
+ma_sound* PlaySound(Sound sound) {  ///
+  auto& params = g_sounds[sound];
+
+  auto  variation = Rand() % params.variations;
+  auto& varIndex = ge.meta._soundManager.soundPlayedIndicesPerVariation[sound][variation];
+  auto  index    = variation * params.pool + varIndex;
+  ASSERT(index < params.variations * params.pool);
+  auto& s = ge.meta._soundManager.sounds[sound][index];
+
+  if (ma_sound_is_playing(&s))
+    return nullptr;
+
+  ma_sound_seek_to_pcm_frame(&s, 0);
+
+  if (params.volume != 1.0f)
+    ma_sound_set_volume(&s, params.volume);
+
+  if (params.pitchMin != 1.0f) {
+    auto t = FRand();
+    t      = EaseInOutQuad(t);
+    ma_sound_set_pitch(&s, Lerp(params.pitchMin, params.pitchMax, t));
+  }
+
+  ma_sound_start(&s);
+  IncrementSetZeroOn(&varIndex, params.pool);
+
+  return &ge.meta._soundManager.sounds[sound][index];
+}
+
+void StopSound(ma_sound* sound) {  ///
+  if (sound)
+    ma_sound_stop(sound);
+}
+
+BF_FORCE_INLINE void RenderGroup_Begin(RenderZ z) {  ///
   ASSERT(ge.render.currentGroupIndex == -1);
   ge.render.currentGroupIndex = ge.render.groups.count;
   *ge.render.groups.Add()     = {.z = z, .commandsStartIndex = ge.render.commands.count};
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_SetSortY(f32 value) {
+BF_FORCE_INLINE void RenderGroup_SetSortY(f32 value) {  ///
   auto& group = ge.render.groups[ge.render.currentGroupIndex];
 
   if (group.sortY == f32_inf)
@@ -431,11 +497,27 @@ enum RenderCommandSetSortY {
   RenderCommandSetSortY_SET_BASELINE,
 };
 
-///
 BF_FORCE_INLINE void RenderGroup_CommandTexture(
   DrawTextureData       data,
   RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
-) {
+) {  ///
+  ASSERT(data.sourceMargins.left >= 0);
+  ASSERT(data.sourceMargins.right >= 0);
+  ASSERT(data.sourceMargins.top >= 0);
+  ASSERT(data.sourceMargins.bottom >= 0);
+  ASSERT(data.sourceMargins.left <= 1);
+  ASSERT(data.sourceMargins.right <= 1);
+  ASSERT(data.sourceMargins.top <= 1);
+  ASSERT(data.sourceMargins.bottom <= 1);
+
+  auto mx = data.sourceMargins.left + data.sourceMargins.right;
+  auto my = data.sourceMargins.bottom + data.sourceMargins.top;
+  ASSERT(mx >= 0);
+  ASSERT(my >= 0);
+
+  if ((mx >= 1) || (my >= 1))
+    return;
+
   if (setSortY == RenderCommandSetSortY_SET_BASELINE) {
     auto tex    = glib->atlas_textures()->Get(data.texId);
     auto height = (f32)tex->size_y();
@@ -451,8 +533,7 @@ BF_FORCE_INLINE void RenderGroup_CommandTexture(
   };
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_CommandCircle(
+BF_FORCE_INLINE void RenderGroup_CommandCircle(  ///
   DrawCircleData        data,
   RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
 ) {
@@ -466,8 +547,7 @@ BF_FORCE_INLINE void RenderGroup_CommandCircle(
   };
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_CommandRect(
+BF_FORCE_INLINE void RenderGroup_CommandRect(  ///
   DrawRectData          data,
   RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
 ) {
@@ -481,8 +561,7 @@ BF_FORCE_INLINE void RenderGroup_CommandRect(
   };
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_CommandCircleLines(DrawCircleData data) {
+BF_FORCE_INLINE void RenderGroup_CommandCircleLines(DrawCircleData data) {  ///
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_CIRCLE_LINES,
@@ -490,8 +569,7 @@ BF_FORCE_INLINE void RenderGroup_CommandCircleLines(DrawCircleData data) {
   };
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {
+BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {  ///
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_RECT_LINES,
@@ -499,8 +577,7 @@ BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {
   };
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_CommandText(DrawTextData data) {
+BF_FORCE_INLINE void RenderGroup_CommandText(DrawTextData data) {  ///
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_TEXT,
@@ -508,8 +585,7 @@ BF_FORCE_INLINE void RenderGroup_CommandText(DrawTextData data) {
   };
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_End() {
+BF_FORCE_INLINE void RenderGroup_End() {  ///
   const auto& group           = ge.render.groups[ge.render.currentGroupIndex];
   ge.render.currentGroupIndex = -1;
 
@@ -521,53 +597,47 @@ BF_FORCE_INLINE void RenderGroup_End() {
   ASSERT(group.sortY != f32_inf);
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_OneShotTexture(DrawTextureData data, RenderZ z) {
+BF_FORCE_INLINE void RenderGroup_OneShotTexture(DrawTextureData data, RenderZ z) {  ///
   RenderGroup_Begin(z);
   RenderGroup_CommandTexture(data, RenderCommandSetSortY_SET_BASELINE);
   RenderGroup_End();
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_OneShotCircle(DrawCircleData data, RenderZ z) {
+BF_FORCE_INLINE void RenderGroup_OneShotCircle(DrawCircleData data, RenderZ z) {  ///
   RenderGroup_Begin(z);
   RenderGroup_CommandCircle(data, RenderCommandSetSortY_SET_BASELINE);
   RenderGroup_End();
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_OneShotCircleLines(DrawCircleData data) {
+BF_FORCE_INLINE void RenderGroup_OneShotCircleLines(DrawCircleData data) {  ///
   RenderGroup_Begin(RenderZ_GIZMOS);
   RenderGroup_SetSortY(0);
   RenderGroup_CommandCircleLines(data);
   RenderGroup_End();
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_OneShotRect(DrawRectData data, RenderZ z) {
+BF_FORCE_INLINE void RenderGroup_OneShotRect(DrawRectData data, RenderZ z) {  ///
   RenderGroup_Begin(z);
   RenderGroup_CommandRect(data, RenderCommandSetSortY_SET_BASELINE);
   RenderGroup_End();
 }
 
-///
-BF_FORCE_INLINE void RenderGroup_OneShotRectLines(DrawRectData data) {
+BF_FORCE_INLINE void RenderGroup_OneShotRectLines(DrawRectData data) {  ///
   RenderGroup_Begin(RenderZ_GIZMOS);
   RenderGroup_SetSortY(0);
   RenderGroup_CommandRectLines(data);
   RenderGroup_End();
 }
 
-/// NOTE: Ignores Y!
-BF_FORCE_INLINE void RenderGroup_OneShotText(DrawTextData data, RenderZ z) {
+// NOTE: Ignores Y!
+BF_FORCE_INLINE void RenderGroup_OneShotText(DrawTextData data, RenderZ z) {  ///
   RenderGroup_Begin(z);
   RenderGroup_SetSortY(0);
   RenderGroup_CommandText(data);
   RenderGroup_End();
 }
 
-///
-BF_FORCE_INLINE int _RenderGroupCmp(const RenderGroup* v1, const RenderGroup* v2) {
+BF_FORCE_INLINE int _RenderGroupCmp(const RenderGroup* v1, const RenderGroup* v2) {  ///
   ASSERT(v1->z > RenderZ_INVALID);
   ASSERT(v2->z > RenderZ_INVALID);
   ASSERT(v1->z < RenderZ_COUNT);
@@ -602,8 +672,7 @@ BF_FORCE_INLINE int _RenderGroupCmp(const RenderGroup* v1, const RenderGroup* v2
 }
 
 // clang-format off
-///
-static const u8 _utf8d[364]{
+static const u8 _utf8d[364]{  ///
 	// The first part of the table maps bytes to character classes that
 	// to reduce the size of the transition table and create bitmasks.
 	 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -625,8 +694,7 @@ static const u8 _utf8d[364]{
 };
 // clang-format on
 
-///
-u32 _UTF8Decode(u32* _state, u8 _ch, u32* _codep) {
+u32 _UTF8Decode(u32* _state, u8 _ch, u32* _codep) {  ///
   u32 byte = _ch;
   u32 type = _utf8d[byte];
   *_codep  = (*_state != 0) ? (byte & 0x3fu) | (*_codep << 6) : (0xff >> type) & (byte);
@@ -634,13 +702,11 @@ u32 _UTF8Decode(u32* _state, u8 _ch, u32* _codep) {
   return *_state;
 }
 
-/// void IterateOverCodepoints(const char* text, int bytesCount, auto&& lambda)
-// {
 BF_FORCE_INLINE void IterateOverCodepoints(
-  const char* text,
-  int         bytesCount,
-  auto&&      lambda /* void(u32 codepoint) */
-) noexcept {
+  const char*                      text,
+  int                              bytesCount,
+  auto&& /* void(u32 codepoint) */ lambda
+) noexcept {  ///
   ASSERT(bytesCount > 0);
   ASSERT(text);
 
@@ -661,7 +727,6 @@ BF_FORCE_INLINE void IterateOverCodepoints(
   lambda(0);
   ASSERT_FALSE(state);  // The string is not well-formed.
 }
-// }
 
 //
 void FlushRenderCommands() {
@@ -670,8 +735,7 @@ void FlushRenderCommands() {
   ASSERT_FALSE(ge.render.flushedThisFrame);
   ge.render.flushedThisFrame = true;
 
-  /// Setup.
-  // {
+  // Setup. {  ///
   ASSERT(ge.render.currentGroupIndex == -1);
 
   qsort(
@@ -726,8 +790,7 @@ void FlushRenderCommands() {
     const Font*   font   = nullptr;
     const Shader* shader = nullptr;
 
-    ///
-    LAMBDA (void, endShader, (int mode)) {
+    LAMBDA (void, endShader, (int mode)) {  ///
       if (!mode) {
         drawCallIndicesCounts[drawCallIndex]  = drawCallIndicesCount;
         drawCallVerticesCounts[drawCallIndex] = drawCallVerticesCount;
@@ -761,8 +824,7 @@ void FlushRenderCommands() {
       ASSERT(group.commandsCount > 0);
 
       FOR_RANGE (int, commandIndex, group.commandsCount) {
-        /// Setup.
-        // {
+        // Setup. {  ///
         const auto& command = ge.render.commands[group.commandsStartIndex + commandIndex];
 
         const Font*   newFont   = nullptr;
@@ -809,8 +871,7 @@ void FlushRenderCommands() {
         // }
 
         switch (command.type) {
-        ///
-        case RenderCommandType_TEXTURE: {
+        case RenderCommandType_TEXTURE: {  ///
           if (!mode) {
             drawCallIndicesCount += 6;
             drawCallVerticesCount += 4;
@@ -823,28 +884,32 @@ void FlushRenderCommands() {
 
             const Rect sourceRec{
               .pos{
-                (f32)tex->atlas_x() + (f32)tex->size_x() * (1 - data.sourceSize.x),
-                (f32)tex->atlas_y() + (f32)tex->size_y() * (1 - data.sourceSize.y),
+                (f32)tex->atlas_x() + (f32)tex->size_x() * data.sourceMargins.left,
+                (f32)tex->atlas_y() + (f32)tex->size_y() * data.sourceMargins.bottom,
               },
               .size{
-                (f32)tex->size_x() * data.sourceSize.x,
-                (f32)tex->size_y() * data.sourceSize.y,
+                (f32)tex->size_x()
+                  * (1 - data.sourceMargins.right - data.sourceMargins.left),
+                (f32)tex->size_y()
+                  * (1 - data.sourceMargins.top - data.sourceMargins.bottom),
               },
             };
             Rect destRec{
               .pos{
                 data.pos.x
-                  + (f32)tex->size_x() * (1 - data.sourceSize.x) * abs(data.scale.x)
+                  + (f32)tex->size_x() * data.sourceMargins.left * abs(data.scale.x)
                       * ge.meta.screenScale * data.anchor.x,
                 data.pos.y
-                  + (f32)tex->size_y() * (1 - data.sourceSize.y) * abs(data.scale.y)
+                  + (f32)tex->size_y() * data.sourceMargins.bottom * abs(data.scale.y)
                       * ge.meta.screenScale * data.anchor.y,
               },
               .size{
-                (f32)tex->size_x() * data.sourceSize.x * abs(data.scale.x)
-                  * ge.meta.screenScale,
-                (f32)tex->size_y() * data.sourceSize.y * abs(data.scale.y)
-                  * ge.meta.screenScale,
+                (f32)tex->size_x()
+                  // * (1 - data.sourceMargins.left - data.sourceMargins.right)
+                  * abs(data.scale.x) * ge.meta.screenScale,
+                (f32)tex->size_y()
+                  // * (1 - data.sourceMargins.bottom - data.sourceMargins.top)
+                  * abs(data.scale.y) * ge.meta.screenScale,
               },
             };
             destRec.pos -= LOGICAL_RESOLUTION / 2;
@@ -854,6 +919,10 @@ void FlushRenderCommands() {
             auto sx1 = sx0 + sourceRec.size.x;
             auto sy0 = sourceRec.pos.y;
             auto sy1 = sy0 + sourceRec.size.y;
+            sx0 += 0.7f;
+            sx1 -= 0.7f;
+            sy0 += 0.7f;
+            sy1 -= 0.7f;
             sx0 /= (f32)ge.meta.atlas.size.x;
             sx1 /= (f32)ge.meta.atlas.size.x;
             sy0 /= (f32)ge.meta.atlas.size.y;
@@ -874,11 +943,16 @@ void FlushRenderCommands() {
             Vector2 bottomLeft{};
             Vector2 bottomRight{};
 
+            auto dsx
+              = destRec.size.x * (1 - data.sourceMargins.left - data.sourceMargins.right);
+            auto dsy
+              = destRec.size.y * (1 - data.sourceMargins.bottom - data.sourceMargins.top);
+
             if (data.rotation == 0.0f) {
               auto dx0 = destRec.pos.x;
-              auto dx1 = destRec.pos.x + destRec.size.x;
+              auto dx1 = destRec.pos.x + dsx;
               auto dy0 = destRec.pos.y;
-              auto dy1 = destRec.pos.y + destRec.size.y;
+              auto dy1 = destRec.pos.y + dsy;
 
               dx0 -= data.anchor.x * destRec.size.x;
               dx1 -= data.anchor.x * destRec.size.x;
@@ -900,20 +974,16 @@ void FlushRenderCommands() {
               topLeft.x = destRec.pos.x + dx * cosRotation - dy * sinRotation;
               topLeft.y = destRec.pos.y + dx * sinRotation + dy * cosRotation;
 
-              topRight.x
-                = destRec.pos.x + (dx + destRec.size.x) * cosRotation - dy * sinRotation;
-              topRight.y
-                = destRec.pos.y + (dx + destRec.size.x) * sinRotation + dy * cosRotation;
+              topRight.x = destRec.pos.x + (dx + dsx) * cosRotation - dy * sinRotation;
+              topRight.y = destRec.pos.y + (dx + dsx) * sinRotation + dy * cosRotation;
 
-              bottomLeft.x
-                = destRec.pos.x + dx * cosRotation - (dy + destRec.size.y) * sinRotation;
-              bottomLeft.y
-                = destRec.pos.y + dx * sinRotation + (dy + destRec.size.y) * cosRotation;
+              bottomLeft.x = destRec.pos.x + dx * cosRotation - (dy + dsy) * sinRotation;
+              bottomLeft.y = destRec.pos.y + dx * sinRotation + (dy + dsy) * cosRotation;
 
-              bottomRight.x = destRec.pos.x + (dx + destRec.size.x) * cosRotation
-                              - (dy + destRec.size.y) * sinRotation;
-              bottomRight.y = destRec.pos.y + (dx + destRec.size.x) * sinRotation
-                              + (dy + destRec.size.y) * cosRotation;
+              bottomRight.x
+                = destRec.pos.x + (dx + dsx) * cosRotation - (dy + dsy) * sinRotation;
+              bottomRight.y
+                = destRec.pos.y + (dx + dsx) * sinRotation + (dy + dsy) * cosRotation;
             }
 
             topLeft.x /= (f32)LOGICAL_RESOLUTION.x / 2.0f;
@@ -962,13 +1032,11 @@ void FlushRenderCommands() {
           ASSERT_FALSE(drawCallVerticesCount % 4);
         } break;
 
-        ///
-        case RenderCommandType_CIRCLE: {
+        case RenderCommandType_CIRCLE: {  ///
           NOT_IMPLEMENTED;
         } break;
 
-        ///
-        case RenderCommandType_RECT: {
+        case RenderCommandType_RECT: {  ///
           if (!mode) {
             drawCallIndicesCount += 6;
             drawCallVerticesCount += 4;
@@ -1020,8 +1088,7 @@ void FlushRenderCommands() {
           }
         } break;
 
-          ///
-        case RenderCommandType_CIRCLE_LINES: {
+        case RenderCommandType_CIRCLE_LINES: {  ///
           if (!mode) {
             drawCallIndicesCount += 16;
             drawCallVerticesCount += 8;
@@ -1084,8 +1151,7 @@ void FlushRenderCommands() {
           }
         } break;
 
-          ///
-        case RenderCommandType_RECT_LINES: {
+        case RenderCommandType_RECT_LINES: {  ///
           if (!mode) {
             drawCallIndicesCount += 8;
             drawCallVerticesCount += 4;
@@ -1136,8 +1202,7 @@ void FlushRenderCommands() {
           }
         } break;
 
-        ///
-        case RenderCommandType_TEXT: {
+        case RenderCommandType_TEXT: {  ///
           const auto& data = command.DataText();
 
           ASSERT(data.bytesCount > 0);
@@ -1314,8 +1379,7 @@ void FlushRenderCommands() {
           }
         } break;
 
-          ///
-        case RenderCommandType_STRIPS: {
+        case RenderCommandType_STRIPS: {  ///
           const auto r = ge.meta.screenToLogicalRatio;
 
           if (!mode) {
@@ -1325,56 +1389,62 @@ void FlushRenderCommands() {
             }
           }
           else {
-            f32 stripWidth  = 2.002f;
-            f32 stripHeight = 2.002f;
-
-            const auto color = *(u32*)&ge.settings.vignetteAndStripsColor;
+            auto color = *(u32*)&ge.settings.backgroundColor;
+            if (BF_DEBUG_VIGNETTE_AND_STRIPS)
+              color = *(u32*)&GREEN;
 
             _PosColorVertex quadVertices[8]{};
 
             auto shouldDrawStrips = true;
 
+            const auto    tex = glib->atlas_textures()->Get(glib->vignette_texture_id());
+            constexpr f32 VIGNETTE_SIZE = 28.0f;
+
             if (r > 1) {
               // Window is too wide. Draw left and right strips.
-              stripWidth = 1 - 1 / r + 0.002f;
+              const auto vignetteSize = VIGNETTE_SIZE / (f32)tex->size_x() / r;
+              const auto stripSize    = 1 - 1 / r + 0.002f - vignetteSize;
 
-              // Top-left.
+              // 1. Top-left.
               quadVertices[0] = {-1.001f, -1.001f, 0, color};
-              // Top-right.
-              quadVertices[1] = {-1.001f + stripWidth, -1.001f, 0, color};
-              // Bottom-left.
+              // 1. Top-right.
+              quadVertices[1] = {-1.001f + stripSize, -1.001f, 0, color};
+              // 1. Bottom-left.
               quadVertices[2] = {-1.001f, 1.001f, 0, color};
-              // Bottom-right.
-              quadVertices[3] = {-1.001f + stripWidth, 1.001f, 0, color};
-              // Top-left.
-              quadVertices[4] = {1.001f - stripWidth, -1.001f, 0, color};
-              // Top-right.
+              // 1. Bottom-right.
+              quadVertices[3] = {-1.001f + stripSize, 1.001f, 0, color};
+
+              // 2. Top-left.
+              quadVertices[4] = {1.001f - stripSize, -1.001f, 0, color};
+              // 2. Top-right.
               quadVertices[5] = {1.001f, -1.001f, 0, color};
-              // Bottom-left.
-              quadVertices[6] = {1.001f - stripWidth, 1.001f, 0, color};
-              // Bottom-right.
+              // 2. Bottom-left.
+              quadVertices[6] = {1.001f - stripSize, 1.001f, 0, color};
+              // 2. Bottom-right.
               quadVertices[7] = {1.001f, 1.001f, 0, color};
             }
             else if (r < 1) {
               // Window is too high. Draw bottom and top strips.
-              stripHeight = 1 - r + 0.002f;
+              const auto vignetteSize = VIGNETTE_SIZE / (f32)tex->size_y() * r;
+              const auto stripSize    = 1 - r + 0.002f - vignetteSize;
 
-              // Top-left.
+              // 1. Top-left.
               quadVertices[0] = {-1.001f, -1.001f, 0, color};
-              // Top-right.
+              // 1. Top-right.
               quadVertices[1] = {1.001f, -1.001f, 0, color};
-              // Bottom-left.
-              quadVertices[2] = {-1.001f, -1.001f + stripHeight, 0, color};
-              // Bottom-right.
-              quadVertices[3] = {1.001f, -1.001f + stripHeight, 0, color};
-              // Top-left.
+              // 1. Bottom-left.
+              quadVertices[2] = {-1.001f, -1.001f + stripSize, 0, color};
+              // 1. Bottom-right.
+              quadVertices[3] = {1.001f, -1.001f + stripSize, 0, color};
+
+              // 2. Top-left.
               quadVertices[4] = {-1.001f, 1.001f, 0, color};
-              // Top-right.
+              // 2. Top-right.
               quadVertices[5] = {1.001f, 1.001f, 0, color};
-              // Bottom-left.
-              quadVertices[6] = {-1.001f, 1.001f - stripHeight, 0, color};
-              // Bottom-right.
-              quadVertices[7] = {1.001f, 1.001f - stripHeight, 0, color};
+              // 2. Bottom-left.
+              quadVertices[6] = {-1.001f, 1.001f - stripSize, 0, color};
+              // 2. Bottom-right.
+              quadVertices[7] = {1.001f, 1.001f - stripSize, 0, color};
             }
             else
               shouldDrawStrips = false;
@@ -1405,8 +1475,7 @@ void FlushRenderCommands() {
   ge.render.groups.Reset();
 }
 
-///
-void _OnTouchDown(Touch touch) {
+void _OnTouchDown(Touch touch) {  ///
   for (auto id : ge.meta._touchIDs)
     ASSERT(id != touch._id);
 
@@ -1419,8 +1488,7 @@ void _OnTouchDown(Touch touch) {
   *ge.meta._touches.Add()  = d;
 }
 
-///
-void _OnTouchUp(Touch touch) {
+void _OnTouchUp(Touch touch) {  ///
   auto found = false;
   // Marking as released. It will be removed on calling `ResetPressedReleasedStates`.
   FOR_RANGE (int, i, ge.meta._touches.count) {
@@ -1437,8 +1505,7 @@ void _OnTouchUp(Touch touch) {
   ASSERT(found);
 }
 
-///
-void _OnTouchMoved(Touch touch) {
+void _OnTouchMoved(Touch touch) {  ///
   auto found = false;
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == touch._id) {
@@ -1452,8 +1519,7 @@ void _OnTouchMoved(Touch touch) {
   ASSERT(found);
 }
 
-///
-void ResetPressedReleasedStates() {
+void ResetPressedReleasedStates() {  ///
   ge.meta._mouseStatePressed  = 0;
   ge.meta._mouseStateReleased = 0;
   FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
@@ -1479,8 +1545,7 @@ void ResetPressedReleasedStates() {
     t._state &= ~_TouchDataState_PRESSED;
 }
 
-///
-bool IsTouchPressed(TouchID id) {
+bool IsTouchPressed(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
@@ -1491,8 +1556,7 @@ bool IsTouchPressed(TouchID id) {
   return false;
 }
 
-///
-bool IsTouchReleased(TouchID id) {
+bool IsTouchReleased(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
@@ -1503,8 +1567,7 @@ bool IsTouchReleased(TouchID id) {
   return false;
 }
 
-///
-bool IsTouchDown(TouchID id) {
+bool IsTouchDown(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
@@ -1514,8 +1577,7 @@ bool IsTouchDown(TouchID id) {
   return false;
 }
 
-///
-TEST_CASE ("Touch controls") {
+TEST_CASE ("Touch controls") {  ///
   LAMBDA (TouchID, id, (SDL_TouchID i)) {
     return {._touchID = i, ._fingerID = i};
   };
@@ -1579,8 +1641,7 @@ TEST_CASE ("Touch controls") {
   }
 }
 
-///
-void* LoadFileData(const char* filepath, int* out_size = nullptr) {
+void* LoadFileData(const char* filepath, int* out_size = nullptr) {  ///
   LOGI("Loading file data '%s'...", filepath);
 
   auto fp = fopen(filepath, "rb");
@@ -1621,20 +1682,20 @@ void* LoadFileData(const char* filepath, int* out_size = nullptr) {
   return buffer;
 }
 
-void UnloadFileData(void* ptr) {
+void UnloadFileData(void* ptr) {  ///
   free(ptr);
 }
 
-bgfx::ShaderHandle _LoadShader(const u8* data, u32 size) {
+bgfx::ShaderHandle _LoadShader(const u8* data, u32 size) {  ///
   return bgfx::createShader(bgfx::makeRef(data, size));
 }
 
-View<TouchID> GetTouchIDs() {
+View<TouchID> GetTouchIDs() {  ///
   return {.count = ge.meta._touchIDs.count, .base = ge.meta._touchIDs.base};
 }
 
-///
-bgfx::ProgramHandle LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 sizeFsh) {
+bgfx::ProgramHandle
+LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 sizeFsh) {  ///
   return bgfx::createProgram(
     _LoadShader(vsh, sizeVsh),
     _LoadShader(fsh, sizeFsh),
@@ -1642,8 +1703,7 @@ bgfx::ProgramHandle LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 s
   );
 }
 
-///
-Texture2D _LoadTexture(const char* filepath, Vector2Int size) {
+Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
   ZoneScopedN("_LoadTexture()");
   LOGI("Loading texture '%s'...", filepath);
 
@@ -1788,51 +1848,115 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {
   return result;
 }
 
-///
-void _UnloadTexture(Texture2D* texture) {
+void _UnloadTexture(Texture2D* texture) {  ///
   bgfx::destroy(texture->handle);
   *texture = {};
 }
 
-///
-constexpr f32 ScaleToFit(Vector2 inner, Vector2 container) {
+constexpr f32 ScaleToFit(Vector2 inner, Vector2 container) {  ///
   f32 scaleX = container.x / inner.x;
   f32 scaleY = container.y / inner.y;
   f32 scale  = (scaleX < scaleY) ? scaleX : scaleY;
   return scale;
 }
 
-///
-TEST_CASE ("ScaleToFit") {
+TEST_CASE ("ScaleToFit") {  ///
   ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 2}), 2));
   ASSERT(FloatEquals(ScaleToFit({1, 1}, {3, 2}), 2));
   ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 3}), 2));
   ASSERT(FloatEquals(ScaleToFit({3, 3}, {2, 3}), 2.0f / 3.0f));
 }
 
-///
-constexpr f32 ScaleToCover(Vector2 inner, Vector2 container) {
+constexpr f32 ScaleToCover(Vector2 inner, Vector2 container) {  ///
   f32 scaleX = container.x / inner.x;
   f32 scaleY = container.y / inner.y;
   f32 scale  = (scaleX > scaleY) ? scaleX : scaleY;
   return scale;
 }
 
-///
-TEST_CASE ("ScaleToCover") {
+TEST_CASE ("ScaleToCover") {  ///
   ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 2}), 2));
   ASSERT(FloatEquals(ScaleToCover({1, 1}, {3, 2}), 3));
   ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 3}), 3));
   ASSERT(FloatEquals(ScaleToCover({3, 3}, {2, 3}), 1));
 }
 
-void LoadGamelib() {
+void LoadGamelib() {  ///
   glib = BFGame::GetGameLibrary(LoadFileData("resources/gamelib.bin"));
 }
 
-///
-void InitializeEngine() {
-  ZoneScopedN("InitializeEngine");
+void InitEngine() {  ///
+  ZoneScopedN("InitEngine");
+
+  ge.meta._keyboardState = SDL_GetKeyboardState(&ge.meta._keyboardStateCount);
+
+  size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardStateCount;
+  for (auto& params : g_sounds) {
+    arenaSize += sizeof(ma_sound) * params.pool * params.variations;
+    arenaSize += sizeof(int) * params.variations;
+  }
+  ge.meta._arena = MakeArena(arenaSize + ge.settings.additionalArenaSize);
+
+  if (Sound_COUNT) {  // Not initializing audio if there is no sounds in project.
+    auto config = ma_engine_config_init();
+    if (ma_engine_init(&config, &ge.meta._soundManager.engine) != MA_SUCCESS)
+      LOGW("Failed to init miniaudio engine");
+    else {
+      LOGI("miniaudio engine initialized");
+
+      FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
+        ge.meta._soundManager.sounds[i] = ALLOCATE_ZEROS_ARRAY(
+          &ge.meta._arena, ma_sound, g_sounds[i].pool * g_sounds[i].variations
+        );
+      }
+      FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
+        ge.meta._soundManager.soundPlayedIndicesPerVariation[i]
+          = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, int, g_sounds[i].variations);
+      }
+
+      int soundTypeIndex = 0;
+      for (const auto params : g_sounds) {
+        auto flags = MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC;
+        if (params.pitchMin == params.pitchMax)
+          flags |= MA_SOUND_FLAG_NO_PITCH;
+
+        FOR_RANGE (int, variation, params.variations) {
+          FOR_RANGE (int, poolInnerIndex, params.pool) {
+            if (!poolInnerIndex) {
+              // Loading original.
+              auto soundPath = params.pathVariations[variation];
+              auto error     = ma_sound_init_from_file(
+                &ge.meta._soundManager.engine,
+                soundPath,
+                flags,
+                nullptr,
+                nullptr,
+                &ge.meta._soundManager
+                   .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
+              );
+              if (error != MA_SUCCESS) {
+                LOGE("Failed to load sound %s: error code %d", soundPath, error);
+                break;
+              }
+            }
+            else {
+              // Loading copies.
+              ma_sound_init_copy(
+                &ge.meta._soundManager.engine,
+                &ge.meta._soundManager.sounds[soundTypeIndex][variation * params.pool],
+                flags,
+                nullptr,
+                &ge.meta._soundManager
+                   .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
+              );
+            }
+          }
+        }
+
+        soundTypeIndex++;
+      }
+    }
+  }
 
 #if !defined(SDL_PLATFORM_EMSCRIPTEN)
   if (ge.settings.gameanalytics.setup) {
@@ -1853,14 +1977,12 @@ void InitializeEngine() {
 
   ge.meta._touches.Reserve(8);
   ge.meta._touchIDs.Reserve(8);
-  ge.meta._keyboardState = SDL_GetKeyboardState(&ge.meta._keyboardStateCount);
-  ge.meta._trashArena    = MakeArena(3 * sizeof(bool) * ge.meta._keyboardStateCount);
   ge.meta._keyboardStatePrev
-    = ALLOCATE_ZEROS_ARRAY(&ge.meta._trashArena, bool, ge.meta._keyboardStateCount);
+    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
   ge.meta._keyboardStatePressed
-    = ALLOCATE_ZEROS_ARRAY(&ge.meta._trashArena, bool, ge.meta._keyboardStateCount);
+    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
   ge.meta._keyboardStateReleased
-    = ALLOCATE_ZEROS_ARRAY(&ge.meta._trashArena, bool, ge.meta._keyboardStateCount);
+    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
 
   LoadGamelib();
   ge.meta.atlas = _LoadTexture(
@@ -1898,8 +2020,18 @@ void InitializeEngine() {
   LOGI("Initialized engine");
 }
 
-///
-void UnloadFont(Font* font) {
+void DeinitEngine() {  ///
+  FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
+    FOR_RANGE (int, k, g_sounds[i].pool) {
+      ma_sound_uninit(&ge.meta._soundManager.sounds[i][k]);
+    }
+  }
+  ma_engine_uninit(&ge.meta._soundManager.engine);
+}
+
+void UnloadFont(Font* font) {  ///
+  ZoneScoped;
+
   ASSERT(font->loaded);
   font->loaded = false;
 
@@ -1926,8 +2058,9 @@ struct LoadFontData {
   f32 outlineAdvance = 0;  // Optional.
 };
 
-///
-Font LoadFont(LoadFontData data) {
+Font LoadFont(LoadFontData data) {  ///
+  ZoneScoped;
+
   ASSERT(data.filepath);
   ASSERT(data.size >= 0);
   ASSERT(data.codepoints);
@@ -1976,10 +2109,15 @@ Font LoadFont(LoadFontData data) {
     .num_chars                   = data.codepointsCount,
     .chardata_for_range          = font.chars,
   };
-  if (!stbtt_PackFontRanges(&context, font.fileData, 0, &range, 1)) {
-    LOGE("stbtt_PackFontRanges failed");
-    INVALID_PATH;
-    return {};
+
+  {
+    ZoneScopedN("stbtt_PackFontRanges()");
+
+    if (!stbtt_PackFontRanges(&context, font.fileData, 0, &range, 1)) {
+      LOGE("stbtt_PackFontRanges failed");
+      INVALID_PATH;
+      return {};
+    }
   }
 
   stbtt_PackEnd(&context);
@@ -1994,6 +2132,8 @@ Font LoadFont(LoadFontData data) {
   }
 
   if (data.outlineWidth) {
+    ZoneScopedN("Outlining");
+
     auto      dist_ = (f32*)malloc(atlasSize.x * atlasSize.y * sizeof(f32));
     View<f32> dist{
       .count = atlasSize.x * atlasSize.y,
@@ -2104,7 +2244,10 @@ Font LoadFont(LoadFontData data) {
   }
 
 #if BF_DEBUG & !defined(SDL_PLATFORM_EMSCRIPTEN)
-  stbi_write_png("debugFontAtlas.png", atlasSize.x, atlasSize.y, 4, atlasData, 0);
+  {
+    ZoneScopedN("stbi_write_png");
+    stbi_write_png("debugFontAtlas.png", atlasSize.x, atlasSize.y, 4, atlasData, 0);
+  }
 #endif
   // TODO: Rework as bgfx::TextureFormat::A8 + appropriate fragment shader.
   font.atlasTexture.handle = bgfx::createTexture2D(
@@ -2127,15 +2270,15 @@ Font LoadFont(LoadFontData data) {
   return font;
 }
 
-i64 GetTicks() {
+i64 GetTicks() {  ///
   return ge.meta.ticks;
 }
 
-f64 GetTime() {
+f64 GetTime() {  ///
   return (f64)ge.meta.ticks / 1000.0;
 }
 
-f32 FrameTime() {
+f32 FrameTime() {  ///
   return (f32)(ge.meta.frameTime - ge.meta.prevFrameTime);
 }
 
@@ -2149,8 +2292,8 @@ void EngineOnFrameStart() {
   auto           ratioActual   = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y;
   ge.meta.screenToLogicalRatio = ratioActual / ratioLogical;
 
-  /// Controls. Keyboard.
-  {
+  // Controls. Keyboard.
+  {  ///
     FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
       ge.meta._keyboardStatePressed[i]
         = !ge.meta._keyboardStatePrev[i] && ge.meta._keyboardState[i];
@@ -2165,8 +2308,8 @@ void EngineOnFrameStart() {
     );
   }
 
-  /// Controls. Mouse.
-  {
+  // Controls. Mouse.
+  {  ///
     ge.meta._mouseState = SDL_GetMouseState(&ge.meta._mousePos.x, &ge.meta._mousePos.y);
     ge.meta._mousePos.y = ge.meta.screenSize.y - ge.meta._mousePos.y;
 
@@ -2189,8 +2332,8 @@ void EngineOnFrameStart() {
     ge.meta._mouseStatePrev = ge.meta._mouseState;
   }
 
-  /// Caching ScreenToLogical data.
-  {
+  // Caching ScreenToLogical data.
+  {  ///
     const auto r = ge.meta.screenToLogicalRatio;
     const auto s = (Vector2)ge.meta.screenSize;
 
@@ -2209,15 +2352,15 @@ void EngineOnFrameStart() {
   }
 }
 
-bool IsKeyDown(SDL_Scancode key) {
+bool IsKeyDown(SDL_Scancode key) {  ///
   return ge.meta._keyboardState[key];
 }
 
-bool IsKeyPressed(SDL_Scancode key) {
+bool IsKeyPressed(SDL_Scancode key) {  ///
   return ge.meta._keyboardStatePressed[key];
 }
 
-bool IsKeyReleased(SDL_Scancode key) {
+bool IsKeyReleased(SDL_Scancode key) {  ///
   return ge.meta._keyboardStateReleased[key];
 }
 
@@ -2228,8 +2371,7 @@ bool IsKeyReleased(SDL_Scancode key) {
 #define IsMouseReleased(button_) \
   (ge.meta._mouseStateReleased & (SDL_BUTTON_##button_##MASK))
 
-///
-Vector2 GetTouchScreenPos(TouchID id) {
+Vector2 GetTouchScreenPos(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       return ge.meta._touches[i]._screenPos;
@@ -2239,8 +2381,7 @@ Vector2 GetTouchScreenPos(TouchID id) {
   return {};
 }
 
-///
-Vector2 GetTouchScreenDPos(TouchID id) {
+Vector2 GetTouchScreenDPos(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id)
       return ge.meta._touches[i]._screenDPos;
@@ -2249,8 +2390,7 @@ Vector2 GetTouchScreenDPos(TouchID id) {
   return {};
 }
 
-///
-void SetTouchUserData(TouchID id, u64 userData) {
+void SetTouchUserData(TouchID id, u64 userData) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       ge.meta._touches[i]._userData = userData;
@@ -2260,8 +2400,7 @@ void SetTouchUserData(TouchID id, u64 userData) {
   INVALID_PATH;  // Not found.
 }
 
-///
-u64 GetTouchUserData(TouchID id) {
+u64 GetTouchUserData(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id)
       return ge.meta._touches[i]._userData;
@@ -2270,34 +2409,31 @@ u64 GetTouchUserData(TouchID id) {
   return 0;
 }
 
-Vector2 GetMouseScreenPos() {
+Vector2 GetMouseScreenPos() {  ///
   return ge.meta._mousePos;
 }
 
-///
-void EngineApplyVignette() {
+void EngineApplyVignette() {  ///
   RenderGroup_OneShotTexture(
     {
       .texId = glib->vignette_texture_id(),
       .pos   = LOGICAL_RESOLUTION / 2,
       .scale{4.01f, 4.01f},
-      .color = ge.settings.vignetteAndStripsColor,
+      .color = (BF_DEBUG_VIGNETTE_AND_STRIPS ? RED : ge.settings.backgroundColor),
     },
     RenderZ_VIGNETTE
   );
 }
 
-///
-void EngineApplyStrips() {
-  RenderGroup_Begin(RenderZ_FADE);
+void EngineApplyStrips() {  ///
+  RenderGroup_Begin(RenderZ_VIGNETTE);
   RenderGroup_SetSortY(0);
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {.type = RenderCommandType_STRIPS};
   RenderGroup_End();
 }
 
-///
-const char* TextFormat(const char* text, ...) {
+const char* TextFormat(const char* text, ...) {  ///
   // Maximum number of static buffers for text formatting.
 #ifndef MAX_TEXTFORMAT_BUFFERS
 #  define MAX_TEXTFORMAT_BUFFERS 4

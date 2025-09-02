@@ -14,7 +14,7 @@ build_type = "Debug"
 function select_target()
     targets = { "game" }
     build_types = { "Debug", "Release", "RelWithDebInfo" }
-    platforms = { "Win", "Web" }
+    platforms = { "Win", "Web", "WebYandex" }
 
     function platform_build_type_choose()
         require("fastaction").select(platforms, {}, function(selected_platform)
@@ -61,7 +61,15 @@ function rebuild_tasks()
                 vim.fn.execute([[term python -m http.server -d .cmake\Web_Release 8001]])
             end,
         },
+        {
+            "c_serve_webyandex_release",
+            function()
+                vim.fn.execute([[term npx @yandex-games/sdk-dev-proxy -h localhost --dev-mode=true]])
+                vim.fn.execute([[term python -m http.server -d .cmake\WebYandex_Release 80]])
+            end,
+        },
         { "o_deploy_itch", cli_command("deploy_itch") },
+        { "p_deploy_yandex", cli_command("deploy_yandex") },
         { "i_make_swatch", cli_command("make_swatch") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
@@ -94,7 +102,7 @@ vim.keymap.set("n", "<leader>0", function()
     if (vim.bo.filetype == "cpp") or (vim.bo.filetype == "jsonc") or (vim.bo.filetype == "yaml") then
         vim.fn.execute([[silent!normal!zE]])
         vim.fn.execute([[silent!normal!mz]])
-        vim.fn.execute([[%g/\/\/\//silent!normal! j$zf%]])
+        vim.fn.execute([[%g/\/\/\//silent!normal! $hhhhhzf%]])
         vim.fn.execute([[%g/###/silent!normal! j$zf%]])
         vim.api.nvim_input("hl0$`z")
     end

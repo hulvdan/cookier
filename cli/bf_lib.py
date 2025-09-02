@@ -50,11 +50,23 @@ class BuildType(StrEnum):
 class BuildPlatform(StrEnum):
     Win = "Win"
     Web = "Web"
+    WebYandex = "WebYandex"
 
 
 class BuildTarget(StrEnum):
     game = "game"
     tests = "tests"
+
+
+ALLOWED_BUILDS = (
+    (BuildTarget.game, BuildPlatform.Win, BuildType.Debug),
+    (BuildTarget.game, BuildPlatform.Win, BuildType.RelWithDebInfo),
+    (BuildTarget.game, BuildPlatform.Win, BuildType.Release),
+    (BuildTarget.game, BuildPlatform.Web, BuildType.Debug),
+    (BuildTarget.game, BuildPlatform.Web, BuildType.Release),
+    (BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release),
+    (BuildTarget.tests, BuildPlatform.Win, BuildType.Debug),
+)
 
 
 P = ParamSpec("P")
@@ -194,10 +206,11 @@ PROJECT_DIR = Path(__file__).parent.parent
 TEMP_DIR = PROJECT_DIR / ".temp"
 TEMP_ART_DIR = TEMP_DIR / "art"
 CLI_DIR = Path("cli")
-SRC_DIR = Path("src")
 ASSETS_DIR = PROJECT_DIR / "assets"
 ART_DIR = ASSETS_DIR / "art"
+SRC_DIR = Path("src")
 RESOURCES_DIR = PROJECT_DIR / "resources"
+VENDOR_DIR = PROJECT_DIR / "vendor"
 GAME_DIR = PROJECT_DIR / "src" / "game"
 HANDS_GENERATED_DIR = PROJECT_DIR / "codegen" / "hands"
 FLATBUFFERS_GENERATED_DIR = PROJECT_DIR / "codegen" / "flatbuffers"
@@ -510,9 +523,13 @@ def git_stash():
         subprocess.run("git stash apply", check=True, shell=True)
 
 
-def _git_get_current_commit_tag() -> str | None:
+def _git_get_current_commit_version_tag() -> str | None:
     process = subprocess.run(
-        "git tag --points-at HEAD", check=True, shell=True, capture_output=True, text=True
+        'git tag -l "v1\\.*" --points-at HEAD',
+        check=True,
+        shell=True,
+        capture_output=True,
+        text=True,
     )
     return process.stdout.strip()
 
@@ -530,7 +547,7 @@ def _git_get_current_branch() -> str:
 def git_bump_tag() -> None:
     assert _git_get_current_branch() == "master"
 
-    if _git_get_current_commit_tag():
+    if _git_get_current_commit_version_tag():
         log.info("Skipping bumping tag")
         return
 

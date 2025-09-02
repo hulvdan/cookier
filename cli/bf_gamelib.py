@@ -7,6 +7,7 @@ from math import radians
 from pathlib import Path
 from typing import Any
 
+import pydub
 import pyjson5 as json
 import yaml
 from bf_game import *  # noqa
@@ -23,7 +24,9 @@ from bf_lib import (
     SRC_DIR,
     TEMP_ART_DIR,
     TEMP_DIR,
+    VENDOR_DIR,
     BuildPlatform,
+    BuildType,
     data_values,
     gamelib_processing_functions,
     genenum,
@@ -172,6 +175,94 @@ def convert_gamelib_json_to_binary(
 ) -> None:
     gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
 
+    if 1:
+        sound_paths = list(RESOURCES_DIR.rglob("*.ogg"))
+        genenum(
+            genline,
+            "Sound",
+            sorted(
+                {sound_path.stem.split("__", 1)[0].upper() for sound_path in sound_paths}
+            ),
+            add_count=True,
+        )
+        gamelib_sound_types: list[str] = [
+            i.pop("type") for i in gamelib.get("sounds", [])
+        ]
+        sound_types_from_files = {i.stem.split("__", 1)[0].upper() for i in sound_paths}
+        excessive_gamelib_sound_types: list[str] = []
+        for sound_type in gamelib_sound_types:
+            if sound_type not in sound_types_from_files:
+                excessive_gamelib_sound_types.append(sound_type)
+
+        if excessive_gamelib_sound_types:
+            assert False, "Found excessive sound types in gamelib: {}".format(
+                excessive_gamelib_sound_types
+            )
+
+        not_found_sounds: list[str] = []
+        sound_variations_per_type: dict[str, list[Path]] = defaultdict(list)
+        for sound_path in sound_paths:
+            sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
+                sound_path
+            )
+
+        for sound_type, variations in sound_variations_per_type.items():
+            params_index = gamelib_sound_types.index(sound_type)
+            if params_index < 0:
+                not_found_sounds.append(sound_type)
+                continue
+
+            genline("const char* const _soundVariations_{}[] {{".format(sound_type))
+            for sound_path in variations:
+                genline('  "{}",'.format(sound_path.relative_to(PROJECT_DIR).as_posix()))
+            genline("};")
+
+        if not_found_sounds:
+            assert False, f"Couldn't find {not_found_sounds} in gamelib"
+
+        genline("""\nconst struct {
+  const char* const * pathVariations = {};
+  int variations = {};
+  int pool = {};
+  f32 volume = {};
+  f32 pitchMin = {};
+  f32 pitchMax = {};
+} g_sounds[] = {""")
+
+        if not gamelib_sound_types:
+            genline("  {},")
+
+        for sound_type in sound_variations_per_type:
+            params = gamelib["sounds"][gamelib_sound_types.index(sound_type)]
+
+            pitch_min = params.get("pitch_min", 1)
+            pitch_max = params.get("pitch_max", 1)
+            if sound_type.startswith("GAME_") and (pitch_min == 1 and pitch_max == 1):
+                pitch_min = 0.85
+                pitch_max = 1.15
+
+            assert pitch_min > 0
+            assert pitch_max > 0
+            assert pitch_min <= pitch_max
+
+            pool = params.get("pool", 1)
+            assert pool >= 1
+
+            volume = params.get("volume", 1)
+
+            variations_var = "_soundVariations_{}".format(sound_type)
+            genline("  {")
+            genline("    .pathVariations = {},".format(variations_var))
+            genline("    .variations = ARRAY_COUNT({}),".format(variations_var))
+            genline("    .pool = {},".format(pool))
+            genline("    .volume = {},".format(volume))
+            genline("    .pitchMin = {},".format(pitch_min))
+            genline("    .pitchMax = {},".format(pitch_max))
+            genline("  },")
+
+        gamelib.pop("sounds", None)
+        genline("};\n")
+
     gamelib |= atlas_data
     genenum(genline, "RenderZ", gamelib.pop("render_z"), add_count=True)
 
@@ -180,21 +271,32 @@ def convert_gamelib_json_to_binary(
     for gamelib_processing_function in gamelib_processing_functions:
         gamelib_processing_function(genline, gamelib, localization_codepoints)
 
-    transform_texture_id = lambda data, key: transform_to_texture_index(
-        data, key, texture_name_2_index=texture_name_2_id
-    )
-    transform_texture_ids_list = lambda data, key: transform_to_texture_indexes_list(
-        data, key, texture_name_2_index=texture_name_2_id
-    )
-    texture_ids_recursive_transform(
-        gamelib, transform_texture_id, transform_texture_ids_list
-    )
+    if 1:
+        not_found_textures: list[str] = []
+        transform_texture_id = lambda data, key: transform_to_texture_index(
+            data,
+            key,
+            texture_name_2_index=texture_name_2_id,
+            not_found_textures=not_found_textures,
+        )
+        transform_texture_ids_list = lambda data, key: transform_to_texture_indexes_list(
+            data,
+            key,
+            texture_name_2_index=texture_name_2_id,
+            not_found_textures=not_found_textures,
+        )
+        texture_ids_recursive_transform(
+            gamelib, transform_texture_id, transform_texture_ids_list
+        )
+        if not_found_textures:
+            assert False, "Couldn't find textures: {}".format(not_found_textures)
+
     degrees_to_radians_recursive_transform(gamelib)
     recursive_replace_transform(gamelib, "locale", "locales", locale_to_index)
 
-    # Создание `gamelib.bin`.
+    # Creation of `gamelib.bin`.
     intermediate_path = TEMP_DIR / "gamelib.intermediate.jsonc"
-    intermediate_path.write_text(json.dumps(gamelib))
+    intermediate_path.write_text(json.dumps(gamelib), newline="\n")
     run_command(
         [
             FLATC_PATH,
@@ -226,16 +328,18 @@ def downscale_images(downscale_factors: list[int]) -> None:
 
             export_image_path = export_dir / image_path.name
 
-            if not export_image_path.exists() or (
-                s1.st_mtime_ns != export_image_path.stat().st_mtime_ns
+            if export_image_path.exists() and (
+                s1.st_mtime_ns == export_image_path.stat().st_mtime_ns
             ):
-                log.info("Downscaling by {} '{}'".format(factor, export_image_path))
-                im = Image.open(image_path)
-                im.thumbnail(
-                    (im.size[0] // factor, im.size[1] // factor), Image.Resampling.LANCZOS
-                )
-                im.save(export_image_path, "PNG")
-                os.utime(export_image_path, ns=(s1.st_atime_ns, s1.st_mtime_ns))
+                continue
+
+            log.info("Downscaling by {} '{}'".format(factor, export_image_path))
+            im = Image.open(image_path)
+            im.thumbnail(
+                (im.size[0] // factor, im.size[1] // factor), Image.Resampling.LANCZOS
+            )
+            im.save(export_image_path, "PNG")
+            os.utime(export_image_path, ns=(s1.st_atime_ns, s1.st_mtime_ns))
 
 
 @timing
@@ -273,7 +377,7 @@ def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dic
             log.info("Generating atlas...")
             run_command("free-tex-packer-cli --project {}".format(path))
 
-            cache_filepath.write_text(str(cache_value))
+            cache_filepath.write_text(str(cache_value), newline="\n")
 
             should_regenerate_atlas = True
 
@@ -384,6 +488,7 @@ def transform_to_texture_indexes_list(
     data: dict[str, Any],
     key: str,
     texture_name_2_index: dict[str, int],
+    not_found_textures: list[str],
 ) -> None:
     textures = data[key]
     assert isinstance(textures, list)
@@ -392,16 +497,17 @@ def transform_to_texture_indexes_list(
         if texture_name.lower() == "undefined":
             textures[i] = -1
         else:
-            assert texture_name in texture_name_2_index, (
-                f"Texture '{texture_name}' not found in atlas!"
-            )
-            textures[i] = texture_name_2_index[texture_name]
+            if texture_name in texture_name_2_index:
+                textures[i] = texture_name_2_index[texture_name]
+            else:
+                not_found_textures.append(texture_name)
 
 
 def transform_to_texture_index(
     data: dict[str, Any],
     key: str,
     texture_name_2_index: dict[str, int],
+    not_found_textures: list[str],
 ) -> None:
     texture_name = data[key]
     assert isinstance(texture_name, str)
@@ -410,11 +516,10 @@ def transform_to_texture_index(
         data[key] = -1
         return
 
-    assert texture_name in texture_name_2_index, (
-        f"Texture '{texture_name}' not found in atlas!"
-    )
-
-    data[key] = texture_name_2_index[texture_name]
+    if texture_name in texture_name_2_index:
+        data[key] = texture_name_2_index[texture_name]
+    else:
+        not_found_textures.append(texture_name)
 
 
 def listfiles_with_hashes_in_dir(path: str | Path) -> dict[str, int]:
@@ -467,14 +572,188 @@ def generate_flatbuffer_files():
 
 
 @timing
-def do_generate() -> None:
-    for platform in BuildPlatform:
+def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType) -> None:
+    match platform:
+        case BuildPlatform.Win:
+            target_dir_ = f".cmake/vs17/{build_type}/resources"
+
+        case BuildPlatform.Web | BuildPlatform.WebYandex:
+            target_dir_ = f".cmake/{platform}_{build_type}/resources"
+
+        case _:
+            assert False, f"Not supported platform: {platform}"
+
+    src_files = {f.name for f in RESOURCES_DIR.iterdir() if f.is_file()}
+
+    target_dir = Path(target_dir_)
+
+    if not target_dir.exists():
+        return
+
+    for file in target_dir.iterdir():
+        if file.is_file() and file.name not in src_files:
+            file.unlink()
+            log.info(f"Removed orphan resources/ file '{file}'")
+
+
+@timing
+def convert_audio() -> None:
+    AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
+    AUDIO_DST_DIR = RESOURCES_DIR
+    AUDIO_INPUT_EXTENSIONS = {".wav", ".mp3", ".flac", ".aac", ".m4a", ".wma", ".ogg"}
+
+    src_files = {
+        p
+        for p in AUDIO_SRC_DIR.rglob("*")
+        if p.suffix.lower() in AUDIO_INPUT_EXTENSIONS and p.is_file()
+    }
+
+    # Checking no duplicated names.
+    if 1:
+        src_files_without_extensions_and_options: set[str] = set()
+        duplicated_filenames: list[str] = []
+        for src_file in src_files:
+            if src_file.stem in src_files_without_extensions_and_options:
+                duplicated_filenames.append(src_file.stem.split("__", 1)[0])
+            else:
+                src_files_without_extensions_and_options.add(src_file.stem)
+        if duplicated_filenames:
+            assert False, f"Found duplicated audio filenames: {duplicated_filenames}"
+
+    # Converting.
+    for src_file in src_files:
+        dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
+
+        if dst_file.exists():
+            src_mtime = src_file.stat().st_mtime_ns
+            dst_mtime = dst_file.stat().st_mtime_ns
+            if dst_mtime == src_mtime:
+                continue
+
+        log.info(f"Converting {src_file} -> {dst_file}")
+
+        audio = pydub.AudioSegment.from_file(src_file)
+        audio = pydub.effects.normalize(audio)
+
+        # Trimming of audio start and end.
+        silent_ranges = pydub.silence.detect_silence(
+            audio, min_silence_len=40, silence_thresh=audio.dBFS - 14
+        )
+        start_trim = 0
+        len_audio = len(audio)
+        end_trim = len_audio
+        if silent_ranges:
+            if silent_ranges[0][0] == 0:
+                start_trim = silent_ranges[0][1]
+            if silent_ranges[-1][1] == len(audio):
+                end_trim = silent_ranges[-1][0]
+
+        audio = audio[start_trim:end_trim]
+        if start_trim:
+            audio = audio.fade_in(40)
+        if end_trim != len_audio:
+            audio = audio.fade_out(40)
+        audio.export(dst_file, format="ogg")
+
+        mtime = src_file.stat().st_mtime_ns
+        os.utime(dst_file, ns=(mtime, mtime))
+
+    # Removing orphan audio files from resources/.
+    for dst_file in AUDIO_DST_DIR.rglob("*.ogg"):
+        src_file = AUDIO_SRC_DIR / dst_file.relative_to(AUDIO_DST_DIR)
+        found = False
+        for ext in AUDIO_INPUT_EXTENSIONS:
+            candidate = AUDIO_SRC_DIR / (dst_file.stem + ext)
+            if candidate.exists():
+                found = True
+                break
+        if not found:
+            log.info(f"Removing orphaned audio file: {dst_file}")
+            dst_file.unlink()
+
+
+@timing
+def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
+    remove_orphan_resources_files(platform, build_type)
+    convert_audio()
+
+    if build_type == BuildType.Release and platform in (
+        BuildPlatform.Web,
+        BuildPlatform.WebYandex,
+    ):
+        shell_file = VENDOR_DIR / "shell_release.html"
+        shell_contents = shell_file.read_text(encoding="utf-8")
+
+        variables = {
+            BuildPlatform.Web: {
+                "EXTEND_BODY_START": "",
+                "EXTEND_MAIN_SCRIPT": "",
+            },
+            BuildPlatform.WebYandex: {
+                "EXTEND_BODY_START": """
+                    <script src="/sdk.js"></script>
+                """,
+                "EXTEND_MAIN_SCRIPT": """
+                    const moduleReady = new Promise(resolve => {
+                        Module.onRuntimeInitialized = resolve;
+                    });
+
+                    (async () => {
+                        window.ysdk = await YaGames.init();
+
+                        await moduleReady;
+                        Module.ccall('mark_ysdk_loaded_from_js', null, [], []);
+
+                        window.ysdk.on('game_api_pause', () => {
+                            Module.ccall('pause_from_js', null, [], []);
+                        });
+                        window.ysdk.on('game_api_resume', () => {
+                            Module.ccall('resume_from_js', null, [], []);
+                        });
+
+                        var lang = 1;
+                        const languages_map = {
+                            ru: 0,
+                            be: 0,
+                            kk: 0,
+                            uk: 0,
+                            uz: 0,
+                            en: 1,
+                        }
+                        const l = window.ysdk.environment.i18n.lang;
+                        if (l in languages_map)
+                            lang = languages_map[l];
+                        Module.ccall(
+                            'set_localization_from_js', null, ['number'], [lang]
+                        );
+                    })();
+                """,
+            },
+        }[platform]
+
+        for variable, value in variables.items():
+            var = f"##{variable}##"
+            assert var in shell_contents
+            shell_contents = shell_contents.replace(var, value)
+
+        assert "##" not in shell_contents
+
+        out_file = {
+            BuildPlatform.Web: TEMP_DIR / "shell_release.html",
+            BuildPlatform.WebYandex: TEMP_DIR / "shell_release_yandex.html",
+        }[platform]
+        out_file.write_text(shell_contents, encoding="utf-8")
+
+    # Shaders.
+    if 1:
         platform_mapping = {
             # BuildPlatform.Win: [("windows", "s_5_0")],
-            BuildPlatform.Win: [("windows", "s_4_0")],
+            # BuildPlatform.Win: [("windows", "s_4_0")],
+            BuildPlatform.Win: [("windows", "100_es")],
             # BuildPlatform.Win: [("windows", "300_es")],
             # BuildPlatform.Win: [("windows", "330")],
             BuildPlatform.Web: [("asm.js", "100_es")],
+            BuildPlatform.WebYandex: [("asm.js", "100_es")],
         }
 
         assert platform in platform_mapping, f"Not supported platform: {platform}"

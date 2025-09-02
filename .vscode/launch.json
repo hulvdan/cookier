@@ -6,14 +6,22 @@
     "configurations": [
 
         {
-            "name": "build game Win Debug",
-            "type": "debugpy",
+            "name": "debug-game.exe",
+            "type": "lldb",
             "request": "launch",
-            "program": "cli/cli.py",
-            "console": "integratedTerminal",
-            "args": [
-                "build","game","Win","Debug"
-            ]
-        }
-    ]
+            "program": ".cmake/vs17/Debug/game.exe",
+            "args": [],
+            "cwd": ".cmake/vs17/Debug",
+            "preLaunchTask": "build-game-debug",
+        },
+        {
+            "name": "debug-tests.exe",
+            "type": "lldb",
+            "request": "launch",
+            "program": ".cmake/vs17/Debug/tests.exe",
+            "args": [],
+            "cwd": ".cmake/vs17/Debug",
+            "preLaunchTask": "build-tests",
+        },
+    ],
 }

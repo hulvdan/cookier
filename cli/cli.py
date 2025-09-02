@@ -1,7 +1,6 @@
 import os
 import subprocess
 import zipfile
-from itertools import product
 from pathlib import Path
 from typing import Callable, ParamSpec
 
@@ -10,6 +9,7 @@ import bf_swatch_aco
 import typer
 from bf_gamelib import do_generate
 from bf_lib import (
+    ALLOWED_BUILDS,
     BUTLER_PATH,
     CMAKE_TESTS_PATH,
     MSBUILD_PATH,
@@ -34,12 +34,6 @@ from bf_lib import (
 )
 
 P = ParamSpec("P")
-
-
-sdl_platforms_mapping = {
-    BuildPlatform.Win: "SDL_PLATFORM_WIN32",
-    BuildPlatform.Web: "SDL_PLATFORM_EMSCRIPTEN",
-}
 
 
 def hook_exit():
@@ -69,15 +63,11 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
             #     command.append("-T ClangCL")
 
             command.append('-G "Visual Studio 17 2022"')
-            command.append(r"-B .cmake\vs17")
+            command.append(r"-B .cmake/vs17")
 
-        case BuildPlatform.Web:
-            assert build_type != BuildType.RelWithDebInfo, (
-                "Don't use 'RelWithDebInfo' for 'Web' target"
-            )
-
+        case BuildPlatform.Web | BuildPlatform.WebYandex:
             command.insert(0, "emcmake")
-            command.append(rf"-B .cmake\{platform}_{build_type}")
+            command.append(f"-B .cmake/{platform}_{build_type}")
 
         case _:
             assert False, f"Not supported platform: {platform}"
@@ -87,6 +77,9 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
 
 @timing
 def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
+    build_id = (target, platform, build_type)
+    assert build_id in ALLOWED_BUILDS, "{} is not allowed!".format(build_id)
+
     match platform:
         case BuildPlatform.Win:
             compiler = MSBUILD_PATH
@@ -95,15 +88,15 @@ def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType
 
             run_command(
                 rf"""
-                "{compiler}" .cmake\vs17\game.sln
+                "{compiler}" .cmake/vs17/game.sln
                 -v:minimal
                 -property:WarningLevel=3
                 -t:{target}
                 """
             )
 
-        case BuildPlatform.Web:
-            run_command(rf"cmake --build .cmake\Web_{build_type} -t {target}")
+        case BuildPlatform.Web | BuildPlatform.WebYandex:
+            run_command(rf"cmake --build .cmake\{platform}_{build_type} -t {target}")
 
         case _:
             assert False, f"Not supported platform: {platform}"
@@ -287,17 +280,16 @@ def command(f: Callable[P, T]) -> Callable[P, T]:
 @command
 def build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
     do_cmake(platform, build_type)
-    do_generate()
+    do_generate(platform, build_type)
     do_build(target, platform, build_type)
 
 
 @command
 def build_all_and_test():
     test()
-    for platform, build_type in product(BuildPlatform, BuildType):
-        if (platform == BuildPlatform.Web) and (build_type == BuildType.RelWithDebInfo):
+    for target, platform, build_type in ALLOWED_BUILDS:
+        if target != BuildTarget.game:
             continue
-
         build(BuildTarget.game, platform, build_type)
 
 
@@ -308,7 +300,7 @@ def run_in_debugger(target: BuildTarget, build_type: BuildType):
     do_stop_debugger_ahk()
 
     do_cmake(platform, build_type)
-    do_generate()
+    do_generate(platform, build_type)
     do_build(target, platform, build_type)
 
     do_run_in_debugger_ahk(target, build_type)
@@ -329,7 +321,7 @@ def test():
     build_type = BuildType.Debug
 
     do_cmake(platform, build_type)
-    do_generate()
+    do_generate(platform, build_type)
     do_build(BuildTarget.tests, platform, build_type)
     do_test()
 
@@ -349,6 +341,20 @@ def deploy_itch():
 
     target = "{}:html".format(data_values.itch_target)
     run_command([BUTLER_PATH, "push", zip_path, target])
+
+
+@command
+def deploy_yandex():
+    git_bump_tag()
+
+    with git_stash():
+        build(BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release)
+
+    zip_path = TEMP_DIR / "yandex.zip"
+
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        for filepath in ("index.data", "index.html", "index.js", "index.wasm"):
+            archive.write(Path(".cmake/WebYandex_Release") / filepath, filepath)
 
 
 @command

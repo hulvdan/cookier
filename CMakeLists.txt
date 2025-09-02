@@ -18,6 +18,12 @@ else()
     add_compile_definitions("BF_DEBUG=0")
 endif()
 
+# Adding:
+# BF_PLATFORM_Web
+# BF_PLATFORM_WebYandex
+# BF_PLATFORM_Win
+add_compile_definitions("BF_PLATFORM_${PLATFORM}=1")
+
 # vendor and codegen
 #-----------------------------------------------------------------------------------
 add_library(vendor_and_codegen INTERFACE)
@@ -29,7 +35,7 @@ target_include_directories(vendor_and_codegen
 
 # GameAnalytics.
 #-----------------------------------------------------------------------------------
-if ("${PLATFORM}" STREQUAL "Web")
+if (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
     add_library(GameAnalytics INTERFACE)
 else()
     add_subdirectory(vendor/gameanalytics-sdk-cpp)
@@ -85,7 +91,7 @@ if ("${PLATFORM}" STREQUAL "Win")
                 IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bimgRelease.lib"
         )
     endif()
-elseif ("${PLATFORM}" STREQUAL "Web")
+elseif (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
         set_target_properties(bgfx
             PROPERTIES
@@ -157,6 +163,36 @@ endif()
 #-----------------------------------------------------------------------------------
 add_subdirectory(vendor/tracy)
 
+# stb_vorbis
+#-----------------------------------------------------------------------------------
+add_library(stb_vorbis STATIC
+    "${CMAKE_SOURCE_DIR}/vendor/stb_vorbis.c"
+)
+target_compile_definitions(stb_vorbis
+    INTERFACE
+        STB_VORBIS_HEADER_ONLY
+)
+
+# miniaudio
+#-----------------------------------------------------------------------------------
+add_library(miniaudio STATIC
+    "${CMAKE_SOURCE_DIR}/vendor/miniaudio/include/miniaudio.h"
+    "${CMAKE_SOURCE_DIR}/vendor/miniaudio/src/miniaudio.c"
+)
+target_include_directories(miniaudio
+    PUBLIC
+        "${CMAKE_SOURCE_DIR}/vendor/miniaudio/include"
+)
+target_compile_definitions(miniaudio
+    PRIVATE
+        MA_IMPLEMENTATION
+)
+target_link_libraries(miniaudio
+    PRIVATE
+        vendor_and_codegen
+        stb_vorbis
+)
+
 # game
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
@@ -169,6 +205,7 @@ target_link_libraries(game
         basisu_transcoder
         GameAnalytics
         TracyClient
+        miniaudio
 )
 target_include_directories(game
     PRIVATE
@@ -180,7 +217,7 @@ target_compile_definitions(game
 )
 
 if ("${PLATFORM}" STREQUAL "Win")
-elseif ("${PLATFORM}" STREQUAL "Web")
+elseif (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
     target_compile_options(game
         PRIVATE
             "-o MIN_WEBGL_VERSION=1"
@@ -229,8 +266,14 @@ elseif ("${PLATFORM}" STREQUAL "Web")
                 "-sASSERTIONS=0"
                 "-sEXIT_RUNTIME=0"
                 "--closure 1"
-                "--shell-file=${CMAKE_SOURCE_DIR}/vendor/shell_release.html"
         )
+        if ("${PLATFORM}" STREQUAL "WebYandex")
+            target_link_options(game PRIVATE
+                "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release_yandex.html")
+        else()
+            target_link_options(game PRIVATE
+                "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release.html")
+        endif()
     endif()
 else()
     message(FATAL_ERROR "Not supported platform: ${PLATFORM}")
@@ -269,6 +312,7 @@ target_link_libraries(tests
         vendor_and_codegen
         basisu_transcoder
         GameAnalytics
+        miniaudio
 )
 target_link_libraries(tests
     PRIVATE
