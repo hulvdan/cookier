@@ -5,10 +5,10 @@
   "savePath": ".temp",
   "images": [],
   "folders": [
-    ".temp/art"
+    ".temp/art/d2"
   ],
   "packOptions": {
-    "textureName": "atlas",
+    "textureName": "atlas_d2",
     "textureFormat": "png",
     "removeFileExtension": true,
     "prependFolderName": true,

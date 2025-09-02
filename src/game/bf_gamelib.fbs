@@ -6,11 +6,11 @@ namespace BFGame;
 table Texture {
     id: uint (key);
     debug_name: string (required);
-    atlas_x: uint;
-    atlas_y: uint;
-    size_x: uint;
-    size_y: uint;
-    baseline: uint;
+    atlas_x: int;
+    atlas_y: int;
+    size_x: int;
+    size_y: int;
+    baseline: int;
 }
 
 table Localization {

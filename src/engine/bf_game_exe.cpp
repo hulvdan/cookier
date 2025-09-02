@@ -10,7 +10,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_MACOS) \
+#if defined(SDL_PLATFORM_WIN32)  /**/ \
+  || defined(SDL_PLATFORM_MACOS) /**/ \
   || defined(SDL_PLATFORM_LINUX)
 #  define SDL_PLATFORM_DESKTOP
 #endif
@@ -35,6 +36,8 @@ using Vector4Int = glm::ivec4;
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
 #  include <emscripten.h>
 #endif
+
+#include "miniaudio.h"
 
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/bf_gamelib_generated.h"
@@ -71,24 +74,38 @@ struct EngineAppState {
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
 extern "C" {
-///
-EMSCRIPTEN_KEEPALIVE void resize_from_js(int w, int h) {
+#  ifdef BF_PLATFORM_WebYandex
+EMSCRIPTEN_KEEPALIVE void mark_ysdk_loaded_from_js() {  ///
+  ge.meta.ysdkLoaded = true;
+}
+
+EMSCRIPTEN_KEEPALIVE void pause_from_js() {  ///
+  ge.meta.paused = true;
+}
+
+EMSCRIPTEN_KEEPALIVE void resume_from_js() {  ///
+  ge.meta.paused = false;
+}
+#  endif
+
+EMSCRIPTEN_KEEPALIVE void set_localization_from_js(int localization) {  ///
+  ge.meta.localization = localization;
+}
+
+EMSCRIPTEN_KEEPALIVE void resize_from_js(int w, int h) {  ///
   if (g_appstate.window)
     SDL_SetWindowSize(g_appstate.window, w, h);
 }
 
-///
-EMSCRIPTEN_KEEPALIVE void set_device_type_from_js(int type) {
+EMSCRIPTEN_KEEPALIVE void set_device_type_from_js(int type) {  ///
   ge.meta.deviceType = (DeviceType)type;
   LOGI("Set device %d", type);
 }
 }
 
-///
 EM_JS(void, js_TriggerOnResize, (), { onResize(); });
 
-///
-EM_JS(void, js_LogWebGLVersion, (), {
+EM_JS(void, js_LogWebGLVersion, (), {  ///
   let canvas = document.createElement('canvas');
   let gl     = canvas.getContext('webgl2') || canvas.getContext('webgl');
   if (gl) {
@@ -100,8 +117,7 @@ EM_JS(void, js_LogWebGLVersion, (), {
 });
 #endif
 
-///
-class BGFXCallbackHandler : public bgfx::CallbackI {
+class BGFXCallbackHandler : public bgfx::CallbackI {  ///
   public:
   void fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code, const char* str)
     override {
@@ -163,8 +179,7 @@ class BGFXCallbackHandler : public bgfx::CallbackI {
   void captureFrame(const void* data, uint32_t size) override {}
 };
 
-///
-SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
+SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {  ///
   ZoneScopedN("SDL_AppInit");
 
   GamePreInit();
@@ -267,13 +282,28 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   js_TriggerOnResize();
 #endif
-  InitializeEngine();
+  InitEngine();
 
   return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppIterate(void* /* appstate */) {
+SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
   SDL_AppResult result{};
+
+#ifdef BF_PLATFORM_WebYandex
+  static bool pr1 = false;
+  static bool pr2 = false;
+  if (!pr1) {
+    pr1 = true;
+    LOGI("Waiting for yandex sdk to initialize...");
+  }
+  if (!ge.meta.ysdkLoaded)
+    return SDL_APP_CONTINUE;
+  if (!pr2) {
+    pr2 = true;
+    LOGI("Waiting for yandex sdk to initialize... Done!");
+  }
+#endif
 
   {
     ZoneScopedN("SDL. SDL_AppIterate()");
@@ -285,6 +315,49 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {
     EngineOnFrameStart();
 
     bgfx::dbgTextClear(0, false);
+
+    {
+      Vector2 size = (Vector2)LOGICAL_RESOLUTION;
+      Vector2 pos{};
+      if (ge.meta.screenToLogicalRatio > 1) {
+        auto d = size.x * (ge.meta.screenToLogicalRatio - 1);
+        size.x += d;
+        pos.x -= d / 2;
+      }
+      else if (ge.meta.screenToLogicalRatio < 1) {
+        auto d = size.y * (1.0f / ge.meta.screenToLogicalRatio - 1);
+        size.y += d;
+        pos.y -= d / 2;
+      }
+
+      // Background.
+      RenderGroup_Begin(RenderZ_SCREEN_BACKGROUND);
+      RenderGroup_SetSortY(0);
+      {
+        RenderGroup_CommandRect({
+          .pos  = pos,
+          .size = size,
+          .anchor{},
+          .color = ge.settings.backgroundColor,
+        });
+      }
+      RenderGroup_End();
+
+      // Fade.
+      if (ge.settings.screenFade > 0) {
+        RenderGroup_Begin(RenderZ_SCREEN_FADE);
+        RenderGroup_SetSortY(0);
+        {
+          RenderGroup_CommandRect({
+            .pos  = pos,
+            .size = size,
+            .anchor{},
+            .color = Fade(ge.settings.screenFadeColor, ge.settings.screenFade),
+          });
+        }
+        RenderGroup_End();
+      }
+    }
 
     result = GameUpdate();
     if (result == SDL_APP_CONTINUE) {
@@ -303,8 +376,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
     return SDL_APP_SUCCESS;
 
-    ///
-  case SDL_EVENT_WINDOW_RESIZED: {
+  case SDL_EVENT_WINDOW_RESIZED: {  ///
     auto window = SDL_GetWindowFromID(event->window.windowID);
 
     auto width  = event->window.data1;
@@ -314,8 +386,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     ge.meta.screenSize = {width, height};
   } break;
 
-  ///
-  case SDL_EVENT_KEY_DOWN: {
+  case SDL_EVENT_KEY_DOWN: {  ///
     switch (event->key.key) {
 #if defined(SDL_PLATFORM_DESKTOP)
     case SDLK_F11: {
@@ -328,8 +399,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     }
   } break;
 
-    ///
-  case SDL_EVENT_FINGER_DOWN: {
+  case SDL_EVENT_FINGER_DOWN: {  ///
     auto& t = event->tfinger;
     _OnTouchDown({
       ._id{._touchID = t.touchID, ._fingerID = t.fingerID},
@@ -337,8 +407,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     });
   } break;
 
-    ///
-  case SDL_EVENT_FINGER_UP: {
+  case SDL_EVENT_FINGER_UP: {  ///
     auto& t = event->tfinger;
     _OnTouchUp({
       ._id{._touchID = t.touchID, ._fingerID = t.fingerID},
@@ -346,8 +415,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     });
   } break;
 
-  ///
-  case SDL_EVENT_FINGER_MOTION: {
+  case SDL_EVENT_FINGER_MOTION: {  ///
     auto& t = event->tfinger;
     _OnTouchMoved({
       ._id{._touchID = t.touchID, ._fingerID = t.fingerID},
@@ -355,13 +423,26 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ._screenDPos = Vector2{t.dx, -t.dy} * (Vector2)ge.meta.screenSize,
     });
   } break;
+
+  case SDL_EVENT_WINDOW_FOCUS_LOST: {
+    // Required by yandex.
+    // TODO: check if it works.
+    ma_engine_set_volume(&ge.meta._soundManager.engine, 0);
+  } break;
+
+  case SDL_EVENT_WINDOW_FOCUS_GAINED: {
+    // Required by yandex.
+    // TODO: check if it works.
+    ma_engine_set_volume(&ge.meta._soundManager.engine, 1);
+  } break;
   }
 
   return SDL_APP_CONTINUE;
 }
 
-///
-void SDL_AppQuit(void* /* appstate */, SDL_AppResult result) {
+void SDL_AppQuit(void* /* appstate */, SDL_AppResult result) {  ///
+  DeinitEngine();
+
   bgfx::shutdown();
 
   SDL_DestroyWindow(g_appstate.window);

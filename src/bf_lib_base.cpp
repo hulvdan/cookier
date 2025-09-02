@@ -109,9 +109,6 @@ constexpr f64 f64_inf = std::numeric_limits<f64>::infinity();
 #define NOT_IMPLEMENTED ASSERT(false)
 #define NOT_SUPPORTED ASSERT(false)
 
-#define SCAST static_cast
-#define RCAST reinterpret_cast
-
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
@@ -249,10 +246,10 @@ struct IteratorFacade {
 
   private:
   SelfType& _self() {
-    return SCAST<SelfType&>(*this);
+    return static_cast<SelfType&>(*this);
   }
   [[nodiscard]] const SelfType& _self() const {
-    return SCAST<const SelfType&>(*this);
+    return static_cast<const SelfType&>(*this);
   }
 
   public:

@@ -10,7 +10,7 @@
   })
 
 template <typename T>
-T ARRAY_POP(T* array, auto* arrayCount) {
+T ARRAY_POP(T* array, auto* arrayCount) {  ///
   ASSERT(*arrayCount > 0);
   T result    = *(array + *arrayCount - 1);
   *arrayCount = *arrayCount - 1;
@@ -29,7 +29,7 @@ T ARRAY_POP(T* array, auto* arrayCount) {
   })
 
 template <typename T>
-int ArrayFind(const T* base, int count, const T& value) {
+int ArrayFind(const T* base, int count, const T& value) {  ///
   FOR_RANGE (int, i, count) {
     if (base[i] == value)
       return i;
@@ -38,7 +38,7 @@ int ArrayFind(const T* base, int count, const T& value) {
 }
 
 template <typename T>
-int ArrayBinaryFind(const T* base, int count, const T& value) {
+int ArrayBinaryFind(const T* base, int count, const T& value) {  ///
   int low  = 0;
   int high = count - 1;
   while (low <= high) {
@@ -57,11 +57,11 @@ int ArrayBinaryFind(const T* base, int count, const T& value) {
 }
 
 template <typename T>
-BF_FORCE_INLINE bool ArrayContains(const T* base, int count, const T& value) {
+BF_FORCE_INLINE bool ArrayContains(const T* base, int count, const T& value) {  ///
   return ArrayFind(base, count, value) != -1;
 }
 
-TEST_CASE ("ArrayFind, ArrayContains") {
+TEST_CASE ("ArrayFind, ArrayContains") {  ///
   {
     int  values[] = {0, 1, 2, 3, 4, 5};
     auto c        = ARRAY_COUNT(values);
@@ -92,7 +92,7 @@ void ArraySort_(
   std::invocable<void*, void*> auto&& cmp,
   std::invocable<int, int> auto&&     callback,
   void*                               swapBuf
-) {
+) {  ///
   ASSERT(elementSize > 0);
 
   FOR_RANGE (int, i, n - 1) {
@@ -124,7 +124,7 @@ void ArraySort_(
     ArraySort_((void*)(ptr), sizeof(*(ptr)), (n), (cmp), (callback), (void*)swapBuf); \
   })
 
-int IntCmp(const int* v1, const int* v2) {
+int IntCmp(const int* v1, const int* v2) {  ///
   if (*v1 > *v2)
     return 1;
   if (*v1 < *v2)
@@ -133,12 +133,12 @@ int IntCmp(const int* v1, const int* v2) {
 }
 
 template <typename T>
-bool Contains(const std::vector<T>& v, T x) {
+bool Contains(const std::vector<T>& v, T x) {  ///
   return std::find(v.begin(), v.end(), x) != v.end();
 }
 
 //----------------------------------------------------------------------------------
-// Контейнеры.
+// Containers.
 //----------------------------------------------------------------------------------
 
 template <typename T>
@@ -146,14 +146,14 @@ struct View {
   int count = 0;
   T*  base  = nullptr;
 
-  T& operator[](int index) const {
+  T& operator[](int index) const {  ///
     ASSERT(base != nullptr);
     ASSERT(index >= 0);
     ASSERT(index < count);
     return base[index];
   }
 
-  void Init(int count_) {
+  void Init(int count_) {  ///
     ASSERT(count == 0);
     ASSERT(base == nullptr);
 
@@ -161,7 +161,7 @@ struct View {
     base  = (T*)malloc(sizeof(T) * count);
   }
 
-  void Deinit() {
+  void Deinit() {  ///
     if (base) {
       ASSERT(count > 0);
       free(base);
@@ -174,13 +174,13 @@ struct View {
     count = 0;
   }
 
-  void Zeroify() {
+  void Zeroify() {  ///
     ASSERT(base != nullptr);
     ASSERT(count > 0);
     memset(base, 0, sizeof(T) * count);
   }
 
-  int IndexOf(const T& value) const {
+  int IndexOf(const T& value) const {  ///
     FOR_RANGE (int, i, count) {
       auto& v = base[i];
       if (v == value)
@@ -190,15 +190,15 @@ struct View {
     return -1;
   }
 
-  bool Contains(const T& value) const {
+  bool Contains(const T& value) const {  ///
     return IndexOf(value) != -1;
   }
 
-  T* begin() {
+  T* begin() {  ///
     return base;
   }
 
-  T* end() {
+  T* end() {  ///
     return base + count;
   }
 };
@@ -213,18 +213,24 @@ struct Array {
   T                base[_count] = {};
   static const int count        = _count;
 
-  T& operator[](int index) {
+  T& operator[](int index) {  ///
     ASSERT(index >= 0);
     ASSERT(index < _count);
     return base[index];
   }
 
-  void Zeroify() {
+  const T& operator[](int index) const {  ///
+    ASSERT(index >= 0);
+    ASSERT(index < _count);
+    return base[index];
+  }
+
+  void Zeroify() {  ///
     ASSERT(_count > 0);
     memset(base, 0, sizeof(T) * _count);
   }
 
-  int IndexOf(const T& value) const {
+  int IndexOf(const T& value) const {  ///
     FOR_RANGE (int, i, _count) {
       auto& v = base[i];
       if (v == value)
@@ -234,19 +240,19 @@ struct Array {
     return -1;
   }
 
-  bool Contains(const T& value) const {
+  bool Contains(const T& value) const {  ///
     return IndexOf(value) != -1;
   }
 
-  T* begin() {
+  T* begin() {  ///
     return base;
   }
 
-  T* end() {
+  T* end() {  ///
     return base + _count;
   }
 
-  View<T> ToView() const {
+  View<T> ToView() const {  ///
     return {
       .count = _count,
       .base  = (T*)base,
@@ -260,14 +266,14 @@ struct Vector {
   int count    = 0;
   u32 maxCount = 0;
 
-  T& operator[](int index) {
+  T& operator[](int index) {  ///
     ASSERT(base != nullptr);
     ASSERT(index >= 0);
     ASSERT(index < count);
     return base[index];
   }
 
-  int IndexOf(const T& value) const {
+  int IndexOf(const T& value) const {  ///
     FOR_RANGE (int, i, count) {
       auto& v = *(base + i);
       if (v == value)
@@ -277,11 +283,11 @@ struct Vector {
     return -1;
   }
 
-  bool Contains(const T& value) const {
+  bool Contains(const T& value) const {  ///
     return IndexOf(value) != -1;
   }
 
-  T* Add() {
+  T* Add() {  ///
     if (base == nullptr) {
       ASSERT(maxCount == 0);
       ASSERT(count == 0);
@@ -309,7 +315,7 @@ struct Vector {
     return result;
   }
 
-  void RemoveAt(const int i) {
+  void RemoveAt(const int i) {  ///
     ASSERT(i >= 0);
     ASSERT(i < count);
 
@@ -323,7 +329,7 @@ struct Vector {
     count--;
   }
 
-  void UnstableRemoveAt(const int i) {
+  void UnstableRemoveAt(const int i) {  ///
     ASSERT(i >= 0);
     ASSERT(i < count);
 
@@ -333,7 +339,7 @@ struct Vector {
     count--;
   }
 
-  void UnstableRemoveUniqueAssert(T value) {
+  void UnstableRemoveUniqueAssert(T value) {  ///
 #if BF_ENABLE_ASSERTS
     int found = 0;
     for (auto& v : *this) {
@@ -354,7 +360,7 @@ struct Vector {
   }
 
   // Вектор сможет содержать как минимум столько элементов без реаллокации.
-  void Reserve(u32 elementsCount) {
+  void Reserve(u32 elementsCount) {  ///
     if (base == nullptr) {
       base     = (T*)malloc(sizeof(T) * elementsCount);
       maxCount = elementsCount;
@@ -368,11 +374,11 @@ struct Vector {
     }
   }
 
-  void Reset() {
+  void Reset() {  ///
     count = 0;
   }
 
-  void Deinit() {
+  void Deinit() {  ///
     if (base) {
       ASSERT(maxCount > 0);
       free(base);
@@ -387,11 +393,11 @@ struct Vector {
     maxCount = 0;
   }
 
-  T* begin() {
+  T* begin() {  ///
     return base;
   }
 
-  T* end() {
+  T* end() {  ///
     return base + count;
   }
 };
@@ -404,28 +410,29 @@ struct VectorIterator : public IteratorFacade<VectorIterator<T>> {
   VectorIterator(Vector<T>* container, int current)
       : _container(container)
       , _current(current)  //
-  {
+  {                        ///
     ASSERT(container != nullptr);
   }
 
-  [[nodiscard]] VectorIterator begin() const {
+  [[nodiscard]] VectorIterator begin() const {  ///
     return {_container, _current};
   }
-  [[nodiscard]] VectorIterator end() const {
+
+  [[nodiscard]] VectorIterator end() const {  ///
     return {_container, _container->count};
   }
 
-  [[nodiscard]] T* Dereference() const {
+  [[nodiscard]] T* Dereference() const {  ///
     ASSERT(_current >= 0);
     ASSERT(_current < _container->count);
     return _container->base + _current;
   }
 
-  void Increment() {
+  void Increment() {  ///
     _current++;
   }
 
-  [[nodiscard]] bool EqualTo(const VectorIterator& o) const {
+  [[nodiscard]] bool EqualTo(const VectorIterator& o) const {  ///
     return _current == o._current;
   }
 
@@ -435,7 +442,7 @@ struct VectorIterator : public IteratorFacade<VectorIterator<T>> {
 };
 
 template <typename T>
-auto Iter(Vector<T>* container) {
+auto Iter(Vector<T>* container) {  ///
   return VectorIterator(container);
 }
 

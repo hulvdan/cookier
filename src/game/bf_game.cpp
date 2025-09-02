@@ -14,6 +14,18 @@ const char* GetWindowTitle() {
     ;
 }
 
+static const char* const g_gameVersion = BF_VERSION
+#if BF_DEBUG
+  " [DEBUG]"
+#endif
+#if BF_PROFILING && defined(DOCTEST_CONFIG_DISABLE)
+  " [PROFILING]"
+#endif
+#if BF_ENABLE_ASSERTS
+  " [ASSERTS]"
+#endif
+  ;
+
 void GamePreInit() {}
 
 SDL_AppResult GameUpdate() {
