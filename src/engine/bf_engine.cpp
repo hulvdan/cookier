@@ -398,7 +398,7 @@ struct EngineData {
     Vector2 _screenToLogicalScale = {};
     Vector2 _screenToLogicalAdd   = {};
 
-    int localization = 1;  // en.
+    int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
       ma_sound* sounds[ARRAY_COUNT(g_sounds)];

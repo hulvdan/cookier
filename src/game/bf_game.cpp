@@ -383,6 +383,7 @@ struct Creature {
   int                health     = {};
   int                maxHealth  = {};
   Vector2            pos        = {};
+  Vector2            dir        = {};
   Body               body       = {};
   CreatureController controller = {};
 };
@@ -422,6 +423,15 @@ struct GameData {
     i64   frame      = 0;
     Arena trashArena = {};
     Font  uiFont     = {};
+
+    bool godMode = false;
+
+    struct Touch {
+      Array<Vector2, 4> pos      = {};  // lstarted, ltarget, rstarted, rtarget.
+      Array<Vector2, 2> dir      = {};
+      Array<TouchID, 2> touchIDs = {};
+      // LogicalFrame      rightLastPressedAt = {};
+    } touch;
   } meta;
 
   struct Level {
@@ -808,6 +818,7 @@ void LevelInit() {
 
   // Making player.
   MakeCreature({
+    .type = CreatureType_PLAYER,
     .pos{},
     .body{
       .type     = BodyType_CREATURE,
@@ -880,6 +891,37 @@ void GameFixedUpdate() {
     }
   }
 
+  // Creatures moving.
+  {  ///
+    auto fb_creatures = glib->creatures();
+
+    for (auto& creature : g.level.a.creatures) {
+      if (!creature.active)
+        continue;
+
+      auto speedScale = 1.0f;
+      if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
+        speedScale *= 1.5f;
+
+      b2Body_ApplyLinearImpulseToCenter(
+        creature.body.id,
+        ToB2Vec2(creature.controller.move * (FIXED_DT * PLAYER_SPEED_FORCE * speedScale)),
+        true
+      );
+    }
+  }
+
+  // Updating box2d world.
+  b2World_Step(g.level.world, FIXED_DT, 4);
+
+  // Updating body positions.
+  for (auto& creature : g.level.a.creatures) {  ///
+    if (!creature.active)
+      continue;
+
+    creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
+  }
+
   g.meta.frame++;
 }
 
@@ -892,9 +934,9 @@ void ResetLevel() {  ///
 }
 
 void GameDraw() {
-  g.meta.deterministicRand.raise = true;
+  ge.meta.deterministicRand.raise = true;
   DEFER {
-    g.meta.deterministicRand.raise = false;
+    ge.meta.deterministicRand.raise = false;
   };
 
   // Drawing creatures.
@@ -905,12 +947,15 @@ void GameDraw() {
       if (!creature.active)
         continue;
 
-      const auto fb = fb_creatures->Get(creature.type);
+      const auto fb    = fb_creatures->Get(creature.type);
+      auto       color = ColorFromRGB(fb->color());
+
       RenderGroup_OneShotTexture(
         {
           .texId = fb->texture_ids()->Get(0),
           .pos   = creature.pos,
-          .color = ColorFromRGB(fb->color()),
+          .scale = Vector2One() * 16.0f,
+          .color = color,
         },
         RenderZ_DEFAULT
       );
