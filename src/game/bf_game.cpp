@@ -805,7 +805,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
 }
 
 void GamePreInit() {  ///
-  ge.meta.deterministicRand = Random(SDL_GetPerformanceCounter());
+  ge.meta.gameLogicRand = Random(SDL_GetPerformanceCounter());
 }
 
 void LevelInit() {
@@ -934,9 +934,11 @@ void ResetLevel() {  ///
 }
 
 void GameDraw() {
-  ge.meta.deterministicRand.raise = true;
+  // Forbidding use of `gameLogicRand` during drawing
+  // so that logic remains deterministic.
+  ge.meta.gameLogicRand.raise = true;
   DEFER {
-    ge.meta.deterministicRand.raise = false;
+    ge.meta.gameLogicRand.raise = false;
   };
 
   // Drawing creatures.
