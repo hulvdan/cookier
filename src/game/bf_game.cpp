@@ -935,7 +935,7 @@ void ResetLevel() {  ///
 
 void GameDraw() {
   // Forbidding use of `logicRand` during drawing
-  // so that logic remains deterministic.
+  // so that game's logic remains deterministic.
   ge.meta.logicRand.raise = true;
   DEFER {
     ge.meta.logicRand.raise = false;
