@@ -947,14 +947,13 @@ void GameDraw() {
       if (!creature.active)
         continue;
 
-      const auto fb    = fb_creatures->Get(creature.type);
-      const auto color = ColorFromRGB(fb->color());
+      const auto fb = fb_creatures->Get(creature.type);
 
       RenderGroup_OneShotTexture(
         {
           .texId = fb->texture_ids()->Get(0),
           .pos   = creature.pos * 100.0f,
-          .color = color,
+          .color = ColorFromRGB(fb->color()),
         },
         RenderZ_DEFAULT
       );
