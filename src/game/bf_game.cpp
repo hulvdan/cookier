@@ -819,7 +819,7 @@ void LevelInit() {
   // Making player.
   MakeCreature({
     .type = CreatureType_PLAYER,
-    .pos{},
+    .pos  = (Vector2)LOGICAL_RESOLUTION / 2.0f / 100.0f,
     .body{
       .type     = BodyType_CREATURE,
       .userData = ShapeUserData::Creature(0),
@@ -948,13 +948,12 @@ void GameDraw() {
         continue;
 
       const auto fb    = fb_creatures->Get(creature.type);
-      auto       color = ColorFromRGB(fb->color());
+      const auto color = ColorFromRGB(fb->color());
 
       RenderGroup_OneShotTexture(
         {
           .texId = fb->texture_ids()->Get(0),
-          .pos   = creature.pos,
-          .scale = Vector2One() * 16.0f,
+          .pos   = creature.pos * 100.0f,
           .color = color,
         },
         RenderZ_DEFAULT
@@ -1005,6 +1004,10 @@ void GameDraw() {
 
     debugTextArena("ge.meta._arena", ge.meta._arena);
   }
+
+  EngineApplyStrips();
+  EngineApplyVignette();
+  FlushRenderCommands();
 }
 
 ///
