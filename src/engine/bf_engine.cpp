@@ -411,7 +411,7 @@ struct EngineData {
 
     bool debugEnabled = false;
 
-    Random gameLogicRand{0};
+    Random logicRand{0};
   } meta;
 
   struct Settings {
@@ -457,7 +457,7 @@ void GameReady() {  ///
 ma_sound* PlaySound(Sound sound) {  ///
   auto& params = g_sounds[sound];
 
-  auto  variation = ge.meta.gameLogicRand.Rand() % params.variations;
+  auto  variation = ge.meta.logicRand.Rand() % params.variations;
   auto& varIndex = ge.meta._soundManager.soundPlayedIndicesPerVariation[sound][variation];
   auto  index    = variation * params.pool + varIndex;
   ASSERT(index < params.variations * params.pool);
@@ -472,7 +472,7 @@ ma_sound* PlaySound(Sound sound) {  ///
     ma_sound_set_volume(&s, params.volume);
 
   if (params.pitchMin != 1.0f) {
-    auto t = ge.meta.gameLogicRand.FRand();
+    auto t = ge.meta.logicRand.FRand();
     t      = EaseInOutQuad(t);
     ma_sound_set_pitch(&s, Lerp(params.pitchMin, params.pitchMax, t));
   }
