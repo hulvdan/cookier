@@ -17,7 +17,28 @@ table Localization {
     strings: [string] (required);
 }
 
+struct Posf {
+    x: float;
+    y: float;
+}
+
+struct Pos {
+    x: int;
+    y: int;
+}
+
 // GAME STUFF
+table Creature {
+    health: int;
+    color: uint = 0xffffff;
+    texture_ids: [int];
+}
+
+table Projectile {
+    damage: int;
+    color: uint = 0xffffff;
+    texture_ids: [int];
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -30,6 +51,8 @@ table GameLibrary {
     localizations: [Localization] (required);
 
     // GAME STUFF
+    creatures: [Creature] (required);
+    projectiles: [Projectile] (required);
     // GAME STUFF END
 }
 

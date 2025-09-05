@@ -9,3 +9,25 @@ vignette_texture_id: vignette
 localization:
   YES_: Да
   NO_: Нет
+creatures:
+  - type: INVALID
+  - type: PLAYER
+    texture_ids:
+      - game_creature_player
+  - type: MOB1
+    color: 0xff0000
+    texture_ids:
+      - game_creature_player
+  - type: MOB2
+    color: 0xff7700
+    texture_ids:
+      - game_creature_player
+projectiles:
+  - type: INVALID
+  - type: ARROW
+    texture_ids:
+      - game_projectile_arrow
+  - type: BULLET
+    color: 0xffff00
+    texture_ids:
+      - game_projectile_arrow

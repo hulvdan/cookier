@@ -8,6 +8,18 @@
 constexpr auto SQRT_2        = 1.41421356237f;
 constexpr auto SQRT_2_OVER_2 = 0.70710678f;
 
+constexpr Vector2 Vector2Zero() {  ///
+  return Vector2{0, 0};
+}
+
+constexpr Vector2 Vector2Half() {  ///
+  return Vector2{0.5f, 0.5f};
+}
+
+constexpr Vector2 Vector2One() {  ///
+  return Vector2{1, 1};
+}
+
 f32 Vector2Length(Vector2 v) {  ///
   return glm::length(v);
 }
@@ -26,6 +38,11 @@ f32 Vector2Distance(Vector2 v1, Vector2 v2) {  ///
 
 f32 Vector2DistanceSqr(Vector2 v1, Vector2 v2) {  ///
   return Vector2LengthSqr(v2 - v1);
+}
+
+f32 Vector2Angle(Vector2 v) {  ///
+  ASSERT(v != Vector2Zero());
+  return atan2f(v.y, v.x);
 }
 
 f32 Vector2Angle(Vector2 v1, Vector2 v2) {  ///
@@ -80,18 +97,6 @@ Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) {  ///
 
 Vector2 Vector2ClampValue(Vector2 v, f32 min, f32 max) {  ///
   return glm::clamp(v, min, max);
-}
-
-constexpr Vector2 Vector2Zero() {  ///
-  return Vector2{0, 0};
-}
-
-constexpr Vector2 Vector2Half() {  ///
-  return Vector2{0.5f, 0.5f};
-}
-
-constexpr Vector2 Vector2One() {  ///
-  return Vector2{1, 1};
 }
 
 struct Rect {
@@ -405,6 +410,8 @@ struct EngineData {
     bool paused     = false;
 
     bool debugEnabled = false;
+
+    Random deterministicRand{0};
   } meta;
 
   struct Settings {
@@ -450,7 +457,7 @@ void GameReady() {  ///
 ma_sound* PlaySound(Sound sound) {  ///
   auto& params = g_sounds[sound];
 
-  auto  variation = Rand() % params.variations;
+  auto  variation = ge.meta.deterministicRand.Rand() % params.variations;
   auto& varIndex = ge.meta._soundManager.soundPlayedIndicesPerVariation[sound][variation];
   auto  index    = variation * params.pool + varIndex;
   ASSERT(index < params.variations * params.pool);
@@ -465,7 +472,7 @@ ma_sound* PlaySound(Sound sound) {  ///
     ma_sound_set_volume(&s, params.volume);
 
   if (params.pitchMin != 1.0f) {
-    auto t = FRand();
+    auto t = ge.meta.deterministicRand.FRand();
     t      = EaseInOutQuad(t);
     ma_sound_set_pitch(&s, Lerp(params.pitchMin, params.pitchMax, t));
   }
