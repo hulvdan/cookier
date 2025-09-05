@@ -49,8 +49,9 @@ Press F5 in cursor to build the game (there is also a configuration for building
 ## Bootstrap a new game
 
 ```shell
-# Create a repo in Github
-# Replace NEWGAME into github-name of the repo
+# * Create a repo in GitHub
+# * Add ruleset to protect default branch in GitHub (disable deletions + disable force pushes)
+# * Replace here `NEWGAME` with github-name of the repo
 mkdir NEWGAME
 cd NEWGAME
 git init
