@@ -7,10 +7,24 @@
   - with "Game development with C++"
   - with "C++ CMake tools for Windows"
 - Install pyenv
-  - `pyenv install 3.11.3`
-  - `pyenv global 3.11.3`
-  - `choco install ffmpeg`
-  - `choco install llvm`
+  Windows:
+    ```shell
+    # In ADMIN Powershell
+    Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win/master/pyenv-win/install-pyenv-win.ps1" -OutFile "./install-pyenv-win.ps1"; &"./install-pyenv-win.ps1"
+    ```
+- Windows. Uninstall python
+- Windows. If running `python` in terminal opens Windows Store, then do what people here do: https://stackoverflow.com/questions/58754860/cmd-opens-windows-store-when-i-type-python
+- After installing pyenv run in default terminal:
+  ```shell
+  pyenv install 3.11.3
+  pyenv global 3.11.3
+  ```
+- TODO: MB migrate to `ux` instead of `poetry` + `pyenv`?
+- Install ffmpeg + llvm:
+  ```shell
+  choco install ffmpeg
+  choco install llvm
+  ```
 
 ## Contributing to game-template
 
@@ -37,8 +51,8 @@ poetry install
 cd vendor
 cd bgfx
 make
-msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
-msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
+msbuild .build/proects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
+msbuild .build/proects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
 make wasm
 cd ..
 cd ..
@@ -70,8 +84,8 @@ git remote add "origin" https://github.com/Hulvdan/NEWGAME.git
 cd vendor
 cd bgfx
 make
-msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
-msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
+msbuild .build/proects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
+msbuild .build/proects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
 make wasm
 cd ..
 cd ..
