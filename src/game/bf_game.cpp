@@ -1,6 +1,6 @@
 #pragma once
 
-const char* GetWindowTitle() {
+const char* GetWindowTitle() {  ///
   return "The Game"
 #if BF_DEBUG
          " [DEBUG]"
@@ -14,6 +14,7 @@ const char* GetWindowTitle() {
     ;
 }
 
+// g_gameVersion { ///
 static const char* const g_gameVersion = BF_VERSION
 #if BF_DEBUG
   " [DEBUG]"
@@ -25,6 +26,7 @@ static const char* const g_gameVersion = BF_VERSION
   " [ASSERTS]"
 #endif
   ;
+// }
 
 struct GameData {
   struct Meta {
