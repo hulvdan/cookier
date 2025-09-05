@@ -401,6 +401,8 @@ struct EngineData {
 
     bool ysdkLoaded = false;
     bool paused     = false;
+
+    bool debugEnabled = false;
   } meta;
 
   struct Settings {
