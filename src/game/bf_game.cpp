@@ -502,8 +502,10 @@ struct GameData {
     b2WorldId    world        = {};
     LogicalFrame playerDiedAt = {};
 
-    f32 xp    = 0;
-    int coins = 0;
+    f32 xp          = 0;
+    f32 nextLevelXp = 10;
+    int coins       = 0;
+    int xpLevel     = 1;
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
@@ -1358,7 +1360,17 @@ void GameFixedUpdate() {
         DestroyBody(&creature.body);
 
         creature.diedAt.SetNow();
-        if (!index)
+        if (index) {
+          g.level.xp++;
+          PLAYER_CREATURE.health
+            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+          if (g.level.xp >= g.level.nextLevelXp) {
+            g.level.nextLevelXp *= 2;
+            g.level.xp = 0;
+            g.level.xpLevel++;
+          }
+        }
+        else
           g.level.playerDiedAt.SetNow();
 
         Pickupable pickupable{
@@ -1422,15 +1434,17 @@ void GameFixedUpdate() {
       else {
         if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
             <= SQR(PICKUPABLE_HURTBOX_RADIUS))
+        {
           pickupable.pickedUpAt.SetNow();
 
-        switch (pickupable.type) {
-        case PickupableType_COIN: {
-          g.level.coins++;
-        } break;
+          switch (pickupable.type) {
+          case PickupableType_COIN: {
+            g.level.coins++;
+          } break;
 
-        default:
-          INVALID_PATH;
+          default:
+            INVALID_PATH;
+          }
         }
       }
     }
@@ -1470,13 +1484,17 @@ void DoUI() {
     int                              beautifiersCount = 0;
 
     CLAY({.layout{.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-      // Health bar.
+      // Health bar + coins.
       // {  ///
       const auto  texs   = glib->ui_health_texture_ids();
       const auto& player = PLAYER_CREATURE;
 
       CLAY({
-        .layout{.padding{.left = 32, .top = 32}},
+        .layout{
+          .padding{.left = 32, .top = 32},
+          .childGap        = 8,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
         .floating{
           .attachPoints{
             .element = CLAY_ATTACH_POINT_LEFT_TOP,
@@ -1507,8 +1525,63 @@ void DoUI() {
               },
               .color = RED,
             });
+
+            CLAY({
+              .floating{
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                },
+                .attachTo = CLAY_ATTACH_TO_PARENT,
+              },
+            }) {
+              FLOATING_BEAUTIFY;
+              BF_CLAY_TEXT(TextFormat(
+                "%d / %d", Round(PLAYER_CREATURE.health), Round(PLAYER_CREATURE.maxHealth)
+              ));
+            }
           }
         });
+
+        BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
+          CLAY({
+            .floating{
+              .attachPoints{
+                .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+              },
+              .attachTo = CLAY_ATTACH_TO_PARENT,
+            },
+          }) {
+            FLOATING_BEAUTIFY;
+            BF_CLAY_IMAGE({
+              .texId = texs->Get(1),
+              .sourceMargins{.right = 1 - (f32)g.level.xp / (f32)g.level.nextLevelXp},
+              .color = GREEN,
+            });
+
+            CLAY({
+              .floating{
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                },
+                .attachTo = CLAY_ATTACH_TO_PARENT,
+              },
+            }) {
+              FLOATING_BEAUTIFY;
+              BF_CLAY_TEXT(TextFormat("%d", g.level.xpLevel));
+            }
+          }
+        });
+
+        CLAY({.layout{
+          .childGap = 8,
+          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+        }}) {
+          BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+          BF_CLAY_TEXT(TextFormat("%d", g.level.coins));
+        }
       }
       // }
 

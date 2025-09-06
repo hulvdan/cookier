@@ -71,6 +71,7 @@ table GameLibrary {
 
     // GAME STUFF
     ui_health_texture_ids: [int] (required);
+    ui_coin_texture_id: int;
     decal_pre_spawn_texture_id: int;
 
     creatures: [Creature] (required);
