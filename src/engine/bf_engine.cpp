@@ -440,6 +440,8 @@ struct EngineData {
   } render;
 } ge = {};
 
+#define GRAND (ge.meta.logicRand)
+
 // clang-format off
 #ifdef BF_PLATFORM_WebYandex
 EM_JS(void, js_YandexReady, (), {

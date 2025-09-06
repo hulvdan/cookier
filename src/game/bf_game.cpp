@@ -187,6 +187,12 @@ Vector2Int ToVector2Int(const BFGame::Pos* value) {  ///
   return {value->x(), value->y()};
 }
 
+Vector2 Vector2DirectionOrRandom(Vector2 from, Vector2 to) {  ///
+  if (from == to)
+    return Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
+  return Vector2Normalize(to - from);
+}
+
 const char* GetWindowTitle() {  ///
   return "The Game"
 #if BF_DEBUG
@@ -388,11 +394,11 @@ struct MakeBodyData {
 };
 
 struct Weapon {
-  WeaponType   type               = {};
-  Vector2      offset             = {};
-  f32          rotation           = {};
-  LogicalFrame startedShootingAt  = {};
-  LogicalFrame lastShotFinishedAt = {};
+  WeaponType   type              = {};
+  Vector2      offset            = {};
+  f32          rotation          = {};
+  LogicalFrame startedShootingAt = {};
+  LogicalFrame cooldownStartedAt = {};
   // f32 lastShotDirection = {};
 };
 
@@ -433,16 +439,18 @@ struct MakeCreatureSpawnData {
 };
 
 struct Projectile {
-  ProjectileType type     = {};
-  bool           isPlayer = {};
-  Vector2        pos      = {};
   bool           active   = true;
+  bool           isPlayer = {};
+  ProjectileType type     = {};
+  Vector2        pos      = {};
+  Vector2        dir      = {};
 };
 
 struct MakeProjectileData {
   ProjectileType type     = {};
   bool           isPlayer = {};
   Vector2        pos      = {};
+  Vector2        dir      = {};
 };
 
 constexpr int PLAYER_WEAPONS_COUNT = 6;
@@ -475,7 +483,6 @@ struct GameData {
   X(CreatureSpawn, creatureSpawns)               \
   X(MakeCreatureSpawnData, creatureSpawnsToMake) \
   X(Projectile, projectiles)                     \
-  X(MakeProjectileData, projectilesToMake)       \
   X(BodyShape, bodyShapes)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -831,9 +838,10 @@ void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
 
   Projectile projectile{
-    .type     = data.type,
     .isPlayer = data.isPlayer,
+    .type     = data.type,
     .pos      = data.pos,
+    .dir      = data.dir,
   };
   // projectile.createdAt.SetNow();
 
@@ -999,8 +1007,6 @@ Vector2 WorldSizeToLogical(Vector2 size) {  ///
   return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
 }
 
-#define GRAND (ge.meta.logicRand)
-
 void GameFixedUpdate() {
   // Player actions.
   if (PLAYER_CREATURE.active) {  ///
@@ -1109,25 +1115,65 @@ void GameFixedUpdate() {
     if (!weapon.type)
       continue;
 
+    const auto fb  = glib->weapons()->Get(weapon.type);
     const auto pos = PLAYER_CREATURE.pos + weapon.offset;
 
     f32       minDistSqr      = f32_inf;
     Creature* closestCreature = nullptr;
 
-    for (int i = 1; i < g.level.a.creatures.count; i++) {
-      const auto creature = g.level.a.creatures.base + i;
-      const auto distSqr  = Vector2DistanceSqr(pos, creature->pos);
+    // Resetting cooldown.
+    const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
+    if (weapon.cooldownStartedAt.IsSet()
+        && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
+      weapon.cooldownStartedAt = {};
 
-      if (distSqr < minDistSqr) {
-        minDistSqr      = distSqr;
-        closestCreature = creature;
+    if (!weapon.cooldownStartedAt.IsSet()) {
+      for (int i = 1; i < g.level.a.creatures.count; i++) {
+        const auto creature = g.level.a.creatures.base + i;
+        const auto distSqr  = Vector2DistanceSqr(pos, creature->pos);
+
+        if (distSqr < minDistSqr) {
+          minDistSqr      = distSqr;
+          closestCreature = creature;
+        }
+      }
+
+      if (closestCreature) {
+        if (minDistSqr < fb->distance() * fb->distance()) {
+          const auto dir  = Vector2DirectionOrRandom(pos, closestCreature->pos);
+          weapon.rotation = Vector2Angle(dir);
+          if (!weapon.startedShootingAt.IsSet()) {
+            weapon.startedShootingAt.SetNow();
+          }
+        }
       }
     }
 
-    if (closestCreature) {
-      const auto fb = glib->weapons()->Get(weapon.type);
-      if (minDistSqr < fb->distance() * fb->distance())
-        weapon.rotation = Vector2Angle(closestCreature->pos - pos);
+    if (weapon.startedShootingAt.IsSet()) {
+      const auto e           = weapon.startedShootingAt.Elapsed();
+      const auto spawnFrames = fb->projectile_spawn_frames();
+
+      bool spawn = false;
+      if (spawnFrames) {
+        for (auto value : *spawnFrames) {
+          if (value == e.value) {
+            spawn = true;
+            break;
+          }
+        }
+      }
+
+      if (spawn) {
+        MakeProjectile({
+          .type     = (ProjectileType)fb->projectile_type(),
+          .isPlayer = true,
+          .pos      = pos,
+          .dir      = Vector2Rotate(Vector2(1, 0), weapon.rotation),
+        });
+      }
+
+      if (e >= lframe::MakeScaled(fb->shooting_duration_frames()))
+        weapon.startedShootingAt = {};
     }
   }
 
@@ -1143,15 +1189,17 @@ void ResetLevel() {  ///
 }
 
 void GameDraw() {
-  // Drawing background.
-  RenderGroup_OneShotRect(
-    {
-      .pos   = WorldPosToLogical((Vector2)WORLD_SIZE / 2.0f),
-      .size  = WorldSizeToLogical((Vector2)WORLD_SIZE),
-      .color = Fade(WHITE, 0.2f),
-    },
-    RenderZ_FLOOR
-  );
+  // Drawing floor.
+  {  ///
+    RenderGroup_OneShotRect(
+      {
+        .pos   = WorldPosToLogical((Vector2)WORLD_SIZE / 2.0f),
+        .size  = WorldSizeToLogical((Vector2)WORLD_SIZE),
+        .color = Fade(WHITE, 0.2f),
+      },
+      RenderZ_FLOOR
+    );
+  }
 
   // Drawing creature spawns.
   {  ///
@@ -1229,9 +1277,10 @@ void GameDraw() {
       const auto fb = fb_projectiles->Get(projectile.type);
       RenderGroup_OneShotTexture(
         {
-          .texId = fb->texture_ids()->Get(0),
-          .pos   = projectile.pos,
-          .color = ColorFromRGB(fb->color()),
+          .texId    = fb->texture_ids()->Get(0),
+          .rotation = Vector2Angle(projectile.dir),
+          .pos      = WorldPosToLogical(projectile.pos),
+          .color    = ColorFromRGB(fb->color()),
         },
         RenderZ_DEFAULT
       );

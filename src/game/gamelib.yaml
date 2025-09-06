@@ -31,7 +31,10 @@ weapons:
   - type: GUN
     projectile_type: BULLET
     damage: 1.0
-    cooldown: 0.2
+    cooldown_frames: 10
+    shooting_duration_frames: 30
+    projectile_spawn_frames:
+      - 6
     distance: 5
     texture_ids:
       - game_weapon_gun

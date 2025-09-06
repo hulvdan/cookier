@@ -36,9 +36,11 @@ table Creature {
 
 table Weapon {
     damage: float;
-    cooldown: float;
+    cooldown_frames: int;
+    shooting_duration_frames: int;
     distance: float;
     projectile_type: int;
+    projectile_spawn_frames: [int];
     color: uint = 0xffffff;
     texture_ids: [int];
 }
