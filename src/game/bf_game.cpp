@@ -481,14 +481,15 @@ struct GameData {
       Array<TouchID, 2> touchIDs = {};
       // LogicalFrame      rightLastPressedAt = {};
     } touch;
+
+    bool reload = false;
   } meta;
 
   struct Level {
     b2WorldId    world        = {};
     LogicalFrame playerDiedAt = {};
 
-    Weapon playerWeapons_[PLAYER_WEAPONS_COUNT] = {};
-    VIEW_FROM_ARRAY_DANGER(playerWeapons);
+    Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
     struct Allocated {
 #define VECTORS_TABLE                            \
@@ -877,18 +878,17 @@ struct Line {
 };
 
 struct MakeWallsData {
-  const Line* lines     = {};
-  View<Body>  outBodies = {};
-  int         n         = {};
+  const View<Line> lines     = {};
+  View<Body>       outBodies = {};
 };
 
 void MakeWalls(MakeWallsData data) {  ///
-  ASSERT(data.n > 0);
+  ASSERT(data.lines.count > 0);
   if (data.outBodies.count)
-    ASSERT(data.n == data.outBodies.count);
-  ASSERT(data.lines);
+    ASSERT(data.lines.count == data.outBodies.count);
+  ASSERT(data.lines.base);
 
-  FOR_RANGE (int, i, data.n) {
+  FOR_RANGE (int, i, data.lines.count) {
     const auto& line = data.lines[i];
 
     auto v1 = line.v1;
@@ -967,15 +967,16 @@ void LevelInit() {
     Vector2Int p00{-1, -1};
     Vector2Int p11{WORLD_X, WORLD_Y};
 
-    const Line lines[]{
+    Line lines_[]{
       // Walls around.
       {{p11.x, p00.y}, {p11.x, p11.y}},  // right
       {{p00.x, p11.y}, {p11.x, p11.y}},  // up
       {{p00.x, p00.y}, {p00.x, p11.y}},  // left
       {{p00.x, p00.y}, {p11.x, p00.y}},  // down
     };
+    VIEW_FROM_ARRAY_DANGER(lines);
 
-    MakeWalls({.lines = lines, .n = ARRAY_COUNT(lines)});
+    MakeWalls({.lines = lines});
   }
 }
 
@@ -1047,7 +1048,21 @@ void TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impuls
     *g.level.a.justDamagedCreatures.Add() = creatureIndex;
 }
 
+void ResetLevel() {  ///
+  b2DestroyWorld(g.level.world);
+
+  auto a = g.level.a;
+  a.Reset();
+  g.level = {.a = a};
+}
+
 void GameFixedUpdate() {
+  if (g.meta.reload) {
+    g.meta.reload = false;
+    ResetLevel();
+    LevelInit();
+  }
+
   // Player actions.
   if (PLAYER_CREATURE.active) {  ///
     // Moving.
@@ -1336,22 +1351,18 @@ void GameFixedUpdate() {
     int        off   = 0;
     FOR_RANGE (int, i, total) {
       const auto& creature = g.level.a.creatures[i - off];
-      if (i && creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
-        g.level.a.creatures.UnstableRemoveAt(i - off);
-        off++;
+      if (creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
+        if (i) {
+          g.level.a.creatures.UnstableRemoveAt(i - off);
+          off++;
+        }
+        else if (!i)
+          g.meta.reload = true;
       }
     }
   }
 
   g.meta.frame++;
-}
-
-void ResetLevel() {  ///
-  b2DestroyWorld(g.level.world);
-
-  auto a = g.level.a;
-  a.Reset();
-  g.level = {.a = a};
 }
 
 void DoUI() {
