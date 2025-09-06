@@ -1735,9 +1735,10 @@ void GameDraw() {
       ));
 
       RenderGroup_CommandText({
-        .pos  = WorldPosToLogical(number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f)),
-        .font = &g.meta.uiFont,
-        .text = buffer,
+        .pos   = WorldPosToLogical(number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f)),
+        .scale = Vector2(1, 1) * (p * 2),
+        .font  = &g.meta.uiFont,
+        .text  = buffer,
         .bytesCount = (int)textLen,
         .color      = Fade(YELLOW, fade),
       });

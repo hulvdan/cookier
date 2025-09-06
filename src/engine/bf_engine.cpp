@@ -295,7 +295,10 @@ struct Font {
 
 struct DrawTextData {
   Vector2 pos = {};
-  // TODO: Vector2 scale = {1, 1};
+
+  // TODO: implement.
+  Vector2 scale = {1, 1};
+
   Vector2     anchor     = Vector2Half();
   const Font* font       = {};
   const char* text       = {};
@@ -591,6 +594,8 @@ BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {  ///
 }
 
 BF_FORCE_INLINE void RenderGroup_CommandText(DrawTextData data) {  ///
+  if ((data.scale.x == 0) || (data.scale.y == 0))
+    return;
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_TEXT,
@@ -1338,6 +1343,16 @@ void FlushRenderCommands() {
                 auto sx1 = q.s1;
                 auto sy0 = q.t0;
                 auto sy1 = q.t1;
+                if (data.scale.x < 0) {
+                  auto t = sx0;
+                  sx0    = sx1;
+                  sx1    = t;
+                }
+                if (data.scale.y < 0) {
+                  auto t = sy0;
+                  sy0    = sy1;
+                  sy1    = t;
+                }
 
                 Vector2 topLeft{};
                 Vector2 topRight{};
