@@ -465,6 +465,12 @@ struct MakeProjectileData {
   f32            damage   = {};
 };
 
+struct DamageNumber {
+  Vector2      pos       = {};
+  float        damage    = {};
+  LogicalFrame createdAt = {};
+};
+
 constexpr int PLAYER_WEAPONS_COUNT = 6;
 
 struct GameData {
@@ -498,7 +504,8 @@ struct GameData {
   X(MakeCreatureSpawnData, creatureSpawnsToMake) \
   X(Projectile, projectiles)                     \
   X(BodyShape, bodyShapes)                       \
-  X(int, justDamagedCreatures)
+  X(int, justDamagedCreatures)                   \
+  X(DamageNumber, damageNumbers)
 
 #define X(type_, name_) Vector<type_> name_ = {};
       VECTORS_TABLE;
@@ -1029,7 +1036,15 @@ Vector2 WorldSizeToLogical(Vector2 size) {  ///
 void TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impulse) {  ///
   auto& creature = g.level.a.creatures[creatureIndex];
 
-  if (!creatureIndex) {
+  if (creatureIndex) {
+    DamageNumber number{
+      .pos    = creature.pos,
+      .damage = damage,
+    };
+    number.createdAt.SetNow();
+    *g.level.a.damageNumbers.Add() = number;
+  }
+  else {
     if (creature.lastDamagedAt.IsSet()
         && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
       return;
@@ -1362,6 +1377,23 @@ void GameFixedUpdate() {
     }
   }
 
+  // Removing old damage numbers.
+  {
+    int removed = 0;
+    int left    = -1;
+    FOR_RANGE (int, i, g.level.a.damageNumbers.count) {
+      const auto& number = g.level.a.damageNumbers[i];
+      if (number.createdAt.Elapsed() >= DAMAGE_NUMBERS_FRAMES) {
+        if (left == -1)
+          left = i;
+        removed++;
+      }
+      else if (left >= 0)
+        g.level.a.damageNumbers[left++] = number;
+    }
+    g.level.a.damageNumbers.count -= removed;
+  }
+
   g.meta.frame++;
 }
 
@@ -1569,6 +1601,8 @@ void DoUI() {
 }
 
 void GameDraw() {
+  TEMP_USAGE(&g.meta.trashArena);
+
   // Drawing floor.
   {  ///
     RenderGroup_OneShotRect(
@@ -1681,6 +1715,29 @@ void GameDraw() {
         });
       }
     }
+  }
+
+  // Drawing damage numbers.
+  {  ///
+    RenderGroup_Begin(RenderZ_FLOOR_DECALS);
+    RenderGroup_SetSortY(0);
+
+    for (const auto& number : g.level.a.damageNumbers) {
+      const auto text    = TextFormat("%d", MAX(1, Round(number.damage)));
+      const auto textLen = strlen(text);
+      const auto buffer  = ALLOCATE_ARRAY(&g.meta.trashArena, char, textLen + 1);
+      memcpy(buffer, text, textLen + 1);
+
+      RenderGroup_CommandText({
+        .pos        = WorldPosToLogical(number.pos),
+        .font       = &g.meta.uiFont,
+        .text       = buffer,
+        .bytesCount = (int)textLen,
+        .color      = YELLOW,
+      });
+    }
+
+    RenderGroup_End();
   }
 
   DoUI();

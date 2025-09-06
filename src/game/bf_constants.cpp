@@ -71,5 +71,6 @@ struct lframe {  ///
 constexpr auto SPAWN_FRAMES                = lframe::MakeScaled(90);
 constexpr auto DIE_FRAMES                  = lframe::MakeScaled(10);
 constexpr auto PLAYER_INVINCIBILITY_FRAMES = lframe::MakeScaled(10);
+constexpr auto DAMAGE_NUMBERS_FRAMES       = lframe::MakeScaled(30);
 
 ///

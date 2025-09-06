@@ -5,6 +5,7 @@ render_z:
   - FLOOR_DECALS
   - DEFAULT
   - WEAPONS
+  - DAMAGE_NUMBERS
   - VIGNETTE
   - UI
   - SCREEN_FADE
