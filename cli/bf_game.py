@@ -7,32 +7,47 @@ USAGE:
     data_values.languages = ["russian", "english"]
 
     @gamelib_processor
-    def process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
+    def _process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
         for tile in gamelib["tiles"]:
             tile.pop("type")
 """
 
 from itertools import groupby
 
-from bf_lib import data_values, gamelib_processor, genenum
+from bf_lib import data_values, gamelib_processor, genenum, recursive_replace_transform
 
 data_values.itch_target = "hulvdan/NOT-SPECIFIED"
 data_values.languages = ["russian", "english"]
 
 
-@gamelib_processor
-def process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
-    # Creatures.
-    # ============================================================
-    if 1:
-        CREATURE_TYPES = [x.pop("type") for x in gamelib["creatures"]]
-        genenum(genline, "CreatureType", CREATURE_TYPES)
+def _check_duplicates(values: list) -> None:
+    for i in range(len(values)):
+        for k in range(i + 1, len(values)):
+            assert values[i] != values[k]
 
-    # Projectiles.
-    # ============================================================
-    if 1:
-        PROJECTILE_TYPES = [x.pop("type") for x in gamelib["projectiles"]]
-        genenum(genline, "ProjectileType", PROJECTILE_TYPES)
+
+@gamelib_processor
+def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+    transforms: list[tuple[str, str, dict[str, int]]] = []
+
+    def add_transform(key: str, codenames: list[str]) -> None:
+        transforms.append(
+            (
+                f"{key}_type",
+                f"{key}_types",
+                {v: i for i, v in enumerate(codenames)},
+            )
+        )
+
+    def generate_relation(key: str) -> None:
+        types = [x.pop("type") for x in gamelib[f"{key}s"]]
+        _check_duplicates(types)
+        genenum(genline, key.title() + "Type", types)
+        add_transform(key, types)
+
+    generate_relation("creature")
+    generate_relation("weapon")
+    generate_relation("projectile")
 
     # Codepoints.
     # ============================================================
@@ -60,3 +75,8 @@ def process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None
                 )
             )
         genline("};\n")
+
+    # Transforms.
+    # ============================================================
+    for v in transforms:
+        recursive_replace_transform(gamelib, *v)

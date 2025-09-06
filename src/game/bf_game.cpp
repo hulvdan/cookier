@@ -213,6 +213,23 @@ static const char* const g_gameVersion = BF_VERSION
 #endif
   ;
 
+struct LogicalFrame {
+  i64 _value = i64_max;
+
+  [[nodiscard]] static LogicalFrame Now() {  ///
+    LogicalFrame frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {  ///
+    return _value != i64_max;
+  }
+  void   SetNow();
+  lframe Elapsed() const;
+  f32    Progress(lframe duration) const;
+};
+
 enum ShapeCategory : u32 {
   ShapeCategory_STATIC     = 0x1,
   ShapeCategory_PLAYER     = 0x2,
@@ -370,6 +387,11 @@ struct MakeBodyData {
   bool          isPlayer = {};
 };
 
+struct Weapon {
+  int fb = {};
+  // f32 lastShotDirection = {};
+};
+
 struct CreatureController {
   Vector2 move = {};
   // Vector2 shoot = {};
@@ -386,6 +408,7 @@ struct Creature {
   Vector2            dir        = {};
   Body               body       = {};
   CreatureController controller = {};
+  Weapon             weapons[6] = {};
 };
 
 struct MakeCreatureData {
@@ -395,8 +418,9 @@ struct MakeCreatureData {
 };
 
 struct CreatureSpawn {
-  CreatureType type = {};
-  Vector2      pos  = {};
+  CreatureType type      = {};
+  Vector2      pos       = {};
+  LogicalFrame createdAt = {};
 };
 
 struct MakeCreatureSpawnData {
@@ -438,26 +462,40 @@ struct GameData {
     b2WorldId world = {};
 
     struct Allocated {
-      Vector<Creature>              creatures            = {};
-      Vector<MakeCreatureData>      creaturesToMake      = {};
-      Vector<CreatureSpawn>         creatureSpawns       = {};
-      Vector<MakeCreatureSpawnData> creatureSpawnsToMake = {};
-      Vector<Projectile>            projectiles          = {};
-      Vector<MakeProjectileData>    projectilesToMake    = {};
-      Vector<BodyShape>             bodyShapes           = {};
+#define VECTORS_TABLE                            \
+  X(Creature, creatures)                         \
+  X(CreatureSpawn, creatureSpawns)               \
+  X(MakeCreatureSpawnData, creatureSpawnsToMake) \
+  X(Projectile, projectiles)                     \
+  X(MakeProjectileData, projectilesToMake)       \
+  X(BodyShape, bodyShapes)
+
+#define X(type_, name_) Vector<type_> name_ = {};
+      VECTORS_TABLE;
+#undef X
 
       void Reset() {  ///
-        creatures.Reset();
-        creaturesToMake.Reset();
-        creatureSpawns.Reset();
-        creatureSpawnsToMake.Reset();
-        projectiles.Reset();
-        projectilesToMake.Reset();
-        bodyShapes.Reset();
+#define X(type_, name_) (name_).Reset();
+        VECTORS_TABLE;
+#undef X
       }
+#undef VECTORS_TABLE
     } a;
   } level;
 } g = {};
+
+#define FRAMES_ELAPSED(value) (g.meta.frame - (value))
+#define PROGRESS(elapsed, duration) ((f32)(elapsed) / (f32)(duration))
+
+void LogicalFrame::SetNow() {  ///
+  ASSERT_FALSE(IsSet());
+  _value = g.meta.frame;
+}
+
+lframe LogicalFrame::Elapsed() const {  ///
+  ASSERT(IsSet());
+  return lframe::MakeUnscaled(FRAMES_ELAPSED(_value));
+}
 
 static BF_FORCE_INLINE Clay_Dimensions MeasureText(
   Clay_StringSlice        text,
@@ -944,6 +982,8 @@ Vector2 WorldSizeToLogical(Vector2 size) {  ///
   return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
 }
 
+#define GRAND (ge.meta.logicRand)
+
 void GameFixedUpdate() {
   // Player actions.
   if (PLAYER_CREATURE.active) {  ///
@@ -1005,6 +1045,48 @@ void GameFixedUpdate() {
     creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
   }
 
+  // Making pre spawns.
+  if (g.meta.frame % (4 * FIXED_FPS) == 0) {  ///
+    const auto         toSpawn = 4 + GRAND.Rand() % 3;
+    const CreatureType types_[]{
+      CreatureType_MOB1,
+      CreatureType_MOB2,
+    };
+    VIEW_FROM_ARRAY_DANGER(types);
+    FOR_RANGE (int, i, toSpawn) {
+      CreatureSpawn spawn{
+        .type = types[GRAND.Rand() % types.count],
+        .pos{
+          0.5f + GRAND.FRand() * (WORLD_X - 1),
+          0.5f + GRAND.FRand() * (WORLD_Y - 1),
+        },
+      };
+      spawn.createdAt.SetNow();
+      *g.level.a.creatureSpawns.Add() = spawn;
+    }
+  }
+
+  // Spawning.
+  {  ///
+    const int total = g.level.a.creatureSpawns.count;
+    int       off   = 0;
+    FOR_RANGE (int, i, total) {
+      auto& v = g.level.a.creatureSpawns[i - off];
+      if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
+        MakeCreature({
+          .type = v.type,
+          .pos  = v.pos,
+          .body{
+            .type     = BodyType_CREATURE,
+            .userData = ShapeUserData::Creature(g.level.a.creatures.count),
+          },
+        });
+        g.level.a.creatureSpawns.UnstableRemoveAt(i - off);
+        off++;
+      }
+    }
+  }
+
   g.meta.frame++;
 }
 
@@ -1026,6 +1108,24 @@ void GameDraw() {
     },
     RenderZ_FLOOR
   );
+
+  // Drawing creature spawns.
+  {  ///
+    const auto texId = glib->decal_pre_spawn_texture_id();
+
+    RenderGroup_Begin(RenderZ_FLOOR_DECALS);
+    RenderGroup_SetSortY(0);
+
+    for (auto& spawn : g.level.a.creatureSpawns) {
+      RenderGroup_CommandTexture({
+        .texId = texId,
+        .pos   = WorldPosToLogical(spawn.pos),
+        .color = RED,
+      });
+    }
+
+    RenderGroup_End();
+  }
 
   // Drawing creatures.
   {  ///

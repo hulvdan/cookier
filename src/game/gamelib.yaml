@@ -2,6 +2,7 @@ render_z:
   - INVALID
   - SCREEN_BACKGROUND
   - FLOOR
+  - FLOOR_DECALS
   - DEFAULT
   - VIGNETTE
   - SCREEN_FADE
@@ -10,6 +11,7 @@ vignette_texture_id: vignette
 localization:
   YES_: Да
   NO_: Нет
+decal_pre_spawn_texture_id: game_decal_pre_spawn
 creatures:
   - type: INVALID
   - type: PLAYER
@@ -23,6 +25,14 @@ creatures:
     color: 0xff7700
     texture_ids:
       - game_creature_player
+weapons:
+  - type: INVALID
+  - type: GUN
+    projectile_type: BULLET
+    damage: 1.0
+    cooldown: 0.2
+    texture_ids:
+      - game_weapon_gun
 projectiles:
   - type: INVALID
   - type: ARROW

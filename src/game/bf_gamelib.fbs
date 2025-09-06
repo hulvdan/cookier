@@ -34,8 +34,14 @@ table Creature {
     texture_ids: [int];
 }
 
+table Weapon {
+    damage: float;
+    cooldown: float;
+    projectile_type: int;
+    texture_ids: [int];
+}
+
 table Projectile {
-    damage: int;
     color: uint = 0xffffff;
     texture_ids: [int];
 }
@@ -51,7 +57,9 @@ table GameLibrary {
     localizations: [Localization] (required);
 
     // GAME STUFF
+    decal_pre_spawn_texture_id: int;
     creatures: [Creature] (required);
+    weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
     // GAME STUFF END
 }

@@ -13,3 +13,58 @@ constexpr f32 CREATURE_COLLIDER_RADIUS = 0.6f;
 // Other.
 // ============================================================
 constexpr f32 PLAYER_SPEED_FORCE = 100.0f;
+
+struct lframe {  ///
+  i64 value = i64_max;
+
+  constexpr static lframe MakeScaled(i64 v) {
+    return {.value = v * _BF_LOGICAL_FPS_SCALE};
+  }
+
+  constexpr static lframe MakeUnscaled(i64 v) {
+    return {.value = v};
+  }
+
+  f32 Progress(const lframe duration) const;
+
+  bool operator==(const lframe& other) const {
+    return value == other.value;
+  }
+
+  bool operator>(const lframe& other) const {
+    return value > other.value;
+  }
+
+  bool operator<(const lframe& other) const {
+    return value < other.value;
+  }
+
+  bool operator>=(const lframe& other) const {
+    return value >= other.value;
+  }
+
+  bool operator<=(const lframe& other) const {
+    return value <= other.value;
+  }
+
+  const lframe operator+(const lframe& other) const {
+    return lframe::MakeUnscaled(value + other.value);
+  }
+
+  const lframe operator-(const lframe& other) const {
+    return lframe::MakeUnscaled(value - other.value);
+  }
+
+  void SetRand(lframe v) {
+    value = ge.meta.logicRand.Rand() % v.value;
+  }
+
+  void SetRand(lframe v1, lframe v2) {
+    ASSERT(v2.value > v1.value);
+    value = v1.value + ge.meta.logicRand.Rand() % (v2.value - v1.value);
+  }
+};
+
+constexpr auto SPAWN_FRAMES = lframe::MakeScaled(90);
+
+///
