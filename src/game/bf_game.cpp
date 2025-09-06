@@ -673,16 +673,12 @@ MakeBodyResult MakeBody(Vector2 pos, MakeBodyData data) {  ///
   case BodyType_STATIC: {
     categoryBits = ShapeCategory_STATIC;
     maskBits |= ShapeCategory_CREATURE;
-    maskBits |= ShapeCategory_PROJECTILE;
   } break;
 
   case BodyType_CREATURE: {
     categoryBits = ShapeCategory_CREATURE;
     if (data.isPlayer)
       categoryBits |= ShapeCategory_PLAYER;
-
-    maskBits |= ShapeCategory_CREATURE;
-    // maskBits |= ShapeCategory_PROJECTILE;
   } break;
 
   default:
