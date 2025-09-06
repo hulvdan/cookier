@@ -1612,13 +1612,16 @@ void GameDraw() {
           if (!weapon.type)
             continue;
 
-          const auto fb = fb_weapons->Get(weapon.type);
+          const auto    fb = fb_weapons->Get(weapon.type);
+          const Vector2 r{1, 0};
+          const Vector2 scale{SIGN(Vector2Dot(r, Vector2Rotate(r, weapon.rotation))), 1};
 
           RenderGroup_OneShotTexture(
             {
               .texId    = fb->texture_ids()->Get(0),
-              .rotation = weapon.rotation,
+              .rotation = weapon.rotation + ((scale.x < 0) ? (f32)PI : 0.0f),
               .pos      = WorldPosToLogical(creature.pos + weapon.offset),
+              .scale    = scale,
               .color    = Fade(ColorFromRGB(fb->color()), fade),
             },
             RenderZ_WEAPONS
