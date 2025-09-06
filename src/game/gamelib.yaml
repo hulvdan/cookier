@@ -3,6 +3,7 @@ render_z:
   - SCREEN_BACKGROUND
   - FLOOR
   - FLOOR_DECALS
+  - PICKUPABLES
   - DEFAULT
   - WEAPONS
   - DAMAGE_NUMBERS
@@ -18,7 +19,7 @@ ui_health_texture_ids:
   - ui_health_back
   - ui_health_top
 decal_pre_spawn_texture_id: game_decal_pre_spawn
-creatures:
+creature__table:
   - type: INVALID
   - type: PLAYER
     health: 20
@@ -39,7 +40,7 @@ creatures:
     speed_force: 75
     texture_ids:
       - game_creature_player
-weapons:
+weapon__table:
   - type: INVALID
   - type: GUN
     projectile_type: BULLET
@@ -61,7 +62,7 @@ weapons:
     distance: 8
     texture_ids:
       - game_weapon_bow
-projectiles:
+projectile__table:
   - type: INVALID
   - type: ARROW
     speed: 12
@@ -72,3 +73,7 @@ projectiles:
     speed: 16
     texture_ids:
       - game_projectile_bullet
+pickupable__table:
+  - type: INVALID
+  - type: COIN
+    texture_id: game_pickupable_coin

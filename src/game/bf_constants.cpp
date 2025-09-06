@@ -9,9 +9,10 @@ constexpr f32        RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER = 8;
 
 #define SQR(v) ((v) * (v))
 
-constexpr f32 PLAYER_HURTBOX_RADIUS    = 0.7f;
-constexpr f32 MOB_HURTBOX_RADIUS       = 0.9f;
-constexpr f32 CREATURE_COLLIDER_RADIUS = 0.6f;
+constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.7f;
+constexpr f32 MOB_HURTBOX_RADIUS        = 0.9f;
+constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.6f;
+constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
 
 // Other.
 // ============================================================
@@ -73,5 +74,6 @@ constexpr auto DIE_FRAMES                  = lframe::MakeScaled(10);
 constexpr auto PLAYER_INVINCIBILITY_FRAMES = lframe::MakeScaled(10);
 constexpr auto DAMAGE_NUMBERS_FRAMES       = lframe::MakeScaled(30);
 constexpr auto DAMAGE_NUMBERS_FADE_FRAMES  = lframe::MakeScaled(10);
+constexpr auto PICKUPABLE_FADE_FRAMES      = lframe::MakeScaled(10);
 
 ///

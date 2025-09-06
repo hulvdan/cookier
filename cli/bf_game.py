@@ -30,24 +30,23 @@ def _check_duplicates(values: list) -> None:
 def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     transforms: list[tuple[str, str, dict[str, int]]] = []
 
-    def add_transform(key: str, codenames: list[str]) -> None:
-        transforms.append(
-            (
-                f"{key}_type",
-                f"{key}_types",
-                {v: i for i, v in enumerate(codenames)},
-            )
-        )
-
-    def generate_relation(key: str) -> None:
-        types = [x.pop("type") for x in gamelib[f"{key}s"]]
-        _check_duplicates(types)
-        genenum(genline, key.title() + "Type", types)
-        add_transform(key, types)
-
-    generate_relation("creature")
-    generate_relation("weapon")
-    generate_relation("projectile")
+    # Tables.
+    # ============================================================
+    if 1:
+        table_keys_to_update: list[str] = []
+        for key_ in gamelib:
+            suffix = "__table"
+            if key_.endswith(suffix):
+                key = key_.removesuffix(suffix)
+                table_keys_to_update.append(key)
+                types = [x.pop("type") for x in gamelib[key_]]
+                _check_duplicates(types)
+                genenum(genline, key.title() + "Type", types)
+                transforms.append(
+                    (f"{key}_type", f"{key}_types", {v: i for i, v in enumerate(types)})
+                )
+        for key in table_keys_to_update:
+            gamelib[f"{key}s"] = gamelib.pop(f"{key}__table")
 
     # Codepoints.
     # ============================================================

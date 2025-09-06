@@ -54,6 +54,10 @@ table Projectile {
     impulse: float = 1;
     texture_ids: [int];
 }
+
+table Pickupable {
+    texture_id: int;
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -68,9 +72,11 @@ table GameLibrary {
     // GAME STUFF
     ui_health_texture_ids: [int] (required);
     decal_pre_spawn_texture_id: int;
+
     creatures: [Creature] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
+    pickupables: [Pickupable] (required);
     // GAME STUFF END
 }
 

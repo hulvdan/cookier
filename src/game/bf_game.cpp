@@ -471,6 +471,13 @@ struct DamageNumber {
   LogicalFrame createdAt = {};
 };
 
+struct Pickupable {
+  PickupableType type       = {};
+  Vector2        pos        = {};
+  LogicalFrame   createdAt  = {};
+  LogicalFrame   pickedUpAt = {};
+};
+
 constexpr int PLAYER_WEAPONS_COUNT = 6;
 
 struct GameData {
@@ -495,6 +502,9 @@ struct GameData {
     b2WorldId    world        = {};
     LogicalFrame playerDiedAt = {};
 
+    f32 xp    = 0;
+    int coins = 0;
+
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
     struct Allocated {
@@ -505,7 +515,8 @@ struct GameData {
   X(Projectile, projectiles)                     \
   X(BodyShape, bodyShapes)                       \
   X(int, justDamagedCreatures)                   \
-  X(DamageNumber, damageNumbers)
+  X(DamageNumber, damageNumbers)                 \
+  X(Pickupable, pickupables)
 
 #define X(type_, name_) Vector<type_> name_ = {};
       VECTORS_TABLE;
@@ -1349,6 +1360,13 @@ void GameFixedUpdate() {
         creature.diedAt.SetNow();
         if (!index)
           g.level.playerDiedAt.SetNow();
+
+        Pickupable pickupable{
+          .type = PickupableType_COIN,
+          .pos  = creature.pos,
+        };
+        pickupable.createdAt.SetNow();
+        *g.level.a.pickupables.Add() = pickupable;
       }
     }
 
@@ -1392,6 +1410,45 @@ void GameFixedUpdate() {
         g.level.a.damageNumbers[left++] = number;
     }
     g.level.a.damageNumbers.count -= removed;
+  }
+
+  // Picking up pickupables.
+  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    for (auto& pickupable : g.level.a.pickupables) {
+      if (pickupable.pickedUpAt.IsSet()) {
+        pickupable.pos
+          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 2, FIXED_DT);
+      }
+      else {
+        if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
+            <= SQR(PICKUPABLE_HURTBOX_RADIUS))
+          pickupable.pickedUpAt.SetNow();
+
+        switch (pickupable.type) {
+        case PickupableType_COIN: {
+          g.level.coins++;
+        } break;
+
+        default:
+          INVALID_PATH;
+        }
+      }
+    }
+  }
+
+  // Removing old picked up pickupables.
+  {  ///
+    const auto total = g.level.a.pickupables.count;
+    int        off   = 0;
+    FOR_RANGE (int, i, total) {
+      const auto& pickupable = g.level.a.pickupables[i - off];
+      if (pickupable.pickedUpAt.IsSet()
+          && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
+      {
+        g.level.a.pickupables.UnstableRemoveAt(i - off);
+        off++;
+      }
+    }
   }
 
   g.meta.frame++;
@@ -1745,6 +1802,33 @@ void GameDraw() {
     }
 
     RenderGroup_End();
+  }
+
+  // Drawing pickupables.
+  {  ///
+    const auto fb_pickupables = glib->pickupables();
+    for (const auto& pickupable : g.level.a.pickupables) {
+      const auto fb = fb_pickupables->Get(pickupable.type);
+
+      f32 fade = 1;
+      {
+        const auto e = pickupable.createdAt.Elapsed();
+        fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
+      }
+      if (pickupable.pickedUpAt.IsSet()) {
+        const auto e = pickupable.pickedUpAt.Elapsed();
+        fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
+      }
+
+      RenderGroup_OneShotTexture(
+        {
+          .texId = fb->texture_id(),
+          .pos   = WorldPosToLogical(pickupable.pos),
+          .color = Fade(WHITE, fade),
+        },
+        RenderZ_PICKUPABLES
+      );
+    }
   }
 
   DoUI();
