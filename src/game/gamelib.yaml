@@ -16,14 +16,17 @@ decal_pre_spawn_texture_id: game_decal_pre_spawn
 creatures:
   - type: INVALID
   - type: PLAYER
+    speed_force: 100
     texture_ids:
       - game_creature_player
   - type: MOB1
     color: 0xff0000
+    speed_force: 130
     texture_ids:
       - game_creature_player
   - type: MOB2
     color: 0xff7700
+    speed_force: 75
     texture_ids:
       - game_creature_player
 weapons:
@@ -41,11 +44,11 @@ weapons:
 projectiles:
   - type: INVALID
   - type: ARROW
-    speed: 5
+    speed: 12
     texture_ids:
       - game_projectile_arrow
   - type: BULLET
     color: 0xffff00
-    speed: 10
+    speed: 16
     texture_ids:
       - game_projectile_arrow

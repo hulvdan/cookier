@@ -2,9 +2,10 @@
 
 // Sizings + colliders.
 // ============================================================
-constexpr int        WORLD_X    = 20;
-constexpr int        WORLD_Y    = 20;
-constexpr Vector2Int WORLD_SIZE = {WORLD_X, WORLD_Y};
+constexpr int        WORLD_X                              = 20;
+constexpr int        WORLD_Y                              = 20;
+constexpr Vector2Int WORLD_SIZE                           = {WORLD_X, WORLD_Y};
+constexpr f32        RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER = 8;
 
 #define SQR(v) ((v) * (v))
 
@@ -14,8 +15,6 @@ constexpr f32 CREATURE_COLLIDER_RADIUS = 0.6f;
 
 // Other.
 // ============================================================
-constexpr f32 PLAYER_SPEED_FORCE = 100.0f;
-
 struct lframe {  ///
   i64 value = i64_max;
 

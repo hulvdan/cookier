@@ -193,6 +193,12 @@ Vector2 Vector2DirectionOrRandom(Vector2 from, Vector2 to) {  ///
   return Vector2Normalize(to - from);
 }
 
+Vector2 Vector2DirectionOrZero(Vector2 from, Vector2 to) {  ///
+  if (from == to)
+    return Vector2Zero();
+  return Vector2Normalize(to - from);
+}
+
 const char* GetWindowTitle() {  ///
   return "The Game"
 #if BF_DEBUG
@@ -1061,21 +1067,29 @@ void GameFixedUpdate() {
     }
   }
 
+  // Updating AI.
+  for (int i = 1; i < g.level.a.creatures.count; i++) {  ///
+    auto& creature           = g.level.a.creatures[i];
+    creature.controller.move = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+  }
+
   // Creatures moving.
   {  ///
-    auto fb_creatures = glib->creatures();
+    const auto fb_creatures = glib->creatures();
 
     for (auto& creature : g.level.a.creatures) {
       if (!creature.active || creature.diedAt.IsSet())
         continue;
 
-      auto speedScale = 1.0f;
+      const auto fb = fb_creatures->Get(creature.type);
+
+      auto speedScale = fb->speed_force();
       if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
         speedScale *= 1.5f;
 
       b2Body_ApplyLinearImpulseToCenter(
         creature.body.id,
-        ToB2Vec2(creature.controller.move * (FIXED_DT * PLAYER_SPEED_FORCE * speedScale)),
+        ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
         true
       );
     }
@@ -1093,24 +1107,35 @@ void GameFixedUpdate() {
   }
 
   // Making pre spawns.
+  static int toSpawn = 4;
+
   if (g.meta.frame % (4 * FIXED_FPS) == 0) {  ///
-    const auto         toSpawn = 4 + GRAND.Rand() % 3;
     const CreatureType types_[]{
       CreatureType_MOB1,
       CreatureType_MOB2,
     };
     VIEW_FROM_ARRAY_DANGER(types);
+
+    Vector2 posToSpawn{};
+
     FOR_RANGE (int, i, toSpawn) {
-      CreatureSpawn spawn{
-        .type = types[GRAND.Rand() % types.count],
-        .pos{
+      do {
+        posToSpawn = {
           0.5f + GRAND.FRand() * (WORLD_X - 1),
           0.5f + GRAND.FRand() * (WORLD_Y - 1),
-        },
+        };
+      } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
+               < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
+
+      CreatureSpawn spawn{
+        .type = types[GRAND.Rand() % types.count],
+        .pos  = posToSpawn,
       };
       spawn.createdAt.SetNow();
       *g.level.a.creatureSpawns.Add() = spawn;
     }
+
+    toSpawn++;
   }
 
   // Spawning.
@@ -1154,7 +1179,10 @@ void GameFixedUpdate() {
     if (!weapon.cooldownStartedAt.IsSet()) {
       for (int i = 1; i < g.level.a.creatures.count; i++) {
         const auto creature = g.level.a.creatures.base + i;
-        const auto distSqr  = Vector2DistanceSqr(pos, creature->pos);
+        if (!creature->active || creature->diedAt.IsSet())
+          continue;
+
+        const auto distSqr = Vector2DistanceSqr(pos, creature->pos);
 
         if (distSqr < minDistSqr) {
           minDistSqr      = distSqr;

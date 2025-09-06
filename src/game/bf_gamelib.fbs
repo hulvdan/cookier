@@ -30,6 +30,7 @@ struct Pos {
 // GAME STUFF
 table Creature {
     health: int;
+    speed_force: float;
     color: uint = 0xffffff;
     texture_ids: [int];
 }
