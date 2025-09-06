@@ -1017,12 +1017,15 @@ void ResetLevel() {  ///
 }
 
 void GameDraw() {
-  // Forbidding use of `logicRand` during drawing
-  // so that game's logic remains deterministic.
-  ge.meta.logicRand.raise = true;
-  DEFER {
-    ge.meta.logicRand.raise = false;
-  };
+  // Drawing background.
+  RenderGroup_OneShotRect(
+    {
+      .pos   = WorldPosToLogical((Vector2)WORLD_SIZE / 2.0f),
+      .size  = WorldSizeToLogical((Vector2)WORLD_SIZE),
+      .color = Fade(WHITE, 0.2f),
+    },
+    RenderZ_FLOOR
+  );
 
   // Drawing creatures.
   {  ///

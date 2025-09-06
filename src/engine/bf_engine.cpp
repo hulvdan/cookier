@@ -2529,7 +2529,14 @@ SDL_AppResult EngineUpdate() {  ///
     }
   }
 
+  // Forbidding use of `logicRand` during drawing.
+  // This way game's logic remains deterministic.
+  // It allows re-simulation of game using prerecorded inputs
+  // such that game's state is always the same during and after the simulation.
+  // TODO: record / replay inputs.
+  ge.meta.logicRand.raise = true;
   GameDraw();
+  ge.meta.logicRand.raise = false;
 
   return SDL_APP_CONTINUE;
 }

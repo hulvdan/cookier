@@ -1,6 +1,7 @@
 render_z:
   - INVALID
   - SCREEN_BACKGROUND
+  - FLOOR
   - DEFAULT
   - VIGNETTE
   - SCREEN_FADE
