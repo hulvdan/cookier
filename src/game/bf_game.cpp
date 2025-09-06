@@ -948,9 +948,18 @@ void LevelInit() {
     },
   });
 
+  struct {
+    WeaponType type = {};
+  } weapons_[]{
+    {.type = WeaponType_GUN},
+    {.type = WeaponType_BOW},
+    {.type = WeaponType_GUN},
+  };
+  VIEW_FROM_ARRAY_DANGER(weapons);
+
   FOR_RANGE (int, i, 3) {
     auto& weapon = g.level.playerWeapons[i * 2];
-    weapon.type  = WeaponType_GUN;
+    weapon.type  = weapons[i].type;
   }
 
   // Placing walls.

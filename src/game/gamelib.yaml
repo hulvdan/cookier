@@ -50,6 +50,16 @@ weapons:
     distance: 5
     texture_ids:
       - game_weapon_gun
+  - type: BOW
+    projectile_type: ARROW
+    damage: 1.5
+    cooldown_frames: 16
+    shooting_duration_frames: 20
+    projectile_spawn_frames:
+      - 4
+    distance: 8
+    texture_ids:
+      - game_weapon_bow
 projectiles:
   - type: INVALID
   - type: ARROW
@@ -60,4 +70,4 @@ projectiles:
     color: 0xffff00
     speed: 16
     texture_ids:
-      - game_projectile_arrow
+      - game_projectile_bullet
