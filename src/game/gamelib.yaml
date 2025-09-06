@@ -4,6 +4,7 @@ render_z:
   - FLOOR
   - FLOOR_DECALS
   - DEFAULT
+  - WEAPONS
   - VIGNETTE
   - SCREEN_FADE
   - GIZMOS
@@ -31,6 +32,7 @@ weapons:
     projectile_type: BULLET
     damage: 1.0
     cooldown: 0.2
+    distance: 5
     texture_ids:
       - game_weapon_gun
 projectiles:

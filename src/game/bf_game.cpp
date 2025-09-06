@@ -388,7 +388,11 @@ struct MakeBodyData {
 };
 
 struct Weapon {
-  int fb = {};
+  WeaponType   type               = {};
+  Vector2      offset             = {};
+  f32          rotation           = {};
+  LogicalFrame startedShootingAt  = {};
+  LogicalFrame lastShotFinishedAt = {};
   // f32 lastShotDirection = {};
 };
 
@@ -408,7 +412,6 @@ struct Creature {
   Vector2            dir        = {};
   Body               body       = {};
   CreatureController controller = {};
-  Weapon             weapons[6] = {};
 };
 
 struct MakeCreatureData {
@@ -442,6 +445,8 @@ struct MakeProjectileData {
   Vector2        pos      = {};
 };
 
+constexpr int PLAYER_WEAPONS_COUNT = 6;
+
 struct GameData {
   struct Meta {
     i64   frame      = 0;
@@ -460,6 +465,9 @@ struct GameData {
 
   struct Level {
     b2WorldId world = {};
+
+    Weapon playerWeapons_[PLAYER_WEAPONS_COUNT] = {};
+    VIEW_FROM_ARRAY_DANGER(playerWeapons);
 
     struct Allocated {
 #define VECTORS_TABLE                            \
@@ -901,6 +909,10 @@ void MakeWalls(MakeWallsData data) {  ///
 }
 
 void LevelInit() {
+  FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
+    g.level.playerWeapons[i].offset = Vector2Rotate(Vector2(1, 0), i * PI / 3.0f);
+  }
+
   // Creating box2d world.
   {  ///
     b2WorldDef worldDef = b2DefaultWorldDef();
@@ -918,6 +930,11 @@ void LevelInit() {
       .isPlayer = true,
     },
   });
+
+  FOR_RANGE (int, i, 3) {
+    auto& weapon = g.level.playerWeapons[i * 2];
+    weapon.type  = WeaponType_GUN;
+  }
 
   // Placing walls.
   {  ///
@@ -1087,6 +1104,33 @@ void GameFixedUpdate() {
     }
   }
 
+  // Player weapons shooting.
+  for (auto& weapon : g.level.playerWeapons) {  ///
+    if (!weapon.type)
+      continue;
+
+    const auto pos = PLAYER_CREATURE.pos + weapon.offset;
+
+    f32       minDistSqr      = f32_inf;
+    Creature* closestCreature = nullptr;
+
+    for (int i = 1; i < g.level.a.creatures.count; i++) {
+      const auto creature = g.level.a.creatures.base + i;
+      const auto distSqr  = Vector2DistanceSqr(pos, creature->pos);
+
+      if (distSqr < minDistSqr) {
+        minDistSqr      = distSqr;
+        closestCreature = creature;
+      }
+    }
+
+    if (closestCreature) {
+      const auto fb = glib->weapons()->Get(weapon.type);
+      if (minDistSqr < fb->distance() * fb->distance())
+        weapon.rotation = Vector2Angle(closestCreature->pos - pos);
+    }
+  }
+
   g.meta.frame++;
 }
 
@@ -1131,6 +1175,8 @@ void GameDraw() {
   {  ///
     const auto fb_creatures = glib->creatures();
 
+    bool isPlayer = true;
+
     for (const auto& creature : g.level.a.creatures) {
       if (!creature.active)
         continue;
@@ -1145,6 +1191,30 @@ void GameDraw() {
         },
         RenderZ_DEFAULT
       );
+
+      if (isPlayer) {
+        const auto fb_weapons = glib->weapons();
+
+        FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
+          const auto& weapon = g.level.playerWeapons[i];
+          if (!weapon.type)
+            continue;
+
+          const auto fb = fb_weapons->Get(weapon.type);
+
+          RenderGroup_OneShotTexture(
+            {
+              .texId    = fb->texture_ids()->Get(0),
+              .rotation = weapon.rotation,
+              .pos      = WorldPosToLogical(creature.pos + weapon.offset),
+              .color    = ColorFromRGB(fb->color()),
+            },
+            RenderZ_WEAPONS
+          );
+        }
+
+        isPlayer = false;
+      }
     }
   }
 
