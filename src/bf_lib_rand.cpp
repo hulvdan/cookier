@@ -3,7 +3,7 @@
 #pragma once
 
 struct Random {
-  bool raise  = false;
+  bool _raise = false;
   u32  _state = {};
 
   explicit Random(u32 seed)
@@ -11,7 +11,7 @@ struct Random {
 
   // Based off splitMix32.
   u32 Rand() {  ///
-    ASSERT_FALSE(raise);
+    ASSERT_FALSE(_raise);
 
     u32 z = _state + 0x9e3779b9;
     z ^= z >> 15;
