@@ -29,7 +29,8 @@ struct Pos {
 
 // GAME STUFF
 table Creature {
-    health: int;
+    health: float;
+    damage: float;
     speed_force: float;
     color: uint = 0xffffff;
     texture_ids: [int];
@@ -65,6 +66,7 @@ table GameLibrary {
     localizations: [Localization] (required);
 
     // GAME STUFF
+    ui_health_texture_ids: [int] (required);
     decal_pre_spawn_texture_id: int;
     creatures: [Creature] (required);
     weapons: [Weapon] (required);

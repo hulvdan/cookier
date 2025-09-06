@@ -143,8 +143,9 @@ struct Beautify {
   }}){}};
 
 struct ClayImageData {
-  int textureId = {};
-  // Color color     = {};
+  int     texId         = {};
+  Margins sourceMargins = {0, 0};
+  Color   color         = WHITE;
   // f32   scale     = {};
   // ImageFitType fitType   = {};
 };
@@ -418,8 +419,8 @@ struct CreatureController {
 struct Creature {
   bool               active        = true;
   CreatureType       type          = {};
-  int                health        = {};
-  int                maxHealth     = {};
+  f32                health        = {};
+  f32                maxHealth     = {};
   Vector2            pos           = {};
   Vector2            dir           = {};
   Body               body          = {};
@@ -576,8 +577,8 @@ void* PushClayCustomData(ClayCustomData data) {  ///
   return (void*)result;
 }
 
-void BF_CLAY_IMAGE(int tex, auto innerLambda) {  ///
-  auto texture = glib->atlas_textures()->Get(tex);
+void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
+  const auto texture = glib->atlas_textures()->Get(data.texId);
   CLAY({
     .layout{
       .sizing{
@@ -594,14 +595,14 @@ void BF_CLAY_IMAGE(int tex, auto innerLambda) {  ///
         .height = CLAY_SIZING_FIXED((f32)texture->size_y() * ASSETS_TO_LOGICAL_RATIO),
       },
     },
-    .image{.imageData = PushClayImageData({.textureId = tex})},
+    .image{.imageData = PushClayImageData(data)},
   }) {
     innerLambda();
   }
 }
 
-void BF_CLAY_IMAGE(int tex) {  ///
-  BF_CLAY_IMAGE(tex, [] {});
+void BF_CLAY_IMAGE(ClayImageData data) {  ///
+  BF_CLAY_IMAGE(data, [] {});
 }
 
 void BF_CLAY_TEXT(Clay_String string) {  ///
@@ -803,9 +804,7 @@ void MakeCreature(MakeCreatureData data) {  ///
   if (data.type != CreatureType_PLAYER)
     hurtboxRadius = MOB_HURTBOX_RADIUS;
 
-  const auto radius = CREATURE_COLLIDER_RADIUS;
-
-  auto fb_creature = glib->creatures()->Get(data.type);
+  const auto fb_creature = glib->creatures()->Get(data.type);
 
   Creature creature{
     .type      = data.type,
@@ -814,7 +813,7 @@ void MakeCreature(MakeCreatureData data) {  ///
     .pos       = data.pos,
     .body      = MakeCircleBody({
            .pos           = data.pos,
-           .radius        = radius,
+           .radius        = CREATURE_COLLIDER_RADIUS,
            .hurtboxRadius = hurtboxRadius,
            .bodyData{
              .type     = BodyType_CREATURE,
@@ -1020,6 +1019,12 @@ Vector2 WorldSizeToLogical(Vector2 size) {  ///
 void TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impulse) {  ///
   auto& creature = g.level.a.creatures[creatureIndex];
 
+  if (!creatureIndex) {
+    if (creature.lastDamagedAt.IsSet()
+        && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
+      return;
+  }
+
   creature.health -= damage;
 
   creature.lastDamagedAt = {};
@@ -1131,7 +1136,8 @@ void GameFixedUpdate() {
       *g.level.a.creatureSpawns.Add() = spawn;
     }
 
-    toSpawn++;
+    if (toSpawn < 30)
+      toSpawn++;
   }
 
   // Spawning.
@@ -1156,73 +1162,96 @@ void GameFixedUpdate() {
   }
 
   // Player weapons shooting.
-  for (auto& weapon : g.level.playerWeapons) {  ///
-    if (!weapon.type)
-      continue;
+  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    for (auto& weapon : g.level.playerWeapons) {
+      if (!weapon.type)
+        continue;
 
-    const auto fb  = glib->weapons()->Get(weapon.type);
-    const auto pos = PLAYER_CREATURE.pos + weapon.offset;
+      const auto fb  = glib->weapons()->Get(weapon.type);
+      const auto pos = PLAYER_CREATURE.pos + weapon.offset;
 
-    f32       minDistSqr      = f32_inf;
-    Creature* closestCreature = nullptr;
+      f32       minDistSqr      = f32_inf;
+      Creature* closestCreature = nullptr;
 
-    // Resetting cooldown.
-    const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
-    if (weapon.cooldownStartedAt.IsSet()
-        && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
-      weapon.cooldownStartedAt = {};
+      // Resetting cooldown.
+      const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
+      if (weapon.cooldownStartedAt.IsSet()
+          && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
+        weapon.cooldownStartedAt = {};
 
-    if (!weapon.cooldownStartedAt.IsSet()) {
-      for (int i = 1; i < g.level.a.creatures.count; i++) {
-        const auto creature = g.level.a.creatures.base + i;
-        if (!creature->active || creature->diedAt.IsSet())
-          continue;
+      if (!weapon.cooldownStartedAt.IsSet()) {
+        for (int i = 1; i < g.level.a.creatures.count; i++) {
+          const auto creature = g.level.a.creatures.base + i;
+          if (!creature->active || creature->diedAt.IsSet())
+            continue;
 
-        const auto distSqr = Vector2DistanceSqr(pos, creature->pos);
+          const auto distSqr = Vector2DistanceSqr(pos, creature->pos);
 
-        if (distSqr < minDistSqr) {
-          minDistSqr      = distSqr;
-          closestCreature = creature;
+          if (distSqr < minDistSqr) {
+            minDistSqr      = distSqr;
+            closestCreature = creature;
+          }
+        }
+
+        if (closestCreature) {
+          if (minDistSqr < fb->distance() * fb->distance()) {
+            const auto dir  = Vector2DirectionOrRandom(pos, closestCreature->pos);
+            weapon.rotation = Vector2Angle(dir);
+            if (!weapon.startedShootingAt.IsSet()) {
+              weapon.startedShootingAt.SetNow();
+            }
+          }
         }
       }
 
-      if (closestCreature) {
-        if (minDistSqr < fb->distance() * fb->distance()) {
-          const auto dir  = Vector2DirectionOrRandom(pos, closestCreature->pos);
-          weapon.rotation = Vector2Angle(dir);
-          if (!weapon.startedShootingAt.IsSet()) {
-            weapon.startedShootingAt.SetNow();
+      if (weapon.startedShootingAt.IsSet()) {
+        const auto e           = weapon.startedShootingAt.Elapsed();
+        const auto spawnFrames = fb->projectile_spawn_frames();
+
+        bool spawn = false;
+        if (spawnFrames) {
+          for (auto value : *spawnFrames) {
+            if (value == e.value) {
+              spawn = true;
+              break;
+            }
           }
         }
+
+        if (spawn) {
+          MakeProjectile({
+            .type     = (ProjectileType)fb->projectile_type(),
+            .isPlayer = true,
+            .pos      = pos,
+            .dir      = Vector2Rotate(Vector2(1, 0), weapon.rotation),
+            .damage   = fb->damage(),
+          });
+        }
+
+        if (e >= lframe::MakeScaled(fb->shooting_duration_frames()))
+          weapon.startedShootingAt = {};
       }
     }
+  }
 
-    if (weapon.startedShootingAt.IsSet()) {
-      const auto e           = weapon.startedShootingAt.Elapsed();
-      const auto spawnFrames = fb->projectile_spawn_frames();
+  // Mobs contact-damage player.
+  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    const auto playerPos = PLAYER_CREATURE.pos;
+    for (int i = 1; i < g.level.a.creatures.count; i++) {
+      const auto& creature = g.level.a.creatures[i];
+      if (!creature.active || creature.diedAt.IsSet())
+        continue;
 
-      bool spawn = false;
-      if (spawnFrames) {
-        for (auto value : *spawnFrames) {
-          if (value == e.value) {
-            spawn = true;
-            break;
-          }
-        }
+      if (Vector2DistanceSqr(playerPos, creature.pos)
+          <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
+      {
+        TryApplyDamage(
+          0,
+          glib->creatures()->Get(creature.type)->damage(),
+          Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
+          0
+        );
       }
-
-      if (spawn) {
-        MakeProjectile({
-          .type     = (ProjectileType)fb->projectile_type(),
-          .isPlayer = true,
-          .pos      = pos,
-          .dir      = Vector2Rotate(Vector2(1, 0), weapon.rotation),
-          .damage   = fb->damage(),
-        });
-      }
-
-      if (e >= lframe::MakeScaled(fb->shooting_duration_frames()))
-        weapon.startedShootingAt = {};
     }
   }
 
@@ -1298,7 +1327,7 @@ void GameFixedUpdate() {
     int        off   = 0;
     FOR_RANGE (int, i, total) {
       const auto& creature = g.level.a.creatures[i - off];
-      if (creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
+      if (i && creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
         g.level.a.creatures.UnstableRemoveAt(i - off);
         off++;
       }
@@ -1314,6 +1343,209 @@ void ResetLevel() {  ///
   auto a = g.level.a;
   a.Reset();
   g.level = {.a = a};
+}
+
+void DoUI() {
+  constexpr int MAX_BEAUTIFIERS      = 32;
+  const auto    localization         = glib->localizations()->Get(ge.meta.localization);
+  const auto    localization_strings = localization->strings();
+
+  TEMP_USAGE(&g.meta.trashArena);
+
+  Clay_BeginLayout();
+
+  auto textures = glib->atlas_textures();
+
+  {
+    Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
+    int                              beautifiersCount = 0;
+
+    CLAY({.layout{.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+      // Health bar.
+      // {  ///
+      const auto  texs   = glib->ui_health_texture_ids();
+      const auto& player = PLAYER_CREATURE;
+
+      CLAY({
+        .layout{.padding{.left = 32, .top = 32}},
+        .floating{
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_LEFT_TOP,
+            .parent  = CLAY_ATTACH_POINT_LEFT_TOP,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
+          CLAY({
+            .floating{
+              .attachPoints{
+                .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+              },
+              .attachTo = CLAY_ATTACH_TO_PARENT,
+            },
+          }) {
+            FLOATING_BEAUTIFY;
+            BF_CLAY_IMAGE({
+              .texId = texs->Get(1),
+              .sourceMargins{
+                .right = Clamp01(
+                  1.0f - (f32)PLAYER_CREATURE.health / (f32)PLAYER_CREATURE.maxHealth
+                )
+              },
+              .color = RED,
+            });
+          }
+        });
+      }
+      // }
+
+      // Game's version.
+      // {  ///
+      CLAY({
+        .layout{
+          BF_CLAY_PADDING_ALL(4),
+          .childGap = 0,
+          BF_CLAY_CHILD_ALIGNMENT_LEFT_BOTTOM,
+        },
+        .floating{
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
+            .parent  = CLAY_ATTACH_POINT_LEFT_BOTTOM,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+#if BF_SHOW_VERSION
+        BF_CLAY_TEXT(g_gameVersion);
+#endif
+      }
+      // }
+    }
+  }
+
+  auto renderCommands = Clay_EndLayout();
+
+  // Rendering UI.
+  {
+    Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
+    int                              beautifiersCount = 0;
+
+    FOR_RANGE (int, mode, 2) {
+      // 0 - drawing ui.
+      // 1 - drawing gizmos
+
+      RenderGroup_Begin(mode ? RenderZ_GIZMOS : RenderZ_UI);
+      RenderGroup_SetSortY(0);
+
+      FOR_RANGE (int, i, renderCommands.length) {
+        // Setup.
+        // {  ///
+        auto& cmd = renderCommands.internalArray[i];
+
+        auto    beautifierAlpha = 1.0f;
+        Vector2 beautifierTranslate{0, 0};
+        Vector2 beautifierScale{1, 1};
+        FOR_RANGE (int, k, beautifiersCount) {
+          auto& beautifier = beautifiers[k];
+          beautifierAlpha *= (f32)beautifier.alpha / (f32)u16_max;
+          beautifierTranslate += beautifier.translate;
+          beautifierScale *= beautifier.scale;
+        }
+        ASSERT(beautifierAlpha <= 1.0f);
+
+        cmd.boundingBox.x += beautifierTranslate.x;
+        cmd.boundingBox.y += beautifierTranslate.y;
+
+        auto bb = cmd.boundingBox;
+        bb.y    = LOGICAL_RESOLUTION.y - bb.y - bb.height;
+        // }
+
+        if (!mode) {
+          switch (cmd.commandType) {
+          case CLAY_RENDER_COMMAND_TYPE_IMAGE: {  ///
+            const auto& d    = cmd.renderData.image;
+            const auto& data = *(ClayImageData*)d.imageData;
+            RenderGroup_CommandTexture({
+              .texId = data.texId,
+              .pos{bb.x + bb.width / 2, bb.y + bb.height / 2},
+              .sourceMargins = data.sourceMargins,
+              .color{
+                data.color.r,
+                data.color.g,
+                data.color.b,
+                (u8)((f32)data.color.a * beautifierAlpha)
+              },
+            });
+          } break;
+
+          case CLAY_RENDER_COMMAND_TYPE_TEXT: {  ///
+            // TODO: uint16_t text.fontId
+            // TODO: uint16_t text.fontSize
+            // TODO: letterSpacing
+            // TODO: lineHeight
+            auto& d = cmd.renderData.text;
+
+            Color c{
+              (u8)d.textColor.r,
+              (u8)d.textColor.g,
+              (u8)d.textColor.b,
+              (u8)((f32)d.textColor.a * beautifierAlpha),
+            };
+            RenderGroup_CommandText({
+              .pos{bb.x, bb.y + bb.height},
+              .anchor{},
+              .font       = &g.meta.uiFont,
+              .text       = d.stringContents.chars,
+              .bytesCount = d.stringContents.length,
+              .color      = c,
+            });
+          } break;
+
+          case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {  ///
+            const auto& d    = cmd.renderData.custom;
+            const auto& data = *(ClayCustomData*)d.customData;
+
+            switch (data.type) {
+            case ClayCustomElementType_BEAUTIFIER_START: {
+              beautifiers[beautifiersCount++] = {
+                .alpha     = data.alpha,
+                .translate = data.translate,
+                .scale     = data.scale,
+              };
+            } break;
+
+            case ClayCustomElementType_BEAUTIFIER_END: {
+              ASSERT(beautifiersCount > 0);
+              beautifiersCount--;
+            } break;
+
+            default:
+              INVALID_PATH;
+            }
+          } break;
+          }
+        }
+        else {
+          // UI elements gizmos.
+          if (ge.meta.debugEnabled && bb.width && bb.height) {  ///
+            RenderGroup_CommandRectLines({
+              .pos = Vector2(bb.x, bb.y) + Vector2(bb.width, bb.height) / 2.0f,
+              .size{bb.width, bb.height},
+              .color = GREEN,
+            });
+          }
+        }
+      }
+
+      RenderGroup_End();
+    }
+  }
 }
 
 void GameDraw() {
@@ -1387,7 +1619,7 @@ void GameDraw() {
               .texId    = fb->texture_ids()->Get(0),
               .rotation = weapon.rotation,
               .pos      = WorldPosToLogical(creature.pos + weapon.offset),
-              .color    = ColorFromRGB(fb->color()),
+              .color    = Fade(ColorFromRGB(fb->color()), fade),
             },
             RenderZ_WEAPONS
           );
@@ -1427,6 +1659,8 @@ void GameDraw() {
       }
     }
   }
+
+  DoUI();
 
   // Gizmos. Colliders.
   if (ge.meta.debugEnabled) {  ///
