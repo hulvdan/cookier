@@ -1378,7 +1378,7 @@ void GameFixedUpdate() {
   }
 
   // Removing old damage numbers.
-  {
+  {  ///
     int removed = 0;
     int left    = -1;
     FOR_RANGE (int, i, g.level.a.damageNumbers.count) {
@@ -1719,7 +1719,7 @@ void GameDraw() {
 
   // Drawing damage numbers.
   {  ///
-    RenderGroup_Begin(RenderZ_FLOOR_DECALS);
+    RenderGroup_Begin(RenderZ_DAMAGE_NUMBERS);
     RenderGroup_SetSortY(0);
 
     for (const auto& number : g.level.a.damageNumbers) {
@@ -1728,12 +1728,18 @@ void GameDraw() {
       const auto buffer  = ALLOCATE_ARRAY(&g.meta.trashArena, char, textLen + 1);
       memcpy(buffer, text, textLen + 1);
 
+      const auto e    = number.createdAt.Elapsed();
+      const auto p    = Clamp01(e.Progress(DAMAGE_NUMBERS_FRAMES));
+      const auto fade = Clamp01(InOutLerp(
+        0, 1, e.value, DAMAGE_NUMBERS_FRAMES.value, DAMAGE_NUMBERS_FADE_FRAMES.value
+      ));
+
       RenderGroup_CommandText({
-        .pos        = WorldPosToLogical(number.pos),
-        .font       = &g.meta.uiFont,
-        .text       = buffer,
+        .pos  = WorldPosToLogical(number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f)),
+        .font = &g.meta.uiFont,
+        .text = buffer,
         .bytesCount = (int)textLen,
-        .color      = YELLOW,
+        .color      = Fade(YELLOW, fade),
       });
     }
 
