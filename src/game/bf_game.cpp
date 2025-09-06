@@ -230,7 +230,7 @@ enum BodyType : u32 {
 
 enum ShapeUserDataType : u32 {
   ShapeUserDataType_INVALID,
-  // ShapeUserDataType_STATIC,
+  ShapeUserDataType_STATIC,
   ShapeUserDataType_CREATURE,  // Can use `index` to query `g.level.a.creatures`.
   // ShapeUserDataType_ITEM,      // Can use `index` to query `g.level.a.items`.
 };
@@ -248,9 +248,9 @@ struct ShapeUserData {
     return 0;
   }
 
-  // static ShapeUserData Static() {  ///
-  //   return {.type = ShapeUserDataType_STATIC};
-  // }
+  static ShapeUserData Static() {  ///
+    return {.type = ShapeUserDataType_STATIC};
+  }
 
   static ShapeUserData Creature(int index) {  ///
     ASSERT(index >= 0);
@@ -616,7 +616,7 @@ MakeBodyResult MakeBody(Vector2 pos, MakeBodyData data) {  ///
       categoryBits |= ShapeCategory_PLAYER;
 
     maskBits |= ShapeCategory_CREATURE;
-    maskBits |= ShapeCategory_PROJECTILE;
+    // maskBits |= ShapeCategory_PROJECTILE;
   } break;
 
   default:
@@ -808,6 +808,60 @@ void GamePreInit() {  ///
   ge.meta.logicRand = Random(SDL_GetPerformanceCounter());
 }
 
+struct Line {
+  Vector2 v1 = {};
+  Vector2 v2 = {};
+};
+
+struct MakeWallsData {
+  const Line* lines     = {};
+  View<Body>  outBodies = {};
+  int         n         = {};
+};
+
+void MakeWalls(MakeWallsData data) {  ///
+  ASSERT(data.n > 0);
+  if (data.outBodies.count)
+    ASSERT(data.n == data.outBodies.count);
+  ASSERT(data.lines);
+
+  FOR_RANGE (int, i, data.n) {
+    const auto& line = data.lines[i];
+
+    auto v1 = line.v1;
+    auto v2 = line.v2;
+
+    if ((v1.x != v2.x) && (v1.y != v2.y))
+      INVALID_PATH;
+    if (v1 == v2)
+      INVALID_PATH;
+
+    if (v1.x > v2.x) {
+      auto t = v1;
+      v1     = v2;
+      v2     = t;
+    }
+    if (v1.y > v2.y) {
+      auto t = v1;
+      v1     = v2;
+      v2     = t;
+    }
+
+    auto body = MakeRectBody({
+      .pos    = v1,
+      .size   = (v2 - v1) + Vector2One(),
+      .anchor = Vector2Zero(),
+      .bodyData{
+        .type     = BodyType_STATIC,
+        .userData = ShapeUserData::Static(),
+      },
+    });
+
+    if (data.outBodies.count)
+      data.outBodies[i] = body;
+  }
+}
+
 void LevelInit() {
   // Creating box2d world.
   {  ///
@@ -819,13 +873,29 @@ void LevelInit() {
   // Making player.
   MakeCreature({
     .type = CreatureType_PLAYER,
-    .pos  = (Vector2)LOGICAL_RESOLUTION / 2.0f / 100.0f,
+    .pos  = (Vector2)WORLD_SIZE / 2.0f,
     .body{
       .type     = BodyType_CREATURE,
       .userData = ShapeUserData::Creature(0),
       .isPlayer = true,
     },
   });
+
+  // Placing walls.
+  {  ///
+    Vector2Int p00{-1, -1};
+    Vector2Int p11{WORLD_X, WORLD_Y};
+
+    const Line lines[]{
+      // Walls around.
+      {{p11.x, p00.y}, {p11.x, p11.y}},  // right
+      {{p00.x, p11.y}, {p11.x, p11.y}},  // up
+      {{p00.x, p00.y}, {p00.x, p11.y}},  // left
+      {{p00.x, p00.y}, {p11.x, p00.y}},  // down
+    };
+
+    MakeWalls({.lines = lines, .n = ARRAY_COUNT(lines)});
+  }
 }
 
 void GameInit() {  ///
@@ -860,6 +930,19 @@ void GameInit() {  ///
 }
 
 #define PLAYER_CREATURE (g.level.a.creatures[0])
+
+Vector2 WorldPosToLogical(Vector2 pos) {  ///
+  return pos * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y)
+         + Vector2(LOGICAL_RESOLUTION.x - LOGICAL_RESOLUTION.y, 0) / 2.0f;
+}
+
+f32 WorldSizeToLogical(f32 size) {  ///
+  return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
+}
+
+Vector2 WorldSizeToLogical(Vector2 size) {  ///
+  return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
+}
 
 void GameFixedUpdate() {
   // Player actions.
@@ -954,7 +1037,7 @@ void GameDraw() {
       RenderGroup_OneShotTexture(
         {
           .texId = fb->texture_ids()->Get(0),
-          .pos   = creature.pos * 100.0f,
+          .pos   = WorldPosToLogical(creature.pos),
           .color = ColorFromRGB(fb->color()),
         },
         RenderZ_DEFAULT
@@ -982,6 +1065,46 @@ void GameDraw() {
     }
   }
 
+  // Gizmos. Colliders.
+  if (ge.meta.debugEnabled) {  ///
+    for (auto& shape : g.level.a.bodyShapes) {
+      if (!shape.active)
+        continue;
+
+      auto pos = ToVector2(b2Body_GetPosition(shape.body.id));
+
+      auto color = shape.color;
+      if (!b2Body_IsEnabled(shape.body.id))
+        color = GRAY;
+
+      switch (shape.type) {
+      case BodyShapeType_CIRCLE: {
+        RenderGroup_OneShotCircleLines({
+          .pos    = WorldPosToLogical(pos),
+          .radius = WorldSizeToLogical(shape.DataCircle().radius),
+          .color  = color,
+        });
+      } break;
+
+      case BodyShapeType_RECT: {
+        RenderGroup_OneShotRectLines({
+          .pos    = WorldPosToLogical(pos),
+          .size   = WorldSizeToLogical(shape.DataRect().size),
+          .anchor = Vector2Half(),
+          .color  = color,
+        });
+      } break;
+
+      default:
+        INVALID_PATH;
+      }
+    }
+  }
+
+  EngineApplyStrips();
+  EngineApplyVignette();
+  FlushRenderCommands();
+
   // Drawing debug text.
   if (ge.meta.debugEnabled) {  ///
     int y = 1;
@@ -1005,10 +1128,6 @@ void GameDraw() {
 
     debugTextArena("ge.meta._arena", ge.meta._arena);
   }
-
-  EngineApplyStrips();
-  EngineApplyVignette();
-  FlushRenderCommands();
 }
 
 ///
