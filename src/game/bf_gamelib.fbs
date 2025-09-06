@@ -47,6 +47,9 @@ table Weapon {
 
 table Projectile {
     color: uint = 0xffffff;
+    speed: float;
+    collider_radius: float = 0.4;
+    impulse: float = 1;
     texture_ids: [int];
 }
 // GAME STUFF END

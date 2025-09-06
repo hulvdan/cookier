@@ -410,14 +410,16 @@ struct CreatureController {
 };
 
 struct Creature {
-  bool               active     = true;
-  CreatureType       type       = {};
-  int                health     = {};
-  int                maxHealth  = {};
-  Vector2            pos        = {};
-  Vector2            dir        = {};
-  Body               body       = {};
-  CreatureController controller = {};
+  bool               active        = true;
+  CreatureType       type          = {};
+  int                health        = {};
+  int                maxHealth     = {};
+  Vector2            pos           = {};
+  Vector2            dir           = {};
+  Body               body          = {};
+  CreatureController controller    = {};
+  LogicalFrame       lastDamagedAt = {};
+  LogicalFrame       diedAt        = {};
 };
 
 struct MakeCreatureData {
@@ -439,11 +441,13 @@ struct MakeCreatureSpawnData {
 };
 
 struct Projectile {
-  bool           active   = true;
-  bool           isPlayer = {};
-  ProjectileType type     = {};
-  Vector2        pos      = {};
-  Vector2        dir      = {};
+  bool           active    = true;
+  bool           isPlayer  = {};
+  ProjectileType type      = {};
+  Vector2        pos       = {};
+  Vector2        dir       = {};
+  f32            damage    = {};
+  LogicalFrame   createdAt = {};
 };
 
 struct MakeProjectileData {
@@ -451,6 +455,7 @@ struct MakeProjectileData {
   bool           isPlayer = {};
   Vector2        pos      = {};
   Vector2        dir      = {};
+  f32            damage   = {};
 };
 
 constexpr int PLAYER_WEAPONS_COUNT = 6;
@@ -472,7 +477,8 @@ struct GameData {
   } meta;
 
   struct Level {
-    b2WorldId world = {};
+    b2WorldId    world        = {};
+    LogicalFrame playerDiedAt = {};
 
     Weapon playerWeapons_[PLAYER_WEAPONS_COUNT] = {};
     VIEW_FROM_ARRAY_DANGER(playerWeapons);
@@ -483,7 +489,8 @@ struct GameData {
   X(CreatureSpawn, creatureSpawns)               \
   X(MakeCreatureSpawnData, creatureSpawnsToMake) \
   X(Projectile, projectiles)                     \
-  X(BodyShape, bodyShapes)
+  X(BodyShape, bodyShapes)                       \
+  X(int, justDamagedCreatures)
 
 #define X(type_, name_) Vector<type_> name_ = {};
       VECTORS_TABLE;
@@ -842,8 +849,9 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .type     = data.type,
     .pos      = data.pos,
     .dir      = data.dir,
+    .damage   = data.damage,
   };
-  // projectile.createdAt.SetNow();
+  projectile.createdAt.SetNow();
 
   switch (data.type) {
   case ProjectileType_ARROW:
@@ -1007,6 +1015,22 @@ Vector2 WorldSizeToLogical(Vector2 size) {  ///
   return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
 }
 
+void TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impulse) {  ///
+  auto& creature = g.level.a.creatures[creatureIndex];
+
+  creature.health -= damage;
+
+  creature.lastDamagedAt = {};
+  creature.lastDamagedAt.SetNow();
+
+  b2Body_ApplyLinearImpulseToCenter(
+    creature.body.id, ToB2Vec2(direction * impulse), true
+  );
+
+  if (!g.level.a.justDamagedCreatures.Contains(creatureIndex))
+    *g.level.a.justDamagedCreatures.Add() = creatureIndex;
+}
+
 void GameFixedUpdate() {
   // Player actions.
   if (PLAYER_CREATURE.active) {  ///
@@ -1042,7 +1066,7 @@ void GameFixedUpdate() {
     auto fb_creatures = glib->creatures();
 
     for (auto& creature : g.level.a.creatures) {
-      if (!creature.active)
+      if (!creature.active || creature.diedAt.IsSet())
         continue;
 
       auto speedScale = 1.0f;
@@ -1062,7 +1086,7 @@ void GameFixedUpdate() {
 
   // Updating body positions.
   for (auto& creature : g.level.a.creatures) {  ///
-    if (!creature.active)
+    if (!creature.active || creature.diedAt.IsSet())
       continue;
 
     creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
@@ -1169,11 +1193,91 @@ void GameFixedUpdate() {
           .isPlayer = true,
           .pos      = pos,
           .dir      = Vector2Rotate(Vector2(1, 0), weapon.rotation),
+          .damage   = fb->damage(),
         });
       }
 
       if (e >= lframe::MakeScaled(fb->shooting_duration_frames()))
         weapon.startedShootingAt = {};
+    }
+  }
+
+  // Updating projectiles.
+  {  ///
+    const auto fb_projectiles = glib->projectiles();
+
+    for (auto& projectile : g.level.a.projectiles) {
+      const auto fb = fb_projectiles->Get(projectile.type);
+      projectile.pos += projectile.dir * (FIXED_DT * fb->speed());
+
+      int start = 0;
+      int end   = g.level.a.creatures.count;
+
+      if (projectile.isPlayer)
+        start = 1;
+      else
+        end = 1;
+
+      for (int i = start; i < end; i++) {
+        auto& creature = g.level.a.creatures[i];
+        if (!creature.active || creature.diedAt.IsSet())
+          continue;
+
+        const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
+        const auto radius  = fb->collider_radius();
+        if (distSqr < SQR(radius)) {
+          TryApplyDamage(
+            i,
+            projectile.damage,
+            Vector2DirectionOrRandom(projectile.pos, creature.pos),
+            fb->impulse()
+          );
+        }
+      }
+    }
+  }
+
+  // Processing justDamagedCreatures.
+  {  ///
+    // auto playerHurt = false;
+    // auto mobHurt    = false;
+
+    for (const auto index : g.level.a.justDamagedCreatures) {
+      auto& creature = g.level.a.creatures[index];
+      ASSERT(creature.active);
+
+      // if (index == 0)
+      //   playerHurt = true;
+      // else
+      //   mobHurt = true;
+
+      if (creature.health <= 0) {
+        DestroyBody(&creature.body);
+
+        creature.diedAt.SetNow();
+        if (!index)
+          g.level.playerDiedAt.SetNow();
+      }
+    }
+
+    // if (playerHurt)
+    //   PlaySound(Sound_GAME_PLAYER_HURT);
+    // if (mobHurt)
+    //   PlaySound(Sound_GAME_HURT);
+
+    g.level.a.justDamagedCreatures.Reset();
+  }
+
+  // Removing old died creatures.
+  {  ///
+    const auto total = g.level.a.creatures.count;
+    int        off   = 0;
+    FOR_RANGE (int, i, total) {
+      const auto& creature = g.level.a.creatures[i - off];
+      if (creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
+        g.level.a.creatures.UnstableRemoveAt(i - off);
+        off++;
+      }
     }
   }
 
@@ -1231,11 +1335,15 @@ void GameDraw() {
 
       const auto fb = fb_creatures->Get(creature.type);
 
+      f32 fade = 1;
+      if (creature.diedAt.IsSet())
+        fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
+
       RenderGroup_OneShotTexture(
         {
           .texId = fb->texture_ids()->Get(0),
           .pos   = WorldPosToLogical(creature.pos),
-          .color = ColorFromRGB(fb->color()),
+          .color = Fade(ColorFromRGB(fb->color()), fade),
         },
         RenderZ_DEFAULT
       );
@@ -1266,7 +1374,7 @@ void GameDraw() {
     }
   }
 
-  // Drawing projectiles.
+  // Drawing projectiles + their gizmos.
   {  ///
     const auto fb_projectiles = glib->projectiles();
 
@@ -1284,6 +1392,15 @@ void GameDraw() {
         },
         RenderZ_DEFAULT
       );
+
+      // Gizmos.
+      if (ge.meta.debugEnabled) {
+        RenderGroup_OneShotCircleLines({
+          .pos    = WorldPosToLogical(projectile.pos),
+          .radius = WorldSizeToLogical(fb->collider_radius()),
+          .color  = YELLOW,
+        });
+      }
     }
   }
 

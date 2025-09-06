@@ -6,6 +6,8 @@ constexpr int        WORLD_X    = 20;
 constexpr int        WORLD_Y    = 20;
 constexpr Vector2Int WORLD_SIZE = {WORLD_X, WORLD_Y};
 
+#define SQR(v) ((v) * (v))
+
 constexpr f32 PLAYER_HURTBOX_RADIUS    = 0.7f;
 constexpr f32 MOB_HURTBOX_RADIUS       = 0.9f;
 constexpr f32 CREATURE_COLLIDER_RADIUS = 0.6f;
@@ -25,7 +27,9 @@ struct lframe {  ///
     return {.value = v};
   }
 
-  f32 Progress(const lframe duration) const;
+  f32 Progress(const lframe duration) const {
+    return (f32)value / (f32)duration.value;
+  }
 
   bool operator==(const lframe& other) const {
     return value == other.value;
@@ -66,5 +70,6 @@ struct lframe {  ///
 };
 
 constexpr auto SPAWN_FRAMES = lframe::MakeScaled(90);
+constexpr auto DIE_FRAMES   = lframe::MakeScaled(10);
 
 ///

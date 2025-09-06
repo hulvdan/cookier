@@ -41,9 +41,11 @@ weapons:
 projectiles:
   - type: INVALID
   - type: ARROW
+    speed: 5
     texture_ids:
       - game_projectile_arrow
   - type: BULLET
     color: 0xffff00
+    speed: 10
     texture_ids:
       - game_projectile_arrow
