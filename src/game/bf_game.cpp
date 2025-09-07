@@ -931,7 +931,8 @@ void MakeProjectile(MakeProjectileData data) {  ///
 }
 
 void GamePreInit() {  ///
-  ge.meta.logicRand = Random(SDL_GetPerformanceCounter());
+  ge.meta.logicRand           = Random(SDL_GetPerformanceCounter());
+  ge.settings.backgroundColor = {0x1d, 0x1b, 0x24, 0xff};
 }
 
 struct Line {
@@ -1838,7 +1839,7 @@ void GameDraw() {
       {
         .pos   = (Vector2)WORLD_SIZE / 2.0f,
         .size  = (Vector2)WORLD_SIZE,
-        .color = Fade(WHITE, 0.2f),
+        .color = {0x3a, 0x3a, 0x41, 0xff},
       },
       RenderZ_FLOOR
     );
@@ -1855,7 +1856,7 @@ void GameDraw() {
       RenderGroup_CommandTexture({
         .texId = texId,
         .pos   = spawn.pos,
-        .color = RED,
+        .color = {0xc0, 0x29, 0x31, 0xff},
       });
     }
 
@@ -1965,7 +1966,7 @@ void GameDraw() {
         .font       = &g.meta.uiFont,
         .text       = buffer,
         .bytesCount = (int)textLen,
-        .color      = Fade(YELLOW, fade),
+        .color      = Fade({0xef, 0xcb, 0x84, 0xff}, fade),
       });
     }
 
