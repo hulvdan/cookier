@@ -987,6 +987,19 @@ void MakeWalls(MakeWallsData data) {  ///
   }
 }
 
+#define PLAYER_CREATURE (g.level.a.creatures[0])
+
+Vector2 GetCameraTargetPos() {  ///
+  auto tpos = PLAYER_CREATURE.pos;
+  tpos.x += Lerp(
+    WORLD_CORNER_MARGIN_X, -WORLD_CORNER_MARGIN_X, PLAYER_CREATURE.pos.x / (f32)WORLD_X
+  );
+  tpos.y += Lerp(
+    WORLD_CORNER_MARGIN_Y, -WORLD_CORNER_MARGIN_Y, PLAYER_CREATURE.pos.y / (f32)WORLD_Y
+  );
+  return tpos;
+}
+
 void LevelInit() {
   FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
     g.level.playerWeapons[i].offset = Vector2Rotate(Vector2(1, 0), i * PI / 3.0f);
@@ -1004,6 +1017,8 @@ void LevelInit() {
     .type = CreatureType_PLAYER,
     .pos  = (Vector2)WORLD_SIZE / 2.0f,
   });
+
+  g.level.camera.pos = GetCameraTargetPos();
 
   struct {
     WeaponType type = {};
@@ -1067,8 +1082,6 @@ void GameInit() {  ///
 
   LevelInit();
 }
-
-#define PLAYER_CREATURE (g.level.a.creatures[0])
 
 Vector2 WorldPosToLogical(Vector2 pos) {  ///
   return pos * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y)
@@ -1548,8 +1561,7 @@ void GameFixedUpdate() {
     }
   }
 
-  g.level.camera.pos
-    = Vector2ExponentialDecay(g.level.camera.pos, PLAYER_CREATURE.pos, 10, FIXED_DT);
+  g.level.camera.pos = GetCameraTargetPos();
   g.meta.frame++;
 }
 
