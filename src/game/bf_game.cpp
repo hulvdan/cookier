@@ -533,6 +533,11 @@ struct GameData {
   } meta;
 
   struct Level {
+    Camera camera{
+      .zoom          = METER_LOGICAL_SIZE,
+      .texturesScale = 1.0f / METER_LOGICAL_SIZE,
+    };
+
     b2WorldId    world          = {};
     int          nextCreatureId = 0;
     LogicalFrame playerDiedAt   = {};
@@ -1174,7 +1179,7 @@ void GameFixedUpdate() {
 
       const auto fb = fb_creatures->Get(creature.type);
 
-      auto speedScale = fb->speed_force();
+      auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
       if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
         speedScale *= 1.5f;
 
@@ -1507,7 +1512,7 @@ void GameFixedUpdate() {
     for (auto& pickupable : g.level.a.pickupables) {
       if (pickupable.pickedUpAt.IsSet()) {
         pickupable.pos
-          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 2, FIXED_DT);
+          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
       }
       else {
         if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
@@ -1543,6 +1548,8 @@ void GameFixedUpdate() {
     }
   }
 
+  g.level.camera.pos
+    = Vector2ExponentialDecay(g.level.camera.pos, PLAYER_CREATURE.pos, 10, FIXED_DT);
   g.meta.frame++;
 }
 
@@ -1811,12 +1818,14 @@ void DoUI() {
 void GameDraw() {
   TEMP_USAGE(&g.meta.trashArena);
 
+  BeginMode2D(&g.level.camera);
+
   // Drawing floor.
   {  ///
     RenderGroup_OneShotRect(
       {
-        .pos   = WorldPosToLogical((Vector2)WORLD_SIZE / 2.0f),
-        .size  = WorldSizeToLogical((Vector2)WORLD_SIZE),
+        .pos   = (Vector2)WORLD_SIZE / 2.0f,
+        .size  = (Vector2)WORLD_SIZE,
         .color = Fade(WHITE, 0.2f),
       },
       RenderZ_FLOOR
@@ -1833,7 +1842,7 @@ void GameDraw() {
     for (auto& spawn : g.level.a.creatureSpawns) {
       RenderGroup_CommandTexture({
         .texId = texId,
-        .pos   = WorldPosToLogical(spawn.pos),
+        .pos   = spawn.pos,
         .color = RED,
       });
     }
@@ -1858,7 +1867,7 @@ void GameDraw() {
       RenderGroup_OneShotTexture(
         {
           .texId = fb->texture_ids()->Get(0),
-          .pos   = WorldPosToLogical(creature.pos),
+          .pos   = creature.pos,
           .color = Fade(ColorFromRGB(fb->color()), fade),
         },
         RenderZ_DEFAULT
@@ -1880,7 +1889,7 @@ void GameDraw() {
             {
               .texId    = fb->texture_ids()->Get(0),
               .rotation = weapon.rotation + ((scale.x < 0) ? (f32)PI : 0.0f),
-              .pos      = WorldPosToLogical(creature.pos + weapon.offset),
+              .pos      = creature.pos + weapon.offset,
               .scale    = scale,
               .color    = Fade(ColorFromRGB(fb->color()), fade),
             },
@@ -1904,7 +1913,7 @@ void GameDraw() {
         {
           .texId    = fb->texture_ids()->Get(0),
           .rotation = Vector2Angle(projectile.dir),
-          .pos      = WorldPosToLogical(projectile.pos),
+          .pos      = projectile.pos,
           .color    = ColorFromRGB(fb->color()),
         },
         RenderZ_DEFAULT
@@ -1913,8 +1922,8 @@ void GameDraw() {
       // Gizmos.
       if (ge.meta.debugEnabled) {
         RenderGroup_OneShotCircleLines({
-          .pos    = WorldPosToLogical(projectile.pos),
-          .radius = WorldSizeToLogical(fb->collider_radius()),
+          .pos    = projectile.pos,
+          .radius = fb->collider_radius(),
           .color  = YELLOW,
         });
       }
@@ -1939,10 +1948,10 @@ void GameDraw() {
       ));
 
       RenderGroup_CommandText({
-        .pos   = WorldPosToLogical(number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f)),
-        .scale = Vector2(1, 1) * (p * 2),
-        .font  = &g.meta.uiFont,
-        .text  = buffer,
+        .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
+        .scale      = Vector2(1, 1) * (p * 2),
+        .font       = &g.meta.uiFont,
+        .text       = buffer,
         .bytesCount = (int)textLen,
         .color      = Fade(YELLOW, fade),
       });
@@ -1970,15 +1979,13 @@ void GameDraw() {
       RenderGroup_OneShotTexture(
         {
           .texId = fb->texture_id(),
-          .pos   = WorldPosToLogical(pickupable.pos),
+          .pos   = pickupable.pos,
           .color = Fade(WHITE, fade),
         },
         RenderZ_PICKUPABLES
       );
     }
   }
-
-  DoUI();
 
   // Gizmos. Colliders.
   if (ge.meta.debugEnabled) {  ///
@@ -1995,16 +2002,16 @@ void GameDraw() {
       switch (shape.type) {
       case BodyShapeType_CIRCLE: {
         RenderGroup_OneShotCircleLines({
-          .pos    = WorldPosToLogical(pos),
-          .radius = WorldSizeToLogical(shape.DataCircle().radius),
+          .pos    = pos,
+          .radius = shape.DataCircle().radius,
           .color  = color,
         });
       } break;
 
       case BodyShapeType_RECT: {
         RenderGroup_OneShotRectLines({
-          .pos    = WorldPosToLogical(pos),
-          .size   = WorldSizeToLogical(shape.DataRect().size),
+          .pos    = pos,
+          .size   = shape.DataRect().size,
           .anchor = Vector2Half(),
           .color  = color,
         });
@@ -2015,6 +2022,10 @@ void GameDraw() {
       }
     }
   }
+
+  EndMode2D();
+
+  DoUI();
 
   EngineApplyStrips();
   EngineApplyVignette();
