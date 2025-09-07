@@ -545,7 +545,7 @@ def _git_get_current_branch() -> str:
 
 
 def git_bump_tag() -> None:
-    assert _git_get_current_branch() == "master"
+    assert _git_get_current_branch() in ("master", "main")
 
     if _git_get_current_commit_version_tag():
         log.info("Skipping bumping tag")
