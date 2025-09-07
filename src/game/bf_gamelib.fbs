@@ -60,6 +60,10 @@ table Projectile {
 table Pickupable {
     texture_id: int;
 }
+
+table Number {
+    color: uint = 0xffffff;
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -80,6 +84,7 @@ table GameLibrary {
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
     pickupables: [Pickupable] (required);
+    numbers: [Number] (required);
     // GAME STUFF END
 }
 

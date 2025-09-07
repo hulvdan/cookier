@@ -80,3 +80,9 @@ pickupable__table:
   - type: INVALID
   - type: COIN
     texture_id: game_pickupable_coin
+number__table:
+  - type: INVALID
+  - type: DAMAGE
+    color: 0xefcb84
+  - type: PICKUPABLE
+    color: 0x66a650
