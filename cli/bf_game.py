@@ -16,7 +16,7 @@ from itertools import groupby
 
 from bf_lib import data_values, gamelib_processor, genenum, recursive_replace_transform
 
-data_values.itch_target = "hulvdan/NOT-SPECIFIED"
+data_values.itch_target = "hulvdan/cookier"
 data_values.languages = ["russian", "english"]
 
 
