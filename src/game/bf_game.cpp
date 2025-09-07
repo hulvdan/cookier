@@ -1552,7 +1552,7 @@ void GameFixedUpdate() {
           MakeNumber({
             .type  = NumberType_PICKUPABLE,
             .value = 1,
-            .pos   = pickupable.pos,
+            .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
           });
 
           switch (pickupable.type) {
@@ -1739,7 +1739,7 @@ void DoUI() {
 
     FOR_RANGE (int, mode, 2) {
       // 0 - drawing ui.
-      // 1 - drawing gizmos
+      // 1 - drawing gizmos.
 
       RenderGroup_Begin(mode ? RenderZ_GIZMOS : RenderZ_UI);
       RenderGroup_SetSortY(0);
