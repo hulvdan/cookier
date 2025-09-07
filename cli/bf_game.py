@@ -48,6 +48,18 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         for key in table_keys_to_update:
             gamelib[f"{key}s"] = gamelib.pop(f"{key}__table")
 
+    # Normalization of wave creature spawn_factors.
+    # ============================================================
+    for wave in gamelib["waves"]:
+        creatures = wave["creatures_to_spawn"]
+        spawn_factor_sum = sum(x["spawn_factor"] for x in creatures)
+
+        prev_factor = 0
+        for creature in creatures:
+            creature["spawn_factor"] = creature["spawn_factor"] / spawn_factor_sum
+            creature["spawn_factor"] += prev_factor
+            prev_factor = creature["spawn_factor"]
+
     # Codepoints.
     # ============================================================
     if 1:

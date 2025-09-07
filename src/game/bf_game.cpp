@@ -521,9 +521,15 @@ struct MakeNumberData {
   Vector2    pos   = {};
 };
 
+lframe GetWaveDuration(int wave) {  ///
+  // return lframe::MakeUnscaled((30 + wave * 5) * FIXED_FPS);
+  return lframe::MakeUnscaled((3 + wave * 5) * FIXED_FPS);
+}
+
 struct GameData {
   struct Meta {
     i64   frame      = 0;
+    Arena arena      = {};
     Arena trashArena = {};
     Font  uiFont     = {};
 
@@ -555,6 +561,9 @@ struct GameData {
     int coins       = 0;
     int xpLevel     = 1;
     int pierceCount = 0;
+
+    int          wave          = 4;
+    LogicalFrame waveStartedAt = {};
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
@@ -1069,12 +1078,16 @@ void LevelInit() {
 
     MakeWalls({.lines = lines});
   }
+
+  g.level.waveStartedAt = {};
+  g.level.waveStartedAt.SetNow();
 }
 
 void GameInit() {  ///
   SDL_HideCursor();
 
   g.meta.trashArena = MakeArena(4 * 1024);
+  g.meta.arena      = MakeArena(4 * 1024);
 
   // Initializing Clay.
   {  ///
@@ -1156,6 +1169,8 @@ void ResetLevel() {  ///
   auto a = g.level.a;
   a.Reset();
   g.level = {.a = a};
+
+  g.meta.arena.used = 0;
 }
 
 void GameFixedUpdate() {
@@ -1163,6 +1178,26 @@ void GameFixedUpdate() {
     g.meta.reload = false;
     ResetLevel();
     LevelInit();
+  }
+
+  // Next wave.
+  if (g.level.waveStartedAt.Elapsed() >= GetWaveDuration(g.level.wave)) {  ///
+    IncrementSetZeroOn(&g.level.wave, (int)glib->waves()->size());
+    g.level.waveStartedAt = {};
+    g.level.waveStartedAt.SetNow();
+
+    for (int i = 1; i < g.level.a.creatures.count; i++) {
+      auto& creature = g.level.a.creatures[i];
+      if (creature.active && !creature.diedAt.IsSet())
+        DestroyBody(&creature.body);
+    }
+    g.level.a.creatures.count = 1;
+    g.level.a.creatureSpawns.Reset();
+    g.level.a.creatureSpawnsToMake.Reset();
+    g.level.a.projectiles.Reset();
+    g.level.a.projectilesToRemove.Reset();
+    g.level.a.bodyShapes.Reset();
+    g.level.a.justDamagedCreatures.Reset();
   }
 
   // Player actions.
@@ -1234,12 +1269,8 @@ void GameFixedUpdate() {
   }
 
   // Making pre spawns.
-  if (g.meta.frame % (4 * FIXED_FPS) == 0) {  ///
-    const CreatureType types_[]{
-      CreatureType_MOB1,
-      CreatureType_MOB2,
-    };
-    VIEW_FROM_ARRAY_DANGER(types);
+  if (g.level.waveStartedAt.Elapsed().value % (4 * FIXED_FPS) == 0) {  ///
+    const auto wave = glib->waves()->Get(g.level.wave);
 
     Vector2 posToSpawn{};
 
@@ -1252,12 +1283,25 @@ void GameFixedUpdate() {
       } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
                < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
 
-      CreatureSpawn spawn{
-        .type = types[GRAND.Rand() % types.count],
-        .pos  = posToSpawn,
-      };
-      spawn.createdAt.SetNow();
-      *g.level.a.creatureSpawns.Add() = spawn;
+      const auto   factor = GRAND.FRand();
+      CreatureType spawnType{};
+      for (const auto creature : *wave->creatures_to_spawn()) {
+        if (factor <= creature->spawn_factor()) {
+          spawnType = (CreatureType)creature->creature_type();
+          break;
+        }
+      }
+
+      if (spawnType) {
+        CreatureSpawn spawn{
+          .type = spawnType,
+          .pos  = posToSpawn,
+        };
+        spawn.createdAt.SetNow();
+        *g.level.a.creatureSpawns.Add() = spawn;
+      }
+      else
+        INVALID_PATH;
     }
 
     if (g.level.toSpawn < 5)
@@ -1705,6 +1749,26 @@ void DoUI() {
       }
       // }
 
+      // Wave.
+      // { ///
+      CLAY({
+        .layout{.padding{.top = 32}},
+        .floating{
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_CENTER_TOP,
+            .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+        const auto remainingFrames
+          = GetWaveDuration(g.level.wave) - g.level.waveStartedAt.Elapsed();
+        const int remainingSeconds = remainingFrames.value / FIXED_FPS + 1;
+        BF_CLAY_TEXT(TextFormat("Wave %d. %d...", g.level.wave + 1, remainingSeconds));
+      }
+      // }
+
       // Game's version.
       // {  ///
       CLAY({
@@ -2097,6 +2161,8 @@ void GameDraw() {
     };
 
     debugTextArena("ge.meta._arena", ge.meta._arena);
+    debugTextArena("g.meta.arena", g.meta.arena);
+    debugTextArena("g.meta.trashArena", g.meta.trashArena);
 
 #define X(type_, name_) \
   DebugText("g.level.a." #name_ ".count: %d", g.level.a.name_.count);
