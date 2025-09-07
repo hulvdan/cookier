@@ -587,6 +587,7 @@ struct GameData {
 #define PROGRESS(elapsed, duration) ((f32)(elapsed) / (f32)(duration))
 
 void MakeNumber(MakeNumberData data) {  ///
+  ASSERT(data.type);
   Number number{
     .type  = data.type,
     .value = data.value,
@@ -1971,6 +1972,7 @@ void GameDraw() {
     const auto fb_numbers = glib->numbers();
 
     for (const auto& number : g.level.a.numbers) {
+      ASSERT(number.type);
       const auto fb = fb_numbers->Get(number.type);
 
       const char* format = "%d";
