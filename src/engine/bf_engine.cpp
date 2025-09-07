@@ -8,6 +8,18 @@
 constexpr auto SQRT_2        = 1.41421356237f;
 constexpr auto SQRT_2_OVER_2 = 0.70710678f;
 
+constexpr Vector2 Vector2Zero() {  ///
+  return Vector2{0, 0};
+}
+
+constexpr Vector2 Vector2Half() {  ///
+  return Vector2{0.5f, 0.5f};
+}
+
+constexpr Vector2 Vector2One() {  ///
+  return Vector2{1, 1};
+}
+
 f32 Vector2Length(Vector2 v) {  ///
   return glm::length(v);
 }
@@ -26,6 +38,11 @@ f32 Vector2Distance(Vector2 v1, Vector2 v2) {  ///
 
 f32 Vector2DistanceSqr(Vector2 v1, Vector2 v2) {  ///
   return Vector2LengthSqr(v2 - v1);
+}
+
+f32 Vector2Angle(Vector2 v) {  ///
+  ASSERT(v != Vector2Zero());
+  return atan2f(v.y, v.x);
 }
 
 f32 Vector2Angle(Vector2 v1, Vector2 v2) {  ///
@@ -80,18 +97,6 @@ Vector2 Vector2Clamp(Vector2 v, Vector2 min, Vector2 max) {  ///
 
 Vector2 Vector2ClampValue(Vector2 v, f32 min, f32 max) {  ///
   return glm::clamp(v, min, max);
-}
-
-constexpr Vector2 Vector2Zero() {  ///
-  return Vector2{0, 0};
-}
-
-constexpr Vector2 Vector2Half() {  ///
-  return Vector2{0.5f, 0.5f};
-}
-
-constexpr Vector2 Vector2One() {  ///
-  return Vector2{1, 1};
 }
 
 struct Rect {
@@ -290,7 +295,10 @@ struct Font {
 
 struct DrawTextData {
   Vector2 pos = {};
-  // TODO: Vector2 scale = {1, 1};
+
+  // TODO: implement.
+  Vector2 scale = {1, 1};
+
   Vector2     anchor     = Vector2Half();
   const Font* font       = {};
   const char* text       = {};
@@ -393,7 +401,7 @@ struct EngineData {
     Vector2 _screenToLogicalScale = {};
     Vector2 _screenToLogicalAdd   = {};
 
-    int localization = 1;  // en.
+    int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
       ma_sound* sounds[ARRAY_COUNT(g_sounds)];
@@ -405,6 +413,8 @@ struct EngineData {
     bool paused     = false;
 
     bool debugEnabled = false;
+
+    Random logicRand{0};
   } meta;
 
   struct Settings {
@@ -433,6 +443,8 @@ struct EngineData {
   } render;
 } ge = {};
 
+#define GRAND (ge.meta.logicRand)
+
 // clang-format off
 #ifdef BF_PLATFORM_WebYandex
 EM_JS(void, js_YandexReady, (), {
@@ -450,7 +462,7 @@ void GameReady() {  ///
 ma_sound* PlaySound(Sound sound) {  ///
   auto& params = g_sounds[sound];
 
-  auto  variation = Rand() % params.variations;
+  auto  variation = ge.meta.logicRand.Rand() % params.variations;
   auto& varIndex = ge.meta._soundManager.soundPlayedIndicesPerVariation[sound][variation];
   auto  index    = variation * params.pool + varIndex;
   ASSERT(index < params.variations * params.pool);
@@ -465,7 +477,7 @@ ma_sound* PlaySound(Sound sound) {  ///
     ma_sound_set_volume(&s, params.volume);
 
   if (params.pitchMin != 1.0f) {
-    auto t = FRand();
+    auto t = ge.meta.logicRand.FRand();
     t      = EaseInOutQuad(t);
     ma_sound_set_pitch(&s, Lerp(params.pitchMin, params.pitchMax, t));
   }
@@ -582,6 +594,8 @@ BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {  ///
 }
 
 BF_FORCE_INLINE void RenderGroup_CommandText(DrawTextData data) {  ///
+  if ((data.scale.x == 0) || (data.scale.y == 0))
+    return;
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_TEXT,
@@ -1329,6 +1343,16 @@ void FlushRenderCommands() {
                 auto sx1 = q.s1;
                 auto sy0 = q.t0;
                 auto sy1 = q.t1;
+                if (data.scale.x < 0) {
+                  auto t = sx0;
+                  sx0    = sx1;
+                  sx1    = t;
+                }
+                if (data.scale.y < 0) {
+                  auto t = sy0;
+                  sy0    = sy1;
+                  sy1    = t;
+                }
 
                 Vector2 topLeft{};
                 Vector2 topRight{};
@@ -2522,7 +2546,14 @@ SDL_AppResult EngineUpdate() {  ///
     }
   }
 
+  // Forbidding use of `logicRand` during drawing.
+  // This way game's logic remains deterministic.
+  // It allows re-simulation of game using prerecorded inputs
+  // such that game's state is always the same during and after the simulation.
+  // TODO: record / replay inputs.
+  ge.meta.logicRand._raise = true;
   GameDraw();
+  ge.meta.logicRand._raise = false;
 
   return SDL_APP_CONTINUE;
 }
