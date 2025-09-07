@@ -83,4 +83,6 @@ constexpr auto PICKUPABLE_FADE_FRAMES      = lframe::MakeScaled(10);
 
 constexpr int PROJECTILE_MAX_PIERCE = 10;
 
+constexpr f32 PLAYER_PICKUP_NUMBER_Y_OFFSET = -0.5f;
+
 ///
