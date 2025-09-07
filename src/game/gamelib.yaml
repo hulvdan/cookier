@@ -28,14 +28,14 @@ creature__table:
     texture_ids:
       - game_creature_player
   - type: MOB1
-    health: 10
-    damage: 2
+    health: 2
+    damage: 1
     speed_force: 130
     color: 0xff0000
     texture_ids:
       - game_creature_player
   - type: MOB2
-    health: 12
+    health: 3
     damage: 2
     color: 0xff7700
     speed_force: 75
