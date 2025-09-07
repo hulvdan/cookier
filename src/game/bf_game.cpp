@@ -572,7 +572,6 @@ struct GameData {
         VECTORS_TABLE;
 #undef X
       }
-#undef VECTORS_TABLE
     } a;
   } level;
 } g = {};
@@ -2066,6 +2065,11 @@ void GameDraw() {
     };
 
     debugTextArena("ge.meta._arena", ge.meta._arena);
+
+#define X(type_, name_) \
+  DebugText("g.level.a.%s.count: %d", #name_, g.level.a.name_.count);
+    VECTORS_TABLE;
+#undef X
   }
 }
 
