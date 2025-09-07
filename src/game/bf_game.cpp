@@ -559,6 +559,7 @@ struct GameData {
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
     struct Allocated {
+      // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
 #define VECTORS_TABLE                            \
   X(Creature, creatures)                         \
   X(CreatureSpawn, creatureSpawns)               \
