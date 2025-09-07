@@ -52,6 +52,8 @@ table Projectile {
     speed: float;
     collider_radius: float = 0.4;
     impulse: float = 1;
+    distance: float = 10;
+    pierce: int = 0;
     texture_ids: [int];
 }
 

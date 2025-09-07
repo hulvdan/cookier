@@ -418,6 +418,7 @@ struct CreatureController {
 
 struct Creature {
   bool               active        = true;
+  int                id            = {};
   CreatureType       type          = {};
   f32                health        = {};
   f32                maxHealth     = {};
@@ -432,7 +433,6 @@ struct Creature {
 struct MakeCreatureData {
   CreatureType type = {};
   Vector2      pos  = {};
-  MakeBodyData body = {};
 };
 
 struct CreatureSpawn {
@@ -448,21 +448,24 @@ struct MakeCreatureSpawnData {
 };
 
 struct Projectile {
-  bool           active    = true;
-  bool           isPlayer  = {};
-  ProjectileType type      = {};
-  Vector2        pos       = {};
-  Vector2        dir       = {};
-  f32            damage    = {};
-  LogicalFrame   createdAt = {};
+  bool                              active             = true;
+  ProjectileType                    type               = {};
+  CreatureType                      owner              = {};
+  Vector2                           pos                = {};
+  Vector2                           dir                = {};
+  f32                               damage             = {};
+  LogicalFrame                      createdAt          = {};
+  Array<int, PROJECTILE_MAX_PIERCE> piercedCreatureIds = {};
+  int                               piercedCount       = 0;
+  f32                               travelledDistance  = 0;
 };
 
 struct MakeProjectileData {
-  ProjectileType type     = {};
-  bool           isPlayer = {};
-  Vector2        pos      = {};
-  Vector2        dir      = {};
-  f32            damage   = {};
+  ProjectileType type   = {};
+  CreatureType   owner  = {};
+  Vector2        pos    = {};
+  Vector2        dir    = {};
+  f32            damage = {};
 };
 
 struct DamageNumber {
@@ -499,13 +502,16 @@ struct GameData {
   } meta;
 
   struct Level {
-    b2WorldId    world        = {};
-    LogicalFrame playerDiedAt = {};
+    b2WorldId    world          = {};
+    int          nextCreatureId = 0;
+    LogicalFrame playerDiedAt   = {};
+    int          toSpawn        = 3;
 
     f32 xp          = 0;
     f32 nextLevelXp = 10;
     int coins       = 0;
     int xpLevel     = 1;
+    int pierceCount = 0;
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
@@ -515,6 +521,7 @@ struct GameData {
   X(CreatureSpawn, creatureSpawns)               \
   X(MakeCreatureSpawnData, creatureSpawnsToMake) \
   X(Projectile, projectiles)                     \
+  X(int, projectilesToRemove)                    \
   X(BodyShape, bodyShapes)                       \
   X(int, justDamagedCreatures)                   \
   X(DamageNumber, damageNumbers)                 \
@@ -672,8 +679,6 @@ struct MakeBodyResult {  ///
 MakeBodyResult MakeBody(Vector2 pos, MakeBodyData data) {  ///
   ASSERT(data.type != BodyType_INVALID);
   ASSERT(data.userData.type != ShapeUserDataType_INVALID);
-  if (data.isPlayer)
-    ASSERT(data.type == BodyType_CREATURE);
 
   b2BodyDef bodyDef = b2DefaultBodyDef();
   if (data.type == BodyType_CREATURE)
@@ -828,6 +833,7 @@ void MakeCreature(MakeCreatureData data) {  ///
   const auto fb_creature = glib->creatures()->Get(data.type);
 
   Creature creature{
+    .id        = g.level.nextCreatureId++,
     .type      = data.type,
     .health    = fb_creature->health(),
     .maxHealth = fb_creature->health(),
@@ -839,7 +845,7 @@ void MakeCreature(MakeCreatureData data) {  ///
            .bodyData{
              .type     = BodyType_CREATURE,
              .userData = ShapeUserData::Creature(index),
-             .isPlayer = (g.level.a.creatures.count == 1),
+             .isPlayer = (data.type == CreatureType_PLAYER),
       },
     }),
   };
@@ -867,11 +873,11 @@ void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
 
   Projectile projectile{
-    .isPlayer = data.isPlayer,
-    .type     = data.type,
-    .pos      = data.pos,
-    .dir      = data.dir,
-    .damage   = data.damage,
+    .type   = data.type,
+    .owner  = data.owner,
+    .pos    = data.pos,
+    .dir    = data.dir,
+    .damage = data.damage,
   };
   projectile.createdAt.SetNow();
 
@@ -961,11 +967,6 @@ void LevelInit() {
   MakeCreature({
     .type = CreatureType_PLAYER,
     .pos  = (Vector2)WORLD_SIZE / 2.0f,
-    .body{
-      .type     = BodyType_CREATURE,
-      .userData = ShapeUserData::Creature(0),
-      .isPlayer = true,
-    },
   });
 
   struct {
@@ -1046,7 +1047,7 @@ Vector2 WorldSizeToLogical(Vector2 size) {  ///
   return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
 }
 
-void TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impulse) {  ///
+bool TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impulse) {  ///
   auto& creature = g.level.a.creatures[creatureIndex];
 
   if (creatureIndex) {
@@ -1060,20 +1061,26 @@ void TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impuls
   else {
     if (creature.lastDamagedAt.IsSet()
         && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
-      return;
+      return false;
   }
 
-  creature.health -= damage;
+  if (creature.health > 0) {
+    creature.health -= damage;
 
-  creature.lastDamagedAt = {};
-  creature.lastDamagedAt.SetNow();
+    creature.lastDamagedAt = {};
+    creature.lastDamagedAt.SetNow();
 
-  b2Body_ApplyLinearImpulseToCenter(
-    creature.body.id, ToB2Vec2(direction * impulse), true
-  );
+    b2Body_ApplyLinearImpulseToCenter(
+      creature.body.id, ToB2Vec2(direction * impulse), true
+    );
 
-  if (!g.level.a.justDamagedCreatures.Contains(creatureIndex))
-    *g.level.a.justDamagedCreatures.Add() = creatureIndex;
+    if (!g.level.a.justDamagedCreatures.Contains(creatureIndex))
+      *g.level.a.justDamagedCreatures.Add() = creatureIndex;
+
+    return true;
+  }
+
+  return false;
 }
 
 void ResetLevel() {  ///
@@ -1160,8 +1167,6 @@ void GameFixedUpdate() {
   }
 
   // Making pre spawns.
-  static int toSpawn = 4;
-
   if (g.meta.frame % (4 * FIXED_FPS) == 0) {  ///
     const CreatureType types_[]{
       CreatureType_MOB1,
@@ -1171,7 +1176,7 @@ void GameFixedUpdate() {
 
     Vector2 posToSpawn{};
 
-    FOR_RANGE (int, i, toSpawn) {
+    FOR_RANGE (int, i, g.level.toSpawn) {
       do {
         posToSpawn = {
           0.5f + GRAND.FRand() * (WORLD_X - 1),
@@ -1188,8 +1193,8 @@ void GameFixedUpdate() {
       *g.level.a.creatureSpawns.Add() = spawn;
     }
 
-    if (toSpawn < 30)
-      toSpawn++;
+    if (g.level.toSpawn < 5)
+      g.level.toSpawn++;
   }
 
   // Spawning.
@@ -1202,10 +1207,6 @@ void GameFixedUpdate() {
         MakeCreature({
           .type = v.type,
           .pos  = v.pos,
-          .body{
-            .type     = BodyType_CREATURE,
-            .userData = ShapeUserData::Creature(g.level.a.creatures.count),
-          },
         });
         g.level.a.creatureSpawns.UnstableRemoveAt(i - off);
         off++;
@@ -1272,11 +1273,11 @@ void GameFixedUpdate() {
 
         if (spawn) {
           MakeProjectile({
-            .type     = (ProjectileType)fb->projectile_type(),
-            .isPlayer = true,
-            .pos      = pos,
-            .dir      = Vector2Rotate(Vector2(1, 0), weapon.rotation),
-            .damage   = fb->damage(),
+            .type   = (ProjectileType)fb->projectile_type(),
+            .owner  = CreatureType_PLAYER,
+            .pos    = pos,
+            .dir    = Vector2Rotate(Vector2(1, 0), weapon.rotation),
+            .damage = fb->damage(),
           });
         }
 
@@ -1307,18 +1308,32 @@ void GameFixedUpdate() {
     }
   }
 
-  // Updating projectiles.
+  // Updating projectiles:
+  // - Movement
+  // - Marking to remove because of travel distance
+  // - Mob collisions
+  // - Marking to remove because of pierce count
   {  ///
     const auto fb_projectiles = glib->projectiles();
 
+    int projectileIndex = -1;
     for (auto& projectile : g.level.a.projectiles) {
-      const auto fb = fb_projectiles->Get(projectile.type);
-      projectile.pos += projectile.dir * (FIXED_DT * fb->speed());
+      projectileIndex++;
+
+      const auto fb       = fb_projectiles->Get(projectile.type);
+      const auto distance = FIXED_DT * fb->speed();
+      projectile.travelledDistance += distance;
+      projectile.pos += projectile.dir * distance;
+
+      if (projectile.travelledDistance >= fb->distance()) {
+        if (!g.level.a.projectilesToRemove.Contains(projectileIndex))
+          *g.level.a.projectilesToRemove.Add() = projectileIndex;
+      }
 
       int start = 0;
       int end   = g.level.a.creatures.count;
 
-      if (projectile.isPlayer)
+      if (projectile.owner == CreatureType_PLAYER)
         start = 1;
       else
         end = 1;
@@ -1328,21 +1343,53 @@ void GameFixedUpdate() {
         if (!creature.active || creature.diedAt.IsSet())
           continue;
 
+        // Not damaging already damaged creatures.
+        if (ArrayContains(
+              projectile.piercedCreatureIds.base, projectile.piercedCount, creature.id
+            ))
+          continue;
+
         const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
         const auto radius  = fb->collider_radius();
         if (distSqr < SQR(radius)) {
-          TryApplyDamage(
-            i,
-            projectile.damage,
-            Vector2DirectionOrRandom(projectile.pos, creature.pos),
-            fb->impulse()
-          );
+          if (TryApplyDamage(
+                i,
+                projectile.damage,
+                Vector2DirectionOrRandom(projectile.pos, creature.pos),
+                fb->impulse()
+              ))
+          {
+            auto maxPierce = fb->pierce();
+            if (projectile.owner == CreatureType_PLAYER)
+              maxPierce += g.level.pierceCount;
+
+            if (projectile.piercedCount < maxPierce)
+              projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
+            else if (!g.level.a.projectilesToRemove.Contains(projectileIndex))
+              *g.level.a.projectilesToRemove.Add() = projectileIndex;
+          }
         }
       }
     }
   }
 
-  // Processing justDamagedCreatures.
+  // Processing `projectilesToRemove`.
+  if (g.level.a.projectilesToRemove.count) {  ///
+    qsort(
+      (void*)g.level.a.projectilesToRemove.base,
+      g.level.a.projectilesToRemove.count,
+      sizeof(*g.level.a.projectilesToRemove.base),
+      (int (*)(const void*, const void*))IntCmp
+    );
+    FOR_RANGE (int, i, g.level.a.projectilesToRemove.count) {
+      const auto projectileIndex
+        = g.level.a.projectilesToRemove[g.level.a.projectilesToRemove.count - i - 1];
+      g.level.a.projectiles.UnstableRemoveAt(projectileIndex);
+    }
+    g.level.a.projectilesToRemove.Reset();
+  }
+
+  // Processing `justDamagedCreatures`.
   {  ///
     // auto playerHurt = false;
     // auto mobHurt    = false;
@@ -1767,8 +1814,6 @@ void GameDraw() {
   {  ///
     const auto fb_creatures = glib->creatures();
 
-    bool isPlayer = true;
-
     for (const auto& creature : g.level.a.creatures) {
       if (!creature.active)
         continue;
@@ -1788,7 +1833,7 @@ void GameDraw() {
         RenderZ_DEFAULT
       );
 
-      if (isPlayer) {
+      if (creature.type == CreatureType_PLAYER) {
         const auto fb_weapons = glib->weapons();
 
         FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
@@ -1811,8 +1856,6 @@ void GameDraw() {
             RenderZ_WEAPONS
           );
         }
-
-        isPlayer = false;
       }
     }
   }

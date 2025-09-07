@@ -76,4 +76,6 @@ constexpr auto DAMAGE_NUMBERS_FRAMES       = lframe::MakeScaled(30);
 constexpr auto DAMAGE_NUMBERS_FADE_FRAMES  = lframe::MakeScaled(10);
 constexpr auto PICKUPABLE_FADE_FRAMES      = lframe::MakeScaled(10);
 
+constexpr int PROJECTILE_MAX_PIERCE = 10;
+
 ///

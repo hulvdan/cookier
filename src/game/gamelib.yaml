@@ -67,6 +67,7 @@ projectile__table:
   - type: INVALID
   - type: ARROW
     speed: 12
+    pierce: 1
     texture_ids:
       - game_projectile_arrow
   - type: BULLET
