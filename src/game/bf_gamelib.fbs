@@ -64,6 +64,15 @@ table Pickupable {
 table Number {
     color: uint = 0xffffff;
 }
+
+table WaveCreature {
+    creature_type: int;
+    spawn_factor: float;
+}
+
+table Wave {
+    creatures_to_spawn: [WaveCreature] (required);
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -85,6 +94,8 @@ table GameLibrary {
     projectiles: [Projectile] (required);
     pickupables: [Pickupable] (required);
     numbers: [Number] (required);
+
+    waves: [Wave] (required);
     // GAME STUFF END
 }
 
