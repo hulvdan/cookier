@@ -24,13 +24,13 @@ creature__table:
   - type: INVALID
   - type: PLAYER
     health: 20
-    speed_force: 100
+    speed_force: 17
     texture_ids:
       - game_creature_player
   - type: MOB1
     health: 2
     damage: 1
-    speed_force: 130
+    speed_force: 14
     color: 0xff0000
     texture_ids:
       - game_creature_player
@@ -38,7 +38,7 @@ creature__table:
     health: 3
     damage: 2
     color: 0xff7700
-    speed_force: 75
+    speed_force: 12
     texture_ids:
       - game_creature_player
 weapon__table:

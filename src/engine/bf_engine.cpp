@@ -360,6 +360,12 @@ struct RenderCommand {
   }
 };
 
+struct Camera {
+  Vector2 pos           = {};
+  f32     zoom          = 1;
+  f32     texturesScale = 1;
+};
+
 struct EngineData {
   struct Meta {
     i64 frame = 0;
@@ -415,6 +421,8 @@ struct EngineData {
     bool debugEnabled = false;
 
     Random logicRand{0};
+
+    const Camera* _currentCamera = nullptr;
   } meta;
 
   struct Settings {
@@ -442,6 +450,16 @@ struct EngineData {
     bool                  flushedThisFrame  = false;
   } render;
 } ge = {};
+
+void BeginMode2D(const Camera* camera) {
+  ASSERT(!ge.meta._currentCamera);
+  ge.meta._currentCamera = camera;
+}
+
+void EndMode2D() {
+  ASSERT(ge.meta._currentCamera);
+  ge.meta._currentCamera = nullptr;
+}
 
 #define GRAND (ge.meta.logicRand)
 
@@ -508,6 +526,34 @@ BF_FORCE_INLINE void RenderGroup_SetSortY(f32 value) {  ///
     INVALID_PATH;
 }
 
+void _ApplyCurrentCamera(Vector2* point, Vector2* size, bool isTexture = false) {  ///
+  if (ge.meta._currentCamera) {
+    ASSERT(ge.meta._currentCamera->zoom > 0);
+    ASSERT(ge.meta._currentCamera->texturesScale > 0);
+
+    *point -= ge.meta._currentCamera->pos;
+    *point *= ge.meta._currentCamera->zoom;
+    *point += (Vector2)LOGICAL_RESOLUTION / 2.0f;
+    *size *= ge.meta._currentCamera->zoom;
+    if (isTexture)
+      *size *= ge.meta._currentCamera->texturesScale;
+  }
+}
+
+void _ApplyCurrentCamera(Vector2* point, f32* size, bool isTexture = false) {  ///
+  if (ge.meta._currentCamera) {
+    ASSERT(ge.meta._currentCamera->zoom > 0);
+    ASSERT(ge.meta._currentCamera->texturesScale > 0);
+
+    *point -= ge.meta._currentCamera->pos;
+    *point *= ge.meta._currentCamera->zoom;
+    *point += (Vector2)LOGICAL_RESOLUTION / 2.0f;
+    *size *= ge.meta._currentCamera->zoom;
+    if (isTexture)
+      *size *= ge.meta._currentCamera->texturesScale;
+  }
+}
+
 enum RenderCommandSetSortY {
   RenderCommandSetSortY_DO_NOTHING,
   RenderCommandSetSortY_SET_BASELINE,
@@ -517,6 +563,8 @@ BF_FORCE_INLINE void RenderGroup_CommandTexture(
   DrawTextureData       data,
   RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
 ) {  ///
+  _ApplyCurrentCamera(&data.pos, &data.scale, true);
+
   ASSERT(data.sourceMargins.left >= 0);
   ASSERT(data.sourceMargins.right >= 0);
   ASSERT(data.sourceMargins.top >= 0);
@@ -553,6 +601,12 @@ BF_FORCE_INLINE void RenderGroup_CommandCircle(  ///
   DrawCircleData        data,
   RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
 ) {
+  ASSERT(data.radius >= 0);
+  if (data.radius <= 0)
+    return;
+
+  _ApplyCurrentCamera(&data.pos, &data.radius);
+
   if (setSortY == RenderCommandSetSortY_SET_BASELINE)
     RenderGroup_SetSortY(data.pos.y - data.radius);
 
@@ -567,6 +621,13 @@ BF_FORCE_INLINE void RenderGroup_CommandRect(  ///
   DrawRectData          data,
   RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
 ) {
+  ASSERT(data.size.x >= 0);
+  ASSERT(data.size.y >= 0);
+  if ((data.size.x == 0) || (data.size.y == 0))
+    return;
+
+  _ApplyCurrentCamera(&data.pos, &data.size);
+
   if (setSortY == RenderCommandSetSortY_SET_BASELINE)
     RenderGroup_SetSortY(data.pos.y - data.size.y * (data.anchor.y - 0.5f));
 
@@ -578,6 +639,12 @@ BF_FORCE_INLINE void RenderGroup_CommandRect(  ///
 }
 
 BF_FORCE_INLINE void RenderGroup_CommandCircleLines(DrawCircleData data) {  ///
+  ASSERT(data.radius >= 0);
+  if (data.radius <= 0)
+    return;
+
+  _ApplyCurrentCamera(&data.pos, &data.radius);
+
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_CIRCLE_LINES,
@@ -586,6 +653,13 @@ BF_FORCE_INLINE void RenderGroup_CommandCircleLines(DrawCircleData data) {  ///
 }
 
 BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {  ///
+  ASSERT(data.size.x >= 0);
+  ASSERT(data.size.y >= 0);
+  if ((data.size.x == 0) || (data.size.y == 0))
+    return;
+
+  _ApplyCurrentCamera(&data.pos, &data.size);
+
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_RECT_LINES,
@@ -596,6 +670,9 @@ BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {  ///
 BF_FORCE_INLINE void RenderGroup_CommandText(DrawTextData data) {  ///
   if ((data.scale.x == 0) || (data.scale.y == 0))
     return;
+
+  _ApplyCurrentCamera(&data.pos, &data.scale);
+
   ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
   *ge.render.commands.Add() = {
     .type = RenderCommandType_TEXT,

@@ -2,17 +2,20 @@
 
 // Sizings + colliders.
 // ============================================================
-constexpr int        WORLD_X                              = 20;
-constexpr int        WORLD_Y                              = 20;
+constexpr int        WORLD_X                              = 40;
+constexpr int        WORLD_Y                              = 40;
 constexpr Vector2Int WORLD_SIZE                           = {WORLD_X, WORLD_Y};
-constexpr f32        RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER = 8;
+constexpr f32        RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER = 10;
+constexpr f32        SPEED_MULTIPLIER                     = 10;
 
 #define SQR(v) ((v) * (v))
 
-constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.7f;
-constexpr f32 MOB_HURTBOX_RADIUS        = 0.9f;
-constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.6f;
+constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.6f;
+constexpr f32 MOB_HURTBOX_RADIUS        = 0.7f;
+constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
+
+constexpr f32 METER_LOGICAL_SIZE = 1600.0f / (f32)WORLD_X;
 
 // Other.
 // ============================================================
