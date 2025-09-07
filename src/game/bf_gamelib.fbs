@@ -17,7 +17,49 @@ table Localization {
     strings: [string] (required);
 }
 
+struct Posf {
+    x: float;
+    y: float;
+}
+
+struct Pos {
+    x: int;
+    y: int;
+}
+
 // GAME STUFF
+table Creature {
+    health: float;
+    damage: float;
+    speed_force: float;
+    color: uint = 0xffffff;
+    texture_ids: [int];
+}
+
+table Weapon {
+    damage: float;
+    cooldown_frames: int;
+    shooting_duration_frames: int;
+    distance: float;
+    projectile_type: int;
+    projectile_spawn_frames: [int];
+    color: uint = 0xffffff;
+    texture_ids: [int];
+}
+
+table Projectile {
+    color: uint = 0xffffff;
+    speed: float;
+    collider_radius: float = 0.4;
+    impulse: float = 1;
+    distance: float = 10;
+    pierce: int = 0;
+    texture_ids: [int];
+}
+
+table Pickupable {
+    texture_id: int;
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -30,6 +72,14 @@ table GameLibrary {
     localizations: [Localization] (required);
 
     // GAME STUFF
+    ui_health_texture_ids: [int] (required);
+    ui_coin_texture_id: int;
+    decal_pre_spawn_texture_id: int;
+
+    creatures: [Creature] (required);
+    weapons: [Weapon] (required);
+    projectiles: [Projectile] (required);
+    pickupables: [Pickupable] (required);
     // GAME STUFF END
 }
 

@@ -289,7 +289,9 @@ def convert_gamelib_json_to_binary(
             gamelib, transform_texture_id, transform_texture_ids_list
         )
         if not_found_textures:
-            assert False, "Couldn't find textures: {}".format(not_found_textures)
+            assert False, "Couldn't find textures:\n{}".format(
+                "\n".join(f"- {x}" for x in not_found_textures)
+            )
 
     degrees_to_radians_recursive_transform(gamelib)
     recursive_replace_transform(gamelib, "locale", "locales", locale_to_index)

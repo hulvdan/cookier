@@ -1,11 +1,81 @@
 render_z:
   - INVALID
   - SCREEN_BACKGROUND
+  - FLOOR
+  - FLOOR_DECALS
+  - PICKUPABLES
   - DEFAULT
+  - WEAPONS
+  - DAMAGE_NUMBERS
   - VIGNETTE
+  - UI
   - SCREEN_FADE
   - GIZMOS
 vignette_texture_id: vignette
 localization:
   YES_: Да
   NO_: Нет
+ui_health_texture_ids:
+  - ui_health_back
+  - ui_health_top
+ui_coin_texture_id: ui_coin
+decal_pre_spawn_texture_id: game_decal_pre_spawn
+creature__table:
+  - type: INVALID
+  - type: PLAYER
+    health: 20
+    speed_force: 100
+    texture_ids:
+      - game_creature_player
+  - type: MOB1
+    health: 2
+    damage: 1
+    speed_force: 130
+    color: 0xff0000
+    texture_ids:
+      - game_creature_player
+  - type: MOB2
+    health: 3
+    damage: 2
+    color: 0xff7700
+    speed_force: 75
+    texture_ids:
+      - game_creature_player
+weapon__table:
+  - type: INVALID
+  - type: GUN
+    projectile_type: BULLET
+    damage: 1.0
+    cooldown_frames: 10
+    shooting_duration_frames: 30
+    projectile_spawn_frames:
+      - 6
+    distance: 5
+    texture_ids:
+      - game_weapon_gun
+  - type: BOW
+    projectile_type: ARROW
+    damage: 1.5
+    cooldown_frames: 16
+    shooting_duration_frames: 20
+    projectile_spawn_frames:
+      - 4
+    distance: 8
+    texture_ids:
+      - game_weapon_bow
+projectile__table:
+  - type: INVALID
+  - type: ARROW
+    speed: 12
+    pierce: 1
+    texture_ids:
+      - game_projectile_arrow
+  - type: BULLET
+    color: 0xffff00
+    speed: 16
+    texture_ids:
+      - game_projectile_bullet
+pickupable__table:
+  - type: INVALID
+  - type: COIN
+    texture_id: game_pickupable_coin
