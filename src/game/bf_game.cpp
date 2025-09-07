@@ -499,9 +499,10 @@ struct MakeProjectileData {
   f32            damage = {};
 };
 
-struct DamageNumber {
+struct Number {
+  NumberType   type      = {};
+  int          value     = {};
   Vector2      pos       = {};
-  float        damage    = {};
   LogicalFrame createdAt = {};
 };
 
@@ -513,6 +514,12 @@ struct Pickupable {
 };
 
 constexpr int PLAYER_WEAPONS_COUNT = 6;
+
+struct MakeNumberData {
+  NumberType type  = {};
+  int        value = {};
+  Vector2    pos   = {};
+};
 
 struct GameData {
   struct Meta {
@@ -560,7 +567,7 @@ struct GameData {
   X(int, projectilesToRemove)                    \
   X(BodyShape, bodyShapes)                       \
   X(int, justDamagedCreatures)                   \
-  X(DamageNumber, damageNumbers)                 \
+  X(Number, numbers)                             \
   X(Pickupable, pickupables)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -578,6 +585,16 @@ struct GameData {
 
 #define FRAMES_ELAPSED(value) (g.meta.frame - (value))
 #define PROGRESS(elapsed, duration) ((f32)(elapsed) / (f32)(duration))
+
+void MakeNumber(MakeNumberData data) {  ///
+  Number number{
+    .type  = data.type,
+    .value = data.value,
+    .pos   = data.pos,
+  };
+  number.createdAt.SetNow();
+  *g.level.a.numbers.Add() = number;
+}
 
 void LogicalFrame::SetNow() {  ///
   ASSERT_FALSE(IsSet());
@@ -1100,12 +1117,11 @@ bool TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impuls
   auto& creature = g.level.a.creatures[creatureIndex];
 
   if (creatureIndex) {
-    DamageNumber number{
-      .pos    = creature.pos,
-      .damage = damage,
-    };
-    number.createdAt.SetNow();
-    *g.level.a.damageNumbers.Add() = number;
+    MakeNumber({
+      .type  = NumberType_DAMAGE,
+      .value = Round(damage),
+      .pos   = creature.pos,
+    });
   }
   else {
     if (creature.lastDamagedAt.IsSet()
@@ -1507,17 +1523,17 @@ void GameFixedUpdate() {
   {  ///
     int removed = 0;
     int left    = -1;
-    FOR_RANGE (int, i, g.level.a.damageNumbers.count) {
-      const auto& number = g.level.a.damageNumbers[i];
+    FOR_RANGE (int, i, g.level.a.numbers.count) {
+      const auto& number = g.level.a.numbers[i];
       if (number.createdAt.Elapsed() >= DAMAGE_NUMBERS_FRAMES) {
         if (left == -1)
           left = i;
         removed++;
       }
       else if (left >= 0)
-        g.level.a.damageNumbers[left++] = number;
+        g.level.a.numbers[left++] = number;
     }
-    g.level.a.damageNumbers.count -= removed;
+    g.level.a.numbers.count -= removed;
   }
 
   // Picking up pickupables.
@@ -1532,6 +1548,11 @@ void GameFixedUpdate() {
             <= SQR(PICKUPABLE_HURTBOX_RADIUS))
         {
           pickupable.pickedUpAt.SetNow();
+          MakeNumber({
+            .type  = NumberType_PICKUPABLE,
+            .value = 1,
+            .pos   = pickupable.pos,
+          });
 
           switch (pickupable.type) {
           case PickupableType_COIN: {
@@ -1947,8 +1968,16 @@ void GameDraw() {
     RenderGroup_Begin(RenderZ_DAMAGE_NUMBERS);
     RenderGroup_SetSortY(0);
 
-    for (const auto& number : g.level.a.damageNumbers) {
-      const auto text    = TextFormat("%d", MAX(1, Round(number.damage)));
+    const auto fb_numbers = glib->numbers();
+
+    for (const auto& number : g.level.a.numbers) {
+      const auto fb = fb_numbers->Get(number.type);
+
+      const char* format = "%d";
+      if (number.type == NumberType_PICKUPABLE)
+        format = "+%d";
+
+      const auto text    = TextFormat(format, MAX(1, number.value));
       const auto textLen = strlen(text);
       const auto buffer  = ALLOCATE_ARRAY(&g.meta.trashArena, char, textLen + 1);
       memcpy(buffer, text, textLen + 1);
@@ -1965,7 +1994,7 @@ void GameDraw() {
         .font       = &g.meta.uiFont,
         .text       = buffer,
         .bytesCount = (int)textLen,
-        .color      = Fade({0xef, 0xcb, 0x84, 0xff}, fade),
+        .color      = Fade(ColorFromRGB(fb->color()), fade),
       });
     }
 
