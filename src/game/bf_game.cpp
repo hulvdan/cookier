@@ -1040,12 +1040,17 @@ void MakeWalls(MakeWallsData data) {  ///
 
 Vector2 GetCameraTargetPos() {  ///
   auto tpos = PLAYER_CREATURE.pos;
+
   tpos.x += Lerp(
     WORLD_CORNER_MARGIN_X, -WORLD_CORNER_MARGIN_X, PLAYER_CREATURE.pos.x / (f32)WORLD_X
   );
   tpos.y += Lerp(
     WORLD_CORNER_MARGIN_Y, -WORLD_CORNER_MARGIN_Y, PLAYER_CREATURE.pos.y / (f32)WORLD_Y
   );
+
+  tpos.x = Clamp(tpos.x, CAMERA_MIN_X, CAMERA_MAX_X);
+  tpos.y = Clamp(tpos.y, CAMERA_MIN_Y, CAMERA_MAX_Y);
+
   return tpos;
 }
 
