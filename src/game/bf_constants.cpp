@@ -10,14 +10,30 @@ constexpr f32        SPEED_MULTIPLIER                     = 10;
 constexpr f32        WORLD_CORNER_MARGIN_X                = 3.0f;
 constexpr f32        WORLD_CORNER_MARGIN_Y                = 3.0f * 9.0f / 16.0f;
 
+constexpr f32 WORLD_RESOLUTION = 1600.0f;
+
+constexpr f32 METER_LOGICAL_SIZE = WORLD_RESOLUTION / (f32)WORLD_X;
+static_assert(METER_LOGICAL_SIZE * WORLD_X >= LOGICAL_RESOLUTION.x);
+
+constexpr f32 WORLD_CAMERA_METERS_MARGIN = 2;
+
+constexpr f32 CAMERA_MIN_X
+  = LOGICAL_RESOLUTION.x / METER_LOGICAL_SIZE / 2.0f - WORLD_CAMERA_METERS_MARGIN;
+constexpr f32 CAMERA_MAX_X
+  = (WORLD_RESOLUTION - LOGICAL_RESOLUTION.x / 2.0f) / METER_LOGICAL_SIZE
+    + WORLD_CAMERA_METERS_MARGIN;
+constexpr f32 CAMERA_MIN_Y
+  = LOGICAL_RESOLUTION.y / METER_LOGICAL_SIZE / 2.0f - WORLD_CAMERA_METERS_MARGIN;
+constexpr f32 CAMERA_MAX_Y
+  = (WORLD_RESOLUTION - LOGICAL_RESOLUTION.y / 2.0f) / METER_LOGICAL_SIZE
+    + WORLD_CAMERA_METERS_MARGIN;
+
 #define SQR(v) ((v) * (v))
 
 constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.6f;
 constexpr f32 MOB_HURTBOX_RADIUS        = 0.7f;
 constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
-
-constexpr f32 METER_LOGICAL_SIZE = 1600.0f / (f32)WORLD_X;
 
 // Other.
 // ============================================================
