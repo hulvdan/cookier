@@ -75,7 +75,9 @@ table Wave {
 }
 
 table Stat {
-    item_texture_id: int;
+    icon_texture_id: int;
+    upgrade_texture_id: int;
+    upgrade_values: [int];
 }
 // GAME STUFF END
 

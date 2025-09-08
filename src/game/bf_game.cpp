@@ -582,7 +582,7 @@ struct GameData {
     LogicalFrame waveStartedAt = {};
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
-    Array<int, StatType_COUNT>          playerStats   = {};
+    Array<f32, StatType_COUNT>          playerStats   = {};
 
     struct {
       Array<StatType, 4> upgradesToPickFrom = {};
@@ -1387,7 +1387,7 @@ void DoUI(bool draw) {
           CLAY({}) {
             if (Clay_Hovered() && IsMouseReleased(L)) {
               g.meta.nextWaveScheduled = true;
-              g.level.playerStats[stat]++;
+              g.level.playerStats[stat] += 1;
             }
 
             const int slotTexId
@@ -1406,7 +1406,7 @@ void DoUI(bool draw) {
                     BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                   },
                 }) {
-                  BF_CLAY_IMAGE({.texId = fb->item_texture_id()});
+                  BF_CLAY_IMAGE({.texId = fb->upgrade_item_texture_id()});
                 }
               }
             );
@@ -1601,6 +1601,9 @@ void GameFixedUpdate() {
         while (1) {
           const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
           if (!newStat)
+            continue;
+          const auto fb = fb_stats->Get(newStat);
+          if (!fb->upgrade_texture_id())
             continue;
           if (ArrayContains(g.level.upgrades.upgradesToPickFrom.base, i, newStat))
             continue;
