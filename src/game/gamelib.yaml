@@ -8,8 +8,8 @@ render_z:
   - WEAPONS
   - DAMAGE_NUMBERS
   - VIGNETTE
-  - UI
   - SCREEN_FADE
+  - UI
   - GIZMOS
 vignette_texture_id: vignette
 localization:
@@ -19,6 +19,7 @@ ui_health_texture_ids:
   - ui_health_back
   - ui_health_top
 ui_coin_texture_id: ui_coin
+ui_item_slot_texture_id: ui_item_slot
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 creature__table:
   - type: INVALID
@@ -86,6 +87,20 @@ number__table:
     color: 0xefcb84
   - type: PICKUPABLE
     color: 0x66a650
+stat__table:
+  - type: INVALID
+  - type: HP
+    item_texture_id: game_stat_item_hp
+  - type: DAMAGE
+    item_texture_id: game_stat_item_damage
+  - type: ATTACK_RATE
+    item_texture_id: game_stat_item_attack_rate
+  - type: CRIT
+    item_texture_id: game_stat_item_crit
+  - type: SPEED
+    item_texture_id: game_stat_item_speed
+  - type: REGEN
+    item_texture_id: game_stat_item_regen
 waves:
   # 1
   - creatures_to_spawn:

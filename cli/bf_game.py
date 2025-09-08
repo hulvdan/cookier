@@ -41,7 +41,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 table_keys_to_update.append(key)
                 types = [x.pop("type") for x in gamelib[key_]]
                 _check_duplicates(types)
-                genenum(genline, key.title() + "Type", types)
+                genenum(genline, key.title() + "Type", types, add_count=True)
                 transforms.append(
                     (f"{key}_type", f"{key}_types", {v: i for i, v in enumerate(types)})
                 )

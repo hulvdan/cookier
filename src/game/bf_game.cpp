@@ -36,6 +36,15 @@
 #define CLAY_IMPLEMENTATION
 #include "clay.h"
 
+Clay_Color ToClayColor(Color color) {
+  return {
+    .r = (f32)color.r,
+    .g = (f32)color.g,
+    .b = (f32)color.b,
+    .a = (f32)color.a,
+  };
+}
+
 #define BF_CLAY_PADDING_ALL(v)      \
   .padding {                        \
     (u16) v, (u16)v, (u16)v, (u16)v \
@@ -526,6 +535,11 @@ lframe GetWaveDuration(int wave) {  ///
   return lframe::MakeUnscaled((3 + wave * 5) * FIXED_FPS);
 }
 
+enum StateType {
+  StateType_GAMEPLAY,
+  StateType_UPGRADES,
+};
+
 struct GameData {
   struct Meta {
     i64   frame      = 0;
@@ -542,7 +556,8 @@ struct GameData {
       // LogicalFrame      rightLastPressedAt = {};
     } touch;
 
-    bool reload = false;
+    bool      reload = false;
+    StateType state  = StateType_GAMEPLAY;
   } meta;
 
   struct Level {
@@ -562,10 +577,15 @@ struct GameData {
     int xpLevel     = 1;
     int pierceCount = 0;
 
-    int          wave          = 4;
+    int          wave          = 0;
     LogicalFrame waveStartedAt = {};
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
+    Array<int, StatType_COUNT>          playerStats   = {};
+
+    struct {
+      Array<StatType, 4> upgradesToPickFrom = {};
+    } upgrades;
 
     struct Allocated {
       // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
@@ -1173,466 +1193,7 @@ void ResetLevel() {  ///
   g.meta.arena.used = 0;
 }
 
-void GameFixedUpdate() {
-  if (g.meta.reload) {
-    g.meta.reload = false;
-    ResetLevel();
-    LevelInit();
-  }
-
-  // Next wave.
-  if (g.level.waveStartedAt.Elapsed() >= GetWaveDuration(g.level.wave)) {  ///
-    IncrementSetZeroOn(&g.level.wave, (int)glib->waves()->size());
-    g.level.waveStartedAt = {};
-    g.level.waveStartedAt.SetNow();
-
-    for (int i = 1; i < g.level.a.creatures.count; i++) {
-      auto& creature = g.level.a.creatures[i];
-      if (creature.active && !creature.diedAt.IsSet())
-        DestroyBody(&creature.body);
-    }
-    g.level.a.creatures.count = 1;
-    g.level.a.creatureSpawns.Reset();
-    g.level.a.creatureSpawnsToMake.Reset();
-    g.level.a.projectiles.Reset();
-    g.level.a.projectilesToRemove.Reset();
-    g.level.a.bodyShapes.Reset();
-    g.level.a.justDamagedCreatures.Reset();
-  }
-
-  // Player actions.
-  if (PLAYER_CREATURE.active) {  ///
-    // Moving.
-    {
-      Vector2 move{};
-
-      if (IsKeyDown(SDL_SCANCODE_W))
-        move.y += 1;
-      if (IsKeyDown(SDL_SCANCODE_A))
-        move.x -= 1;
-      if (IsKeyDown(SDL_SCANCODE_S))
-        move.y -= 1;
-      if (IsKeyDown(SDL_SCANCODE_D))
-        move.x += 1;
-
-      if (move.x || move.y) {
-        move                = Vector2Normalize(move);
-        PLAYER_CREATURE.dir = move;
-      }
-
-      if (move == Vector2Zero()) {
-        if (g.meta.touch.touchIDs[0] != InvalidTouchID)
-          move = g.meta.touch.dir[0];
-      }
-
-      PLAYER_CREATURE.controller.move = move;
-    }
-  }
-
-  // Updating AI.
-  for (int i = 1; i < g.level.a.creatures.count; i++) {  ///
-    auto& creature           = g.level.a.creatures[i];
-    creature.controller.move = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
-  }
-
-  // Creatures moving.
-  {  ///
-    const auto fb_creatures = glib->creatures();
-
-    for (auto& creature : g.level.a.creatures) {
-      if (!creature.active || creature.diedAt.IsSet())
-        continue;
-
-      const auto fb = fb_creatures->Get(creature.type);
-
-      auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
-      if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
-        speedScale *= 1.5f;
-
-      b2Body_ApplyLinearImpulseToCenter(
-        creature.body.id,
-        ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
-        true
-      );
-    }
-  }
-
-  // Updating box2d world.
-  b2World_Step(g.level.world, FIXED_DT, 4);
-
-  // Updating body positions.
-  for (auto& creature : g.level.a.creatures) {  ///
-    if (!creature.active || creature.diedAt.IsSet())
-      continue;
-
-    creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
-  }
-
-  // Making pre spawns.
-  if (g.level.waveStartedAt.Elapsed().value % (4 * FIXED_FPS) == 0) {  ///
-    const auto wave = glib->waves()->Get(g.level.wave);
-
-    Vector2 posToSpawn{};
-
-    FOR_RANGE (int, i, g.level.toSpawn) {
-      do {
-        posToSpawn = {
-          0.5f + GRAND.FRand() * (WORLD_X - 1),
-          0.5f + GRAND.FRand() * (WORLD_Y - 1),
-        };
-      } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
-               < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
-
-      const auto   factor = GRAND.FRand();
-      CreatureType spawnType{};
-      for (const auto creature : *wave->creatures_to_spawn()) {
-        if (factor <= creature->spawn_factor()) {
-          spawnType = (CreatureType)creature->creature_type();
-          break;
-        }
-      }
-
-      if (spawnType) {
-        CreatureSpawn spawn{
-          .type = spawnType,
-          .pos  = posToSpawn,
-        };
-        spawn.createdAt.SetNow();
-        *g.level.a.creatureSpawns.Add() = spawn;
-      }
-      else
-        INVALID_PATH;
-    }
-
-    if (g.level.toSpawn < 5)
-      g.level.toSpawn++;
-  }
-
-  // Spawning.
-  {  ///
-    const int total = g.level.a.creatureSpawns.count;
-    int       off   = 0;
-    FOR_RANGE (int, i, total) {
-      auto& v = g.level.a.creatureSpawns[i - off];
-      if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
-        MakeCreature({
-          .type = v.type,
-          .pos  = v.pos,
-        });
-        g.level.a.creatureSpawns.UnstableRemoveAt(i - off);
-        off++;
-      }
-    }
-  }
-
-  // Player weapons shooting.
-  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
-    for (auto& weapon : g.level.playerWeapons) {
-      if (!weapon.type)
-        continue;
-
-      const auto fb  = glib->weapons()->Get(weapon.type);
-      const auto pos = PLAYER_CREATURE.pos + weapon.offset;
-
-      f32       minDistSqr      = f32_inf;
-      Creature* closestCreature = nullptr;
-
-      // Resetting cooldown.
-      const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
-      if (weapon.cooldownStartedAt.IsSet()
-          && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
-        weapon.cooldownStartedAt = {};
-
-      if (!weapon.cooldownStartedAt.IsSet()) {
-        for (int i = 1; i < g.level.a.creatures.count; i++) {
-          const auto creature = g.level.a.creatures.base + i;
-          if (!creature->active || creature->diedAt.IsSet())
-            continue;
-
-          const auto distSqr = Vector2DistanceSqr(pos, creature->pos);
-
-          if (distSqr < minDistSqr) {
-            minDistSqr      = distSqr;
-            closestCreature = creature;
-          }
-        }
-
-        if (closestCreature) {
-          if (minDistSqr < fb->distance() * fb->distance()) {
-            const auto dir  = Vector2DirectionOrRandom(pos, closestCreature->pos);
-            weapon.rotation = Vector2Angle(dir);
-            if (!weapon.startedShootingAt.IsSet()) {
-              weapon.startedShootingAt.SetNow();
-            }
-          }
-        }
-      }
-
-      if (weapon.startedShootingAt.IsSet()) {
-        const auto e           = weapon.startedShootingAt.Elapsed();
-        const auto spawnFrames = fb->projectile_spawn_frames();
-
-        bool spawn = false;
-        if (spawnFrames) {
-          for (auto value : *spawnFrames) {
-            if (value == e.value) {
-              spawn = true;
-              break;
-            }
-          }
-        }
-
-        if (spawn) {
-          MakeProjectile({
-            .type   = (ProjectileType)fb->projectile_type(),
-            .owner  = CreatureType_PLAYER,
-            .pos    = pos,
-            .dir    = Vector2Rotate(Vector2(1, 0), weapon.rotation),
-            .damage = fb->damage(),
-          });
-        }
-
-        if (e >= lframe::MakeScaled(fb->shooting_duration_frames()))
-          weapon.startedShootingAt = {};
-      }
-    }
-  }
-
-  // Mobs contact-damage player.
-  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
-    const auto playerPos = PLAYER_CREATURE.pos;
-    for (int i = 1; i < g.level.a.creatures.count; i++) {
-      const auto& creature = g.level.a.creatures[i];
-      if (!creature.active || creature.diedAt.IsSet())
-        continue;
-
-      if (Vector2DistanceSqr(playerPos, creature.pos)
-          <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
-      {
-        TryApplyDamage(
-          0,
-          glib->creatures()->Get(creature.type)->damage(),
-          Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
-          0
-        );
-      }
-    }
-  }
-
-  // Updating projectiles:
-  // - Movement
-  // - Marking to remove because of travel distance
-  // - Mob collisions
-  // - Marking to remove because of pierce count
-  {  ///
-    const auto fb_projectiles = glib->projectiles();
-
-    int projectileIndex = -1;
-    for (auto& projectile : g.level.a.projectiles) {
-      projectileIndex++;
-
-      const auto fb       = fb_projectiles->Get(projectile.type);
-      const auto distance = FIXED_DT * fb->speed();
-      projectile.travelledDistance += distance;
-      projectile.pos += projectile.dir * distance;
-
-      if (projectile.travelledDistance >= fb->distance()) {
-        if (!g.level.a.projectilesToRemove.Contains(projectileIndex))
-          *g.level.a.projectilesToRemove.Add() = projectileIndex;
-      }
-
-      int start = 0;
-      int end   = g.level.a.creatures.count;
-
-      if (projectile.owner == CreatureType_PLAYER)
-        start = 1;
-      else
-        end = 1;
-
-      for (int i = start; i < end; i++) {
-        auto& creature = g.level.a.creatures[i];
-        if (!creature.active || creature.diedAt.IsSet())
-          continue;
-
-        // Not damaging already damaged creatures.
-        if (ArrayContains(
-              projectile.piercedCreatureIds.base, projectile.piercedCount, creature.id
-            ))
-          continue;
-
-        const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
-        const auto radius  = fb->collider_radius();
-        if (distSqr < SQR(radius)) {
-          if (TryApplyDamage(
-                i,
-                projectile.damage,
-                Vector2DirectionOrRandom(projectile.pos, creature.pos),
-                fb->impulse()
-              ))
-          {
-            auto maxPierce = fb->pierce();
-            if (projectile.owner == CreatureType_PLAYER)
-              maxPierce += g.level.pierceCount;
-
-            if (projectile.piercedCount < maxPierce)
-              projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
-            else if (!g.level.a.projectilesToRemove.Contains(projectileIndex))
-              *g.level.a.projectilesToRemove.Add() = projectileIndex;
-          }
-        }
-      }
-    }
-  }
-
-  // Processing `projectilesToRemove`.
-  if (g.level.a.projectilesToRemove.count) {  ///
-    qsort(
-      (void*)g.level.a.projectilesToRemove.base,
-      g.level.a.projectilesToRemove.count,
-      sizeof(*g.level.a.projectilesToRemove.base),
-      (int (*)(const void*, const void*))IntCmp
-    );
-    FOR_RANGE (int, i, g.level.a.projectilesToRemove.count) {
-      const auto projectileIndex
-        = g.level.a.projectilesToRemove[g.level.a.projectilesToRemove.count - i - 1];
-      g.level.a.projectiles.UnstableRemoveAt(projectileIndex);
-    }
-    g.level.a.projectilesToRemove.Reset();
-  }
-
-  // Processing `justDamagedCreatures`.
-  {  ///
-    // auto playerHurt = false;
-    // auto mobHurt    = false;
-
-    for (const auto index : g.level.a.justDamagedCreatures) {
-      auto& creature = g.level.a.creatures[index];
-      ASSERT(creature.active);
-
-      // if (index == 0)
-      //   playerHurt = true;
-      // else
-      //   mobHurt = true;
-
-      if (creature.health <= 0) {
-        DestroyBody(&creature.body);
-
-        creature.diedAt.SetNow();
-        if (index) {
-          g.level.xp++;
-          PLAYER_CREATURE.health
-            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-          if (g.level.xp >= g.level.nextLevelXp) {
-            g.level.nextLevelXp *= 2;
-            g.level.xp = 0;
-            g.level.xpLevel++;
-          }
-        }
-        else
-          g.level.playerDiedAt.SetNow();
-
-        Pickupable pickupable{
-          .type = PickupableType_COIN,
-          .pos  = creature.pos,
-        };
-        pickupable.createdAt.SetNow();
-        *g.level.a.pickupables.Add() = pickupable;
-      }
-    }
-
-    // if (playerHurt)
-    //   PlaySound(Sound_GAME_PLAYER_HURT);
-    // if (mobHurt)
-    //   PlaySound(Sound_GAME_HURT);
-
-    g.level.a.justDamagedCreatures.Reset();
-  }
-
-  // Removing old died creatures.
-  {  ///
-    const auto total = g.level.a.creatures.count;
-    int        off   = 0;
-    FOR_RANGE (int, i, total) {
-      const auto& creature = g.level.a.creatures[i - off];
-      if (creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
-        if (i) {
-          g.level.a.creatures.UnstableRemoveAt(i - off);
-          off++;
-        }
-        else if (!i)
-          g.meta.reload = true;
-      }
-    }
-  }
-
-  // Removing old damage numbers.
-  {  ///
-    int removed = 0;
-    int left    = -1;
-    FOR_RANGE (int, i, g.level.a.numbers.count) {
-      const auto& number = g.level.a.numbers[i];
-      if (number.createdAt.Elapsed() >= DAMAGE_NUMBERS_FRAMES) {
-        if (left == -1)
-          left = i;
-        removed++;
-      }
-      else if (left >= 0)
-        g.level.a.numbers[left++] = number;
-    }
-    g.level.a.numbers.count -= removed;
-  }
-
-  // Picking up pickupables.
-  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
-    for (auto& pickupable : g.level.a.pickupables) {
-      if (pickupable.pickedUpAt.IsSet()) {
-        pickupable.pos
-          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
-      }
-      else {
-        if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
-            <= SQR(PICKUPABLE_HURTBOX_RADIUS))
-        {
-          pickupable.pickedUpAt.SetNow();
-          MakeNumber({
-            .type  = NumberType_PICKUPABLE,
-            .value = 1,
-            .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
-          });
-
-          switch (pickupable.type) {
-          case PickupableType_COIN: {
-            g.level.coins++;
-          } break;
-
-          default:
-            INVALID_PATH;
-          }
-        }
-      }
-    }
-  }
-
-  // Removing old picked up pickupables.
-  {  ///
-    const auto total = g.level.a.pickupables.count;
-    int        off   = 0;
-    FOR_RANGE (int, i, total) {
-      const auto& pickupable = g.level.a.pickupables[i - off];
-      if (pickupable.pickedUpAt.IsSet()
-          && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
-      {
-        g.level.a.pickupables.UnstableRemoveAt(i - off);
-        off++;
-      }
-    }
-  }
-
-  g.level.camera.pos = GetCameraTargetPos();
-  g.meta.frame++;
-}
-
-void DoUI() {
+void DoUI(bool draw) {
   constexpr int MAX_BEAUTIFIERS      = 32;
   const auto    localization         = glib->localizations()->Get(ge.meta.localization);
   const auto    localization_strings = localization->strings();
@@ -1643,11 +1204,12 @@ void DoUI() {
 
   auto textures = glib->atlas_textures();
 
-  {
-    Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
-    int                              beautifiersCount = 0;
+  Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
+  int                              beautifiersCount = 0;
 
-    CLAY({.layout{.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+  // Gameplay.
+  if (g.meta.state == StateType_GAMEPLAY) {
+    CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
       // Health bar + coins.
       // {  ///
       const auto  texs   = glib->ui_health_texture_ids();
@@ -1794,11 +1356,53 @@ void DoUI() {
       // }
     }
   }
+  // Upgrades.
+  else if (g.meta.state == StateType_UPGRADES) {
+    CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+      CLAY({
+        .layout{.childGap = 8},
+        .floating{
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        const auto fb_stats = glib->stats();
+
+        FOR_RANGE (int, i, g.level.upgrades.upgradesToPickFrom.count) {
+          const auto fb = fb_stats->Get(g.level.upgrades.upgradesToPickFrom[i]);
+          CLAY({}) {
+            BF_CLAY_IMAGE(
+              {.texId = glib->ui_item_slot_texture_id()},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({
+                  .layout{
+                    .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                  },
+                }) {
+                  BF_CLAY_IMAGE({
+                    .texId = fb->item_texture_id(),
+                  });
+                }
+              }
+            );
+          }
+        }
+      }
+    }
+  }
+  else
+    INVALID_PATH;
 
   auto renderCommands = Clay_EndLayout();
 
-  // Rendering UI.
-  {
+  // Drawing UI.
+  if (draw) {
     Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
     int                              beautifiersCount = 0;
 
@@ -1834,6 +1438,21 @@ void DoUI() {
 
         if (!mode) {
           switch (cmd.commandType) {
+          case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {  ///
+            const auto& d = cmd.renderData.rectangle;
+            RenderGroup_CommandRect({
+              .pos{bb.x, bb.y},
+              .size{bb.width, bb.height},
+              .anchor{},
+              .color{
+                (u8)d.backgroundColor.r,
+                (u8)d.backgroundColor.g,
+                (u8)d.backgroundColor.b,
+                (u8)((f32)d.backgroundColor.a * beautifierAlpha)
+              },
+            });
+          } break;
+
           case CLAY_RENDER_COMMAND_TYPE_IMAGE: {  ///
             const auto& d    = cmd.renderData.image;
             const auto& data = *(ClayImageData*)d.imageData;
@@ -1912,6 +1531,493 @@ void DoUI() {
       RenderGroup_End();
     }
   }
+}
+
+void GameFixedUpdate() {
+  if (g.meta.reload) {
+    g.meta.reload = false;
+    ResetLevel();
+    LevelInit();
+  }
+
+  // Updating gameplay.
+  if (g.meta.state == StateType_GAMEPLAY) {
+    // Finishing wave opens upgrades screen.
+    if (g.level.waveStartedAt.Elapsed() >= GetWaveDuration(g.level.wave)) {  ///
+      g.meta.state           = StateType_UPGRADES;
+      ge.settings.screenFade = 0.5f;
+      SDL_ShowCursor();
+
+      const auto fb_stats = glib->stats();
+
+      // Refilling `upgradesToPickFrom`.
+      FOR_RANGE (int, i, g.level.upgrades.upgradesToPickFrom.count) {
+        while (1) {
+          const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
+          if (!newStat)
+            continue;
+          if (ArrayContains(g.level.upgrades.upgradesToPickFrom.base, i, newStat))
+            continue;
+          g.level.upgrades.upgradesToPickFrom[i] = newStat;
+          break;
+        }
+      }
+    }
+
+    // Player actions.
+    if (PLAYER_CREATURE.active) {  ///
+      // Moving.
+      {
+        Vector2 move{};
+
+        if (IsKeyDown(SDL_SCANCODE_W))
+          move.y += 1;
+        if (IsKeyDown(SDL_SCANCODE_A))
+          move.x -= 1;
+        if (IsKeyDown(SDL_SCANCODE_S))
+          move.y -= 1;
+        if (IsKeyDown(SDL_SCANCODE_D))
+          move.x += 1;
+
+        if (move.x || move.y) {
+          move                = Vector2Normalize(move);
+          PLAYER_CREATURE.dir = move;
+        }
+
+        if (move == Vector2Zero()) {
+          if (g.meta.touch.touchIDs[0] != InvalidTouchID)
+            move = g.meta.touch.dir[0];
+        }
+
+        PLAYER_CREATURE.controller.move = move;
+      }
+    }
+
+    // Updating AI.
+    for (int i = 1; i < g.level.a.creatures.count; i++) {  ///
+      auto& creature = g.level.a.creatures[i];
+      creature.controller.move
+        = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+    }
+
+    // Creatures moving.
+    {  ///
+      const auto fb_creatures = glib->creatures();
+
+      for (auto& creature : g.level.a.creatures) {
+        if (!creature.active || creature.diedAt.IsSet())
+          continue;
+
+        const auto fb = fb_creatures->Get(creature.type);
+
+        auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
+        if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
+          speedScale *= 1.5f;
+
+        b2Body_ApplyLinearImpulseToCenter(
+          creature.body.id,
+          ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
+          true
+        );
+      }
+    }
+
+    // Updating box2d world.
+    b2World_Step(g.level.world, FIXED_DT, 4);
+
+    // Updating body positions.
+    for (auto& creature : g.level.a.creatures) {  ///
+      if (!creature.active || creature.diedAt.IsSet())
+        continue;
+
+      creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
+    }
+
+    // Making pre spawns.
+    if (g.level.waveStartedAt.Elapsed().value % (4 * FIXED_FPS) == 0) {  ///
+      const auto wave = glib->waves()->Get(g.level.wave);
+
+      Vector2 posToSpawn{};
+
+      FOR_RANGE (int, i, g.level.toSpawn) {
+        do {
+          posToSpawn = {
+            0.5f + GRAND.FRand() * (WORLD_X - 1),
+            0.5f + GRAND.FRand() * (WORLD_Y - 1),
+          };
+        } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
+                 < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
+
+        const auto   factor = GRAND.FRand();
+        CreatureType spawnType{};
+        for (const auto creature : *wave->creatures_to_spawn()) {
+          if (factor <= creature->spawn_factor()) {
+            spawnType = (CreatureType)creature->creature_type();
+            break;
+          }
+        }
+
+        if (spawnType) {
+          CreatureSpawn spawn{
+            .type = spawnType,
+            .pos  = posToSpawn,
+          };
+          spawn.createdAt.SetNow();
+          *g.level.a.creatureSpawns.Add() = spawn;
+        }
+        else
+          INVALID_PATH;
+      }
+
+      if (g.level.toSpawn < 5)
+        g.level.toSpawn++;
+    }
+
+    // Spawning.
+    {  ///
+      const int total = g.level.a.creatureSpawns.count;
+      int       off   = 0;
+      FOR_RANGE (int, i, total) {
+        auto& v = g.level.a.creatureSpawns[i - off];
+        if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
+          MakeCreature({
+            .type = v.type,
+            .pos  = v.pos,
+          });
+          g.level.a.creatureSpawns.UnstableRemoveAt(i - off);
+          off++;
+        }
+      }
+    }
+
+    // Player weapons shooting.
+    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      for (auto& weapon : g.level.playerWeapons) {
+        if (!weapon.type)
+          continue;
+
+        const auto fb  = glib->weapons()->Get(weapon.type);
+        const auto pos = PLAYER_CREATURE.pos + weapon.offset;
+
+        f32       minDistSqr      = f32_inf;
+        Creature* closestCreature = nullptr;
+
+        // Resetting cooldown.
+        const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
+        if (weapon.cooldownStartedAt.IsSet()
+            && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
+          weapon.cooldownStartedAt = {};
+
+        if (!weapon.cooldownStartedAt.IsSet()) {
+          for (int i = 1; i < g.level.a.creatures.count; i++) {
+            const auto creature = g.level.a.creatures.base + i;
+            if (!creature->active || creature->diedAt.IsSet())
+              continue;
+
+            const auto distSqr = Vector2DistanceSqr(pos, creature->pos);
+
+            if (distSqr < minDistSqr) {
+              minDistSqr      = distSqr;
+              closestCreature = creature;
+            }
+          }
+
+          if (closestCreature) {
+            if (minDistSqr < fb->distance() * fb->distance()) {
+              const auto dir  = Vector2DirectionOrRandom(pos, closestCreature->pos);
+              weapon.rotation = Vector2Angle(dir);
+              if (!weapon.startedShootingAt.IsSet()) {
+                weapon.startedShootingAt.SetNow();
+              }
+            }
+          }
+        }
+
+        if (weapon.startedShootingAt.IsSet()) {
+          const auto e           = weapon.startedShootingAt.Elapsed();
+          const auto spawnFrames = fb->projectile_spawn_frames();
+
+          bool spawn = false;
+          if (spawnFrames) {
+            for (auto value : *spawnFrames) {
+              if (value == e.value) {
+                spawn = true;
+                break;
+              }
+            }
+          }
+
+          if (spawn) {
+            MakeProjectile({
+              .type   = (ProjectileType)fb->projectile_type(),
+              .owner  = CreatureType_PLAYER,
+              .pos    = pos,
+              .dir    = Vector2Rotate(Vector2(1, 0), weapon.rotation),
+              .damage = fb->damage(),
+            });
+          }
+
+          if (e >= lframe::MakeScaled(fb->shooting_duration_frames()))
+            weapon.startedShootingAt = {};
+        }
+      }
+    }
+
+    // Mobs contact-damage player.
+    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      const auto playerPos = PLAYER_CREATURE.pos;
+      for (int i = 1; i < g.level.a.creatures.count; i++) {
+        const auto& creature = g.level.a.creatures[i];
+        if (!creature.active || creature.diedAt.IsSet())
+          continue;
+
+        if (Vector2DistanceSqr(playerPos, creature.pos)
+            <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
+        {
+          TryApplyDamage(
+            0,
+            glib->creatures()->Get(creature.type)->damage(),
+            Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
+            0
+          );
+        }
+      }
+    }
+
+    // Updating projectiles:
+    // - Movement
+    // - Marking to remove because of travel distance
+    // - Mob collisions
+    // - Marking to remove because of pierce count
+    {  ///
+      const auto fb_projectiles = glib->projectiles();
+
+      int projectileIndex = -1;
+      for (auto& projectile : g.level.a.projectiles) {
+        projectileIndex++;
+
+        const auto fb       = fb_projectiles->Get(projectile.type);
+        const auto distance = FIXED_DT * fb->speed();
+        projectile.travelledDistance += distance;
+        projectile.pos += projectile.dir * distance;
+
+        if (projectile.travelledDistance >= fb->distance()) {
+          if (!g.level.a.projectilesToRemove.Contains(projectileIndex))
+            *g.level.a.projectilesToRemove.Add() = projectileIndex;
+        }
+
+        int start = 0;
+        int end   = g.level.a.creatures.count;
+
+        if (projectile.owner == CreatureType_PLAYER)
+          start = 1;
+        else
+          end = 1;
+
+        for (int i = start; i < end; i++) {
+          auto& creature = g.level.a.creatures[i];
+          if (!creature.active || creature.diedAt.IsSet())
+            continue;
+
+          // Not damaging already damaged creatures.
+          if (ArrayContains(
+                projectile.piercedCreatureIds.base, projectile.piercedCount, creature.id
+              ))
+            continue;
+
+          const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
+          const auto radius  = fb->collider_radius();
+          if (distSqr < SQR(radius)) {
+            if (TryApplyDamage(
+                  i,
+                  projectile.damage,
+                  Vector2DirectionOrRandom(projectile.pos, creature.pos),
+                  fb->impulse()
+                ))
+            {
+              auto maxPierce = fb->pierce();
+              if (projectile.owner == CreatureType_PLAYER)
+                maxPierce += g.level.pierceCount;
+
+              if (projectile.piercedCount < maxPierce)
+                projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
+              else if (!g.level.a.projectilesToRemove.Contains(projectileIndex))
+                *g.level.a.projectilesToRemove.Add() = projectileIndex;
+            }
+          }
+        }
+      }
+    }
+
+    // Processing `projectilesToRemove`.
+    if (g.level.a.projectilesToRemove.count) {  ///
+      qsort(
+        (void*)g.level.a.projectilesToRemove.base,
+        g.level.a.projectilesToRemove.count,
+        sizeof(*g.level.a.projectilesToRemove.base),
+        (int (*)(const void*, const void*))IntCmp
+      );
+      FOR_RANGE (int, i, g.level.a.projectilesToRemove.count) {
+        const auto projectileIndex
+          = g.level.a.projectilesToRemove[g.level.a.projectilesToRemove.count - i - 1];
+        g.level.a.projectiles.UnstableRemoveAt(projectileIndex);
+      }
+      g.level.a.projectilesToRemove.Reset();
+    }
+
+    // Processing `justDamagedCreatures`.
+    {  ///
+      // auto playerHurt = false;
+      // auto mobHurt    = false;
+
+      for (const auto index : g.level.a.justDamagedCreatures) {
+        auto& creature = g.level.a.creatures[index];
+        ASSERT(creature.active);
+
+        // if (index == 0)
+        //   playerHurt = true;
+        // else
+        //   mobHurt = true;
+
+        if (creature.health <= 0) {
+          DestroyBody(&creature.body);
+
+          creature.diedAt.SetNow();
+          if (index) {
+            g.level.xp++;
+            PLAYER_CREATURE.health
+              = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+            if (g.level.xp >= g.level.nextLevelXp) {
+              g.level.nextLevelXp *= 2;
+              g.level.xp = 0;
+              g.level.xpLevel++;
+            }
+          }
+          else
+            g.level.playerDiedAt.SetNow();
+
+          Pickupable pickupable{
+            .type = PickupableType_COIN,
+            .pos  = creature.pos,
+          };
+          pickupable.createdAt.SetNow();
+          *g.level.a.pickupables.Add() = pickupable;
+        }
+      }
+
+      // if (playerHurt)
+      //   PlaySound(Sound_GAME_PLAYER_HURT);
+      // if (mobHurt)
+      //   PlaySound(Sound_GAME_HURT);
+
+      g.level.a.justDamagedCreatures.Reset();
+    }
+
+    // Picking up pickupables.
+    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      for (auto& pickupable : g.level.a.pickupables) {
+        if (pickupable.pickedUpAt.IsSet()) {
+          pickupable.pos
+            = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
+        }
+        else {
+          if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
+              <= SQR(PICKUPABLE_HURTBOX_RADIUS))
+          {
+            pickupable.pickedUpAt.SetNow();
+            MakeNumber({
+              .type  = NumberType_PICKUPABLE,
+              .value = 1,
+              .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+            });
+
+            switch (pickupable.type) {
+            case PickupableType_COIN: {
+              g.level.coins++;
+            } break;
+
+            default:
+              INVALID_PATH;
+            }
+          }
+        }
+      }
+    }
+  }
+  else if (g.meta.state == StateType_UPGRADES) {
+    IncrementSetZeroOn(&g.level.wave, (int)glib->waves()->size());
+    g.level.waveStartedAt = {};
+    g.level.waveStartedAt.SetNow();
+
+    for (int i = 1; i < g.level.a.creatures.count; i++) {
+      auto& creature = g.level.a.creatures[i];
+      if (creature.active && !creature.diedAt.IsSet())
+        DestroyBody(&creature.body);
+    }
+    g.level.a.creatures.count = 1;
+    g.level.a.creatureSpawns.Reset();
+    g.level.a.creatureSpawnsToMake.Reset();
+    g.level.a.projectiles.Reset();
+    g.level.a.projectilesToRemove.Reset();
+    g.level.a.bodyShapes.Reset();
+    g.level.a.justDamagedCreatures.Reset();
+  }
+  else
+    INVALID_PATH;
+
+  DoUI(false);
+
+  // Removing old died creatures.
+  {  ///
+    const auto total = g.level.a.creatures.count;
+    int        off   = 0;
+    FOR_RANGE (int, i, total) {
+      const auto& creature = g.level.a.creatures[i - off];
+      if (creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
+        if (i) {
+          g.level.a.creatures.UnstableRemoveAt(i - off);
+          off++;
+        }
+        else if (!i)
+          g.meta.reload = true;
+      }
+    }
+  }
+
+  // Removing old damage numbers.
+  {  ///
+    int removed = 0;
+    int left    = -1;
+    FOR_RANGE (int, i, g.level.a.numbers.count) {
+      const auto& number = g.level.a.numbers[i];
+      if (number.createdAt.Elapsed() >= DAMAGE_NUMBERS_FRAMES) {
+        if (left == -1)
+          left = i;
+        removed++;
+      }
+      else if (left >= 0)
+        g.level.a.numbers[left++] = number;
+    }
+    g.level.a.numbers.count -= removed;
+  }
+
+  // Removing old picked up pickupables.
+  {  ///
+    const auto total = g.level.a.pickupables.count;
+    int        off   = 0;
+    FOR_RANGE (int, i, total) {
+      const auto& pickupable = g.level.a.pickupables[i - off];
+      if (pickupable.pickedUpAt.IsSet()
+          && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
+      {
+        g.level.a.pickupables.UnstableRemoveAt(i - off);
+        off++;
+      }
+    }
+  }
+
+  g.level.camera.pos = GetCameraTargetPos();
+  g.meta.frame++;
 }
 
 void GameDraw() {
@@ -2133,7 +2239,7 @@ void GameDraw() {
 
   EndMode2D();
 
-  DoUI();
+  DoUI(true);
 
   EngineApplyStrips();
   EngineApplyVignette();
