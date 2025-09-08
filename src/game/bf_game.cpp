@@ -1370,7 +1370,7 @@ void DoUI(bool draw) {
     }
   }
   // Upgrades.
-  else if (g.meta.state == StateType_UPGRADES) {
+  else if (g.meta.state == StateType_UPGRADES) {  ///
     CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
       CLAY({
         .layout{.childGap = 8},
@@ -1391,7 +1391,7 @@ void DoUI(bool draw) {
           const auto fb   = fb_stats->Get(stat);
           CLAY({}) {
             // Scheduling close of upgrade UI + applying selected stat upgrade.
-            if (Clay_Hovered() && IsMouseReleased(L)) {  ///
+            if (Clay_Hovered() && IsMouseReleased(L)) {
               g.meta.nextWaveScheduled = true;
 
               const int amount = 1;
