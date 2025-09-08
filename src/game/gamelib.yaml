@@ -19,7 +19,11 @@ ui_health_texture_ids:
   - ui_health_back
   - ui_health_top
 ui_coin_texture_id: ui_coin
-ui_item_slot_texture_id: ui_item_slot
+ui_modal_fade: 0.75
+ui_item_slot_default_texture_id: ui_item_slot
+ui_item_slot_default_color: 0x5e3735
+ui_item_slot_hovered_texture_id: ui_item_slot
+ui_item_slot_hovered_color: 0x885a44
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 creature__table:
   - type: INVALID
