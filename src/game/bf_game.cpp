@@ -1406,7 +1406,7 @@ void DoUI(bool draw) {
                     BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                   },
                 }) {
-                  BF_CLAY_IMAGE({.texId = fb->upgrade_item_texture_id()});
+                  BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
                 }
               }
             );

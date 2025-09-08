@@ -100,112 +100,112 @@ stat__table:
       - 6
       - 9
       - 12
-    upgrade_texture_id: game_stat_item_hp
+    upgrade_texture_id: game_stat_upgrade_hp
   - type: REGEN
     upgrade_values:
       - 2
       - 3
       - 4
       - 5
-    upgrade_texture_id: game_stat_item_regen
+    upgrade_texture_id: game_stat_upgrade_regen
   - type: LIFE_STEAL
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_item_life_steal
+    upgrade_texture_id: game_stat_upgrade_life_steal
   - type: DAMAGE
     upgrade_values:
       - 5
       - 8
       - 12
       - 16
-    upgrade_texture_id: game_stat_item_damage
+    upgrade_texture_id: game_stat_upgrade_damage
   - type: DAMAGE_MELEE
     upgrade_values:
       - 2
       - 4
       - 6
       - 8
-    upgrade_texture_id: game_stat_item_damage_melee
+    upgrade_texture_id: game_stat_upgrade_damage_melee
   - type: DAMAGE_RANGED
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_item_damage_ranged
+    upgrade_texture_id: game_stat_upgrade_damage_ranged
   - type: DAMAGE_ELEMENTAL
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_item_damage_elemental
+    upgrade_texture_id: game_stat_upgrade_damage_elemental
   - type: ATTACK_SPEED
     upgrade_values:
       - 5
       - 10
       - 15
       - 20
-    upgrade_texture_id: game_stat_item_attack_speed
+    upgrade_texture_id: game_stat_upgrade_attack_speed
   - type: CRIT_CHANCE
     upgrade_values:
       - 3
       - 5
       - 7
       - 9
-    upgrade_texture_id: game_stat_item_crit_chance
+    upgrade_texture_id: game_stat_upgrade_crit_chance
   - type: ENGINEERING
     upgrade_values:
       - 2
       - 3
       - 4
       - 5
-    upgrade_texture_id: game_stat_item_engineering
+    upgrade_texture_id: game_stat_upgrade_engineering
   - type: RANGE
     upgrade_values:
       - 15
       - 30
       - 45
       - 60
-    upgrade_texture_id: game_stat_item_range
+    upgrade_texture_id: game_stat_upgrade_range
   - type: ARMOR
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_item_armor
+    upgrade_texture_id: game_stat_upgrade_armor
   - type: DODGE
     upgrade_values:
       - 3
       - 6
       - 9
       - 12
-    upgrade_texture_id: game_stat_item_dodge
+    upgrade_texture_id: game_stat_upgrade_dodge
   - type: SPEED
     upgrade_values:
       - 3
       - 6
       - 9
       - 12
-    upgrade_texture_id: game_stat_item_speed
+    upgrade_texture_id: game_stat_upgrade_speed
   - type: LUCK
     upgrade_values:
       - 5
       - 10
       - 15
       - 20
-    upgrade_texture_id: game_stat_item_luck
+    upgrade_texture_id: game_stat_upgrade_luck
   - type: HARVESTING
     upgrade_values:
       - 5
       - 8
       - 10
       - 12
-    upgrade_texture_id: game_stat_item_harvesting
+    upgrade_texture_id: game_stat_upgrade_harvesting
 waves:
   # 1
   - creatures_to_spawn:
