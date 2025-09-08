@@ -582,7 +582,7 @@ struct GameData {
     LogicalFrame waveStartedAt = {};
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
-    Array<f32, StatType_COUNT>          playerStats   = {};
+    Array<int, StatType_COUNT>          playerStats   = {};
 
     struct {
       Array<StatType, 4> upgradesToPickFrom = {};
@@ -1392,7 +1392,19 @@ void DoUI(bool draw) {
           CLAY({}) {
             if (Clay_Hovered() && IsMouseReleased(L)) {
               g.meta.nextWaveScheduled = true;
-              g.level.playerStats[stat] += 1;
+
+              int amount = 1;
+              g.level.playerStats[stat] += amount;
+
+              switch (stat) {
+              case StatType_HP: {
+                PLAYER_CREATURE.health += amount;
+                PLAYER_CREATURE.maxHealth += amount;
+              } break;
+
+              default:
+                break;
+              }
             }
 
             const int slotTexId
