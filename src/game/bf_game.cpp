@@ -556,8 +556,9 @@ struct GameData {
       // LogicalFrame      rightLastPressedAt = {};
     } touch;
 
-    bool      reload = false;
-    StateType state  = StateType_GAMEPLAY;
+    bool      reload            = false;
+    bool      nextWaveScheduled = false;
+    StateType state             = StateType_GAMEPLAY;
   } meta;
 
   struct Level {
@@ -1194,6 +1195,13 @@ void ResetLevel() {  ///
 }
 
 void DoUI(bool draw) {
+  if (!draw) {
+    // Updating clay mouse pos.
+    // TODO: TOUCH!
+    const auto pos = GetMouseLogicalPos();
+    Clay_SetPointerState({pos.x, pos.y}, false);
+  }
+
   constexpr int MAX_BEAUTIFIERS      = 32;
   const auto    localization         = glib->localizations()->Get(ge.meta.localization);
   const auto    localization_strings = localization->strings();
@@ -1374,10 +1382,19 @@ void DoUI(bool draw) {
         const auto fb_stats = glib->stats();
 
         FOR_RANGE (int, i, g.level.upgrades.upgradesToPickFrom.count) {
-          const auto fb = fb_stats->Get(g.level.upgrades.upgradesToPickFrom[i]);
+          const auto stat = g.level.upgrades.upgradesToPickFrom[i];
+          const auto fb   = fb_stats->Get(stat);
           CLAY({}) {
+            if (Clay_Hovered() && IsMouseReleased(L)) {
+              g.meta.nextWaveScheduled = true;
+              g.level.playerStats[stat]++;
+            }
+
             BF_CLAY_IMAGE(
-              {.texId = glib->ui_item_slot_texture_id()},
+              {
+                .texId = glib->ui_item_slot_texture_id(),
+                .color = (Clay_Hovered() ? RED : YELLOW),
+              },
               [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({
                   .layout{
@@ -1385,9 +1402,7 @@ void DoUI(bool draw) {
                     BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                   },
                 }) {
-                  BF_CLAY_IMAGE({
-                    .texId = fb->item_texture_id(),
-                  });
+                  BF_CLAY_IMAGE({.texId = fb->item_texture_id()});
                 }
               }
             );
@@ -1534,10 +1549,37 @@ void DoUI(bool draw) {
 }
 
 void GameFixedUpdate() {
-  if (g.meta.reload) {
+  // Reloading game.
+  if (g.meta.reload) {  ///
     g.meta.reload = false;
     ResetLevel();
     LevelInit();
+  }
+
+  // Advancing to the next wave.
+  if (g.meta.nextWaveScheduled) {  ///
+    g.meta.nextWaveScheduled = false;
+
+    g.meta.state           = StateType_GAMEPLAY;
+    ge.settings.screenFade = 0;
+    SDL_HideCursor();
+
+    IncrementSetZeroOn(&g.level.wave, (int)glib->waves()->size());
+    g.level.waveStartedAt = {};
+    g.level.waveStartedAt.SetNow();
+
+    for (int i = 1; i < g.level.a.creatures.count; i++) {
+      auto& creature = g.level.a.creatures[i];
+      if (creature.active && !creature.diedAt.IsSet())
+        DestroyBody(&creature.body);
+    }
+    g.level.a.creatures.count = 1;
+    g.level.a.creatureSpawns.Reset();
+    g.level.a.creatureSpawnsToMake.Reset();
+    g.level.a.projectiles.Reset();
+    g.level.a.projectilesToRemove.Reset();
+    g.level.a.bodyShapes.Reset();
+    g.level.a.justDamagedCreatures.Reset();
   }
 
   // Updating gameplay.
@@ -1945,22 +1987,7 @@ void GameFixedUpdate() {
     }
   }
   else if (g.meta.state == StateType_UPGRADES) {
-    IncrementSetZeroOn(&g.level.wave, (int)glib->waves()->size());
-    g.level.waveStartedAt = {};
-    g.level.waveStartedAt.SetNow();
-
-    for (int i = 1; i < g.level.a.creatures.count; i++) {
-      auto& creature = g.level.a.creatures[i];
-      if (creature.active && !creature.diedAt.IsSet())
-        DestroyBody(&creature.body);
-    }
-    g.level.a.creatures.count = 1;
-    g.level.a.creatureSpawns.Reset();
-    g.level.a.creatureSpawnsToMake.Reset();
-    g.level.a.projectiles.Reset();
-    g.level.a.projectilesToRemove.Reset();
-    g.level.a.bodyShapes.Reset();
-    g.level.a.justDamagedCreatures.Reset();
+    // NOTE: Intentionally left blank.
   }
   else
     INVALID_PATH;
