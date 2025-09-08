@@ -2518,6 +2518,10 @@ Vector2 GetMouseScreenPos() {  ///
   return ge.meta._mousePos;
 }
 
+Vector2 GetMouseLogicalPos() {  ///
+  return ge.meta._mousePos;
+}
+
 void EngineApplyVignette() {  ///
   RenderGroup_OneShotTexture(
     {
