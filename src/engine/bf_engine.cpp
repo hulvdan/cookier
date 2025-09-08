@@ -2518,8 +2518,8 @@ Vector2 GetMouseScreenPos() {  ///
   return ge.meta._mousePos;
 }
 
-Vector2 GetMouseLogicalPos() {  ///
-  return ge.meta._mousePos;
+Vector2 ScreenPosToLogical(Vector2 pos) {  ///
+  return (pos + ge.meta._screenToLogicalAdd) * ge.meta._screenToLogicalScale;
 }
 
 void EngineApplyVignette() {  ///

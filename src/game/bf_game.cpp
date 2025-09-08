@@ -1198,7 +1198,7 @@ void DoUI(bool draw) {
   if (!draw) {
     // Updating clay mouse pos.
     // TODO: TOUCH!
-    const auto pos = GetMouseLogicalPos();
+    const auto pos = ScreenPosToLogical(GetMouseScreenPos());
     Clay_SetPointerState({pos.x, pos.y}, false);
   }
 
@@ -1390,11 +1390,15 @@ void DoUI(bool draw) {
               g.level.playerStats[stat]++;
             }
 
+            const int slotTexId
+              = (Clay_Hovered() ? glib->ui_item_slot_hovered_texture_id() : glib->ui_item_slot_default_texture_id());
+            const auto slotColor = ColorFromRGB(
+              Clay_Hovered() ? glib->ui_item_slot_hovered_color()
+                             : glib->ui_item_slot_default_color()
+            );
+
             BF_CLAY_IMAGE(
-              {
-                .texId = glib->ui_item_slot_texture_id(),
-                .color = (Clay_Hovered() ? RED : YELLOW),
-              },
+              {.texId = slotTexId, .color = slotColor},
               [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({
                   .layout{
@@ -1587,7 +1591,7 @@ void GameFixedUpdate() {
     // Finishing wave opens upgrades screen.
     if (g.level.waveStartedAt.Elapsed() >= GetWaveDuration(g.level.wave)) {  ///
       g.meta.state           = StateType_UPGRADES;
-      ge.settings.screenFade = 0.5f;
+      ge.settings.screenFade = glib->ui_modal_fade();
       SDL_ShowCursor();
 
       const auto fb_stats = glib->stats();
