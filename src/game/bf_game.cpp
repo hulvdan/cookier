@@ -1570,6 +1570,15 @@ void DoUI(bool draw) {
   }
 }
 
+constexpr f32 GetStatRegenPerSecond(int level) {  ///
+  return (f32)level / 11.25f + 1.0f / 9.0f;
+}
+
+constexpr f32 GetStatRegenPerFrame(int level) {  ///
+  const auto perSecond = GetStatRegenPerSecond(level);
+  return perSecond / (f32)FIXED_FPS;
+}
+
 void GameFixedUpdate() {
   // Reloading game.
   if (g.meta.reload) {  ///
@@ -1631,10 +1640,9 @@ void GameFixedUpdate() {
       }
     }
 
-    // Player actions.
-    if (PLAYER_CREATURE.active) {  ///
-      // Moving.
-      {
+    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {
+      // Player actions. Moving.
+      {  ///
         Vector2 move{};
 
         if (IsKeyDown(SDL_SCANCODE_W))
@@ -1657,6 +1665,15 @@ void GameFixedUpdate() {
         }
 
         PLAYER_CREATURE.controller.move = move;
+      }
+
+      // Player HP regen.
+      if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {  ///
+        PLAYER_CREATURE.health = MoveTowards(
+          PLAYER_CREATURE.health,
+          PLAYER_CREATURE.maxHealth,
+          GetStatRegenPerFrame(g.level.playerStats[StatType_REGEN])
+        );
       }
     }
 
