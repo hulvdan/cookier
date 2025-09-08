@@ -1390,10 +1390,11 @@ void DoUI(bool draw) {
           const auto stat = g.level.upgrades.upgradesToPickFrom[i];
           const auto fb   = fb_stats->Get(stat);
           CLAY({}) {
-            if (Clay_Hovered() && IsMouseReleased(L)) {
+            // Scheduling close of upgrade UI + applying selected stat upgrade.
+            if (Clay_Hovered() && IsMouseReleased(L)) {  ///
               g.meta.nextWaveScheduled = true;
 
-              int amount = 1;
+              const int amount = 1;
               g.level.playerStats[stat] += amount;
 
               switch (stat) {
