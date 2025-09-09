@@ -449,6 +449,10 @@ struct Weapon {
   // f32 lastShotDirection = {};
 };
 
+struct Item {
+  ItemType type = {};
+};
+
 struct CreatureController {
   Vector2 move = {};
   // Vector2 shoot = {};
@@ -612,7 +616,8 @@ struct GameData {
   X(BodyShape, bodyShapes)                       \
   X(int, justDamagedCreatures)                   \
   X(Number, numbers)                             \
-  X(Pickupable, pickupables)
+  X(Pickupable, pickupables)                     \
+  X(Item, playerItems)
 
 #define X(type_, name_) Vector<type_> name_ = {};
       VECTORS_TABLE;
@@ -1521,11 +1526,15 @@ void DoUI(bool draw) {
           }
 
           CLAY({}) {
-            // Buying bought item / weapon.
+            // Processing buying of item / weapon.
             if (canBuy && clicked()) {
               g.level.coins -= v.price;
               if (v.weapon)
                 g.level.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
+              else if (v.item)
+                *g.level.a.playerItems.Add() = {.type = v.item};
+              else
+                INVALID_PATH;
               v = {};
             }
 
