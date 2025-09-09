@@ -175,6 +175,7 @@ def convert_gamelib_json_to_binary(
 ) -> None:
     gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
 
+    # Enriching gamelib with sounds.
     if 1:
         sound_paths = list(RESOURCES_DIR.rglob("*.ogg"))
         genenum(
@@ -266,6 +267,31 @@ def convert_gamelib_json_to_binary(
     gamelib |= atlas_data
     genenum(genline, "RenderZ", gamelib.pop("render_z"), add_count=True)
 
+    # Locale gen.
+    if 1:
+        lines = (
+            Path(SRC_DIR / "game" / "bf_gamelib.fbs")
+            .read_text(encoding="utf-8")
+            .split("\n")
+        )
+
+        start = -1
+        end = -1
+        for i, line in enumerate(lines):
+            if "LOCALE_GEN_START" in line:
+                start = i + 1
+            if "LOCALE_GEN_END" in line:
+                end = i
+                break
+
+        assert start >= 0
+        assert end >= 1
+        assert start < end
+
+        for i in range(start, end):
+            field_name = lines[i].split(":", 1)[0].strip().removesuffix("_locale")
+            gamelib["{}_locale".format(field_name)] = field_name.upper()
+
     localization_codepoints, locale_to_index = _do_localization(gamelib)
 
     for gamelib_processing_function in gamelib_processing_functions:
@@ -294,6 +320,7 @@ def convert_gamelib_json_to_binary(
             )
 
     degrees_to_radians_recursive_transform(gamelib)
+
     recursive_replace_transform(gamelib, "locale", "locales", locale_to_index)
 
     # Creation of `gamelib.bin`.

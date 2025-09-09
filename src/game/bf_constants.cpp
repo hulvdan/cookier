@@ -96,9 +96,12 @@ constexpr auto PLAYER_INVINCIBILITY_FRAMES = lframe::MakeScaled(10);
 constexpr auto DAMAGE_NUMBERS_FRAMES       = lframe::MakeScaled(30);
 constexpr auto DAMAGE_NUMBERS_FADE_FRAMES  = lframe::MakeScaled(10);
 constexpr auto PICKUPABLE_FADE_FRAMES      = lframe::MakeScaled(10);
+constexpr auto LIFESTEAL_COOLDOWN_FRAMES   = lframe::MakeUnscaled(FIXED_FPS / 10);
 
 constexpr int PROJECTILE_MAX_PIERCE = 10;
 
 constexpr f32 PLAYER_PICKUP_NUMBER_Y_OFFSET = -0.5f;
+
+constexpr f32 SHOP_ITEM_RATIO = 0.4f;  // X% of items in shop, (1-X)% of weapons.
 
 ///

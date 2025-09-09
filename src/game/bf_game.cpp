@@ -490,7 +490,7 @@ struct MakeCreatureSpawnData {
 struct Projectile {
   bool                              active             = true;
   ProjectileType                    type               = {};
-  CreatureType                      owner              = {};
+  int                               ownerCreatureIndex = {};
   Vector2                           pos                = {};
   Vector2                           dir                = {};
   f32                               damage             = {};
@@ -501,11 +501,11 @@ struct Projectile {
 };
 
 struct MakeProjectileData {
-  ProjectileType type   = {};
-  CreatureType   owner  = {};
-  Vector2        pos    = {};
-  Vector2        dir    = {};
-  f32            damage = {};
+  ProjectileType type               = {};
+  int            ownerCreatureIndex = {};
+  Vector2        pos                = {};
+  Vector2        dir                = {};
+  f32            damage             = {};
 };
 
 struct Number {
@@ -538,6 +538,13 @@ lframe GetWaveDuration(int wave) {  ///
 enum StateType {
   StateType_GAMEPLAY,
   StateType_UPGRADES,
+  StateType_SHOP,
+};
+
+struct ShopItem {
+  WeaponType weapon = {};
+  ItemType   item   = {};
+  int        price  = {};
 };
 
 struct GameData {
@@ -557,6 +564,7 @@ struct GameData {
     } touch;
 
     bool      reload            = false;
+    bool      shopScheduled     = false;
     bool      nextWaveScheduled = false;
     StateType state             = StateType_GAMEPLAY;
   } meta;
@@ -567,10 +575,11 @@ struct GameData {
       .texturesScale = 1.0f / METER_LOGICAL_SIZE,
     };
 
-    b2WorldId    world          = {};
-    int          nextCreatureId = 0;
-    LogicalFrame playerDiedAt   = {};
-    int          toSpawn        = 3;
+    b2WorldId    world           = {};
+    int          nextCreatureId  = 0;
+    LogicalFrame playerDiedAt    = {};
+    int          toSpawn         = 3;
+    LogicalFrame lastLifestealAt = {};
 
     f32 xp          = 0;
     f32 nextLevelXp = 10;
@@ -585,8 +594,12 @@ struct GameData {
     Array<int, StatType_COUNT>          playerStats   = {};
 
     struct {
-      Array<StatType, 4> upgradesToPickFrom = {};
+      Array<StatType, 4> toPick = {};
     } upgrades;
+
+    struct {
+      Array<ShopItem, 4> toPick = {};
+    } shop;
 
     struct Allocated {
       // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
@@ -957,11 +970,11 @@ void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
 
   Projectile projectile{
-    .type   = data.type,
-    .owner  = data.owner,
-    .pos    = data.pos,
-    .dir    = data.dir,
-    .damage = data.damage,
+    .type               = data.type,
+    .ownerCreatureIndex = data.ownerCreatureIndex,
+    .pos                = data.pos,
+    .dir                = data.dir,
+    .damage             = data.damage,
   };
   projectile.createdAt.SetNow();
 
@@ -1154,7 +1167,26 @@ Vector2 WorldSizeToLogical(Vector2 size) {  ///
   return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
 }
 
-bool TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impulse) {  ///
+constexpr f32 GetStatRegenPerSecond(int level) {  ///
+  return (f32)level / 11.25f + 1.0f / 9.0f;
+}
+
+constexpr f32 GetStatRegenPerFrame(int level) {  ///
+  const auto perSecond = GetStatRegenPerSecond(level);
+  return perSecond / (f32)FIXED_FPS;
+}
+
+constexpr f32 GetLifestealChance(int level) {  ///
+  return (f32)level / 100.0f;
+}
+
+bool TryApplyDamage(
+  int     creatureIndex,
+  f32     damage,
+  Vector2 direction,
+  f32     impulse,
+  int     damageApplicatorCreatureIndex
+) {  ///
   auto& creature = g.level.a.creatures[creatureIndex];
 
   if (creatureIndex) {
@@ -1171,6 +1203,22 @@ bool TryApplyDamage(int creatureIndex, f32 damage, Vector2 direction, f32 impuls
   }
 
   if (creature.health > 0) {
+    if (!damageApplicatorCreatureIndex) {
+      if (GRAND.FRand() < GetLifestealChance(g.level.playerStats[StatType_LIFE_STEAL])) {
+        bool canLifesteal = false;
+        if (!g.level.lastLifestealAt.IsSet())
+          canLifesteal = true;
+        else if (g.level.lastLifestealAt.Elapsed() >= LIFESTEAL_COOLDOWN_FRAMES)
+          canLifesteal = true;
+
+        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
+          PLAYER_CREATURE.health
+            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+          g.level.lastLifestealAt = {};
+          g.level.lastLifestealAt.SetNow();
+        }
+      }
+    }
     creature.health -= damage;
 
     creature.lastDamagedAt = {};
@@ -1200,12 +1248,20 @@ void ResetLevel() {  ///
 }
 
 void DoUI(bool draw) {
+  // NOTE: Logic must be executed only when not drawing!
+  // e.g. updating mouse position, processing `clicked()`,
+  // logically reacting to `Clay_Hovered()`, setting game state, etc.
+
   if (!draw) {
     // Updating clay mouse pos.
     // TODO: TOUCH!
     const auto pos = ScreenPosToLogical(GetMouseScreenPos());
-    Clay_SetPointerState({pos.x, pos.y}, false);
+    Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
   }
+
+  LAMBDA (bool, clicked, ()) {  ///
+    return !draw && Clay_Hovered() && IsMouseReleased(L);
+  };
 
   constexpr int MAX_BEAUTIFIERS      = 32;
   const auto    localization         = glib->localizations()->Get(ge.meta.localization);
@@ -1386,13 +1442,13 @@ void DoUI(bool draw) {
 
         const auto fb_stats = glib->stats();
 
-        FOR_RANGE (int, i, g.level.upgrades.upgradesToPickFrom.count) {
-          const auto stat = g.level.upgrades.upgradesToPickFrom[i];
+        FOR_RANGE (int, i, g.level.upgrades.toPick.count) {
+          const auto stat = g.level.upgrades.toPick[i];
           const auto fb   = fb_stats->Get(stat);
           CLAY({}) {
             // Scheduling close of upgrade UI + applying selected stat upgrade.
-            if (Clay_Hovered() && IsMouseReleased(L)) {
-              g.meta.nextWaveScheduled = true;
+            if (clicked()) {
+              g.meta.shopScheduled = true;
 
               const int amount = 1;
               g.level.playerStats[stat] += amount;
@@ -1429,6 +1485,84 @@ void DoUI(bool draw) {
               }
             );
           }
+        }
+      }
+    }
+  }
+  // Shop.
+  else if (g.meta.state == StateType_SHOP) {  ///
+    CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+      CLAY({
+        .layout{.childGap = 8},
+        .floating{
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        for (auto& v : g.level.shop.toPick) {
+          CLAY({}) {
+            // Applying bought item / weapon.
+            if (clicked()) {
+            }
+
+            const auto fb_item   = (v.item ? glib->items()->Get(v.item) : nullptr);
+            const auto fb_weapon = (v.weapon ? glib->weapons()->Get(v.weapon) : nullptr);
+
+            const int slotTexId
+              = (Clay_Hovered() ? glib->ui_item_slot_hovered_texture_id() : glib->ui_item_slot_default_texture_id());
+            const auto slotColor = ColorFromRGB(
+              Clay_Hovered() ? glib->ui_item_slot_hovered_color()
+                             : glib->ui_item_slot_default_color()
+            );
+
+            BF_CLAY_IMAGE(
+              {.texId = slotTexId, .color = slotColor},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({
+                  .layout{
+                    .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                  },
+                }) {
+                  int texId = 0;
+                  if (v.item)
+                    texId = fb_item->texture_id();
+                  if (v.weapon)
+                    texId = fb_weapon->texture_ids()->Get(0);
+                  BF_CLAY_IMAGE({.texId = texId});
+                }
+              }
+            );
+          }
+        }
+      }
+
+      // Advance to the next wave button.
+      CLAY({
+        .layout{.padding{.right = 8, .bottom = 8}},
+        .floating{
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+            .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        CLAY({
+          .layout{BF_CLAY_PADDING_ALL(8)},
+          .backgroundColor = ToClayColor(Clay_Hovered() ? WHITE : GRAY),
+        }) {
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
+
+          if (clicked())
+            g.meta.nextWaveScheduled = true;
         }
       }
     }
@@ -1570,21 +1704,34 @@ void DoUI(bool draw) {
   }
 }
 
-constexpr f32 GetStatRegenPerSecond(int level) {  ///
-  return (f32)level / 11.25f + 1.0f / 9.0f;
-}
-
-constexpr f32 GetStatRegenPerFrame(int level) {  ///
-  const auto perSecond = GetStatRegenPerSecond(level);
-  return perSecond / (f32)FIXED_FPS;
-}
-
 void GameFixedUpdate() {
   // Reloading game.
   if (g.meta.reload) {  ///
     g.meta.reload = false;
     ResetLevel();
     LevelInit();
+  }
+
+  // Advancing to shop.
+  if (g.meta.shopScheduled) {  ///
+    g.meta.shopScheduled = false;
+    g.meta.state         = StateType_SHOP;
+
+    auto& toPick = g.level.shop.toPick;
+
+    for (auto& v : toPick) {
+      v = {.price = 15 + GRAND.Rand() % 20};
+
+      const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
+      if (setToItem) {
+        while (!v.item)
+          v.item = (ItemType)(GRAND.Rand() % glib->items()->size());
+      }
+      else {
+        while (!v.weapon)
+          v.weapon = (WeaponType)(GRAND.Rand() % glib->weapons()->size());
+      }
+    }
   }
 
   // Advancing to the next wave.
@@ -1623,8 +1770,8 @@ void GameFixedUpdate() {
 
       const auto fb_stats = glib->stats();
 
-      // Refilling `upgradesToPickFrom`.
-      FOR_RANGE (int, i, g.level.upgrades.upgradesToPickFrom.count) {
+      // Refilling `toPick`.
+      FOR_RANGE (int, i, g.level.upgrades.toPick.count) {
         while (1) {
           const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
           if (!newStat)
@@ -1632,9 +1779,9 @@ void GameFixedUpdate() {
           const auto fb = fb_stats->Get(newStat);
           if (!fb->upgrade_texture_id())
             continue;
-          if (ArrayContains(g.level.upgrades.upgradesToPickFrom.base, i, newStat))
+          if (ArrayContains(g.level.upgrades.toPick.base, i, newStat))
             continue;
-          g.level.upgrades.upgradesToPickFrom[i] = newStat;
+          g.level.upgrades.toPick[i] = newStat;
           break;
         }
       }
@@ -1833,11 +1980,11 @@ void GameFixedUpdate() {
 
           if (spawn) {
             MakeProjectile({
-              .type   = (ProjectileType)fb->projectile_type(),
-              .owner  = CreatureType_PLAYER,
-              .pos    = pos,
-              .dir    = Vector2Rotate(Vector2(1, 0), weapon.rotation),
-              .damage = fb->damage(),
+              .type               = (ProjectileType)fb->projectile_type(),
+              .ownerCreatureIndex = 0,
+              .pos                = pos,
+              .dir                = Vector2Rotate(Vector2(1, 0), weapon.rotation),
+              .damage             = fb->damage(),
             });
           }
 
@@ -1862,7 +2009,8 @@ void GameFixedUpdate() {
             0,
             glib->creatures()->Get(creature.type)->damage(),
             Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
-            0
+            0,
+            i
           );
         }
       }
@@ -1893,7 +2041,8 @@ void GameFixedUpdate() {
         int start = 0;
         int end   = g.level.a.creatures.count;
 
-        if (projectile.owner == CreatureType_PLAYER)
+        if (g.level.a.creatures[projectile.ownerCreatureIndex].type
+            == CreatureType_PLAYER)
           start = 1;
         else
           end = 1;
@@ -1916,11 +2065,13 @@ void GameFixedUpdate() {
                   i,
                   projectile.damage,
                   Vector2DirectionOrRandom(projectile.pos, creature.pos),
-                  fb->impulse()
+                  fb->impulse(),
+                  projectile.ownerCreatureIndex
                 ))
             {
               auto maxPierce = fb->pierce();
-              if (projectile.owner == CreatureType_PLAYER)
+              if (g.level.a.creatures[projectile.ownerCreatureIndex].type
+                  == CreatureType_PLAYER)
                 maxPierce += g.level.pierceCount;
 
               if (projectile.piercedCount < maxPierce)
@@ -1969,8 +2120,6 @@ void GameFixedUpdate() {
           creature.diedAt.SetNow();
           if (index) {
             g.level.xp++;
-            PLAYER_CREATURE.health
-              = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
             if (g.level.xp >= g.level.nextLevelXp) {
               g.level.nextLevelXp *= 2;
               g.level.xp = 0;
@@ -2028,11 +2177,6 @@ void GameFixedUpdate() {
       }
     }
   }
-  else if (g.meta.state == StateType_UPGRADES) {
-    // NOTE: Intentionally left blank.
-  }
-  else
-    INVALID_PATH;
 
   DoUI(false);
 
