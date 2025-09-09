@@ -544,10 +544,11 @@ lframe GetWaveDuration(int wave) {  ///
   constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
                              60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
   VIEW_FROM_ARRAY_DANGER(durations);
-  return durations[MIN(durations.count - 1, wave)];
+  const int seconds = durations[MIN(durations.count - 1, wave)];
 #else
-  return lframe::MakeUnscaled((3 + wave * 5) * FIXED_FPS);
+  const int seconds = 3 + wave * 5;
 #endif
+  return lframe::MakeUnscaled(seconds * FIXED_FPS);
 }
 
 enum StateType {
