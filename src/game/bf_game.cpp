@@ -1435,9 +1435,12 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
+        bool showVersion = ge.meta.debugEnabled;
 #if BF_SHOW_VERSION
-        BF_CLAY_TEXT(g_gameVersion);
+        showVersion = true;
 #endif
+        if (showVersion)
+          BF_CLAY_TEXT(g_gameVersion);
       }
       // }
     }
