@@ -212,6 +212,8 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {  ///
       return SDL_APP_FAILURE;
     }
     g_appstate.window = window;
+
+    SDL_SetWindowMouseGrab(window, true);
   }
 
   {
