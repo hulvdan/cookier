@@ -45,6 +45,11 @@ Clay_Color ToClayColor(Color color) {
   };
 }
 
+#define BF_CLAY_SPACER_VERTICAL \
+  CLAY({.layout{.sizing{CLAY_SIZING_FIXED(1), CLAY_SIZING_GROW(0)}}}) {}
+#define BF_CLAY_SPACER_HORIZONTAL \
+  CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(1)}}}) {}
+
 #define BF_CLAY_PADDING_ALL(v)      \
   .padding {                        \
     (u16) v, (u16)v, (u16)v, (u16)v \
@@ -1503,20 +1508,26 @@ void DoUI(bool draw) {
       // 2. items to buy.
       // 3. player's items and weapons.
       CLAY({.layout{
+        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
         .childGap        = 8,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
         // Wave, coins, reroll.
-        CLAY({}) {
-          BF_CLAY_PADDING_HORIZONTAL;
-          BF_CLAY_PADDING_HORIZONTAL;
+        CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
+          BF_CLAY_SPACER_HORIZONTAL;
+          BF_CLAY_SPACER_HORIZONTAL;
         }
 
-        BF_CLAY_PADDING_VERTICAL;
+        BF_CLAY_SPACER_VERTICAL;
 
         // Items to buy.
-        CLAY({.layout{.childGap = 8}}) {
+        CLAY({.layout{
+          .sizing{.width = CLAY_SIZING_GROW(0)},
+          .childGap = 8,
+        }}) {
           FLOATING_BEAUTIFY;
+
+          BF_CLAY_SPACER_HORIZONTAL;
 
           for (auto& v : g.level.shop.toPick) {
             bool canBuy = ((v.weapon || v.item) && (v.price <= g.level.coins));
@@ -1589,28 +1600,28 @@ void DoUI(bool draw) {
               );
             }
           }
+
+          BF_CLAY_SPACER_HORIZONTAL;
         }
 
-        BF_CLAY_PADDING_VERTICAL;
+        BF_CLAY_SPACER_VERTICAL;
 
         // Player's items and weapons.
-        CLAY({}) {}
+        CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {}
       }
 
       // Right column that contains stats and next wave button.
-      CLAY({}) {
+      CLAY({.layout{.sizing{.height = CLAY_SIZING_GROW(0)}}}) {
         // Advance to the next wave button.
         CLAY({
-          .layout{.padding{.right = 8, .bottom = 8}},
-          .floating{
-            .attachPoints{
-              .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-              .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-            },
-            .attachTo = CLAY_ATTACH_TO_PARENT,
+          .layout{
+            .sizing{.height = CLAY_SIZING_GROW(0)},
+            .padding{.right = 8, .bottom = 8},
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
         }) {
-          FLOATING_BEAUTIFY;
+
+          BF_CLAY_SPACER_VERTICAL;
 
           CLAY({
             .layout{BF_CLAY_PADDING_ALL(8)},
