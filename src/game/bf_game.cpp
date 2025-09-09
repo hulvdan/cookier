@@ -540,8 +540,14 @@ struct MakeNumberData {
 };
 
 lframe GetWaveDuration(int wave) {  ///
-  // return lframe::MakeUnscaled((30 + wave * 5) * FIXED_FPS);
+#if BF_RELEASE
+  constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
+                             60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
+  VIEW_FROM_ARRAY_DANGER(durations);
+  return durations[MIN(durations.count - 1, wave)];
+#else
   return lframe::MakeUnscaled((3 + wave * 5) * FIXED_FPS);
+#endif
 }
 
 enum StateType {
