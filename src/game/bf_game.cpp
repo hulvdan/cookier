@@ -1720,7 +1720,7 @@ void GameFixedUpdate() {
     auto& toPick = g.level.shop.toPick;
 
     for (auto& v : toPick) {
-      v = {.price = 15 + GRAND.Rand() % 20};
+      v = {.price = 15 + (int)(GRAND.Rand() % 20)};
 
       const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
       if (setToItem) {
