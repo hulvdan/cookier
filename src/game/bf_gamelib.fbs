@@ -37,10 +37,12 @@ table Creature {
 }
 
 table Item {
+    name_locale: int;
     texture_id: int;
 }
 
 table Weapon {
+    name_locale: int;
     damage: float;
     cooldown_frames: int;
     shooting_duration_frames: int;

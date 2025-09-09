@@ -30,6 +30,16 @@ def _check_duplicates(values: list) -> None:
 def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     transforms: list[tuple[str, str, dict[str, int]]] = []
 
+    # Items.
+    # ============================================================
+    for x in gamelib["item__table"][1:]:
+        x["name_locale"] = "ITEM_" + x["type"].upper()
+
+    # Weapons.
+    # ============================================================
+    for x in gamelib["weapon__table"][1:]:
+        x["name_locale"] = "WEAPON_" + x["type"].upper()
+
     # Tables.
     # ============================================================
     if 1:

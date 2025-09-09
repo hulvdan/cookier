@@ -22,6 +22,10 @@ localization:
   SHOP_BUTTON_NEXT_WAVE: Продолжить
   SHOP_LABEL_ITEMS: Предметы
   SHOP_LABEL_WEAPONS: Оружие
+  ITEM_SUGAR: Сахар
+  ITEM_MILK: Молоко
+  WEAPON_GUN: Пистолет
+  WEAPON_BOW: Лук
 ui_health_texture_ids:
   - ui_health_back
   - ui_health_top
