@@ -1609,7 +1609,7 @@ void DoUI(bool draw) {
               const int type = (canBuy ? (Clay_Hovered() ? 0 : 1) : 2);
 
               // Item's image + name.
-              CLAY({}) {
+              CLAY({.layout{.childGap = 8}}) {
                 // Item's image.
                 BF_CLAY_IMAGE(
                   {.texId = texs[type], .color = ColorFromRGB(colors[type])},
@@ -1632,7 +1632,13 @@ void DoUI(bool draw) {
                   }
                 );
 
-                // TODO: Item's name.
+                int locale = 0;
+                if (v.item)
+                  locale = fb_item->name_locale();
+                else if (v.weapon)
+                  locale = fb_weapon->name_locale();
+                if (locale)
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
               }
 
               BF_CLAY_SPACER_VERTICAL;
