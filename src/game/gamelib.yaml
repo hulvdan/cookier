@@ -25,6 +25,8 @@ ui_item_slot_default_texture_id: ui_item_slot
 ui_item_slot_default_color: 0x5e3735
 ui_item_slot_hovered_texture_id: ui_item_slot
 ui_item_slot_hovered_color: 0x885a44
+ui_item_slot_disabled_texture_id: ui_item_slot
+ui_item_slot_disabled_color: 0x3a3a41
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 creature__table:
   - type: INVALID

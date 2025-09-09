@@ -1505,36 +1505,58 @@ void DoUI(bool draw) {
         FLOATING_BEAUTIFY;
 
         for (auto& v : g.level.shop.toPick) {
+          bool canBuy = ((v.weapon || v.item) && (v.price <= g.level.coins));
+          int  emptyWeaponSlotIndex = -1;
+          if (canBuy && v.weapon) {
+            bool emptySlotExists = false;
+            FOR_RANGE (int, i, g.level.playerWeapons.count) {
+              const auto& weapon = g.level.playerWeapons[i];
+              if (!weapon.type) {
+                emptyWeaponSlotIndex = i;
+                break;
+              }
+            }
+            if (emptyWeaponSlotIndex == -1)
+              canBuy = false;
+          }
+
           CLAY({}) {
-            // Applying bought item / weapon.
-            if (clicked()) {
+            // Buying bought item / weapon.
+            if (canBuy && clicked()) {
+              g.level.coins -= v.price;
+              if (v.weapon)
+                g.level.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
+              v = {};
             }
 
             const auto fb_item   = (v.item ? glib->items()->Get(v.item) : nullptr);
             const auto fb_weapon = (v.weapon ? glib->weapons()->Get(v.weapon) : nullptr);
 
             const int slotTexId
-              = (Clay_Hovered() ? glib->ui_item_slot_hovered_texture_id() : glib->ui_item_slot_default_texture_id());
+              = (canBuy ? (Clay_Hovered() ? glib->ui_item_slot_hovered_texture_id() : glib->ui_item_slot_default_texture_id()) : glib->ui_item_slot_disabled_texture_id());
             const auto slotColor = ColorFromRGB(
-              Clay_Hovered() ? glib->ui_item_slot_hovered_color()
-                             : glib->ui_item_slot_default_color()
+              canBuy ? (Clay_Hovered() ? glib->ui_item_slot_hovered_color()
+                                       : glib->ui_item_slot_default_color())
+                     : glib->ui_item_slot_disabled_color()
             );
 
             BF_CLAY_IMAGE(
               {.texId = slotTexId, .color = slotColor},
               [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({
-                  .layout{
-                    .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                  },
-                }) {
-                  int texId = 0;
-                  if (v.item)
-                    texId = fb_item->texture_id();
-                  if (v.weapon)
-                    texId = fb_weapon->texture_ids()->Get(0);
-                  BF_CLAY_IMAGE({.texId = texId});
+                if (v.item || v.weapon) {
+                  CLAY({
+                    .layout{
+                      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    },
+                  }) {
+                    int texId = 0;
+                    if (v.item)
+                      texId = fb_item->texture_id();
+                    if (v.weapon)
+                      texId = fb_weapon->texture_ids()->Get(0);
+                    BF_CLAY_IMAGE({.texId = texId});
+                  }
                 }
               }
             );
@@ -1710,6 +1732,12 @@ void GameFixedUpdate() {
     g.meta.reload = false;
     ResetLevel();
     LevelInit();
+  }
+
+  // Cheats.
+  if (ge.meta.debugEnabled) {
+    if (IsKeyPressed(SDL_SCANCODE_F5))
+      g.level.coins += 10;
   }
 
   // Advancing to shop.
@@ -2466,6 +2494,9 @@ void GameDraw() {
     };
 
     DebugText("Close debug menu: hold F1 -> press F2");
+    DebugText("Close debug menu: F3 change localization");
+    DebugText("Close debug menu: F4 change device");
+    DebugText("Close debug menu: F5 +10 coins");
 
     LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
       DebugText(
