@@ -1514,7 +1514,15 @@ void DoUI(bool draw) {
       }}) {
         // Wave, coins, reroll.
         CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
+
           BF_CLAY_SPACER_HORIZONTAL;
+
+          // Coins.
+          CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+            BF_CLAY_TEXT(TextFormat("%d", g.level.coins));
+          }
+
           BF_CLAY_SPACER_HORIZONTAL;
         }
 
@@ -1545,19 +1553,17 @@ void DoUI(bool draw) {
                 canBuy = false;
             }
 
-            CLAY({}) {
-              // Buying item / weapon.
-              if (canBuy && clicked()) {
-                g.level.coins -= v.price;
-                if (v.weapon)
-                  g.level.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
-                else if (v.item)
-                  *g.level.a.playerItems.Add() = {.type = v.item};
-                else
-                  INVALID_PATH;
-                v = {};
-              }
-
+            CLAY({
+              .layout{
+                .sizing{
+                  .width  = CLAY_SIZING_FIXED(235),
+                  .height = CLAY_SIZING_FIXED(320),
+                },
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+              },
+              .backgroundColor
+              = ToClayColor(ColorFromRGB(glib->ui_item_big_frame_color())),
+            }) {
               const auto fb_item = (v.item ? glib->items()->Get(v.item) : nullptr);
               const auto fb_weapon
                 = (v.weapon ? glib->weapons()->Get(v.weapon) : nullptr);
@@ -1578,26 +1584,54 @@ void DoUI(bool draw) {
 
               const int type = (canBuy ? (Clay_Hovered() ? 0 : 1) : 2);
 
-              BF_CLAY_IMAGE(
-                {.texId = texs[type], .color = ColorFromRGB(colors[type])},
-                [&]() BF_FORCE_INLINE_LAMBDA {
-                  if (v.item || v.weapon) {
-                    CLAY({
-                      .layout{
-                        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                      },
-                    }) {
-                      int texId = 0;
-                      if (v.item)
-                        texId = fb_item->texture_id();
-                      if (v.weapon)
-                        texId = fb_weapon->texture_ids()->Get(0);
-                      BF_CLAY_IMAGE({.texId = texId});
+              // Item's image + name.
+              CLAY({}) {
+                // Item's image.
+                BF_CLAY_IMAGE(
+                  {.texId = texs[type], .color = ColorFromRGB(colors[type])},
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    if (v.item || v.weapon) {
+                      CLAY({
+                        .layout{
+                          .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                        },
+                      }) {
+                        int texId = 0;
+                        if (v.item)
+                          texId = fb_item->texture_id();
+                        if (v.weapon)
+                          texId = fb_weapon->texture_ids()->Get(0);
+                        BF_CLAY_IMAGE({.texId = texId});
+                      }
                     }
                   }
+                );
+
+              }
+
+              BF_CLAY_SPACER_VERTICAL;
+
+              // Item's price.
+              CLAY({.layout{
+                .sizing{.width = CLAY_SIZING_GROW(0)},
+                BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+              }}) {
+                BF_CLAY_TEXT(TextFormat("%d", v.price));
+                BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+
+                // Buying item / weapon.
+                if (canBuy && clicked()) {
+                  g.level.coins -= v.price;
+                  if (v.weapon)
+                    g.level.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
+                  else if (v.item)
+                    *g.level.a.playerItems.Add() = {.type = v.item};
+                  else
+                    INVALID_PATH;
+                  v = {};
                 }
-              );
+              }
             }
           }
 
