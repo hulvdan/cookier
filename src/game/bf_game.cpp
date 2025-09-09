@@ -1514,6 +1514,7 @@ void DoUI(bool draw) {
       }}) {
         // Wave, coins, reroll.
         CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
+          // TODO: wave
 
           BF_CLAY_SPACER_HORIZONTAL;
 
@@ -1524,6 +1525,8 @@ void DoUI(bool draw) {
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
+
+          // TODO: reroll
         }
 
         BF_CLAY_SPACER_VERTICAL;
@@ -1608,6 +1611,7 @@ void DoUI(bool draw) {
                   }
                 );
 
+                // TODO: Item's name.
               }
 
               BF_CLAY_SPACER_VERTICAL;
@@ -1654,6 +1658,7 @@ void DoUI(bool draw) {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
         }) {
+          // TODO: stats
 
           BF_CLAY_SPACER_VERTICAL;
 
