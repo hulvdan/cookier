@@ -15,6 +15,7 @@ vignette_texture_id: vignette
 localization:
   YES_: Да
   NO_: Нет
+  SHOP_BUTTON_NEXT_WAVE: Продолжить
 ui_health_texture_ids:
   - ui_health_back
   - ui_health_top
@@ -47,6 +48,12 @@ creature__table:
     speed_force: 12
     texture_ids:
       - game_creature_player
+item__table:
+  - type: INVALID
+  - type: SUGAR
+    texture_id: game_item_sugar
+  - type: MILK
+    texture_id: game_item_milk
 weapon__table:
   - type: INVALID
   - type: GUN

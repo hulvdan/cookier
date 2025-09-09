@@ -36,6 +36,10 @@ table Creature {
     texture_ids: [int];
 }
 
+table Item {
+    texture_id: int;
+}
+
 table Weapon {
     damage: float;
     cooldown_frames: int;
@@ -90,6 +94,10 @@ table GameLibrary {
 
     localizations: [Localization] (required);
 
+    // LOCALE_GEN_START.
+    shop_button_next_wave_locale: int;
+    // LOCALE_GEN_END.
+
     // GAME STUFF
     ui_health_texture_ids: [int] (required);
     ui_modal_fade: float;
@@ -101,6 +109,7 @@ table GameLibrary {
     decal_pre_spawn_texture_id: int;
 
     creatures: [Creature] (required);
+    items: [Item] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
     pickupables: [Pickupable] (required);
