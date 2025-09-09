@@ -1502,7 +1502,10 @@ void DoUI(bool draw) {
   // Shop.
   else if (g.meta.state == StateType_SHOP) {  ///
     // Columns.
-    CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+    CLAY({.layout{
+      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+      BF_CLAY_PADDING_ALL(8),
+    }}) {
       // Left column that contains:
       // 1. wave, coins, reroll.
       // 2. items to buy.
@@ -1512,26 +1515,42 @@ void DoUI(bool draw) {
         .childGap        = 8,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
-        // Wave, coins, reroll.
+        // 1. Wave, coins, reroll.
         CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
-          // TODO: wave
+          // CLAY({}) {
+          // BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
+          // }
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_shop_locale());
+          BF_CLAY_TEXT(" (");
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+          BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave));
 
           BF_CLAY_SPACER_HORIZONTAL;
 
           // Coins.
-          CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+          CLAY({
+            .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+            .floating{
+              .attachPoints{
+                .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+              },
+              .attachTo = CLAY_ATTACH_TO_PARENT,
+            },
+          }) {
+            FLOATING_BEAUTIFY;
+            BF_CLAY_TEXT(TextFormat("%d ", g.level.coins));
             BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-            BF_CLAY_TEXT(TextFormat("%d", g.level.coins));
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
 
-          // TODO: reroll
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
         }
 
         BF_CLAY_SPACER_VERTICAL;
 
-        // Items to buy.
+        // 2. Items to buy.
         CLAY({.layout{
           .sizing{.width = CLAY_SIZING_GROW(0)},
           .childGap = 8,
@@ -1562,6 +1581,7 @@ void DoUI(bool draw) {
                   .width  = CLAY_SIZING_FIXED(235),
                   .height = CLAY_SIZING_FIXED(320),
                 },
+                BF_CLAY_PADDING_ALL(8),
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               },
               .backgroundColor
@@ -1585,6 +1605,7 @@ void DoUI(bool draw) {
               };
               VIEW_FROM_ARRAY_DANGER(colors);
 
+              // TODO: Highlight price, not item's frame.
               const int type = (canBuy ? (Clay_Hovered() ? 0 : 1) : 2);
 
               // Item's image + name.
@@ -1621,7 +1642,7 @@ void DoUI(bool draw) {
                 .sizing{.width = CLAY_SIZING_GROW(0)},
                 BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
               }}) {
-                BF_CLAY_TEXT(TextFormat("%d", v.price));
+                BF_CLAY_TEXT(TextFormat("%d ", v.price));
                 BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
 
                 // Buying item / weapon.
@@ -1644,8 +1665,38 @@ void DoUI(bool draw) {
 
         BF_CLAY_SPACER_VERTICAL;
 
-        // Player's items and weapons.
-        CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {}
+        // 3. Player's items and weapons.
+        CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
+          CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+            // Items label.
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_items_locale());
+
+            // TODO: Items.
+            CLAY({}) {}
+          }
+
+          BF_CLAY_SPACER_HORIZONTAL;
+
+          CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+            // Weapons label.
+            CLAY({}) {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_weapons_locale());
+
+              int weaponsCount = 0;
+              for (const auto& weapon : g.level.playerWeapons) {
+                if (weapon.type)
+                  weaponsCount++;
+              }
+
+              BF_CLAY_TEXT(
+                TextFormat(" (%d/%d)", weaponsCount, g.level.playerWeapons.count)
+              );
+            }
+
+            // TODO: Weapons.
+            CLAY({}) {}
+          }
+        }
       }
 
       // Right column that contains stats and next wave button.
@@ -1654,7 +1705,6 @@ void DoUI(bool draw) {
         CLAY({
           .layout{
             .sizing{.height = CLAY_SIZING_GROW(0)},
-            .padding{.right = 8, .bottom = 8},
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
         }) {
@@ -1667,6 +1717,9 @@ void DoUI(bool draw) {
             .backgroundColor = ToClayColor(Clay_Hovered() ? WHITE : GRAY),
           }) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
+            BF_CLAY_TEXT(" (");
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+            BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave + 1));
 
             if (clicked())
               g.meta.nextWaveScheduled = true;
