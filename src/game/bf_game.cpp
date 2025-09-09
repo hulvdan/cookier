@@ -1496,104 +1496,131 @@ void DoUI(bool draw) {
   }
   // Shop.
   else if (g.meta.state == StateType_SHOP) {  ///
+    // Columns.
     CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
-      CLAY({
-        .layout{.childGap = 8},
-        .floating{
-          .attachPoints{
-            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-          },
-          .attachTo = CLAY_ATTACH_TO_PARENT,
-        },
-      }) {
-        FLOATING_BEAUTIFY;
+      // Left column that contains:
+      // 1. wave, coins, reroll.
+      // 2. items to buy.
+      // 3. player's items and weapons.
+      CLAY({.layout{
+        .childGap        = 8,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
+        // Wave, coins, reroll.
+        CLAY({}) {
+          BF_CLAY_PADDING_HORIZONTAL;
+          BF_CLAY_PADDING_HORIZONTAL;
+        }
 
-        for (auto& v : g.level.shop.toPick) {
-          bool canBuy = ((v.weapon || v.item) && (v.price <= g.level.coins));
-          int  emptyWeaponSlotIndex = -1;
-          if (canBuy && v.weapon) {
-            bool emptySlotExists = false;
-            FOR_RANGE (int, i, g.level.playerWeapons.count) {
-              const auto& weapon = g.level.playerWeapons[i];
-              if (!weapon.type) {
-                emptyWeaponSlotIndex = i;
-                break;
-              }
-            }
-            if (emptyWeaponSlotIndex == -1)
-              canBuy = false;
-          }
+        BF_CLAY_PADDING_VERTICAL;
 
-          CLAY({}) {
-            // Processing buying of item / weapon.
-            if (canBuy && clicked()) {
-              g.level.coins -= v.price;
-              if (v.weapon)
-                g.level.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
-              else if (v.item)
-                *g.level.a.playerItems.Add() = {.type = v.item};
-              else
-                INVALID_PATH;
-              v = {};
-            }
+        // Items to buy.
+        CLAY({.layout{.childGap = 8}}) {
+          FLOATING_BEAUTIFY;
 
-            const auto fb_item   = (v.item ? glib->items()->Get(v.item) : nullptr);
-            const auto fb_weapon = (v.weapon ? glib->weapons()->Get(v.weapon) : nullptr);
-
-            const int slotTexId
-              = (canBuy ? (Clay_Hovered() ? glib->ui_item_slot_hovered_texture_id() : glib->ui_item_slot_default_texture_id()) : glib->ui_item_slot_disabled_texture_id());
-            const auto slotColor = ColorFromRGB(
-              canBuy ? (Clay_Hovered() ? glib->ui_item_slot_hovered_color()
-                                       : glib->ui_item_slot_default_color())
-                     : glib->ui_item_slot_disabled_color()
-            );
-
-            BF_CLAY_IMAGE(
-              {.texId = slotTexId, .color = slotColor},
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                if (v.item || v.weapon) {
-                  CLAY({
-                    .layout{
-                      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                    },
-                  }) {
-                    int texId = 0;
-                    if (v.item)
-                      texId = fb_item->texture_id();
-                    if (v.weapon)
-                      texId = fb_weapon->texture_ids()->Get(0);
-                    BF_CLAY_IMAGE({.texId = texId});
-                  }
+          for (auto& v : g.level.shop.toPick) {
+            bool canBuy = ((v.weapon || v.item) && (v.price <= g.level.coins));
+            int  emptyWeaponSlotIndex = -1;
+            if (canBuy && v.weapon) {
+              bool emptySlotExists = false;
+              FOR_RANGE (int, i, g.level.playerWeapons.count) {
+                const auto& weapon = g.level.playerWeapons[i];
+                if (!weapon.type) {
+                  emptyWeaponSlotIndex = i;
+                  break;
                 }
               }
-            );
+              if (emptyWeaponSlotIndex == -1)
+                canBuy = false;
+            }
+
+            CLAY({}) {
+              // Buying item / weapon.
+              if (canBuy && clicked()) {
+                g.level.coins -= v.price;
+                if (v.weapon)
+                  g.level.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
+                else if (v.item)
+                  *g.level.a.playerItems.Add() = {.type = v.item};
+                else
+                  INVALID_PATH;
+                v = {};
+              }
+
+              const auto fb_item = (v.item ? glib->items()->Get(v.item) : nullptr);
+              const auto fb_weapon
+                = (v.weapon ? glib->weapons()->Get(v.weapon) : nullptr);
+
+              const int texs_[]{
+                glib->ui_item_slot_hovered_texture_id(),
+                glib->ui_item_slot_default_texture_id(),
+                glib->ui_item_slot_disabled_texture_id(),
+              };
+              VIEW_FROM_ARRAY_DANGER(texs);
+
+              const u32 colors_[]{
+                glib->ui_item_slot_hovered_color(),
+                glib->ui_item_slot_default_color(),
+                glib->ui_item_slot_disabled_color(),
+              };
+              VIEW_FROM_ARRAY_DANGER(colors);
+
+              const int type = (canBuy ? (Clay_Hovered() ? 0 : 1) : 2);
+
+              BF_CLAY_IMAGE(
+                {.texId = texs[type], .color = ColorFromRGB(colors[type])},
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  if (v.item || v.weapon) {
+                    CLAY({
+                      .layout{
+                        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                      },
+                    }) {
+                      int texId = 0;
+                      if (v.item)
+                        texId = fb_item->texture_id();
+                      if (v.weapon)
+                        texId = fb_weapon->texture_ids()->Get(0);
+                      BF_CLAY_IMAGE({.texId = texId});
+                    }
+                  }
+                }
+              );
+            }
           }
         }
+
+        BF_CLAY_PADDING_VERTICAL;
+
+        // Player's items and weapons.
+        CLAY({}) {}
       }
 
-      // Advance to the next wave button.
-      CLAY({
-        .layout{.padding{.right = 8, .bottom = 8}},
-        .floating{
-          .attachPoints{
-            .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-            .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-          },
-          .attachTo = CLAY_ATTACH_TO_PARENT,
-        },
-      }) {
-        FLOATING_BEAUTIFY;
-
+      // Right column that contains stats and next wave button.
+      CLAY({}) {
+        // Advance to the next wave button.
         CLAY({
-          .layout{BF_CLAY_PADDING_ALL(8)},
-          .backgroundColor = ToClayColor(Clay_Hovered() ? WHITE : GRAY),
+          .layout{.padding{.right = 8, .bottom = 8}},
+          .floating{
+            .attachPoints{
+              .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+              .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+            },
+            .attachTo = CLAY_ATTACH_TO_PARENT,
+          },
         }) {
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
+          FLOATING_BEAUTIFY;
 
-          if (clicked())
-            g.meta.nextWaveScheduled = true;
+          CLAY({
+            .layout{BF_CLAY_PADDING_ALL(8)},
+            .backgroundColor = ToClayColor(Clay_Hovered() ? WHITE : GRAY),
+          }) {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
+
+            if (clicked())
+              g.meta.nextWaveScheduled = true;
+          }
         }
       }
     }
