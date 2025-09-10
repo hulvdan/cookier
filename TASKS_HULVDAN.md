@@ -42,8 +42,8 @@ x correct hp stat
 x don't show bought item/weapon empty slot
 x price is red if not enough money
 x fix: can't buy when `canBuy` is false
+x rendering stable sort
 
-* rendering stable sort
 * экран победы / смерти
 * апгрейды только за полученные уровни
 * stat effect: LIFE_STEAL
