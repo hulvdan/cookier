@@ -44,8 +44,8 @@ x price is red if not enough money
 x fix: can't buy when `canBuy` is false
 x rendering stable sort
 x endgame screen gets shown + restart button works
+x endgame screen: blacken background + show cursor
 
-* endgame screen: blacken background + show cursor
 * endgame screen:
 * endgame screen:
 * endgame screen:
