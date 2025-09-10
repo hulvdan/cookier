@@ -615,6 +615,9 @@ struct GameData {
 
     struct {
       Array<ShopItem, 4> toPick = {};
+
+      int rerolledTimes = 0;
+      int rerollPrice   = 0;
     } shop;
 
     struct Allocated {
@@ -1264,6 +1267,36 @@ void ResetLevel() {  ///
   g.meta.arena.used = 0;
 }
 
+int GetRerollPrice(int wave, int rerolledTimes) {  ///
+  int rerollPricesPerWave_[]{1,  2,  3,  4,  5,  6,  7,  9,  9,  11,
+                             12, 13, 14, 15, 17, 18, 18, 20, 21, 23};
+  VIEW_FROM_ARRAY_DANGER(rerollPricesPerWave);
+
+  int rerollPriceIncreasePerWave_[]{1, 1, 1, 1, 2, 2, 2, 3, 3, 4,
+                                    4, 4, 5, 5, 6, 6, 6, 7, 7, 8};
+  VIEW_FROM_ARRAY_DANGER(rerollPriceIncreasePerWave);
+
+  return rerollPricesPerWave[wave] + rerolledTimes * rerollPriceIncreasePerWave[wave];
+}
+
+void RefillShopToPick() {  ///
+  auto& toPick = g.level.shop.toPick;
+
+  for (auto& v : toPick) {
+    v = {.price = 15 + (int)(GRAND.Rand() % 20)};
+
+    const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
+    if (setToItem) {
+      while (!v.item)
+        v.item = (ItemType)(GRAND.Rand() % glib->items()->size());
+    }
+    else {
+      while (!v.weapon)
+        v.weapon = (WeaponType)(GRAND.Rand() % glib->weapons()->size());
+    }
+  }
+}
+
 void DoUI(bool draw) {
   // NOTE: Logic must be executed only when not drawing!
   // e.g. updating mouse position, processing `clicked()`,
@@ -1511,6 +1544,15 @@ void DoUI(bool draw) {
   }
   // Shop.
   else if (g.meta.state == StateType_SHOP) {  ///
+    LAMBDA (bool, button, (auto innerLambda)) {
+      bool result{};
+      CLAY({}) {
+        result = clicked();
+        innerLambda();
+      }
+      return result;
+    };
+
     // Columns.
     CLAY({.layout{
       .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
@@ -1527,9 +1569,7 @@ void DoUI(bool draw) {
       }}) {
         // 1. Wave, coins, reroll.
         CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
-          // CLAY({}) {
-          // BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
-          // }
+          // Wave.
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_shop_locale());
           BF_CLAY_TEXT(" (");
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
@@ -1555,7 +1595,26 @@ void DoUI(bool draw) {
 
           BF_CLAY_SPACER_HORIZONTAL;
 
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
+          // Reroll button.
+          bool canReroll     = (g.level.coins >= g.level.shop.rerollPrice);
+          bool rerollClicked = button([&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({.layout{BF_CLAY_PADDING_ALL(8)}}) {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
+
+              ASSERT(g.level.shop.rerollPrice >= 0);
+
+              if (g.level.shop.rerollPrice > 0) {
+                BF_CLAY_TEXT(TextFormat(" - %d ", g.level.shop.rerollPrice));
+                BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+              }
+            }
+          });
+          if (canReroll && rerollClicked) {
+            g.level.coins -= g.level.shop.rerollPrice;
+            g.level.shop.rerollPrice
+              = GetRerollPrice(g.level.wave, ++g.level.shop.rerolledTimes);
+            RefillShopToPick();
+          }
         }
 
         BF_CLAY_SPACER_VERTICAL;
@@ -1728,18 +1787,17 @@ void DoUI(bool draw) {
 
           BF_CLAY_SPACER_VERTICAL;
 
-          CLAY({
-            .layout{BF_CLAY_PADDING_ALL(8)},
-            .backgroundColor = ToClayColor(Clay_Hovered() ? WHITE : GRAY),
-          }) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
-            BF_CLAY_TEXT(" (");
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
-            BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave + 1));
-
-            if (clicked())
-              g.meta.nextWaveScheduled = true;
-          }
+          g.meta.nextWaveScheduled = button([&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({
+              .layout{BF_CLAY_PADDING_ALL(8)},
+              .backgroundColor = ToClayColor(Clay_Hovered() ? WHITE : GRAY),
+            }) {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
+              BF_CLAY_TEXT(" (");
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+              BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave + 1));
+            }
+          });
         }
       }
     }
@@ -1900,21 +1958,9 @@ void GameFixedUpdate() {
     g.meta.shopScheduled = false;
     g.meta.state         = StateType_SHOP;
 
-    auto& toPick = g.level.shop.toPick;
-
-    for (auto& v : toPick) {
-      v = {.price = 15 + (int)(GRAND.Rand() % 20)};
-
-      const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
-      if (setToItem) {
-        while (!v.item)
-          v.item = (ItemType)(GRAND.Rand() % glib->items()->size());
-      }
-      else {
-        while (!v.weapon)
-          v.weapon = (WeaponType)(GRAND.Rand() % glib->weapons()->size());
-      }
-    }
+    g.level.shop.rerolledTimes = 0;
+    g.level.shop.rerollPrice   = GetRerollPrice(g.level.wave, 0);
+    RefillShopToPick();
   }
 
   // Advancing to the next wave.
