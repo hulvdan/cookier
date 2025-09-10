@@ -40,6 +40,8 @@ x show current items
 x show stats
 x correct hp stat
 x don't show bought item/weapon empty slot
+x price is red if not enough money
+x fix: can't buy when `canBuy` is false
 
 * rendering stable sort
 * экран победы / смерти
