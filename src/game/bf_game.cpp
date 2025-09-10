@@ -555,6 +555,7 @@ enum StateType {
   StateType_GAMEPLAY,
   StateType_UPGRADES,
   StateType_SHOP,
+  StateType_END,
 };
 
 struct ShopItem {
@@ -578,14 +579,17 @@ struct GameData {
       Array<TouchID, 2> touchIDs = {};
       // LogicalFrame      rightLastPressedAt = {};
     } touch;
-
-    bool      reload            = false;
-    bool      shopScheduled     = false;
-    bool      nextWaveScheduled = false;
-    StateType state             = StateType_GAMEPLAY;
   } meta;
 
   struct Level {
+    bool      reload = false;
+    bool      won    = false;
+    StateType state  = StateType_GAMEPLAY;
+
+    bool scheduledShop     = false;
+    bool scheduledEnd      = false;
+    bool scheduledNextWave = false;
+
     Camera camera{
       .zoom          = METER_LOGICAL_SIZE,
       .texturesScale = 1.0f / METER_LOGICAL_SIZE,
@@ -1335,8 +1339,101 @@ void DoUI(bool draw) {
   Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
   int                              beautifiersCount = 0;
 
+  // LAMBDA (bool, componentButton, (bool enabled, auto innerLambda)) { ///
+  const u32 buttonColors_[]{
+    glib->ui_button_hovered_color(),
+    glib->ui_button_default_color(),
+    glib->ui_button_disabled_color(),
+  };
+  VIEW_FROM_ARRAY_DANGER(buttonColors);
+
+  LAMBDA (bool, componentButton, (bool enabled, auto innerLambda)) {
+    bool result{};
+
+    CLAY({
+      .layout{BF_CLAY_PADDING_ALL(8)},
+      .backgroundColor
+      = ToClayColor(ColorFromRGB(buttonColors[(enabled ? (Clay_Hovered() ? 0 : 1) : 2)])),
+    }) {
+      result = enabled && clicked();
+      innerLambda();
+    }
+
+    return result;
+  };
+  // }
+
+  // LAMBDA (void, componentSlot, (bool enabled, auto innerLambda)) { ///
+  const int slotTexs_[]{
+    ///
+    glib->ui_item_slot_hovered_texture_id(),
+    glib->ui_item_slot_default_texture_id(),
+    glib->ui_item_slot_disabled_texture_id(),
+  };
+  VIEW_FROM_ARRAY_DANGER(slotTexs);
+
+  const u32 slotColors_[]{
+    ///
+    glib->ui_item_slot_hovered_color(),
+    glib->ui_item_slot_default_color(),
+    glib->ui_item_slot_disabled_color(),
+  };
+  VIEW_FROM_ARRAY_DANGER(slotColors);
+
+  LAMBDA (void, componentSlot, (bool enabled, auto innerLambda)) {
+    const int type = (enabled ? (Clay_Hovered() ? 0 : 1) : 2);
+    BF_CLAY_IMAGE(
+      {
+        .texId = slotTexs[type],
+        .color = ColorFromRGB(slotColors[type]),
+      },
+      innerLambda
+    );
+  };
+  // }
+
+  LAMBDA (void, componentStats, ()) {  ///
+    CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+      // Stats label.
+      CLAY({.layout{
+        .sizing{.width = CLAY_SIZING_GROW(0)},
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }}) {
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_stats_locale());
+      }
+
+      LAMBDA (void, statsEntry, (int iconTexId, int locale, int value)) {
+        CLAY({.layout{
+          .sizing{.width = CLAY_SIZING_GROW(0)},
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
+          BF_CLAY_IMAGE({.texId = iconTexId});
+          BF_CLAY_TEXT(" ");
+          BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
+          BF_CLAY_SPACER_HORIZONTAL;
+          BF_CLAY_TEXT(TextFormat("%d", value));
+        }
+      };
+
+      // Current level.
+      statsEntry(
+        glib->ui_shop_current_level_icon_texture_id(),
+        glib->shop_current_level_locale(),
+        g.level.xpLevel
+      );
+
+      // Stats.
+      CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+      FOR_RANGE (int, i, (int)StatType_COUNT - 1) {
+        const auto type = (StatType)(i + 1);
+        const auto fb   = glib->stats()->Get(type);
+        statsEntry(fb->icon_texture_id(), fb->name_locale(), g.level.playerStats[type]);
+      }
+    }
+  };
+
   // Gameplay.
-  if (g.meta.state == StateType_GAMEPLAY) {
+  if (g.level.state == StateType_GAMEPLAY) {
     CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
       // Health bar + coins.
       // {  ///
@@ -1489,7 +1586,7 @@ void DoUI(bool draw) {
     }
   }
   // Upgrades.
-  else if (g.meta.state == StateType_UPGRADES) {  ///
+  else if (g.level.state == StateType_UPGRADES) {  ///
     CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
       CLAY({
         .layout{.childGap = 8},
@@ -1511,7 +1608,7 @@ void DoUI(bool draw) {
           CLAY({}) {
             // Scheduling close of upgrade UI + applying selected stat upgrade.
             if (clicked()) {
-              g.meta.shopScheduled = true;
+              g.level.scheduledShop = true;
 
               const int amount = 1;
               g.level.playerStats[stat] += amount;
@@ -1553,54 +1650,7 @@ void DoUI(bool draw) {
     }
   }
   // Shop.
-  else if (g.meta.state == StateType_SHOP) {  ///
-    const u32 buttonColors_[]{
-      glib->ui_button_hovered_color(),
-      glib->ui_button_default_color(),
-      glib->ui_button_disabled_color(),
-    };
-    VIEW_FROM_ARRAY_DANGER(buttonColors);
-
-    LAMBDA (bool, button, (bool enabled, auto innerLambda)) {
-      bool result{};
-
-      CLAY({
-        .layout{BF_CLAY_PADDING_ALL(8)},
-        .backgroundColor
-        = ToClayColor(ColorFromRGB(buttonColors[(enabled ? (Clay_Hovered() ? 0 : 1) : 2)])
-        ),
-      }) {
-        result = enabled && clicked();
-        innerLambda();
-      }
-
-      return result;
-    };
-
-    const int slotTexs_[]{
-      glib->ui_item_slot_hovered_texture_id(),
-      glib->ui_item_slot_default_texture_id(),
-      glib->ui_item_slot_disabled_texture_id(),
-    };
-    VIEW_FROM_ARRAY_DANGER(slotTexs);
-
-    const u32 slotColors_[]{
-      glib->ui_item_slot_hovered_color(),
-      glib->ui_item_slot_default_color(),
-      glib->ui_item_slot_disabled_color(),
-    };
-    VIEW_FROM_ARRAY_DANGER(slotColors);
-
-    LAMBDA (void, slot, (bool enabled, auto innerLambda)) {
-      const int type = (enabled ? (Clay_Hovered() ? 0 : 1) : 2);
-      BF_CLAY_IMAGE(
-        {
-          .texId = slotTexs[type],
-          .color = ColorFromRGB(slotColors[type]),
-        },
-        innerLambda
-      );
-    };
+  else if (g.level.state == StateType_SHOP) {  ///
 
     // Columns.
     CLAY({.layout{
@@ -1650,7 +1700,7 @@ void DoUI(bool draw) {
 
           // Reroll button.
           bool canReroll     = (g.level.coins >= g.level.shop.rerollPrice);
-          bool rerollClicked = button(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
+          bool rerollClicked = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{
               BF_CLAY_PADDING_ALL(8),
               BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1719,7 +1769,7 @@ void DoUI(bool draw) {
                 // Item's image + name.
                 CLAY({.layout{.childGap = 8}}) {
                   // Image.
-                  slot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                  componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                       if (v.item || v.weapon) {
                         CLAY({
@@ -1757,18 +1807,19 @@ void DoUI(bool draw) {
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                 }}) {
                   // Buying item / weapon.
-                  const auto bought = button(canBuy, [&]() BF_FORCE_INLINE_LAMBDA {
-                    CLAY({.layout{
-                      .sizing{.width = CLAY_SIZING_GROW(0)},
-                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                    }}) {
-                      BF_CLAY_TEXT(
-                        TextFormat("%d ", v.price),
-                        (v.price <= g.level.coins ? WHITE : RED)
-                      );
-                      BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                    }
-                  });
+                  const auto bought
+                    = componentButton(canBuy, [&]() BF_FORCE_INLINE_LAMBDA {
+                        CLAY({.layout{
+                          .sizing{.width = CLAY_SIZING_GROW(0)},
+                          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                        }}) {
+                          BF_CLAY_TEXT(
+                            TextFormat("%d ", v.price),
+                            (v.price <= g.level.coins ? WHITE : RED)
+                          );
+                          BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                        }
+                      });
 
                   if (bought) {
                     g.level.coins -= v.price;
@@ -1810,7 +1861,7 @@ void DoUI(bool draw) {
 
                   const auto& item = g.level.a.playerItems[t];
                   const auto  fb   = glib->items()->Get(item.type);
-                  slot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                  componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{
                       .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
                       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1852,7 +1903,7 @@ void DoUI(bool draw) {
               FOR_RANGE (int, x, 3) {
                 const int t = y * WEAPONS_X + x;
 
-                slot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
                   const auto& weapon = g.level.playerWeapons[t];
                   if (weapon.type) {
                     const auto fb = glib->weapons()->Get(weapon.type);
@@ -1875,61 +1926,70 @@ void DoUI(bool draw) {
 
       // Right column that contains stats and next wave button.
       CLAY({.layout{.sizing{.height = CLAY_SIZING_GROW(0)}}}) {
-        // Advance to the next wave button.
-        CLAY({
-          .layout{
-            .sizing{.height = CLAY_SIZING_GROW(0)},
-            .childGap        = 8,
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-          },
-        }) {
-          // Stats label.
-          CLAY({.layout{
-            .sizing{.width = CLAY_SIZING_GROW(0)},
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          }}) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_stats_locale());
-          }
-
-          LAMBDA (void, statsEntry, (int iconTexId, int locale, int value)) {
-            CLAY({.layout{
-              .sizing{.width = CLAY_SIZING_GROW(0)},
-              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-            }}) {
-              BF_CLAY_IMAGE({.texId = iconTexId});
-              BF_CLAY_TEXT(" ");
-              BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
-              BF_CLAY_SPACER_HORIZONTAL;
-              BF_CLAY_TEXT(TextFormat("%d", value));
-            }
-          };
-
-          // Current level.
-          statsEntry(
-            glib->ui_shop_current_level_icon_texture_id(),
-            glib->shop_current_level_locale(),
-            g.level.xpLevel
-          );
-
+        CLAY({.layout{
+          .sizing{.height = CLAY_SIZING_GROW(0)},
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
           // Stats.
-          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
-          FOR_RANGE (int, i, (int)StatType_COUNT - 1) {
-            const auto type = (StatType)(i + 1);
-            const auto fb   = glib->stats()->Get(type);
-            statsEntry(
-              fb->icon_texture_id(), fb->name_locale(), g.level.playerStats[type]
-            );
-          }
+          componentStats();
 
           BF_CLAY_SPACER_VERTICAL;
 
-          g.meta.nextWaveScheduled = button(true, [&]() BF_FORCE_INLINE_LAMBDA {
+          // Advance to the next wave button.
+          g.level.scheduledNextWave = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
             BF_CLAY_TEXT(" (");
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
             BF_CLAY_TEXT(TextFormat(" %d)", g.level.waveIndex + 2));
           });
         }
+      }
+    }
+  }
+  // End.
+  else if (g.level.state == StateType_END) {  ///
+    CLAY({.layout{
+      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+      BF_CLAY_PADDING_ALL(8),
+      .childGap = 8,
+      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      .layoutDirection = CLAY_TOP_TO_BOTTOM,
+    }}) {
+      // Header. Run Won / Lost, Wave.
+      CLAY({.layout{
+        .sizing{.width = CLAY_SIZING_GROW(0)},
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }}) {
+        // Run Won / Lost.
+        {
+          const int locale
+            = (g.level.won ? glib->end_won_locale() : glib->end_lost_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
+        }
+
+        BF_CLAY_TEXT(". ");
+
+        // Wave.
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+        BF_CLAY_TEXT(TextFormat(" %d", g.level.waveIndex + 1));
+      }
+
+      // Main. Player's stats, weapons, items.
+      CLAY({.layout{
+        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }}) {
+        componentStats();
+      }
+
+      // Footer. Restart.
+      CLAY({.layout{
+        .sizing{.width = CLAY_SIZING_GROW(0)},
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }}) {
+        g.level.reload = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->end_button_restart_locale());
+        });
       }
     }
   }
@@ -2072,8 +2132,7 @@ void DoUI(bool draw) {
 
 void GameFixedUpdate() {
   // Reloading game.
-  if (g.meta.reload) {  ///
-    g.meta.reload = false;
+  if (g.level.reload) {  ///
     ResetLevel();
     LevelInit();
   }
@@ -2089,27 +2148,36 @@ void GameFixedUpdate() {
       Item item{.type = (ItemType)((GRAND.Rand() % (int)(ItemType_COUNT - 1)) + 1)};
       *g.level.a.playerItems.Add() = item;
     }
+
+    // F7 - show end screen.
+    if (IsKeyPressed(SDL_SCANCODE_F7) && (g.level.state == StateType_GAMEPLAY))
+      g.level.scheduledEnd = true;
   }
 
   // Advancing to shop.
-  if (g.meta.shopScheduled) {  ///
-    g.meta.shopScheduled = false;
-    g.meta.state         = StateType_SHOP;
+  if (g.level.scheduledShop) {  ///
+    g.level.scheduledShop = false;
+    g.level.state         = StateType_SHOP;
 
     g.level.shop.rerolledTimes = 0;
     g.level.shop.rerollPrice   = GetRerollPrice(g.level.waveIndex, 0);
     RefillShopToPick();
   }
 
+  // Advancing to end screen.
+  if (g.level.scheduledEnd) {
+    g.level.state = StateType_END;
+  }
+
   // Advancing to the next wave.
-  if (g.meta.nextWaveScheduled) {  ///
-    g.meta.nextWaveScheduled = false;
+  if (g.level.scheduledNextWave) {  ///
+    g.level.scheduledNextWave = false;
 
     const auto health         = (f32)g.level.playerStats[StatType_HP];
     PLAYER_CREATURE.health    = health;
     PLAYER_CREATURE.maxHealth = health;
 
-    g.meta.state           = StateType_GAMEPLAY;
+    g.level.state          = StateType_GAMEPLAY;
     ge.settings.screenFade = 0;
     SDL_HideCursor();
 
@@ -2132,10 +2200,14 @@ void GameFixedUpdate() {
   }
 
   // Updating gameplay.
-  if (g.meta.state == StateType_GAMEPLAY) {
+  if (g.level.state == StateType_GAMEPLAY) {
     // Finishing wave opens upgrades screen.
     if (g.level.waveStartedAt.Elapsed() >= GetWaveDuration(g.level.waveIndex)) {  ///
-      g.meta.state           = StateType_UPGRADES;
+      if (g.level.waveIndex == TOTAL_WAVES - 1)
+        g.level.state = StateType_END;
+      else
+        g.level.state = StateType_UPGRADES;
+
       ge.settings.screenFade = glib->ui_modal_fade();
       SDL_ShowCursor();
 
@@ -2488,7 +2560,11 @@ void GameFixedUpdate() {
         if (creature.health <= 0) {
           DestroyBody(&creature.body);
 
-          creature.diedAt.SetNow();
+          if (!index)
+            g.level.scheduledEnd = true;
+          else
+            creature.diedAt.SetNow();
+
           if (index) {
             g.level.xp++;
             if (g.level.xp >= g.level.nextLevelXp) {
@@ -2558,12 +2634,11 @@ void GameFixedUpdate() {
     FOR_RANGE (int, i, total) {
       const auto& creature = g.level.a.creatures[i - off];
       if (creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
+        ASSERT(i);
         if (i) {
           g.level.a.creatures.UnstableRemoveAt(i - off);
           off++;
         }
-        else if (!i)
-          g.meta.reload = true;
       }
     }
   }
@@ -2841,6 +2916,7 @@ void GameDraw() {
     DebugText("Close debug menu: F4 change device");
     DebugText("Close debug menu: F5 +10 coins");
     DebugText("Close debug menu: F6 add item");
+    DebugText("Close debug menu: F7 show end screen");
 
     LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
       DebugText(

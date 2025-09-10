@@ -104,4 +104,6 @@ constexpr f32 PLAYER_PICKUP_NUMBER_Y_OFFSET = -0.5f;
 
 constexpr f32 SHOP_ITEM_RATIO = 0.4f;  // X% of items in shop, (1-X)% of weapons.
 
+constexpr int TOTAL_WAVES = (BF_DEBUG ? 5 : 20);
+
 ///

@@ -17,10 +17,13 @@ localization:
   SHOP_STATS: Характеристики
   SHOP_CURRENT_LEVEL: Текущий Уровень
   SHOP_LABEL_SHOP: Магазин
-  SHOP_BUTTON_REROLL: Перебросить
-  SHOP_BUTTON_NEXT_WAVE: Продолжить
   SHOP_LABEL_ITEMS: Предметы
   SHOP_LABEL_WEAPONS: Оружие
+  SHOP_BUTTON_REROLL: Перебросить
+  SHOP_BUTTON_NEXT_WAVE: Продолжить
+  END_WON: Победа
+  END_LOST: Поражение
+  END_BUTTON_RESTART: Начать Заново
   ITEM_SUGAR: Сахар
   ITEM_MILK: Молоко
   WEAPON_GUN: Пистолет

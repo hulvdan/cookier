@@ -43,8 +43,8 @@ x don't show bought item/weapon empty slot
 x price is red if not enough money
 x fix: can't buy when `canBuy` is false
 x rendering stable sort
+x endgame screen gets shows + restart button works
 
-* экран победы / смерти
 * апгрейды только за полученные уровни
 * stat effect: LIFE_STEAL
 * stat effect: CURSE
