@@ -750,11 +750,11 @@ void BF_CLAY_IMAGE(ClayImageData data) {  ///
   BF_CLAY_IMAGE(data, [] {});
 }
 
-void BF_CLAY_TEXT(Clay_String string) {  ///
-  CLAY_TEXT(string, CLAY_TEXT_CONFIG({.textColor{255, 255, 255, 255}}));
+void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
+  CLAY_TEXT(string, CLAY_TEXT_CONFIG({.textColor = ToClayColor(color)}));
 }
 
-void BF_CLAY_TEXT(const char* text) {  ///
+void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
   auto len           = strlen(text);
   auto allocatedText = ALLOCATE_ARRAY(&g.meta.trashArena, char, len);
   memcpy(allocatedText, text, len + 1);
@@ -763,7 +763,7 @@ void BF_CLAY_TEXT(const char* text) {  ///
     .length = (i32)len,
     .chars  = allocatedText,
   };
-  BF_CLAY_TEXT(string);
+  BF_CLAY_TEXT(string, color);
 }
 
 void DestroyBody(Body* body) {  ///
@@ -1570,7 +1570,7 @@ void DoUI(bool draw) {
         = ToClayColor(ColorFromRGB(buttonColors[(enabled ? (Clay_Hovered() ? 0 : 1) : 2)])
         ),
       }) {
-        result = clicked();
+        result = enabled && clicked();
         innerLambda();
       }
 
@@ -1719,7 +1719,7 @@ void DoUI(bool draw) {
                 // Item's image + name.
                 CLAY({.layout{.childGap = 8}}) {
                   // Image.
-                  slot(canBuy, [&]() BF_FORCE_INLINE_LAMBDA {
+                  slot(false, [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                       if (v.item || v.weapon) {
                         CLAY({
@@ -1756,11 +1756,21 @@ void DoUI(bool draw) {
                   .sizing{.width = CLAY_SIZING_GROW(0)},
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                 }}) {
-                  BF_CLAY_TEXT(TextFormat("%d ", v.price));
-                  BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-
                   // Buying item / weapon.
-                  if (canBuy && clicked()) {
+                  const auto bought = button(canBuy, [&]() BF_FORCE_INLINE_LAMBDA {
+                    CLAY({.layout{
+                      .sizing{.width = CLAY_SIZING_GROW(0)},
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    }}) {
+                      BF_CLAY_TEXT(
+                        TextFormat("%d ", v.price),
+                        (v.price <= g.level.coins ? WHITE : RED)
+                      );
+                      BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                    }
+                  });
+
+                  if (bought) {
                     g.level.coins -= v.price;
                     if (v.weapon)
                       g.level.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
