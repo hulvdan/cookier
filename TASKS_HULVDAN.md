@@ -45,6 +45,12 @@ x fix: can't buy when `canBuy` is false
 x rendering stable sort
 x endgame screen gets shows + restart button works
 
+* endgame screen: blacken background
+* endgame screen:
+* endgame screen:
+* endgame screen:
+* endgame screen:
+* endgame screen:
 * апгрейды только за полученные уровни
 * stat effect: LIFE_STEAL
 * stat effect: CURSE
