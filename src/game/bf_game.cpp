@@ -1567,6 +1567,31 @@ void DoUI(bool draw) {
       return result;
     };
 
+    const int slotTexs_[]{
+      glib->ui_item_slot_hovered_texture_id(),
+      glib->ui_item_slot_default_texture_id(),
+      glib->ui_item_slot_disabled_texture_id(),
+    };
+    VIEW_FROM_ARRAY_DANGER(slotTexs);
+
+    const u32 slotColors_[]{
+      glib->ui_item_slot_hovered_color(),
+      glib->ui_item_slot_default_color(),
+      glib->ui_item_slot_disabled_color(),
+    };
+    VIEW_FROM_ARRAY_DANGER(slotColors);
+
+    LAMBDA (void, slot, (bool enabled, auto innerLambda)) {
+      const int type = (enabled ? (Clay_Hovered() ? 0 : 1) : 2);
+      BF_CLAY_IMAGE(
+        {
+          .texId = slotTexs[type],
+          .color = ColorFromRGB(slotColors[type]),
+        },
+        innerLambda
+      );
+    };
+
     // Columns.
     CLAY({.layout{
       .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
@@ -1583,7 +1608,10 @@ void DoUI(bool draw) {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
         // 1. Wave, coins, reroll.
-        CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
+        CLAY({.layout{
+          .sizing{.width = CLAY_SIZING_GROW(0)},
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
           // Wave.
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_shop_locale());
           BF_CLAY_TEXT(" (");
@@ -1678,29 +1706,13 @@ void DoUI(bool draw) {
               const auto fb_weapon
                 = (v.weapon ? glib->weapons()->Get(v.weapon) : nullptr);
 
-              const int texs_[]{
-                glib->ui_item_slot_hovered_texture_id(),
-                glib->ui_item_slot_default_texture_id(),
-                glib->ui_item_slot_disabled_texture_id(),
-              };
-              VIEW_FROM_ARRAY_DANGER(texs);
-
-              const u32 colors_[]{
-                glib->ui_item_slot_hovered_color(),
-                glib->ui_item_slot_default_color(),
-                glib->ui_item_slot_disabled_color(),
-              };
-              VIEW_FROM_ARRAY_DANGER(colors);
-
               // TODO: Highlight price, not item's frame.
-              const int type = (canBuy ? (Clay_Hovered() ? 0 : 1) : 2);
 
               // Item's image + name.
               CLAY({.layout{.childGap = 8}}) {
-                // Item's image.
-                BF_CLAY_IMAGE(
-                  {.texId = texs[type], .color = ColorFromRGB(colors[type])},
-                  [&]() BF_FORCE_INLINE_LAMBDA {
+                // Image.
+                slot(canBuy, [&]() BF_FORCE_INLINE_LAMBDA {
+                  CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
                     if (v.item || v.weapon) {
                       CLAY({
                         .layout{
@@ -1717,8 +1729,9 @@ void DoUI(bool draw) {
                       }
                     }
                   }
-                );
+                });
 
+                // Name.
                 int locale = 0;
                 if (v.item)
                   locale = fb_item->name_locale();
@@ -1760,12 +1773,35 @@ void DoUI(bool draw) {
 
         // 3. Player's items and weapons.
         CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
-          CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_items_locale());
 
-            // TODO: Items.
-            CLAY({}) {}
+            // Items.
+            CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+              constexpr int ITEMS_X = 10;
+              const int     ITEMS_Y = CeilDivision(g.level.a.playerItems.count, ITEMS_X);
+
+              FOR_RANGE (int, y, ITEMS_Y) {
+                CLAY({.layout{.childGap = 8}})
+                FOR_RANGE (int, x, ITEMS_X) {
+                  const int t = y * ITEMS_X + x;
+                  if (t >= g.level.a.playerItems.count)
+                    break;
+
+                  const auto& item = g.level.a.playerItems[t];
+                  const auto  fb   = glib->items()->Get(item.type);
+                  slot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                    CLAY({.layout{
+                      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    }}) {
+                      BF_CLAY_IMAGE({.texId = fb->texture_id()});
+                    }
+                  });
+                }
+              }
+            }
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -1786,7 +1822,7 @@ void DoUI(bool draw) {
               );
             }
 
-            // TODO: Weapons.
+            // Weapons.
             constexpr int WEAPONS_X = 3;
             constexpr int WEAPONS_Y = 2;
             static_assert(WEAPONS_X * WEAPONS_Y == g.level.playerWeapons.count);
@@ -1796,27 +1832,22 @@ void DoUI(bool draw) {
               CLAY({.layout{.childGap = 8}})
               FOR_RANGE (int, x, 3) {
                 const int t = y * WEAPONS_X + x;
-                BF_CLAY_IMAGE(
-                  {
-                    .texId = glib->ui_item_slot_disabled_texture_id(),
-                    .color = ColorFromRGB(glib->ui_item_slot_disabled_color()),
-                  },
-                  [&]() BF_FORCE_INLINE_LAMBDA {
-                    const auto& weapon = g.level.playerWeapons[t];
-                    if (weapon.type) {
-                      const auto fb = glib->weapons()->Get(weapon.type);
-                      CLAY({.layout{
-                        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                      }}) {
-                        BF_CLAY_IMAGE({
-                          .texId = fb->texture_ids()->Get(0),
-                          .color = ColorFromRGB(fb->color()),
-                        });
-                      }
+
+                slot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                  const auto& weapon = g.level.playerWeapons[t];
+                  if (weapon.type) {
+                    const auto fb = glib->weapons()->Get(weapon.type);
+                    CLAY({.layout{
+                      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    }}) {
+                      BF_CLAY_IMAGE({
+                        .texId = fb->texture_ids()->Get(0),
+                        .color = ColorFromRGB(fb->color()),
+                      });
                     }
                   }
-                );
+                });
               }
             }
           }
@@ -1993,8 +2024,15 @@ void GameFixedUpdate() {
 
   // Cheats.
   if (ge.meta.debugEnabled) {
+    // F5 - add 10 coins.
     if (IsKeyPressed(SDL_SCANCODE_F5))
       g.level.coins += 10;
+
+    // F6 - add random item.
+    if (IsKeyPressed(SDL_SCANCODE_F6)) {
+      Item item{.type = (ItemType)((GRAND.Rand() % (int)(ItemType_COUNT - 1)) + 1)};
+      *g.level.a.playerItems.Add() = item;
+    }
   }
 
   // Advancing to shop.
@@ -2742,6 +2780,7 @@ void GameDraw() {
     DebugText("Close debug menu: F3 change localization");
     DebugText("Close debug menu: F4 change device");
     DebugText("Close debug menu: F5 +10 coins");
+    DebugText("Close debug menu: F6 add item");
 
     LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
       DebugText(
