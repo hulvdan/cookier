@@ -1571,6 +1571,7 @@ void DoUI(bool draw) {
     CLAY({.layout{
       .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
       BF_CLAY_PADDING_ALL(8),
+      .childGap = 8,
     }}) {
       // Left column that contains:
       // 1. wave, coins, reroll.
@@ -1766,7 +1767,7 @@ void DoUI(bool draw) {
 
           BF_CLAY_SPACER_HORIZONTAL;
 
-          CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Weapons label.
             CLAY({}) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_weapons_locale());
@@ -1783,7 +1784,38 @@ void DoUI(bool draw) {
             }
 
             // TODO: Weapons.
-            CLAY({}) {}
+            constexpr int WEAPONS_X = 3;
+            constexpr int WEAPONS_Y = 2;
+            static_assert(WEAPONS_X * WEAPONS_Y == g.level.playerWeapons.count);
+
+            CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+            FOR_RANGE (int, y, 2) {
+              CLAY({.layout{.childGap = 8}})
+              FOR_RANGE (int, x, 3) {
+                const int t = y * WEAPONS_X + x;
+                BF_CLAY_IMAGE(
+                  {
+                    .texId = glib->ui_item_slot_disabled_texture_id(),
+                    .color = ColorFromRGB(glib->ui_item_slot_disabled_color()),
+                  },
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    const auto& weapon = g.level.playerWeapons[t];
+                    if (weapon.type) {
+                      const auto fb = glib->weapons()->Get(weapon.type);
+                      CLAY({.layout{
+                        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                      }}) {
+                        BF_CLAY_IMAGE({
+                          .texId = fb->texture_ids()->Get(0),
+                          .color = ColorFromRGB(fb->color()),
+                        });
+                      }
+                    }
+                  }
+                );
+              }
+            }
           }
         }
       }
