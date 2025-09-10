@@ -43,6 +43,14 @@
 
 #define INLINE_LAMBDA [&]() BF_FORCE_INLINE_LAMBDA
 
+#if defined(_MSC_VER)
+#  define BF_RESTRICT __restrict
+#elif defined(__GNUC__) || defined(__clang__)
+#  define BF_RESTRICT __restrict__
+#else
+#  define BF_RESTRICT
+#endif
+
 #define BF_RELEASE (BF_DEBUG == 0)
 
 #define PTR_FROM_UINT(value) ((void*)((u8*)(nullptr) + (value)))

@@ -732,7 +732,10 @@ BF_FORCE_INLINE void RenderGroup_OneShotText(DrawTextData data, RenderZ z) {  //
   RenderGroup_End();
 }
 
-BF_FORCE_INLINE int _RenderGroupCmp(const RenderGroup* v1, const RenderGroup* v2) {  ///
+BF_FORCE_INLINE int _RenderGroupCmp(
+  const RenderGroup* BF_RESTRICT v1,
+  const RenderGroup* BF_RESTRICT v2
+) {  ///
   ASSERT(v1->z > RenderZ_INVALID);
   ASSERT(v2->z > RenderZ_INVALID);
   ASSERT(v1->z < RenderZ_COUNT);
@@ -823,6 +826,11 @@ BF_FORCE_INLINE void IterateOverCodepoints(
   ASSERT_FALSE(state);  // The string is not well-formed.
 }
 
+#define SORT_NAME render_group
+#define SORT_TYPE RenderGroup
+#define SORT_CMP(x, y) (_RenderGroupCmp(&x, &y))
+#include "sort.h"
+
 //
 void FlushRenderCommands() {
   ZoneScoped;
@@ -833,12 +841,7 @@ void FlushRenderCommands() {
   // Setup. {  ///
   ASSERT(ge.render.currentGroupIndex == -1);
 
-  qsort(
-    (void*)ge.render.groups.base,
-    ge.render.groups.count,
-    sizeof(RenderGroup),
-    (int (*)(const void*, const void*))_RenderGroupCmp
-  );
+  render_group_tim_sort(ge.render.groups.base, ge.render.groups.count);
 
   Shader shaders_[]{
     {
