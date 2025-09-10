@@ -1544,12 +1544,26 @@ void DoUI(bool draw) {
   }
   // Shop.
   else if (g.meta.state == StateType_SHOP) {  ///
-    LAMBDA (bool, button, (auto innerLambda)) {
+    const u32 buttonColors_[]{
+      glib->ui_button_hovered_color(),
+      glib->ui_button_default_color(),
+      glib->ui_button_disabled_color(),
+    };
+    VIEW_FROM_ARRAY_DANGER(buttonColors);
+
+    LAMBDA (bool, button, (bool enabled, auto innerLambda)) {
       bool result{};
-      CLAY({}) {
+
+      CLAY({
+        .layout{BF_CLAY_PADDING_ALL(8)},
+        .backgroundColor
+        = ToClayColor(ColorFromRGB(buttonColors[(enabled ? (Clay_Hovered() ? 0 : 1) : 2)])
+        ),
+      }) {
         result = clicked();
         innerLambda();
       }
+
       return result;
     };
 
@@ -1597,7 +1611,7 @@ void DoUI(bool draw) {
 
           // Reroll button.
           bool canReroll     = (g.level.coins >= g.level.shop.rerollPrice);
-          bool rerollClicked = button([&]() BF_FORCE_INLINE_LAMBDA {
+          bool rerollClicked = button(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{BF_CLAY_PADDING_ALL(8)}}) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
 
@@ -1787,16 +1801,11 @@ void DoUI(bool draw) {
 
           BF_CLAY_SPACER_VERTICAL;
 
-          g.meta.nextWaveScheduled = button([&]() BF_FORCE_INLINE_LAMBDA {
-            CLAY({
-              .layout{BF_CLAY_PADDING_ALL(8)},
-              .backgroundColor = ToClayColor(Clay_Hovered() ? WHITE : GRAY),
-            }) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
-              BF_CLAY_TEXT(" (");
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
-              BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave + 1));
-            }
+          g.meta.nextWaveScheduled = button(true, [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
+            BF_CLAY_TEXT(" (");
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+            BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave + 1));
           });
         }
       }
