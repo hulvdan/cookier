@@ -39,9 +39,8 @@ x show current weapons
 x show current items
 x show stats
 x correct hp stat
+x don't show bought item/weapon empty slot
 
-* start with
-* don't show bought item/weapon empty slot
 * rendering stable sort
 * экран победы / смерти
 * апгрейды только за полученные уровни
