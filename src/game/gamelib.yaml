@@ -62,7 +62,6 @@ decal_pre_spawn_texture_id: game_decal_pre_spawn
 creature__table:
   - type: INVALID
   - type: PLAYER
-    health: 20
     speed_force: 17
     color: 0x208cb2
     texture_ids:

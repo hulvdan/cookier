@@ -948,12 +948,17 @@ void MakeCreature(MakeCreatureData data) {  ///
     hurtboxRadius = MOB_HURTBOX_RADIUS;
 
   const auto fb_creature = glib->creatures()->Get(data.type);
+  auto       health      = (f32)fb_creature->health();
+  if (data.type == CreatureType_PLAYER)
+    health = (f32)g.level.playerStats[StatType_HP];
+
+  ASSERT(health > 0);
 
   Creature creature{
     .id        = g.level.nextCreatureId++,
     .type      = data.type,
-    .health    = fb_creature->health(),
-    .maxHealth = fb_creature->health(),
+    .health    = health,
+    .maxHealth = health,
     .pos       = data.pos,
     .body      = MakeCircleBody({
            .pos           = data.pos,
@@ -1098,6 +1103,9 @@ void LevelInit() {
     worldDef.gravity    = b2Vec2{0, 0};
     g.level.world       = b2CreateWorld(&worldDef);
   }
+
+  // Initializing `playerStats`.
+  g.level.playerStats[StatType_HP] = 20;
 
   // Making player.
   MakeCreature({
@@ -2087,6 +2095,10 @@ void GameFixedUpdate() {
   // Advancing to the next wave.
   if (g.meta.nextWaveScheduled) {  ///
     g.meta.nextWaveScheduled = false;
+
+    const auto health         = (f32)g.level.playerStats[StatType_HP];
+    PLAYER_CREATURE.health    = health;
+    PLAYER_CREATURE.maxHealth = health;
 
     g.meta.state           = StateType_GAMEPLAY;
     ge.settings.screenFade = 0;

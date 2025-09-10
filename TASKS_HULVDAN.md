@@ -38,8 +38,8 @@ x reroll button
 x show current weapons
 x show current items
 x show stats
+x correct hp stat
 
-* correct hp stat
 * start with
 * don't show bought item/weapon empty slot
 * rendering stable sort
