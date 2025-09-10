@@ -1096,7 +1096,7 @@ Vector2 GetCameraTargetPos() {  ///
   return tpos;
 }
 
-void LevelInit() {
+void RunInit() {
   FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
     g.run.playerWeapons[i].offset = Vector2Rotate(Vector2(1, 0), i * PI / 3.0f);
   }
@@ -1183,7 +1183,7 @@ void GameInit() {  ///
     .outlineAdvance  = 2,
   });
 
-  LevelInit();
+  RunInit();
 }
 
 Vector2 WorldPosToLogical(Vector2 pos) {  ///
@@ -1269,7 +1269,7 @@ bool TryApplyDamage(
   return false;
 }
 
-void ResetLevel() {  ///
+void RunReset() {  ///
   b2DestroyWorld(g.run.world);
 
   auto a = g.run.a;
@@ -2131,8 +2131,8 @@ void DoUI(bool draw) {
 void GameFixedUpdate() {
   // Reloading game.
   if (g.run.reload) {  ///
-    ResetLevel();
-    LevelInit();
+    RunReset();
+    RunInit();
   }
 
   // Cheats.
