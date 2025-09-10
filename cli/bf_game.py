@@ -40,6 +40,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     for x in gamelib["weapon__table"][1:]:
         x["name_locale"] = "WEAPON_" + x["type"].upper()
 
+    # Stats.
+    # ============================================================
+    for x in gamelib["stat__table"][1:]:
+        x["name_locale"] = "STAT_" + x["type"].upper()
+
     # Tables.
     # ============================================================
     if 1:

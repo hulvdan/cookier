@@ -539,14 +539,14 @@ struct MakeNumberData {
   Vector2    pos   = {};
 };
 
-lframe GetWaveDuration(int wave) {  ///
+lframe GetWaveDuration(int waveIndex) {  ///
 #if BF_RELEASE
   constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
                              60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
   VIEW_FROM_ARRAY_DANGER(durations);
-  const int seconds = durations[MIN(durations.count - 1, wave)];
+  const int seconds = durations[MIN(durations.count - 1, waveIndex)];
 #else
-  const int seconds = 3 + wave * 5;
+  const int seconds = 3 + waveIndex * 5;
 #endif
   return lframe::MakeUnscaled(seconds * FIXED_FPS);
 }
@@ -603,7 +603,7 @@ struct GameData {
     int xpLevel     = 1;
     int pierceCount = 0;
 
-    int          wave          = 0;
+    int          waveIndex     = 0;
     LogicalFrame waveStartedAt = {};
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
@@ -1267,7 +1267,7 @@ void ResetLevel() {  ///
   g.meta.arena.used = 0;
 }
 
-int GetRerollPrice(int wave, int rerolledTimes) {  ///
+int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
   int rerollPricesPerWave_[]{1,  2,  3,  4,  5,  6,  7,  9,  9,  11,
                              12, 13, 14, 15, 17, 18, 18, 20, 21, 23};
   VIEW_FROM_ARRAY_DANGER(rerollPricesPerWave);
@@ -1276,7 +1276,8 @@ int GetRerollPrice(int wave, int rerolledTimes) {  ///
                                     4, 4, 5, 5, 6, 6, 6, 7, 7, 8};
   VIEW_FROM_ARRAY_DANGER(rerollPriceIncreasePerWave);
 
-  return rerollPricesPerWave[wave] + rerolledTimes * rerollPriceIncreasePerWave[wave];
+  return rerollPricesPerWave[waveIndex]
+         + rerolledTimes * rerollPriceIncreasePerWave[waveIndex];
 }
 
 void RefillShopToPick() {  ///
@@ -1444,9 +1445,10 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
         const auto remainingFrames
-          = GetWaveDuration(g.level.wave) - g.level.waveStartedAt.Elapsed();
+          = GetWaveDuration(g.level.waveIndex) - g.level.waveStartedAt.Elapsed();
         const int remainingSeconds = remainingFrames.value / FIXED_FPS + 1;
-        BF_CLAY_TEXT(TextFormat("Wave %d. %d...", g.level.wave + 1, remainingSeconds));
+        BF_CLAY_TEXT(TextFormat("Wave %d. %d...", g.level.waveIndex + 1, remainingSeconds)
+        );
       }
       // }
 
@@ -1616,7 +1618,7 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_shop_locale());
           BF_CLAY_TEXT(" (");
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
-          BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave));
+          BF_CLAY_TEXT(TextFormat(" %d)", g.level.waveIndex + 1));
 
           BF_CLAY_SPACER_HORIZONTAL;
 
@@ -1658,7 +1660,7 @@ void DoUI(bool draw) {
           if (canReroll && rerollClicked) {
             g.level.coins -= g.level.shop.rerollPrice;
             g.level.shop.rerollPrice
-              = GetRerollPrice(g.level.wave, ++g.level.shop.rerolledTimes);
+              = GetRerollPrice(g.level.waveIndex, ++g.level.shop.rerolledTimes);
             RefillShopToPick();
           }
         }
@@ -1860,10 +1862,47 @@ void DoUI(bool draw) {
         CLAY({
           .layout{
             .sizing{.height = CLAY_SIZING_GROW(0)},
+            .childGap        = 8,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
         }) {
-          // TODO: stats
+          // Stats label.
+          CLAY({.layout{
+            .sizing{.width = CLAY_SIZING_GROW(0)},
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_stats_locale());
+          }
+
+          LAMBDA (void, statsEntry, (int iconTexId, int locale, int value)) {
+            CLAY({.layout{
+              .sizing{.width = CLAY_SIZING_GROW(0)},
+              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            }}) {
+              BF_CLAY_IMAGE({.texId = iconTexId});
+              BF_CLAY_TEXT(" ");
+              BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
+              BF_CLAY_SPACER_HORIZONTAL;
+              BF_CLAY_TEXT(TextFormat("%d", value));
+            }
+          };
+
+          // Current level.
+          statsEntry(
+            glib->ui_shop_current_level_icon_texture_id(),
+            glib->shop_current_level_locale(),
+            g.level.xpLevel
+          );
+
+          // Stats.
+          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+          FOR_RANGE (int, i, (int)StatType_COUNT - 1) {
+            const auto type = (StatType)(i + 1);
+            const auto fb   = glib->stats()->Get(type);
+            statsEntry(
+              fb->icon_texture_id(), fb->name_locale(), g.level.playerStats[type]
+            );
+          }
 
           BF_CLAY_SPACER_VERTICAL;
 
@@ -1871,7 +1910,7 @@ void DoUI(bool draw) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
             BF_CLAY_TEXT(" (");
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
-            BF_CLAY_TEXT(TextFormat(" %d)", g.level.wave + 1));
+            BF_CLAY_TEXT(TextFormat(" %d)", g.level.waveIndex + 2));
           });
         }
       }
@@ -2041,7 +2080,7 @@ void GameFixedUpdate() {
     g.meta.state         = StateType_SHOP;
 
     g.level.shop.rerolledTimes = 0;
-    g.level.shop.rerollPrice   = GetRerollPrice(g.level.wave, 0);
+    g.level.shop.rerollPrice   = GetRerollPrice(g.level.waveIndex, 0);
     RefillShopToPick();
   }
 
@@ -2053,7 +2092,7 @@ void GameFixedUpdate() {
     ge.settings.screenFade = 0;
     SDL_HideCursor();
 
-    IncrementSetZeroOn(&g.level.wave, (int)glib->waves()->size());
+    IncrementSetZeroOn(&g.level.waveIndex, (int)glib->waves()->size());
     g.level.waveStartedAt = {};
     g.level.waveStartedAt.SetNow();
 
@@ -2074,7 +2113,7 @@ void GameFixedUpdate() {
   // Updating gameplay.
   if (g.meta.state == StateType_GAMEPLAY) {
     // Finishing wave opens upgrades screen.
-    if (g.level.waveStartedAt.Elapsed() >= GetWaveDuration(g.level.wave)) {  ///
+    if (g.level.waveStartedAt.Elapsed() >= GetWaveDuration(g.level.waveIndex)) {  ///
       g.meta.state           = StateType_UPGRADES;
       ge.settings.screenFade = glib->ui_modal_fade();
       SDL_ShowCursor();
@@ -2177,7 +2216,7 @@ void GameFixedUpdate() {
 
     // Making pre spawns.
     if (g.level.waveStartedAt.Elapsed().value % (4 * FIXED_FPS) == 0) {  ///
-      const auto wave = glib->waves()->Get(g.level.wave);
+      const auto wave = glib->waves()->Get(g.level.waveIndex);
 
       Vector2 posToSpawn{};
 

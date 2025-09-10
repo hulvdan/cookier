@@ -82,6 +82,7 @@ table Wave {
 
 table Stat {
     icon_texture_id: int;
+    name_locale: int;
     upgrade_texture_id: int;
     upgrade_values: [int];
 }
@@ -99,6 +100,7 @@ table GameLibrary {
     // LOCALE_GEN_START.
     wave_locale: int;
     shop_stats_locale: int;
+    shop_current_level_locale: int;
     shop_label_shop_locale: int;
     shop_button_reroll_locale: int;
     shop_label_items_locale: int;
@@ -120,6 +122,7 @@ table GameLibrary {
     ui_button_hovered_color: uint;
     ui_button_disabled_color: uint;
     ui_item_big_frame_color: uint;
+    ui_shop_current_level_icon_texture_id: uint;
     decal_pre_spawn_texture_id: int;
 
     creatures: [Creature] (required);
