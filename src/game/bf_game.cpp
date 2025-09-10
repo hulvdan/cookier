@@ -586,6 +586,7 @@ struct GameData {
     bool      won    = false;
     StateType state  = StateType_GAMEPLAY;
 
+    bool scheduledUpgrades = false;
     bool scheduledShop     = false;
     bool scheduledEnd      = false;
     bool scheduledNextWave = false;
@@ -1270,6 +1271,9 @@ bool TryApplyDamage(
 }
 
 void RunReset() {  ///
+  ge.settings.screenFade = 0;
+  SDL_HideCursor();
+
   b2DestroyWorld(g.run.world);
 
   auto a = g.run.a;
@@ -2138,18 +2142,48 @@ void GameFixedUpdate() {
   // Cheats.
   if (ge.meta.debugEnabled) {
     // F5 - add 10 coins.
-    if (IsKeyPressed(SDL_SCANCODE_F5))
+    if (IsKeyPressed(SDL_SCANCODE_F5)) {  ///
       g.run.coins += 10;
+    }
 
     // F6 - add random item.
-    if (IsKeyPressed(SDL_SCANCODE_F6)) {
+    if (IsKeyPressed(SDL_SCANCODE_F6)) {  ///
       Item item{.type = (ItemType)((GRAND.Rand() % (int)(ItemType_COUNT - 1)) + 1)};
       *g.run.a.playerItems.Add() = item;
     }
 
     // F7 - show end screen.
-    if (IsKeyPressed(SDL_SCANCODE_F7) && (g.run.state == StateType_GAMEPLAY))
+    if (IsKeyPressed(SDL_SCANCODE_F7) && (g.run.state == StateType_GAMEPLAY)) {  ///
       g.run.scheduledEnd = true;
+    }
+  }
+
+  // Advancing to upgrades.
+  if (g.run.scheduledUpgrades || g.run.scheduledEnd) {  ///
+    g.run.scheduledUpgrades = false;
+
+    g.run.state = StateType_UPGRADES;
+
+    ge.settings.screenFade = glib->ui_modal_fade();
+    SDL_ShowCursor();
+
+    const auto fb_stats = glib->stats();
+
+    // Refilling `toPick`.
+    FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
+      while (1) {
+        const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
+        if (!newStat)
+          continue;
+        const auto fb = fb_stats->Get(newStat);
+        if (!fb->upgrade_texture_id())
+          continue;
+        if (ArrayContains(g.run.upgrades.toPick.base, i, newStat))
+          continue;
+        g.run.upgrades.toPick[i] = newStat;
+        break;
+      }
+    }
   }
 
   // Advancing to shop.
@@ -2163,8 +2197,9 @@ void GameFixedUpdate() {
   }
 
   // Advancing to end screen.
-  if (g.run.scheduledEnd) {
-    g.run.state = StateType_END;
+  if (g.run.scheduledEnd) {  ///
+    g.run.scheduledEnd = false;
+    g.run.state        = StateType_END;
   }
 
   // Advancing to the next wave.
@@ -2201,31 +2236,9 @@ void GameFixedUpdate() {
   if (g.run.state == StateType_GAMEPLAY) {
     // Finishing wave opens upgrades screen.
     if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
-      if (g.run.waveIndex == TOTAL_WAVES - 1)
-        g.run.state = StateType_END;
-      else
-        g.run.state = StateType_UPGRADES;
-
-      ge.settings.screenFade = glib->ui_modal_fade();
-      SDL_ShowCursor();
-
-      const auto fb_stats = glib->stats();
-
-      // Refilling `toPick`.
-      FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
-        while (1) {
-          const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
-          if (!newStat)
-            continue;
-          const auto fb = fb_stats->Get(newStat);
-          if (!fb->upgrade_texture_id())
-            continue;
-          if (ArrayContains(g.run.upgrades.toPick.base, i, newStat))
-            continue;
-          g.run.upgrades.toPick[i] = newStat;
-          break;
-        }
-      }
+      g.run.scheduledUpgrades = true;
+      if (g.run.waveIndex >= TOTAL_WAVES - 1)
+        g.run.scheduledEnd = true;
     }
 
     if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {
