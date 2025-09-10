@@ -1613,7 +1613,10 @@ void DoUI(bool draw) {
           // Reroll button.
           bool canReroll     = (g.level.coins >= g.level.shop.rerollPrice);
           bool rerollClicked = button(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
-            CLAY({.layout{BF_CLAY_PADDING_ALL(8)}}) {
+            CLAY({.layout{
+              BF_CLAY_PADDING_ALL(8),
+              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            }}) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
 
               ASSERT(g.level.shop.rerollPrice >= 0);
