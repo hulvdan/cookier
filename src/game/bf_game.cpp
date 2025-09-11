@@ -50,6 +50,21 @@ Clay_Color ToClayColor(Color color) {
 #define BF_CLAY_SPACER_HORIZONTAL \
   CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(1)}}}) {}
 
+#define BF_CLAY_SIZING_GROW_XY               \
+  .sizing {                                  \
+    CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) \
+  }
+
+#define BF_CLAY_SIZING_GROW_X    \
+  .sizing {                      \
+    .width = CLAY_SIZING_GROW(0) \
+  }
+
+#define BF_CLAY_SIZING_GROW_Y     \
+  .sizing {                       \
+    .height = CLAY_SIZING_GROW(0) \
+  }
+
 #define BF_CLAY_PADDING_ALL(v)      \
   .padding {                        \
     (u16) v, (u16)v, (u16)v, (u16)v \
@@ -1400,15 +1415,15 @@ void DoUI(bool draw) {
     CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
       // Stats label.
       CLAY({.layout{
-        .sizing{.width = CLAY_SIZING_GROW(0)},
+        BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_stats_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_stats_locale());
       }
 
       LAMBDA (void, statsEntry, (int iconTexId, int locale, int value)) {
         CLAY({.layout{
-          .sizing{.width = CLAY_SIZING_GROW(0)},
+          BF_CLAY_SIZING_GROW_X,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           BF_CLAY_IMAGE({.texId = iconTexId});
@@ -1422,7 +1437,7 @@ void DoUI(bool draw) {
       // Current level.
       statsEntry(
         glib->ui_shop_current_level_icon_texture_id(),
-        glib->shop_current_level_locale(),
+        glib->ui_current_level_locale(),
         g.run.xpLevel
       );
 
@@ -1438,7 +1453,7 @@ void DoUI(bool draw) {
 
   // Gameplay.
   if (g.run.state == StateType_GAMEPLAY) {
-    CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+    CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
       // Health bar + coins.
       // {  ///
       const auto  texs   = glib->ui_health_texture_ids();
@@ -1590,7 +1605,7 @@ void DoUI(bool draw) {
   }
   // Upgrades.
   else if (g.run.state == StateType_UPGRADES) {  ///
-    CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+    CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
       CLAY({
         .layout{.childGap = 8},
         .floating{
@@ -1639,7 +1654,7 @@ void DoUI(bool draw) {
               [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({
                   .layout{
-                    .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                    BF_CLAY_SIZING_GROW_XY,
                     BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                   },
                 }) {
@@ -1657,7 +1672,7 @@ void DoUI(bool draw) {
 
     // Columns.
     CLAY({.layout{
-      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+      BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_PADDING_ALL(8),
       .childGap = 8,
     }}) {
@@ -1666,19 +1681,19 @@ void DoUI(bool draw) {
       // 2. items to buy.
       // 3. player's items and weapons.
       CLAY({.layout{
-        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+        BF_CLAY_SIZING_GROW_XY,
         .childGap        = 8,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
         // 1. Wave, coins, reroll.
         CLAY({.layout{
-          .sizing{.width = CLAY_SIZING_GROW(0)},
+          BF_CLAY_SIZING_GROW_X,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           // Wave.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_shop_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_shop_locale());
           BF_CLAY_TEXT(" (");
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
           BF_CLAY_TEXT(TextFormat(" %d)", g.run.waveIndex + 1));
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -1708,7 +1723,7 @@ void DoUI(bool draw) {
               BF_CLAY_PADDING_ALL(8),
               BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
             }}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_reroll_locale());
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
 
               ASSERT(g.run.shop.rerollPrice >= 0);
 
@@ -1729,10 +1744,7 @@ void DoUI(bool draw) {
         BF_CLAY_SPACER_VERTICAL;
 
         // 2. Items to buy.
-        CLAY({.layout{
-          .sizing{.width = CLAY_SIZING_GROW(0)},
-          .childGap = 8,
-        }}) {
+        CLAY({.layout{BF_CLAY_SIZING_GROW_X, .childGap = 8}}) {
           FLOATING_BEAUTIFY;
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -1756,7 +1768,7 @@ void DoUI(bool draw) {
             if (v.item || v.weapon) {
               CLAY({
                 .layout{
-                  .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                  BF_CLAY_SIZING_GROW_XY,
                   BF_CLAY_PADDING_ALL(8),
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
@@ -1773,21 +1785,16 @@ void DoUI(bool draw) {
                 CLAY({.layout{.childGap = 8}}) {
                   // Image.
                   componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
-                    CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+                    CLAY({.layout{
+                      BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER
+                    }}) {
                       if (v.item || v.weapon) {
-                        CLAY({
-                          .layout{
-                            .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
-                            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                          },
-                        }) {
-                          int texId = 0;
-                          if (v.item)
-                            texId = fb_item->texture_id();
-                          if (v.weapon)
-                            texId = fb_weapon->texture_ids()->Get(0);
-                          BF_CLAY_IMAGE({.texId = texId});
-                        }
+                        int texId = 0;
+                        if (v.item)
+                          texId = fb_item->texture_id();
+                        if (v.weapon)
+                          texId = fb_weapon->texture_ids()->Get(0);
+                        BF_CLAY_IMAGE({.texId = texId});
                       }
                     }
                   });
@@ -1806,14 +1813,14 @@ void DoUI(bool draw) {
 
                 // Item's price.
                 CLAY({.layout{
-                  .sizing{.width = CLAY_SIZING_GROW(0)},
+                  BF_CLAY_SIZING_GROW_X,
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                 }}) {
                   // Buying item / weapon.
                   const auto bought
                     = componentButton(canBuy, [&]() BF_FORCE_INLINE_LAMBDA {
                         CLAY({.layout{
-                          .sizing{.width = CLAY_SIZING_GROW(0)},
+                          BF_CLAY_SIZING_GROW_X,
                           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                         }}) {
                           BF_CLAY_TEXT(
@@ -1845,10 +1852,10 @@ void DoUI(bool draw) {
         BF_CLAY_SPACER_VERTICAL;
 
         // 3. Player's items and weapons.
-        CLAY({.layout{.sizing{.width = CLAY_SIZING_GROW(0)}}}) {
+        CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
           CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_items_locale());
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
 
             // Items.
             CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
@@ -1866,7 +1873,7 @@ void DoUI(bool draw) {
                   const auto  fb   = glib->items()->Get(item.type);
                   componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{
-                      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                      BF_CLAY_SIZING_GROW_XY,
                       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                     }}) {
                       BF_CLAY_IMAGE({.texId = fb->texture_id()});
@@ -1882,7 +1889,7 @@ void DoUI(bool draw) {
           CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Weapons label.
             CLAY({}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_label_weapons_locale());
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
 
               int weaponsCount = 0;
               for (const auto& weapon : g.run.playerWeapons) {
@@ -1910,7 +1917,7 @@ void DoUI(bool draw) {
                   if (weapon.type) {
                     const auto fb = glib->weapons()->Get(weapon.type);
                     CLAY({.layout{
-                      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                      BF_CLAY_SIZING_GROW_XY,
                       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                     }}) {
                       BF_CLAY_IMAGE({
@@ -1927,9 +1934,9 @@ void DoUI(bool draw) {
       }
 
       // Right column that contains stats and next wave button.
-      CLAY({.layout{.sizing{.height = CLAY_SIZING_GROW(0)}}}) {
+      CLAY({.layout{BF_CLAY_SIZING_GROW_Y}}) {
         CLAY({.layout{
-          .sizing{.height = CLAY_SIZING_GROW(0)},
+          BF_CLAY_SIZING_GROW_Y,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           // Stats.
@@ -1939,9 +1946,9 @@ void DoUI(bool draw) {
 
           // Advance to the next wave button.
           g.run.scheduledNextWave = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->shop_button_next_wave_locale());
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_next_wave_locale());
             BF_CLAY_TEXT(" (");
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
             BF_CLAY_TEXT(TextFormat(" %d)", g.run.waveIndex + 2));
           });
         }
@@ -1951,7 +1958,7 @@ void DoUI(bool draw) {
   // End.
   else if (g.run.state == StateType_END) {  ///
     CLAY({.layout{
-      .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+      BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_PADDING_ALL(8),
       .childGap = 8,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1959,38 +1966,93 @@ void DoUI(bool draw) {
     }}) {
       // Header. Run Won / Lost, Wave.
       CLAY({.layout{
-        .sizing{.width = CLAY_SIZING_GROW(0)},
+        BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
         // Run Won / Lost.
         {
-          const int locale
-            = (g.run.won ? glib->end_won_locale() : glib->end_lost_locale());
+          const int locale = (g.run.won ? glib->ui_won_locale() : glib->ui_lost_locale());
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
         }
 
         BF_CLAY_TEXT(". ");
 
         // Wave.
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->wave_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
         BF_CLAY_TEXT(TextFormat(" %d", g.run.waveIndex + 1));
       }
 
       // Main. Player's stats, weapons, items.
       CLAY({.layout{
-        .sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+        BF_CLAY_SIZING_GROW_XY,
+        .childGap = 8,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
+        // Stats.
         componentStats();
+
+        // Player's weapons and items.
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_XY,
+          .childGap        = 8,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
+          // Weapons label.
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
+
+          // Weapons.
+          CLAY({.layout{.childGap = 8}})
+          for (const auto& weapon : g.run.playerWeapons) {
+            if (weapon.type) {
+              const auto fb = glib->weapons()->Get(weapon.type);
+              componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({.layout{
+                  BF_CLAY_SIZING_GROW_XY,
+                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                }}) {
+                  BF_CLAY_IMAGE({.texId = fb->texture_ids()->Get(0)});
+                }
+              });
+            }
+          }
+
+          // Items label.
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
+
+          // Items.
+          const auto& items = g.run.a.playerItems;
+
+          constexpr int ITEMS_X = 10;
+          const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
+
+          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+          FOR_RANGE (int, y, ITEMS_Y) {
+            CLAY({.layout{.childGap = 8}})
+            FOR_RANGE (int, x, ITEMS_X) {
+              const auto t = y * ITEMS_X + x;
+              if (t >= items.count)
+                break;
+              const auto fb = glib->items()->Get(items[t].type);
+              componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({.layout{
+                  BF_CLAY_SIZING_GROW_XY,
+                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                }}) {
+                  BF_CLAY_IMAGE({.texId = fb->texture_id()});
+                }
+              });
+            }
+          }
+        }
       }
 
       // Footer. Restart.
       CLAY({.layout{
-        .sizing{.width = CLAY_SIZING_GROW(0)},
+        BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
         g.run.reload = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->end_button_restart_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_restart_locale());
         });
       }
     }
