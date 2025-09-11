@@ -47,8 +47,8 @@ x endgame screen gets shown + restart button works
 x endgame screen: blacken background + show cursor
 2025-09-10
 x endgame screen: current weapons + items
+x upgrades get shown only after level up
 
-* апгрейды только за полученные уровни
 * stat effect: LIFE_STEAL
 * stat effect: CURSE
 * stat effect: DAMAGE
