@@ -466,11 +466,13 @@ struct Weapon {
   Vector2      targetDir         = {};
   LogicalFrame startedShootingAt = {};
   LogicalFrame cooldownStartedAt = {};
+  int          tier              = {};
   // f32 lastShotDirection = {};
 };
 
 struct Item {
   ItemType type = {};
+  int      tier = {};
 };
 
 struct CreatureController {
@@ -575,6 +577,12 @@ struct ShopItem {
   WeaponType weapon = {};
   ItemType   item   = {};
   int        price  = {};
+  int        tier   = {};
+};
+
+struct Upgrade {
+  StatType stat = {};
+  int      tier = {};
 };
 
 struct GameData {
@@ -630,7 +638,7 @@ struct GameData {
     Array<int, StatType_COUNT>          playerStats        = {};
 
     struct {
-      Array<StatType, 4> toPick = {};
+      Array<Upgrade, 4> toPick = {};
     } upgrades;
 
     struct {
@@ -1013,6 +1021,7 @@ void MakeCreatureSpawn(MakeCreatureSpawnData data) {  ///
 
 void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
+  ASSERT(data.dir != Vector2Zero());
 
   Projectile projectile{
     .type               = data.type,
@@ -1165,6 +1174,7 @@ void RunInit() {
   FOR_RANGE (int, i, 3) {
     auto& weapon = g.run.playerWeapons[i];
     weapon.type  = weapons[i].type;
+    weapon.tier  = GRAND.Rand() % TOTAL_TIERS;
     g.run.playerWeaponsCount++;
   }
   RecalculatePlayerWeaponOffsets();
@@ -1335,7 +1345,10 @@ void RefillShopToPick() {  ///
   auto& toPick = g.run.shop.toPick;
 
   for (auto& v : toPick) {
-    v = {.price = 15 + (int)(GRAND.Rand() % 20)};
+    v = {
+      .price = 15 + (int)(GRAND.Rand() % 20),
+      .tier  = GRAND.Rand() % TOTAL_TIERS,
+    };
 
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
@@ -1402,29 +1415,16 @@ void DoUI(bool draw) {
   };
   // }
 
-  // LAMBDA (void, componentSlot, (bool enabled, auto innerLambda)) { ///
-  const int slotTexs_[]{
-    ///
-    glib->ui_item_slot_hovered_texture_id(),
-    glib->ui_item_slot_default_texture_id(),
-    glib->ui_item_slot_disabled_texture_id(),
-  };
-  VIEW_FROM_ARRAY_DANGER(slotTexs);
+  // LAMBDA (void, componentSlot, (bool enabled, int tier, auto innerLambda)) { ///
+  const auto slotTexs   = glib->ui_item_slot_texture_ids();
+  const auto slotColors = glib->ui_item_slot_colors();
 
-  const u32 slotColors_[]{
-    ///
-    glib->ui_item_slot_hovered_color(),
-    glib->ui_item_slot_default_color(),
-    glib->ui_item_slot_disabled_color(),
-  };
-  VIEW_FROM_ARRAY_DANGER(slotColors);
-
-  LAMBDA (void, componentSlot, (bool enabled, auto innerLambda)) {
-    const int type = (enabled ? (Clay_Hovered() ? 0 : 1) : 2);
+  LAMBDA (void, componentSlot, (bool enabled, int tier, auto innerLambda)) {
+    const int t = (enabled ? (Clay_Hovered() ? 0 : 1) : 2) + 3 * tier;
     BF_CLAY_IMAGE(
       {
-        .texId = slotTexs[type],
-        .color = ColorFromRGB(slotColors[type]),
+        .texId = slotTexs->Get(t),
+        .color = ColorFromRGB(slotColors->Get(t)),
       },
       innerLambda
     );
@@ -1641,8 +1641,8 @@ void DoUI(bool draw) {
         const auto fb_stats = glib->stats();
 
         FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
-          const auto stat = g.run.upgrades.toPick[i];
-          const auto fb   = fb_stats->Get(stat);
+          const auto upgrade = g.run.upgrades.toPick[i];
+          const auto fb      = fb_stats->Get(upgrade.stat);
           CLAY({}) {
             // Scheduling close of upgrade UI + applying selected stat upgrade.
             if (clicked()) {
@@ -1654,9 +1654,9 @@ void DoUI(bool draw) {
                 g.run.scheduledShop = true;
 
               const int amount = 1;
-              g.run.playerStats[stat] += amount;
+              g.run.playerStats[upgrade.stat] += amount * (upgrade.tier + 1);
 
-              switch (stat) {
+              switch (upgrade.stat) {
               case StatType_HP: {
                 PLAYER_CREATURE.health += amount;
                 PLAYER_CREATURE.maxHealth += amount;
@@ -1667,26 +1667,16 @@ void DoUI(bool draw) {
               }
             }
 
-            const int slotTexId
-              = (Clay_Hovered() ? glib->ui_item_slot_hovered_texture_id() : glib->ui_item_slot_default_texture_id());
-            const auto slotColor = ColorFromRGB(
-              Clay_Hovered() ? glib->ui_item_slot_hovered_color()
-                             : glib->ui_item_slot_default_color()
-            );
-
-            BF_CLAY_IMAGE(
-              {.texId = slotTexId, .color = slotColor},
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({
-                  .layout{
-                    BF_CLAY_SIZING_GROW_XY,
-                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                  },
-                }) {
-                  BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
-                }
+            componentSlot(true, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+              CLAY({
+                .layout{
+                  BF_CLAY_SIZING_GROW_XY,
+                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                },
+              }) {
+                BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
               }
-            );
+            });
           }
         }
       }
@@ -1809,7 +1799,7 @@ void DoUI(bool draw) {
                 // Item's image + name.
                 CLAY({.layout{.childGap = 8}}) {
                   // Image.
-                  componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                  componentSlot(false, v.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{
                       BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER
                     }}) {
@@ -1860,11 +1850,16 @@ void DoUI(bool draw) {
                     g.run.coins -= v.price;
                     if (v.weapon) {
                       g.run.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
+                      g.run.playerWeapons[emptyWeaponSlotIndex].tier = v.tier;
                       g.run.playerWeaponsCount++;
                       RecalculatePlayerWeaponOffsets();
                     }
-                    else if (v.item)
-                      *g.run.a.playerItems.Add() = {.type = v.item};
+                    else if (v.item) {
+                      *g.run.a.playerItems.Add() = {
+                        .type = v.item,
+                        .tier = v.tier,
+                      };
+                    }
                     else
                       INVALID_PATH;
                     v = {};
@@ -1899,7 +1894,7 @@ void DoUI(bool draw) {
 
                   const auto& item = g.run.a.playerItems[t];
                   const auto  fb   = glib->items()->Get(item.type);
-                  componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                  componentSlot(false, item.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{
                       BF_CLAY_SIZING_GROW_XY,
                       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1938,10 +1933,10 @@ void DoUI(bool draw) {
             FOR_RANGE (int, y, 2) {
               CLAY({.layout{.childGap = 8}})
               FOR_RANGE (int, x, 3) {
-                const int t = y * WEAPONS_X + x;
+                const int   t      = y * WEAPONS_X + x;
+                const auto& weapon = g.run.playerWeapons[t];
 
-                componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
-                  const auto& weapon = g.run.playerWeapons[t];
+                componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                   if (weapon.type) {
                     const auto fb = glib->weapons()->Get(weapon.type);
                     CLAY({.layout{
@@ -2033,7 +2028,7 @@ void DoUI(bool draw) {
           for (const auto& weapon : g.run.playerWeapons) {
             if (weapon.type) {
               const auto fb = glib->weapons()->Get(weapon.type);
-              componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+              componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
                   BF_CLAY_SIZING_GROW_XY,
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -2060,8 +2055,9 @@ void DoUI(bool draw) {
               const auto t = y * ITEMS_X + x;
               if (t >= items.count)
                 break;
-              const auto fb = glib->items()->Get(items[t].type);
-              componentSlot(false, [&]() BF_FORCE_INLINE_LAMBDA {
+              const auto& item = items[t];
+              const auto  fb   = glib->items()->Get(item.type);
+              componentSlot(false, item.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
                   BF_CLAY_SIZING_GROW_XY,
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -2271,12 +2267,29 @@ void GameFixedUpdate() {
         const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
         if (!newStat)
           continue;
+
         const auto fb = fb_stats->Get(newStat);
+
+        // Can't upgrade `curse`.
         if (!fb->upgrade_texture_id())
           continue;
-        if (ArrayContains(g.run.upgrades.toPick.base, i, newStat))
+
+        // Not showing same upgrade twice.
+        bool contains = false;
+        for (const auto& v : g.run.upgrades.toPick) {
+          if (v.stat == newStat) {
+            contains = true;
+            break;
+          }
+        }
+        if (contains)
           continue;
-        g.run.upgrades.toPick[i] = newStat;
+
+        // Setting upgrade.
+        g.run.upgrades.toPick[i] = {
+          .stat = newStat,
+          .tier = GRAND.Rand() % TOTAL_TIERS,
+        };
         break;
       }
     }
@@ -2336,8 +2349,10 @@ void GameFixedUpdate() {
     // Finishing wave opens upgrades screen.
     if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
       g.run.scheduledUpgrades = true;
-      if (g.run.waveIndex >= TOTAL_WAVES - 1)
+      if (g.run.waveIndex >= TOTAL_WAVES - 1) {
         g.run.scheduledEnd = true;
+        g.run.won          = true;
+      }
     }
 
     if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {
@@ -2523,7 +2538,7 @@ void GameFixedUpdate() {
             }
           }
 
-          if (!targetSet)
+          if (!targetSet && !weapon.startedShootingAt.IsSet())
             weapon.targetDir = {};
         }
 

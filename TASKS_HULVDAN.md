@@ -55,6 +55,8 @@ x correct player weapon angles
   5 weapons 72
   6 weapons 60
 x resetting weapon target when no mob is in range
+x fix of it
+x item / weapons tiers
 
 * combining weapons
 * weapons / item upgrading
