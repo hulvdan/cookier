@@ -463,7 +463,7 @@ struct MakeBodyData {
 struct Weapon {
   WeaponType   type              = {};
   Vector2      offset            = {};
-  f32          rotation          = {};
+  Vector2      targetDir         = {};
   LogicalFrame startedShootingAt = {};
   LogicalFrame cooldownStartedAt = {};
   // f32 lastShotDirection = {};
@@ -2483,8 +2483,8 @@ void GameFixedUpdate() {
         const auto fb  = glib->weapons()->Get(weapon.type);
         const auto pos = PLAYER_CREATURE.pos + weapon.offset;
 
-        f32       minDistSqr      = f32_inf;
-        Creature* closestCreature = nullptr;
+        f32 minDistSqr           = f32_inf;
+        int closestCreatureIndex = -1;
 
         // Resetting cooldown.
         const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
@@ -2493,28 +2493,38 @@ void GameFixedUpdate() {
           weapon.cooldownStartedAt = {};
 
         if (!weapon.cooldownStartedAt.IsSet()) {
-          for (int i = 1; i < g.run.a.creatures.count; i++) {
-            const auto creature = g.run.a.creatures.base + i;
-            if (!creature->active || creature->diedAt.IsSet())
+          int creatureIndex = -1;
+          for (const auto& creature : g.run.a.creatures) {
+            creatureIndex++;
+
+            if (!creature.active            //
+                || creature.diedAt.IsSet()  //
+                || (creature.type == CreatureType_PLAYER))
               continue;
 
-            const auto distSqr = Vector2DistanceSqr(pos, creature->pos);
+            const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
 
             if (distSqr < minDistSqr) {
-              minDistSqr      = distSqr;
-              closestCreature = creature;
+              minDistSqr           = distSqr;
+              closestCreatureIndex = creatureIndex;
             }
           }
 
-          if (closestCreature) {
+          bool targetSet = false;
+
+          if (closestCreatureIndex >= 0) {
+            const auto& closestCreature = g.run.a.creatures[closestCreatureIndex];
             if (minDistSqr < fb->distance() * fb->distance()) {
-              const auto dir  = Vector2DirectionOrRandom(pos, closestCreature->pos);
-              weapon.rotation = Vector2Angle(dir);
-              if (!weapon.startedShootingAt.IsSet()) {
+              const auto dir   = Vector2DirectionOrRandom(pos, closestCreature.pos);
+              weapon.targetDir = dir;
+              if (!weapon.startedShootingAt.IsSet())
                 weapon.startedShootingAt.SetNow();
-              }
+              targetSet = true;
             }
           }
+
+          if (!targetSet)
+            weapon.targetDir = {};
         }
 
         if (weapon.startedShootingAt.IsSet()) {
@@ -2536,7 +2546,7 @@ void GameFixedUpdate() {
               .type               = (ProjectileType)fb->projectile_type(),
               .ownerCreatureIndex = 0,
               .pos                = pos,
-              .dir                = Vector2Rotate(Vector2(1, 0), weapon.rotation),
+              .dir                = weapon.targetDir,
               .damage             = fb->damage(),
             });
           }
@@ -2854,14 +2864,22 @@ void GameDraw() {
           if (!weapon.type)
             continue;
 
-          const auto    fb = fb_weapons->Get(weapon.type);
-          const Vector2 r{1, 0};
-          const Vector2 scale{SIGN(Vector2Dot(r, Vector2Rotate(r, weapon.rotation))), 1};
+          const auto fb = fb_weapons->Get(weapon.type);
+
+          f32     rotation = 0;
+          Vector2 scale{0, 1};
+
+          if (weapon.targetDir == Vector2Zero())
+            scale.x = (creature.dir.x >= 0 ? 1 : -1);
+          else {
+            scale.x  = (weapon.targetDir.x >= 0 ? 1 : -1);
+            rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI : 0.0f);
+          }
 
           RenderGroup_OneShotTexture(
             {
               .texId    = fb->texture_ids()->Get(0),
-              .rotation = weapon.rotation + ((scale.x < 0) ? (f32)PI : 0.0f),
+              .rotation = rotation,
               .pos      = creature.pos + weapon.offset,
               .scale    = scale,
               .color    = Fade(ColorFromRGB(fb->color()), fade),
