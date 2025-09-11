@@ -1664,17 +1664,21 @@ void DoUI(bool draw) {
   }
   // Upgrades.
   else if (g.run.state == StateType_UPGRADES) {  ///
+    // Vertical columns with upgrades and stats;
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
     }}) {
+      // Upgrades.
       CLAY({.layout{
         .childGap = 20,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
+        // Level up label.
         BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_level_up_locale());
 
+        // Upgrades.
         CLAY({.layout{.childGap = 20}}) {
           const auto fb_stats = glib->stats();
 
@@ -1686,6 +1690,7 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               CLAY({.layout{.childGap = 8}}) {
+                // Slot with upgrade's image.
                 componentSlot(false, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                   CLAY({
                     .layout{
@@ -1697,10 +1702,11 @@ void DoUI(bool draw) {
                   }
                 });
 
+                // Name.
                 BF_CLAY_TEXT_LOCALIZED_DANGER(fb->upgrade_name_locale());
               }
 
-              // Scheduling close of upgrade UI + applying selected stat upgrade.
+              // Choose button.
               const auto clicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
               });
@@ -1746,6 +1752,7 @@ void DoUI(bool draw) {
         }
       }
 
+      // Stats.
       componentStats();
     }
   }
