@@ -63,11 +63,11 @@ x upgrades screen: button
 x upgrades screen: reroll
 
 <!-- HULVDAN REMEMBER TO USE <leader>D -->
-* clay ui 9 slice
-* женя должен научиться работать с UI
 * upgrades screen: show upgrade effects
-* upgrades screen: frame
 * upgrades screen: fix width of upgrade's frame
+* clay ui 9 slice
+* upgrades screen: frame
+* женя должен научиться работать с UI
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
