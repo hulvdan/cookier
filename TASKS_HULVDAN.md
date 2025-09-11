@@ -45,10 +45,9 @@ x fix: can't buy when `canBuy` is false
 x rendering stable sort
 x endgame screen gets shown + restart button works
 x endgame screen: blacken background + show cursor
-2025-09-10
+2025-09-11
 x endgame screen: current weapons + items
 x upgrades get shown only after level up
-2025-09-11
 x correct player weapon angles
   2 weapons 180
   3 weapons 120
