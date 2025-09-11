@@ -83,6 +83,7 @@ table Wave {
 table Stat {
     icon_texture_id: int;
     name_locale: int;
+    upgrade_name_locale: int;
     upgrade_texture_id: int;
     upgrade_values: [int];
 }
@@ -101,9 +102,11 @@ table GameLibrary {
     ui_wave_locale: int;
     ui_stats_locale: int;
     ui_current_level_locale: int;
+    ui_level_up_locale: int;
     ui_label_shop_locale: int;
     ui_label_items_locale: int;
     ui_label_weapons_locale: int;
+    ui_button_choose_locale: int;
     ui_button_reroll_locale: int;
     ui_button_next_wave_locale: int;
     ui_won_locale: int;

@@ -57,7 +57,21 @@ x correct player weapon angles
 x resetting weapon target when no mob is in range
 x fix of it
 x item / weapons tiers
+x upgrades screen: upgrade name
+x upgrades screen: stats
+x upgrades screen: button
 
+<!-- HULVDAN REMEMBER TO USE <leader>D -->
+* upgrades screen: show upgrade effects
+* upgrades screen: frame
+* upgrades screen: reroll
+* upgrades screen: fix width of upgrade's frame
+* upgrades screen:
+* upgrades screen:
+* upgrades screen:
+* upgrades screen:
+* upgrades screen:
+* upgrades screen:
 * combining weapons
 * weapons / item upgrading
 * better mob spawn rate (ref brotato)
@@ -91,84 +105,3 @@ x item / weapons tiers
 * internet shouldn't be required for building
   * check web
   * check web debug yandex build with mocked ysdk
-2025-09-11
-2025-09-12
-2025-09-13
-2025-09-14
-2025-09-15
-2025-09-16
-2025-09-17
-2025-09-18
-2025-09-19
-2025-09-20
-2025-09-21
-2025-09-22
-2025-09-23
-2025-09-24
-2025-09-25
-2025-09-26
-2025-09-27
-2025-09-28
-2025-09-29
-2025-09-30
-2025-10-01
-2025-10-02
-2025-10-03
-2025-10-04
-2025-10-05
-2025-10-06
-2025-10-07
-2025-10-08
-2025-10-09
-2025-10-10
-2025-10-11
-2025-10-12
-2025-10-13
-2025-10-14
-2025-10-15
-2025-10-16
-2025-10-17
-2025-10-18
-2025-10-19
-2025-10-20
-2025-10-21
-2025-10-22
-2025-10-23
-2025-10-24
-2025-10-25
-2025-10-26
-2025-10-27
-2025-10-28
-2025-10-29
-2025-10-30
-2025-10-31
-2025-11-01
-2025-11-02
-2025-11-03
-2025-11-04
-2025-11-05
-2025-11-06
-2025-11-07
-2025-11-08
-2025-11-09
-2025-11-10
-2025-11-11
-2025-11-12
-2025-11-13
-2025-11-14
-2025-11-15
-2025-11-16
-2025-11-17
-2025-11-18
-2025-11-19
-2025-11-20
-2025-11-21
-2025-11-22
-2025-11-23
-2025-11-24
-2025-11-25
-2025-11-26
-2025-11-27
-2025-11-28
-2025-11-29
-2025-11-30
