@@ -13,17 +13,17 @@ render_z:
   - GIZMOS
 vignette_texture_id: vignette
 localization:
-  WAVE: Волна
-  SHOP_STATS: Характеристики
-  SHOP_CURRENT_LEVEL: Текущий Уровень
-  SHOP_LABEL_SHOP: Магазин
-  SHOP_LABEL_ITEMS: Предметы
-  SHOP_LABEL_WEAPONS: Оружие
-  SHOP_BUTTON_REROLL: Перебросить
-  SHOP_BUTTON_NEXT_WAVE: Продолжить
-  END_WON: Победа
-  END_LOST: Поражение
-  END_BUTTON_RESTART: Начать Заново
+  UI_WAVE: Волна
+  UI_STATS: Характеристики
+  UI_CURRENT_LEVEL: Текущий Уровень
+  UI_LABEL_SHOP: Магазин
+  UI_LABEL_ITEMS: Предметы
+  UI_LABEL_WEAPONS: Оружие
+  UI_BUTTON_REROLL: Перебросить
+  UI_BUTTON_NEXT_WAVE: Продолжить
+  UI_WON: Победа
+  UI_LOST: Поражение
+  UI_BUTTON_RESTART: Начать Заново
   ITEM_SUGAR: Сахар
   ITEM_MILK: Молоко
   WEAPON_GUN: Пистолет

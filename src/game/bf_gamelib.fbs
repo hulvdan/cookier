@@ -98,17 +98,17 @@ table GameLibrary {
     localizations: [Localization] (required);
 
     // LOCALE_GEN_START.
-    wave_locale: int;
-    shop_stats_locale: int;
-    shop_current_level_locale: int;
-    shop_label_shop_locale: int;
-    shop_label_items_locale: int;
-    shop_label_weapons_locale: int;
-    shop_button_reroll_locale: int;
-    shop_button_next_wave_locale: int;
-    end_won_locale: int;
-    end_lost_locale: int;
-    end_button_restart_locale: int;
+    ui_wave_locale: int;
+    ui_stats_locale: int;
+    ui_current_level_locale: int;
+    ui_label_shop_locale: int;
+    ui_label_items_locale: int;
+    ui_label_weapons_locale: int;
+    ui_button_reroll_locale: int;
+    ui_button_next_wave_locale: int;
+    ui_won_locale: int;
+    ui_lost_locale: int;
+    ui_button_restart_locale: int;
     // LOCALE_GEN_END.
 
     // GAME STUFF

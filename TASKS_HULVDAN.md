@@ -45,11 +45,9 @@ x fix: can't buy when `canBuy` is false
 x rendering stable sort
 x endgame screen gets shown + restart button works
 x endgame screen: blacken background + show cursor
+2025-09-10
+x endgame screen: current weapons + items
 
-* endgame screen:
-* endgame screen:
-* endgame screen:
-* endgame screen:
 * апгрейды только за полученные уровни
 * stat effect: LIFE_STEAL
 * stat effect: CURSE
@@ -68,7 +66,6 @@ x endgame screen: blacken background + show cursor
 * stat effect: HARVESTING
 * finishing wave moves pickupables on floor to UI
 * ranged mobs
-2025-09-10
 2025-09-11
 2025-09-12
 2025-09-13

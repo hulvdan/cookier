@@ -273,6 +273,13 @@ struct Vector {
     return base[index];
   }
 
+  const T& operator[](int index) const {  ///
+    ASSERT(base != nullptr);
+    ASSERT(index >= 0);
+    ASSERT(index < count);
+    return base[index];
+  }
+
   int IndexOf(const T& value) const {  ///
     FOR_RANGE (int, i, count) {
       auto& v = *(base + i);
