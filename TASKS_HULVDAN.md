@@ -54,9 +54,12 @@ x correct player weapon angles
   4 weapons 90
   5 weapons 72
   6 weapons 60
+x resetting weapon target when no mob is in range
 
-* if weapon has no target to shoot at, it must reset it's rotation
+* combining weapons
 * weapons / item upgrading
+* better mob spawn rate (ref brotato)
+* stats frame
 * item effects
 * категоризация оружия
   что за precise/primitive/etc?
@@ -83,6 +86,9 @@ x correct player weapon angles
   * stat effect: HARVESTING
 * finishing wave moves pickupables on floor to UI
 * ranged mobs
+* internet shouldn't be required for building
+  * check web
+  * check web debug yandex build with mocked ysdk
 2025-09-11
 2025-09-12
 2025-09-13
