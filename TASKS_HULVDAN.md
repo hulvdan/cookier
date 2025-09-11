@@ -60,11 +60,13 @@ x item / weapons tiers
 x upgrades screen: upgrade name
 x upgrades screen: stats
 x upgrades screen: button
+x upgrades screen: reroll
 
 <!-- HULVDAN REMEMBER TO USE <leader>D -->
+* clay ui 9 slice
+* женя должен научиться работать с UI
 * upgrades screen: show upgrade effects
 * upgrades screen: frame
-* upgrades screen: reroll
 * upgrades screen: fix width of upgrade's frame
 * upgrades screen:
 * upgrades screen:
@@ -105,3 +107,4 @@ x upgrades screen: button
 * internet shouldn't be required for building
   * check web
   * check web debug yandex build with mocked ysdk
+* trim pngs of transparent pixels

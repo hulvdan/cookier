@@ -639,6 +639,9 @@ struct GameData {
 
     struct {
       Array<Upgrade, 4> toPick = {};
+
+      int rerolledTimes = 0;
+      int rerollPrice   = 0;
     } upgrades;
 
     struct {
@@ -1341,6 +1344,42 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
          + rerolledTimes * rerollPriceIncreasePerWave[waveIndex];
 }
 
+void RefillUpgradesToPick() {  ///
+  const auto fb_stats = glib->stats();
+
+  FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
+    while (1) {
+      const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
+      if (!newStat)
+        continue;
+
+      const auto fb = fb_stats->Get(newStat);
+
+      // Can't upgrade `curse`.
+      if (!fb->upgrade_texture_id())
+        continue;
+
+      // Not showing same upgrade twice.
+      bool contains = false;
+      for (const auto& v : g.run.upgrades.toPick) {
+        if (v.stat == newStat) {
+          contains = true;
+          break;
+        }
+      }
+      if (contains)
+        continue;
+
+      // Setting upgrade.
+      g.run.upgrades.toPick[i] = {
+        .stat = newStat,
+        .tier = GRAND.Rand() % TOTAL_TIERS,
+      };
+      break;
+    }
+  }
+}
+
 void RefillShopToPick() {  ///
   auto& toPick = g.run.shop.toPick;
 
@@ -1629,57 +1668,81 @@ void DoUI(bool draw) {
       BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
     }}) {
-      CLAY({.layout{.childGap = 8}}) {
-        const auto fb_stats = glib->stats();
+      CLAY({.layout{
+        .childGap = 20,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_level_up_locale());
 
-        FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
-          const auto upgrade = g.run.upgrades.toPick[i];
-          const auto fb      = fb_stats->Get(upgrade.stat);
-          CLAY({.layout{
-            .sizing{},
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-          }}) {
-            CLAY({.layout{.childGap = 8}}) {
-              componentSlot(false, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({
-                  .layout{
-                    BF_CLAY_SIZING_GROW_XY,
-                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                  },
-                }) {
-                  BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
-                }
-              });
+        CLAY({.layout{.childGap = 20}}) {
+          const auto fb_stats = glib->stats();
 
-              BF_CLAY_TEXT_LOCALIZED_DANGER(fb->upgrade_name_locale());
-            }
+          FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
+            const auto upgrade = g.run.upgrades.toPick[i];
+            const auto fb      = fb_stats->Get(upgrade.stat);
+            CLAY({.layout{
+              .sizing{},
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              CLAY({.layout{.childGap = 8}}) {
+                componentSlot(false, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+                  CLAY({
+                    .layout{
+                      BF_CLAY_SIZING_GROW_XY,
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    },
+                  }) {
+                    BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
+                  }
+                });
 
-            // Scheduling close of upgrade UI + applying selected stat upgrade.
-            const auto clicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
-            });
-            if (clicked) {
-              if (g.run.previousLevel < g.run.xpLevel) {
-                g.run.previousLevel++;
-                g.run.scheduledUpgrades = true;
+                BF_CLAY_TEXT_LOCALIZED_DANGER(fb->upgrade_name_locale());
               }
-              else
-                g.run.scheduledShop = true;
 
-              const int amount = 1;
-              g.run.playerStats[upgrade.stat] += amount * (upgrade.tier + 1);
+              // Scheduling close of upgrade UI + applying selected stat upgrade.
+              const auto clicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
+              });
+              if (clicked) {
+                if (g.run.previousLevel < g.run.xpLevel) {
+                  g.run.previousLevel++;
+                  g.run.scheduledUpgrades = true;
+                }
+                else
+                  g.run.scheduledShop = true;
 
-              switch (upgrade.stat) {
-              case StatType_HP: {
-                PLAYER_CREATURE.health += amount;
-                PLAYER_CREATURE.maxHealth += amount;
-              } break;
+                const int amount = 1;
+                g.run.playerStats[upgrade.stat] += amount * (upgrade.tier + 1);
 
-              default:
-                break;
+                switch (upgrade.stat) {
+                case StatType_HP: {
+                  PLAYER_CREATURE.health += amount;
+                  PLAYER_CREATURE.maxHealth += amount;
+                } break;
+
+                default:
+                  break;
+                }
               }
             }
           }
+        }
+
+        // Reroll button.
+        const bool canReroll = (g.run.upgrades.rerollPrice <= g.run.coins);
+        const bool rerolled  = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
+          CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
+            BF_CLAY_TEXT(TextFormat(" - %d ", g.run.upgrades.rerollPrice));
+            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+          }
+        });
+        if (rerolled) {
+          g.run.coins -= g.run.upgrades.rerollPrice;
+          g.run.upgrades.rerollPrice
+            = GetRerollPrice(g.run.waveIndex, ++g.run.upgrades.rerolledTimes);
+          RefillUpgradesToPick();
         }
       }
 
@@ -1735,8 +1798,8 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_HORIZONTAL;
 
           // Reroll button.
-          bool canReroll     = (g.run.coins >= g.run.shop.rerollPrice);
-          bool rerollClicked = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
+          const bool canReroll = (g.run.coins >= g.run.shop.rerollPrice);
+          const bool rerolled  = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{
               BF_CLAY_PADDING_ALL(8),
               BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1751,7 +1814,7 @@ void DoUI(bool draw) {
               }
             }
           });
-          if (canReroll && rerollClicked) {
+          if (rerolled) {
             g.run.coins -= g.run.shop.rerollPrice;
             g.run.shop.rerollPrice
               = GetRerollPrice(g.run.waveIndex, ++g.run.shop.rerolledTimes);
@@ -2262,40 +2325,10 @@ void GameFixedUpdate() {
     ge.settings.screenFade = glib->ui_modal_fade();
     SDL_ShowCursor();
 
-    const auto fb_stats = glib->stats();
+    RefillUpgradesToPick();
 
-    // Refilling `toPick`.
-    FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
-      while (1) {
-        const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
-        if (!newStat)
-          continue;
-
-        const auto fb = fb_stats->Get(newStat);
-
-        // Can't upgrade `curse`.
-        if (!fb->upgrade_texture_id())
-          continue;
-
-        // Not showing same upgrade twice.
-        bool contains = false;
-        for (const auto& v : g.run.upgrades.toPick) {
-          if (v.stat == newStat) {
-            contains = true;
-            break;
-          }
-        }
-        if (contains)
-          continue;
-
-        // Setting upgrade.
-        g.run.upgrades.toPick[i] = {
-          .stat = newStat,
-          .tier = GRAND.Rand() % TOTAL_TIERS,
-        };
-        break;
-      }
-    }
+    g.run.upgrades.rerolledTimes = 0;
+    g.run.upgrades.rerollPrice   = GetRerollPrice(g.run.waveIndex, 0);
 
     if (g.run.xpLevel == g.run.previousLevel)
       g.run.scheduledShop = true;
