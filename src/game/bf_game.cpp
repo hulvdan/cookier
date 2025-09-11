@@ -546,8 +546,6 @@ struct Pickupable {
   LogicalFrame   pickedUpAt = {};
 };
 
-constexpr int PLAYER_WEAPONS_COUNT = 6;
-
 struct MakeNumberData {
   NumberType type  = {};
   int        value = {};
@@ -627,8 +625,9 @@ struct GameData {
     int          waveIndex     = 0;
     LogicalFrame waveStartedAt = {};
 
-    Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
-    Array<int, StatType_COUNT>          playerStats   = {};
+    Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons      = {};
+    int                                 playerWeaponsCount = 0;
+    Array<int, StatType_COUNT>          playerStats        = {};
 
     struct {
       Array<StatType, 4> toPick = {};
@@ -1113,11 +1112,29 @@ Vector2 GetCameraTargetPos() {  ///
   return tpos;
 }
 
-void RunInit() {
-  FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
-    g.run.playerWeapons[i].offset = Vector2Rotate(Vector2(1, 0), i * PI / 3.0f);
+void RecalculatePlayerWeaponOffsets() {  ///
+  // Checking that playerWeaponsCount is correct.
+  int weaponsCount = 0;
+  for (const auto& weapon : g.run.playerWeapons) {
+    if (weapon.type)
+      weaponsCount++;
   }
+  ASSERT(g.run.playerWeaponsCount == weaponsCount);
 
+  // Checkin that INVALID weapons are on the end of `playerWeapons`.
+  for (int i = weaponsCount; i < g.run.playerWeapons.count; i++)
+    ASSERT(!g.run.playerWeapons[i].type);
+
+  // Recalculating offsets.
+  const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
+  const auto angleDelta    = 2.0f * (f32)PI / (f32)weaponsCount;
+  FOR_RANGE (int, i, g.run.playerWeaponsCount) {
+    g.run.playerWeapons[i].offset
+      = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
+  }
+}
+
+void RunInit() {
   // Creating box2d world.
   {  ///
     b2WorldDef worldDef = b2DefaultWorldDef();
@@ -1146,9 +1163,11 @@ void RunInit() {
   VIEW_FROM_ARRAY_DANGER(weapons);
 
   FOR_RANGE (int, i, 3) {
-    auto& weapon = g.run.playerWeapons[i * 2];
+    auto& weapon = g.run.playerWeapons[i];
     weapon.type  = weapons[i].type;
+    g.run.playerWeaponsCount++;
   }
+  RecalculatePlayerWeaponOffsets();
 
   // Placing walls.
   {  ///
@@ -1839,8 +1858,11 @@ void DoUI(bool draw) {
 
                   if (bought) {
                     g.run.coins -= v.price;
-                    if (v.weapon)
+                    if (v.weapon) {
                       g.run.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
+                      g.run.playerWeaponsCount++;
+                      RecalculatePlayerWeaponOffsets();
+                    }
                     else if (v.item)
                       *g.run.a.playerItems.Add() = {.type = v.item};
                     else

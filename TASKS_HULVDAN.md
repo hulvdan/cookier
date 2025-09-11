@@ -48,22 +48,39 @@ x endgame screen: blacken background + show cursor
 2025-09-10
 x endgame screen: current weapons + items
 x upgrades get shown only after level up
+x correct player weapon angles
+  2 weapons 180
+  3 weapons 120
+  4 weapons 90
+  5 weapons 72
+  6 weapons 60
 
-* stat effect: LIFE_STEAL
-* stat effect: CURSE
-* stat effect: DAMAGE
-* stat effect: DAMAGE_MELEE
-* stat effect: DAMAGE_RANGED
-* stat effect: DAMAGE_ELEMENTAL
-* stat effect: ATTACK_SPEED
-* stat effect: CRIT_CHANCE
-* stat effect: ENGINEERING
-* stat effect: RANGE
-* stat effect: ARMOR
-* stat effect: DODGE
-* stat effect: SPEED
-* stat effect: LUCK
-* stat effect: HARVESTING
+* if weapon has no target to shoot at, it must reset it's rotation
+* weapons / item upgrading
+* item effects
+* категоризация оружия
+  что за precise/primitive/etc?
+  жидкое / твёрдое?
+* не спавнить крестики прямо перед завершением волны
+* женя может билдить веб
+* Экран загрузки для HTML?
+* система записи / воспроизведения действий для облегчения отладки
+* stat effects:
+  * stat effect: LIFE_STEAL
+  * stat effect: CURSE
+  * stat effect: DAMAGE
+  * stat effect: DAMAGE_MELEE
+  * stat effect: DAMAGE_RANGED
+  * stat effect: DAMAGE_ELEMENTAL
+  * stat effect: ATTACK_SPEED
+  * stat effect: CRIT_CHANCE
+  * stat effect: ENGINEERING
+  * stat effect: RANGE
+  * stat effect: ARMOR
+  * stat effect: DODGE
+  * stat effect: SPEED
+  * stat effect: LUCK
+  * stat effect: HARVESTING
 * finishing wave moves pickupables on floor to UI
 * ranged mobs
 2025-09-11

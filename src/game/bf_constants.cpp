@@ -106,4 +106,16 @@ constexpr f32 SHOP_ITEM_RATIO = 0.4f;  // X% of items in shop, (1-X)% of weapons
 
 constexpr int TOTAL_WAVES = (BF_DEBUG ? 5 : 20);
 
+constexpr int PLAYER_WEAPONS_COUNT = 6;
+constexpr f32 PLAYER_WEAPONS_STARTING_ANGLES_[]{
+  0,
+  0,
+  -(f32)PI / 2.0f,
+  (f32)PI / 4.0f,
+  -(f32)PI / 2.0f + 2.0f * (f32)PI / 5.0f,
+  0
+};
+
+VIEW_FROM_ARRAY_DANGER(PLAYER_WEAPONS_STARTING_ANGLES);
+
 ///
