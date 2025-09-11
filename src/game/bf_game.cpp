@@ -1373,7 +1373,7 @@ void RefillUpgradesToPick() {  ///
       // Setting upgrade.
       g.run.upgrades.toPick[i] = {
         .stat = newStat,
-        .tier = (int)GRAND.Rand() % TOTAL_TIERS,
+        .tier = (int)(GRAND.Rand() % TOTAL_TIERS),
       };
       break;
     }
@@ -1386,7 +1386,7 @@ void RefillShopToPick() {  ///
   for (auto& v : toPick) {
     v = {
       .price = 15 + (int)(GRAND.Rand() % 20),
-      .tier  = (int)GRAND.Rand() % TOTAL_TIERS,
+      .tier  = (int)(GRAND.Rand() % TOTAL_TIERS),
     };
 
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
