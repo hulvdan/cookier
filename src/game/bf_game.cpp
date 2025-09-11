@@ -1373,7 +1373,7 @@ void RefillUpgradesToPick() {  ///
       // Setting upgrade.
       g.run.upgrades.toPick[i] = {
         .stat = newStat,
-        .tier = GRAND.Rand() % TOTAL_TIERS,
+        .tier = (int)GRAND.Rand() % TOTAL_TIERS,
       };
       break;
     }
@@ -1386,7 +1386,7 @@ void RefillShopToPick() {  ///
   for (auto& v : toPick) {
     v = {
       .price = 15 + (int)(GRAND.Rand() % 20),
-      .tier  = GRAND.Rand() % TOTAL_TIERS,
+      .tier  = (int)GRAND.Rand() % TOTAL_TIERS,
     };
 
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
@@ -1402,9 +1402,9 @@ void RefillShopToPick() {  ///
 }
 
 void DoUI(bool draw) {
-  // NOTE: Logic must be executed only when not drawing!
+  // NOTE: Logic must be executed only when `draw` is false!
   // e.g. updating mouse position, processing `clicked()`,
-  // logically reacting to `Clay_Hovered()`, setting game state, etc.
+  // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 
   if (!draw) {
     // Updating clay mouse pos.
