@@ -48,6 +48,7 @@ x endgame screen: blacken background + show cursor
 2025-09-10
 x endgame screen: current weapons + items
 x upgrades get shown only after level up
+2025-09-11
 x correct player weapon angles
   2 weapons 180
   3 weapons 120
