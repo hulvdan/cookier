@@ -617,11 +617,12 @@ struct GameData {
     int          toSpawn         = 3;
     LogicalFrame lastLifestealAt = {};
 
-    f32 xp          = 0;
-    f32 nextLevelXp = 10;
-    int coins       = 0;
-    int xpLevel     = 1;
-    int pierceCount = 0;
+    f32 xp            = 0;
+    f32 nextLevelXp   = 10;
+    int coins         = 0;
+    int xpLevel       = 1;
+    int previousLevel = 1;
+    int pierceCount   = 0;
 
     int          waveIndex     = 0;
     LogicalFrame waveStartedAt = {};
@@ -1626,7 +1627,12 @@ void DoUI(bool draw) {
           CLAY({}) {
             // Scheduling close of upgrade UI + applying selected stat upgrade.
             if (clicked()) {
-              g.run.scheduledShop = true;
+              if (g.run.previousLevel < g.run.xpLevel) {
+                g.run.previousLevel++;
+                g.run.scheduledUpgrades = true;
+              }
+              else
+                g.run.scheduledShop = true;
 
               const int amount = 1;
               g.run.playerStats[stat] += amount;
@@ -2218,6 +2224,12 @@ void GameFixedUpdate() {
     if (IsKeyPressed(SDL_SCANCODE_F7) && (g.run.state == StateType_GAMEPLAY)) {  ///
       g.run.scheduledEnd = true;
     }
+
+    // F8 - add level.
+    if (IsKeyPressed(SDL_SCANCODE_F8) && (g.run.state == StateType_GAMEPLAY)) {
+      g.run.nextLevelXp *= 2;
+      g.run.xpLevel++;
+    }
   }
 
   // Advancing to upgrades.
@@ -2246,6 +2258,9 @@ void GameFixedUpdate() {
         break;
       }
     }
+
+    if (g.run.xpLevel == g.run.previousLevel)
+      g.run.scheduledShop = true;
   }
 
   // Advancing to shop.
@@ -2989,6 +3004,7 @@ void GameDraw() {
     DebugText("Close debug menu: F5 +10 coins");
     DebugText("Close debug menu: F6 add item");
     DebugText("Close debug menu: F7 show end screen");
+    DebugText("Close debug menu: F8 add level");
 
     LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
       DebugText(
