@@ -1625,27 +1625,40 @@ void DoUI(bool draw) {
   }
   // Upgrades.
   else if (g.run.state == StateType_UPGRADES) {  ///
-    CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
-      CLAY({
-        .layout{.childGap = 8},
-        .floating{
-          .attachPoints{
-            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-          },
-          .attachTo = CLAY_ATTACH_TO_PARENT,
-        },
-      }) {
-        FLOATING_BEAUTIFY;
-
+    CLAY({.layout{
+      BF_CLAY_SIZING_GROW_XY,
+      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+    }}) {
+      CLAY({.layout{.childGap = 8}}) {
         const auto fb_stats = glib->stats();
 
         FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
           const auto upgrade = g.run.upgrades.toPick[i];
           const auto fb      = fb_stats->Get(upgrade.stat);
-          CLAY({}) {
+          CLAY({.layout{
+            .sizing{},
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
+            CLAY({.layout{.childGap = 8}}) {
+              componentSlot(false, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({
+                  .layout{
+                    BF_CLAY_SIZING_GROW_XY,
+                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                  },
+                }) {
+                  BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
+                }
+              });
+
+              BF_CLAY_TEXT_LOCALIZED_DANGER(fb->upgrade_name_locale());
+            }
+
             // Scheduling close of upgrade UI + applying selected stat upgrade.
-            if (clicked()) {
+            const auto clicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
+            });
+            if (clicked) {
               if (g.run.previousLevel < g.run.xpLevel) {
                 g.run.previousLevel++;
                 g.run.scheduledUpgrades = true;
@@ -1666,25 +1679,15 @@ void DoUI(bool draw) {
                 break;
               }
             }
-
-            componentSlot(true, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-              CLAY({
-                .layout{
-                  BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                },
-              }) {
-                BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
-              }
-            });
           }
         }
       }
+
+      componentStats();
     }
   }
   // Shop.
   else if (g.run.state == StateType_SHOP) {  ///
-
     // Columns.
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,

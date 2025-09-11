@@ -42,8 +42,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # Stats.
     # ============================================================
-    for x in gamelib["stat__table"][1:]:
-        x["name_locale"] = "STAT_" + x["type"].upper()
+    for i, x in enumerate(gamelib["stat__table"]):
+        if i >= 1:
+            x["name_locale"] = "STAT_" + x["type"].upper()
+        if i >= 2:
+            x["upgrade_name_locale"] = "UPGRADE_NAME_" + x["type"].upper()
 
     # Tables.
     # ============================================================

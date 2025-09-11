@@ -16,9 +16,11 @@ localization:
   UI_WAVE: Волна
   UI_STATS: Характеристики
   UI_CURRENT_LEVEL: Текущий Уровень
+  UI_LEVEL_UP: Новый Уровень
   UI_LABEL_SHOP: Магазин
   UI_LABEL_ITEMS: Предметы
   UI_LABEL_WEAPONS: Оружие
+  UI_BUTTON_CHOOSE: Выбрать
   UI_BUTTON_REROLL: Перебросить
   UI_BUTTON_NEXT_WAVE: Продолжить
   UI_WON: Победа
@@ -45,6 +47,22 @@ localization:
   STAT_SPEED: Скорость
   STAT_LUCK: Удача
   STAT_HARVESTING: Сбор
+  UPGRADE_NAME_HP: Сердце
+  UPGRADE_NAME_REGEN: Лёгкие
+  UPGRADE_NAME_LIFE_STEAL: Челюсть
+  UPGRADE_NAME_DAMAGE: Трицепс
+  UPGRADE_NAME_DAMAGE_MELEE: Предплечья
+  UPGRADE_NAME_DAMAGE_RANGED: Плечи
+  UPGRADE_NAME_DAMAGE_ELEMENTAL: Мозг
+  UPGRADE_NAME_ATTACK_SPEED: Рефлексы
+  UPGRADE_NAME_CRIT_CHANCE: Пальцы
+  UPGRADE_NAME_ENGINEERING: Череп
+  UPGRADE_NAME_RANGE: Глаза
+  UPGRADE_NAME_ARMOR: Грудь
+  UPGRADE_NAME_DODGE: Спина
+  UPGRADE_NAME_SPEED: Ноги
+  UPGRADE_NAME_LUCK: Нос
+  UPGRADE_NAME_HARVESTING: Руки
 ui_health_texture_ids:
   - ui_health_back
   - ui_health_top
