@@ -115,12 +115,8 @@ table GameLibrary {
     ui_health_texture_ids: [int] (required);
     ui_modal_fade: float;
     ui_coin_texture_id: int;
-    ui_item_slot_default_texture_id: int;
-    ui_item_slot_default_color: uint;
-    ui_item_slot_hovered_texture_id: int;
-    ui_item_slot_hovered_color: uint;
-    ui_item_slot_disabled_texture_id: int;
-    ui_item_slot_disabled_color: uint;
+    ui_item_slot_texture_ids: [int] (required);
+    ui_item_slot_colors: [uint] (required);
     ui_button_default_color: uint;
     ui_button_hovered_color: uint;
     ui_button_disabled_color: uint;
