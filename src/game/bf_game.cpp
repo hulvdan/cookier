@@ -1511,8 +1511,16 @@ void DoUI(bool draw) {
   };
 
   // Gameplay.
-  if (g.run.state == StateType_GAMEPLAY) {
-    CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
+  if ((g.run.state == StateType_GAMEPLAY) || (g.run.state == StateType_UPGRADES)) {
+    CLAY({
+      .layout{BF_CLAY_SIZING_GROW_XY},
+      .floating{
+        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+        .attachTo           = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+
       // Health bar + coins.
       // {  ///
       const auto  texs   = glib->ui_health_texture_ids();
@@ -1627,10 +1635,16 @@ void DoUI(bool draw) {
         },
       }) {
         FLOATING_BEAUTIFY;
-        const auto remainingFrames
-          = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
-        const int remainingSeconds = remainingFrames.value / FIXED_FPS + 1;
-        BF_CLAY_TEXT(TextFormat("Wave %d. %d...", g.run.waveIndex + 1, remainingSeconds));
+
+        BF_CLAY_TEXT(TextFormat("Wave %d", g.run.waveIndex + 1));
+
+        if (g.run.state == StateType_GAMEPLAY) {
+          const auto remainingFrames
+            = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
+          const int remainingSeconds
+            = CeilDivision(MAX(1, remainingFrames.value), FIXED_FPS);
+          BF_CLAY_TEXT(TextFormat(". %d...", remainingSeconds));
+        }
       }
       // }
 
@@ -1662,8 +1676,9 @@ void DoUI(bool draw) {
       // }
     }
   }
+
   // Upgrades.
-  else if (g.run.state == StateType_UPGRADES) {  ///
+  if (g.run.state == StateType_UPGRADES) {  ///
     // Vertical columns with upgrades and stats;
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
@@ -2159,6 +2174,9 @@ void DoUI(bool draw) {
         });
       }
     }
+  }
+  else if (g.run.state == StateType_GAMEPLAY) {
+    // NOTE: Intentionally left blank.
   }
   else
     INVALID_PATH;
