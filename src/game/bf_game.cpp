@@ -1686,7 +1686,7 @@ void DoUI(bool draw) {
             const auto upgrade = g.run.upgrades.toPick[i];
             const auto fb      = fb_stats->Get(upgrade.stat);
             CLAY({.layout{
-              .sizing{},
+              .childGap        = 8,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               CLAY({.layout{.childGap = 8}}) {
@@ -1706,6 +1706,13 @@ void DoUI(bool draw) {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(fb->upgrade_name_locale());
               }
 
+              // Amount.
+              const auto amount = fb->upgrade_values()->Get(upgrade.tier);
+              CLAY({}) {
+                BF_CLAY_TEXT(TextFormat("+%d ", amount));
+                BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+              }
+
               // Choose button.
               const auto clicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
@@ -1718,8 +1725,7 @@ void DoUI(bool draw) {
                 else
                   g.run.scheduledShop = true;
 
-                const int amount = 1;
-                g.run.playerStats[upgrade.stat] += amount * (upgrade.tier + 1);
+                g.run.playerStats[upgrade.stat] += amount;
 
                 switch (upgrade.stat) {
                 case StatType_HP: {
