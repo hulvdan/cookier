@@ -251,10 +251,21 @@ struct DrawTextureData {
   Vector2 pos           = {};
   Vector2 anchor        = Vector2Half();
   Vector2 scale         = {1, 1};
-  Margins sourceMargins = {0, 0};
+  Margins sourceMargins = {};
   Color   color         = WHITE;
   // bgfx::ProgramHandle program = {};
   // int materialsBufferStart = -1;
+};
+
+struct DrawTextureNineSliceData {
+  int     texId            = -1;
+  f32     rotation         = {};
+  Vector2 pos              = {};
+  Vector2 anchor           = Vector2Half();
+  Vector2 scale            = {1, 1};
+  Color   color            = WHITE;
+  Margins nineSliceMargins = {};
+  Vector2 nineSliceSize    = {};
 };
 
 struct DrawCircleData {
@@ -310,6 +321,7 @@ struct DrawTextData {
 enum RenderCommandType {
   RenderCommandType_INVALID,
   RenderCommandType_TEXTURE,
+  RenderCommandType_TEXTURE_NINE_SLICE,
   RenderCommandType_CIRCLE,
   RenderCommandType_RECT,
   RenderCommandType_STRIPS,
@@ -329,15 +341,21 @@ struct RenderCommand {
   RenderCommandType type = RenderCommandType_INVALID;
 
   union {
-    DrawTextureData texture;
-    DrawCircleData  circle;
-    DrawRectData    rect;
-    DrawTextData    text;
+    DrawTextureData          texture;
+    DrawTextureNineSliceData textureNineSlice;
+    DrawCircleData           circle;
+    DrawRectData             rect;
+    DrawTextData             text;
   } _u;
 
   auto& DataTexture() const {  ///
     ASSERT(type == RenderCommandType_TEXTURE);
     return _u.texture;
+  }
+
+  auto& DataTextureNineSlice() const {  ///
+    ASSERT(type == RenderCommandType_TEXTURE_NINE_SLICE);
+    return _u.textureNineSlice;
   }
 
   auto& DataCircle() const {  ///
@@ -594,6 +612,35 @@ BF_FORCE_INLINE void RenderGroup_CommandTexture(
   *ge.render.commands.Add() = {
     .type = RenderCommandType_TEXTURE,
     ._u{.texture = data},
+  };
+}
+
+BF_FORCE_INLINE void RenderGroup_CommandTextureNineSlice(
+  DrawTextureNineSliceData data,
+  RenderCommandSetSortY    setSortY = RenderCommandSetSortY_DO_NOTHING
+) {  ///
+  _ApplyCurrentCamera(&data.pos, &data.scale, true);
+
+  ASSERT(data.nineSliceMargins.left > 0);
+  ASSERT(data.nineSliceMargins.right > 0);
+  ASSERT(data.nineSliceMargins.top > 0);
+  ASSERT(data.nineSliceMargins.bottom > 0);
+
+  if ((data.nineSliceSize.x == 0) || (data.nineSliceSize.y == 0))
+    return;
+
+  if (setSortY == RenderCommandSetSortY_SET_BASELINE) {
+    auto tex    = glib->atlas_textures()->Get(data.texId);
+    auto height = (f32)tex->size_y();
+    auto off    = ASSETS_TO_LOGICAL_RATIO * data.scale.y
+               * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
+    RenderGroup_SetSortY(data.pos.y + off);
+  }
+
+  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
+  *ge.render.commands.Add() = {
+    .type = RenderCommandType_TEXTURE_NINE_SLICE,
+    ._u{.textureNineSlice = data},
   };
 }
 
@@ -928,7 +975,8 @@ void FlushRenderCommands() {
         const Font*   newFont   = nullptr;
         const Shader* newShader = nullptr;
 
-        if (command.type == RenderCommandType_TEXTURE)
+        if ((command.type == RenderCommandType_TEXTURE)
+            || (command.type == RenderCommandType_TEXTURE_NINE_SLICE))
           newShader = &shaders[0];
         else if (command.type == RenderCommandType_RECT)
           newShader = &shaders[1];
@@ -1012,7 +1060,6 @@ void FlushRenderCommands() {
             };
             destRec.pos -= LOGICAL_RESOLUTION / 2;
 
-            // TODO: add / subtract epsilon?
             auto sx0 = sourceRec.pos.x;
             auto sx1 = sx0 + sourceRec.size.x;
             auto sy0 = sourceRec.pos.y;
@@ -1128,6 +1175,155 @@ void FlushRenderCommands() {
 
           ASSERT_FALSE(drawCallIndicesCount % 6);
           ASSERT_FALSE(drawCallVerticesCount % 4);
+        } break;
+
+        case RenderCommandType_TEXTURE_NINE_SLICE: {  ///
+          if (!mode) {
+            drawCallIndicesCount += 6 * 9;
+            drawCallVerticesCount += 16;
+          }
+          else {
+            const auto& data = command.DataTextureNineSlice();
+            ASSERT(data.texId >= 0);
+
+            const auto tex = glib->atlas_textures()->Get(data.texId);
+
+            const Rect sourceRec{
+              .pos{
+                (f32)tex->atlas_x() + (f32)tex->size_x(),
+                (f32)tex->atlas_y() + (f32)tex->size_y(),
+              },
+              .size{(f32)tex->size_x(), (f32)tex->size_y()},
+            };
+            Rect destRec{
+              .pos{
+                data.pos.x
+                  + (f32)tex->size_x() * abs(data.scale.x) * ge.meta.screenScale
+                      * data.anchor.x,
+                data.pos.y
+                  + (f32)tex->size_y() * abs(data.scale.y) * ge.meta.screenScale
+                      * data.anchor.y,
+              },
+              .size{
+                (f32)tex->size_x() * abs(data.scale.x) * ge.meta.screenScale,
+                (f32)tex->size_y() * abs(data.scale.y) * ge.meta.screenScale,
+              },
+            };
+            destRec.pos -= LOGICAL_RESOLUTION / 2;
+
+            auto sx0 = sourceRec.pos.x;
+            auto sx3 = sx0 + sourceRec.size.x;
+            auto sy0 = sourceRec.pos.y;
+            auto sy3 = sy0 + sourceRec.size.y;
+            sx0 += 0.7f;
+            sx3 -= 0.7f;
+            sy0 += 0.7f;
+            sy3 -= 0.7f;
+            auto sx1 = sx0 + data.nineSliceMargins.left;
+            auto sx2 = sx3 - data.nineSliceMargins.right;
+            auto sy1 = sy0 + data.nineSliceMargins.top;
+            auto sy2 = sy3 - data.nineSliceMargins.bottom;
+            sx0 /= (f32)ge.meta.atlas.size.x;
+            sx1 /= (f32)ge.meta.atlas.size.x;
+            sx2 /= (f32)ge.meta.atlas.size.x;
+            sx3 /= (f32)ge.meta.atlas.size.x;
+            sy0 /= (f32)ge.meta.atlas.size.y;
+            sy1 /= (f32)ge.meta.atlas.size.y;
+            sy2 /= (f32)ge.meta.atlas.size.y;
+            sy3 /= (f32)ge.meta.atlas.size.y;
+            if (data.scale.x < 0) {
+              auto t = sx0;
+              sx0    = sx3;
+              sx3    = t;
+              t      = sx1;
+              sx1    = sx2;
+              sx2    = t;
+            }
+            if (data.scale.y < 0) {
+              auto t = sy0;
+              sy0    = sy3;
+              sy3    = t;
+              t      = sy1;
+              sy1    = sy2;
+              sy2    = t;
+            }
+
+            auto dsx = destRec.size.x;
+            auto dsy = destRec.size.y;
+
+            Array<Vector2, 16> points{};
+
+            if (data.rotation == 0.0f) {
+              auto dx0 = destRec.pos.x;
+              auto dx3 = destRec.pos.x + dsx;
+              auto dy0 = destRec.pos.y;
+              auto dy3 = destRec.pos.y + dsy;
+
+              dx0 -= data.anchor.x * dsx;
+              dx3 -= data.anchor.x * dsx;
+              dy0 -= data.anchor.y * dsy;
+              dy3 -= data.anchor.y * dsy;
+
+              auto dx1 = dx0 + 1;
+              auto dx2 = dx3 - 1;
+              auto dy1 = dy0 + 1;
+              auto dy2 = dy3 - 1;
+
+              f32 dx_[4]{dx0, dx1, dx2, dx3};
+              f32 dy_[4]{dy0, dy1, dy2, dy3};
+              FOR_RANGE (int, y, 4) {
+                FOR_RANGE (int, x, 4) {
+                  const auto t = y * 4 + x;
+                  points[t]    = {dx_[x], dy_[y]};
+                }
+              }
+            }
+            else
+              NOT_IMPLEMENTED;
+
+            for (auto& point : points) {
+              point.x /= (f32)LOGICAL_RESOLUTION.x / 2.0f;
+              point.y /= (f32)LOGICAL_RESOLUTION.y / 2.0f;
+            }
+
+            const auto r = ge.meta.screenToLogicalRatio;
+            if (r >= 1) {  // Window is too wide.
+              const auto c = 1 - 1 / r;
+              for (auto& point : points)
+                point.x -= point.x * c;
+            }
+            else {  // Window is too high.
+              const auto c = 1 - r;
+              for (auto& point : points)
+                point.y -= point.y * c;
+            }
+
+            int            quadIndicesFilled = 0;
+            Array<int, 54> quadIndices{};
+            FOR_RANGE (int, y, 3) {
+              FOR_RANGE (int, x, 3) {
+                int baseIndices[]{0, 1, 4, 1, 5, 4};
+                for (int index : baseIndices)
+                  quadIndices[quadIndicesFilled++] = index + x + 4 * y;
+              }
+            }
+
+            for (const auto index : quadIndices) {
+              ((u16*)tib.data)[drawCallIndicesCount++]
+                = (u16)(index + drawCallVerticesCount);
+            }
+
+            const auto color  = *(u32*)&data.color;
+            const f32  sx_[4] = {sx0, sx1, sx2, sx3};
+            const f32  sy_[4] = {sy3, sy2, sy1, sy0};
+            FOR_RANGE (int, y, 4) {
+              FOR_RANGE (int, x, 4) {
+                const auto t = y * 4 + x;
+                ((_PosColorTexVertex*)tvb.data)[drawCallVerticesCount++]
+                  = {points[t].x, points[t].y, 0.0f, color, sx_[x], sy_[y]};
+              }
+            }
+          }
         } break;
 
         case RenderCommandType_CIRCLE: {  ///

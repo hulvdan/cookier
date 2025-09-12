@@ -142,12 +142,12 @@ Clay_Color ToClayColor(Color color) {
     BF_CLAY_TEXT(text);                                      \
   }
 
-#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr)     \
-  .custom {                                                \
-    .customData = PushClayCustomData({                     \
-      .type      = ClayCustomElementType_BEAUTIFIER_START, \
-      .nineSlice = (gamelibNineSlicePtr),                  \
-    }),                                                    \
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr) \
+  .custom {                                            \
+    .customData = PushClayCustomData({                 \
+      .type      = ClayCustomElementType_NINE_SLICE,   \
+      .nineSlice = (gamelibNineSlicePtr),              \
+    }),                                                \
   }
 
 struct Beautify {
@@ -224,11 +224,12 @@ enum ClayCustomElementType : u16 {
 };
 
 struct ClayCustomData {
-  ClayCustomElementType    type      = {};
-  u16                      alpha     = u16_max;
-  Vector2                  translate = {0, 0};
-  Vector2                  scale     = {1, 1};
-  const BFGame::NineSlice* nineSlice = nullptr;
+  ClayCustomElementType    type           = {};
+  u16                      alpha          = u16_max;
+  Vector2                  translate      = {0, 0};
+  Vector2                  scale          = {1, 1};
+  const BFGame::NineSlice* nineSlice      = nullptr;
+  Color                    nineSliceColor = WHITE;
 };
 
 // ============================================================ }
@@ -1242,19 +1243,6 @@ void GameInit() {  ///
   });
 
   RunInit();
-}
-
-Vector2 WorldPosToLogical(Vector2 pos) {  ///
-  return pos * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y)
-         + Vector2(LOGICAL_RESOLUTION.x - LOGICAL_RESOLUTION.y, 0) / 2.0f;
-}
-
-f32 WorldSizeToLogical(f32 size) {  ///
-  return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
-}
-
-Vector2 WorldSizeToLogical(Vector2 size) {  ///
-  return size * ((f32)LOGICAL_RESOLUTION.y / (f32)WORLD_SIZE.y);
 }
 
 constexpr f32 GetStatRegenPerSecond(int level) {  ///
@@ -2303,7 +2291,26 @@ void DoUI(bool draw) {
             } break;
 
             case ClayCustomElementType_NINE_SLICE: {
-              NOT_IMPLEMENTED;
+              const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
+              const auto fb              = data.nineSlice;
+              RenderGroup_CommandTextureNineSlice({
+                .texId = data.nineSlice->texture_id(),
+                .pos{bb.x, bb.y},
+                .anchor{},
+                .color{
+                  data.nineSliceColor.r,
+                  data.nineSliceColor.g,
+                  data.nineSliceColor.b,
+                  (u8)((f32)data.nineSliceColor.a * beautifierAlpha)
+                },
+                .nineSliceMargins{
+                  (f32)fb->left() / downscaleFactor,
+                  (f32)fb->right() / downscaleFactor,
+                  (f32)fb->top() / downscaleFactor,
+                  (f32)fb->bottom() / downscaleFactor,
+                },
+                .nineSliceSize{(f32)bb.width, (f32)bb.height},
+              });
             } break;
 
             default:
