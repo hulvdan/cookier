@@ -1410,8 +1410,6 @@ void RefillShopToPick() {  ///
   }
 }
 
-// struct Custom
-
 void DoUI(bool draw) {
   // NOTE: Logic must be executed only when `draw` is false!
   // e.g. updating mouse position, processing `clicked()`,
