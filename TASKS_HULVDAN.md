@@ -63,9 +63,9 @@ x upgrades screen: button
 x upgrades screen: reroll
 2025-09-12
 x upgrades screen: show upgrade effects
+x upgrades screen: show gameplay UI (so that coins are shown)
 
 <!-- HULVDAN REMEMBER TO USE <leader>D -->
-* upgrades screen: show gameplay UI (so that coins are shown)
 * upgrades screen: fix width of upgrade's frame
 * clay ui 9 slice
 * upgrades screen: frame
