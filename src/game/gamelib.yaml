@@ -107,6 +107,12 @@ ui_button_hovered_color: 0x885a44
 ui_button_disabled_color: 0x3a3a41
 ui_item_big_frame_color: 0x1d1b24
 ui_shop_current_level_icon_texture_id: game_stat_icon_armor
+ui_frame_nine_slice:
+  texture_id: ui_frame
+  left: 49
+  right: 49
+  top: 49
+  bottom: 49
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 creature__table:
   - type: INVALID

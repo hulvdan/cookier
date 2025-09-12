@@ -477,6 +477,7 @@ def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dic
 
         atlases_data.append(
             {
+                "atlas_downscale_factor": factor,
                 "atlas_textures": textures,
                 "atlas_size_x": json_data["meta"]["size"]["w"],
                 "atlas_size_y": json_data["meta"]["size"]["h"],
