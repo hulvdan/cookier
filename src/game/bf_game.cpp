@@ -142,6 +142,14 @@ Clay_Color ToClayColor(Color color) {
     BF_CLAY_TEXT(text);                                      \
   }
 
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr)     \
+  .custom {                                                \
+    .customData = PushClayCustomData({                     \
+      .type      = ClayCustomElementType_BEAUTIFIER_START, \
+      .nineSlice = (gamelibNineSlicePtr),                  \
+    }),                                                    \
+  }
+
 struct Beautify {
   u16     alpha     = u16_max;
   Vector2 translate = {0, 0};
@@ -210,16 +218,17 @@ struct ClayImageData {
 
 enum ClayCustomElementType : u16 {
   ClayCustomElementType_INVALID,
-  ClayCustomElementType_DIALOGUE,
   ClayCustomElementType_BEAUTIFIER_START,
   ClayCustomElementType_BEAUTIFIER_END,
+  ClayCustomElementType_NINE_SLICE,
 };
 
 struct ClayCustomData {
-  ClayCustomElementType type      = {};
-  u16                   alpha     = u16_max;
-  Vector2               translate = {0, 0};
-  Vector2               scale     = {1, 1};
+  ClayCustomElementType    type      = {};
+  u16                      alpha     = u16_max;
+  Vector2                  translate = {0, 0};
+  Vector2                  scale     = {1, 1};
+  const BFGame::NineSlice* nineSlice = nullptr;
 };
 
 // ============================================================ }
@@ -1401,6 +1410,8 @@ void RefillShopToPick() {  ///
   }
 }
 
+// struct Custom
+
 void DoUI(bool draw) {
   // NOTE: Logic must be executed only when `draw` is false!
   // e.g. updating mouse position, processing `clicked()`,
@@ -1881,8 +1892,9 @@ void DoUI(bool draw) {
                   BF_CLAY_PADDING_ALL(8),
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
-                .backgroundColor
-                = ToClayColor(ColorFromRGB(glib->ui_item_big_frame_color())),
+                // .backgroundColor
+                // = ToClayColor(ColorFromRGB(glib->ui_item_big_frame_color())),
+                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
               }) {
                 const auto fb_item = (v.item ? glib->items()->Get(v.item) : nullptr);
                 const auto fb_weapon
@@ -2290,6 +2302,10 @@ void DoUI(bool draw) {
             case ClayCustomElementType_BEAUTIFIER_END: {
               ASSERT(beautifiersCount > 0);
               beautifiersCount--;
+            } break;
+
+            case ClayCustomElementType_NINE_SLICE: {
+              NOT_IMPLEMENTED;
             } break;
 
             default:

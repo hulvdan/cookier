@@ -87,9 +87,18 @@ table Stat {
     upgrade_texture_id: int;
     upgrade_values: [int];
 }
+
+table NineSlice {
+    texture_id: int;
+    left: int;
+    right: int;
+    top: int;
+    bottom: int;
+}
 // GAME STUFF END
 
 table GameLibrary {
+    atlas_downscale_factor: int;
     atlas_size_x: uint;
     atlas_size_y: uint;
     atlas_textures: [Texture] (required);
@@ -125,6 +134,7 @@ table GameLibrary {
     ui_button_disabled_color: uint;
     ui_item_big_frame_color: uint;
     ui_shop_current_level_icon_texture_id: uint;
+    ui_frame_nine_slice: NineSlice;
     decal_pre_spawn_texture_id: int;
 
     creatures: [Creature] (required);
