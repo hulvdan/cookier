@@ -39,6 +39,7 @@ table Creature {
 table Item {
     name_locale: int;
     texture_id: int;
+    tier: int;
 }
 
 table Weapon {
