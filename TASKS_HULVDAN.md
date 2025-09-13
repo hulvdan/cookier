@@ -72,6 +72,7 @@ x upgrading weapons via buying
 x items stack
 x melee weapons that get thrown
 
+* show melee weapons collider gizmos
 * weapons render z
 * ref draw/drawing -> render/rendering (for consistency)
 * mob "tree": consumable
