@@ -1163,8 +1163,8 @@ Vector2 GetCameraTargetPos() {  ///
     WORLD_CORNER_MARGIN_Y, -WORLD_CORNER_MARGIN_Y, PLAYER_CREATURE.pos.y / (f32)WORLD_Y
   );
 
-  tpos.x = Clamp(tpos.x, CAMERA_MIN_X, CAMERA_MAX_X);
-  tpos.y = Clamp(tpos.y, CAMERA_MIN_Y, CAMERA_MAX_Y);
+  tpos.x = Clamp(tpos.x, CAMERA_MIN_WORLD_X, CAMERA_MAX_WORLD_X);
+  tpos.y = Clamp(tpos.y, CAMERA_MIN_WORLD_Y, CAMERA_MAX_WORLD_Y);
 
   return tpos;
 }
