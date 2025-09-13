@@ -1188,33 +1188,22 @@ void FlushRenderCommands() {
 
             const auto tex = glib->atlas_textures()->Get(data.texId);
 
-            const Rect sourceRec{
-              .pos{
-                (f32)tex->atlas_x() + (f32)tex->size_x(),
-                (f32)tex->atlas_y() + (f32)tex->size_y(),
-              },
-              .size{(f32)tex->size_x(), (f32)tex->size_y()},
-            };
             Rect destRec{
               .pos{
-                data.pos.x
-                  + (f32)tex->size_x() * abs(data.scale.x) * ge.meta.screenScale
-                      * data.anchor.x,
-                data.pos.y
-                  + (f32)tex->size_y() * abs(data.scale.y) * ge.meta.screenScale
-                      * data.anchor.y,
+                data.pos.x + data.nineSliceSize.x * abs(data.scale.x) * data.anchor.x,
+                data.pos.y + data.nineSliceSize.y * abs(data.scale.y) * data.anchor.y,
               },
               .size{
-                (f32)tex->size_x() * abs(data.scale.x) * ge.meta.screenScale,
-                (f32)tex->size_y() * abs(data.scale.y) * ge.meta.screenScale,
+                data.nineSliceSize.x * abs(data.scale.x),
+                data.nineSliceSize.y * abs(data.scale.y),
               },
             };
             destRec.pos -= LOGICAL_RESOLUTION / 2;
 
-            auto sx0 = sourceRec.pos.x;
-            auto sx3 = sx0 + sourceRec.size.x;
-            auto sy0 = sourceRec.pos.y;
-            auto sy3 = sy0 + sourceRec.size.y;
+            auto sx0 = (f32)tex->atlas_x();
+            auto sx3 = sx0 + (f32)tex->size_x();
+            auto sy0 = (f32)tex->atlas_y();
+            auto sy3 = sy0 + (f32)tex->size_y();
             sx0 += 0.7f;
             sx3 -= 0.7f;
             sy0 += 0.7f;
