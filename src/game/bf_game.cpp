@@ -1403,16 +1403,14 @@ void DoUI(bool draw) {
   // e.g. updating mouse position, processing `clicked()`,
   // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 
+  // Setup.
+  // {  ///
   if (!draw) {
     // Updating clay mouse pos.
     // TODO: TOUCH!
     const auto pos = ScreenPosToLogical(GetMouseScreenPos());
     Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
   }
-
-  LAMBDA (bool, clicked, ()) {  ///
-    return !draw && Clay_Hovered() && IsMouseReleased(L);
-  };
 
   constexpr int MAX_BEAUTIFIERS      = 32;
   const auto    localization         = glib->localizations()->Get(ge.meta.localization);
@@ -1426,6 +1424,11 @@ void DoUI(bool draw) {
 
   Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
   int                              beautifiersCount = 0;
+  // }
+
+  LAMBDA (bool, clicked, ()) {  ///
+    return !draw && Clay_Hovered() && IsMouseReleased(L);
+  };
 
   // LAMBDA (bool, componentButton, (bool enabled, auto innerLambda)) { ///
   const u32 buttonColors_[]{
@@ -1878,8 +1881,6 @@ void DoUI(bool draw) {
                   BF_CLAY_PADDING_ALL(8),
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
-                // .backgroundColor
-                // = ToClayColor(ColorFromRGB(glib->ui_item_big_frame_color())),
                 BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
               }) {
                 const auto fb_item = (v.item ? glib->items()->Get(v.item) : nullptr);
