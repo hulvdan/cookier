@@ -3167,12 +3167,12 @@ void GameDraw() {
     };
 
     DebugText("Close debug menu: hold F1 -> press F2");
-    DebugText("Close debug menu: F3 change localization");
-    DebugText("Close debug menu: F4 change device");
-    DebugText("Close debug menu: F5 +10 coins");
-    DebugText("Close debug menu: F6 add item");
-    DebugText("Close debug menu: F7 show end screen");
-    DebugText("Close debug menu: F8 add level");
+    DebugText("F3 change localization");
+    DebugText("F4 change device");
+    DebugText("F5 +10 coins");
+    DebugText("F6 add item");
+    DebugText("F7 show end screen");
+    DebugText("F8 add level");
 
     LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
       DebugText(
