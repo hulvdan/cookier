@@ -68,23 +68,22 @@ x 9slice: made test texture + added 9slice frame element in shop
 2025-09-13
 x 9slice: drawing of 9slice UI element
 x 9slice: correct 9slice margins
+x upgrading weapons via buying
 
+* upgrading weapons via combining
+* item upgrading?
 * aseprite show image center
 * zhenya vs code /// collapsing
-* 9slice: bulletproof on different textures (ui_frame, ui_frame2, ui_frame3)
-* 9slice:
-* 9slice:
 * upgrades screen: "WAVE COMPLETE" animation
 * upgrades screen: fix width of upgrade's frame
 * upgrades screen: frame
-* женя должен научиться работать с UI
+* женя научиться работать с UI
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
 * combining weapons
-* weapons / item upgrading
 * better mob spawn rate (ref brotato)
 * stats frame
 * item effects

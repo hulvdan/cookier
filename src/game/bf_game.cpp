@@ -1187,7 +1187,7 @@ void RunInit() {
   FOR_RANGE (int, i, 3) {
     auto& weapon = g.run.playerWeapons[i];
     weapon.type  = weapons[i].type;
-    weapon.tier  = GRAND.Rand() % TOTAL_TIERS;
+    weapon.tier  = GRAND.Rand() % (TOTAL_TIERS - 1);
     g.run.playerWeaponsCount++;
   }
   RecalculatePlayerWeaponOffsets();
@@ -1383,7 +1383,7 @@ void RefillShopToPick() {  ///
   for (auto& v : toPick) {
     v = {
       .price = 15 + (int)(GRAND.Rand() % 20),
-      .tier  = (int)(GRAND.Rand() % TOTAL_TIERS),
+      .tier  = (int)(GRAND.Rand() % (TOTAL_TIERS - 1)),  // No legendaries in shop.
     };
 
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
@@ -1860,16 +1860,30 @@ void DoUI(bool draw) {
 
           for (auto& v : g.run.shop.toPick) {
             bool canBuy = ((v.item || v.weapon) && (v.price <= g.run.coins));
-            int  emptyWeaponSlotIndex = -1;
+            int  emptyOrSameWeaponSlotIndex = -1;
             if (canBuy && v.weapon) {
+              // Trying to find empty weapon slot.
               FOR_RANGE (int, i, g.run.playerWeapons.count) {
                 const auto& weapon = g.run.playerWeapons[i];
                 if (!weapon.type) {
-                  emptyWeaponSlotIndex = i;
+                  emptyOrSameWeaponSlotIndex = i;
                   break;
                 }
               }
-              if (emptyWeaponSlotIndex == -1)
+              // If not found, trying to find the same player's weapon to upgrade.
+              if (emptyOrSameWeaponSlotIndex == -1) {
+                FOR_RANGE (int, i, g.run.playerWeapons.count) {
+                  const auto& weapon        = g.run.playerWeapons[i];
+                  const bool  canBeUpgraded = (weapon.type == v.weapon)  //
+                                             && (weapon.tier == v.tier)  //
+                                             && (v.tier < TOTAL_TIERS - 1);
+                  if (canBeUpgraded) {
+                    emptyOrSameWeaponSlotIndex = i;
+                    break;
+                  }
+                }
+              }
+              if (emptyOrSameWeaponSlotIndex == -1)
                 canBuy = false;
             }
 
@@ -1942,10 +1956,20 @@ void DoUI(bool draw) {
                   if (bought) {
                     g.run.coins -= v.price;
                     if (v.weapon) {
-                      g.run.playerWeapons[emptyWeaponSlotIndex].type = v.weapon;
-                      g.run.playerWeapons[emptyWeaponSlotIndex].tier = v.tier;
-                      g.run.playerWeaponsCount++;
-                      RecalculatePlayerWeaponOffsets();
+                      auto& weapon = g.run.playerWeapons[emptyOrSameWeaponSlotIndex];
+                      if (weapon.type) {
+                        // Upgrading an existing weapon if no empty slot found.
+                        ASSERT(weapon.type == v.weapon);
+                        ASSERT(weapon.tier == v.tier);
+                        weapon.tier += 1;
+                      }
+                      else {
+                        // Filling empty weapon slot if exists.
+                        weapon.type = v.weapon;
+                        weapon.tier = v.tier;
+                        g.run.playerWeaponsCount++;
+                        RecalculatePlayerWeaponOffsets();
+                      }
                     }
                     else if (v.item) {
                       *g.run.a.playerItems.Add() = {
@@ -2684,10 +2708,10 @@ void GameFixedUpdate() {
     }
 
     // Updating projectiles:
-    // - Movement
-    // - Marking to remove because of travel distance
-    // - Mob collisions
-    // - Marking to remove because of pierce count
+    // - Movement.
+    // - Marking to remove because of travel distance.
+    // - Mob collisions.
+    // - Marking to remove because of pierce count.
     {  ///
       const auto fb_projectiles = glib->projectiles();
 
