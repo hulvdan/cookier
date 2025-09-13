@@ -481,8 +481,9 @@ struct Weapon {
 };
 
 struct Item {
-  ItemType type = {};
-  int      tier = {};
+  ItemType type  = {};
+  int      tier  = {};
+  int      count = {};
 };
 
 struct CreatureController {
@@ -1381,19 +1382,22 @@ void RefillShopToPick() {  ///
   auto& toPick = g.run.shop.toPick;
 
   for (auto& v : toPick) {
-    v = {
-      .price = 15 + (int)(GRAND.Rand() % 20),
-      .tier  = (int)(GRAND.Rand() % (TOTAL_TIERS - 1)),  // No legendaries in shop.
-    };
+    v = {.price = 15 + (int)(GRAND.Rand() % 20)};
 
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
       while (!v.item)
         v.item = (ItemType)(GRAND.Rand() % glib->items()->size());
+
+      const auto fb = glib->items()->Get(v.item);
+      v.tier        = fb->tier();
     }
     else {
-      while (!v.weapon)
+      while (!v.weapon) {
         v.weapon = (WeaponType)(GRAND.Rand() % glib->weapons()->size());
+        // Legendary weapons can't be sold in shop.
+        v.tier = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
+      }
     }
   }
 }
@@ -1972,10 +1976,23 @@ void DoUI(bool draw) {
                       }
                     }
                     else if (v.item) {
-                      *g.run.a.playerItems.Add() = {
-                        .type = v.item,
-                        .tier = v.tier,
-                      };
+                      bool increasedExistingItemCount = false;
+                      int  i                          = 0;
+                      for (auto& item : g.run.a.playerItems) {
+                        i++;
+                        if (item.type == v.item) {
+                          item.count++;
+                          increasedExistingItemCount = true;
+                          break;
+                        }
+                      }
+                      if (!increasedExistingItemCount) {
+                        *g.run.a.playerItems.Add() = {
+                          .type  = v.item,
+                          .tier  = v.tier,
+                          .count = 1,
+                        };
+                      }
                     }
                     else
                       INVALID_PATH;
@@ -2017,6 +2034,20 @@ void DoUI(bool draw) {
                       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                     }}) {
                       BF_CLAY_IMAGE({.texId = fb->texture_id()});
+
+                      // Showing count if there are multiple of the same item.
+                      if (item.count > 1) {
+                        CLAY({.floating{
+                          .attachPoints{
+                            .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+                            .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+                          },
+                          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                          .attachTo           = CLAY_ATTACH_TO_PARENT,
+                        }}) {
+                          BF_CLAY_TEXT(TextFormat("x%d", item.count));
+                        }
+                      }
                     }
                   });
                 }

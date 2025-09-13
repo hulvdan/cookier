@@ -139,8 +139,10 @@ item__table:
   - type: INVALID
   - type: SUGAR
     texture_id: game_item_sugar
+    tier: 2
   - type: MILK
     texture_id: game_item_milk
+    tier: 0
 weapon__table:
   - type: INVALID
   - type: GUN

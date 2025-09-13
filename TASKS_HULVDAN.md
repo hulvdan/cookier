@@ -69,9 +69,24 @@ x 9slice: made test texture + added 9slice frame element in shop
 x 9slice: drawing of 9slice UI element
 x 9slice: correct 9slice margins
 x upgrading weapons via buying
+x items stack
 
-* upgrading weapons via combining
-* item upgrading?
+* melee weapon that get thrown
+* mob tree that drops crate
+* primitive weapons bonus (3,6,9,12,15 HP)
+* shop: upgrading weapons via combining
+* shop: selling player's weapons
+*
+*
+*
+*
+*
+*
+*
+* aseprite show image center
+* zhenya vs code /// collapsing
+* upgrades screen: "WAVE COMPLETE" animation
+* upgrades screen: fix width of upgrade's frame
 * aseprite show image center
 * zhenya vs code /// collapsing
 * upgrades screen: "WAVE COMPLETE" animation
