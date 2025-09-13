@@ -47,9 +47,9 @@ table Weapon {
     damage: float;
     cooldown_frames: int;
     shooting_duration_frames: int;
-    distance: float;
     projectile_type: int;
     projectile_spawn_frames: [int];
+    range: float;
     color: uint = 0xffffff;
     texture_ids: [int];
 }
@@ -59,7 +59,6 @@ table Projectile {
     speed: float;
     collider_radius: float = 0.4;
     impulse: float = 1;
-    distance: float = 10;
     pierce: int = 0;
     texture_ids: [int];
 }

@@ -71,8 +71,12 @@ x 9slice: correct 9slice margins
 x upgrading weapons via buying
 x items stack
 
-* melee weapon that get thrown
-* mob tree that drops crate
+* melee weapons that get thrown
+* mob "tree": consumable
+* mob "tree": picking up consumable heals?
+* mob "tree": also has a chance to drop crate instead of consumable
+* mob "tree": picking up crate shows up "item pickup" screen before upgrades
+* can mobs drop consumable?
 * primitive weapons bonus (3,6,9,12,15 HP)
 * shop: upgrading weapons via combining
 * shop: selling player's weapons
