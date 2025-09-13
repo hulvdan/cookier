@@ -98,7 +98,11 @@ constexpr auto DAMAGE_NUMBERS_FADE_FRAMES  = lframe::MakeScaled(10);
 constexpr auto PICKUPABLE_FADE_FRAMES      = lframe::MakeScaled(10);
 constexpr auto LIFESTEAL_COOLDOWN_FRAMES   = lframe::MakeUnscaled(FIXED_FPS / 10);
 
-constexpr int PROJECTILE_MAX_PIERCE = 10;
+// Projectiles and weapons won't be able to damage
+// the same creatures they've already damaged
+// on previous frames of animation / projectile flying.
+constexpr int PROJECTILE_MAX_PIERCE = 12;
+constexpr int WEAPON_MAX_PIERCE     = 32;
 
 constexpr f32 PLAYER_PICKUP_NUMBER_Y_OFFSET = -0.5f;
 

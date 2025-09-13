@@ -228,10 +228,10 @@ struct Touch {
 };
 
 enum _TouchDataState : u32 {
-  _TouchDataState_DOWN     = 0x1,
-  _TouchDataState_PREV     = 0x2,
-  _TouchDataState_PRESSED  = 0x4,
-  _TouchDataState_RELEASED = 0x8,
+  _TouchDataState_DOWN     = 1 << 0,
+  _TouchDataState_PREV     = 1 << 1,
+  _TouchDataState_PRESSED  = 1 << 2,
+  _TouchDataState_RELEASED = 1 << 3,
 };
 
 struct _TouchData {
@@ -847,6 +847,8 @@ u32 _UTF8Decode(u32* _state, u8 _ch, u32* _codep) {  ///
   return *_state;
 }
 
+// NOTE: Be sure to handle `0` - the sentinel value.
+// It's passed to inform that iteration is over.
 BF_FORCE_INLINE void IterateOverCodepoints(
   const char*                      text,
   int                              bytesCount,

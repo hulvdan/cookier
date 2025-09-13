@@ -314,11 +314,11 @@ struct LogicalFrame {
 };
 
 enum ShapeCategory : u32 {
-  ShapeCategory_STATIC     = 0x1,
-  ShapeCategory_PLAYER     = 0x2,
-  ShapeCategory_CREATURE   = 0x4,
-  ShapeCategory_PROJECTILE = 0x8,
-  // ShapeCategory_ITEM       = 0x10,
+  ShapeCategory_STATIC     = 1 << 0,
+  ShapeCategory_PLAYER     = 1 << 1,
+  ShapeCategory_CREATURE   = 1 << 2,
+  ShapeCategory_PROJECTILE = 1 << 3,
+  // ShapeCategory_ITEM       = 1 << 4,
 };
 
 enum BodyType : u32 {
@@ -338,15 +338,6 @@ enum ShapeUserDataType : u32 {
 struct ShapeUserData {
   ShapeUserDataType type   = {};
   int               _index = {};
-
-  int index() {  ///
-    if (type == ShapeUserDataType_CREATURE)
-      return _index;
-    // if (type == ShapeUserDataType_TILE)
-    //   return _index;
-    INVALID_PATH;
-    return 0;
-  }
 
   static ShapeUserData Static() {  ///
     return {.type = ShapeUserDataType_STATIC};
@@ -380,6 +371,11 @@ struct ShapeUserData {
   //     ._index = roomIndex * ROOM_TILES_TOTAL + index,
   //   };
   // }
+
+  int GetCreatureIndex() const {  ///
+    ASSERT(type == ShapeUserDataType_CREATURE);
+    return _index;
+  }
 
   static ShapeUserData FromPointer(void* ptr) {  ///
     static_assert((sizeof(ShapeUserData) == 4) || (sizeof(ShapeUserData) == 8));
@@ -477,6 +473,9 @@ struct Weapon {
   LogicalFrame startedShootingAt = {};
   LogicalFrame cooldownStartedAt = {};
   int          tier              = {};
+
+  Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
+  int                           piercedCount       = 0;
   // f32 lastShotDirection = {};
 };
 
@@ -690,6 +689,38 @@ struct GameData {
     } a;
   } run;
 } g = {};
+
+template <typename T>
+void CheckCollisionsRect(
+  ShapeCategory           ofWhat,
+  /* ShapeCategory */ u32 withWhat,
+  Vector2                 center,
+  Vector2                 size,
+  Vector2                 dir,
+  bool (*onCollided)(b2ShapeId, T*),
+  T* context
+) {  ///
+  ASSERT(ofWhat);
+  ASSERT(withWhat);
+
+  ASSERT(FloatEquals(Vector2Length(dir), 1));
+  ASSERT(size.x > 0);
+  ASSERT(size.y > 0);
+
+  const auto         box = b2MakeBox(size.x / 2, size.y / 2);
+  const b2ShapeProxy proxy
+    = b2MakeOffsetProxy(box.vertices, box.count, 0, {center.x, center.y}, {dir.x, dir.y});
+  b2World_OverlapShape(
+    g.run.world,
+    &proxy,
+    b2QueryFilter{
+      .categoryBits = ofWhat,
+      .maskBits     = withWhat,
+    },
+    (bool (*)(b2ShapeId, void*))onCollided,
+    context
+  );
+}
 
 #define FRAMES_ELAPSED(value) (g.meta.frame - (value))
 #define PROGRESS(elapsed, duration) ((f32)(elapsed) / (f32)(duration))
@@ -1182,13 +1213,13 @@ void RunInit() {
   struct {
     WeaponType type = {};
   } weapons_[]{
-    {.type = WeaponType_GUN},
-    {.type = WeaponType_BOW},
-    {.type = WeaponType_GUN},
+    {.type = WeaponType_SWORD},
+    // {.type = WeaponType_BOW},
+    // {.type = WeaponType_GUN},
   };
   VIEW_FROM_ARRAY_DANGER(weapons);
 
-  FOR_RANGE (int, i, 3) {
+  FOR_RANGE (int, i, weapons.count) {
     auto& weapon = g.run.playerWeapons[i];
     weapon.type  = weapons[i].type;
     weapon.tier  = GRAND.Rand() % (TOTAL_TIERS - 1);
@@ -2379,7 +2410,7 @@ void DoUI(bool draw) {
           }
         }
         else {
-          // UI elements gizmos.
+          // UI elements' gizmos.
           if (ge.meta.debugEnabled && bb.width && bb.height) {  ///
             RenderGroup_CommandRectLines({
               .pos = Vector2(bb.x, bb.y) + Vector2(bb.width, bb.height) / 2.0f,
@@ -2393,6 +2424,57 @@ void DoUI(bool draw) {
       RenderGroup_End();
     }
   }
+}
+
+bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
+  const bool continueCollisions = true;
+  const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
+
+  const auto  creatureIndex = userData.GetCreatureIndex();
+  const auto& creature      = g.run.a.creatures[creatureIndex];
+
+  ASSERT(creature.type);
+  ASSERT(creature.active);
+
+  if (creature.type == CreatureType_PLAYER)
+    return continueCollisions;
+
+  const auto fb = glib->weapons()->Get(weapon->type);
+
+  if (weapon->piercedCreatureIds.Contains(creature.id))
+    return continueCollisions;
+
+  if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
+    weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
+    TryApplyDamage(creatureIndex, fb->damage(), weapon->targetDir, fb->impulse(), 0);
+  }
+  return continueCollisions;
+}
+
+Vector2 GetWeaponPos(const Weapon& weapon) {  ///
+  const auto fb = glib->weapons()->Get(weapon.type);
+
+  auto result = PLAYER_CREATURE.pos + weapon.offset;
+
+  if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
+    return result;
+
+  const auto e           = weapon.startedShootingAt.Elapsed();
+  const auto shootingDur = lframe::MakeScaled(fb->shooting_duration_frames());
+  auto       p           = e.Progress(shootingDur);
+  if (p > 0.5)
+    p = 2.0f - p * 2;
+  else
+    p *= 2;
+  const auto texId     = fb->texture_ids()->Get(0);
+  const auto fbTexture = glib->atlas_textures()->Get(texId);
+  const auto colliderSize
+    = (f32)fbTexture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+  const auto movingDistance = fb->range() - colliderSize;
+  const auto movedDistance  = EaseInOutQuad(p) * movingDistance;
+
+  result += weapon.targetDir * movedDistance;
+  return result;
 }
 
 void GameFixedUpdate() {
@@ -2690,32 +2772,74 @@ void GameFixedUpdate() {
         }
 
         if (weapon.startedShootingAt.IsSet()) {
-          const auto e           = weapon.startedShootingAt.Elapsed();
-          const auto spawnFrames = fb->projectile_spawn_frames();
+          const auto projectileType = (ProjectileType)fb->projectile_type();
+          const auto e              = weapon.startedShootingAt.Elapsed();
+          const auto shootingDur    = lframe::MakeScaled(fb->shooting_duration_frames());
 
-          bool spawn = false;
-          if (spawnFrames) {
-            for (auto value : *spawnFrames) {
+          const auto projectileSpawnFrames = fb->projectile_spawn_frames();
+
+          if (projectileType) {
+            // It's a ranged weapon that spawns projectiles.
+            ASSERT(projectileSpawnFrames);
+
+            bool spawn = false;
+            for (auto value : *projectileSpawnFrames) {
               if (value == e.value) {
                 spawn = true;
                 break;
               }
             }
+
+            if (spawn) {
+              MakeProjectile({
+                .type               = projectileType,
+                .ownerCreatureIndex = 0,
+                .pos                = pos,
+                .dir                = weapon.targetDir,
+                .range              = fb->range(),
+                .damage             = fb->damage(),
+              });
+            }
+          }
+          else {
+            // It's a melee weapon that gets "shot" itself.
+            ASSERT(!projectileSpawnFrames);
+
+            auto p = e.Progress(shootingDur);
+
+            const auto colliderActiveStart = 0.25f;
+            const auto colliderActiveEnd   = 0.5f;
+
+            const auto texId     = fb->texture_ids()->Get(0);
+            const auto fbTexture = glib->atlas_textures()->Get(texId);
+            const auto    colliderSize = Vector2{
+              // TODO: update calculation of X upon starting
+              // to target 4K / 0.25K resolutions.
+              (f32)fbTexture->size_x(),
+              // NOTE:
+              // Y is divided by 2 because it's grabbed from a texture that targets 4K.
+              // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).
+              (f32)fb->melee_collider_height_px() / 2.0f,
+            } * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+
+            if ((colliderActiveStart <= p) && (p <= colliderActiveEnd)) {
+              CheckCollisionsRect(
+                ShapeCategory_STATIC,
+                (u32)ShapeCategory_CREATURE,
+                GetWeaponPos(weapon),
+                colliderSize,
+                weapon.targetDir,
+                OnWeaponCollided,
+                &weapon
+              );
+            }
           }
 
-          if (spawn) {
-            MakeProjectile({
-              .type               = (ProjectileType)fb->projectile_type(),
-              .ownerCreatureIndex = 0,
-              .pos                = pos,
-              .dir                = weapon.targetDir,
-              .range              = fb->range(),
-              .damage             = fb->damage(),
-            });
-          }
-
-          if (e >= lframe::MakeScaled(fb->shooting_duration_frames()))
+          if (e >= shootingDur) {
             weapon.startedShootingAt = {};
+            weapon.piercedCount      = 0;
+            weapon.cooldownStartedAt.SetNow();
+          }
         }
       }
     }
@@ -2909,20 +3033,12 @@ void GameFixedUpdate() {
 
   DoUI(false);
 
-  // Removing old died creatures.
-  {  ///
-    const auto total = g.run.a.creatures.count;
-    int        off   = 0;
-    FOR_RANGE (int, i, total) {
-      const auto& creature = g.run.a.creatures[i - off];
-      if (creature.diedAt.IsSet() && (creature.diedAt.Elapsed() >= DIE_FRAMES)) {
-        ASSERT(i);
-        if (i) {
-          g.run.a.creatures.UnstableRemoveAt(i - off);
-          off++;
-        }
-      }
-    }
+  // Unactivating old died creatures.
+  for (auto& creature : g.run.a.creatures) {  ///
+    if (creature.active                       //
+        && creature.diedAt.IsSet()            //
+        && (creature.diedAt.Elapsed() >= DIE_FRAMES))
+      creature.active = false;
   }
 
   // Removing old damage numbers.
@@ -3020,6 +3136,7 @@ void GameDraw() {
       );
 
       if (creature.type == CreatureType_PLAYER) {
+        // Drawing player's weapons.
         const auto fb_weapons = glib->weapons();
 
         FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
@@ -3043,7 +3160,7 @@ void GameDraw() {
             {
               .texId    = fb->texture_ids()->Get(0),
               .rotation = rotation,
-              .pos      = creature.pos + weapon.offset,
+              .pos      = GetWeaponPos(weapon),
               .scale    = scale,
               .color    = Fade(ColorFromRGB(fb->color()), fade),
             },
