@@ -70,8 +70,10 @@ x 9slice: drawing of 9slice UI element
 x 9slice: correct 9slice margins
 x upgrading weapons via buying
 x items stack
+x melee weapons that get thrown
 
-* melee weapons that get thrown
+* weapons render z
+* ref draw/drawing -> render/rendering (for consistency)
 * mob "tree": consumable
 * mob "tree": picking up consumable heals?
 * mob "tree": also has a chance to drop crate instead of consumable
