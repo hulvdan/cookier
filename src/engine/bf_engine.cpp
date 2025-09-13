@@ -1204,14 +1204,20 @@ void FlushRenderCommands() {
             auto sx3 = sx0 + (f32)tex->size_x();
             auto sy0 = (f32)tex->atlas_y();
             auto sy3 = sy0 + (f32)tex->size_y();
+            auto sx1 = sx0 + data.nineSliceMargins.left + 1;
+            auto sx2 = sx3 - data.nineSliceMargins.right - 1;
+            auto sy1 = sy0 + data.nineSliceMargins.top + 1;
+            auto sy2 = sy3 - data.nineSliceMargins.bottom - 1;
             sx0 += 0.7f;
             sx3 -= 0.7f;
             sy0 += 0.7f;
             sy3 -= 0.7f;
-            auto sx1 = sx0 + data.nineSliceMargins.left;
-            auto sx2 = sx3 - data.nineSliceMargins.right;
-            auto sy1 = sy0 + data.nineSliceMargins.top;
-            auto sy2 = sy3 - data.nineSliceMargins.bottom;
+            ASSERT(sx0 < sx1);
+            ASSERT(sx1 < sx2);
+            ASSERT(sx2 < sx3);
+            ASSERT(sy0 < sy1);
+            ASSERT(sy1 < sy2);
+            ASSERT(sy2 < sy3);
             sx0 /= (f32)ge.meta.atlas.size.x;
             sx1 /= (f32)ge.meta.atlas.size.x;
             sx2 /= (f32)ge.meta.atlas.size.x;
@@ -1253,10 +1259,10 @@ void FlushRenderCommands() {
               dy0 -= data.anchor.y * dsy;
               dy3 -= data.anchor.y * dsy;
 
-              auto dx1 = dx0 + 1;
-              auto dx2 = dx3 - 1;
-              auto dy1 = dy0 + 1;
-              auto dy2 = dy3 - 1;
+              auto dx1 = dx0 + data.nineSliceMargins.left * ASSETS_TO_LOGICAL_RATIO;
+              auto dx2 = dx3 - data.nineSliceMargins.right * ASSETS_TO_LOGICAL_RATIO;
+              auto dy1 = dy0 + data.nineSliceMargins.top * ASSETS_TO_LOGICAL_RATIO;
+              auto dy2 = dy3 - data.nineSliceMargins.bottom * ASSETS_TO_LOGICAL_RATIO;
 
               f32 dx_[4]{dx0, dx1, dx2, dx3};
               f32 dy_[4]{dy0, dy1, dy2, dy3};

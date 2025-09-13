@@ -67,8 +67,9 @@ x upgrades screen: show gameplay UI (so that coins are shown)
 x 9slice: made test texture + added 9slice frame element in shop
 2025-09-13
 x 9slice: drawing of 9slice UI element
+x 9slice: correct 9slice margins
 
-* 9slice: correct 9slice margins
+* aseprite show image center
 * zhenya vs code /// collapsing
 * 9slice: bulletproof on different textures (ui_frame, ui_frame2, ui_frame3)
 * 9slice:
