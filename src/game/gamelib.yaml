@@ -109,10 +109,10 @@ ui_item_big_frame_color: 0x1d1b24
 ui_shop_current_level_icon_texture_id: game_stat_icon_armor
 ui_frame_nine_slice:
   texture_id: ui_frame
-  left: 48
-  right: 48
-  top: 48
-  bottom: 48
+  left: 60
+  right: 60
+  top: 60
+  bottom: 60
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 creature__table:
   - type: INVALID
