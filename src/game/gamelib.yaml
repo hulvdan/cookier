@@ -152,7 +152,7 @@ weapon__table:
     shooting_duration_frames: 30
     projectile_spawn_frames:
       - 6
-    distance: 5
+    range: 5
     texture_ids:
       - game_weapon_gun
   - type: BOW
@@ -162,7 +162,7 @@ weapon__table:
     shooting_duration_frames: 20
     projectile_spawn_frames:
       - 4
-    distance: 8
+    range: 8
     texture_ids:
       - game_weapon_bow
 projectile__table:

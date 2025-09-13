@@ -534,6 +534,7 @@ struct Projectile {
   LogicalFrame                      createdAt          = {};
   Array<int, PROJECTILE_MAX_PIERCE> piercedCreatureIds = {};
   int                               piercedCount       = 0;
+  f32                               range              = {};
   f32                               travelledDistance  = 0;
 };
 
@@ -542,6 +543,7 @@ struct MakeProjectileData {
   int            ownerCreatureIndex = {};
   Vector2        pos                = {};
   Vector2        dir                = {};
+  f32            range              = {};
   f32            damage             = {};
 };
 
@@ -1043,6 +1045,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .pos                = data.pos,
     .dir                = data.dir,
     .damage             = data.damage,
+    .range              = data.range,
   };
   projectile.createdAt.SetNow();
 
@@ -2673,7 +2676,7 @@ void GameFixedUpdate() {
 
           if (closestCreatureIndex >= 0) {
             const auto& closestCreature = g.run.a.creatures[closestCreatureIndex];
-            if (minDistSqr < fb->distance() * fb->distance()) {
+            if (minDistSqr < SQR(fb->range())) {
               const auto dir   = Vector2DirectionOrRandom(pos, closestCreature.pos);
               weapon.targetDir = dir;
               if (!weapon.startedShootingAt.IsSet())
@@ -2706,6 +2709,7 @@ void GameFixedUpdate() {
               .ownerCreatureIndex = 0,
               .pos                = pos,
               .dir                = weapon.targetDir,
+              .range              = fb->range(),
               .damage             = fb->damage(),
             });
           }
@@ -2755,7 +2759,7 @@ void GameFixedUpdate() {
         projectile.travelledDistance += distance;
         projectile.pos += projectile.dir * distance;
 
-        if (projectile.travelledDistance >= fb->distance()) {
+        if (projectile.travelledDistance >= projectile.range) {
           if (!g.run.a.projectilesToRemove.Contains(projectileIndex))
             *g.run.a.projectilesToRemove.Add() = projectileIndex;
         }
