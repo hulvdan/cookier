@@ -2610,25 +2610,27 @@ void GameFixedUpdate() {
       *g.run.a.playerItems.Add() = item;
     }
 
-    // F7 - show end screen.
-    if (IsKeyPressed(SDL_SCANCODE_F7) && (g.run.screen == ScreenType_GAMEPLAY)) {  ///
-      g.run.scheduledUI  = true;
-      g.run.scheduledEnd = true;
-    }
+    if (g.run.screen == ScreenType_GAMEPLAY) {
+      // F7 - show end screen.
+      if (IsKeyPressed(SDL_SCANCODE_F7)) {  ///
+        g.run.scheduledUI  = true;
+        g.run.scheduledEnd = true;
+      }
 
-    // F8 - add level.
-    if (IsKeyPressed(SDL_SCANCODE_F8) && (g.run.screen == ScreenType_GAMEPLAY)) {  ///
-      AddXP(g.run.nextLevelXp);
-    }
+      // F8 - add level.
+      if (IsKeyPressed(SDL_SCANCODE_F8)) {  ///
+        AddXP(g.run.nextLevelXp);
+      }
 
-    // F9 - add crate.
-    if (IsKeyPressed(SDL_SCANCODE_F9) && (g.run.screen == ScreenType_GAMEPLAY)) {  ///
-      g.run.crates++;
+      // F9 - add crate.
+      if (IsKeyPressed(SDL_SCANCODE_F9)) {  ///
+        g.run.crates++;
+      }
     }
   }
 
   // Applying UI settings.
-  if (g.run.scheduledUI) {
+  if (g.run.scheduledUI) {  ///
     g.run.scheduledUI = false;
 
     ge.settings.screenFade = glib->ui_modal_fade();
