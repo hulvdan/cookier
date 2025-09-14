@@ -103,9 +103,10 @@ x reset weapons shooting times & cooldowns upon starting a new wave
 x finishing wave damages enemies to death + the don't drop pickupables
 x fix melee weapons flying outside the world at the end of the wave
 
-* wave completed: animation with mobs dying
-* wave completed: not picked up coins fly to
-* wave completed: not picked up coins drop during the next wave with x2 value
+* wave completed: "WAVE COMPLETED" animation with mobs dying
+  before entering upgrades / item pickup screens
+* wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
+* wave completed: stashed coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *

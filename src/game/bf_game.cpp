@@ -488,7 +488,6 @@ struct Weapon {
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
-  // f32 lastShotDirection = {};
 };
 
 struct Item {
@@ -498,9 +497,6 @@ struct Item {
 
 struct CreatureController {
   Vector2 move = {};
-  // Vector2 shoot = {};
-  // bool    bomb  = false;
-  // LogicalFrame startedMovingAt = {};
 };
 
 struct Creature {
