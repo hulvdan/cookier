@@ -22,6 +22,8 @@ localization:
   UI_LABEL_ITEMS: Предметы
   UI_LABEL_WEAPONS: Оружие
   UI_LABEL_ITEM_FOUND: Найден Предмет!
+  UI_BUTTON_COMBINE: Скомбинировать
+  UI_BUTTON_CANCEL: Назад
   UI_BUTTON_TAKE: Взять
   UI_BUTTON_RECYCLE: Переработать
   UI_BUTTON_CHOOSE: Выбрать
