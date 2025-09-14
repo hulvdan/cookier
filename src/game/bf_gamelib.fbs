@@ -120,6 +120,7 @@ table GameLibrary {
     ui_stats_locale: int;
     ui_current_level_locale: int;
     ui_level_up_locale: int;
+    ui_level_up_number_locale: int;
     ui_label_shop_locale: int;
     ui_label_items_locale: int;
     ui_label_weapons_locale: int;

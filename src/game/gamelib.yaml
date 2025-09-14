@@ -17,6 +17,7 @@ localization:
   UI_STATS: Характеристики
   UI_CURRENT_LEVEL: Текущий Уровень
   UI_LEVEL_UP: Новый Уровень
+  UI_LEVEL_UP_NUMBER: НОВЫЙ УРОВЕНЬ
   UI_LABEL_SHOP: Магазин
   UI_LABEL_ITEMS: Предметы
   UI_LABEL_WEAPONS: Оружие
@@ -223,6 +224,8 @@ numbers:
   - type: DAMAGE
     color: 0xefcb84
   - type: PICKUPABLE
+    color: 0x66a650
+  - type: LEVEL_UP
     color: 0x66a650
 stats:
   - type: INVALID
