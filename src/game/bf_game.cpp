@@ -2258,8 +2258,11 @@ void DoUI(bool draw) {
                 const auto fb     = fb_weapons->Get(weapon.type);
 
                 CLAY({}) {
+                  // Weapon.
                   componentWeapon(weaponIndex);
 
+                  // Floating weapon details modal.
+                  // Gets shown upon hovering. Gets sticked upon clicking on weapon.
                   if ((Clay_Hovered() || (g.run.shop.selectedWeaponIndex == weaponIndex))
                       && g.run.playerWeapons[weaponIndex].type)
                   {
