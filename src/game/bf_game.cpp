@@ -1304,18 +1304,21 @@ bool TryApplyDamage(
 
   if (creature.health > 0) {
     if (!damageApplicatorCreatureIndex) {
-      if (GRAND.FRand() < GetLifestealChance(g.run.playerStats[StatType_LIFE_STEAL])) {
-        bool canLifesteal = false;
-        if (!g.run.lastLifestealAt.IsSet())
-          canLifesteal = true;
-        else if (g.run.lastLifestealAt.Elapsed() >= LIFESTEAL_COOLDOWN_FRAMES)
-          canLifesteal = true;
+      auto lifesteal = GetLifestealChance(g.run.playerStats[StatType_LIFE_STEAL]);
+      while (lifesteal > 0) {
+        if (GRAND.FRand() < lifesteal) {
+          bool canLifesteal = false;
+          if (!g.run.lastLifestealAt.IsSet())
+            canLifesteal = true;
+          else if (g.run.lastLifestealAt.Elapsed() >= LIFESTEAL_COOLDOWN_FRAMES)
+            canLifesteal = true;
 
-        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
-          PLAYER_CREATURE.health
-            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-          g.run.lastLifestealAt = {};
-          g.run.lastLifestealAt.SetNow();
+          if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
+            PLAYER_CREATURE.health
+              = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+            g.run.lastLifestealAt = {};
+            g.run.lastLifestealAt.SetNow();
+          }
         }
         lifesteal -= 1;
       }
