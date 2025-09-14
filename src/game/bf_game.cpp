@@ -328,21 +328,18 @@ enum ShapeCategory : u32 {
   ShapeCategory_PLAYER     = 1 << 1,
   ShapeCategory_CREATURE   = 1 << 2,
   ShapeCategory_PROJECTILE = 1 << 3,
-  // ShapeCategory_ITEM       = 1 << 4,
 };
 
 enum BodyType : u32 {
   BodyType_INVALID,
   BodyType_STATIC,
   BodyType_CREATURE,
-  // BodyType_ITEM,
 };
 
 enum ShapeUserDataType : u32 {
   ShapeUserDataType_INVALID,
   ShapeUserDataType_STATIC,
-  ShapeUserDataType_CREATURE,  // Can use `index` to query `g.run.a.creatures`.
-  // ShapeUserDataType_ITEM,      // Can use `index` to query `g.run.a.items`.
+  ShapeUserDataType_CREATURE,
 };
 
 struct ShapeUserData {
@@ -360,27 +357,6 @@ struct ShapeUserData {
       ._index = index,
     };
   }
-
-  // static ShapeUserData Item(int index) {  ///
-  //   ASSERT(index >= 0);
-  //   return {
-  //     .type   = ShapeUserDataType_ITEM,
-  //     ._index = index,
-  //   };
-  // }
-  //
-  // static ShapeUserData Tile(int roomIndex, int index) {  ///
-  //   ASSERT(roomIndex >= 0);
-  //   ASSERT(roomIndex < LEVEL_ROOMS_TOTAL);
-  //
-  //   ASSERT(index >= 0);
-  //   ASSERT(index < ROOM_TILES_TOTAL);
-  //
-  //   return {
-  //     .type   = ShapeUserDataType_TILE,
-  //     ._index = roomIndex * ROOM_TILES_TOTAL + index,
-  //   };
-  // }
 
   int GetCreatureIndex() const {  ///
     ASSERT(type == ShapeUserDataType_CREATURE);
@@ -1341,6 +1317,7 @@ bool TryApplyDamage(
           g.run.lastLifestealAt = {};
           g.run.lastLifestealAt.SetNow();
         }
+        lifesteal -= 1;
       }
     }
     creature.health -= damage;
