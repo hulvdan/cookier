@@ -3054,7 +3054,7 @@ void GameFixedUpdate() {
 void GameDraw() {
   TEMP_USAGE(&g.meta.trashArena);
 
-  const auto fb_hostilities = glib->creatures();
+  const auto fb_hostilities = glib->hostilities();
   const auto fb_creatures   = glib->creatures();
   const auto fb_weapons     = glib->weapons();
   const auto fb_projectiles = glib->projectiles();
@@ -3084,14 +3084,11 @@ void GameDraw() {
 
     for (auto& spawn : g.run.a.creatureSpawns) {
       const auto fb_creature  = fb_creatures->Get(spawn.type);
-      const auto host_type    = fb_creature->hostility_type();
-      const auto fb_hostility = fb_hostilities->Get(host_type);
-      const auto color        = fb_hostility->color();
-      const auto color_       = ColorFromRGB(color);
+      const auto fb_hostility = fb_hostilities->Get(fb_creature->hostility_type());
       RenderGroup_CommandTexture({
         .texId = texId,
         .pos   = spawn.pos,
-        .color = color_,
+        .color = ColorFromRGB(fb_hostility->color()),
       });
     }
 
