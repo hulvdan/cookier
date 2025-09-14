@@ -3162,7 +3162,6 @@ void GameDraw() {
 
   // Drawing projectiles + their gizmos.
   {  ///
-
     for (const auto& projectile : g.run.a.projectiles) {
       if (!projectile.active)
         continue;
