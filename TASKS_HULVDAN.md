@@ -77,9 +77,8 @@ x show item stacks in the end screen
 x mob "tree": spawn
 x mob "tree": doesn't do contact damage to player
 x mob "tree": cross is green
+x mob "tree": consumable pickupable that heals on pickup
 
-* mob "tree": consumable pickupable
-* mob "tree": picking up consumable heals?
 * mob "tree": also has a chance to drop a crate instead of consumable
 * mob "tree": picking up crate shows up "item pickup" screen before upgrades
 * mob "tree":

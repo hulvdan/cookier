@@ -2960,6 +2960,9 @@ void GameFixedUpdate() {
             .type = PickupableType_COIN,
             .pos  = creature.pos,
           };
+          if (creature.type == CreatureType_TREE)
+            pickupable.type = PickupableType_CONSUMABLE;
+
           pickupable.createdAt.SetNow();
           *g.run.a.pickupables.Add() = pickupable;
         }
@@ -2994,6 +2997,13 @@ void GameFixedUpdate() {
             switch (pickupable.type) {
             case PickupableType_COIN: {
               g.run.coins++;
+            } break;
+
+            case PickupableType_CONSUMABLE: {
+              if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+                PLAYER_CREATURE.health
+                  = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+              }
             } break;
 
             default:
