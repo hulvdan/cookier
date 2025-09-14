@@ -644,9 +644,8 @@ struct GameData {
     int          waveIndex     = 0;
     LogicalFrame waveStartedAt = {};
 
-    Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons      = {};
-    int                                 playerWeaponsCount = 0;
-    Array<int, StatType_COUNT>          playerStats        = {};
+    Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
+    Array<int, StatType_COUNT>          playerStats   = {};
 
     struct {
       ItemType toPick       = {};
@@ -666,7 +665,7 @@ struct GameData {
       int rerolledTimes = 0;
       int rerollPrice   = 0;
 
-      int selectedWeapon = -1;
+      int selectedWeaponIndex = -1;
     } shop;
 
     struct Allocated {
@@ -1159,13 +1158,11 @@ Vector2 GetCameraTargetPos() {  ///
 }
 
 void RecalculatePlayerWeaponOffsets() {  ///
-  // Checking that playerWeaponsCount is correct.
   int weaponsCount = 0;
   for (const auto& weapon : g.run.playerWeapons) {
     if (weapon.type)
       weaponsCount++;
   }
-  ASSERT(g.run.playerWeaponsCount == weaponsCount);
 
   // Checkin that INVALID weapons are on the end of `playerWeapons`.
   for (int i = weaponsCount; i < g.run.playerWeapons.count; i++)
@@ -1174,7 +1171,7 @@ void RecalculatePlayerWeaponOffsets() {  ///
   // Recalculating offsets.
   const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
   const auto angleDelta    = 2.0f * (f32)PI / (f32)weaponsCount;
-  FOR_RANGE (int, i, g.run.playerWeaponsCount) {
+  FOR_RANGE (int, i, weaponsCount) {
     g.run.playerWeapons[i].offset
       = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
   }
@@ -1224,7 +1221,6 @@ void RunInit() {
     weapon.type         = weapons[i].type;
     weapon.tier         = GRAND.Rand() % (TOTAL_TIERS - 1);
     weapon.recyclePrice = GenerateItemPrice();
-    g.run.playerWeaponsCount++;
   }
   RecalculatePlayerWeaponOffsets();
 
@@ -1460,6 +1456,13 @@ void AddItem(ItemType v) {  ///
   }
 }
 
+void StableRemoveWeapon(int index) {  ///
+  for (int i = index + 1; i < g.run.playerWeapons.count; i++)
+    g.run.playerWeapons[i - 1] = g.run.playerWeapons[i];
+  g.run.playerWeapons[g.run.playerWeapons.count - 1] = {};
+  RecalculatePlayerWeaponOffsets();
+}
+
 void DoUI(bool draw) {
   // NOTE: Logic must be executed only when `draw` is false!
   // e.g. updating mouse position, processing `clicked()`,
@@ -1618,8 +1621,8 @@ void DoUI(bool draw) {
           });
         }
 
-        if (clicked() && (g.run.shop.selectedWeapon == -1))
-          g.run.shop.selectedWeapon = weaponIndex;
+        if (clicked() && (g.run.shop.selectedWeaponIndex == -1))
+          g.run.shop.selectedWeaponIndex = weaponIndex;
       }
     });
   };
@@ -2178,7 +2181,6 @@ void DoUI(bool draw) {
                         weapon.type         = v.weapon;
                         weapon.tier         = v.tier;
                         weapon.recyclePrice = v.price;
-                        g.run.playerWeaponsCount++;
                         RecalculatePlayerWeaponOffsets();
                       }
                     }
@@ -2248,23 +2250,23 @@ void DoUI(bool draw) {
             FOR_RANGE (int, y, 2) {
               CLAY({.layout{.childGap = 8}})
               FOR_RANGE (int, x, 3) {
-                const int t = y * WEAPONS_X + x;
-                if (t >= g.run.playerWeapons.count)
+                const int weaponIndex = y * WEAPONS_X + x;
+                if (weaponIndex >= g.run.playerWeapons.count)
                   break;
 
-                auto&      weapon = g.run.playerWeapons[t];
+                auto&      weapon = g.run.playerWeapons[weaponIndex];
                 const auto fb     = fb_weapons->Get(weapon.type);
 
                 CLAY({}) {
-                  componentWeapon(t);
+                  componentWeapon(weaponIndex);
 
-                  if ((Clay_Hovered() || (g.run.shop.selectedWeapon == t))
-                      && g.run.playerWeapons[t].type)
+                  if ((Clay_Hovered() || (g.run.shop.selectedWeaponIndex == weaponIndex))
+                      && g.run.playerWeapons[weaponIndex].type)
                   {
-                    if (g.run.shop.selectedWeapon == t) {
+                    if (g.run.shop.selectedWeaponIndex == weaponIndex) {
                       // Pressing ESC closes modal.
                       if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
-                        g.run.shop.selectedWeapon = -1;
+                        g.run.shop.selectedWeaponIndex = -1;
                     }
 
                     CLAY({
@@ -2300,13 +2302,27 @@ void DoUI(bool draw) {
                         BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
                       }
 
+                      int canCombineWithIndex = -1;
+                      for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
+                        if (i == weaponIndex)
+                          continue;
+                        auto& otherWeapon = g.run.playerWeapons[i];
+                        if ((weapon.type == otherWeapon.type)     //
+                            && (weapon.tier == otherWeapon.tier)  //
+                            && (weapon.tier < TOTAL_TIERS - 1))
+                        {
+                          canCombineWithIndex = i;
+                          break;
+                        }
+                      }
+
                       // Combine button.
-                      // TODO make combine work
-                      const bool combined
-                        = componentButton(false, [&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale()
-                            );
-                          });
+                      const bool combined = componentButton(
+                        canCombineWithIndex >= 0,
+                        [&]() BF_FORCE_INLINE_LAMBDA {
+                          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
+                        }
+                      );
 
                       // Recycle button.
                       const bool recycled
@@ -2325,12 +2341,14 @@ void DoUI(bool draw) {
 
                       if (combined) {
                         weapon.tier += 1;
+                        StableRemoveWeapon(canCombineWithIndex);
                       }
                       if (recycled) {
                         g.run.coins += weapon.recyclePrice;
+                        StableRemoveWeapon(weaponIndex);
                       }
                       if (cancelled || recycled || combined)
-                        g.run.shop.selectedWeapon = -1;
+                        g.run.shop.selectedWeaponIndex = -1;
                     }
                   }
                 }
