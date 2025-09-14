@@ -93,10 +93,10 @@ x upgrade random stat on level up
 x shop: show weapon detail upon hovering on weapon
 x shop: clicking on weapon makes modal stick
 x shop: cancel/recycle buttons work
+x shop: set weapon recycling price
 
 * shop: implement recycling (remove weapon)
 * shop: implement combining (remove weapon)
-* shop: set weapon recycling price
 * shop: sticked weapon detail darkens UI behind it
   (through custom element attached to parent of frame)
 * fix melee weapon flying away from the screen
