@@ -88,10 +88,10 @@ x melee weapon doesn't change rotation after starting shooting
 - melee weapon detaches from player then lerps to player's hand?
   (player's movement doesn't affect detached weapon)
 x increase xp on picking up coins
+x «level up» number
+x upgrade random stat on level up
 
-* «level up» number
 * fix melee weapon flying away from the screen
-* upgrade random stat on level up
 * «upgraded stat» number upon levelup
 *
 *

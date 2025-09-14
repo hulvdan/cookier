@@ -2565,6 +2565,31 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   return basePos + weapon.targetDir * movedDistance;
 }
 
+void AddXP(f32 xp) {  ///
+  g.run.xp += xp;
+
+  // Handling level up.
+  if (g.run.xp >= g.run.nextLevelXp) {
+    g.run.nextLevelXp *= 2;
+    g.run.xp = 0;
+    g.run.xpLevel++;
+
+    MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
+
+    // Increasing random stat.
+    while (1) {
+      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
+      if (!stat)
+        continue;
+      if (stat == StatType_CURSE)
+        continue;
+
+      g.run.playerStats[stat]++;
+      break;
+    }
+  }
+}
+
 void GameFixedUpdate() {
   // Reloading game.
   if (g.run.reload) {  ///
@@ -2593,8 +2618,7 @@ void GameFixedUpdate() {
 
     // F8 - add level.
     if (IsKeyPressed(SDL_SCANCODE_F8) && (g.run.screen == ScreenType_GAMEPLAY)) {  ///
-      g.run.nextLevelXp *= 2;
-      g.run.xpLevel++;
+      AddXP(g.run.nextLevelXp);
     }
 
     // F9 - add crate.
@@ -3150,15 +3174,7 @@ void GameFixedUpdate() {
             switch (pickupable.type) {
             case PickupableType_COIN: {
               g.run.coins++;
-
-              g.run.xp++;
-              if (g.run.xp >= g.run.nextLevelXp) {
-                g.run.nextLevelXp *= 2;
-                g.run.xp = 0;
-                g.run.xpLevel++;
-
-                MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
-              }
+              AddXP(1);
             } break;
 
             case PickupableType_CONSUMABLE: {
