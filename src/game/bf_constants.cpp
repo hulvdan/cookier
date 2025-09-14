@@ -126,4 +126,6 @@ constexpr int TOTAL_TIERS = 4;
 
 constexpr f32 TREE_DROP_CRATE_FACTOR = 0.25f;
 
+const Color MODAL_OVERLAY_COLOR = Fade(BLACK, 0.75f);
+
 ///
