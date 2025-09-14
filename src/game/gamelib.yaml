@@ -115,10 +115,22 @@ ui_frame_nine_slice:
   top: 60
   bottom: 60
 decal_pre_spawn_texture_id: game_decal_pre_spawn
-creature__table:
+# «Hostility» is about colors of «spawn crosses» in brotato.
+# Colors differ based on whether a creature that will be spawned
+# would be neutral (like trees), friendly (like flying bots), or hostile (like mobs).
+hostilities:
+  - type: INVALID
+  - type: MOB
+    color: 0xc02931
+  - type: NEUTRAL
+    color: 0x66a650
+  - type: FRIENDLY
+    color: 0x208cb2
+creatures:
   - type: INVALID
   - type: PLAYER
     speed_force: 17
+    hostility_type: FRIENDLY
     color: 0x208cb2
     texture_ids:
       - game_creature_player
@@ -136,7 +148,13 @@ creature__table:
     speed_force: 12
     texture_ids:
       - game_creature_player
-item__table:
+  - type: TREE
+    health: 5
+    hostility_type: NEUTRAL
+    can_be_knocked_back: false
+    texture_ids:
+      - game_creature_tree
+items:
   - type: INVALID
   - type: SUGAR
     texture_id: game_item_sugar
@@ -144,7 +162,7 @@ item__table:
   - type: MILK
     texture_id: game_item_milk
     tier: 0
-weapon__table:
+weapons:
   # If a weapon doesn't have `projectile_type` specified,
   # then it's a melee weapon that gets "shot" itself.
   - type: INVALID
@@ -177,7 +195,7 @@ weapon__table:
     range: 8
     texture_ids:
       - game_weapon_bow
-projectile__table:
+projectiles:
   - type: INVALID
   - type: ARROW
     speed: 12
@@ -189,17 +207,21 @@ projectile__table:
     speed: 16
     texture_ids:
       - game_projectile_bullet
-pickupable__table:
+pickupables:
   - type: INVALID
   - type: COIN
     texture_id: game_pickupable_coin
-number__table:
+  - type: CONSUMABLE
+    texture_id: game_pickupable_consumable
+  - type: CRATE
+    texture_id: game_pickupable_crate
+numbers:
   - type: INVALID
   - type: DAMAGE
     color: 0xefcb84
   - type: PICKUPABLE
     color: 0x66a650
-stat__table:
+stats:
   - type: INVALID
   - type: CURSE
     icon_texture_id: game_stat_icon_armor
@@ -340,24 +362,32 @@ waves:
         #   spawn_factor: 20
   # 2
   - creatures_to_spawn:
+      - creature_type: TREE
+        spawn_factor: 1005
       # - creature_type: MOB1
       #   spawn_factor: 30
       - creature_type: MOB2
         spawn_factor: 20
   # 3
   - creatures_to_spawn:
+      - creature_type: TREE
+        spawn_factor: 1005
       - creature_type: MOB1
         spawn_factor: 10
       - creature_type: MOB2
         spawn_factor: 30
   # 4
   - creatures_to_spawn:
+      - creature_type: TREE
+        spawn_factor: 1005
       - creature_type: MOB1
         spawn_factor: 40
       - creature_type: MOB2
         spawn_factor: 15
   # 5
   - creatures_to_spawn:
+      - creature_type: TREE
+        spawn_factor: 1005
       - creature_type: MOB1
         spawn_factor: 50
       - creature_type: MOB2

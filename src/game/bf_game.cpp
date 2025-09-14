@@ -517,12 +517,6 @@ struct CreatureSpawn {
   LogicalFrame createdAt = {};
 };
 
-struct MakeCreatureSpawnData {
-  CreatureType type = {};
-  Vector2      pos  = {};
-  MakeBodyData body = {};
-};
-
 struct Projectile {
   bool                              active             = true;
   ProjectileType                    type               = {};
@@ -665,16 +659,15 @@ struct GameData {
 
     struct Allocated {
       // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
-#define VECTORS_TABLE                            \
-  X(Creature, creatures)                         \
-  X(CreatureSpawn, creatureSpawns)               \
-  X(MakeCreatureSpawnData, creatureSpawnsToMake) \
-  X(Projectile, projectiles)                     \
-  X(int, projectilesToRemove)                    \
-  X(BodyShape, bodyShapes)                       \
-  X(int, justDamagedCreatures)                   \
-  X(Number, numbers)                             \
-  X(Pickupable, pickupables)                     \
+#define VECTORS_TABLE              \
+  X(Creature, creatures)           \
+  X(CreatureSpawn, creatureSpawns) \
+  X(Projectile, projectiles)       \
+  X(int, projectilesToRemove)      \
+  X(BodyShape, bodyShapes)         \
+  X(int, justDamagedCreatures)     \
+  X(Number, numbers)               \
+  X(Pickupable, pickupables)       \
   X(Item, playerItems)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -1047,23 +1040,7 @@ void MakeCreature(MakeCreatureData data) {  ///
     }),
   };
 
-  switch (data.type) {
-  case CreatureType_PLAYER:
-  case CreatureType_MOB1:
-  case CreatureType_MOB2: {
-    // Intentionally left blank.
-  } break;
-
-  default:
-    INVALID_PATH;
-  }
-
   g.run.a.creatures[index] = creature;
-}
-
-void MakeCreatureSpawn(MakeCreatureSpawnData data) {  ///
-  ASSERT(data.type);
-  NOT_IMPLEMENTED;
 }
 
 void MakeProjectile(MakeProjectileData data) {  ///
@@ -1302,6 +1279,10 @@ bool TryApplyDamage(
 ) {  ///
   auto& creature = g.run.a.creatures[creatureIndex];
 
+  const auto fb = glib->creatures()->Get(creature.type);
+  if (!fb->can_be_knocked_back())
+    impulse = 0;
+
   if (creatureIndex) {
     MakeNumber({
       .type  = NumberType_DAMAGE,
@@ -1413,6 +1394,9 @@ void RefillUpgradesToPick() {  ///
 }
 
 void RefillShopToPick() {  ///
+  const auto fb_items   = glib->items();
+  const auto fb_weapons = glib->weapons();
+
   auto& toPick = g.run.shop.toPick;
 
   for (auto& v : toPick) {
@@ -1421,14 +1405,14 @@ void RefillShopToPick() {  ///
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
       while (!v.item)
-        v.item = (ItemType)(GRAND.Rand() % glib->items()->size());
+        v.item = (ItemType)(GRAND.Rand() % fb_items->size());
 
-      const auto fb = glib->items()->Get(v.item);
+      const auto fb = fb_items->Get(v.item);
       v.tier        = fb->tier();
     }
     else {
       while (!v.weapon) {
-        v.weapon = (WeaponType)(GRAND.Rand() % glib->weapons()->size());
+        v.weapon = (WeaponType)(GRAND.Rand() % fb_weapons->size());
         // Legendary weapons can't be sold in shop.
         v.tier = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
       }
@@ -2551,7 +2535,6 @@ void GameFixedUpdate() {
     }
     g.run.a.creatures.count = 1;
     g.run.a.creatureSpawns.Reset();
-    g.run.a.creatureSpawnsToMake.Reset();
     g.run.a.projectiles.Reset();
     g.run.a.projectilesToRemove.Reset();
     g.run.a.bodyShapes.Reset();
@@ -2831,10 +2814,16 @@ void GameFixedUpdate() {
 
     // Mobs contact-damage player.
     if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      const auto fb_creatures = glib->creatures();
+
       const auto playerPos = PLAYER_CREATURE.pos;
       for (int i = 1; i < g.run.a.creatures.count; i++) {
         const auto& creature = g.run.a.creatures[i];
         if (!creature.active || creature.diedAt.IsSet())
+          continue;
+
+        const auto fb = fb_creatures->Get(creature.type);
+        if (fb->hostility_type() != HostilityType_MOB)
           continue;
 
         if (Vector2DistanceSqr(playerPos, creature.pos)
@@ -3065,6 +3054,13 @@ void GameFixedUpdate() {
 void GameDraw() {
   TEMP_USAGE(&g.meta.trashArena);
 
+  const auto fb_hostilities = glib->creatures();
+  const auto fb_creatures   = glib->creatures();
+  const auto fb_weapons     = glib->weapons();
+  const auto fb_projectiles = glib->projectiles();
+  const auto fb_pickupables = glib->pickupables();
+  const auto fb_numbers     = glib->numbers();
+
   BeginMode2D(&g.run.camera);
 
   // Drawing floor.
@@ -3087,10 +3083,15 @@ void GameDraw() {
     RenderGroup_SetSortY(0);
 
     for (auto& spawn : g.run.a.creatureSpawns) {
+      const auto fb_creature  = fb_creatures->Get(spawn.type);
+      const auto host_type    = fb_creature->hostility_type();
+      const auto fb_hostility = fb_hostilities->Get(host_type);
+      const auto color        = fb_hostility->color();
+      const auto color_       = ColorFromRGB(color);
       RenderGroup_CommandTexture({
         .texId = texId,
         .pos   = spawn.pos,
-        .color = {0xc0, 0x29, 0x31, 0xff},
+        .color = color_,
       });
     }
 
@@ -3099,8 +3100,6 @@ void GameDraw() {
 
   // Drawing creatures.
   {  ///
-    const auto fb_creatures = glib->creatures();
-
     for (const auto& creature : g.run.a.creatures) {
       if (!creature.active)
         continue;
@@ -3122,8 +3121,6 @@ void GameDraw() {
 
       if (creature.type == CreatureType_PLAYER) {
         // Drawing player's weapons.
-        const auto fb_weapons = glib->weapons();
-
         FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
           const auto& weapon = g.run.playerWeapons[i];
           if (!weapon.type)
@@ -3158,7 +3155,6 @@ void GameDraw() {
 
   // Drawing projectiles + their gizmos.
   {  ///
-    const auto fb_projectiles = glib->projectiles();
 
     for (const auto& projectile : g.run.a.projectiles) {
       if (!projectile.active)
@@ -3190,8 +3186,6 @@ void GameDraw() {
   {  ///
     RenderGroup_Begin(RenderZ_DAMAGE_NUMBERS);
     RenderGroup_SetSortY(0);
-
-    const auto fb_numbers = glib->numbers();
 
     for (const auto& number : g.run.a.numbers) {
       ASSERT(number.type);
@@ -3227,7 +3221,6 @@ void GameDraw() {
 
   // Drawing pickupables.
   {  ///
-    const auto fb_pickupables = glib->pickupables();
     for (const auto& pickupable : g.run.a.pickupables) {
       const auto fb = fb_pickupables->Get(pickupable.type);
 

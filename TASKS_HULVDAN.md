@@ -71,16 +71,33 @@ x 9slice: correct 9slice margins
 x upgrading weapons via buying
 x items stack
 x melee weapons that get thrown
+2025-09-14
 x show item stacks in the end screen
   (ref extract items + weapons components)
+x mob "tree": spawn
+x mob "tree": doesn't do contact damage to player
 
+* mob "tree": cross is green
+* mob "tree": consumable pickupable
+* mob "tree": picking up consumable heals?
+* mob "tree": also has a chance to drop a crate instead of consumable
+* mob "tree": picking up crate shows up "item pickup" screen before upgrades
+* mob "tree":
+* mob "tree":
+* mob "tree":
+* mob "tree":
+* item pickup screen: draw it
+* item pickup screen: pickup button
+* item pickup screen: refund button
+* total commander for zheka for working with sounds
+  instructions of how to work with sounds
+  - finding them using total commander (alt+F7)
+  - sending them for listening to foobar2000
+    (total commander: «Feed to listbox» then drag'n drop)
+  - fast editing with audacity (fade in, fade out, compression, export macroses)
 * show melee weapons collider gizmos
 * weapons render z
 * ref draw/drawing -> render/rendering (for consistency)
-* mob "tree": consumable
-* mob "tree": picking up consumable heals?
-* mob "tree": also has a chance to drop crate instead of consumable
-* mob "tree": picking up crate shows up "item pickup" screen before upgrades
 * can mobs drop consumable?
 * primitive weapons bonus (3,6,9,12,15 HP)
 * shop: upgrading weapons via combining
