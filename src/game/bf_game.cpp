@@ -469,6 +469,7 @@ struct MakeBodyData {
 struct Weapon {
   WeaponType   type              = {};
   Vector2      offset            = {};
+  Vector2      detachedPos       = {};
   Vector2      targetDir         = {};
   LogicalFrame startedShootingAt = {};
   LogicalFrame cooldownStartedAt = {};
@@ -2543,10 +2544,9 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
 Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   const auto fb = glib->weapons()->Get(weapon.type);
 
-  auto result = PLAYER_CREATURE.pos + weapon.offset;
-
+  const auto basePos = PLAYER_CREATURE.pos + weapon.offset;
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
-    return result;
+    return basePos;
 
   const auto e           = weapon.startedShootingAt.Elapsed();
   const auto shootingDur = lframe::MakeScaled(fb->shooting_duration_frames());
@@ -2562,8 +2562,7 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   const auto movingDistance = fb->range() - colliderSize;
   const auto movedDistance  = EaseInOutQuad(p) * movingDistance;
 
-  result += weapon.targetDir * movedDistance;
-  return result;
+  return basePos + weapon.targetDir * movedDistance;
 }
 
 void GameFixedUpdate() {
@@ -2873,10 +2872,18 @@ void GameFixedUpdate() {
           if (closestCreatureIndex >= 0) {
             const auto& closestCreature = g.run.a.creatures[closestCreatureIndex];
             if (minDistSqr < SQR(fb->range())) {
-              const auto dir   = Vector2DirectionOrRandom(pos, closestCreature.pos);
-              weapon.targetDir = dir;
-              if (!weapon.startedShootingAt.IsSet())
+              const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
+
+              // Only ranged weapons continue tracking target
+              // in the middle of shooting.
+              if (fb->projectile_type())
+                weapon.targetDir = dir;
+
+              if (!weapon.startedShootingAt.IsSet()) {
+                weapon.targetDir   = dir;
+                weapon.detachedPos = GetWeaponPos(weapon);
                 weapon.startedShootingAt.SetNow();
+              }
               targetSet = true;
             }
           }
