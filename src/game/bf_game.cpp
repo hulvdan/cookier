@@ -150,6 +150,14 @@ Clay_Color ToClayColor(Color color) {
     }),                                                \
   }
 
+#define BF_CLAY_CUSTOM_OVERLAY(color)                \
+  .custom {                                          \
+    .customData = PushClayCustomData({               \
+      .type         = ClayCustomElementType_OVERLAY, \
+      .overlayColor = (color),                       \
+    }),                                              \
+  }
+
 struct Beautify {
   u16     alpha     = u16_max;
   Vector2 translate = {0, 0};
@@ -221,6 +229,7 @@ enum ClayCustomElementType : u16 {
   ClayCustomElementType_BEAUTIFIER_START,
   ClayCustomElementType_BEAUTIFIER_END,
   ClayCustomElementType_NINE_SLICE,
+  ClayCustomElementType_OVERLAY,
 };
 
 struct ClayCustomData {
@@ -230,6 +239,7 @@ struct ClayCustomData {
   Vector2                  scale          = {1, 1};
   const BFGame::NineSlice* nineSlice      = nullptr;
   Color                    nineSliceColor = WHITE;
+  Color                    overlayColor   = MAGENTA;
 };
 
 // ============================================================ }
@@ -1169,11 +1179,13 @@ void RecalculatePlayerWeaponOffsets() {  ///
     ASSERT(!g.run.playerWeapons[i].type);
 
   // Recalculating offsets.
-  const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
-  const auto angleDelta    = 2.0f * (f32)PI / (f32)weaponsCount;
-  FOR_RANGE (int, i, weaponsCount) {
-    g.run.playerWeapons[i].offset
-      = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
+  if (weaponsCount > 0) {
+    const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
+    const auto angleDelta    = 2.0f * (f32)PI / (f32)weaponsCount;
+    FOR_RANGE (int, i, weaponsCount) {
+      g.run.playerWeapons[i].offset
+        = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
+    }
   }
 }
 
@@ -2273,11 +2285,6 @@ void DoUI(bool draw) {
                     }
 
                     CLAY({
-                      .layout{
-                        BF_CLAY_PADDING_ALL(8),
-                        .childGap        = 8,
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                      },
                       .floating{
                         .attachPoints{
                           .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
@@ -2285,73 +2292,86 @@ void DoUI(bool draw) {
                         },
                         .attachTo = CLAY_ATTACH_TO_PARENT,
                       },
-                      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
                     }) {
-                      FLOATING_BEAUTIFY;
+                      if (g.run.shop.selectedWeaponIndex == weaponIndex)
+                        CLAY({BF_CLAY_CUSTOM_OVERLAY(Fade(BLACK, 0.75f))}) {}
 
-                      CLAY({.layout{.childGap = 8}}) {
-                        componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                          CLAY({.layout{
-                            BF_CLAY_SIZING_GROW_XY,
-                            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                          }}) {
-                            BF_CLAY_IMAGE({
-                              .texId = fb->texture_ids()->Get(0),
-                              .color = ColorFromRGB(fb->color()),
-                            });
+                      CLAY({
+                        .layout{
+                          BF_CLAY_PADDING_ALL(8),
+                          .childGap        = 8,
+                          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        },
+                        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+                      }) {
+                        FLOATING_BEAUTIFY;
+
+                        CLAY({.layout{.childGap = 8}}) {
+                          componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+                            CLAY({.layout{
+                              BF_CLAY_SIZING_GROW_XY,
+                              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                            }}) {
+                              BF_CLAY_IMAGE({
+                                .texId = fb->texture_ids()->Get(0),
+                                .color = ColorFromRGB(fb->color()),
+                              });
+                            }
+                          });
+
+                          BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+                        }
+
+                        int canCombineWithIndex = -1;
+                        for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
+                          if (i == weaponIndex)
+                            continue;
+                          auto& otherWeapon = g.run.playerWeapons[i];
+                          if ((weapon.type == otherWeapon.type)     //
+                              && (weapon.tier == otherWeapon.tier)  //
+                              && (weapon.tier < TOTAL_TIERS - 1))
+                          {
+                            canCombineWithIndex = i;
+                            break;
                           }
-                        });
-
-                        BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
-                      }
-
-                      int canCombineWithIndex = -1;
-                      for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
-                        if (i == weaponIndex)
-                          continue;
-                        auto& otherWeapon = g.run.playerWeapons[i];
-                        if ((weapon.type == otherWeapon.type)     //
-                            && (weapon.tier == otherWeapon.tier)  //
-                            && (weapon.tier < TOTAL_TIERS - 1))
-                        {
-                          canCombineWithIndex = i;
-                          break;
                         }
-                      }
 
-                      // Combine button.
-                      const bool combined = componentButton(
-                        canCombineWithIndex >= 0,
-                        [&]() BF_FORCE_INLINE_LAMBDA {
-                          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
+                        // Combine button.
+                        const bool combined = componentButton(
+                          canCombineWithIndex >= 0,
+                          [&]() BF_FORCE_INLINE_LAMBDA {
+                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale()
+                            );
+                          }
+                        );
+
+                        // Recycle button.
+                        const bool recycled
+                          = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+                              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                                glib->ui_button_recycle_locale()
+                              );
+                              BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
+                            });
+
+                        // Cancel button.
+                        const bool cancelled
+                          = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+                              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale(
+                              ));
+                            });
+
+                        if (combined) {
+                          weapon.tier += 1;
+                          StableRemoveWeapon(canCombineWithIndex);
                         }
-                      );
-
-                      // Recycle button.
-                      const bool recycled
-                        = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale()
-                            );
-                            BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
-                          });
-
-                      // Cancel button.
-                      const bool cancelled
-                        = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale()
-                            );
-                          });
-
-                      if (combined) {
-                        weapon.tier += 1;
-                        StableRemoveWeapon(canCombineWithIndex);
+                        if (recycled) {
+                          g.run.coins += weapon.recyclePrice;
+                          StableRemoveWeapon(weaponIndex);
+                        }
+                        if (cancelled || recycled || combined)
+                          g.run.shop.selectedWeaponIndex = -1;
                       }
-                      if (recycled) {
-                        g.run.coins += weapon.recyclePrice;
-                        StableRemoveWeapon(weaponIndex);
-                      }
-                      if (cancelled || recycled || combined)
-                        g.run.shop.selectedWeaponIndex = -1;
                     }
                   }
                 }
@@ -2607,6 +2627,28 @@ void DoUI(bool draw) {
                   (f32)fb->bottom() / downscaleFactor,
                 },
                 .nineSliceSize{(f32)bb.width, (f32)bb.height},
+              });
+            } break;
+
+            case ClayCustomElementType_OVERLAY: {
+              Vector2 size = (Vector2)LOGICAL_RESOLUTION;
+              Vector2 pos{};
+              if (ge.meta.screenToLogicalRatio > 1) {
+                auto d = size.x * (ge.meta.screenToLogicalRatio - 1);
+                size.x += d;
+                pos.x -= d / 2;
+              }
+              else if (ge.meta.screenToLogicalRatio < 1) {
+                auto d = size.y * (1.0f / ge.meta.screenToLogicalRatio - 1);
+                size.y += d;
+                pos.y -= d / 2;
+              }
+
+              RenderGroup_CommandRect({
+                .pos  = pos,
+                .size = size,
+                .anchor{},
+                .color = data.overlayColor,
               });
             } break;
 

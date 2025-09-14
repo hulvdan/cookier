@@ -97,9 +97,9 @@ x shop: set weapon recycling price
 x remove playerWeaponsCount
 x shop: implement recycling (remove weapon)
 x shop: implement combining (remove weapon)
-
-* shop: sticked weapon detail darkens UI behind it
+x shop: sticked weapon detail darkens UI behind it
   (through custom element attached to parent of frame)
+
 * reset weapons shooting times & cooldowns upon starting a new wave
 * fix melee weapon flying away from the screen
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
