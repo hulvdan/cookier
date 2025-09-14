@@ -474,6 +474,7 @@ struct Weapon {
   LogicalFrame startedShootingAt = {};
   LogicalFrame cooldownStartedAt = {};
   int          tier              = {};
+  int          recyclePrice      = {};
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
@@ -664,6 +665,8 @@ struct GameData {
 
       int rerolledTimes = 0;
       int rerollPrice   = 0;
+
+      int selectedWeapon = -1;
     } shop;
 
     struct Allocated {
@@ -1598,7 +1601,9 @@ void DoUI(bool draw) {
     });
   };
 
-  LAMBDA (void, componentWeapon, (const Weapon& weapon)) {  ///
+  LAMBDA (void, componentWeapon, (int weaponIndex)) {  ///
+    auto& weapon = g.run.playerWeapons[weaponIndex];
+
     componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
       if (weapon.type) {
         const auto fb = fb_weapons->Get(weapon.type);
@@ -1611,6 +1616,9 @@ void DoUI(bool draw) {
             .color = ColorFromRGB(fb->color()),
           });
         }
+
+        if (clicked() && (g.run.shop.selectedWeapon == -1))
+          g.run.shop.selectedWeapon = weaponIndex;
       }
     });
   };
@@ -1846,26 +1854,25 @@ void DoUI(bool draw) {
 
           // Take and Recycle buttons.
           CLAY({.layout{.childGap = 8}}) {
-            const bool takeClicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+            const bool took = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
             });
 
-            const bool recycleClicked
-              = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-                  CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
-                    BF_CLAY_TEXT(TextFormat(" (+%d ", g.run.pickedUpItem.recyclingPrice));
-                    BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                    BF_CLAY_TEXT(")");
-                  }
-                });
+            const bool recycled = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+              CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
+                BF_CLAY_TEXT(TextFormat(" (+%d)", g.run.pickedUpItem.recyclingPrice));
+                // BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                // BF_CLAY_TEXT(")");
+              }
+            });
 
-            if (takeClicked)
+            if (took)
               AddItem(g.run.pickedUpItem.toPick);
-            else if (recycleClicked)
+            else if (recycled)
               g.run.coins += g.run.pickedUpItem.recyclingPrice;
 
-            if (takeClicked || recycleClicked) {
+            if (took || recycled) {
               g.run.crates--;
               if (g.run.crates)
                 g.run.scheduledPickedUpItems = true;
@@ -2240,7 +2247,91 @@ void DoUI(bool draw) {
               CLAY({.layout{.childGap = 8}})
               FOR_RANGE (int, x, 3) {
                 const int t = y * WEAPONS_X + x;
-                componentWeapon(g.run.playerWeapons[t]);
+                if (t >= g.run.playerWeapons.count)
+                  break;
+
+                auto&      weapon = g.run.playerWeapons[t];
+                const auto fb     = fb_weapons->Get(weapon.type);
+
+                CLAY({}) {
+                  componentWeapon(t);
+
+                  if ((Clay_Hovered() || (g.run.shop.selectedWeapon == t))
+                      && g.run.playerWeapons[t].type)
+                  {
+                    if (g.run.shop.selectedWeapon == t) {
+                      // Pressing ESC closes modal.
+                      if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
+                        g.run.shop.selectedWeapon = -1;
+                    }
+
+                    CLAY({
+                      .layout{
+                        BF_CLAY_PADDING_ALL(8),
+                        .childGap        = 8,
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                      },
+                      .floating{
+                        .attachPoints{
+                          .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+                          .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
+                        },
+                        .attachTo = CLAY_ATTACH_TO_PARENT,
+                      },
+                      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+                    }) {
+                      FLOATING_BEAUTIFY;
+
+                      CLAY({.layout{.childGap = 8}}) {
+                        componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+                          CLAY({.layout{
+                            BF_CLAY_SIZING_GROW_XY,
+                            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                          }}) {
+                            BF_CLAY_IMAGE({
+                              .texId = fb->texture_ids()->Get(0),
+                              .color = ColorFromRGB(fb->color()),
+                            });
+                          }
+                        });
+
+                        BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+                      }
+
+                      // Combine button.
+                      // TODO make combine work
+                      const bool combined
+                        = componentButton(false, [&]() BF_FORCE_INLINE_LAMBDA {
+                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale()
+                            );
+                          });
+
+                      // Recycle button.
+                      const bool recycled
+                        = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale()
+                            );
+                            BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
+                          });
+
+                      // Cancel button.
+                      const bool cancelled
+                        = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale()
+                            );
+                          });
+
+                      if (combined) {
+                        weapon.tier += 1;
+                      }
+                      if (recycled) {
+                        g.run.coins += weapon.recyclePrice;
+                      }
+                      if (cancelled || recycled || combined)
+                        g.run.shop.selectedWeapon = -1;
+                    }
+                  }
+                }
               }
             }
           }
@@ -2315,10 +2406,13 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
 
           // Weapons.
-          CLAY({.layout{.childGap = 8}})
-          for (const auto& weapon : g.run.playerWeapons) {
-            if (weapon.type)
-              componentWeapon(weapon);
+          CLAY({.layout{.childGap = 8}}) {
+            int i = -1;
+            for (auto& weapon : g.run.playerWeapons) {
+              i++;
+              if (weapon.type)
+                componentWeapon(i);
+            }
           }
 
           // Items label.
@@ -3246,6 +3340,8 @@ void GameFixedUpdate() {
 }
 
 void GameDraw() {
+  // Setup.
+  // {  ///
   TEMP_USAGE(&g.meta.trashArena);
 
   const auto localization         = glib->localizations()->Get(ge.meta.localization);
@@ -3257,6 +3353,7 @@ void GameDraw() {
   const auto fb_projectiles = glib->projectiles();
   const auto fb_pickupables = glib->pickupables();
   const auto fb_numbers     = glib->numbers();
+  // }
 
   BeginMode2D(&g.run.camera);
 
@@ -3532,4 +3629,4 @@ void GameDraw() {
   }
 }
 
-//
+///

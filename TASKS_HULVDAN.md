@@ -90,13 +90,20 @@ x melee weapon doesn't change rotation after starting shooting
 x increase xp on picking up coins
 x «level up» number
 x upgrade random stat on level up
+x shop: show weapon detail upon hovering on weapon
+x shop: clicking on weapon makes modal stick
+x shop: cancel/recycle buttons work
 
+* shop: implement recycling (remove weapon)
+* shop: implement combining (remove weapon)
+* shop: set weapon recycling price
+* shop: sticked weapon detail darkens UI behind it
+  (through custom element attached to parent of frame)
 * fix melee weapon flying away from the screen
-* «upgraded stat» number upon levelup
+* «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *
-* shop: upgrading weapons via combining
-* shop: refunding player's weapons
+*
 * ZHEKA: total commander for working with sounds?
   instructions of how to work with sounds
   - finding them using total commander (alt+F7)
