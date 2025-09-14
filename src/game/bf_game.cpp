@@ -2867,6 +2867,8 @@ void GameFixedUpdate() {
     g.run.waveStartedAt.SetNow();
   }
 
+  PLAYER_CREATURE.controller.move = {};
+
   // Updating gameplay.
   if (g.run.screen == ScreenType_GAMEPLAY) {
     // Finishing wave opens upgrades screen.
@@ -2921,39 +2923,6 @@ void GameFixedUpdate() {
       auto& creature = g.run.a.creatures[i];
       creature.controller.move
         = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
-    }
-
-    // Creatures moving.
-    {  ///
-      const auto fb_creatures = glib->creatures();
-
-      for (auto& creature : g.run.a.creatures) {
-        if (!creature.active || creature.diedAt.IsSet())
-          continue;
-
-        const auto fb = fb_creatures->Get(creature.type);
-
-        auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
-        if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
-          speedScale *= 1.5f;
-
-        b2Body_ApplyLinearImpulseToCenter(
-          creature.body.id,
-          ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
-          true
-        );
-      }
-    }
-
-    // Updating box2d world.
-    b2World_Step(g.run.world, FIXED_DT, 4);
-
-    // Updating body positions.
-    for (auto& creature : g.run.a.creatures) {  ///
-      if (!creature.active || creature.diedAt.IsSet())
-        continue;
-
-      creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
     }
 
     // Making pre spawns.
@@ -3013,140 +2982,6 @@ void GameFixedUpdate() {
       }
     }
 
-    // Player weapons shooting.
-    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
-      for (auto& weapon : g.run.playerWeapons) {
-        if (!weapon.type)
-          continue;
-
-        const auto fb  = glib->weapons()->Get(weapon.type);
-        const auto pos = PLAYER_CREATURE.pos + weapon.offset;
-
-        f32 minDistSqr           = f32_inf;
-        int closestCreatureIndex = -1;
-
-        // Resetting cooldown.
-        const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
-        if (weapon.cooldownStartedAt.IsSet()
-            && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
-          weapon.cooldownStartedAt = {};
-
-        if (!weapon.cooldownStartedAt.IsSet()) {
-          int creatureIndex = -1;
-          for (const auto& creature : g.run.a.creatures) {
-            creatureIndex++;
-
-            if (!creature.active            //
-                || creature.diedAt.IsSet()  //
-                || (creature.type == CreatureType_PLAYER))
-              continue;
-
-            const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
-
-            if (distSqr < minDistSqr) {
-              minDistSqr           = distSqr;
-              closestCreatureIndex = creatureIndex;
-            }
-          }
-
-          bool targetSet = false;
-
-          if (closestCreatureIndex >= 0) {
-            const auto& closestCreature = g.run.a.creatures[closestCreatureIndex];
-            if (minDistSqr < SQR(fb->range())) {
-              const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
-
-              // Only ranged weapons continue tracking target
-              // in the middle of shooting.
-              if (fb->projectile_type())
-                weapon.targetDir = dir;
-
-              if (!weapon.startedShootingAt.IsSet()) {
-                weapon.targetDir   = dir;
-                weapon.detachedPos = GetWeaponPos(weapon);
-                weapon.startedShootingAt.SetNow();
-              }
-              targetSet = true;
-            }
-          }
-
-          if (!targetSet && !weapon.startedShootingAt.IsSet())
-            weapon.targetDir = {};
-        }
-
-        if (weapon.startedShootingAt.IsSet()) {
-          const auto projectileType = (ProjectileType)fb->projectile_type();
-          const auto e              = weapon.startedShootingAt.Elapsed();
-          const auto shootingDur    = lframe::MakeScaled(fb->shooting_duration_frames());
-
-          const auto projectileSpawnFrames = fb->projectile_spawn_frames();
-
-          if (projectileType) {
-            // It's a ranged weapon that spawns projectiles.
-            ASSERT(projectileSpawnFrames);
-
-            bool spawn = false;
-            for (auto value : *projectileSpawnFrames) {
-              if (value == e.value) {
-                spawn = true;
-                break;
-              }
-            }
-
-            if (spawn) {
-              MakeProjectile({
-                .type               = projectileType,
-                .ownerCreatureIndex = 0,
-                .pos                = pos,
-                .dir                = weapon.targetDir,
-                .range              = fb->range(),
-                .damage             = fb->damage(),
-              });
-            }
-          }
-          else {
-            // It's a melee weapon that gets "shot" itself.
-            ASSERT(!projectileSpawnFrames);
-
-            auto p = e.Progress(shootingDur);
-
-            const auto colliderActiveStart = 0.25f;
-            const auto colliderActiveEnd   = 0.5f;
-
-            const auto texId     = fb->texture_ids()->Get(0);
-            const auto fbTexture = glib->atlas_textures()->Get(texId);
-            const auto    colliderSize = Vector2{
-              // TODO: update calculation of X upon starting
-              // to target 4K / 0.25K resolutions.
-              (f32)fbTexture->size_x(),
-              // NOTE:
-              // Y is divided by 2 because it's grabbed from a texture that targets 4K.
-              // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).
-              (f32)fb->melee_collider_height_px() / 2.0f,
-            } * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-
-            if ((colliderActiveStart <= p) && (p <= colliderActiveEnd)) {
-              CheckCollisionsRect(
-                ShapeCategory_STATIC,
-                (u32)ShapeCategory_CREATURE,
-                GetWeaponPos(weapon),
-                colliderSize,
-                weapon.targetDir,
-                OnWeaponCollided,
-                &weapon
-              );
-            }
-          }
-
-          if (e >= shootingDur) {
-            weapon.startedShootingAt = {};
-            weapon.piercedCount      = 0;
-            weapon.cooldownStartedAt.SetNow();
-          }
-        }
-      }
-    }
-
     // Mobs contact-damage player.
     if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
       const auto fb_creatures = glib->creatures();
@@ -3173,144 +3008,6 @@ void GameFixedUpdate() {
           );
         }
       }
-    }
-
-    // Updating projectiles:
-    // - Movement.
-    // - Marking to remove because of travel distance.
-    // - Mob collisions.
-    // - Marking to remove because of pierce count.
-    {  ///
-      const auto fb_projectiles = glib->projectiles();
-
-      int projectileIndex = -1;
-      for (auto& projectile : g.run.a.projectiles) {
-        projectileIndex++;
-
-        const auto fb       = fb_projectiles->Get(projectile.type);
-        const auto distance = FIXED_DT * fb->speed();
-        projectile.travelledDistance += distance;
-        projectile.pos += projectile.dir * distance;
-
-        if (projectile.travelledDistance >= projectile.range) {
-          if (!g.run.a.projectilesToRemove.Contains(projectileIndex))
-            *g.run.a.projectilesToRemove.Add() = projectileIndex;
-        }
-
-        int start = 0;
-        int end   = g.run.a.creatures.count;
-
-        if (g.run.a.creatures[projectile.ownerCreatureIndex].type == CreatureType_PLAYER)
-          start = 1;
-        else
-          end = 1;
-
-        for (int i = start; i < end; i++) {
-          auto& creature = g.run.a.creatures[i];
-          if (!creature.active || creature.diedAt.IsSet())
-            continue;
-
-          // Not damaging already damaged creatures.
-          if (ArrayContains(
-                projectile.piercedCreatureIds.base, projectile.piercedCount, creature.id
-              ))
-            continue;
-
-          const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
-          const auto radius  = fb->collider_radius();
-          if (distSqr < SQR(radius)) {
-            if (TryApplyDamage(
-                  i,
-                  projectile.damage,
-                  Vector2DirectionOrRandom(projectile.pos, creature.pos),
-                  fb->impulse(),
-                  projectile.ownerCreatureIndex
-                ))
-            {
-              auto maxPierce = fb->pierce();
-              if (g.run.a.creatures[projectile.ownerCreatureIndex].type
-                  == CreatureType_PLAYER)
-                maxPierce += g.run.pierceCount;
-
-              if (projectile.piercedCount < maxPierce)
-                projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
-              else if (!g.run.a.projectilesToRemove.Contains(projectileIndex))
-                *g.run.a.projectilesToRemove.Add() = projectileIndex;
-            }
-          }
-        }
-      }
-    }
-
-    // Processing `projectilesToRemove`.
-    if (g.run.a.projectilesToRemove.count) {  ///
-      qsort(
-        (void*)g.run.a.projectilesToRemove.base,
-        g.run.a.projectilesToRemove.count,
-        sizeof(*g.run.a.projectilesToRemove.base),
-        (int (*)(const void*, const void*))IntCmp
-      );
-      FOR_RANGE (int, i, g.run.a.projectilesToRemove.count) {
-        const auto projectileIndex
-          = g.run.a.projectilesToRemove[g.run.a.projectilesToRemove.count - i - 1];
-        g.run.a.projectiles.UnstableRemoveAt(projectileIndex);
-      }
-      g.run.a.projectilesToRemove.Reset();
-    }
-
-    // Processing `justDamagedCreatures`.
-    {  ///
-      // auto playerHurt = false;
-      // auto mobHurt    = false;
-
-      for (const auto index : g.run.a.justDamagedCreatures) {
-        auto& creature = g.run.a.creatures[index];
-        ASSERT(creature.active);
-
-        // if (index == 0)
-        //   playerHurt = true;
-        // else
-        //   mobHurt = true;
-
-        if (creature.health <= 0) {
-          DestroyBody(&creature.body);
-
-          if (!index) {
-            g.run.scheduledUI  = true;
-            g.run.scheduledEnd = true;
-          }
-          else
-            creature.diedAt.SetNow();
-
-          if (!index)
-            g.run.playerDiedAt.SetNow();
-
-          if (creature.health != -f32_inf) {
-            Pickupable pickupable{
-              .type = PickupableType_COIN,
-              .pos  = creature.pos,
-            };
-
-            // Trees drop consumables or crates.
-            if (creature.type == CreatureType_TREE) {
-              pickupable.type = PickupableType_CONSUMABLE;
-
-              if (GRAND.FRand() <= TREE_DROP_CRATE_FACTOR)
-                pickupable.type = PickupableType_CRATE;
-            }
-
-            pickupable.createdAt.SetNow();
-            *g.run.a.pickupables.Add() = pickupable;
-          }
-        }
-      }
-
-      // if (playerHurt)
-      //   PlaySound(Sound_GAME_PLAYER_HURT);
-      // if (mobHurt)
-      //   PlaySound(Sound_GAME_HURT);
-
-      g.run.a.justDamagedCreatures.Reset();
     }
 
     // Picking up pickupables.
@@ -3355,6 +3052,311 @@ void GameFixedUpdate() {
         }
       }
     }
+  }
+
+  // Creatures moving.
+  {  ///
+    const auto fb_creatures = glib->creatures();
+
+    for (auto& creature : g.run.a.creatures) {
+      if (!creature.active || creature.diedAt.IsSet())
+        continue;
+
+      const auto fb = fb_creatures->Get(creature.type);
+
+      auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
+      if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
+        speedScale *= 1.5f;
+
+      b2Body_ApplyLinearImpulseToCenter(
+        creature.body.id,
+        ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
+        true
+      );
+    }
+  }
+
+  // Updating box2d world.
+  b2World_Step(g.run.world, FIXED_DT, 4);
+
+  // Updating body positions.
+  for (auto& creature : g.run.a.creatures) {  ///
+    if (!creature.active || creature.diedAt.IsSet())
+      continue;
+
+    creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
+  }
+
+  // Player weapons shooting.
+  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    for (auto& weapon : g.run.playerWeapons) {
+      if (!weapon.type)
+        continue;
+
+      const auto fb  = glib->weapons()->Get(weapon.type);
+      const auto pos = PLAYER_CREATURE.pos + weapon.offset;
+
+      f32 minDistSqr           = f32_inf;
+      int closestCreatureIndex = -1;
+
+      // Resetting cooldown.
+      const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
+      if (weapon.cooldownStartedAt.IsSet()
+          && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
+        weapon.cooldownStartedAt = {};
+
+      if (!weapon.cooldownStartedAt.IsSet()) {
+        int creatureIndex = -1;
+        for (const auto& creature : g.run.a.creatures) {
+          creatureIndex++;
+
+          if (!creature.active            //
+              || creature.diedAt.IsSet()  //
+              || (creature.type == CreatureType_PLAYER))
+            continue;
+
+          const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
+
+          if (distSqr < minDistSqr) {
+            minDistSqr           = distSqr;
+            closestCreatureIndex = creatureIndex;
+          }
+        }
+
+        bool targetSet = false;
+
+        if (closestCreatureIndex >= 0) {
+          const auto& closestCreature = g.run.a.creatures[closestCreatureIndex];
+          if (minDistSqr < SQR(fb->range())) {
+            const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
+
+            // Only ranged weapons continue tracking target
+            // in the middle of shooting.
+            if (fb->projectile_type())
+              weapon.targetDir = dir;
+
+            if (!weapon.startedShootingAt.IsSet()) {
+              weapon.targetDir   = dir;
+              weapon.detachedPos = GetWeaponPos(weapon);
+              weapon.startedShootingAt.SetNow();
+            }
+            targetSet = true;
+          }
+        }
+
+        if (!targetSet && !weapon.startedShootingAt.IsSet())
+          weapon.targetDir = {};
+      }
+
+      if (weapon.startedShootingAt.IsSet()) {
+        const auto projectileType = (ProjectileType)fb->projectile_type();
+        const auto e              = weapon.startedShootingAt.Elapsed();
+        const auto shootingDur    = lframe::MakeScaled(fb->shooting_duration_frames());
+
+        const auto projectileSpawnFrames = fb->projectile_spawn_frames();
+
+        if (projectileType) {
+          // It's a ranged weapon that spawns projectiles.
+          ASSERT(projectileSpawnFrames);
+
+          bool spawn = false;
+          for (auto value : *projectileSpawnFrames) {
+            if (value == e.value) {
+              spawn = true;
+              break;
+            }
+          }
+
+          if (spawn) {
+            MakeProjectile({
+              .type               = projectileType,
+              .ownerCreatureIndex = 0,
+              .pos                = pos,
+              .dir                = weapon.targetDir,
+              .range              = fb->range(),
+              .damage             = fb->damage(),
+            });
+          }
+        }
+        else {
+          // It's a melee weapon that gets "shot" itself.
+          ASSERT(!projectileSpawnFrames);
+
+          auto p = e.Progress(shootingDur);
+
+          const auto colliderActiveStart = 0.25f;
+          const auto colliderActiveEnd   = 0.5f;
+
+          const auto texId     = fb->texture_ids()->Get(0);
+          const auto fbTexture = glib->atlas_textures()->Get(texId);
+          const auto    colliderSize = Vector2{
+              // TODO: update calculation of X upon starting
+              // to target 4K / 0.25K resolutions.
+              (f32)fbTexture->size_x(),
+              // NOTE:
+              // Y is divided by 2 because it's grabbed from a texture that targets 4K.
+              // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).
+              (f32)fb->melee_collider_height_px() / 2.0f,
+            } * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+
+          if ((colliderActiveStart <= p) && (p <= colliderActiveEnd)) {
+            CheckCollisionsRect(
+              ShapeCategory_STATIC,
+              (u32)ShapeCategory_CREATURE,
+              GetWeaponPos(weapon),
+              colliderSize,
+              weapon.targetDir,
+              OnWeaponCollided,
+              &weapon
+            );
+          }
+        }
+
+        if (e >= shootingDur) {
+          weapon.startedShootingAt = {};
+          weapon.piercedCount      = 0;
+          weapon.cooldownStartedAt.SetNow();
+        }
+      }
+    }
+  }
+
+  // Updating projectiles:
+  // - Movement.
+  // - Marking to remove because of travel distance.
+  // - Mob collisions.
+  // - Marking to remove because of pierce count.
+  {  ///
+    const auto fb_projectiles = glib->projectiles();
+
+    int projectileIndex = -1;
+    for (auto& projectile : g.run.a.projectiles) {
+      projectileIndex++;
+
+      const auto fb       = fb_projectiles->Get(projectile.type);
+      const auto distance = FIXED_DT * fb->speed();
+      projectile.travelledDistance += distance;
+      projectile.pos += projectile.dir * distance;
+
+      if (projectile.travelledDistance >= projectile.range) {
+        if (!g.run.a.projectilesToRemove.Contains(projectileIndex))
+          *g.run.a.projectilesToRemove.Add() = projectileIndex;
+      }
+
+      int start = 0;
+      int end   = g.run.a.creatures.count;
+
+      if (g.run.a.creatures[projectile.ownerCreatureIndex].type == CreatureType_PLAYER)
+        start = 1;
+      else
+        end = 1;
+
+      for (int i = start; i < end; i++) {
+        auto& creature = g.run.a.creatures[i];
+        if (!creature.active || creature.diedAt.IsSet())
+          continue;
+
+        // Not damaging already damaged creatures.
+        if (ArrayContains(
+              projectile.piercedCreatureIds.base, projectile.piercedCount, creature.id
+            ))
+          continue;
+
+        const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
+        const auto radius  = fb->collider_radius();
+        if (distSqr < SQR(radius)) {
+          if (TryApplyDamage(
+                i,
+                projectile.damage,
+                Vector2DirectionOrRandom(projectile.pos, creature.pos),
+                fb->impulse(),
+                projectile.ownerCreatureIndex
+              ))
+          {
+            auto maxPierce = fb->pierce();
+            if (g.run.a.creatures[projectile.ownerCreatureIndex].type
+                == CreatureType_PLAYER)
+              maxPierce += g.run.pierceCount;
+
+            if (projectile.piercedCount < maxPierce)
+              projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
+            else if (!g.run.a.projectilesToRemove.Contains(projectileIndex))
+              *g.run.a.projectilesToRemove.Add() = projectileIndex;
+          }
+        }
+      }
+    }
+  }
+
+  // Processing `projectilesToRemove`.
+  if (g.run.a.projectilesToRemove.count) {  ///
+    qsort(
+      (void*)g.run.a.projectilesToRemove.base,
+      g.run.a.projectilesToRemove.count,
+      sizeof(*g.run.a.projectilesToRemove.base),
+      (int (*)(const void*, const void*))IntCmp
+    );
+    FOR_RANGE (int, i, g.run.a.projectilesToRemove.count) {
+      const auto projectileIndex
+        = g.run.a.projectilesToRemove[g.run.a.projectilesToRemove.count - i - 1];
+      g.run.a.projectiles.UnstableRemoveAt(projectileIndex);
+    }
+    g.run.a.projectilesToRemove.Reset();
+  }
+
+  // Processing `justDamagedCreatures`.
+  {  ///
+    // auto playerHurt = false;
+    // auto mobHurt    = false;
+
+    for (const auto index : g.run.a.justDamagedCreatures) {
+      auto& creature = g.run.a.creatures[index];
+      ASSERT(creature.active);
+
+      // if (index == 0)
+      //   playerHurt = true;
+      // else
+      //   mobHurt = true;
+
+      if (creature.health <= 0) {
+        DestroyBody(&creature.body);
+
+        if (!index) {
+          g.run.scheduledUI  = true;
+          g.run.scheduledEnd = true;
+        }
+        else
+          creature.diedAt.SetNow();
+
+        if (!index)
+          g.run.playerDiedAt.SetNow();
+
+        if (creature.health != -f32_inf) {
+          Pickupable pickupable{
+            .type = PickupableType_COIN,
+            .pos  = creature.pos,
+          };
+
+          // Trees drop consumables or crates.
+          if (creature.type == CreatureType_TREE) {
+            pickupable.type = PickupableType_CONSUMABLE;
+
+            if (GRAND.FRand() <= TREE_DROP_CRATE_FACTOR)
+              pickupable.type = PickupableType_CRATE;
+          }
+
+          pickupable.createdAt.SetNow();
+          *g.run.a.pickupables.Add() = pickupable;
+        }
+      }
+    }
+
+    // if (playerHurt)
+    //   PlaySound(Sound_GAME_PLAYER_HURT);
+    // if (mobHurt)
+    //   PlaySound(Sound_GAME_HURT);
+
+    g.run.a.justDamagedCreatures.Reset();
   }
 
   DoUI(false);
