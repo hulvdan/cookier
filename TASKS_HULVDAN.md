@@ -87,9 +87,9 @@ x mob "tree": show crate in UI top right
 x melee weapon doesn't change rotation after starting shooting
 - melee weapon detaches from player then lerps to player's hand?
   (player's movement doesn't affect detached weapon)
+x increase xp on picking up coins
 
 * fix melee weapon flying away from the screen
-* increase xp on picking up coins
 * upgrade random stat on level up
 * «level up» damage number
 * «upgraded stat» damage number upon levelup
