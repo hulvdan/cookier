@@ -85,24 +85,25 @@ x item pickup screen: pickup button
 x item pickup screen: refund button
 x mob "tree": show crate in UI top right
 
-* mob "tree":
-* mob "tree":
-* mob "tree":
+* melee weapon detaches from player then lerps to player's hand?
+  (player's movement doesn't affect detached weapon)
 * melee weapon doesn't change rotation after starting shooting
 * fix melee weapon flying away from the screen
-* total commander for zheka for working with sounds
+* shop: upgrading weapons via combining
+* shop: refunding player's weapons
+* ZHEKA: total commander for working with sounds?
   instructions of how to work with sounds
   - finding them using total commander (alt+F7)
   - sending them for listening to foobar2000
     (total commander: «Feed to listbox» then drag'n drop)
   - fast editing with audacity (fade in, fade out, compression, export macroses)
-* show melee weapons collider gizmos
+* show melee weapon collider gizmos
 * weapons render z
 * ref draw/drawing -> render/rendering (for consistency)
-* can mobs drop consumable?
+* can mobs drop consumables?
+* gather all weapon classes (e.g. primitive)
 * primitive weapons bonus (3,6,9,12,15 HP)
-* shop: upgrading weapons via combining
-* shop: selling player's weapons
+* ethereal weapons bonus (3,6,9,12,15 ARMOR or 2,4,X or 1,2,X)
 *
 *
 *
