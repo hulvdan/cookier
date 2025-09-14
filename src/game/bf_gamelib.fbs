@@ -28,10 +28,16 @@ struct Pos {
 }
 
 // GAME STUFF
+table Hostility {
+    color: uint = 0xffffffff;
+}
+
 table Creature {
     health: float;
     damage: float;
     speed_force: float;
+    hostility_type: int = 1;
+    can_be_knocked_back: bool = true;
     color: uint = 0xffffff;
     texture_ids: [int];
 }
@@ -139,6 +145,11 @@ table GameLibrary {
     ui_frame_nine_slice: NineSlice;
     decal_pre_spawn_texture_id: int;
 
+    // NOTE: «Table Gen» works in Python `bf_game.py`.
+    // It goes through the field names in the following TABLE_GEN_START/END region.
+    // Then makes code generation magic (enums in `bf_codegen.cpp`, recursive replaces)
+    // TABLE_GEN_START
+    hostilities: [Hostility] (required);
     creatures: [Creature] (required);
     items: [Item] (required);
     weapons: [Weapon] (required);
@@ -146,6 +157,7 @@ table GameLibrary {
     pickupables: [Pickupable] (required);
     numbers: [Number] (required);
     stats: [Stat] (required);
+    // TABLE_GEN_END
 
     waves: [Wave] (required);
     // GAME STUFF END
