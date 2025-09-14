@@ -3156,6 +3156,8 @@ void GameFixedUpdate() {
                 g.run.nextLevelXp *= 2;
                 g.run.xp = 0;
                 g.run.xpLevel++;
+
+                MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
               }
             } break;
 
@@ -3227,6 +3229,9 @@ void GameFixedUpdate() {
 
 void GameDraw() {
   TEMP_USAGE(&g.meta.trashArena);
+
+  const auto localization         = glib->localizations()->Get(ge.meta.localization);
+  const auto localization_strings = localization->strings();
 
   const auto fb_hostilities = glib->hostilities();
   const auto fb_creatures   = glib->creatures();
@@ -3352,7 +3357,7 @@ void GameDraw() {
     }
   }
 
-  // Drawing damage numbers.
+  // Drawing numbers.
   {  ///
     RenderGroup_Begin(RenderZ_DAMAGE_NUMBERS);
     RenderGroup_SetSortY(0);
@@ -3361,14 +3366,24 @@ void GameDraw() {
       ASSERT(number.type);
       const auto fb = fb_numbers->Get(number.type);
 
-      const char* format = "%d";
-      if (number.type == NumberType_PICKUPABLE)
-        format = "+%d";
+      const char* buffer     = nullptr;
+      int         bytesCount = 0;
 
-      const auto text    = TextFormat(format, MAX(1, number.value));
-      const auto textLen = strlen(text);
-      const auto buffer  = ALLOCATE_ARRAY(&g.meta.trashArena, char, textLen + 1);
-      memcpy(buffer, text, textLen + 1);
+      if (number.type == NumberType_LEVEL_UP) {
+        const auto fb = localization_strings->Get(glib->ui_level_up_number_locale());
+        buffer        = fb->c_str();
+        bytesCount    = fb->size();
+      }
+      else {
+        const char* format = "%d";
+        if (number.type == NumberType_PICKUPABLE)
+          format = "+%d";
+
+        const auto text = TextFormat(format, MAX(1, number.value));
+        bytesCount      = strlen(text);
+        buffer          = ALLOCATE_ARRAY(&g.meta.trashArena, char, bytesCount + 1);
+        memcpy((void*)buffer, text, bytesCount + 1);
+      }
 
       const auto e    = number.createdAt.Elapsed();
       const auto p    = Clamp01(e.Progress(DAMAGE_NUMBERS_FRAMES));
@@ -3381,7 +3396,7 @@ void GameDraw() {
         .scale      = Vector2(1, 1) * (p * 2),
         .font       = &g.meta.uiFont,
         .text       = buffer,
-        .bytesCount = (int)textLen,
+        .bytesCount = (int)bytesCount,
         .color      = Fade(ColorFromRGB(fb->color()), fade),
       });
     }
