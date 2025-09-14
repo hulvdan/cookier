@@ -71,6 +71,7 @@ x 9slice: correct 9slice margins
 x upgrading weapons via buying
 x items stack
 x melee weapons that get thrown
+x internet shouldn't be required for building: check web
 2025-09-14
 x show item stacks in the end screen
   (ref extract items + weapons components)
@@ -108,8 +109,13 @@ x fix melee weapons flying outside the world at the end of the wave
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
+* mobs can't spawn near edges.
+  consider spawning them with padding = radius of collider
 *
 *
+* ZHEKA: ^ vs code /// collapsing
+* ZHEKA: ^ knows how to work with UI
+* ZHEKA: can web build
 * ZHEKA: total commander for working with sounds?
   instructions of how to work with sounds
   - finding them using total commander (alt+F7)
@@ -125,21 +131,9 @@ x fix melee weapons flying outside the world at the end of the wave
 * ethereal weapons bonus (3,6,9,12,15 ARMOR or 2,4,X or 1,2,X)
 *
 *
-*
-*
-*
-*
-*
 * aseprite show image center
-* zhenya vs code /// collapsing
-* upgrades screen: "WAVE COMPLETE" animation
-* upgrades screen: fix width of upgrade's frame
-* aseprite show image center
-* zhenya vs code /// collapsing
-* upgrades screen: "WAVE COMPLETE" animation
 * upgrades screen: fix width of upgrade's frame
 * upgrades screen: frame
-* женя научиться работать с UI
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
@@ -149,11 +143,8 @@ x fix melee weapons flying outside the world at the end of the wave
 * better mob spawn rate (ref brotato)
 * stats frame
 * item effects
-* категоризация оружия
-  что за precise/primitive/etc?
-  жидкое / твёрдое?
-* не спавнить крестики прямо перед завершением волны
-* женя может билдить веб
+* weapons categorization. жидкое / твёрдое?
+* don't create spawn decals right before finishing the wave
 * Экран загрузки для HTML?
 * система записи / воспроизведения действий для облегчения отладки
 * stat effects:
@@ -172,9 +163,7 @@ x fix melee weapons flying outside the world at the end of the wave
   * stat effect: SPEED
   * stat effect: LUCK
   * stat effect: HARVESTING
-* finishing wave moves pickupables on floor to UI
 * ranged mobs
-* internet shouldn't be required for building
-  * check web
-  * check web debug yandex build with mocked ysdk
+* internet shouldn't be required for building:
+  check web debug yandex build with mocked ysdk
 * trim pngs of transparent pixels
