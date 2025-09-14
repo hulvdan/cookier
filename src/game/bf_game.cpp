@@ -649,8 +649,8 @@ struct GameData {
     Array<int, StatType_COUNT>          playerStats        = {};
 
     struct {
-      ItemType toPick         = {};
-      int      recyclingPrice = {};
+      ItemType toPick       = {};
+      int      recyclePrice = {};
     } pickedUpItem;
 
     struct {
@@ -1180,6 +1180,17 @@ void RecalculatePlayerWeaponOffsets() {  ///
   }
 }
 
+ItemType GenerateRandomItem() {  ///
+  ItemType type{};
+  while (!type)
+    type = (ItemType)(GRAND.Rand() % (u32)ItemType_COUNT);
+  return type;
+}
+
+int GenerateItemPrice() {  ///
+  return 15 + (int)(GRAND.Rand() % 20);
+}
+
 void RunInit() {
   // Creating box2d world.
   {  ///
@@ -1209,9 +1220,10 @@ void RunInit() {
   VIEW_FROM_ARRAY_DANGER(weapons);
 
   FOR_RANGE (int, i, weapons.count) {
-    auto& weapon = g.run.playerWeapons[i];
-    weapon.type  = weapons[i].type;
-    weapon.tier  = GRAND.Rand() % (TOTAL_TIERS - 1);
+    auto& weapon        = g.run.playerWeapons[i];
+    weapon.type         = weapons[i].type;
+    weapon.tier         = GRAND.Rand() % (TOTAL_TIERS - 1);
+    weapon.recyclePrice = GenerateItemPrice();
     g.run.playerWeaponsCount++;
   }
   RecalculatePlayerWeaponOffsets();
@@ -1403,17 +1415,6 @@ void RefillUpgradesToPick() {  ///
       break;
     }
   }
-}
-
-ItemType GenerateRandomItem() {  ///
-  ItemType type{};
-  while (!type)
-    type = (ItemType)(GRAND.Rand() % (u32)ItemType_COUNT);
-  return type;
-}
-
-int GenerateItemPrice() {  ///
-  return 15 + (int)(GRAND.Rand() % 20);
 }
 
 void RefillShopToPick() {  ///
@@ -1861,7 +1862,7 @@ void DoUI(bool draw) {
             const bool recycled = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
               CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
-                BF_CLAY_TEXT(TextFormat(" (+%d)", g.run.pickedUpItem.recyclingPrice));
+                BF_CLAY_TEXT(TextFormat(" (+%d)", g.run.pickedUpItem.recyclePrice));
                 // BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                 // BF_CLAY_TEXT(")");
               }
@@ -1870,7 +1871,7 @@ void DoUI(bool draw) {
             if (took)
               AddItem(g.run.pickedUpItem.toPick);
             else if (recycled)
-              g.run.coins += g.run.pickedUpItem.recyclingPrice;
+              g.run.coins += g.run.pickedUpItem.recyclePrice;
 
             if (took || recycled) {
               g.run.crates--;
@@ -2174,8 +2175,9 @@ void DoUI(bool draw) {
                       }
                       else {
                         // Filling empty weapon slot if exists.
-                        weapon.type = v.weapon;
-                        weapon.tier = v.tier;
+                        weapon.type         = v.weapon;
+                        weapon.tier         = v.tier;
+                        weapon.recyclePrice = v.price;
                         g.run.playerWeaponsCount++;
                         RecalculatePlayerWeaponOffsets();
                       }
@@ -2740,9 +2742,9 @@ void GameFixedUpdate() {
   if (g.run.scheduledPickedUpItems) {  ///
     g.run.scheduledPickedUpItems = false;
 
-    g.run.screen                      = ScreenType_PICKED_UP_ITEM;
-    g.run.pickedUpItem.toPick         = GenerateRandomItem();
-    g.run.pickedUpItem.recyclingPrice = GenerateItemPrice();
+    g.run.screen                    = ScreenType_PICKED_UP_ITEM;
+    g.run.pickedUpItem.toPick       = GenerateRandomItem();
+    g.run.pickedUpItem.recyclePrice = GenerateItemPrice();
   }
 
   // Advancing to upgrades.
