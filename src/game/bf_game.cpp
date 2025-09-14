@@ -1316,11 +1316,13 @@ bool TryApplyDamage(
     impulse = 0;
 
   if (creatureIndex) {
-    MakeNumber({
-      .type  = NumberType_DAMAGE,
-      .value = Round(damage),
-      .pos   = creature.pos,
-    });
+    if (!damageApplicatorCreatureIndex) {
+      MakeNumber({
+        .type  = NumberType_DAMAGE,
+        .value = Round(damage),
+        .pos   = creature.pos,
+      });
+    }
   }
   else {
     if (creature.lastDamagedAt.IsSet()
@@ -2799,6 +2801,13 @@ void GameFixedUpdate() {
       g.run.scheduledPickedUpItems = true;
     else
       g.run.scheduledUpgrades = true;
+
+    for (int i = 1; i < g.run.a.creatures.count; i++) {
+      auto& creature = g.run.a.creatures[i];
+      if (creature.active && !creature.diedAt.IsSet())
+        TryApplyDamage(i, f32_inf, {}, 0, -1);
+    }
+    g.run.a.creatureSpawns.Reset();
   }
 
   // Advancing to picked up items.
@@ -2856,23 +2865,6 @@ void GameFixedUpdate() {
     IncrementSetZeroOn(&g.run.waveIndex, (int)glib->waves()->size());
     g.run.waveStartedAt = {};
     g.run.waveStartedAt.SetNow();
-
-    for (int i = 1; i < g.run.a.creatures.count; i++) {
-      auto& creature = g.run.a.creatures[i];
-      if (creature.active && !creature.diedAt.IsSet())
-        DestroyBody(&creature.body);
-    }
-    g.run.a.creatures.count = 1;
-    g.run.a.creatureSpawns.Reset();
-    g.run.a.projectiles.Reset();
-    g.run.a.projectilesToRemove.Reset();
-    g.run.a.bodyShapes.Reset();
-    g.run.a.justDamagedCreatures.Reset();
-    for (auto& weapon : g.run.playerWeapons) {
-      weapon.startedShootingAt = {};
-      weapon.cooldownStartedAt = {};
-      weapon.piercedCount      = 0;
-    }
   }
 
   // Updating gameplay.
@@ -3293,21 +3285,23 @@ void GameFixedUpdate() {
           if (!index)
             g.run.playerDiedAt.SetNow();
 
-          Pickupable pickupable{
-            .type = PickupableType_COIN,
-            .pos  = creature.pos,
-          };
+          if (creature.health != -f32_inf) {
+            Pickupable pickupable{
+              .type = PickupableType_COIN,
+              .pos  = creature.pos,
+            };
 
-          // Trees drop consumables or crates.
-          if (creature.type == CreatureType_TREE) {
-            pickupable.type = PickupableType_CONSUMABLE;
+            // Trees drop consumables or crates.
+            if (creature.type == CreatureType_TREE) {
+              pickupable.type = PickupableType_CONSUMABLE;
 
-            if (GRAND.FRand() <= TREE_DROP_CRATE_FACTOR)
-              pickupable.type = PickupableType_CRATE;
+              if (GRAND.FRand() <= TREE_DROP_CRATE_FACTOR)
+                pickupable.type = PickupableType_CRATE;
+            }
+
+            pickupable.createdAt.SetNow();
+            *g.run.a.pickupables.Add() = pickupable;
           }
-
-          pickupable.createdAt.SetNow();
-          *g.run.a.pickupables.Add() = pickupable;
         }
       }
 
