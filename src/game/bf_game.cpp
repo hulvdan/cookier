@@ -630,6 +630,23 @@ struct GameData {
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
     Array<int, StatType_COUNT>          playerStats   = {};
 
+    // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
+#define VECTORS_TABLE              \
+  X(Creature, creatures)           \
+  X(CreatureSpawn, creatureSpawns) \
+  X(Projectile, projectiles)       \
+  X(int, projectilesToRemove)      \
+  X(BodyShape, bodyShapes)         \
+  X(int, justDamagedCreatures)     \
+  X(Number, numbers)               \
+  X(Pickupable, pickupables)       \
+  X(Item, playerItems)
+
+#define X(type_, name_) Vector<type_> name_ = {};
+    VECTORS_TABLE;
+#undef X
+
+    // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
     struct {
       ItemType toPick       = {};
       int      recyclePrice = {};
@@ -650,22 +667,6 @@ struct GameData {
 
       int selectedWeaponIndex = -1;
     } shop;
-
-    // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
-#define VECTORS_TABLE              \
-  X(Creature, creatures)           \
-  X(CreatureSpawn, creatureSpawns) \
-  X(Projectile, projectiles)       \
-  X(int, projectilesToRemove)      \
-  X(BodyShape, bodyShapes)         \
-  X(int, justDamagedCreatures)     \
-  X(Number, numbers)               \
-  X(Pickupable, pickupables)       \
-  X(Item, playerItems)
-
-#define X(type_, name_) Vector<type_> name_ = {};
-    VECTORS_TABLE;
-#undef X
   } run;
 } g = {};
 
