@@ -20,6 +20,9 @@ localization:
   UI_LABEL_SHOP: Магазин
   UI_LABEL_ITEMS: Предметы
   UI_LABEL_WEAPONS: Оружие
+  UI_LABEL_ITEM_FOUND: Найден Предмет!
+  UI_BUTTON_TAKE: Взять
+  UI_BUTTON_RECYCLE: Переработать
   UI_BUTTON_CHOOSE: Выбрать
   UI_BUTTON_REROLL: Перебросить
   UI_BUTTON_NEXT_WAVE: Продолжить

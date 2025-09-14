@@ -123,6 +123,9 @@ table GameLibrary {
     ui_label_shop_locale: int;
     ui_label_items_locale: int;
     ui_label_weapons_locale: int;
+    ui_label_item_found_locale: int;
+    ui_button_take_locale: int;
+    ui_button_recycle_locale: int;
     ui_button_choose_locale: int;
     ui_button_reroll_locale: int;
     ui_button_next_wave_locale: int;

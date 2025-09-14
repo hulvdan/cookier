@@ -481,7 +481,6 @@ struct Weapon {
 
 struct Item {
   ItemType type  = {};
-  int      tier  = {};
   int      count = {};
 };
 
@@ -572,11 +571,12 @@ lframe GetWaveDuration(int waveIndex) {  ///
   return lframe::MakeUnscaled(seconds * FIXED_FPS);
 }
 
-enum StateType {
-  StateType_GAMEPLAY,
-  StateType_UPGRADES,
-  StateType_SHOP,
-  StateType_END,
+enum ScreenType {
+  ScreenType_GAMEPLAY,
+  ScreenType_PICKED_UP_ITEM,
+  ScreenType_UPGRADES,
+  ScreenType_SHOP,
+  ScreenType_END,
 };
 
 struct ShopItem {
@@ -609,14 +609,16 @@ struct GameData {
   } meta;
 
   struct Run {
-    bool      reload = false;
-    bool      won    = false;
-    StateType state  = StateType_GAMEPLAY;
+    bool       reload = false;
+    bool       won    = false;
+    ScreenType screen = ScreenType_GAMEPLAY;
 
-    bool scheduledUpgrades = false;
-    bool scheduledShop     = false;
-    bool scheduledEnd      = false;
-    bool scheduledNextWave = false;
+    bool scheduledUI            = false;
+    bool scheduledPickedUpItems = false;
+    bool scheduledUpgrades      = false;
+    bool scheduledShop          = false;
+    bool scheduledEnd           = false;
+    bool scheduledNextWave      = false;
 
     Camera camera{
       .zoom          = METER_LOGICAL_SIZE,
@@ -632,6 +634,7 @@ struct GameData {
     f32 xp            = 0;
     f32 nextLevelXp   = 10;
     int coins         = 0;
+    int crates        = 0;
     int xpLevel       = 1;
     int previousLevel = 1;
     int pierceCount   = 0;
@@ -642,6 +645,11 @@ struct GameData {
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons      = {};
     int                                 playerWeaponsCount = 0;
     Array<int, StatType_COUNT>          playerStats        = {};
+
+    struct {
+      ItemType toPick         = {};
+      int      recyclingPrice = {};
+    } pickedUpItem;
 
     struct {
       Array<Upgrade, 4> toPick = {};
@@ -1393,6 +1401,17 @@ void RefillUpgradesToPick() {  ///
   }
 }
 
+ItemType GenerateRandomItem() {  ///
+  ItemType type{};
+  while (!type)
+    type = (ItemType)(GRAND.Rand() % (u32)ItemType_COUNT);
+  return type;
+}
+
+int GenerateItemPrice() {  ///
+  return 15 + (int)(GRAND.Rand() % 20);
+}
+
 void RefillShopToPick() {  ///
   const auto fb_items   = glib->items();
   const auto fb_weapons = glib->weapons();
@@ -1400,12 +1419,11 @@ void RefillShopToPick() {  ///
   auto& toPick = g.run.shop.toPick;
 
   for (auto& v : toPick) {
-    v = {.price = 15 + (int)(GRAND.Rand() % 20)};
+    v = {.price = GenerateItemPrice()};
 
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
-      while (!v.item)
-        v.item = (ItemType)(GRAND.Rand() % fb_items->size());
+      v.item = GenerateRandomItem();
 
       const auto fb = fb_items->Get(v.item);
       v.tier        = fb->tier();
@@ -1420,10 +1438,31 @@ void RefillShopToPick() {  ///
   }
 }
 
+void AddItem(ItemType v) {  ///
+  bool increasedExistingItemCount = false;
+  int  i                          = 0;
+  for (auto& item : g.run.a.playerItems) {
+    i++;
+    if (item.type == v) {
+      item.count++;
+      increasedExistingItemCount = true;
+      break;
+    }
+  }
+  if (!increasedExistingItemCount) {
+    Item item{.type = v, .count = 1};
+    *g.run.a.playerItems.Add() = item;
+  }
+}
+
 void DoUI(bool draw) {
   // NOTE: Logic must be executed only when `draw` is false!
   // e.g. updating mouse position, processing `clicked()`,
   // logically reacting to `Clay_Hovered()`, changing game's state, etc.
+
+  const auto fb_items       = glib->items();
+  const auto fb_weapons     = glib->weapons();
+  const auto fb_pickupables = glib->pickupables();
 
   // Setup.
   // {  ///
@@ -1534,7 +1573,7 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentItem, (const Item& item)) {  ///
     const auto fb = glib->items()->Get(item.type);
-    componentSlot(false, item.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+    componentSlot(false, fb->tier(), [&]() BF_FORCE_INLINE_LAMBDA {
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1561,7 +1600,7 @@ void DoUI(bool draw) {
   LAMBDA (void, componentWeapon, (const Weapon& weapon)) {  ///
     componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
       if (weapon.type) {
-        const auto fb = glib->weapons()->Get(weapon.type);
+        const auto fb = fb_weapons->Get(weapon.type);
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1576,7 +1615,10 @@ void DoUI(bool draw) {
   };
 
   // Gameplay.
-  if ((g.run.state == StateType_GAMEPLAY) || (g.run.state == StateType_UPGRADES)) {
+  if ((g.run.screen == ScreenType_GAMEPLAY)           //
+      || (g.run.screen == ScreenType_PICKED_UP_ITEM)  //
+      || (g.run.screen == ScreenType_UPGRADES))
+  {
     CLAY({
       .layout{BF_CLAY_SIZING_GROW_XY},
       .floating{
@@ -1703,7 +1745,7 @@ void DoUI(bool draw) {
 
         BF_CLAY_TEXT(TextFormat("Wave %d", g.run.waveIndex + 1));
 
-        if (g.run.state == StateType_GAMEPLAY) {
+        if (g.run.screen == ScreenType_GAMEPLAY) {
           const auto remainingFrames
             = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
           const int remainingSeconds
@@ -1739,11 +1781,106 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT(g_gameVersion);
       }
       // }
+
+      // Picked up crates.
+      // { ///
+      CLAY({
+        .layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+        .floating{
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_RIGHT_TOP,
+            .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        FOR_RANGE (int, i, g.run.crates) {
+          const auto fb = fb_pickupables->Get(PickupableType_CRATE);
+          BF_CLAY_IMAGE({.texId = fb->texture_id()});
+        }
+      }
+      // }
     }
   }
 
+  // Picked up item.
+  if (g.run.screen == ScreenType_PICKED_UP_ITEM) {  ///
+    CLAY({.layout{
+      BF_CLAY_SIZING_GROW_XY,
+      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+    }}) {
+      // Columns (1) picked up item, (2) stats
+      CLAY({.layout{
+        .childGap = 8,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }}) {
+        // Picked up item.
+        CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          // "Item Found" label.
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_item_found_locale());
+
+          // Item.
+          CLAY({
+            .layout{
+              .sizing{CLAY_SIZING_FIXED(235), CLAY_SIZING_FIXED(320)},
+              BF_CLAY_PADDING_ALL(8),
+              .childGap        = 8,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            },
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+          }) {
+            CLAY({.layout{.childGap = 8}}) {
+              const auto type = g.run.pickedUpItem.toPick;
+              const auto fb   = fb_items->Get(type);
+              const Item item{.type = type, .count = 1};
+              componentItem(item);
+
+              BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+            }
+
+            // TODO: Item stats.
+          }
+
+          // Take and Recycle buttons.
+          CLAY({.layout{.childGap = 8}}) {
+            const bool takeClicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
+            });
+
+            const bool recycleClicked
+              = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+                  CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
+                    BF_CLAY_TEXT(TextFormat(" (+%d ", g.run.pickedUpItem.recyclingPrice));
+                    BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                    BF_CLAY_TEXT(")");
+                  }
+                });
+
+            if (takeClicked)
+              AddItem(g.run.pickedUpItem.toPick);
+            else if (recycleClicked)
+              g.run.coins += g.run.pickedUpItem.recyclingPrice;
+
+            if (takeClicked || recycleClicked) {
+              g.run.crates--;
+              if (g.run.crates)
+                g.run.scheduledPickedUpItems = true;
+              else
+                g.run.scheduledUpgrades = true;
+            }
+          }
+        }
+
+        // Stats.
+        componentStats();
+      }
+    }
+  }
   // Upgrades.
-  if (g.run.state == StateType_UPGRADES) {  ///
+  else if (g.run.screen == ScreenType_UPGRADES) {  ///
     // Vertical columns with upgrades and stats;
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
@@ -1843,7 +1980,7 @@ void DoUI(bool draw) {
     }
   }
   // Shop.
-  else if (g.run.state == StateType_SHOP) {  ///
+  else if (g.run.screen == ScreenType_SHOP) {  ///
     // Columns.
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
@@ -1962,9 +2099,8 @@ void DoUI(bool draw) {
                 },
                 BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
               }) {
-                const auto fb_item = (v.item ? glib->items()->Get(v.item) : nullptr);
-                const auto fb_weapon
-                  = (v.weapon ? glib->weapons()->Get(v.weapon) : nullptr);
+                const auto fb_item   = (v.item ? fb_items->Get(v.item) : nullptr);
+                const auto fb_weapon = (v.weapon ? fb_weapons->Get(v.weapon) : nullptr);
 
                 // TODO: Highlight price, not item's frame.
 
@@ -2037,23 +2173,7 @@ void DoUI(bool draw) {
                       }
                     }
                     else if (v.item) {
-                      bool increasedExistingItemCount = false;
-                      int  i                          = 0;
-                      for (auto& item : g.run.a.playerItems) {
-                        i++;
-                        if (item.type == v.item) {
-                          item.count++;
-                          increasedExistingItemCount = true;
-                          break;
-                        }
-                      }
-                      if (!increasedExistingItemCount) {
-                        *g.run.a.playerItems.Add() = {
-                          .type  = v.item,
-                          .tier  = v.tier,
-                          .count = 1,
-                        };
-                      }
+                      AddItem(v.item);
                     }
                     else
                       INVALID_PATH;
@@ -2149,7 +2269,7 @@ void DoUI(bool draw) {
     }
   }
   // End.
-  else if (g.run.state == StateType_END) {  ///
+  else if (g.run.screen == ScreenType_END) {  ///
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_PADDING_ALL(8),
@@ -2232,7 +2352,7 @@ void DoUI(bool draw) {
       }
     }
   }
-  else if (g.run.state == StateType_GAMEPLAY) {
+  else if (g.run.screen == ScreenType_GAMEPLAY) {
     // NOTE: Intentionally left blank.
   }
   else
@@ -2467,25 +2587,50 @@ void GameFixedUpdate() {
     }
 
     // F7 - show end screen.
-    if (IsKeyPressed(SDL_SCANCODE_F7) && (g.run.state == StateType_GAMEPLAY)) {  ///
+    if (IsKeyPressed(SDL_SCANCODE_F7) && (g.run.screen == ScreenType_GAMEPLAY)) {  ///
+      g.run.scheduledUI  = true;
       g.run.scheduledEnd = true;
     }
 
     // F8 - add level.
-    if (IsKeyPressed(SDL_SCANCODE_F8) && (g.run.state == StateType_GAMEPLAY)) {
+    if (IsKeyPressed(SDL_SCANCODE_F8) && (g.run.screen == ScreenType_GAMEPLAY)) {  ///
       g.run.nextLevelXp *= 2;
       g.run.xpLevel++;
     }
+
+    // F9 - add crate.
+    if (IsKeyPressed(SDL_SCANCODE_F9) && (g.run.screen == ScreenType_GAMEPLAY)) {  ///
+      g.run.crates++;
+    }
   }
 
-  // Advancing to upgrades.
-  if (g.run.scheduledUpgrades || g.run.scheduledEnd) {  ///
-    g.run.scheduledUpgrades = false;
-
-    g.run.state = StateType_UPGRADES;
+  // Applying UI settings.
+  if (g.run.scheduledUI) {
+    g.run.scheduledUI = false;
 
     ge.settings.screenFade = glib->ui_modal_fade();
     SDL_ShowCursor();
+
+    if (g.run.crates)
+      g.run.scheduledPickedUpItems = true;
+    else
+      g.run.scheduledUpgrades = true;
+  }
+
+  // Advancing to picked up items.
+  if (g.run.scheduledPickedUpItems) {  ///
+    g.run.scheduledPickedUpItems = false;
+
+    g.run.screen                      = ScreenType_PICKED_UP_ITEM;
+    g.run.pickedUpItem.toPick         = GenerateRandomItem();
+    g.run.pickedUpItem.recyclingPrice = GenerateItemPrice();
+  }
+
+  // Advancing to upgrades.
+  if (g.run.scheduledUpgrades) {  ///
+    g.run.scheduledUpgrades = false;
+
+    g.run.screen = ScreenType_UPGRADES;
 
     RefillUpgradesToPick();
 
@@ -2499,7 +2644,7 @@ void GameFixedUpdate() {
   // Advancing to shop.
   if (g.run.scheduledShop) {  ///
     g.run.scheduledShop = false;
-    g.run.state         = StateType_SHOP;
+    g.run.screen        = ScreenType_SHOP;
 
     g.run.shop.rerolledTimes = 0;
     g.run.shop.rerollPrice   = GetRerollPrice(g.run.waveIndex, 0);
@@ -2509,7 +2654,7 @@ void GameFixedUpdate() {
   // Advancing to end screen.
   if (g.run.scheduledEnd) {  ///
     g.run.scheduledEnd = false;
-    g.run.state        = StateType_END;
+    g.run.screen       = ScreenType_END;
   }
 
   // Advancing to the next wave.
@@ -2520,7 +2665,7 @@ void GameFixedUpdate() {
     PLAYER_CREATURE.health    = health;
     PLAYER_CREATURE.maxHealth = health;
 
-    g.run.state            = StateType_GAMEPLAY;
+    g.run.screen           = ScreenType_GAMEPLAY;
     ge.settings.screenFade = 0;
     SDL_HideCursor();
 
@@ -2542,11 +2687,12 @@ void GameFixedUpdate() {
   }
 
   // Updating gameplay.
-  if (g.run.state == StateType_GAMEPLAY) {
+  if (g.run.screen == ScreenType_GAMEPLAY) {
     // Finishing wave opens upgrades screen.
     if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
-      g.run.scheduledUpgrades = true;
+      g.run.scheduledUI = true;
       if (g.run.waveIndex >= TOTAL_WAVES - 1) {
+        g.run.scheduledUI  = true;
         g.run.scheduledEnd = true;
         g.run.won          = true;
       }
@@ -2940,8 +3086,10 @@ void GameFixedUpdate() {
         if (creature.health <= 0) {
           DestroyBody(&creature.body);
 
-          if (!index)
+          if (!index) {
+            g.run.scheduledUI  = true;
             g.run.scheduledEnd = true;
+          }
           else
             creature.diedAt.SetNow();
 
@@ -2960,8 +3108,14 @@ void GameFixedUpdate() {
             .type = PickupableType_COIN,
             .pos  = creature.pos,
           };
-          if (creature.type == CreatureType_TREE)
+
+          // Trees drop consumables or crates.
+          if (creature.type == CreatureType_TREE) {
             pickupable.type = PickupableType_CONSUMABLE;
+
+            if (GRAND.FRand() <= TREE_DROP_CRATE_FACTOR)
+              pickupable.type = PickupableType_CRATE;
+          }
 
           pickupable.createdAt.SetNow();
           *g.run.a.pickupables.Add() = pickupable;
@@ -3004,6 +3158,10 @@ void GameFixedUpdate() {
                 PLAYER_CREATURE.health
                   = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
               }
+            } break;
+
+            case PickupableType_CRATE: {
+              g.run.crates++;
             } break;
 
             default:
@@ -3307,8 +3465,11 @@ void GameDraw() {
     DebugText("F4 change device");
     DebugText("F5 +10 coins");
     DebugText("F6 add item");
-    DebugText("F7 show end screen");
-    DebugText("F8 add level");
+    if (g.run.screen == ScreenType_GAMEPLAY) {
+      DebugText("F7 show end screen");
+      DebugText("F8 add level");
+      DebugText("F9 add crate");
+    }
 
     LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
       DebugText(
@@ -3332,4 +3493,4 @@ void GameDraw() {
   }
 }
 
-///
+//
