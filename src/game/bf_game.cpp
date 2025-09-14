@@ -1548,6 +1548,49 @@ void DoUI(bool draw) {
     }
   };
 
+  LAMBDA (void, componentItem, (const Item& item)) {  ///
+    const auto fb = glib->items()->Get(item.type);
+    componentSlot(false, item.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+      CLAY({.layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }}) {
+        BF_CLAY_IMAGE({.texId = fb->texture_id()});
+
+        // Showing count if there are multiple of the same item.
+        if (item.count > 1) {
+          CLAY({.floating{
+            .attachPoints{
+              .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+              .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+            },
+            .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+            .attachTo           = CLAY_ATTACH_TO_PARENT,
+          }}) {
+            BF_CLAY_TEXT(TextFormat("x%d", item.count));
+          }
+        }
+      }
+    });
+  };
+
+  LAMBDA (void, componentWeapon, (const Weapon& weapon)) {  ///
+    componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+      if (weapon.type) {
+        const auto fb = glib->weapons()->Get(weapon.type);
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
+          BF_CLAY_IMAGE({
+            .texId = fb->texture_ids()->Get(0),
+            .color = ColorFromRGB(fb->color()),
+          });
+        }
+      }
+    });
+  };
+
   // Gameplay.
   if ((g.run.state == StateType_GAMEPLAY) || (g.run.state == StateType_UPGRADES)) {
     CLAY({
@@ -2059,31 +2102,7 @@ void DoUI(bool draw) {
                   const int t = y * ITEMS_X + x;
                   if (t >= g.run.a.playerItems.count)
                     break;
-
-                  const auto& item = g.run.a.playerItems[t];
-                  const auto  fb   = glib->items()->Get(item.type);
-                  componentSlot(false, item.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                    CLAY({.layout{
-                      BF_CLAY_SIZING_GROW_XY,
-                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                    }}) {
-                      BF_CLAY_IMAGE({.texId = fb->texture_id()});
-
-                      // Showing count if there are multiple of the same item.
-                      if (item.count > 1) {
-                        CLAY({.floating{
-                          .attachPoints{
-                            .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-                            .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-                          },
-                          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-                          .attachTo           = CLAY_ATTACH_TO_PARENT,
-                        }}) {
-                          BF_CLAY_TEXT(TextFormat("x%d", item.count));
-                        }
-                      }
-                    }
-                  });
+                  componentItem(g.run.a.playerItems[t]);
                 }
               }
             }
@@ -2115,23 +2134,8 @@ void DoUI(bool draw) {
             FOR_RANGE (int, y, 2) {
               CLAY({.layout{.childGap = 8}})
               FOR_RANGE (int, x, 3) {
-                const int   t      = y * WEAPONS_X + x;
-                const auto& weapon = g.run.playerWeapons[t];
-
-                componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                  if (weapon.type) {
-                    const auto fb = glib->weapons()->Get(weapon.type);
-                    CLAY({.layout{
-                      BF_CLAY_SIZING_GROW_XY,
-                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                    }}) {
-                      BF_CLAY_IMAGE({
-                        .texId = fb->texture_ids()->Get(0),
-                        .color = ColorFromRGB(fb->color()),
-                      });
-                    }
-                  }
-                });
+                const int t = y * WEAPONS_X + x;
+                componentWeapon(g.run.playerWeapons[t]);
               }
             }
           }
@@ -2208,17 +2212,8 @@ void DoUI(bool draw) {
           // Weapons.
           CLAY({.layout{.childGap = 8}})
           for (const auto& weapon : g.run.playerWeapons) {
-            if (weapon.type) {
-              const auto fb = glib->weapons()->Get(weapon.type);
-              componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({.layout{
-                  BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                }}) {
-                  BF_CLAY_IMAGE({.texId = fb->texture_ids()->Get(0)});
-                }
-              });
-            }
+            if (weapon.type)
+              componentWeapon(weapon);
           }
 
           // Items label.
@@ -2235,18 +2230,8 @@ void DoUI(bool draw) {
             CLAY({.layout{.childGap = 8}})
             FOR_RANGE (int, x, ITEMS_X) {
               const auto t = y * ITEMS_X + x;
-              if (t >= items.count)
-                break;
-              const auto& item = items[t];
-              const auto  fb   = glib->items()->Get(item.type);
-              componentSlot(false, item.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({.layout{
-                  BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                }}) {
-                  BF_CLAY_IMAGE({.texId = fb->texture_id()});
-                }
-              });
+              if (t < items.count)
+                componentItem(items[t]);
             }
           }
         }
