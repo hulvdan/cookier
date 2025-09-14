@@ -84,11 +84,17 @@ x item pickup screen: draw it
 x item pickup screen: pickup button
 x item pickup screen: refund button
 x mob "tree": show crate in UI top right
-
-* melee weapon detaches from player then lerps to player's hand?
+x melee weapon doesn't change rotation after starting shooting
+- melee weapon detaches from player then lerps to player's hand?
   (player's movement doesn't affect detached weapon)
-* melee weapon doesn't change rotation after starting shooting
+
 * fix melee weapon flying away from the screen
+* increase xp on picking up coins
+* upgrade random stat on level up
+* «level up» damage number
+* «upgraded stat» damage number upon levelup
+*
+*
 * shop: upgrading weapons via combining
 * shop: refunding player's weapons
 * ZHEKA: total commander for working with sounds?
