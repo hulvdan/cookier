@@ -2294,7 +2294,7 @@ void DoUI(bool draw) {
                       },
                     }) {
                       if (g.run.shop.selectedWeaponIndex == weaponIndex)
-                        CLAY({BF_CLAY_CUSTOM_OVERLAY(Fade(BLACK, 0.75f))}) {}
+                        CLAY({BF_CLAY_CUSTOM_OVERLAY(MODAL_OVERLAY_COLOR)}) {}
 
                       CLAY({
                         .layout{
@@ -2868,6 +2868,11 @@ void GameFixedUpdate() {
     g.run.a.projectilesToRemove.Reset();
     g.run.a.bodyShapes.Reset();
     g.run.a.justDamagedCreatures.Reset();
+    for (auto& weapon : g.run.playerWeapons) {
+      weapon.startedShootingAt = {};
+      weapon.cooldownStartedAt = {};
+      weapon.piercedCount      = 0;
+    }
   }
 
   // Updating gameplay.
