@@ -2426,7 +2426,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
 
   const auto fb = glib->weapons()->Get(weapon->type);
 
-  if (weapon->piercedCreatureIds.Contains(creature.id))
+  if (ArrayContains(weapon->piercedCreatureIds.base, weapon->piercedCount, creature.id))
     return continueCollisions;
 
   if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
