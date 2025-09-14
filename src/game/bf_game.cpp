@@ -3100,15 +3100,7 @@ void GameFixedUpdate() {
           else
             creature.diedAt.SetNow();
 
-          if (index) {
-            g.run.xp++;
-            if (g.run.xp >= g.run.nextLevelXp) {
-              g.run.nextLevelXp *= 2;
-              g.run.xp = 0;
-              g.run.xpLevel++;
-            }
-          }
-          else
+          if (!index)
             g.run.playerDiedAt.SetNow();
 
           Pickupable pickupable{
@@ -3158,6 +3150,13 @@ void GameFixedUpdate() {
             switch (pickupable.type) {
             case PickupableType_COIN: {
               g.run.coins++;
+
+              g.run.xp++;
+              if (g.run.xp >= g.run.nextLevelXp) {
+                g.run.nextLevelXp *= 2;
+                g.run.xp = 0;
+                g.run.xpLevel++;
+              }
             } break;
 
             case PickupableType_CONSUMABLE: {
