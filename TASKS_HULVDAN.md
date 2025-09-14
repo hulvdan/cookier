@@ -71,6 +71,8 @@ x 9slice: correct 9slice margins
 x upgrading weapons via buying
 x items stack
 x melee weapons that get thrown
+x show item stacks in the end screen
+  (ref extract items + weapons components)
 
 * show melee weapons collider gizmos
 * weapons render z
