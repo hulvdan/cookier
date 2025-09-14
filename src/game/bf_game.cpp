@@ -578,7 +578,6 @@ struct Upgrade {
 struct GameData {
   struct Meta {
     i64   frame      = 0;
-    Arena arena      = {};
     Arena trashArena = {};
     Font  uiFont     = {};
 
@@ -593,6 +592,8 @@ struct GameData {
   } meta;
 
   struct Run {
+    Arena arena = {};
+
     bool       reload = false;
     bool       won    = false;
     ScreenType screen = ScreenType_GAMEPLAY;
@@ -650,8 +651,7 @@ struct GameData {
       int selectedWeaponIndex = -1;
     } shop;
 
-    struct Allocated {
-      // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
+    // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
 #define VECTORS_TABLE              \
   X(Creature, creatures)           \
   X(CreatureSpawn, creatureSpawns) \
@@ -664,15 +664,8 @@ struct GameData {
   X(Item, playerItems)
 
 #define X(type_, name_) Vector<type_> name_ = {};
-      VECTORS_TABLE;
+    VECTORS_TABLE;
 #undef X
-
-      void Reset() {  ///
-#define X(type_, name_) (name_).Reset();
-        VECTORS_TABLE;
-#undef X
-      }
-    } a;
   } run;
 } g = {};
 
@@ -719,7 +712,7 @@ void MakeNumber(MakeNumberData data) {  ///
     .pos   = data.pos,
   };
   number.createdAt.SetNow();
-  *g.run.a.numbers.Add() = number;
+  *g.run.numbers.Add() = number;
 }
 
 void LogicalFrame::SetNow() {  ///
@@ -829,7 +822,7 @@ void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
 
 void DestroyBody(Body* body) {  ///
   b2DestroyBody(body->id);
-  for (auto& shape : g.run.a.bodyShapes) {
+  for (auto& shape : g.run.bodyShapes) {
     if (shape.body.createdId == body->createdId)
       shape.active = false;
   }
@@ -839,14 +832,14 @@ void AddBodyShape(BodyShape v) {  ///
   ASSERT(v.active);
   ASSERT(v.type);
 
-  for (auto& shape : g.run.a.bodyShapes) {
+  for (auto& shape : g.run.bodyShapes) {
     if (!shape.active) {
       shape = v;
       return;
     }
   }
 
-  *g.run.a.bodyShapes.Add() = v;
+  *g.run.bodyShapes.Add() = v;
 }
 
 struct MakeBodyResult {  ///
@@ -983,13 +976,13 @@ void MakeCreature(MakeCreatureData data) {  ///
     return;
 
   int index = -1;
-  FOR_RANGE (int, i, g.run.a.creatures.count) {
-    if (!g.run.a.creatures[i].active) {
+  FOR_RANGE (int, i, g.run.creatures.count) {
+    if (!g.run.creatures[i].active) {
       auto ok = false;
 
-      if ((i == 0) && (g.run.a.creatures.count == 0))
+      if ((i == 0) && (g.run.creatures.count == 0))
         ok = true;
-      if ((i > 0) && (g.run.a.creatures.count > 0))
+      if ((i > 0) && (g.run.creatures.count > 0))
         ok = true;
 
       if (ok) {
@@ -1000,8 +993,8 @@ void MakeCreature(MakeCreatureData data) {  ///
   }
 
   if (index == -1) {
-    index = g.run.a.creatures.count;
-    g.run.a.creatures.Add();
+    index = g.run.creatures.count;
+    g.run.creatures.Add();
   }
 
   auto hurtboxRadius = PLAYER_HURTBOX_RADIUS;
@@ -1033,7 +1026,7 @@ void MakeCreature(MakeCreatureData data) {  ///
     }),
   };
 
-  g.run.a.creatures[index] = creature;
+  g.run.creatures[index] = creature;
 }
 
 void MakeProjectile(MakeProjectileData data) {  ///
@@ -1060,7 +1053,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     INVALID_PATH;
   }
 
-  *g.run.a.projectiles.Add() = projectile;
+  *g.run.projectiles.Add() = projectile;
 }
 
 void GamePreInit() {  ///
@@ -1121,7 +1114,7 @@ void MakeWalls(MakeWallsData data) {  ///
   }
 }
 
-#define PLAYER_CREATURE (g.run.a.creatures[0])
+#define PLAYER_CREATURE (g.run.creatures[0])
 
 Vector2 GetCameraTargetPos() {  ///
   auto tpos = PLAYER_CREATURE.pos;
@@ -1233,7 +1226,7 @@ void GameInit() {  ///
   SDL_HideCursor();
 
   g.meta.trashArena = MakeArena(4 * 1024);
-  g.meta.arena      = MakeArena(4 * 1024);
+  g.run.arena       = MakeArena(4 * 1024);
 
   // Initializing Clay.
   {  ///
@@ -1281,7 +1274,7 @@ bool TryApplyDamage(
   f32     impulse,
   int     damageApplicatorCreatureIndex
 ) {  ///
-  auto& creature = g.run.a.creatures[creatureIndex];
+  auto& creature = g.run.creatures[creatureIndex];
 
   const auto fb = glib->creatures()->Get(creature.type);
   if (!fb->can_be_knocked_back())
@@ -1332,8 +1325,8 @@ bool TryApplyDamage(
       creature.body.id, ToB2Vec2(direction * impulse), true
     );
 
-    if (!g.run.a.justDamagedCreatures.Contains(creatureIndex))
-      *g.run.a.justDamagedCreatures.Add() = creatureIndex;
+    if (!g.run.justDamagedCreatures.Contains(creatureIndex))
+      *g.run.justDamagedCreatures.Add() = creatureIndex;
 
     return true;
   }
@@ -1347,11 +1340,25 @@ void RunReset() {  ///
 
   b2DestroyWorld(g.run.world);
 
-  auto a = g.run.a;
-  a.Reset();
-  g.run = {.a = a};
+  // Resetting `g.run` to a default value,
+  // while preserving allocated memory of it's Vectors.
+  struct {
+#define X(type_, name_) Vector<type_> name_ = g.run.name_;
+    VECTORS_TABLE;
+#undef X
+  } temp{};
 
-  g.meta.arena.used = 0;
+#define X(type_, name_) temp.name_.Reset();
+  VECTORS_TABLE;
+#undef X
+
+  g.run = {
+#define X(type_, name_) .name_ = temp.name_,
+    VECTORS_TABLE
+#undef X
+  };
+
+  g.run.arena.used = 0;
 }
 
 int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
@@ -1432,7 +1439,7 @@ void RefillShopToPick() {  ///
 void AddItem(ItemType v) {  ///
   bool increasedExistingItemCount = false;
   int  i                          = 0;
-  for (auto& item : g.run.a.playerItems) {
+  for (auto& item : g.run.playerItems) {
     i++;
     if (item.type == v) {
       item.count++;
@@ -1442,7 +1449,7 @@ void AddItem(ItemType v) {  ///
   }
   if (!increasedExistingItemCount) {
     Item item{.type = v, .count = 1};
-    *g.run.a.playerItems.Add() = item;
+    *g.run.playerItems.Add() = item;
   }
 }
 
@@ -2200,15 +2207,15 @@ void DoUI(bool draw) {
             // Items.
             CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
               constexpr int ITEMS_X = 10;
-              const int     ITEMS_Y = CeilDivision(g.run.a.playerItems.count, ITEMS_X);
+              const int     ITEMS_Y = CeilDivision(g.run.playerItems.count, ITEMS_X);
 
               FOR_RANGE (int, y, ITEMS_Y) {
                 CLAY({.layout{.childGap = 8}})
                 FOR_RANGE (int, x, ITEMS_X) {
                   const int t = y * ITEMS_X + x;
-                  if (t >= g.run.a.playerItems.count)
+                  if (t >= g.run.playerItems.count)
                     break;
-                  componentItem(g.run.a.playerItems[t]);
+                  componentItem(g.run.playerItems[t]);
                 }
               }
             }
@@ -2440,7 +2447,7 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
 
           // Items.
-          const auto& items = g.run.a.playerItems;
+          const auto& items = g.run.playerItems;
 
           constexpr int ITEMS_X = 10;
           const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
@@ -2658,7 +2665,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
 
   const auto  creatureIndex = userData.GetCreatureIndex();
-  const auto& creature      = g.run.a.creatures[creatureIndex];
+  const auto& creature      = g.run.creatures[creatureIndex];
 
   ASSERT(creature.type);
   ASSERT(creature.active);
@@ -2744,7 +2751,7 @@ void GameFixedUpdate() {
     // F6 - add random item.
     if (IsKeyPressed(SDL_SCANCODE_F6)) {  ///
       Item item{.type = (ItemType)((GRAND.Rand() % (int)(ItemType_COUNT - 1)) + 1)};
-      *g.run.a.playerItems.Add() = item;
+      *g.run.playerItems.Add() = item;
     }
 
     if (g.run.screen == ScreenType_GAMEPLAY) {
@@ -2778,12 +2785,12 @@ void GameFixedUpdate() {
     else
       g.run.scheduledUpgrades = true;
 
-    for (int i = 1; i < g.run.a.creatures.count; i++) {
-      auto& creature = g.run.a.creatures[i];
+    for (int i = 1; i < g.run.creatures.count; i++) {
+      auto& creature = g.run.creatures[i];
       if (creature.active && !creature.diedAt.IsSet())
         TryApplyDamage(i, f32_inf, {}, 0, -1);
     }
-    g.run.a.creatureSpawns.Reset();
+    g.run.creatureSpawns.Reset();
   }
 
   // Advancing to picked up items.
@@ -2895,8 +2902,8 @@ void GameFixedUpdate() {
     }
 
     // Updating AI.
-    for (int i = 1; i < g.run.a.creatures.count; i++) {  ///
-      auto& creature = g.run.a.creatures[i];
+    for (int i = 1; i < g.run.creatures.count; i++) {  ///
+      auto& creature = g.run.creatures[i];
       creature.controller.move
         = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
     }
@@ -2931,7 +2938,7 @@ void GameFixedUpdate() {
             .pos  = posToSpawn,
           };
           spawn.createdAt.SetNow();
-          *g.run.a.creatureSpawns.Add() = spawn;
+          *g.run.creatureSpawns.Add() = spawn;
         }
         else
           INVALID_PATH;
@@ -2943,16 +2950,16 @@ void GameFixedUpdate() {
 
     // Spawning.
     {  ///
-      const int total = g.run.a.creatureSpawns.count;
+      const int total = g.run.creatureSpawns.count;
       int       off   = 0;
       FOR_RANGE (int, i, total) {
-        auto& v = g.run.a.creatureSpawns[i - off];
+        auto& v = g.run.creatureSpawns[i - off];
         if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
           MakeCreature({
             .type = v.type,
             .pos  = v.pos,
           });
-          g.run.a.creatureSpawns.UnstableRemoveAt(i - off);
+          g.run.creatureSpawns.UnstableRemoveAt(i - off);
           off++;
         }
       }
@@ -2963,8 +2970,8 @@ void GameFixedUpdate() {
       const auto fb_creatures = glib->creatures();
 
       const auto playerPos = PLAYER_CREATURE.pos;
-      for (int i = 1; i < g.run.a.creatures.count; i++) {
-        const auto& creature = g.run.a.creatures[i];
+      for (int i = 1; i < g.run.creatures.count; i++) {
+        const auto& creature = g.run.creatures[i];
         if (!creature.active || creature.diedAt.IsSet())
           continue;
 
@@ -2988,7 +2995,7 @@ void GameFixedUpdate() {
 
     // Picking up pickupables.
     if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
-      for (auto& pickupable : g.run.a.pickupables) {
+      for (auto& pickupable : g.run.pickupables) {
         if (pickupable.pickedUpAt.IsSet()) {
           pickupable.pos
             = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
@@ -3034,7 +3041,7 @@ void GameFixedUpdate() {
   {  ///
     const auto fb_creatures = glib->creatures();
 
-    for (auto& creature : g.run.a.creatures) {
+    for (auto& creature : g.run.creatures) {
       if (!creature.active || creature.diedAt.IsSet())
         continue;
 
@@ -3056,7 +3063,7 @@ void GameFixedUpdate() {
   b2World_Step(g.run.world, FIXED_DT, 4);
 
   // Updating body positions.
-  for (auto& creature : g.run.a.creatures) {  ///
+  for (auto& creature : g.run.creatures) {  ///
     if (!creature.active || creature.diedAt.IsSet())
       continue;
 
@@ -3083,7 +3090,7 @@ void GameFixedUpdate() {
 
       if (!weapon.cooldownStartedAt.IsSet()) {
         int creatureIndex = -1;
-        for (const auto& creature : g.run.a.creatures) {
+        for (const auto& creature : g.run.creatures) {
           creatureIndex++;
 
           if (!creature.active            //
@@ -3102,7 +3109,7 @@ void GameFixedUpdate() {
         bool targetSet = false;
 
         if (closestCreatureIndex >= 0) {
-          const auto& closestCreature = g.run.a.creatures[closestCreatureIndex];
+          const auto& closestCreature = g.run.creatures[closestCreatureIndex];
           if (minDistSqr < SQR(fb->range())) {
             const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
 
@@ -3206,7 +3213,7 @@ void GameFixedUpdate() {
     const auto fb_projectiles = glib->projectiles();
 
     int projectileIndex = -1;
-    for (auto& projectile : g.run.a.projectiles) {
+    for (auto& projectile : g.run.projectiles) {
       projectileIndex++;
 
       const auto fb       = fb_projectiles->Get(projectile.type);
@@ -3215,20 +3222,20 @@ void GameFixedUpdate() {
       projectile.pos += projectile.dir * distance;
 
       if (projectile.travelledDistance >= projectile.range) {
-        if (!g.run.a.projectilesToRemove.Contains(projectileIndex))
-          *g.run.a.projectilesToRemove.Add() = projectileIndex;
+        if (!g.run.projectilesToRemove.Contains(projectileIndex))
+          *g.run.projectilesToRemove.Add() = projectileIndex;
       }
 
       int start = 0;
-      int end   = g.run.a.creatures.count;
+      int end   = g.run.creatures.count;
 
-      if (g.run.a.creatures[projectile.ownerCreatureIndex].type == CreatureType_PLAYER)
+      if (g.run.creatures[projectile.ownerCreatureIndex].type == CreatureType_PLAYER)
         start = 1;
       else
         end = 1;
 
       for (int i = start; i < end; i++) {
-        auto& creature = g.run.a.creatures[i];
+        auto& creature = g.run.creatures[i];
         if (!creature.active || creature.diedAt.IsSet())
           continue;
 
@@ -3250,14 +3257,14 @@ void GameFixedUpdate() {
               ))
           {
             auto maxPierce = fb->pierce();
-            if (g.run.a.creatures[projectile.ownerCreatureIndex].type
+            if (g.run.creatures[projectile.ownerCreatureIndex].type
                 == CreatureType_PLAYER)
               maxPierce += g.run.pierceCount;
 
             if (projectile.piercedCount < maxPierce)
               projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
-            else if (!g.run.a.projectilesToRemove.Contains(projectileIndex))
-              *g.run.a.projectilesToRemove.Add() = projectileIndex;
+            else if (!g.run.projectilesToRemove.Contains(projectileIndex))
+              *g.run.projectilesToRemove.Add() = projectileIndex;
           }
         }
       }
@@ -3265,19 +3272,19 @@ void GameFixedUpdate() {
   }
 
   // Processing `projectilesToRemove`.
-  if (g.run.a.projectilesToRemove.count) {  ///
+  if (g.run.projectilesToRemove.count) {  ///
     qsort(
-      (void*)g.run.a.projectilesToRemove.base,
-      g.run.a.projectilesToRemove.count,
-      sizeof(*g.run.a.projectilesToRemove.base),
+      (void*)g.run.projectilesToRemove.base,
+      g.run.projectilesToRemove.count,
+      sizeof(*g.run.projectilesToRemove.base),
       (int (*)(const void*, const void*))IntCmp
     );
-    FOR_RANGE (int, i, g.run.a.projectilesToRemove.count) {
+    FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
       const auto projectileIndex
-        = g.run.a.projectilesToRemove[g.run.a.projectilesToRemove.count - i - 1];
-      g.run.a.projectiles.UnstableRemoveAt(projectileIndex);
+        = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
+      g.run.projectiles.UnstableRemoveAt(projectileIndex);
     }
-    g.run.a.projectilesToRemove.Reset();
+    g.run.projectilesToRemove.Reset();
   }
 
   // Processing `justDamagedCreatures`.
@@ -3285,8 +3292,8 @@ void GameFixedUpdate() {
     // auto playerHurt = false;
     // auto mobHurt    = false;
 
-    for (const auto index : g.run.a.justDamagedCreatures) {
-      auto& creature = g.run.a.creatures[index];
+    for (const auto index : g.run.justDamagedCreatures) {
+      auto& creature = g.run.creatures[index];
       ASSERT(creature.active);
 
       // if (index == 0)
@@ -3322,7 +3329,7 @@ void GameFixedUpdate() {
           }
 
           pickupable.createdAt.SetNow();
-          *g.run.a.pickupables.Add() = pickupable;
+          *g.run.pickupables.Add() = pickupable;
         }
       }
     }
@@ -3332,15 +3339,15 @@ void GameFixedUpdate() {
     // if (mobHurt)
     //   PlaySound(Sound_GAME_HURT);
 
-    g.run.a.justDamagedCreatures.Reset();
+    g.run.justDamagedCreatures.Reset();
   }
 
   DoUI(false);
 
   // Unactivating old died creatures.
-  for (auto& creature : g.run.a.creatures) {  ///
-    if (creature.active                       //
-        && creature.diedAt.IsSet()            //
+  for (auto& creature : g.run.creatures) {  ///
+    if (creature.active                     //
+        && creature.diedAt.IsSet()          //
         && (creature.diedAt.Elapsed() >= DIE_FRAMES))
       creature.active = false;
   }
@@ -3349,29 +3356,29 @@ void GameFixedUpdate() {
   {  ///
     int removed = 0;
     int left    = -1;
-    FOR_RANGE (int, i, g.run.a.numbers.count) {
-      const auto& number = g.run.a.numbers[i];
+    FOR_RANGE (int, i, g.run.numbers.count) {
+      const auto& number = g.run.numbers[i];
       if (number.createdAt.Elapsed() >= DAMAGE_NUMBERS_FRAMES) {
         if (left == -1)
           left = i;
         removed++;
       }
       else if (left >= 0)
-        g.run.a.numbers[left++] = number;
+        g.run.numbers[left++] = number;
     }
-    g.run.a.numbers.count -= removed;
+    g.run.numbers.count -= removed;
   }
 
   // Removing old picked up pickupables.
   {  ///
-    const auto total = g.run.a.pickupables.count;
+    const auto total = g.run.pickupables.count;
     int        off   = 0;
     FOR_RANGE (int, i, total) {
-      const auto& pickupable = g.run.a.pickupables[i - off];
+      const auto& pickupable = g.run.pickupables[i - off];
       if (pickupable.pickedUpAt.IsSet()
           && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
       {
-        g.run.a.pickupables.UnstableRemoveAt(i - off);
+        g.run.pickupables.UnstableRemoveAt(i - off);
         off++;
       }
     }
@@ -3418,7 +3425,7 @@ void GameDraw() {
     RenderGroup_Begin(RenderZ_FLOOR_DECALS);
     RenderGroup_SetSortY(0);
 
-    for (auto& spawn : g.run.a.creatureSpawns) {
+    for (auto& spawn : g.run.creatureSpawns) {
       const auto fb_creature  = fb_creatures->Get(spawn.type);
       const auto fb_hostility = fb_hostilities->Get(fb_creature->hostility_type());
       RenderGroup_CommandTexture({
@@ -3433,7 +3440,7 @@ void GameDraw() {
 
   // Drawing creatures.
   {  ///
-    for (const auto& creature : g.run.a.creatures) {
+    for (const auto& creature : g.run.creatures) {
       if (!creature.active)
         continue;
 
@@ -3488,7 +3495,7 @@ void GameDraw() {
 
   // Drawing projectiles + their gizmos.
   {  ///
-    for (const auto& projectile : g.run.a.projectiles) {
+    for (const auto& projectile : g.run.projectiles) {
       if (!projectile.active)
         continue;
 
@@ -3519,7 +3526,7 @@ void GameDraw() {
     RenderGroup_Begin(RenderZ_DAMAGE_NUMBERS);
     RenderGroup_SetSortY(0);
 
-    for (const auto& number : g.run.a.numbers) {
+    for (const auto& number : g.run.numbers) {
       ASSERT(number.type);
       const auto fb = fb_numbers->Get(number.type);
 
@@ -3563,7 +3570,7 @@ void GameDraw() {
 
   // Drawing pickupables.
   {  ///
-    for (const auto& pickupable : g.run.a.pickupables) {
+    for (const auto& pickupable : g.run.pickupables) {
       const auto fb = fb_pickupables->Get(pickupable.type);
 
       f32 fade = 1;
@@ -3589,7 +3596,7 @@ void GameDraw() {
 
   // Gizmos. Colliders.
   if (ge.meta.debugEnabled) {  ///
-    for (auto& shape : g.run.a.bodyShapes) {
+    for (auto& shape : g.run.bodyShapes) {
       if (!shape.active)
         continue;
 
@@ -3662,10 +3669,13 @@ void GameDraw() {
     };
 
     debugTextArena("ge.meta._arena", ge.meta._arena);
-    debugTextArena("g.meta.arena", g.meta.arena);
+    debugTextArena("g.run.arena", g.run.arena);
     debugTextArena("g.meta.trashArena", g.meta.trashArena);
 
-#define X(type_, name_) DebugText("g.run.a." #name_ ".count: %d", g.run.a.name_.count);
+#define X(type_, name_)                                                            \
+  DebugText(                                                                       \
+    "g.run." #name_ ".count: %d, .base: %llu", g.run.name_.count, g.run.name_.base \
+  );
     VECTORS_TABLE;
 #undef X
   }
