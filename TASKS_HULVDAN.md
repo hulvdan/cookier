@@ -100,8 +100,12 @@ x shop: implement combining (remove weapon)
 x shop: sticked weapon detail darkens UI behind it
   (through custom element attached to parent of frame)
 x reset weapons shooting times & cooldowns upon starting a new wave
+x finishing wave damages enemies to death + the don't drop pickupables
 
 * fix melee weapon flying away from the screen
+* wave completed: animation with mobs dying
+* wave completed: not picked up coins fly to
+* wave completed: not picked up coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *
