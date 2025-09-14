@@ -76,8 +76,8 @@ x show item stacks in the end screen
   (ref extract items + weapons components)
 x mob "tree": spawn
 x mob "tree": doesn't do contact damage to player
+x mob "tree": cross is green
 
-* mob "tree": cross is green
 * mob "tree": consumable pickupable
 * mob "tree": picking up consumable heals?
 * mob "tree": also has a chance to drop a crate instead of consumable
