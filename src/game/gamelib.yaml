@@ -239,6 +239,8 @@ numbers:
   - type: INVALID
   - type: DAMAGE
     color: 0xefcb84
+  - type: DAMAGE_CRIT
+    color: 0xdc9824
   - type: PICKUPABLE
     color: 0x66a650
   - type: LEVEL_UP

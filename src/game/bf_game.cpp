@@ -1279,7 +1279,8 @@ bool TryApplyDamage(
   f32     damage,
   Vector2 direction,
   f32     impulse,
-  int     damageApplicatorCreatureIndex
+  int     damageApplicatorCreatureIndex,
+  bool    isCrit
 ) {  ///
   auto& creature = g.run.creatures[creatureIndex];
 
@@ -1290,7 +1291,7 @@ bool TryApplyDamage(
   if (creatureIndex) {
     if (!damageApplicatorCreatureIndex) {
       MakeNumber({
-        .type  = NumberType_DAMAGE,
+        .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
         .value = Round(damage),
         .pos   = creature.pos,
       });
@@ -1555,11 +1556,15 @@ void DoUI(bool draw) {
         BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_stats_locale());
       }
 
-      LAMBDA (void, statsEntry, (int iconTexId, int locale, int value)) {
+      LAMBDA (void, statsEntry, (int iconTexId, int locale, int value, StatType stat)) {
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_X,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
+          // Increasing stat by clicking on it in debug mode.
+          if (stat && ge.meta.debugEnabled && clicked())
+            g.run.playerStats[stat]++;
+
           BF_CLAY_IMAGE({.texId = iconTexId});
           BF_CLAY_TEXT(" ");
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
@@ -1572,7 +1577,8 @@ void DoUI(bool draw) {
       statsEntry(
         glib->ui_shop_current_level_icon_texture_id(),
         glib->ui_current_level_locale(),
-        g.run.xpLevel
+        g.run.xpLevel,
+        StatType_INVALID
       );
 
       // Stats.
@@ -1580,7 +1586,9 @@ void DoUI(bool draw) {
       FOR_RANGE (int, i, (int)StatType_COUNT - 1) {
         const auto type = (StatType)(i + 1);
         const auto fb   = glib->stats()->Get(type);
-        statsEntry(fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type]);
+        statsEntry(
+          fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type], type
+        );
       }
     }
   };
@@ -2677,6 +2685,11 @@ f32 GetPlayerStatDamageMultiplier() {  ///
   return (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
 }
 
+bool IsCrit() {  ///
+  const f32 chance = (f32)g.run.playerStats[StatType_CRIT_CHANCE] / 100.0f;
+  return GRAND.FRand() < chance;
+}
+
 bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
@@ -2701,8 +2714,11 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
     f32 damage = fb->damage();
     damage += g.run.playerStats[StatType_DAMAGE_MELEE];
     damage *= GetPlayerStatDamageMultiplier();
+    bool isCrit = IsCrit();
+    if (isCrit)
+      damage *= CRIT_DAMAGE_MULTIPLIER;
 
-    TryApplyDamage(creatureIndex, damage, weapon->targetDir, fb->impulse(), 0);
+    TryApplyDamage(creatureIndex, damage, weapon->targetDir, fb->impulse(), 0, isCrit);
   }
   return continueCollisions;
 }
@@ -2827,7 +2843,7 @@ void GameFixedUpdate() {
     for (int i = 1; i < g.run.creatures.count; i++) {
       auto& creature = g.run.creatures[i];
       if (creature.active && !creature.diedAt.IsSet())
-        TryApplyDamage(i, f32_inf, {}, 0, -1);
+        TryApplyDamage(i, f32_inf, {}, 0, -1, false);
     }
     g.run.creaturePreSpawns.Reset();
 
@@ -3054,7 +3070,8 @@ void GameFixedUpdate() {
             fb_creatures->Get(creature.type)->damage(),
             Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
             0,
-            i
+            i,
+            false
           );
         }
       }
@@ -3318,10 +3335,14 @@ void GameFixedUpdate() {
         const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
         const auto radius  = fb->collider_radius();
         if (distSqr < SQR(radius)) {
-          f32 damage = projectile.damage;
+          f32  damage = projectile.damage;
+          bool isCrit = false;
           if (!projectile.ownerCreatureIndex) {
             damage += g.run.playerStats[StatType_DAMAGE_RANGED];
             damage *= GetPlayerStatDamageMultiplier();
+            isCrit = IsCrit();
+            if (isCrit)
+              damage *= CRIT_DAMAGE_MULTIPLIER;
           }
 
           if (TryApplyDamage(
@@ -3329,7 +3350,8 @@ void GameFixedUpdate() {
                 damage,
                 Vector2DirectionOrRandom(projectile.pos, creature.pos),
                 fb->impulse(),
-                projectile.ownerCreatureIndex
+                projectile.ownerCreatureIndex,
+                isCrit
               ))
           {
             auto maxPierce = fb->pierce();
