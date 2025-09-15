@@ -116,6 +116,7 @@ x mob that spawns others on death
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 * mobs can't spawn near edges.
   consider spawning them with padding = radius of collider
+  + make the same thing with mobs that spawn others on death
 *
 *
 * ZHEKA: ^ vs code /// collapsing
