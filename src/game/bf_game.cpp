@@ -1562,7 +1562,14 @@ void DoUI(bool draw) {
   // }
 
   LAMBDA (void, componentStats, ()) {  ///
-    CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+    CLAY({
+      .layout{
+        BF_CLAY_PADDING_ALL(8),
+        .childGap        = 8,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      },
+      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+    }) {
       // Stats label.
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_X,
