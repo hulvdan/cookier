@@ -2742,7 +2742,18 @@ void AddXP(f32 xp) {  ///
   }
 }
 
+bool CanSpawnMoreCreatures() {  ///
+  const auto framesUntilTheEndOfTheWave
+    = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
+  return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
+}
+
 void GameFixedUpdate() {
+  const auto fb_creatures   = glib->creatures();
+  const auto fb_weapons     = glib->weapons();
+  const auto fb_projectiles = glib->projectiles();
+  const auto fb_waves       = glib->waves();
+
   // Reloading game.
   if (g.run.reload) {  ///
     RunReset();
@@ -2870,7 +2881,7 @@ void GameFixedUpdate() {
     ge.settings.screenFade = 0;
     SDL_HideCursor();
 
-    IncrementSetZeroOn(&g.run.waveIndex, (int)glib->waves()->size());
+    IncrementSetZeroOn(&g.run.waveIndex, (int)fb_waves->size());
     g.run.waveStartedAt = {};
     g.run.waveStartedAt.SetNow();
   }
@@ -2933,14 +2944,10 @@ void GameFixedUpdate() {
 
     // Making pre spawn decals.
     {  ///
-      const auto framesUntilTheEndOfTheWave
-        = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
-
-      const auto canSpawn
-        = (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
-
-      if (canSpawn && (g.run.waveStartedAt.Elapsed().value % FIXED_FPS == 0)) {
-        const auto fb_wave = glib->waves()->Get(g.run.waveIndex);
+      if (CanSpawnMoreCreatures()
+          && (g.run.waveStartedAt.Elapsed().value % FIXED_FPS == 0))
+      {
+        const auto fb_wave = fb_waves->Get(g.run.waveIndex);
 
         Vector2 posToSpawn{};
 
@@ -2998,8 +3005,6 @@ void GameFixedUpdate() {
 
     // Mobs contact-damage player.
     if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
-      const auto fb_creatures = glib->creatures();
-
       const auto playerPos = PLAYER_CREATURE.pos;
       for (int i = 1; i < g.run.creatures.count; i++) {
         const auto& creature = g.run.creatures[i];
@@ -3015,7 +3020,7 @@ void GameFixedUpdate() {
         {
           TryApplyDamage(
             0,
-            glib->creatures()->Get(creature.type)->damage(),
+            fb_creatures->Get(creature.type)->damage(),
             Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
             0,
             i
@@ -3070,8 +3075,6 @@ void GameFixedUpdate() {
 
   // Creatures moving.
   {  ///
-    const auto fb_creatures = glib->creatures();
-
     for (auto& creature : g.run.creatures) {
       if (!creature.active || creature.diedAt.IsSet())
         continue;
@@ -3107,7 +3110,7 @@ void GameFixedUpdate() {
       if (!weapon.type)
         continue;
 
-      const auto fb  = glib->weapons()->Get(weapon.type);
+      const auto fb  = fb_weapons->Get(weapon.type);
       const auto pos = PLAYER_CREATURE.pos + weapon.offset;
 
       f32 minDistSqr           = f32_inf;
@@ -3241,8 +3244,6 @@ void GameFixedUpdate() {
   // - Mob collisions.
   // - Marking to remove because of pierce count.
   {  ///
-    const auto fb_projectiles = glib->projectiles();
-
     int projectileIndex = -1;
     for (auto& projectile : g.run.projectiles) {
       projectileIndex++;
@@ -3327,6 +3328,8 @@ void GameFixedUpdate() {
       auto& creature = g.run.creatures[index];
       ASSERT(creature.active);
 
+      const auto fb = fb_creatures->Get(creature.type);
+
       // if (index == 0)
       //   playerHurt = true;
       // else
@@ -3341,8 +3344,37 @@ void GameFixedUpdate() {
             g.run.waveWon = false;
           }
         }
-        else
+        else {
           creature.diedAt.SetNow();
+
+          // Spawning children if mob spawns the on death.
+          if (fb->on_death_spawns_creature_type() && CanSpawnMoreCreatures()) {
+            int toSpawn = GRAND.RandInt(
+              fb->on_death_spawns_count_min(), fb->on_death_spawns_count_max()
+            );
+            FOR_RANGE (int, i, toSpawn) {
+              const auto       t1 = GRAND.FRand();
+              const auto       t2 = GRAND.FRand();
+              CreaturePreSpawn spawn{
+                .type = (CreatureType)fb->on_death_spawns_creature_type(),
+                .pos  = creature.pos
+                       + Vector2Rotate(
+                         Vector2(
+                           Lerp(
+                             fb->on_death_spawns_distance_min(),
+                             fb->on_death_spawns_distance_max(),
+                             t1
+                           ),
+                           0
+                         ),
+                         t2 * 2.0f * PI
+                       ),
+              };
+              spawn.createdAt.SetNow();
+              *g.run.creaturePreSpawns.Add() = spawn;
+            }
+          }
+        }
 
         if (!index)
           g.run.playerDiedAt.SetNow();

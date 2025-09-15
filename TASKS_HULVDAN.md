@@ -108,11 +108,11 @@ x ref stoopid `g.run.a`
 x don't create creature pre spawns right before finishing the wave
 x wave completed: "WAVE COMPLETED" animation with mobs dying
   before entering upgrades / item pickup screens
+x mob that spawns others on death
+  (be sure not to make pre spawns if wave ends shortly)
 
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
-* mob that spawns others on getting killed
-  (be sure not to make pre spawns if wave ends shortly)
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 * mobs can't spawn near edges.
   consider spawning them with padding = radius of collider

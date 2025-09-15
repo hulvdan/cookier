@@ -38,6 +38,13 @@ table Creature {
     speed_force: float;
     hostility_type: int = 1;
     can_be_knocked_back: bool = true;
+
+    on_death_spawns_creature_type: int;
+    on_death_spawns_count_min: int;
+    on_death_spawns_count_max: int;
+    on_death_spawns_distance_min: float;
+    on_death_spawns_distance_max: float;
+
     color: uint = 0xffffff;
     texture_ids: [int];
 }
