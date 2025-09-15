@@ -115,7 +115,7 @@ ui_button_default_color: 0x5e3735
 ui_button_hovered_color: 0x885a44
 ui_button_disabled_color: 0x3a3a41
 ui_item_big_frame_color: 0x1d1b24
-ui_shop_current_level_icon_texture_id: game_stat_icon_armor
+ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
 ui_frame_nine_slice:
   texture_id: ui_frame
   left: 60
@@ -165,10 +165,10 @@ creatures:
 items:
   - type: INVALID
   - type: SUGAR
-    texture_id: game_item_sugar
+    texture_id: ui_item_sugar
     tier: 2
   - type: MILK
-    texture_id: game_item_milk
+    texture_id: ui_item_milk
     tier: 0
 weapons:
   # If a weapon doesn't have `projectile_type` specified,
@@ -234,135 +234,135 @@ numbers:
 stats:
   - type: INVALID
   - type: CURSE
-    icon_texture_id: game_stat_icon_armor
+    icon_texture_id: ui_stat_icon_armor
   - type: HP
     upgrade_values:
       - 3
       - 6
       - 9
       - 12
-    upgrade_texture_id: game_stat_upgrade_hp
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_hp
+    icon_texture_id: ui_stat_icon_armor
   - type: REGEN
     upgrade_values:
       - 2
       - 3
       - 4
       - 5
-    upgrade_texture_id: game_stat_upgrade_regen
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_regen
+    icon_texture_id: ui_stat_icon_armor
   - type: LIFE_STEAL
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_upgrade_life_steal
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_life_steal
+    icon_texture_id: ui_stat_icon_armor
   - type: DAMAGE
     upgrade_values:
       - 5
       - 8
       - 12
       - 16
-    upgrade_texture_id: game_stat_upgrade_damage
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_damage
+    icon_texture_id: ui_stat_icon_armor
   - type: DAMAGE_MELEE
     upgrade_values:
       - 2
       - 4
       - 6
       - 8
-    upgrade_texture_id: game_stat_upgrade_damage_melee
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_damage_melee
+    icon_texture_id: ui_stat_icon_armor
   - type: DAMAGE_RANGED
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_upgrade_damage_ranged
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_damage_ranged
+    icon_texture_id: ui_stat_icon_armor
   - type: DAMAGE_ELEMENTAL
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_upgrade_damage_elemental
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_damage_elemental
+    icon_texture_id: ui_stat_icon_armor
   - type: ATTACK_SPEED
     upgrade_values:
       - 5
       - 10
       - 15
       - 20
-    upgrade_texture_id: game_stat_upgrade_attack_speed
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_attack_speed
+    icon_texture_id: ui_stat_icon_armor
   - type: CRIT_CHANCE
     upgrade_values:
       - 3
       - 5
       - 7
       - 9
-    upgrade_texture_id: game_stat_upgrade_crit_chance
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_crit_chance
+    icon_texture_id: ui_stat_icon_armor
   - type: ENGINEERING
     upgrade_values:
       - 2
       - 3
       - 4
       - 5
-    upgrade_texture_id: game_stat_upgrade_engineering
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_engineering
+    icon_texture_id: ui_stat_icon_armor
   - type: RANGE
     upgrade_values:
       - 15
       - 30
       - 45
       - 60
-    upgrade_texture_id: game_stat_upgrade_range
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_range
+    icon_texture_id: ui_stat_icon_armor
   - type: ARMOR
     upgrade_values:
       - 1
       - 2
       - 3
       - 4
-    upgrade_texture_id: game_stat_upgrade_armor
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_armor
+    icon_texture_id: ui_stat_icon_armor
   - type: DODGE
     upgrade_values:
       - 3
       - 6
       - 9
       - 12
-    upgrade_texture_id: game_stat_upgrade_dodge
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_dodge
+    icon_texture_id: ui_stat_icon_armor
   - type: SPEED
     upgrade_values:
       - 3
       - 6
       - 9
       - 12
-    upgrade_texture_id: game_stat_upgrade_speed
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_speed
+    icon_texture_id: ui_stat_icon_armor
   - type: LUCK
     upgrade_values:
       - 5
       - 10
       - 15
       - 20
-    upgrade_texture_id: game_stat_upgrade_luck
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_luck
+    icon_texture_id: ui_stat_icon_armor
   - type: HARVESTING
     upgrade_values:
       - 5
       - 8
       - 10
       - 12
-    upgrade_texture_id: game_stat_upgrade_harvesting
-    icon_texture_id: game_stat_icon_armor
+    upgrade_texture_id: ui_stat_upgrade_harvesting
+    icon_texture_id: ui_stat_icon_armor
 waves:
   # 1
   - creatures_to_spawn:
