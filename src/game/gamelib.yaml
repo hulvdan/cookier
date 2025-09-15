@@ -16,6 +16,7 @@ localization:
   UI_WAVE: Волна
   UI_STATS: Характеристики
   UI_CURRENT_LEVEL: Текущий Уровень
+  UI_DODGE: Уворот
   UI_LEVEL_UP: Новый Уровень
   UI_LEVEL_UP_NUMBER: НОВЫЙ УРОВЕНЬ
   UI_LABEL_SHOP: Магазин
@@ -241,6 +242,8 @@ numbers:
     color: 0xefcb84
   - type: DAMAGE_CRIT
     color: 0xdc9824
+  - type: DODGE
+    color: 0x7a7576
   - type: PICKUPABLE
     color: 0x66a650
   - type: LEVEL_UP

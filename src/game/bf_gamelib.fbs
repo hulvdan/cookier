@@ -126,6 +126,7 @@ table GameLibrary {
     ui_wave_locale: int;
     ui_stats_locale: int;
     ui_current_level_locale: int;
+    ui_dodge_locale: int;
     ui_level_up_locale: int;
     ui_level_up_number_locale: int;
     ui_label_shop_locale: int;
