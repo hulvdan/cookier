@@ -3673,10 +3673,7 @@ void GameDraw() {
     debugTextArena("g.run.arena", g.run.arena);
     debugTextArena("g.meta.trashArena", g.meta.trashArena);
 
-#define X(type_, name_)                                                            \
-  DebugText(                                                                       \
-    "g.run." #name_ ".count: %d, .base: %llu", g.run.name_.count, g.run.name_.base \
-  );
+#define X(type_, name_) DebugText("g.run." #name_ ".count: %d", g.run.name_.count);
     VECTORS_TABLE;
 #undef X
   }
