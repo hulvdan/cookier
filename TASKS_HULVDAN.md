@@ -120,12 +120,18 @@ x stat effect: CRIT_CHANCE
 x stat effect: ARMOR
 x stat effect: DODGE
 
-* stat effect: RANGE
+* INTERNET stat effect: RANGE: how does it work?
+* stat effect: RANGE: weapon pos
+* stat effect: RANGE: weapon starting to shoot distance
 * stat effect: CURSE
 * stat effect: DAMAGE_ELEMENTAL
 * stat effect: ENGINEERING
 * stat effect: LUCK
 * stat effect: HARVESTING
+* engine: automatically scale fonts for current screenSize
+* engine: different atlases for different resolutions
+* engine: hanle multiple textures of the same atlas
+  (when there's too much textures to pack into 1 atlas)
 * show % in names of stats that are %
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
