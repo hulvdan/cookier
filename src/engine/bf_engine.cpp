@@ -771,8 +771,9 @@ BF_FORCE_INLINE void RenderGroup_OneShotRectLines(DrawRectData data) {  ///
   RenderGroup_End();
 }
 
-// NOTE: Ignores Y!
+// NOTE: Ignores SortY!
 BF_FORCE_INLINE void RenderGroup_OneShotText(DrawTextData data, RenderZ z) {  ///
+  ASSERT(data.bytesCount > 0);
   RenderGroup_Begin(z);
   RenderGroup_SetSortY(0);
   RenderGroup_CommandText(data);
@@ -850,28 +851,31 @@ u32 _UTF8Decode(u32* _state, u8 _ch, u32* _codep) {  ///
 // NOTE: Be sure to handle `0` - the sentinel value.
 // It's passed to inform that iteration is over.
 BF_FORCE_INLINE void IterateOverCodepoints(
-  const char*                      text,
-  int                              bytesCount,
-  auto&& /* void(u32 codepoint) */ lambda
+  const char*                                         text,
+  int                                                 bytesCount,
+  auto&& /* void(u32 codepoint, u32 codepointSize) */ lambda
 ) noexcept {  ///
   ASSERT(bytesCount > 0);
   ASSERT(text);
 
   u32  codepoint{};
+  u32  codepointSize = 0;
   u32  state{};
   auto remaining = bytesCount + 1;
 
   auto p = text;
   for (; *p; ++p) {
+    codepointSize++;
     remaining--;
     if (remaining <= 0)
       break;
     if (_UTF8Decode(&state, *(u8*)p, &codepoint))
       continue;
 
-    lambda(codepoint);
+    lambda(codepoint, codepointSize);
+    codepointSize = 0;
   }
-  lambda(0);
+  lambda(0, 0);
   ASSERT_FALSE(state);  // The string is not well-formed.
 }
 
@@ -1508,16 +1512,17 @@ void FlushRenderCommands() {
             IterateOverCodepoints(
               data.text,
               data.bytesCount,
-              [&font, &drawCallIndicesCount, &drawCallVerticesCount](u32 codepoint)
-                BF_FORCE_INLINE_LAMBDA {
-                  if (!codepoint)
-                    return;
-                  if (codepoint == (u32)'\n')
-                    return;
+              [&font, &drawCallIndicesCount, &drawCallVerticesCount](
+                u32 codepoint, u32 _codepointSize
+              ) BF_FORCE_INLINE_LAMBDA {
+                if (!codepoint)
+                  return;
+                if (codepoint == (u32)'\n')
+                  return;
 
-                  drawCallIndicesCount += 6;
-                  drawCallVerticesCount += 4;
-                }
+                drawCallIndicesCount += 6;
+                drawCallVerticesCount += 4;
+              }
             );
           }
           else {
@@ -1532,7 +1537,7 @@ void FlushRenderCommands() {
               IterateOverCodepoints(
                 data.text,
                 data.bytesCount,
-                [&maxWidth, &width, &height, &font](u32 codepoint)
+                [&maxWidth, &width, &height, &font](u32 codepoint, u32 _codepointSize)
                   BF_FORCE_INLINE_LAMBDA {
                     if (!codepoint) {
                       maxWidth = MAX(maxWidth, width);
@@ -1579,7 +1584,7 @@ void FlushRenderCommands() {
             IterateOverCodepoints(
               data.text,
               data.bytesCount,
-              [&](u32 codepoint) BF_FORCE_INLINE_LAMBDA {
+              [&](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
                 if (!codepoint)
                   return;
                 if (codepoint == (u32)'\n') {
