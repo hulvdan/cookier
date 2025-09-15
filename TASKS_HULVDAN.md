@@ -104,6 +104,7 @@ x reset weapons shooting times & cooldowns upon starting a new wave
 x finishing wave damages enemies to death + the don't drop pickupables
 x fix melee weapons flying outside the world at the end of the wave
 x ref stoopid `g.run.a`
+2025-09-15
 
 * wave completed: "WAVE COMPLETED" animation with mobs dying
   before entering upgrades / item pickup screens
