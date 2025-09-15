@@ -613,11 +613,12 @@ struct GameData {
       .texturesScale = 1.0f / METER_LOGICAL_SIZE,
     };
 
-    b2WorldId    world           = {};
-    int          nextCreatureId  = 0;
-    LogicalFrame playerDiedAt    = {};
-    int          toSpawn         = 3;
-    LogicalFrame lastLifestealAt = {};
+    b2WorldId    world                 = {};
+    int          nextCreatureId        = 0;
+    LogicalFrame playerDiedAt          = {};
+    int          toSpawn               = 3;
+    LogicalFrame playerLastLifestealAt = {};
+    LogicalFrame playerLastRegenAt     = {};
 
     f32 xp            = 0;
     f32 nextLevelXp   = 10;
@@ -631,7 +632,8 @@ struct GameData {
     LogicalFrame waveStartedAt = {};
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
-    Array<int, StatType_COUNT>          playerStats   = {};
+
+    Array<int, StatType_COUNT> playerStats = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
 #define VECTORS_TABLE                    \
@@ -1185,6 +1187,7 @@ void RunInit() {
     .type = CreatureType_PLAYER,
     .pos  = (Vector2)WORLD_SIZE / 2.0f,
   });
+  g.run.playerLastRegenAt.SetNow();
 
   g.run.camera.pos = GetCameraTargetPos();
 
@@ -1260,13 +1263,11 @@ void GameInit() {  ///
   RunInit();
 }
 
-constexpr f32 GetStatRegenPerSecond(int level) {  ///
-  return (f32)level / 11.25f + 1.0f / 9.0f;
-}
-
-constexpr f32 GetStatRegenPerFrame(int level) {  ///
-  const auto perSecond = GetStatRegenPerSecond(level);
-  return perSecond / (f32)FIXED_FPS;
+constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
+  if (regenLevel <= 0)
+    return lframe::MakeUnscaled(i64_max);
+  const f32 regenPerSecond = (f32)regenLevel / 11.25f + 1.0f / 9.0f;
+  return lframe::MakeUnscaled((i64)((f32)FIXED_FPS / regenPerSecond));
 }
 
 constexpr f32 GetLifestealChance(int level) {  ///
@@ -1307,16 +1308,16 @@ bool TryApplyDamage(
       while (lifesteal > 0) {
         if (GRAND.FRand() < lifesteal) {
           bool canLifesteal = false;
-          if (!g.run.lastLifestealAt.IsSet())
+          if (!g.run.playerLastLifestealAt.IsSet())
             canLifesteal = true;
-          else if (g.run.lastLifestealAt.Elapsed() >= LIFESTEAL_COOLDOWN_FRAMES)
+          else if (g.run.playerLastLifestealAt.Elapsed() >= LIFESTEAL_COOLDOWN_FRAMES)
             canLifesteal = true;
 
           if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
             PLAYER_CREATURE.health
               = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-            g.run.lastLifestealAt = {};
-            g.run.lastLifestealAt.SetNow();
+            g.run.playerLastLifestealAt = {};
+            g.run.playerLastLifestealAt.SetNow();
           }
         }
         lifesteal -= 1;
@@ -2933,11 +2934,14 @@ void GameFixedUpdate() {
 
       // Player HP regen.
       if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {  ///
-        PLAYER_CREATURE.health = MoveTowards(
-          PLAYER_CREATURE.health,
-          PLAYER_CREATURE.maxHealth,
-          GetStatRegenPerFrame(g.run.playerStats[StatType_REGEN])
-        );
+        const bool canRegen = g.run.playerLastRegenAt.Elapsed()
+                              >= GetFramesPerRegen(g.run.playerStats[StatType_REGEN]);
+        if (canRegen) {
+          PLAYER_CREATURE.health
+            = MIN(PLAYER_CREATURE.health + 1, PLAYER_CREATURE.maxHealth);
+          g.run.playerLastRegenAt = {};
+          g.run.playerLastRegenAt.SetNow();
+        }
       }
     }
 
