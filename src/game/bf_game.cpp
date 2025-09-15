@@ -494,7 +494,7 @@ struct MakeCreatureData {
   Vector2      pos  = {};
 };
 
-struct CreatureSpawn {
+struct CreaturePreSpawn {
   CreatureType type      = {};
   Vector2      pos       = {};
   LogicalFrame createdAt = {};
@@ -631,15 +631,15 @@ struct GameData {
     Array<int, StatType_COUNT>          playerStats   = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
-#define VECTORS_TABLE              \
-  X(Creature, creatures)           \
-  X(CreatureSpawn, creatureSpawns) \
-  X(Projectile, projectiles)       \
-  X(int, projectilesToRemove)      \
-  X(BodyShape, bodyShapes)         \
-  X(int, justDamagedCreatures)     \
-  X(Number, numbers)               \
-  X(Pickupable, pickupables)       \
+#define VECTORS_TABLE                    \
+  X(Creature, creatures)                 \
+  X(CreaturePreSpawn, creaturePreSpawns) \
+  X(Projectile, projectiles)             \
+  X(int, projectilesToRemove)            \
+  X(BodyShape, bodyShapes)               \
+  X(int, justDamagedCreatures)           \
+  X(Number, numbers)                     \
+  X(Pickupable, pickupables)             \
   X(Item, playerItems)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -2791,7 +2791,7 @@ void GameFixedUpdate() {
       if (creature.active && !creature.diedAt.IsSet())
         TryApplyDamage(i, f32_inf, {}, 0, -1);
     }
-    g.run.creatureSpawns.Reset();
+    g.run.creaturePreSpawns.Reset();
   }
 
   // Advancing to picked up items.
@@ -2909,58 +2909,66 @@ void GameFixedUpdate() {
         = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
     }
 
-    // Making pre spawns.
-    if (g.run.waveStartedAt.Elapsed().value % (4 * FIXED_FPS) == 0) {  ///
-      const auto wave = glib->waves()->Get(g.run.waveIndex);
+    // Making pre spawn decals.
+    {  ///
+      const auto framesUntilTheEndOfTheWave
+        = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
 
-      Vector2 posToSpawn{};
+      const auto canSpawn
+        = (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
 
-      FOR_RANGE (int, i, g.run.toSpawn) {
-        do {
-          posToSpawn = {
-            0.5f + GRAND.FRand() * (WORLD_X - 1),
-            0.5f + GRAND.FRand() * (WORLD_Y - 1),
-          };
-        } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
-                 < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
+      if (canSpawn && (g.run.waveStartedAt.Elapsed().value % FIXED_FPS == 0)) {
+        const auto fb_wave = glib->waves()->Get(g.run.waveIndex);
 
-        const auto   factor = GRAND.FRand();
-        CreatureType spawnType{};
-        for (const auto creature : *wave->creatures_to_spawn()) {
-          if (factor <= creature->spawn_factor()) {
-            spawnType = (CreatureType)creature->creature_type();
-            break;
+        Vector2 posToSpawn{};
+
+        FOR_RANGE (int, i, g.run.toSpawn) {
+          do {
+            posToSpawn = {
+              0.5f + GRAND.FRand() * (WORLD_X - 1),
+              0.5f + GRAND.FRand() * (WORLD_Y - 1),
+            };
+          } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
+                   < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
+
+          const auto   factor = GRAND.FRand();
+          CreatureType spawnType{};
+          for (const auto creature : *fb_wave->creatures_to_spawn()) {
+            if (factor <= creature->spawn_factor()) {
+              spawnType = (CreatureType)creature->creature_type();
+              break;
+            }
           }
+
+          if (spawnType) {
+            CreaturePreSpawn spawn{
+              .type = spawnType,
+              .pos  = posToSpawn,
+            };
+            spawn.createdAt.SetNow();
+            *g.run.creaturePreSpawns.Add() = spawn;
+          }
+          else
+            INVALID_PATH;
         }
 
-        if (spawnType) {
-          CreatureSpawn spawn{
-            .type = spawnType,
-            .pos  = posToSpawn,
-          };
-          spawn.createdAt.SetNow();
-          *g.run.creatureSpawns.Add() = spawn;
-        }
-        else
-          INVALID_PATH;
+        if (g.run.toSpawn < 3)
+          g.run.toSpawn++;
       }
-
-      if (g.run.toSpawn < 5)
-        g.run.toSpawn++;
     }
 
     // Spawning.
     {  ///
-      const int total = g.run.creatureSpawns.count;
+      const int total = g.run.creaturePreSpawns.count;
       int       off   = 0;
       FOR_RANGE (int, i, total) {
-        auto& v = g.run.creatureSpawns[i - off];
+        auto& v = g.run.creaturePreSpawns[i - off];
         if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
           MakeCreature({
             .type = v.type,
             .pos  = v.pos,
           });
-          g.run.creatureSpawns.UnstableRemoveAt(i - off);
+          g.run.creaturePreSpawns.UnstableRemoveAt(i - off);
           off++;
         }
       }
@@ -3426,7 +3434,7 @@ void GameDraw() {
     RenderGroup_Begin(RenderZ_FLOOR_DECALS);
     RenderGroup_SetSortY(0);
 
-    for (auto& spawn : g.run.creatureSpawns) {
+    for (auto& spawn : g.run.creaturePreSpawns) {
       const auto fb_creature  = fb_creatures->Get(spawn.type);
       const auto fb_hostility = fb_hostilities->Get(fb_creature->hostility_type());
       RenderGroup_CommandTexture({

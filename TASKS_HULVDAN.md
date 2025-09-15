@@ -105,6 +105,7 @@ x finishing wave damages enemies to death + the don't drop pickupables
 x fix melee weapons flying outside the world at the end of the wave
 x ref stoopid `g.run.a`
 2025-09-15
+x don't create creature pre spawns right before finishing the wave
 
 * wave completed: "WAVE COMPLETED" animation with mobs dying
   before entering upgrades / item pickup screens
@@ -146,7 +147,6 @@ x ref stoopid `g.run.a`
 * stats frame
 * item effects
 * weapons categorization. жидкое / твёрдое?
-* don't create spawn decals right before finishing the wave
 * Экран загрузки для HTML?
 * система записи / воспроизведения действий для облегчения отладки
 * stat effects:
