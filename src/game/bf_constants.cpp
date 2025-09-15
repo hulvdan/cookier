@@ -130,4 +130,6 @@ constexpr f32 TREE_DROP_CRATE_FACTOR = 0.25f;
 
 const Color MODAL_OVERLAY_COLOR = Fade(BLACK, 0.75f);
 
+constexpr f32 CRIT_DAMAGE_MULTIPLIER = 1.5f;
+
 ///

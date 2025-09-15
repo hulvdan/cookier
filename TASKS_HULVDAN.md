@@ -116,12 +116,12 @@ x stat effect: DAMAGE_MELEE
 x stat effect: DAMAGE_RANGED
 x stat effect: SPEED
 x stat effect: ATTACK_SPEED
+x stat effect: CRIT_CHANCE
 
+* stat effect: RANGE
 * stat effect: CURSE
 * stat effect: DAMAGE_ELEMENTAL
-* stat effect: CRIT_CHANCE
 * stat effect: ENGINEERING
-* stat effect: RANGE
 * stat effect: ARMOR
 * stat effect: DODGE
 * stat effect: LUCK
