@@ -119,7 +119,11 @@ x stat effect: ATTACK_SPEED
 x stat effect: CRIT_CHANCE
 x stat effect: ARMOR
 x stat effect: DODGE
+x stats frame
+2025-09-16
 
+* show `%` in names of stats that are %
+* fix web build exception on killing a ton of enemies right before the wave ended
 * INTERNET stat effect: RANGE: how does it work?
 * stat effect: RANGE: weapon pos
 * stat effect: RANGE: weapon starting to shoot distance
@@ -130,9 +134,7 @@ x stat effect: DODGE
 * stat effect: HARVESTING
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
-* engine: hanle multiple textures of the same atlas
-  (when there's too much textures to pack into 1 atlas)
-* show % in names of stats that are %
+* engine: handle the case when there's too much textures to pack into 1 atlas
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
@@ -161,7 +163,6 @@ x stat effect: DODGE
 *
 * aseprite show image center
 * upgrades screen: fix width of upgrade's frame
-* upgrades screen: frame
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
@@ -169,11 +170,10 @@ x stat effect: DODGE
 * upgrades screen:
 * combining weapons
 * better mob spawn rate (ref brotato)
-* stats frame
 * item effects
 * weapons categorization. жидкое / твёрдое?
-* Экран загрузки для HTML?
-* система записи / воспроизведения действий для облегчения отладки
+* HTML game loading screen?
+* record+replay system
 * ranged mobs
 * internet shouldn't be required for building:
   check web debug yandex build with mocked ysdk
