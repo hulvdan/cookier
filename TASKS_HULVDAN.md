@@ -114,7 +114,18 @@ x correct regen formula
 x stat effect: DAMAGE
 x stat effect: DAMAGE_MELEE
 x stat effect: DAMAGE_RANGED
+x stat effect: SPEED
+x stat effect: ATTACK_SPEED
 
+* stat effect: CURSE
+* stat effect: DAMAGE_ELEMENTAL
+* stat effect: CRIT_CHANCE
+* stat effect: ENGINEERING
+* stat effect: RANGE
+* stat effect: ARMOR
+* stat effect: DODGE
+* stat effect: LUCK
+* stat effect: HARVESTING
 * show % in names of stats that are %
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
@@ -157,18 +168,6 @@ x stat effect: DAMAGE_RANGED
 * weapons categorization. жидкое / твёрдое?
 * Экран загрузки для HTML?
 * система записи / воспроизведения действий для облегчения отладки
-* stat effects:
-  * stat effect: CURSE
-  * stat effect: DAMAGE_ELEMENTAL
-  * stat effect: ATTACK_SPEED
-  * stat effect: CRIT_CHANCE
-  * stat effect: ENGINEERING
-  * stat effect: RANGE
-  * stat effect: ARMOR
-  * stat effect: DODGE
-  * stat effect: SPEED
-  * stat effect: LUCK
-  * stat effect: HARVESTING
 * ranged mobs
 * internet shouldn't be required for building:
   check web debug yandex build with mocked ysdk
