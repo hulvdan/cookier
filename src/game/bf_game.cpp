@@ -1227,6 +1227,8 @@ void RunInit() {
 }
 
 void GameInit() {  ///
+  ZoneScoped;
+
   SDL_HideCursor();
 
   g.meta.trashArena = MakeArena(4 * 1024);
@@ -1465,6 +1467,8 @@ void StableRemoveWeapon(int index) {  ///
 }
 
 void DoUI(bool draw) {
+  ZoneScoped;
+
   // NOTE: Logic must be executed only when `draw` is false!
   // e.g. updating mouse position, processing `clicked()`,
   // logically reacting to `Clay_Hovered()`, changing game's state, etc.
@@ -2749,6 +2753,8 @@ bool CanSpawnMoreCreatures() {  ///
 }
 
 void GameFixedUpdate() {
+  ZoneScoped;
+
   const auto fb_creatures   = glib->creatures();
   const auto fb_weapons     = glib->weapons();
   const auto fb_projectiles = glib->projectiles();
@@ -3454,6 +3460,8 @@ void GameFixedUpdate() {
 }
 
 void GameDraw() {
+  ZoneScoped;
+
   // Setup.
   // {  ///
   TEMP_USAGE(&g.meta.trashArena);
