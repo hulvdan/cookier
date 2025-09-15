@@ -1282,6 +1282,11 @@ bool TryApplyDamage(
   int     damageApplicatorCreatureIndex,
   bool    isCrit
 ) {  ///
+  if (damage <= 0)
+    return false;
+  if (FloatEquals(damage, 0))
+    return false;
+
   auto& creature = g.run.creatures[creatureIndex];
 
   const auto fb = glib->creatures()->Get(creature.type);
@@ -3067,7 +3072,8 @@ void GameFixedUpdate() {
         {
           TryApplyDamage(
             0,
-            fb_creatures->Get(creature.type)->damage(),
+            fb_creatures->Get(creature.type)->damage()
+              - (f32)g.run.playerStats[StatType_ARMOR],
             Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
             0,
             i,
