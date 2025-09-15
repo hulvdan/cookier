@@ -2707,6 +2707,17 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   return continueCollisions;
 }
 
+f32 GetPlayerStatAttackSpeedMultiplier() {  ///
+  return (f32)(100 + g.run.playerStats[StatType_ATTACK_SPEED]) / 100.0f;
+}
+
+lframe ApplyAttackSpeedToShootingDuration(int shootingDurationFrames) {  ///
+  return lframe::MakeUnscaled(CeilDivision(
+    (f32)(_BF_LOGICAL_FPS_SCALE * shootingDurationFrames),
+    GetPlayerStatAttackSpeedMultiplier()
+  ));
+}
+
 Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   const auto fb = glib->weapons()->Get(weapon.type);
 
@@ -2714,9 +2725,10 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
     return basePos;
 
-  const auto e           = weapon.startedShootingAt.Elapsed();
-  const auto shootingDur = lframe::MakeScaled(fb->shooting_duration_frames());
-  auto       p           = e.Progress(shootingDur);
+  const auto e = weapon.startedShootingAt.Elapsed();
+  const auto shootingDur
+    = ApplyAttackSpeedToShootingDuration(fb->shooting_duration_frames());
+  auto p = e.Progress(shootingDur);
   if (p > 0.5)
     p = 2.0f - p * 2;
   else
@@ -3101,8 +3113,12 @@ void GameFixedUpdate() {
       const auto fb = fb_creatures->Get(creature.type);
 
       auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
-      if ((creature.type == CreatureType_PLAYER) && g.meta.godMode)
-        speedScale *= 1.5f;
+      if (creature.type == CreatureType_PLAYER) {
+        speedScale *= MAX(0.01f, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
+
+        if (g.meta.godMode)
+          speedScale *= 1.5f;
+      }
 
       b2Body_ApplyLinearImpulseToCenter(
         creature.body.id,
@@ -3136,7 +3152,7 @@ void GameFixedUpdate() {
       int closestCreatureIndex = -1;
 
       // Resetting cooldown.
-      const auto cooldownDur = lframe::MakeScaled(fb->cooldown_frames());
+      const auto cooldownDur = ApplyAttackSpeedToShootingDuration(fb->cooldown_frames());
       if (weapon.cooldownStartedAt.IsSet()
           && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
         weapon.cooldownStartedAt = {};
@@ -3187,7 +3203,9 @@ void GameFixedUpdate() {
       if (weapon.startedShootingAt.IsSet()) {
         const auto projectileType = (ProjectileType)fb->projectile_type();
         const auto e              = weapon.startedShootingAt.Elapsed();
-        const auto shootingDur    = lframe::MakeScaled(fb->shooting_duration_frames());
+
+        const auto shootingDur
+          = ApplyAttackSpeedToShootingDuration(fb->shooting_duration_frames());
 
         const auto projectileSpawnFrames = fb->projectile_spawn_frames();
 
@@ -3195,9 +3213,10 @@ void GameFixedUpdate() {
           // It's a ranged weapon that spawns projectiles.
           ASSERT(projectileSpawnFrames);
 
-          bool spawn = false;
+          bool       spawn     = false;
+          const auto speedMult = GetPlayerStatAttackSpeedMultiplier();
           for (auto value : *projectileSpawnFrames) {
-            if (value == e.value) {
+            if (CeilDivision(value, speedMult) == e.value) {
               spawn = true;
               break;
             }
