@@ -118,12 +118,12 @@ x stat effect: SPEED
 x stat effect: ATTACK_SPEED
 x stat effect: CRIT_CHANCE
 x stat effect: ARMOR
+x stat effect: DODGE
 
 * stat effect: RANGE
 * stat effect: CURSE
 * stat effect: DAMAGE_ELEMENTAL
 * stat effect: ENGINEERING
-* stat effect: DODGE
 * stat effect: LUCK
 * stat effect: HARVESTING
 * show % in names of stats that are %

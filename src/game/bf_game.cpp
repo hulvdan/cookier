@@ -1288,10 +1288,10 @@ bool TryApplyDamage(
     return false;
 
   auto& creature = g.run.creatures[creatureIndex];
+  if (creature.health <= 0)
+    return false;
 
   const auto fb = glib->creatures()->Get(creature.type);
-  if (!fb->can_be_knocked_back())
-    impulse = 0;
 
   if (creatureIndex) {
     if (!damageApplicatorCreatureIndex) {
@@ -1303,48 +1303,58 @@ bool TryApplyDamage(
     }
   }
   else {
+    // Can't hurt player if he was recently damaged.
     if (creature.lastDamagedAt.IsSet()
         && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
       return false;
-  }
 
-  if (creature.health > 0) {
-    if (!damageApplicatorCreatureIndex) {
-      auto lifesteal = GetLifestealChance(g.run.playerStats[StatType_LIFE_STEAL]);
-      while (lifesteal > 0) {
-        if (GRAND.FRand() < lifesteal) {
-          bool canLifesteal = false;
-          if (!g.run.playerLastLifestealAt.IsSet())
-            canLifesteal = true;
-          else if (g.run.playerLastLifestealAt.Elapsed() >= LIFESTEAL_COOLDOWN_FRAMES)
-            canLifesteal = true;
+    // Dodge.
+    if (GRAND.FRand() < (f32)g.run.playerStats[StatType_DODGE] / 100.0f) {
+      MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
 
-          if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
-            PLAYER_CREATURE.health
-              = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-            g.run.playerLastLifestealAt = {};
-            g.run.playerLastLifestealAt.SetNow();
-          }
-        }
-        lifesteal -= 1;
-      }
+      // TODO: lastInvincibilityTriggeredAt?
+      creature.lastDamagedAt = {};
+      creature.lastDamagedAt.SetNow();
+      return false;
     }
-    creature.health -= damage;
-
-    creature.lastDamagedAt = {};
-    creature.lastDamagedAt.SetNow();
-
-    b2Body_ApplyLinearImpulseToCenter(
-      creature.body.id, ToB2Vec2(direction * impulse), true
-    );
-
-    if (!g.run.justDamagedCreatures.Contains(creatureIndex))
-      *g.run.justDamagedCreatures.Add() = creatureIndex;
-
-    return true;
   }
 
-  return false;
+  // Player lifesteals.
+  if (!damageApplicatorCreatureIndex) {
+    auto lifesteal = GetLifestealChance(g.run.playerStats[StatType_LIFE_STEAL]);
+    while (lifesteal > 0) {
+      if (GRAND.FRand() < lifesteal) {
+        bool canLifesteal = false;
+        if (!g.run.playerLastLifestealAt.IsSet())
+          canLifesteal = true;
+        else if (g.run.playerLastLifestealAt.Elapsed() >= LIFESTEAL_COOLDOWN_FRAMES)
+          canLifesteal = true;
+
+        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
+          PLAYER_CREATURE.health
+            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+          g.run.playerLastLifestealAt = {};
+          g.run.playerLastLifestealAt.SetNow();
+        }
+      }
+      lifesteal -= 1;
+    }
+  }
+  creature.health -= damage;
+
+  creature.lastDamagedAt = {};
+  creature.lastDamagedAt.SetNow();
+
+  if (!fb->can_be_knocked_back())
+    impulse = 0;
+  b2Body_ApplyLinearImpulseToCenter(
+    creature.body.id, ToB2Vec2(direction * impulse), true
+  );
+
+  if (!g.run.justDamagedCreatures.Contains(creatureIndex))
+    *g.run.justDamagedCreatures.Add() = creatureIndex;
+
+  return true;
 }
 
 void RunReset() {  ///
@@ -3670,7 +3680,12 @@ void GameDraw() {
       const char* buffer     = nullptr;
       int         bytesCount = 0;
 
-      if (number.type == NumberType_LEVEL_UP) {
+      if (number.type == NumberType_DODGE) {
+        const auto fb = localization_strings->Get(glib->ui_dodge_locale());
+        buffer        = fb->c_str();
+        bytesCount    = fb->size();
+      }
+      else if (number.type == NumberType_LEVEL_UP) {
         const auto fb = localization_strings->Get(glib->ui_level_up_number_locale());
         buffer        = fb->c_str();
         bytesCount    = fb->size();
