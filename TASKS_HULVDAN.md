@@ -110,7 +110,12 @@ x wave completed: "WAVE COMPLETED" animation with mobs dying
   before entering upgrades / item pickup screens
 x mob that spawns others on death
   (be sure not to make pre spawns if wave ends shortly)
+x correct regen formula
+x stat effect: DAMAGE
+x stat effect: DAMAGE_MELEE
+x stat effect: DAMAGE_RANGED
 
+* show % in names of stats that are %
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
@@ -153,11 +158,7 @@ x mob that spawns others on death
 * Экран загрузки для HTML?
 * система записи / воспроизведения действий для облегчения отладки
 * stat effects:
-  * stat effect: LIFE_STEAL
   * stat effect: CURSE
-  * stat effect: DAMAGE
-  * stat effect: DAMAGE_MELEE
-  * stat effect: DAMAGE_RANGED
   * stat effect: DAMAGE_ELEMENTAL
   * stat effect: ATTACK_SPEED
   * stat effect: CRIT_CHANCE

@@ -2673,6 +2673,10 @@ void DoUI(bool draw) {
   }
 }
 
+f32 GetPlayerStatDamageMultiplier() {  ///
+  return (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
+}
+
 bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
@@ -2693,7 +2697,12 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
 
   if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
     weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
-    TryApplyDamage(creatureIndex, fb->damage(), weapon->targetDir, fb->impulse(), 0);
+
+    f32 damage = fb->damage();
+    damage += g.run.playerStats[StatType_DAMAGE_MELEE];
+    damage *= GetPlayerStatDamageMultiplier();
+
+    TryApplyDamage(creatureIndex, damage, weapon->targetDir, fb->impulse(), 0);
   }
   return continueCollisions;
 }
@@ -3290,9 +3299,15 @@ void GameFixedUpdate() {
         const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
         const auto radius  = fb->collider_radius();
         if (distSqr < SQR(radius)) {
+          f32 damage = projectile.damage;
+          if (!projectile.ownerCreatureIndex) {
+            damage += g.run.playerStats[StatType_DAMAGE_RANGED];
+            damage *= GetPlayerStatDamageMultiplier();
+          }
+
           if (TryApplyDamage(
                 i,
-                projectile.damage,
+                damage,
                 Vector2DirectionOrRandom(projectile.pos, creature.pos),
                 fb->impulse(),
                 projectile.ownerCreatureIndex
