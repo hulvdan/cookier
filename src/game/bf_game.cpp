@@ -557,6 +557,7 @@ lframe GetWaveDuration(int waveIndex) {  ///
 
 enum ScreenType {
   ScreenType_GAMEPLAY,
+  ScreenType_WAVE_END_ANIMATION,
   ScreenType_PICKED_UP_ITEM,
   ScreenType_UPGRADES,
   ScreenType_SHOP,
@@ -598,12 +599,14 @@ struct GameData {
     bool       won    = false;
     ScreenType screen = ScreenType_GAMEPLAY;
 
-    bool scheduledUI            = false;
-    bool scheduledPickedUpItems = false;
-    bool scheduledUpgrades      = false;
-    bool scheduledShop          = false;
-    bool scheduledEnd           = false;
-    bool scheduledNextWave      = false;
+    LogicalFrame scheduledWaveCompleted = {};
+    bool         waveWon                = false;
+    bool         scheduledUI            = false;
+    bool         scheduledPickedUpItems = false;
+    bool         scheduledUpgrades      = false;
+    bool         scheduledShop          = false;
+    bool         scheduledEnd           = false;
+    bool         scheduledNextWave      = false;
 
     Camera camera{
       .zoom          = METER_LOGICAL_SIZE,
@@ -738,7 +741,7 @@ static BF_FORCE_INLINE Clay_Dimensions MeasureText(
   IterateOverCodepoints(
     text.chars,
     text.length,
-    [&font, &width](u32 codepoint) BF_FORCE_INLINE_LAMBDA {
+    [&font, &width](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
       if (!codepoint)
         return;
 
@@ -1626,8 +1629,9 @@ void DoUI(bool draw) {
   };
 
   // Gameplay.
-  if ((g.run.screen == ScreenType_GAMEPLAY)           //
-      || (g.run.screen == ScreenType_PICKED_UP_ITEM)  //
+  if ((g.run.screen == ScreenType_GAMEPLAY)               //
+      || (g.run.screen == ScreenType_WAVE_END_ANIMATION)  //
+      || (g.run.screen == ScreenType_PICKED_UP_ITEM)      //
       || (g.run.screen == ScreenType_UPGRADES))
   {
     CLAY({
@@ -2476,6 +2480,9 @@ void DoUI(bool draw) {
       }
     }
   }
+  else if (g.run.screen == ScreenType_WAVE_END_ANIMATION) {
+    // NOTE: Intentionally left blank.
+  }
   else if (g.run.screen == ScreenType_GAMEPLAY) {
     // NOTE: Intentionally left blank.
   }
@@ -2774,7 +2781,31 @@ void GameFixedUpdate() {
     }
   }
 
-  // Applying UI settings.
+  // Advancing to UI after wave completion animation finishes.
+  if (g.run.scheduledWaveCompleted.IsSet()) {  ///
+    g.run.screen = ScreenType_WAVE_END_ANIMATION;
+
+    for (int i = 1; i < g.run.creatures.count; i++) {
+      auto& creature = g.run.creatures[i];
+      if (creature.active && !creature.diedAt.IsSet())
+        TryApplyDamage(i, f32_inf, {}, 0, -1);
+    }
+    g.run.creaturePreSpawns.Reset();
+
+    if (g.run.scheduledWaveCompleted.Elapsed() >= WAVE_COMPLETED_FRAMES) {
+      if (g.run.waveIndex >= TOTAL_WAVES - 1) {
+        g.run.scheduledEnd = true;
+        g.run.won          = g.run.waveWon;
+      }
+
+      g.run.scheduledWaveCompleted = {};
+      g.run.waveWon                = false;
+
+      g.run.scheduledUI = true;
+    }
+  }
+
+  // Applying UI settings (showing cursor + darkening gameplay).
   if (g.run.scheduledUI) {  ///
     g.run.scheduledUI = false;
 
@@ -2785,16 +2816,9 @@ void GameFixedUpdate() {
       g.run.scheduledPickedUpItems = true;
     else
       g.run.scheduledUpgrades = true;
-
-    for (int i = 1; i < g.run.creatures.count; i++) {
-      auto& creature = g.run.creatures[i];
-      if (creature.active && !creature.diedAt.IsSet())
-        TryApplyDamage(i, f32_inf, {}, 0, -1);
-    }
-    g.run.creaturePreSpawns.Reset();
   }
 
-  // Advancing to picked up items.
+  // Advancing to ScreenType_PICKED_UP_ITEM.
   if (g.run.scheduledPickedUpItems) {  ///
     g.run.scheduledPickedUpItems = false;
 
@@ -2803,7 +2827,7 @@ void GameFixedUpdate() {
     g.run.pickedUpItem.recyclePrice = GenerateItemPrice();
   }
 
-  // Advancing to upgrades.
+  // Advancing to ScreenType_UPGRADES.
   if (g.run.scheduledUpgrades) {  ///
     g.run.scheduledUpgrades = false;
 
@@ -2818,7 +2842,7 @@ void GameFixedUpdate() {
       g.run.scheduledShop = true;
   }
 
-  // Advancing to shop.
+  // Advancing to ScrenType_SHOP.
   if (g.run.scheduledShop) {  ///
     g.run.scheduledShop = false;
     g.run.screen        = ScreenType_SHOP;
@@ -2828,13 +2852,13 @@ void GameFixedUpdate() {
     RefillShopToPick();
   }
 
-  // Advancing to end screen.
+  // Advancing to ScreenType_END.
   if (g.run.scheduledEnd) {  ///
     g.run.scheduledEnd = false;
     g.run.screen       = ScreenType_END;
   }
 
-  // Advancing to the next wave.
+  // Advancing to the next wave (ScreenType_GAMEPLAY).
   if (g.run.scheduledNextWave) {  ///
     g.run.scheduledNextWave = false;
 
@@ -2857,11 +2881,9 @@ void GameFixedUpdate() {
   if (g.run.screen == ScreenType_GAMEPLAY) {
     // Finishing wave opens upgrades screen.
     if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
-      g.run.scheduledUI = true;
-      if (g.run.waveIndex >= TOTAL_WAVES - 1) {
-        g.run.scheduledUI  = true;
-        g.run.scheduledEnd = true;
-        g.run.won          = true;
+      if (!g.run.scheduledWaveCompleted.IsSet()) {
+        g.run.waveWon = true;
+        g.run.scheduledWaveCompleted.SetNow();
       }
     }
 
@@ -3314,8 +3336,10 @@ void GameFixedUpdate() {
         DestroyBody(&creature.body);
 
         if (!index) {
-          g.run.scheduledUI  = true;
-          g.run.scheduledEnd = true;
+          if (g.run.scheduledWaveCompleted.IsSet()) {
+            g.run.scheduledWaveCompleted.SetNow();
+            g.run.waveWon = false;
+          }
         }
         else
           creature.diedAt.SetNow();
@@ -3503,30 +3527,28 @@ void GameDraw() {
   }
 
   // Drawing projectiles + their gizmos.
-  {  ///
-    for (const auto& projectile : g.run.projectiles) {
-      if (!projectile.active)
-        continue;
+  for (const auto& projectile : g.run.projectiles) {  ///
+    if (!projectile.active)
+      continue;
 
-      const auto fb = fb_projectiles->Get(projectile.type);
-      RenderGroup_OneShotTexture(
-        {
-          .texId    = fb->texture_ids()->Get(0),
-          .rotation = Vector2Angle(projectile.dir),
-          .pos      = projectile.pos,
-          .color    = ColorFromRGB(fb->color()),
-        },
-        RenderZ_DEFAULT
-      );
+    const auto fb = fb_projectiles->Get(projectile.type);
+    RenderGroup_OneShotTexture(
+      {
+        .texId    = fb->texture_ids()->Get(0),
+        .rotation = Vector2Angle(projectile.dir),
+        .pos      = projectile.pos,
+        .color    = ColorFromRGB(fb->color()),
+      },
+      RenderZ_DEFAULT
+    );
 
-      // Gizmos.
-      if (ge.meta.debugEnabled) {
-        RenderGroup_OneShotCircleLines({
-          .pos    = projectile.pos,
-          .radius = fb->collider_radius(),
-          .color  = YELLOW,
-        });
-      }
+    // Gizmos.
+    if (ge.meta.debugEnabled) {
+      RenderGroup_OneShotCircleLines({
+        .pos    = projectile.pos,
+        .radius = fb->collider_radius(),
+        .color  = YELLOW,
+      });
     }
   }
 
@@ -3578,29 +3600,27 @@ void GameDraw() {
   }
 
   // Drawing pickupables.
-  {  ///
-    for (const auto& pickupable : g.run.pickupables) {
-      const auto fb = fb_pickupables->Get(pickupable.type);
+  for (const auto& pickupable : g.run.pickupables) {  ///
+    const auto fb = fb_pickupables->Get(pickupable.type);
 
-      f32 fade = 1;
-      {
-        const auto e = pickupable.createdAt.Elapsed();
-        fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
-      }
-      if (pickupable.pickedUpAt.IsSet()) {
-        const auto e = pickupable.pickedUpAt.Elapsed();
-        fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
-      }
-
-      RenderGroup_OneShotTexture(
-        {
-          .texId = fb->texture_id(),
-          .pos   = pickupable.pos,
-          .color = Fade(WHITE, fade),
-        },
-        RenderZ_PICKUPABLES
-      );
+    f32 fade = 1;
+    {
+      const auto e = pickupable.createdAt.Elapsed();
+      fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
     }
+    if (pickupable.pickedUpAt.IsSet()) {
+      const auto e = pickupable.pickedUpAt.Elapsed();
+      fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
+    }
+
+    RenderGroup_OneShotTexture(
+      {
+        .texId = fb->texture_id(),
+        .pos   = pickupable.pos,
+        .color = Fade(WHITE, fade),
+      },
+      RenderZ_PICKUPABLES
+    );
   }
 
   // Gizmos. Colliders.
@@ -3640,6 +3660,59 @@ void GameDraw() {
   }
 
   EndMode2D();
+
+  // Drawing wave completion animation.
+  if (g.run.scheduledWaveCompleted.IsSet()) {  ///
+    auto p
+      = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
+
+    int locale = glib->ui_label_wave_won_locale();
+    if (!g.run.waveWon)
+      locale = glib->ui_label_wave_lost_locale();
+    auto text = localization_strings->Get(locale);
+
+    int totalChars = 0;
+    IterateOverCodepoints(
+      text->c_str(),
+      text->size(),
+      [&totalChars](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
+        if (codepoint)
+          totalChars++;
+      }
+    );
+    int bytesToShow = 0;
+
+    p               = InOutLerp(0, 1, p, 1, 0.33f);
+    int charsToShow = MIN(totalChars, Ceil((f32)totalChars * p));
+
+    IterateOverCodepoints(
+      text->c_str(),
+      text->size(),
+      [&charsToShow, &bytesToShow](u32 codepoint, u32 codepointSize)
+        BF_FORCE_INLINE_LAMBDA {
+          if (codepoint && charsToShow) {
+            bytesToShow += codepointSize;
+            charsToShow--;
+          }
+        }
+    );
+
+    if (bytesToShow) {
+      RenderGroup_OneShotText(
+        {
+          .pos{
+            (f32)LOGICAL_RESOLUTION.x / 2.0f,
+            (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
+          },
+          .font       = &g.meta.uiFont,
+          .text       = text->c_str(),
+          .bytesCount = bytesToShow,
+          .color      = WHITE,
+        },
+        RenderZ_UI
+      );
+    }
+  }
 
   DoUI(true);
 

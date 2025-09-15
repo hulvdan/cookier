@@ -135,6 +135,8 @@ table GameLibrary {
     ui_won_locale: int;
     ui_lost_locale: int;
     ui_button_restart_locale: int;
+    ui_label_wave_won_locale: int;
+    ui_label_wave_lost_locale: int;
     // LOCALE_GEN_END.
 
     // GAME STUFF

@@ -106,11 +106,13 @@ x fix melee weapons flying outside the world at the end of the wave
 x ref stoopid `g.run.a`
 2025-09-15
 x don't create creature pre spawns right before finishing the wave
-
-* wave completed: "WAVE COMPLETED" animation with mobs dying
+x wave completed: "WAVE COMPLETED" animation with mobs dying
   before entering upgrades / item pickup screens
+
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
+* mob that spawns others on getting killed
+  (be sure not to make pre spawns if wave ends shortly)
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 * mobs can't spawn near edges.
   consider spawning them with padding = radius of collider

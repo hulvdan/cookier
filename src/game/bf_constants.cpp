@@ -98,6 +98,7 @@ constexpr auto DAMAGE_NUMBERS_FRAMES             = lframe::MakeScaled(30);
 constexpr auto DAMAGE_NUMBERS_FADE_FRAMES        = lframe::MakeScaled(10);
 constexpr auto PICKUPABLE_FADE_FRAMES            = lframe::MakeScaled(10);
 constexpr auto LIFESTEAL_COOLDOWN_FRAMES         = lframe::MakeScaled(3);
+constexpr auto WAVE_COMPLETED_FRAMES             = lframe::MakeScaled(60);
 
 // Projectiles and weapons won't be able to damage
 // the same creatures they've already damaged
