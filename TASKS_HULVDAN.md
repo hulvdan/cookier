@@ -125,7 +125,20 @@ x INTERNET stat effect: RANGE: how does it work?
 x stat effect: RANGE
 x show `%` in upgrades of stats that are %
 x stat effect: HARVESTING
+x idle / run animations
+2025-09-17
 
+* spread mobs apart (use force?)
+* more mobs: default mob - стандартная с шоколадными крошками
+* more mobs: ranged mob стреляет шоколадными крошками
+* more mobs: heavy rusher mob
+* more mobs: heavy spawner mob - толстая шрек печенька
+* more mobs: tiny mob
+* more mobs: mob boss - галет (он сухой)
+* more mobs: tree - cow / apple tree
+*
+*
+*
 * correct xp progression
 * mobs armor characteristic
 * mobs damage progression

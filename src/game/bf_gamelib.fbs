@@ -46,7 +46,12 @@ table Creature {
     on_death_spawns_distance_max: float;
 
     color: uint = 0xffffff;
-    texture_ids: [int];
+
+    movement_accumulator_meters_cycle: float = 4;
+    idle_seconds: float = 0.75;
+
+    idle_texture_ids: [int];
+    move_texture_ids: [int];
 }
 
 table Item {
