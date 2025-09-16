@@ -45,6 +45,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     for x in gamelib["weapons"][1:]:
         x["name_locale"] = "WEAPON_" + x["type"].upper()
+        assert "damage_type" in x, (
+            f"Weapon {x['type']} must have `damage_type` specified!"
+        )
 
     # Stats.
     # ============================================================

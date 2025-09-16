@@ -183,11 +183,18 @@ items:
   - type: MILK
     texture_id: ui_item_milk
     tier: 0
+damages:
+  - type: INVALID
+  - type: MELEE
+  - type: RANGED
+  - type: ELEMENTAL
+  - type: ENGINEERING
 weapons:
   # If a weapon doesn't have `projectile_type` specified,
   # then it's a melee weapon that gets "shot" itself.
   - type: INVALID
   - type: SWORD
+    damage_type: MELEE
     damage: 2
     cooldown_frames: 20
     shooting_duration_frames: 10
@@ -197,6 +204,7 @@ weapons:
     texture_ids:
       - game_weapon_sword
   - type: GUN
+    damage_type: RANGED
     projectile_type: BULLET
     damage: 1.0
     cooldown_frames: 10
@@ -208,6 +216,7 @@ weapons:
       - game_weapon_gun
   - type: BOW
     projectile_type: ARROW
+    damage_type: RANGED
     damage: 1.5
     cooldown_frames: 16
     shooting_duration_frames: 10

@@ -2733,8 +2733,11 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
     weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
 
-    f32 damage = fb->damage();
-    damage += g.run.playerStats[StatType_DAMAGE_MELEE];
+    f32        damage     = fb->damage();
+    const auto damageStat = fb->damage_type() == DamageType_MELEE
+                              ? StatType_DAMAGE_MELEE
+                              : StatType_DAMAGE_ELEMENTAL;
+    damage += g.run.playerStats[damageStat];
     damage *= GetPlayerStatDamageMultiplier();
     bool isCrit = IsCrit();
     if (isCrit)
@@ -3250,7 +3253,7 @@ void GameFixedUpdate() {
         const auto projectileSpawnFrames = fb->projectile_spawn_frames();
 
         if (projectileType) {
-          // It's a ranged weapon that spawns projectiles.
+          // It's a weapon that shoots projectiles (ranged / elemental).
           ASSERT(projectileSpawnFrames);
 
           bool       spawn     = false;
@@ -3261,6 +3264,11 @@ void GameFixedUpdate() {
               break;
             }
           }
+          f32        damage     = fb->damage();
+          const auto damageStat = fb->damage_type() == DamageType_RANGED
+                                    ? StatType_DAMAGE_RANGED
+                                    : StatType_DAMAGE_ELEMENTAL;
+          damage += g.run.playerStats[damageStat];
 
           if (spawn) {
             MakeProjectile({
@@ -3269,12 +3277,12 @@ void GameFixedUpdate() {
               .pos                = pos,
               .dir                = weapon.targetDir,
               .range              = fb->range(),
-              .damage             = fb->damage(),
+              .damage             = damage,
             });
           }
         }
         else {
-          // It's a melee weapon that gets "shot" itself.
+          // It's a weapon that gets "shot" itself (melee / elemental).
           ASSERT(!projectileSpawnFrames);
 
           auto p = e.Progress(shootingDur);
@@ -3361,7 +3369,6 @@ void GameFixedUpdate() {
           f32  damage = projectile.damage;
           bool isCrit = false;
           if (!projectile.ownerCreatureIndex) {
-            damage += g.run.playerStats[StatType_DAMAGE_RANGED];
             damage *= GetPlayerStatDamageMultiplier();
             isCrit = IsCrit();
             if (isCrit)
