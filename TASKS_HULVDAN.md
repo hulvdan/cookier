@@ -120,8 +120,9 @@ x stat effect: CRIT_CHANCE
 x stat effect: DODGE
 x stats frame
 2025-09-16
-x elemental damage type
+x elemental damage type + stat effect: DAMAGE_ELEMENTAL
 x stat effect: RANGE
+x show `%` in upgrades of stats that are %
 
 * stat effect: RANGE
   10  range +0.01s striking weapon shooting duration
@@ -171,7 +172,7 @@ x stat effect: RANGE
         Increases or decreases the speed of Enemies that spawn during waves.
     % Reroll Price
         Increases or decreases the price of rerolling in the [[Shop}]] and when choosing Upgrades
-x stat effect: ARMOR
+* stat effect: ARMOR
   % of damage received after being reduced by positive armor = 1 / ( 1 + ( ARMOR / 15 ) )
   % of damage received after being increased by negative armor = (15 - 2 * ARMOR) / (15 - ARMOR)
   Tooltip for Damage Reduction % = ROUND( ( 1 - ( DmgReceived% ) ) * 100 )
@@ -182,7 +183,6 @@ x stat effect: ARMOR
     So if an enemy would deal 1.6 damage, that is rounded up to 2 damage, then armor is applied to the 2 damage.
     And then that number is rounded. So you need 6+ armor to reduce 2 damage down to 1,
     because you need to reduce it to under 1.5 damage for it to round down.
-* show `%` in names of stats that are %
 * fix web build exception on killing a ton of enemies right before the wave ended
 * INTERNET stat effect: RANGE: how does it work?
 * stat effect: RANGE: weapon pos
@@ -199,7 +199,6 @@ x stat effect: ARMOR
         The downsides (red texts) of the item will be divided by the Curse Ratio. The neutral effects (white texts) such as +5% Enemies in Gentle Alien will not be affected by Curse.
         Every single effects (enhancements/downsides) of an item has independant random Curse Ratio.
         Some cursed enhancements will round to integer. For example, you may get +3 Dangerous Bunny, +2 Tardigrade or +5%  Retromation's Hoodie if the Curse Ratio > 2.0.
-* stat effect: DAMAGE_ELEMENTAL
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.

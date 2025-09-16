@@ -103,6 +103,7 @@ table Wave {
 table Stat {
     icon_texture_id: int;
     name_locale: int;
+    is_percent: bool;
     upgrade_name_locale: int;
     upgrade_texture_id: int;
     upgrade_values: [int];

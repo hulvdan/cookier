@@ -304,6 +304,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_regen
     icon_texture_id: ui_stat_icon_armor
   - type: LIFE_STEAL
+    is_percent: true
     upgrade_values:
       - 1
       - 2
@@ -312,6 +313,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_life_steal
     icon_texture_id: ui_stat_icon_armor
   - type: DAMAGE
+    is_percent: true
     upgrade_values:
       - 5
       - 8
@@ -344,6 +346,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_damage_elemental
     icon_texture_id: ui_stat_icon_armor
   - type: ATTACK_SPEED
+    is_percent: true
     upgrade_values:
       - 5
       - 10
@@ -352,6 +355,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_attack_speed
     icon_texture_id: ui_stat_icon_armor
   - type: CRIT_CHANCE
+    is_percent: true
     upgrade_values:
       - 3
       - 5
@@ -384,6 +388,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_armor
     icon_texture_id: ui_stat_icon_armor
   - type: DODGE
+    is_percent: true
     upgrade_values:
       - 3
       - 6
@@ -392,6 +397,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_dodge
     icon_texture_id: ui_stat_icon_armor
   - type: SPEED
+    is_percent: true
     upgrade_values:
       - 3
       - 6
