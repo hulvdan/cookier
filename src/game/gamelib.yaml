@@ -192,13 +192,17 @@ damages:
 weapons:
   # If a weapon doesn't have `projectile_type` specified,
   # then it's a melee weapon that gets "shot" itself.
+  #
+  # Range here is in meters.
+  # A minimal range is 1 meter.
+  # Screen is 32x18 meters. Quarter is 16x9.
   - type: INVALID
   - type: SWORD
     damage_type: MELEE
     damage: 2
     cooldown_frames: 20
     shooting_duration_frames: 10
-    range: 3
+    range_meters: 3
     impulse: 100
     melee_collider_height_px: 76
     texture_ids:
@@ -211,7 +215,7 @@ weapons:
     shooting_duration_frames: 20
     projectile_spawn_frames:
       - 6
-    range: 5
+    range_meters: 5
     texture_ids:
       - game_weapon_gun
   - type: BOW
@@ -222,7 +226,7 @@ weapons:
     shooting_duration_frames: 10
     projectile_spawn_frames:
       - 4
-    range: 8
+    range_meters: 8
     texture_ids:
       - game_weapon_bow
 projectiles:

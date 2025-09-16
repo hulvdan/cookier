@@ -67,7 +67,7 @@ table Weapon {
     shooting_duration_frames: int;
     projectile_type: int;
     projectile_spawn_frames: [int];
-    range: float;
+    range_meters: float;
     melee_collider_height_px: float;
     color: uint = 0xffffff;
     texture_ids: [int];
