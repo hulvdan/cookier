@@ -1492,6 +1492,7 @@ void DoUI(bool draw) {
   // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 
   const auto fb_items       = glib->items();
+  const auto fb_stats       = glib->stats();
   const auto fb_weapons     = glib->weapons();
   const auto fb_pickupables = glib->pickupables();
 
@@ -1956,7 +1957,7 @@ void DoUI(bool draw) {
               .childGap        = 8,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
-              CLAY({.layout{.childGap = 8}}) {
+              CLAY({}) {
                 // Slot with upgrade's image.
                 componentSlot(false, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                   CLAY({
@@ -1976,7 +1977,13 @@ void DoUI(bool draw) {
               // Amount.
               const auto amount = fb->upgrade_values()->Get(upgrade.tier);
               CLAY({}) {
-                BF_CLAY_TEXT(TextFormat("+%d ", amount));
+                BF_CLAY_TEXT(TextFormat("+%d", amount));
+
+                if (fb->is_percent())
+                  BF_CLAY_TEXT("% ");
+                else
+                  BF_CLAY_TEXT(" ");
+
                 BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
               }
 
