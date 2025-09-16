@@ -3154,7 +3154,7 @@ void GameFixedUpdate() {
 
       auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
       if (creature.type == CreatureType_PLAYER) {
-        speedScale *= MAX(0.01f, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
+        speedScale *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
 
         if (g.meta.godMode)
           speedScale *= 1.5f;
