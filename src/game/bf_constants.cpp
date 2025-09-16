@@ -28,6 +28,13 @@ constexpr f32 CAMERA_MAX_WORLD_Y
   = (WORLD_RESOLUTION - LOGICAL_RESOLUTION.y / 2.0f) / METER_LOGICAL_SIZE
     + WORLD_CAMERA_METERS_MARGIN;
 
+// As Brotato community in steam says:
+// 900 range = can shoot to corner using slingshot.
+// Half of our screen is {16 meters, 9 meters}.
+// meter/range = sqrt(9**2 + 16**2) / 900 = 0.0204f
+// Using higher value that "feels" good.
+constexpr f32 RANGE_TO_METER_SCALE = 0.04f;
+
 #define SQR(v) ((v) * (v))
 
 constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.6f;
