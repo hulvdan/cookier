@@ -121,9 +121,13 @@ x stat effect: DODGE
 x stats frame
 2025-09-16
 x elemental damage type + stat effect: DAMAGE_ELEMENTAL
+x INTERNET stat effect: RANGE: how does it work?
 x stat effect: RANGE
 x show `%` in upgrades of stats that are %
 
+* mobs can't spawn near edges.
+  consider spawning them with padding = radius of collider
+  + make the same thing with mobs that spawn others on death
 * stat effect: RANGE
   10  range +0.01s striking weapon shooting duration
   100 range +0.05s striking weapon shooting duration
@@ -183,10 +187,6 @@ x show `%` in upgrades of stats that are %
     So if an enemy would deal 1.6 damage, that is rounded up to 2 damage, then armor is applied to the 2 damage.
     And then that number is rounded. So you need 6+ armor to reduce 2 damage down to 1,
     because you need to reduce it to under 1.5 damage for it to round down.
-* fix web build exception on killing a ton of enemies right before the wave ended
-* INTERNET stat effect: RANGE: how does it work?
-* stat effect: RANGE: weapon pos
-* stat effect: RANGE: weapon starting to shoot distance
 * stat effect: CURSE
     Enemies:
         Cursed enemies drop 33% additional materials on death.
@@ -222,9 +222,6 @@ x show `%` in upgrades of stats that are %
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
-* mobs can't spawn near edges.
-  consider spawning them with padding = radius of collider
-  + make the same thing with mobs that spawn others on death
 *
 *
 * ZHEKA: ^ vs code /// collapsing
