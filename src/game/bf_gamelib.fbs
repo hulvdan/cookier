@@ -55,8 +55,12 @@ table Item {
     tier: int;
 }
 
+table Damage {
+}
+
 table Weapon {
     name_locale: int;
+    damage_type: int;
     damage: float;
     impulse: float;
     cooldown_frames: int;
@@ -168,6 +172,7 @@ table GameLibrary {
     hostilities: [Hostility] (required);
     creatures: [Creature] (required);
     items: [Item] (required);
+    damages: [Damage] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
     pickupables: [Pickupable] (required);
