@@ -2734,9 +2734,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
     weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
 
     f32        damage     = fb->damage();
-    const auto damageStat = fb->damage_type() == DamageType_MELEE
-                              ? StatType_DAMAGE_MELEE
-                              : StatType_DAMAGE_ELEMENTAL;
+    const auto damageStat = glib->damages()->Get(fb->damage_type())->stat_type();
     damage += g.run.playerStats[damageStat];
     damage *= GetPlayerStatDamageMultiplier();
     bool isCrit = IsCrit();
@@ -2759,6 +2757,21 @@ lframe ApplyAttackSpeedToShootingDuration(int shootingDurationFrames) {  ///
   ));
 }
 
+f32 GetWeaponRange(const Weapon& weapon) {  ///
+  const auto fb = glib->weapons()->Get(weapon.type);
+
+  f32 bonusRange = g.run.playerStats[StatType_RANGE] * RANGE_TO_METER_SCALE;
+
+  // Divided by 2 because range stat is half as effective for melee weapons.
+  // (don't confuse with weapons that have DamageType_MELEE).
+  // TODO: better naming to differentiate
+  // MELEE weapon from MELEE damage type. Ideas?
+  if (!fb->projectile_type())
+    bonusRange /= 2.0f;
+
+  return MAX(1, fb->range_meters() + bonusRange);
+}
+
 Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   const auto fb = glib->weapons()->Get(weapon.type);
 
@@ -2779,12 +2792,7 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   const auto colliderSize
     = (f32)fbTexture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
-  f32 range = fb->range_meters();
-  // Divided by 2 because range stat is half as effective for melee weapons
-  // (don't confuse with weapons that have DamageType_MELEE).
-  range += (f32)g.run.playerStats[StatType_RANGE] * RANGE_TO_METER_SCALE / 2.0f;
-
-  const f32  movingDistance = MAX(1, range - colliderSize);
+  const f32  movingDistance = MAX(1, GetWeaponRange(weapon));
   const auto movedDistance  = EaseInOutQuad(p) * movingDistance;
 
   return basePos + weapon.targetDir * movedDistance;
@@ -2825,6 +2833,7 @@ void GameFixedUpdate() {
   ZoneScoped;
 
   const auto fb_creatures   = glib->creatures();
+  const auto fb_damages     = glib->damages();
   const auto fb_weapons     = glib->weapons();
   const auto fb_projectiles = glib->projectiles();
   const auto fb_waves       = glib->waves();
@@ -3228,7 +3237,21 @@ void GameFixedUpdate() {
 
         if (closestCreatureIndex >= 0) {
           const auto& closestCreature = g.run.creatures[closestCreatureIndex];
-          if (minDistSqr < SQR(fb->range_meters())) {
+          auto        range           = GetWeaponRange(weapon);
+
+          if (fb->projectile_type()) {
+            const auto fb_projectile = glib->projectiles()->Get(fb->projectile_type());
+            range += fb_projectile->collider_radius();
+          }
+          else {
+            const auto fb_texture
+              = glib->atlas_textures()->Get(fb->texture_ids()->Get(0));
+            // TODO: ATLAS_D2 rework!
+            range += (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO
+                     / METER_LOGICAL_SIZE / 2.0f;
+          }
+
+          if (minDistSqr < SQR(range)) {
             const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
 
             // Only ranged weapons continue tracking target
@@ -3259,7 +3282,7 @@ void GameFixedUpdate() {
         const auto projectileSpawnFrames = fb->projectile_spawn_frames();
 
         if (projectileType) {
-          // It's a weapon that shoots projectiles (ranged / elemental).
+          // It's a weapon that shoots projectiles (RANGED / ELEMENTAL damage types).
           ASSERT(projectileSpawnFrames);
 
           bool       spawn     = false;
@@ -3271,27 +3294,22 @@ void GameFixedUpdate() {
             }
           }
           f32        damage     = fb->damage();
-          const auto damageStat = fb->damage_type() == DamageType_RANGED
-                                    ? StatType_DAMAGE_RANGED
-                                    : StatType_DAMAGE_ELEMENTAL;
+          const auto damageStat = fb_damages->Get(fb->damage_type())->stat_type();
           damage += g.run.playerStats[damageStat];
 
           if (spawn) {
-            const f32 rangeMeters
-              = fb->range_meters()
-                + g.run.playerStats[StatType_RANGE] * RANGE_TO_METER_SCALE;
             MakeProjectile({
               .type               = projectileType,
               .ownerCreatureIndex = 0,
               .pos                = pos,
               .dir                = weapon.targetDir,
-              .range              = MAX(1, rangeMeters),
+              .range              = GetWeaponRange(weapon),
               .damage             = damage,
             });
           }
         }
         else {
-          // It's a weapon that gets "shot" itself (melee / elemental).
+          // It's a weapon that gets "shot" itself (MELEE / ELEMENTAL damage types).
           ASSERT(!projectileSpawnFrames);
 
           auto p = e.Progress(shootingDur);
