@@ -2808,11 +2808,12 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
 
 void AddXP(f32 xp) {  ///
   g.run.xp += xp;
+  g.run.xp = MAX(0, g.run.xp);
 
   // Handling level up.
-  if (g.run.xp >= g.run.nextLevelXp) {
+  while (g.run.xp >= g.run.nextLevelXp) {
+    g.run.xp -= g.run.nextLevelXp;
     g.run.nextLevelXp *= 2;
-    g.run.xp = 0;
     g.run.xpLevel++;
 
     MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
@@ -2896,6 +2897,17 @@ void GameFixedUpdate() {
     g.run.creaturePreSpawns.Reset();
 
     if (g.run.scheduledWaveCompleted.Elapsed() >= WAVE_COMPLETED_FRAMES) {
+      {
+        // Applying StatType_HARVESTING.
+        auto& harvesting = g.run.playerStats[StatType_HARVESTING];
+        g.run.coins += harvesting;
+        g.run.coins = MAX(0, g.run.coins);
+        AddXP(harvesting);
+        // Harvesting stat (if positive) grows by 5% upon finishing each wave.
+        if (harvesting > 0)
+          harvesting = Ceil((f32)harvesting * 1.05f);
+      }
+
       if (g.run.waveIndex >= TOTAL_WAVES - 1) {
         g.run.scheduledEnd = true;
         g.run.won          = g.run.waveWon;
