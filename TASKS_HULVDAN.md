@@ -124,7 +124,13 @@ x elemental damage type + stat effect: DAMAGE_ELEMENTAL
 x INTERNET stat effect: RANGE: how does it work?
 x stat effect: RANGE
 x show `%` in upgrades of stats that are %
+x stat effect: HARVESTING
 
+* correct xp progression
+* mobs armor characteristic
+* mobs damage progression
+* mob that shoots
+* mob that dashes
 * mobs can't spawn near edges.
   consider spawning them with padding = radius of collider
   + make the same thing with mobs that spawn others on death
@@ -211,11 +217,6 @@ x show `%` in upgrades of stats that are %
   (but only doubles it from Trees, as they have 100% base Fruit chance).
   Formula for loot crate drop chance:
   `Enemy_Box_Drop_Chance * (100% + Luck) / (1 + Box_Spawned_This_Wave)`
-* stat effect: HARVESTING
-    You earn +x Materials and Experience at the end of a wave.
-    After you gained the Materials and XP, your harvesting stat increases by 5% rounded up.
-    (So if you have 5 harvest it becomes 6, and it takes 21 for getting +2 harvesting at the end of each wave).
-  If Harvesting is negative, you lose -x Materials and XP at the end of a wave. You cannot lose a level from this XP loss. While your harvesting stat is negative, there is no 5% interest.
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas
