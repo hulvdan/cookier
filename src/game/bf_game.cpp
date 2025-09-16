@@ -782,6 +782,7 @@ void* PushClayCustomData(ClayCustomData data) {  ///
   return (void*)result;
 }
 
+// TODO: ATLAS_D2.
 void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
   const auto texture = glib->atlas_textures()->Get(data.texId);
   CLAY({
@@ -2787,10 +2788,10 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
     p = 2.0f - p * 2;
   else
     p *= 2;
-  const auto texId     = fb->texture_ids()->Get(0);
-  const auto fbTexture = glib->atlas_textures()->Get(texId);
+  const auto texId      = fb->texture_ids()->Get(0);
+  const auto fb_texture = glib->atlas_textures()->Get(texId);
   const auto colliderSize
-    = (f32)fbTexture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+    = (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
   const f32  movingDistance = MAX(1, GetWeaponRange(weapon));
   const auto movedDistance  = EaseInOutQuad(p) * movingDistance;
@@ -3246,7 +3247,7 @@ void GameFixedUpdate() {
           else {
             const auto fb_texture
               = glib->atlas_textures()->Get(fb->texture_ids()->Get(0));
-            // TODO: ATLAS_D2 rework!
+            // TODO: ATLAS_D2.
             range += (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO
                      / METER_LOGICAL_SIZE / 2.0f;
           }
@@ -3317,12 +3318,11 @@ void GameFixedUpdate() {
           const auto colliderActiveStart = 0.25f;
           const auto colliderActiveEnd   = 0.5f;
 
-          const auto texId     = fb->texture_ids()->Get(0);
-          const auto fbTexture = glib->atlas_textures()->Get(texId);
+          const auto texId      = fb->texture_ids()->Get(0);
+          const auto fb_texture = glib->atlas_textures()->Get(texId);
           const auto    colliderSize = Vector2{
-              // TODO: update calculation of X upon starting
-              // to target 4K / 0.25K resolutions.
-              (f32)fbTexture->size_x(),
+              // TODO: ATLAS_D2.
+              (f32)fb_texture->size_x(),
               // NOTE:
               // Y is divided by 2 because it's grabbed from a texture that targets 4K.
               // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).

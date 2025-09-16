@@ -121,25 +121,11 @@ x stat effect: DODGE
 x stats frame
 2025-09-16
 x elemental damage type
+x stat effect: RANGE
 
 * stat effect: RANGE
-    All weapons have a minimum of 25 range.
-    For Ranged Weapons:
-        The weapon's range is simply your Range stat, plus the weapon's own range.
-    For Melee Weapons:
-        The Range stat increases the weapon's range, but only by half of your Range stat.
-        For thrust weapons, Range makes attacks travel further.
-        For sweep weapons, Range makes attacks cover a larger area.
-        Higher Range is generally beneficial because:
-            It lets you attack more enemies at once.
-            It lets you keep your distance from enemies, reducing the chance for contact damage.
-        However, Range also makes attacks have a slightly longer cooldown (ie. lower Attack Speed), due to the extra area they cover before they return to you.
-            This difference is almost negligible unless you have very high Range.
-                Eg. at +10 Range, the attack speed difference is ~0.01s -- this makes weapons about 0% to 1% slower.
-                Eg. at +100 Range, the attack speed difference is ~0.05s -- this makes weapons about 3% to 10% slower.
-                Fast weapons are effected more by differences in Range. Eg at +100 Range, Fist is 10% slower, while Rock is only 3% slower.
-                Keep in mind that this doesn't translate to a direct DPS decrease though, because you'll also be hitting a lot more enemies at once.
-        A weapon's Cooldown stat displayed in-game does account for any modifications due to Range.
+  10  range +0.01s striking weapon shooting duration
+  100 range +0.05s striking weapon shooting duration
 * secondary stats:
     Consumable Heal
         Increases or decreases the healing done by consumables.
