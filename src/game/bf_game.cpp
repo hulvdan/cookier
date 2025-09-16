@@ -476,17 +476,19 @@ struct CreatureController {
 };
 
 struct Creature {
-  bool               active        = true;
-  int                id            = {};
-  CreatureType       type          = {};
-  f32                health        = {};
-  f32                maxHealth     = {};
-  Vector2            pos           = {};
-  Vector2            dir           = {};
-  Body               body          = {};
-  CreatureController controller    = {};
-  LogicalFrame       lastDamagedAt = {};
-  LogicalFrame       diedAt        = {};
+  bool               active              = true;
+  int                id                  = {};
+  CreatureType       type                = {};
+  f32                health              = {};
+  f32                maxHealth           = {};
+  Vector2            pos                 = {};
+  Vector2            dir                 = {};
+  Body               body                = {};
+  CreatureController controller          = {};
+  LogicalFrame       lastDamagedAt       = {};
+  LogicalFrame       diedAt              = {};
+  f32                movementAccumulator = {};
+  LogicalFrame       idleStartedAt       = {};
 };
 
 struct MakeCreatureData {
@@ -1032,6 +1034,7 @@ void MakeCreature(MakeCreatureData data) {  ///
       },
     }),
   };
+  creature.idleStartedAt.SetNow();
 
   g.run.creatures[index] = creature;
 }
@@ -3047,6 +3050,11 @@ void GameFixedUpdate() {
       auto& creature = g.run.creatures[i];
       creature.controller.move
         = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+
+      if (creature.controller.move.x >= 0)
+        creature.dir = {1, 0};
+      else
+        creature.dir = {-1, 0};
     }
 
     // Making pre spawn decals.
@@ -3215,6 +3223,25 @@ void GameFixedUpdate() {
       continue;
 
     creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
+
+    const auto velocity = ToVector2(b2Body_GetLinearVelocity(creature.body.id));
+
+    const auto tolerance = 0.1f;
+
+    if ((abs(velocity.x) < tolerance) && (abs(velocity.y) < tolerance)) {
+      creature.movementAccumulator = 0;
+      if (!creature.idleStartedAt.IsSet())
+        creature.idleStartedAt.SetNow();
+    }
+    else {
+      creature.movementAccumulator += Vector2Length(velocity) * FIXED_DT;
+      if (creature.idleStartedAt.IsSet())
+        creature.idleStartedAt = {};
+    }
+
+    const auto fb = fb_creatures->Get(creature.type);
+    creature.movementAccumulator
+      = fmodf(creature.movementAccumulator, fb->movement_accumulator_meters_cycle());
   }
 
   // Player weapons shooting.
@@ -3595,6 +3622,12 @@ void GameFixedUpdate() {
   g.meta.frame++;
 }
 
+int GetTextureIdByProgress(const flatbuffers::Vector<int>* vectorOfTextures, f32 p) {  ///
+  int index = p * vectorOfTextures->size();
+  index     = MIN(index, vectorOfTextures->size());
+  return vectorOfTextures->Get(index);
+}
+
 void GameDraw() {
   ZoneScoped;
 
@@ -3659,10 +3692,31 @@ void GameDraw() {
       if (creature.diedAt.IsSet())
         fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
 
+      int texId = 0;
+      if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
+        texId = GetTextureIdByProgress(
+          fb->move_texture_ids(),
+          creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
+        );
+      }
+      else {
+        f32 p = 0.0f;
+        if (creature.idleStartedAt.IsSet()) {
+          const auto idleDuration = lframe::MakeUnscaled(fb->idle_seconds() * FIXED_FPS);
+          p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
+        }
+        texId = GetTextureIdByProgress(fb->idle_texture_ids(), p);
+      }
+
+      Vector2 scale{1, 1};
+      if (creature.dir.x < 0)
+        scale.x = -1;
+
       RenderGroup_OneShotTexture(
         {
-          .texId = fb->texture_ids()->Get(0),
+          .texId = texId,
           .pos   = creature.pos,
+          .scale = scale,
           .color = Fade(ColorFromRGB(fb->color()), fade),
         },
         RenderZ_DEFAULT

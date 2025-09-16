@@ -141,22 +141,46 @@ creatures:
     speed_force: 17
     hostility_type: FRIENDLY
     color: 0x208cb2
-    texture_ids:
-      - game_creature_player
+    idle_texture_ids:
+      - game_creature_player_idle_1
+      - game_creature_player_idle_2
+      - game_creature_player_idle_3
+      - game_creature_player_idle_4
+    move_texture_ids:
+      - game_creature_player_move_1
+      - game_creature_player_move_2
+      - game_creature_player_move_3
+      - game_creature_player_move_4
   - type: MOB1
     health: 2
     damage: 1
     speed_force: 14
     color: 0xa13d77
-    texture_ids:
-      - game_creature_player
+    idle_texture_ids:
+      - game_creature_player_idle_1
+      - game_creature_player_idle_2
+      - game_creature_player_idle_3
+      - game_creature_player_idle_4
+    move_texture_ids:
+      - game_creature_player_move_1
+      - game_creature_player_move_2
+      - game_creature_player_move_3
+      - game_creature_player_move_4
   - type: MOB2
     health: 3
     damage: 2
     color: 0xb8560f
     speed_force: 12
-    texture_ids:
-      - game_creature_player
+    idle_texture_ids:
+      - game_creature_player_idle_1
+      - game_creature_player_idle_2
+      - game_creature_player_idle_3
+      - game_creature_player_idle_4
+    move_texture_ids:
+      - game_creature_player_move_1
+      - game_creature_player_move_2
+      - game_creature_player_move_3
+      - game_creature_player_move_4
   - type: MOB3
     health: 3
     damage: 2
@@ -167,13 +191,21 @@ creatures:
     on_death_spawns_count_max: 6
     on_death_spawns_distance_min: 3
     on_death_spawns_distance_max: 1
-    texture_ids:
-      - game_creature_player
+    idle_texture_ids:
+      - game_creature_player_idle_1
+      - game_creature_player_idle_2
+      - game_creature_player_idle_3
+      - game_creature_player_idle_4
+    move_texture_ids:
+      - game_creature_player_move_1
+      - game_creature_player_move_2
+      - game_creature_player_move_3
+      - game_creature_player_move_4
   - type: TREE
     health: 5
     hostility_type: NEUTRAL
     can_be_knocked_back: false
-    texture_ids:
+    idle_texture_ids:
       - game_creature_tree
 items:
   - type: INVALID
