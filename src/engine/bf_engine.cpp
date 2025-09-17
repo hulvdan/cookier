@@ -168,6 +168,19 @@ Color Fade(Color value, f32 p) {  ///
   return value;
 }
 
+Color ColorLerp(Color v1, Color v2, f32 p) {  ///
+  ASSERT(p >= 0);
+  ASSERT(p <= 1);
+
+  Color result{
+    (u8)MIN(255.0f, MAX(0.0f, (f32)v1.r * (1.0f - p) + (f32)v2.r * p)),
+    (u8)MIN(255.0f, MAX(0.0f, (f32)v1.g * (1.0f - p) + (f32)v2.g * p)),
+    (u8)MIN(255.0f, MAX(0.0f, (f32)v1.b * (1.0f - p) + (f32)v2.b * p)),
+    (u8)MIN(255.0f, MAX(0.0f, (f32)v1.a * (1.0f - p) + (f32)v2.a * p)),
+  };
+  return result;
+}
+
 constexpr Vector2Int ASSETS_REFERENCE_RESOLUTION = {1920, 1080};
 constexpr Vector2Int LOGICAL_RESOLUTION          = {1280, 720};
 constexpr f32        ASSETS_TO_LOGICAL_RATIO     = 1280.0f / 1920.0f;
