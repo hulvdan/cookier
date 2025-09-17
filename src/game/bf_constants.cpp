@@ -143,4 +143,9 @@ constexpr auto MOB_RANGER_SHOOTING_FRAMES      = lframe::MakeScaled(40);
 constexpr auto MOB_RANGER_SHOOTING_FRAME       = lframe::MakeScaled(36);
 constexpr f32  MOB_RANGER_MOVEMENT_SPEED_SCALE = 0.3f;
 
+constexpr auto MOB_RUSHER_RUSH_PRE_FRAMES   = lframe::MakeScaled(10);
+constexpr auto MOB_RUSHER_RUSH_TOTAL_FRAMES = lframe::MakeScaled(60);
+constexpr auto MOB_RUSHER_RUSH_POST_FRAMES  = lframe::MakeScaled(20);
+constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
+
 ///

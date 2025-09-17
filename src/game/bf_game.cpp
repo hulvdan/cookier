@@ -494,16 +494,31 @@ struct Creature {
     struct {
       LogicalFrame startedShootingAt;
     } ranger;
+
+    struct {
+      LogicalFrame startedRushingAt;
+      Vector2      rushingDir;
+    } rusher;
   } _mob;
 
-  auto& DataRanger() {
+  auto& DataRanger() {  ///
     ASSERT(type == CreatureType_RANGER);
     return _mob.ranger;
   };
 
-  const auto& DataRanger() const {
+  const auto& DataRanger() const {  ///
     ASSERT(type == CreatureType_RANGER);
     return _mob.ranger;
+  };
+
+  auto& DataRusher() {  ///
+    ASSERT(type == CreatureType_RUSHER);
+    return _mob.rusher;
+  };
+
+  const auto& DataRusher() const {  ///
+    ASSERT(type == CreatureType_RUSHER);
+    return _mob.rusher;
   };
 };
 
@@ -1055,6 +1070,10 @@ void MakeCreature(MakeCreatureData data) {  ///
   switch (creature.type) {
   case CreatureType_RANGER: {
     creature.DataRanger() = {};
+  } break;
+
+  case CreatureType_RUSHER: {
+    creature.DataRusher() = {};
   } break;
 
   default:
@@ -2867,6 +2886,10 @@ bool CanSpawnMoreCreatures() {  ///
   return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
 }
 
+f32 GetApproximatedMaxSpeed(f32 impulse, b2BodyId id) {  ///
+  return impulse / b2Body_GetMass(PLAYER_CREATURE.body.id);
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -3077,6 +3100,8 @@ void GameFixedUpdate() {
       if (!creature.active || creature.diedAt.IsSet())
         continue;
 
+      const auto fb = fb_creatures->Get(creature.type);
+
       creature.controller.move
         = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
 
@@ -3099,13 +3124,12 @@ void GameFixedUpdate() {
         else
           canShoot = false;
 
-        auto& ranger = creature.DataRanger();
-        if (ranger.startedShootingAt.IsSet()) {
+        auto& data = creature.DataRanger();
+        if (data.startedShootingAt.IsSet()) {
           creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
 
-          const auto e = ranger.startedShootingAt.Elapsed();
+          const auto e = data.startedShootingAt.Elapsed();
           if (e == MOB_RANGER_SHOOTING_FRAME) {
-            const auto fb = fb_creatures->Get(creature.type);
             MakeProjectile({
               .type               = ProjectileType_MOB,
               .ownerCreatureIndex = i,
@@ -3116,10 +3140,41 @@ void GameFixedUpdate() {
             });
           }
           if (e >= MOB_RANGER_SHOOTING_FRAMES)
-            ranger.startedShootingAt = {};
+            data.startedShootingAt = {};
         }
         else if (canShoot)
-          ranger.startedShootingAt.SetNow();
+          data.startedShootingAt.SetNow();
+      }
+      else if (creature.type == CreatureType_RUSHER) {
+        auto& data = creature.DataRusher();
+
+        if (data.startedRushingAt.IsSet()) {
+          creature.controller.move = {};
+
+          const auto e = data.startedRushingAt.Elapsed();
+          if ((MOB_RUSHER_RUSH_PRE_FRAMES < e)
+              && (e < MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_POST_FRAMES))
+            creature.controller.move = data.rushingDir * MOB_RUSHER_RUSH_SPEED_SCALE;
+
+          if (e >= MOB_RUSHER_RUSH_TOTAL_FRAMES) {
+            data.startedRushingAt = {};
+            data.rushingDir       = {};
+          }
+        }
+        else {
+          auto dist  = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
+          auto speed = GetApproximatedMaxSpeed(fb->speed_force(), creature.body.id);
+          speed *= MOB_RUSHER_RUSH_SPEED_SCALE;
+          auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_PRE_FRAMES
+                            - MOB_RUSHER_RUSH_POST_FRAMES;
+          auto durSeconds   = (f32)rushingDur.value / FIXED_FPS;
+          auto rushDistance = speed * durSeconds;
+
+          if (dist <= rushDistance) {
+            data.startedRushingAt.SetNow();
+            data.rushingDir = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
+          }
+        }
       }
     }
 
@@ -3790,6 +3845,22 @@ void GameDraw() {
             t = 1
                 - (e - MOB_RANGER_SHOOTING_FRAME)
                     .Progress(MOB_RANGER_SHOOTING_FRAMES - MOB_RANGER_SHOOTING_FRAME);
+          }
+        }
+        t     = Clamp01(t);
+        color = ColorLerp(color, RED, t);
+      }
+      else if (creature.type == CreatureType_RUSHER) {
+        const auto& data = creature.DataRusher();
+        f32         t    = 0;
+        if (data.startedRushingAt.IsSet()) {
+          auto e = data.startedRushingAt.Elapsed();
+          if (e < MOB_RUSHER_RUSH_PRE_FRAMES)
+            t = e.Progress(MOB_RUSHER_RUSH_PRE_FRAMES);
+          else {
+            t = 1
+                - (e - MOB_RUSHER_RUSH_TOTAL_FRAMES + MOB_RUSHER_RUSH_PRE_FRAMES)
+                    .Progress(MOB_RUSHER_RUSH_POST_FRAMES);
           }
         }
         t     = Clamp01(t);
