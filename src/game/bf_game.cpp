@@ -489,6 +489,22 @@ struct Creature {
   LogicalFrame       diedAt              = {};
   f32                movementAccumulator = {};
   LogicalFrame       idleStartedAt       = {};
+
+  union {
+    struct {
+      LogicalFrame startedShootingAt;
+    } ranger;
+  } _mob;
+
+  auto& DataRanger() {
+    ASSERT(type == CreatureType_RANGER);
+    return _mob.ranger;
+  };
+
+  const auto& DataRanger() const {
+    ASSERT(type == CreatureType_RANGER);
+    return _mob.ranger;
+  };
 };
 
 struct MakeCreatureData {
@@ -1036,6 +1052,15 @@ void MakeCreature(MakeCreatureData data) {  ///
   };
   creature.idleStartedAt.SetNow();
 
+  switch (creature.type) {
+  case CreatureType_RANGER: {
+    creature.DataRanger() = {};
+  } break;
+
+  default:
+    break;
+  }
+
   g.run.creatures[index] = creature;
 }
 
@@ -1055,7 +1080,8 @@ void MakeProjectile(MakeProjectileData data) {  ///
 
   switch (data.type) {
   case ProjectileType_ARROW:
-  case ProjectileType_BULLET: {
+  case ProjectileType_BULLET:
+  case ProjectileType_MOB: {
     // Intentionally left blank.
   } break;
 
@@ -3048,6 +3074,9 @@ void GameFixedUpdate() {
     // Updating AI.
     for (int i = 1; i < g.run.creatures.count; i++) {  ///
       auto& creature = g.run.creatures[i];
+      if (!creature.active || creature.diedAt.IsSet())
+        continue;
+
       creature.controller.move
         = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
 
@@ -3055,6 +3084,43 @@ void GameFixedUpdate() {
         creature.dir = {1, 0};
       else
         creature.dir = {-1, 0};
+
+      if (creature.type == CreatureType_RANGER) {
+        constexpr f32 thresholdMeters = 0.5f;
+        constexpr f32 shootMeters     = 8;
+        const auto    distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
+
+        bool canShoot = true;
+
+        if (distSqr < SQR(shootMeters - thresholdMeters))
+          creature.controller.move *= -1.0f;
+        else if (distSqr < SQR(shootMeters + thresholdMeters))
+          creature.controller.move = {};
+        else
+          canShoot = false;
+
+        auto& ranger = creature.DataRanger();
+        if (ranger.startedShootingAt.IsSet()) {
+          creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
+
+          const auto e = ranger.startedShootingAt.Elapsed();
+          if (e == MOB_RANGER_SHOOTING_FRAME) {
+            const auto fb = fb_creatures->Get(creature.type);
+            MakeProjectile({
+              .type               = ProjectileType_MOB,
+              .ownerCreatureIndex = i,
+              .pos                = creature.pos,
+              .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
+              .range  = 12,
+              .damage = fb->projectile_damage(),
+            });
+          }
+          if (e >= MOB_RANGER_SHOOTING_FRAMES)
+            ranger.startedShootingAt = {};
+        }
+        else if (canShoot)
+          ranger.startedShootingAt.SetNow();
+      }
     }
 
     // Making pre spawn decals.
@@ -3135,7 +3201,7 @@ void GameFixedUpdate() {
         {
           TryApplyDamage(
             0,
-            fb_creatures->Get(creature.type)->damage()
+            fb_creatures->Get(creature.type)->contact_damage()
               - (f32)g.run.playerStats[StatType_ARMOR],
             Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
             0,
@@ -3712,12 +3778,30 @@ void GameDraw() {
       if (creature.dir.x < 0)
         scale.x = -1;
 
+      auto color = ColorFromRGB(fb->color());
+      if (creature.type == CreatureType_RANGER) {
+        const auto& data = creature.DataRanger();
+        f32         t    = 0;
+        if (data.startedShootingAt.IsSet()) {
+          auto e = data.startedShootingAt.Elapsed();
+          if (e < MOB_RANGER_SHOOTING_FRAME)
+            t = e.Progress(MOB_RANGER_SHOOTING_FRAME);
+          else {
+            t = 1
+                - (e - MOB_RANGER_SHOOTING_FRAME)
+                    .Progress(MOB_RANGER_SHOOTING_FRAMES - MOB_RANGER_SHOOTING_FRAME);
+          }
+        }
+        t     = Clamp01(t);
+        color = ColorLerp(color, RED, t);
+      }
+
       RenderGroup_OneShotTexture(
         {
           .texId = texId,
           .pos   = creature.pos,
           .scale = scale,
-          .color = Fade(ColorFromRGB(fb->color()), fade),
+          .color = Fade(color, fade),
         },
         RenderZ_DEFAULT
       );

@@ -34,7 +34,8 @@ table Hostility {
 
 table Creature {
     health: float;
-    damage: float;
+    contact_damage: float;
+    projectile_damage: float;
     speed_force: float;
     hostility_type: int = 1;
     can_be_knocked_back: bool = true;

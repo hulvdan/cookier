@@ -153,7 +153,7 @@ creatures:
       - game_creature_player_move_4
   - type: MOB1
     health: 2
-    damage: 1
+    contact_damage: 1
     speed_force: 14
     color: 0xa13d77
     idle_texture_ids:
@@ -168,7 +168,7 @@ creatures:
       - game_creature_player_move_4
   - type: MOB2
     health: 3
-    damage: 2
+    contact_damage: 2
     color: 0xb8560f
     speed_force: 12
     idle_texture_ids:
@@ -181,9 +181,25 @@ creatures:
       - game_creature_player_move_2
       - game_creature_player_move_3
       - game_creature_player_move_4
-  - type: MOB3
+  - type: RANGER
+    health: 2
+    contact_damage: 1
+    projectile_damage: 4
+    color: 0xb59a66
+    speed_force: 17
+    idle_texture_ids:
+      - game_creature_player_idle_1
+      - game_creature_player_idle_2
+      - game_creature_player_idle_3
+      - game_creature_player_idle_4
+    move_texture_ids:
+      - game_creature_player_move_1
+      - game_creature_player_move_2
+      - game_creature_player_move_3
+      - game_creature_player_move_4
+  - type: SPAWNER
     health: 3
-    damage: 2
+    contact_damage: 2
     color: 0x82dcd7
     speed_force: 12
     on_death_spawns_creature_type: MOB1
@@ -295,6 +311,11 @@ projectiles:
     speed: 16
     texture_ids:
       - game_projectile_bullet
+  - type: MOB
+    color: 0xff0000
+    speed: 10
+    texture_ids:
+      - game_projectile_mob
 pickupables:
   - type: INVALID
   - type: COIN
@@ -460,7 +481,9 @@ waves:
         spawn_factor: 20
       - creature_type: MOB2
         spawn_factor: 20
-      - creature_type: MOB3
+      - creature_type: SPAWNER
+        spawn_factor: 35
+      - creature_type: RANGER
         spawn_factor: 35
   # 2
   - creatures_to_spawn:
@@ -470,7 +493,9 @@ waves:
         spawn_factor: 30
       - creature_type: MOB2
         spawn_factor: 20
-      - creature_type: MOB3
+      - creature_type: SPAWNER
+        spawn_factor: 35
+      - creature_type: RANGER
         spawn_factor: 35
   # 3
   - creatures_to_spawn:
@@ -480,7 +505,9 @@ waves:
         spawn_factor: 10
       - creature_type: MOB2
         spawn_factor: 30
-      - creature_type: MOB3
+      - creature_type: SPAWNER
+        spawn_factor: 35
+      - creature_type: RANGER
         spawn_factor: 35
   # 4
   - creatures_to_spawn:
@@ -490,8 +517,10 @@ waves:
         spawn_factor: 40
       - creature_type: MOB2
         spawn_factor: 15
-      - creature_type: MOB3
+      - creature_type: SPAWNER
         spawn_factor: 15
+      - creature_type: RANGER
+        spawn_factor: 35
   # 5
   - creatures_to_spawn:
       - creature_type: TREE
@@ -500,5 +529,7 @@ waves:
         spawn_factor: 50
       - creature_type: MOB2
         spawn_factor: 50
-      - creature_type: MOB3
+      - creature_type: SPAWNER
+        spawn_factor: 35
+      - creature_type: RANGER
         spawn_factor: 35

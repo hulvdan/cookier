@@ -127,8 +127,19 @@ x show `%` in upgrades of stats that are %
 x stat effect: HARVESTING
 x idle / run animations
 2025-09-17
+x ranged mob that shoots and backs up if player is too close
 
+* stat effect: LUCK
+  100 Luck doubles the chances of Fruit to drop from enemies, while -100 Luck means none drop at all
+  (except guaranteed Crates from Loot Aliens, Elites, and Bosses).
+  100 Luck also doubles the chances of turning Fruit into a Loot Crate
+  — but because it also doubles the chance of Fruit, it effectively quadruples
+  your chances of getting Crates from enemies
+  (but only doubles it from Trees, as they have 100% base Fruit chance).
+  Formula for loot crate drop chance:
+  `Enemy_Box_Drop_Chance * (100% + Luck) / (1 + Box_Spawned_This_Wave)`
 * spread mobs apart (use force?)
+* mob that rotates when moving?
 * more mobs: default mob - стандартная с шоколадными крошками
 * more mobs: ranged mob стреляет шоколадными крошками
 * more mobs: heavy rusher mob
@@ -221,15 +232,6 @@ x idle / run animations
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
-* stat effect: LUCK
-  100 Luck doubles the chances of Fruit to drop from enemies, while -100 Luck means none drop at all
-  (except guaranteed Crates from Loot Aliens, Elites, and Bosses).
-  100 Luck also doubles the chances of turning Fruit into a Loot Crate
-  — but because it also doubles the chance of Fruit, it effectively quadruples
-  your chances of getting Crates from enemies
-  (but only doubles it from Trees, as they have 100% base Fruit chance).
-  Formula for loot crate drop chance:
-  `Enemy_Box_Drop_Chance * (100% + Luck) / (1 + Box_Spawned_This_Wave)`
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas

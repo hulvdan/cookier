@@ -139,4 +139,8 @@ const Color MODAL_OVERLAY_COLOR = Fade(BLACK, 0.75f);
 
 constexpr f32 CRIT_DAMAGE_MULTIPLIER = 1.5f;
 
+constexpr auto MOB_RANGER_SHOOTING_FRAMES      = lframe::MakeScaled(40);
+constexpr auto MOB_RANGER_SHOOTING_FRAME       = lframe::MakeScaled(36);
+constexpr f32  MOB_RANGER_MOVEMENT_SPEED_SCALE = 0.3f;
+
 ///
