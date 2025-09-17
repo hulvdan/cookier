@@ -128,7 +128,9 @@ x stat effect: HARVESTING
 x idle / run animations
 2025-09-17
 x ranged mob that shoots and backs up if player is too close
+x mob that rushes
 
+* fix player death wave lost
 * stat effect: LUCK
   100 Luck doubles the chances of Fruit to drop from enemies, while -100 Luck means none drop at all
   (except guaranteed Crates from Loot Aliens, Elites, and Bosses).

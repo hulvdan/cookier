@@ -197,6 +197,21 @@ creatures:
       - game_creature_player_move_2
       - game_creature_player_move_3
       - game_creature_player_move_4
+  - type: RUSHER
+    health: 10
+    contact_damage: 6
+    color: 0x7a7576
+    speed_force: 12
+    idle_texture_ids:
+      - game_creature_player_idle_1
+      - game_creature_player_idle_2
+      - game_creature_player_idle_3
+      - game_creature_player_idle_4
+    move_texture_ids:
+      - game_creature_player_move_1
+      - game_creature_player_move_2
+      - game_creature_player_move_3
+      - game_creature_player_move_4
   - type: SPAWNER
     health: 3
     contact_damage: 2
@@ -485,6 +500,8 @@ waves:
         spawn_factor: 35
       - creature_type: RANGER
         spawn_factor: 35
+      - creature_type: RUSHER
+        spawn_factor: 35
   # 2
   - creatures_to_spawn:
       - creature_type: TREE
@@ -496,6 +513,8 @@ waves:
       - creature_type: SPAWNER
         spawn_factor: 35
       - creature_type: RANGER
+        spawn_factor: 35
+      - creature_type: RUSHER
         spawn_factor: 35
   # 3
   - creatures_to_spawn:
@@ -509,6 +528,8 @@ waves:
         spawn_factor: 35
       - creature_type: RANGER
         spawn_factor: 35
+      - creature_type: RUSHER
+        spawn_factor: 35
   # 4
   - creatures_to_spawn:
       - creature_type: TREE
@@ -521,6 +542,8 @@ waves:
         spawn_factor: 15
       - creature_type: RANGER
         spawn_factor: 35
+      - creature_type: RUSHER
+        spawn_factor: 35
   # 5
   - creatures_to_spawn:
       - creature_type: TREE
@@ -532,4 +555,6 @@ waves:
       - creature_type: SPAWNER
         spawn_factor: 35
       - creature_type: RANGER
+        spawn_factor: 35
+      - creature_type: RUSHER
         spawn_factor: 35
