@@ -652,13 +652,14 @@ struct GameData {
     LogicalFrame playerLastLifestealAt = {};
     LogicalFrame playerLastRegenAt     = {};
 
-    f32 xp            = 0;
-    f32 nextLevelXp   = 10;
-    int coins         = 0;
-    int crates        = 0;
-    int xpLevel       = 1;
-    int previousLevel = 1;
-    int pierceCount   = 0;
+    f32 xp                    = 0;
+    f32 nextLevelXp           = 10;
+    int coins                 = 0;
+    int crates                = 0;
+    int cratesDroppedThisWave = 0;
+    int xpLevel               = 1;
+    int previousLevel         = 1;
+    int pierceCount           = 0;
 
     int          waveIndex     = 0;
     LogicalFrame waveStartedAt = {};
@@ -2889,6 +2890,10 @@ f32 GetApproximatedMaxSpeed(f32 impulse, b2BodyId id) {  ///
   return impulse / b2Body_GetMass(id);
 }
 
+f32 GetLuckFactor() {  ///
+  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -3037,6 +3042,8 @@ void GameFixedUpdate() {
     SDL_HideCursor();
 
     IncrementSetZeroOn(&g.run.waveIndex, (int)fb_waves->size());
+    g.run.cratesDroppedThisWave = 0;
+
     g.run.waveStartedAt = {};
     g.run.waveStartedAt.SetNow();
   }
@@ -3097,6 +3104,8 @@ void GameFixedUpdate() {
     for (int i = 1; i < g.run.creatures.count; i++) {  ///
       auto& creature = g.run.creatures[i];
       if (!creature.active || creature.diedAt.IsSet())
+        continue;
+      if (creature.type == CreatureType_TREE)
         continue;
 
       const auto fb = fb_creatures->Get(creature.type);
@@ -3679,24 +3688,30 @@ void GameFixedUpdate() {
               *g.run.creaturePreSpawns.Add() = spawn;
             }
           }
-        }
 
-        if (creature.health != -f32_inf) {
-          Pickupable pickupable{
-            .type = PickupableType_COIN,
-            .pos  = creature.pos,
-          };
+          // Mob drops coin / consumable / crate.
+          if (creature.health != -f32_inf) {
+            Pickupable pickupable{
+              .type = PickupableType_COIN,
+              .pos  = creature.pos,
+            };
+            pickupable.createdAt.SetNow();
+            *g.run.pickupables.Add() = pickupable;
 
-          // Trees drop consumables or crates.
-          if (creature.type == CreatureType_TREE) {
-            pickupable.type = PickupableType_CONSUMABLE;
+            const auto luckFactor = GetLuckFactor();
+            if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
+              pickupable.type = PickupableType_CONSUMABLE;
 
-            if (GRAND.FRand() <= TREE_DROP_CRATE_FACTOR)
-              pickupable.type = PickupableType_CRATE;
+              const auto crateChance = CRATE_INSTEAD_OF_CONSUMABLE_FACTOR * luckFactor
+                                       / (f32)(1 + g.run.cratesDroppedThisWave);
+              if (GRAND.FRand() <= crateChance) {
+                pickupable.type = PickupableType_CRATE;
+                g.run.cratesDroppedThisWave++;
+              }
+
+              *g.run.pickupables.Add() = pickupable;
+            }
           }
-
-          pickupable.createdAt.SetNow();
-          *g.run.pickupables.Add() = pickupable;
         }
       }
     }
