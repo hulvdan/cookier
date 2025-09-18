@@ -20,7 +20,7 @@
     Consumable Heal
         Increases or decreases the healing done by consumables.
     % Materials Healing
-        Chance of being healed by 1 when picking up Materials. Currently only used by Cute Monkey.
+        Chance of being healed by 1 when picking up Materials.
     % XP Gain
         Increases or decreases all forms of Experience you earn.
     % Pickup Range
