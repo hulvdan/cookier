@@ -23,9 +23,6 @@
 * correct xp progression
 * mobs armor characteristic
 * mobs damage progression
-* mob that shoots
-* mob that dashes
-* mobs can't spawn near edges.
   consider spawning them with padding = radius of collider
   + make the same thing with mobs that spawn others on death
 * stat effect: RANGE

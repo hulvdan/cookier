@@ -102,6 +102,18 @@ Vector2 Vector2ClampValue(Vector2 v, f32 min, f32 max) {  ///
 struct Rect {
   Vector2 pos  = {};
   Vector2 size = {};
+
+  constexpr bool ContainsInside(Vector2 v) const {
+    if (v.x <= pos.x)
+      return false;
+    if (v.y <= pos.y)
+      return false;
+    if (v.x >= pos.x + size.x)
+      return false;
+    if (v.y >= pos.y + size.y)
+      return false;
+    return true;
+  }
 };
 
 struct Color {
