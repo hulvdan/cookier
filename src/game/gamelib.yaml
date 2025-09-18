@@ -33,7 +33,7 @@ localization:
   UI_WON: Победа
   UI_LOST: Поражение
   UI_LABEL_WAVE_WON: Волна Пройдена!
-  UI_LABEL_WAVE_LOST: Волна Провалена!
+  UI_LABEL_WAVE_LOST: Забег Провален!
   UI_BUTTON_RESTART: Начать Заново
   ITEM_SUGAR: Сахар
   ITEM_MILK: Молоко
