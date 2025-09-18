@@ -265,7 +265,7 @@ def convert_gamelib_json_to_binary(
         genline("};\n")
 
     gamelib |= atlas_data
-    genenum(genline, "RenderZ", gamelib.pop("render_z"), add_count=True)
+    genenum(genline, "DrawZ", gamelib.pop("render_z"), add_count=True)
 
     # Locale gen.
     if 1:

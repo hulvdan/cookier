@@ -334,31 +334,31 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
       }
 
       // Background.
-      RenderGroup_Begin(RenderZ_SCREEN_BACKGROUND);
-      RenderGroup_SetSortY(0);
+      DrawGroup_Begin(DrawZ_SCREEN_BACKGROUND);
+      DrawGroup_SetSortY(0);
       {
-        RenderGroup_CommandRect({
+        DrawGroup_CommandRect({
           .pos  = pos,
           .size = size,
           .anchor{},
           .color = ge.settings.backgroundColor,
         });
       }
-      RenderGroup_End();
+      DrawGroup_End();
 
       // Fade.
       if (ge.settings.screenFade > 0) {
-        RenderGroup_Begin(RenderZ_SCREEN_FADE);
-        RenderGroup_SetSortY(0);
+        DrawGroup_Begin(DrawZ_SCREEN_FADE);
+        DrawGroup_SetSortY(0);
         {
-          RenderGroup_CommandRect({
+          DrawGroup_CommandRect({
             .pos  = pos,
             .size = size,
             .anchor{},
             .color = Fade(ge.settings.screenFadeColor, ge.settings.screenFade),
           });
         }
-        RenderGroup_End();
+        DrawGroup_End();
       }
     }
 

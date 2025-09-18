@@ -343,27 +343,27 @@ struct DrawTextData {
   // TODO: Color outlineColor = BLACK + shader.
 };
 
-enum RenderCommandType {
-  RenderCommandType_INVALID,
-  RenderCommandType_TEXTURE,
-  RenderCommandType_TEXTURE_NINE_SLICE,
-  RenderCommandType_CIRCLE,
-  RenderCommandType_RECT,
-  RenderCommandType_STRIPS,
-  RenderCommandType_CIRCLE_LINES,
-  RenderCommandType_RECT_LINES,
-  RenderCommandType_TEXT,
+enum DrawCommandType {
+  DrawCommandType_INVALID,
+  DrawCommandType_TEXTURE,
+  DrawCommandType_TEXTURE_NINE_SLICE,
+  DrawCommandType_CIRCLE,
+  DrawCommandType_RECT,
+  DrawCommandType_STRIPS,
+  DrawCommandType_CIRCLE_LINES,
+  DrawCommandType_RECT_LINES,
+  DrawCommandType_TEXT,
 };
 
-struct RenderGroup {
-  RenderZ z                  = RenderZ_DEFAULT;
-  f32     sortY              = f32_inf;
-  int     commandsCount      = 0;
-  int     commandsStartIndex = -1;
+struct DrawGroup {
+  DrawZ z                  = DrawZ_DEFAULT;
+  f32   sortY              = f32_inf;
+  int   commandsCount      = 0;
+  int   commandsStartIndex = -1;
 };
 
-struct RenderCommand {
-  RenderCommandType type = RenderCommandType_INVALID;
+struct DrawCommand {
+  DrawCommandType type = DrawCommandType_INVALID;
 
   union {
     DrawTextureData          texture;
@@ -374,31 +374,30 @@ struct RenderCommand {
   } _u;
 
   auto& DataTexture() const {  ///
-    ASSERT(type == RenderCommandType_TEXTURE);
+    ASSERT(type == DrawCommandType_TEXTURE);
     return _u.texture;
   }
 
   auto& DataTextureNineSlice() const {  ///
-    ASSERT(type == RenderCommandType_TEXTURE_NINE_SLICE);
+    ASSERT(type == DrawCommandType_TEXTURE_NINE_SLICE);
     return _u.textureNineSlice;
   }
 
   auto& DataCircle() const {  ///
     auto allowed
-      = (type == RenderCommandType_CIRCLE) || (type == RenderCommandType_CIRCLE_LINES);
+      = (type == DrawCommandType_CIRCLE) || (type == DrawCommandType_CIRCLE_LINES);
     ASSERT(allowed);
     return _u.circle;
   }
 
   auto& DataRect() const {  ///
-    auto allowed
-      = (type == RenderCommandType_RECT) || (type == RenderCommandType_RECT_LINES);
+    auto allowed = (type == DrawCommandType_RECT) || (type == DrawCommandType_RECT_LINES);
     ASSERT(allowed);
     return _u.rect;
   }
 
   auto& DataText() const {  ///
-    ASSERT(type == RenderCommandType_TEXT);
+    ASSERT(type == DrawCommandType_TEXT);
     return _u.text;
   }
 };
@@ -486,12 +485,12 @@ struct EngineData {
     size_t additionalArenaSize = 0;
   } settings;
 
-  struct Render {
-    Vector<RenderCommand> commands          = {};
-    Vector<RenderGroup>   groups            = {};
-    int                   currentGroupIndex = -1;
-    bool                  flushedThisFrame  = false;
-  } render;
+  struct Draw {
+    Vector<DrawCommand> commands          = {};
+    Vector<DrawGroup>   groups            = {};
+    int                 currentGroupIndex = -1;
+    bool                flushedThisFrame  = false;
+  } draw;
 } ge = {};
 
 void BeginMode2D(const Camera* camera) {
@@ -554,14 +553,14 @@ void StopSound(ma_sound* sound) {  ///
     ma_sound_stop(sound);
 }
 
-BF_FORCE_INLINE void RenderGroup_Begin(RenderZ z) {  ///
-  ASSERT(ge.render.currentGroupIndex == -1);
-  ge.render.currentGroupIndex = ge.render.groups.count;
-  *ge.render.groups.Add()     = {.z = z, .commandsStartIndex = ge.render.commands.count};
+BF_FORCE_INLINE void DrawGroup_Begin(DrawZ z) {  ///
+  ASSERT(ge.draw.currentGroupIndex == -1);
+  ge.draw.currentGroupIndex = ge.draw.groups.count;
+  *ge.draw.groups.Add()     = {.z = z, .commandsStartIndex = ge.draw.commands.count};
 }
 
-BF_FORCE_INLINE void RenderGroup_SetSortY(f32 value) {  ///
-  auto& group = ge.render.groups[ge.render.currentGroupIndex];
+BF_FORCE_INLINE void DrawGroup_SetSortY(f32 value) {  ///
+  auto& group = ge.draw.groups[ge.draw.currentGroupIndex];
 
   if (group.sortY == f32_inf)
     group.sortY = value;
@@ -597,14 +596,14 @@ void _ApplyCurrentCamera(Vector2* point, f32* size, bool isTexture = false) {  /
   }
 }
 
-enum RenderCommandSetSortY {
-  RenderCommandSetSortY_DO_NOTHING,
-  RenderCommandSetSortY_SET_BASELINE,
+enum DrawCommandSetSortY {
+  DrawCommandSetSortY_DO_NOTHING,
+  DrawCommandSetSortY_SET_BASELINE,
 };
 
-BF_FORCE_INLINE void RenderGroup_CommandTexture(
-  DrawTextureData       data,
-  RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
+BF_FORCE_INLINE void DrawGroup_CommandTexture(
+  DrawTextureData     data,
+  DrawCommandSetSortY setSortY = DrawCommandSetSortY_DO_NOTHING
 ) {  ///
   _ApplyCurrentCamera(&data.pos, &data.scale, true);
 
@@ -625,24 +624,24 @@ BF_FORCE_INLINE void RenderGroup_CommandTexture(
   if ((mx >= 1) || (my >= 1))
     return;
 
-  if (setSortY == RenderCommandSetSortY_SET_BASELINE) {
+  if (setSortY == DrawCommandSetSortY_SET_BASELINE) {
     auto tex    = glib->atlas_textures()->Get(data.texId);
     auto height = (f32)tex->size_y();
     auto off    = ASSETS_TO_LOGICAL_RATIO * data.scale.y
                * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
-    RenderGroup_SetSortY(data.pos.y + off);
+    DrawGroup_SetSortY(data.pos.y + off);
   }
 
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {
-    .type = RenderCommandType_TEXTURE,
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {
+    .type = DrawCommandType_TEXTURE,
     ._u{.texture = data},
   };
 }
 
-BF_FORCE_INLINE void RenderGroup_CommandTextureNineSlice(
+BF_FORCE_INLINE void DrawGroup_CommandTextureNineSlice(
   DrawTextureNineSliceData data,
-  RenderCommandSetSortY    setSortY = RenderCommandSetSortY_DO_NOTHING
+  DrawCommandSetSortY      setSortY = DrawCommandSetSortY_DO_NOTHING
 ) {  ///
   _ApplyCurrentCamera(&data.pos, &data.scale, true);
 
@@ -654,24 +653,24 @@ BF_FORCE_INLINE void RenderGroup_CommandTextureNineSlice(
   if ((data.nineSliceSize.x == 0) || (data.nineSliceSize.y == 0))
     return;
 
-  if (setSortY == RenderCommandSetSortY_SET_BASELINE) {
+  if (setSortY == DrawCommandSetSortY_SET_BASELINE) {
     auto tex    = glib->atlas_textures()->Get(data.texId);
     auto height = (f32)tex->size_y();
     auto off    = ASSETS_TO_LOGICAL_RATIO * data.scale.y
                * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
-    RenderGroup_SetSortY(data.pos.y + off);
+    DrawGroup_SetSortY(data.pos.y + off);
   }
 
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {
-    .type = RenderCommandType_TEXTURE_NINE_SLICE,
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {
+    .type = DrawCommandType_TEXTURE_NINE_SLICE,
     ._u{.textureNineSlice = data},
   };
 }
 
-BF_FORCE_INLINE void RenderGroup_CommandCircle(  ///
-  DrawCircleData        data,
-  RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
+BF_FORCE_INLINE void DrawGroup_CommandCircle(  ///
+  DrawCircleData      data,
+  DrawCommandSetSortY setSortY = DrawCommandSetSortY_DO_NOTHING
 ) {
   ASSERT(data.radius >= 0);
   if (data.radius <= 0)
@@ -679,19 +678,19 @@ BF_FORCE_INLINE void RenderGroup_CommandCircle(  ///
 
   _ApplyCurrentCamera(&data.pos, &data.radius);
 
-  if (setSortY == RenderCommandSetSortY_SET_BASELINE)
-    RenderGroup_SetSortY(data.pos.y - data.radius);
+  if (setSortY == DrawCommandSetSortY_SET_BASELINE)
+    DrawGroup_SetSortY(data.pos.y - data.radius);
 
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {
-    .type = RenderCommandType_CIRCLE,
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {
+    .type = DrawCommandType_CIRCLE,
     ._u{.circle = data},
   };
 }
 
-BF_FORCE_INLINE void RenderGroup_CommandRect(  ///
-  DrawRectData          data,
-  RenderCommandSetSortY setSortY = RenderCommandSetSortY_DO_NOTHING
+BF_FORCE_INLINE void DrawGroup_CommandRect(  ///
+  DrawRectData        data,
+  DrawCommandSetSortY setSortY = DrawCommandSetSortY_DO_NOTHING
 ) {
   ASSERT(data.size.x >= 0);
   ASSERT(data.size.y >= 0);
@@ -700,31 +699,31 @@ BF_FORCE_INLINE void RenderGroup_CommandRect(  ///
 
   _ApplyCurrentCamera(&data.pos, &data.size);
 
-  if (setSortY == RenderCommandSetSortY_SET_BASELINE)
-    RenderGroup_SetSortY(data.pos.y - data.size.y * (data.anchor.y - 0.5f));
+  if (setSortY == DrawCommandSetSortY_SET_BASELINE)
+    DrawGroup_SetSortY(data.pos.y - data.size.y * (data.anchor.y - 0.5f));
 
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {
-    .type = RenderCommandType_RECT,
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {
+    .type = DrawCommandType_RECT,
     ._u{.rect = data},
   };
 }
 
-BF_FORCE_INLINE void RenderGroup_CommandCircleLines(DrawCircleData data) {  ///
+BF_FORCE_INLINE void DrawGroup_CommandCircleLines(DrawCircleData data) {  ///
   ASSERT(data.radius >= 0);
   if (data.radius <= 0)
     return;
 
   _ApplyCurrentCamera(&data.pos, &data.radius);
 
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {
-    .type = RenderCommandType_CIRCLE_LINES,
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {
+    .type = DrawCommandType_CIRCLE_LINES,
     ._u{.circle = data},
   };
 }
 
-BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {  ///
+BF_FORCE_INLINE void DrawGroup_CommandRectLines(DrawRectData data) {  ///
   ASSERT(data.size.x >= 0);
   ASSERT(data.size.y >= 0);
   if ((data.size.x == 0) || (data.size.y == 0))
@@ -732,87 +731,87 @@ BF_FORCE_INLINE void RenderGroup_CommandRectLines(DrawRectData data) {  ///
 
   _ApplyCurrentCamera(&data.pos, &data.size);
 
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {
-    .type = RenderCommandType_RECT_LINES,
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {
+    .type = DrawCommandType_RECT_LINES,
     ._u{.rect = data},
   };
 }
 
-BF_FORCE_INLINE void RenderGroup_CommandText(DrawTextData data) {  ///
+BF_FORCE_INLINE void DrawGroup_CommandText(DrawTextData data) {  ///
   if ((data.scale.x == 0) || (data.scale.y == 0))
     return;
 
   _ApplyCurrentCamera(&data.pos, &data.scale);
 
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {
-    .type = RenderCommandType_TEXT,
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {
+    .type = DrawCommandType_TEXT,
     ._u{.text = data},
   };
 }
 
-BF_FORCE_INLINE void RenderGroup_End() {  ///
-  const auto& group           = ge.render.groups[ge.render.currentGroupIndex];
-  ge.render.currentGroupIndex = -1;
+BF_FORCE_INLINE void DrawGroup_End() {  ///
+  const auto& group         = ge.draw.groups[ge.draw.currentGroupIndex];
+  ge.draw.currentGroupIndex = -1;
 
   if (!group.commandsCount) {
-    ge.render.groups.count--;
+    ge.draw.groups.count--;
     return;
   }
 
   ASSERT(group.sortY != f32_inf);
 }
 
-BF_FORCE_INLINE void RenderGroup_OneShotTexture(DrawTextureData data, RenderZ z) {  ///
-  RenderGroup_Begin(z);
-  RenderGroup_CommandTexture(data, RenderCommandSetSortY_SET_BASELINE);
-  RenderGroup_End();
+BF_FORCE_INLINE void DrawGroup_OneShotTexture(DrawTextureData data, DrawZ z) {  ///
+  DrawGroup_Begin(z);
+  DrawGroup_CommandTexture(data, DrawCommandSetSortY_SET_BASELINE);
+  DrawGroup_End();
 }
 
-BF_FORCE_INLINE void RenderGroup_OneShotCircle(DrawCircleData data, RenderZ z) {  ///
-  RenderGroup_Begin(z);
-  RenderGroup_CommandCircle(data, RenderCommandSetSortY_SET_BASELINE);
-  RenderGroup_End();
+BF_FORCE_INLINE void DrawGroup_OneShotCircle(DrawCircleData data, DrawZ z) {  ///
+  DrawGroup_Begin(z);
+  DrawGroup_CommandCircle(data, DrawCommandSetSortY_SET_BASELINE);
+  DrawGroup_End();
 }
 
-BF_FORCE_INLINE void RenderGroup_OneShotCircleLines(DrawCircleData data) {  ///
-  RenderGroup_Begin(RenderZ_GIZMOS);
-  RenderGroup_SetSortY(0);
-  RenderGroup_CommandCircleLines(data);
-  RenderGroup_End();
+BF_FORCE_INLINE void DrawGroup_OneShotCircleLines(DrawCircleData data) {  ///
+  DrawGroup_Begin(DrawZ_GIZMOS);
+  DrawGroup_SetSortY(0);
+  DrawGroup_CommandCircleLines(data);
+  DrawGroup_End();
 }
 
-BF_FORCE_INLINE void RenderGroup_OneShotRect(DrawRectData data, RenderZ z) {  ///
-  RenderGroup_Begin(z);
-  RenderGroup_CommandRect(data, RenderCommandSetSortY_SET_BASELINE);
-  RenderGroup_End();
+BF_FORCE_INLINE void DrawGroup_OneShotRect(DrawRectData data, DrawZ z) {  ///
+  DrawGroup_Begin(z);
+  DrawGroup_CommandRect(data, DrawCommandSetSortY_SET_BASELINE);
+  DrawGroup_End();
 }
 
-BF_FORCE_INLINE void RenderGroup_OneShotRectLines(DrawRectData data) {  ///
-  RenderGroup_Begin(RenderZ_GIZMOS);
-  RenderGroup_SetSortY(0);
-  RenderGroup_CommandRectLines(data);
-  RenderGroup_End();
+BF_FORCE_INLINE void DrawGroup_OneShotRectLines(DrawRectData data) {  ///
+  DrawGroup_Begin(DrawZ_GIZMOS);
+  DrawGroup_SetSortY(0);
+  DrawGroup_CommandRectLines(data);
+  DrawGroup_End();
 }
 
 // NOTE: Ignores SortY!
-BF_FORCE_INLINE void RenderGroup_OneShotText(DrawTextData data, RenderZ z) {  ///
+BF_FORCE_INLINE void DrawGroup_OneShotText(DrawTextData data, DrawZ z) {  ///
   ASSERT(data.bytesCount > 0);
-  RenderGroup_Begin(z);
-  RenderGroup_SetSortY(0);
-  RenderGroup_CommandText(data);
-  RenderGroup_End();
+  DrawGroup_Begin(z);
+  DrawGroup_SetSortY(0);
+  DrawGroup_CommandText(data);
+  DrawGroup_End();
 }
 
-BF_FORCE_INLINE int _RenderGroupCmp(
-  const RenderGroup* BF_RESTRICT v1,
-  const RenderGroup* BF_RESTRICT v2
+BF_FORCE_INLINE int _DrawGroupCmp(
+  const DrawGroup* BF_RESTRICT v1,
+  const DrawGroup* BF_RESTRICT v2
 ) {  ///
-  ASSERT(v1->z > RenderZ_INVALID);
-  ASSERT(v2->z > RenderZ_INVALID);
-  ASSERT(v1->z < RenderZ_COUNT);
-  ASSERT(v2->z < RenderZ_COUNT);
+  ASSERT(v1->z > DrawZ_INVALID);
+  ASSERT(v2->z > DrawZ_INVALID);
+  ASSERT(v1->z < DrawZ_COUNT);
+  ASSERT(v2->z < DrawZ_COUNT);
 
   const auto y1 = v1->sortY;
   const auto y2 = v2->sortY;
@@ -828,14 +827,14 @@ BF_FORCE_INLINE int _RenderGroupCmp(
     cmp = 1;
 
   if (cmp == 0) {
-    const auto& cmd1 = ge.render.commands[v1->commandsStartIndex];
-    const auto& cmd2 = ge.render.commands[v2->commandsStartIndex];
-    if ((cmd1.type == RenderCommandType_TEXTURE)  //
-        && (cmd2.type == RenderCommandType_TEXTURE))
+    const auto& cmd1 = ge.draw.commands[v1->commandsStartIndex];
+    const auto& cmd2 = ge.draw.commands[v2->commandsStartIndex];
+    if ((cmd1.type == DrawCommandType_TEXTURE)  //
+        && (cmd2.type == DrawCommandType_TEXTURE))
       cmp = (cmd1.DataTexture().pos.x > cmd2.DataTexture().pos.x ? 1 : -1);
-    else if (cmd1.type == RenderCommandType_TEXTURE)
+    else if (cmd1.type == DrawCommandType_TEXTURE)
       cmp = 1;
-    else if (cmd2.type == RenderCommandType_TEXTURE)
+    else if (cmd2.type == DrawCommandType_TEXTURE)
       cmp = -1;
   }
 
@@ -904,22 +903,22 @@ BF_FORCE_INLINE void IterateOverCodepoints(
   ASSERT_FALSE(state);  // The string is not well-formed.
 }
 
-#define SORT_NAME render_group
-#define SORT_TYPE RenderGroup
-#define SORT_CMP(x, y) (_RenderGroupCmp(&x, &y))
+#define SORT_NAME draw_group
+#define SORT_TYPE DrawGroup
+#define SORT_CMP(x, y) (_DrawGroupCmp(&x, &y))
 #include "sort.h"
 
 //
-void FlushRenderCommands() {
+void FlushDrawCommands() {
   ZoneScoped;
 
-  ASSERT_FALSE(ge.render.flushedThisFrame);
-  ge.render.flushedThisFrame = true;
+  ASSERT_FALSE(ge.draw.flushedThisFrame);
+  ge.draw.flushedThisFrame = true;
 
   // Setup. {  ///
-  ASSERT(ge.render.currentGroupIndex == -1);
+  ASSERT(ge.draw.currentGroupIndex == -1);
 
-  render_group_tim_sort(ge.render.groups.base, ge.render.groups.count);
+  draw_group_tim_sort(ge.draw.groups.base, ge.draw.groups.count);
 
   Shader shaders_[]{
     {
@@ -994,33 +993,33 @@ void FlushRenderCommands() {
       }
     };
 
-    for (auto& group : ge.render.groups) {
-      ASSERT(group.z < RenderZ_COUNT);
+    for (auto& group : ge.draw.groups) {
+      ASSERT(group.z < DrawZ_COUNT);
       ASSERT(group.commandsStartIndex >= 0);
       ASSERT(group.commandsCount > 0);
 
       FOR_RANGE (int, commandIndex, group.commandsCount) {
         // Setup. {  ///
-        const auto& command = ge.render.commands[group.commandsStartIndex + commandIndex];
+        const auto& command = ge.draw.commands[group.commandsStartIndex + commandIndex];
 
         const Font*   newFont   = nullptr;
         const Shader* newShader = nullptr;
 
-        if ((command.type == RenderCommandType_TEXTURE)
-            || (command.type == RenderCommandType_TEXTURE_NINE_SLICE))
+        if ((command.type == DrawCommandType_TEXTURE)
+            || (command.type == DrawCommandType_TEXTURE_NINE_SLICE))
           newShader = &shaders[0];
-        else if (command.type == RenderCommandType_RECT)
+        else if (command.type == DrawCommandType_RECT)
           newShader = &shaders[1];
-        else if (command.type == RenderCommandType_STRIPS) {
+        else if (command.type == DrawCommandType_STRIPS) {
           if (ge.meta.screenToLogicalRatio == 1)
             continue;
           newShader = &shaders[1];
         }
-        else if (command.type == RenderCommandType_CIRCLE_LINES)
+        else if (command.type == DrawCommandType_CIRCLE_LINES)
           newShader = &shaders[2];
-        else if (command.type == RenderCommandType_RECT_LINES)
+        else if (command.type == DrawCommandType_RECT_LINES)
           newShader = &shaders[2];
-        else if (command.type == RenderCommandType_TEXT) {
+        else if (command.type == DrawCommandType_TEXT) {
           newShader = &shaders[3];
           newFont   = command.DataText().font;
         }
@@ -1048,7 +1047,7 @@ void FlushRenderCommands() {
         // }
 
         switch (command.type) {
-        case RenderCommandType_TEXTURE: {  ///
+        case DrawCommandType_TEXTURE: {  ///
           if (!mode) {
             drawCallIndicesCount += 6;
             drawCallVerticesCount += 4;
@@ -1208,7 +1207,7 @@ void FlushRenderCommands() {
           ASSERT_FALSE(drawCallVerticesCount % 4);
         } break;
 
-        case RenderCommandType_TEXTURE_NINE_SLICE: {  ///
+        case DrawCommandType_TEXTURE_NINE_SLICE: {  ///
           if (!mode) {
             drawCallIndicesCount += 6 * 9;
             drawCallVerticesCount += 16;
@@ -1352,11 +1351,11 @@ void FlushRenderCommands() {
           }
         } break;
 
-        case RenderCommandType_CIRCLE: {  ///
+        case DrawCommandType_CIRCLE: {  ///
           NOT_IMPLEMENTED;
         } break;
 
-        case RenderCommandType_RECT: {  ///
+        case DrawCommandType_RECT: {  ///
           if (!mode) {
             drawCallIndicesCount += 6;
             drawCallVerticesCount += 4;
@@ -1408,7 +1407,7 @@ void FlushRenderCommands() {
           }
         } break;
 
-        case RenderCommandType_CIRCLE_LINES: {  ///
+        case DrawCommandType_CIRCLE_LINES: {  ///
           if (!mode) {
             drawCallIndicesCount += 16;
             drawCallVerticesCount += 8;
@@ -1471,7 +1470,7 @@ void FlushRenderCommands() {
           }
         } break;
 
-        case RenderCommandType_RECT_LINES: {  ///
+        case DrawCommandType_RECT_LINES: {  ///
           if (!mode) {
             drawCallIndicesCount += 8;
             drawCallVerticesCount += 4;
@@ -1522,13 +1521,13 @@ void FlushRenderCommands() {
           }
         } break;
 
-        case RenderCommandType_TEXT: {  ///
+        case DrawCommandType_TEXT: {  ///
           const auto& data = command.DataText();
 
           ASSERT(data.bytesCount > 0);
           ASSERT(font);
           if (!font->loaded) {
-            LOGE("RenderCommandType_TEXT: font is not loaded!");
+            LOGE("DrawCommandType_TEXT: font is not loaded!");
             INVALID_PATH;
             break;
           }
@@ -1710,7 +1709,7 @@ void FlushRenderCommands() {
           }
         } break;
 
-        case RenderCommandType_STRIPS: {  ///
+        case DrawCommandType_STRIPS: {  ///
           const auto r = ge.meta.screenToLogicalRatio;
 
           if (!mode) {
@@ -1802,8 +1801,8 @@ void FlushRenderCommands() {
       endShader(mode);
   }
 
-  ge.render.commands.Reset();
-  ge.render.groups.Reset();
+  ge.draw.commands.Reset();
+  ge.draw.groups.Reset();
 }
 
 void _OnTouchDown(Touch touch) {  ///
@@ -2614,10 +2613,10 @@ f32 FrameTime() {  ///
 }
 
 void EngineOnFrameStart() {
-  ge.render.flushedThisFrame = false;
-  ge.meta.ticks              = (i64)SDL_GetTicks();
-  ge.meta.prevFrameTime      = ge.meta.frameTime;
-  ge.meta.frameTime          = GetTime();
+  ge.draw.flushedThisFrame = false;
+  ge.meta.ticks            = (i64)SDL_GetTicks();
+  ge.meta.prevFrameTime    = ge.meta.frameTime;
+  ge.meta.frameTime        = GetTime();
 
   constexpr auto ratioLogical  = (f32)LOGICAL_RESOLUTION.x / (f32)LOGICAL_RESOLUTION.y;
   auto           ratioActual   = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y;
@@ -2749,23 +2748,23 @@ Vector2 ScreenPosToLogical(Vector2 pos) {  ///
 }
 
 void EngineApplyVignette() {  ///
-  RenderGroup_OneShotTexture(
+  DrawGroup_OneShotTexture(
     {
       .texId = glib->vignette_texture_id(),
       .pos   = LOGICAL_RESOLUTION / 2,
       .scale{4.01f, 4.01f},
       .color = (BF_DEBUG_VIGNETTE_AND_STRIPS ? RED : ge.settings.backgroundColor),
     },
-    RenderZ_VIGNETTE
+    DrawZ_VIGNETTE
   );
 }
 
 void EngineApplyStrips() {  ///
-  RenderGroup_Begin(RenderZ_VIGNETTE);
-  RenderGroup_SetSortY(0);
-  ge.render.groups[ge.render.currentGroupIndex].commandsCount++;
-  *ge.render.commands.Add() = {.type = RenderCommandType_STRIPS};
-  RenderGroup_End();
+  DrawGroup_Begin(DrawZ_VIGNETTE);
+  DrawGroup_SetSortY(0);
+  ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
+  *ge.draw.commands.Add() = {.type = DrawCommandType_STRIPS};
+  DrawGroup_End();
 }
 
 const char* TextFormat(const char* text, ...) {  ///
