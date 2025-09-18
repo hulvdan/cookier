@@ -25,9 +25,6 @@
 * mobs damage progression
   consider spawning them with padding = radius of collider
   + make the same thing with mobs that spawn others on death
-* stat effect: RANGE
-  10  range +0.01s striking weapon shooting duration
-  100 range +0.05s striking weapon shooting duration
 * secondary stats:
     Consumable Heal
         Increases or decreases the healing done by consumables.
@@ -84,18 +81,6 @@
     So if an enemy would deal 1.6 damage, that is rounded up to 2 damage, then armor is applied to the 2 damage.
     And then that number is rounded. So you need 6+ armor to reduce 2 damage down to 1,
     because you need to reduce it to under 1.5 damage for it to round down.
-* stat effect: CURSE
-    Enemies:
-        Cursed enemies drop 33% additional materials on death.
-        Cursed enemies have +25% Damage, +15% Speed, and +150% HP +2% * Curse stat.
-        Enemy cursed chance = 50 * Curse / (50 + Curse)
-    Items:
-        Shop item curse chance = 15 * Curse / (50 + Curse)
-        Your items and weapons may become cursed and get some enhancement. The enhancements (green texts) of an item will be multiplied by a randomed Curse Ratio, which is ranged from 1.1 ~ 2.1, and enhanced by wave. When you reach wave 20+, the Curse Ratio will reach the highest range from 1.5 ~ 2.1. More precisely:
-        Curse Ratio = 1.4 + random_range(-0.3, 0.3) + 0.02 * min(current_wave,20)
-        The downsides (red texts) of the item will be divided by the Curse Ratio. The neutral effects (white texts) such as +5% Enemies in Gentle Alien will not be affected by Curse.
-        Every single effects (enhancements/downsides) of an item has independant random Curse Ratio.
-        Some cursed enhancements will round to integer. For example, you may get +3 Dangerous Bunny, +2 Tardigrade or +5%  Retromation's Hoodie if the Curse Ratio > 2.0.
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
@@ -118,7 +103,6 @@
   - fast editing with audacity (fade in, fade out, compression, export macroses)
 * show melee weapon collider gizmos
 * weapons render z
-* can mobs drop consumables?
 * gather all weapon classes (e.g. primitive)
 * primitive weapons bonus (3,6,9,12,15 HP)
 * ethereal weapons bonus (3,6,9,12,15 ARMOR or 2,4,X or 1,2,X)
@@ -131,13 +115,10 @@
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
-* combining weapons
 * better mob spawn rate (ref brotato)
 * item effects
 * weapons categorization. жидкое / твёрдое?
 * HTML game loading screen?
 * record+replay system
-* ranged mobs
-* internet shouldn't be required for building:
-  check web debug yandex build with mocked ysdk
+* internet shouldn't be required for building: check web debug yandex build with mocked ysdk
 * trim pngs of transparent pixels
