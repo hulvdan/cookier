@@ -236,6 +236,7 @@ creatures:
     health: 5
     hostility_type: NEUTRAL
     can_be_knocked_back: false
+    consumable_drop_chance: 1
     idle_texture_ids:
       - game_creature_tree
 items:

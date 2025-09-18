@@ -1,13 +1,4 @@
 
-* stat effect: LUCK
-  100 Luck doubles the chances of Fruit to drop from enemies, while -100 Luck means none drop at all
-  (except guaranteed Crates from Loot Aliens, Elites, and Bosses).
-  100 Luck also doubles the chances of turning Fruit into a Loot Crate
-  — but because it also doubles the chance of Fruit, it effectively quadruples
-  your chances of getting Crates from enemies
-  (but only doubles it from Trees, as they have 100% base Fruit chance).
-  Formula for loot crate drop chance:
-  `Enemy_Box_Drop_Chance * (100% + Luck) / (1 + Box_Spawned_This_Wave)`
 * spread mobs apart (use force?)
 * mob that rotates when moving?
 * more mobs: default mob - стандартная с шоколадными крошками
