@@ -35,6 +35,8 @@ localization:
   UI_LABEL_WAVE_WON: Волна Пройдена!
   UI_LABEL_WAVE_LOST: Забег Провален!
   UI_BUTTON_RESTART: Начать Заново
+  UI_LABEL_STATS_PRIMARY: Основные
+  UI_LABEL_STATS_SECONDARY: Побочные
   ITEM_SUGAR: Сахар
   ITEM_MILK: Молоко
   WEAPON_GUN: Пистолет
@@ -57,6 +59,10 @@ localization:
   STAT_SPEED: Скорость
   STAT_LUCK: Удача
   STAT_HARVESTING: Сбор
+  STAT_CONSUMABLE_HEAL: Лечение Яблоками
+  STAT_PERCENT_MATERIALS_HEALING: Лечение Монетами
+  STAT_PERCENT_XP_GAIN: Получение Опыта
+  STAT_PERCENT_PICKUP_RANGE: Радиус Подбора
   UPGRADE_NAME_HP: Сердце
   UPGRADE_NAME_REGEN: Лёгкие
   UPGRADE_NAME_LIFE_STEAL: Челюсть
@@ -490,6 +496,21 @@ stats:
       - 12
     upgrade_texture_id: ui_stat_upgrade_harvesting
     icon_texture_id: ui_stat_icon_armor
+  - type: CONSUMABLE_HEAL
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  - type: PERCENT_MATERIALS_HEALING
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  - type: PERCENT_XP_GAIN
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  - type: PERCENT_PICKUP_RANGE
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
 waves:
   # 1
   - creatures_to_spawn:

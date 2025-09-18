@@ -16,51 +16,30 @@
 * mobs damage progression
   consider spawning them with padding = radius of collider
   + make the same thing with mobs that spawn others on death
-* secondary stats:
-    Consumable Heal
-        Increases or decreases the healing done by consumables.
-    % Materials Healing
-        Chance of being healed by 1 when picking up Materials.
-    % XP Gain
-        Increases or decreases all forms of Experience you earn.
-    % Pickup Range
-        Increases or decreases the range at which you pick up materials and consumables.
-    % Items Price
-        Increases or decreases Shop Prices.
-    % Explosion Damage
-        Increases or decreases the damage of Explosions
-    % Explosion Size
-        Increases or decreases the size of Explosions
-    Bounces
-        Gives projectiles additional Bounces
-    Piercing
-        Gives projectiles additional Piercing
-    % Piercing Damage
-        Increases or decreases the piercing damage falloff for projectile weapons.
-    % Damage against Bosses
-        Multiplies the damage you do against Bosses and Elites.
-    % Structure Attack Speed
-        Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
-    Structure Range
-        Increases or decreases the range of Structures.
-    % Burning Speed
-        Increases or decreases the rate of which Burn ticks for damage.
-    Burning Spread
-        Increases the amount of times Burn spreads.
-    Knockback
-        Increases or decreases the distance enemies are knockbacked back when hit.
-    % Double Material Chance
-        Increases the chance of gaining double materials when picking up Materials
-    Free Rerolls
-        Provides an amount of free reroll at the beginning of each Shop
-    Trees
-        Increases the amount of Trees that spawn. See the Wiki page for details.
-    % Enemies
-        Increases or decreases the amount of Enemies that spawn during waves.
-    % Enemy Speed
-        Increases or decreases the speed of Enemies that spawn during waves.
-    % Reroll Price
-        Increases or decreases the price of rerolling in the [[Shop}]] and when choosing Upgrades
+
+* stats: Consumable Heal: Increases or decreases the healing done by consumables.
+* stats: % Materials Healing: Chance of being healed by 1 when picking up Materials.
+* stats: % XP Gain: Increases or decreases all forms of Experience you earn.
+* stats: % Pickup Range: Increases or decreases pick up materials / consumables range.
+* stats: % Items Price: Increases or decreases Shop Prices.
+* stats: % Explosion Damage: Increases or decreases the damage of Explosions
+* stats: % Explosion Size: Increases or decreases the size of Explosions
+* stats: Bounces: Gives projectiles additional Bounces
+* stats: Piercing: Gives projectiles additional Piercing
+* stats: % Piercing Damage: Increases or decreases the piercing damage falloff for projectile weapons.
+* stats: % Damage against Bosses: Multiplies the damage you do against Bosses and Elites.
+* stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
+* stats: Structure Range: Increases or decreases the range of Structures.
+* stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
+* stats: Burning Spread: Increases the amount of times Burn spreads.
+* stats: Knockback
+* stats: % Double Material Chance: Increases the chance of gaining double materials when picking up Materials
+* stats: Free Rerolls: Provides an amount of free reroll at the beginning of each Shop
+* stats: Trees: Increases the amount of Trees that spawn. See the Wiki page for details.
+* stats: % Enemies
+* stats: % Enemy Speed
+* stats: % Reroll Price: Increases or decreases the price of rerolling in the Shop and when choosing Upgrades
+
 * stat effect: ARMOR
   % of damage received after being reduced by positive armor = 1 / ( 1 + ( ARMOR / 15 ) )
   % of damage received after being increased by negative armor = (15 - 2 * ARMOR) / (15 - ARMOR)
