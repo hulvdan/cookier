@@ -2987,6 +2987,9 @@ void GameFixedUpdate() {
       g.run.scheduledPickedUpItems = true;
     else
       g.run.scheduledUpgrades = true;
+
+    g.run.upgrades.rerolledTimes = 0;
+    g.run.upgrades.rerollPrice   = GetRerollPrice(g.run.waveIndex, 0);
   }
 
   // Advancing to ScreenType_PICKED_UP_ITEM.
@@ -3005,9 +3008,6 @@ void GameFixedUpdate() {
     g.run.screen = ScreenType_UPGRADES;
 
     RefillUpgradesToPick();
-
-    g.run.upgrades.rerolledTimes = 0;
-    g.run.upgrades.rerollPrice   = GetRerollPrice(g.run.waveIndex, 0);
 
     if (g.run.xpLevel == g.run.previousLevel)
       g.run.scheduledShop = true;
