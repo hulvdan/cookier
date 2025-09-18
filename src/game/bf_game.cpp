@@ -1336,6 +1336,10 @@ bool TryApplyDamage(
   if (FloatEquals(damage, 0))
     return false;
 
+  // Can't take damage when finishing wave.
+  if (g.run.scheduledWaveCompleted.IsSet())
+    return false;
+
   auto& creature = g.run.creatures[creatureIndex];
   if (creature.health <= 0)
     return false;
