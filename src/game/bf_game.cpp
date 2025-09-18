@@ -2579,7 +2579,7 @@ void DoUI(bool draw) {
   else
     INVALID_PATH;
 
-  auto renderCommands = Clay_EndLayout();
+  auto drawCommands = Clay_EndLayout();
 
   // Drawing UI.
   if (draw) {
@@ -2590,13 +2590,13 @@ void DoUI(bool draw) {
       // 0 - drawing ui.
       // 1 - drawing gizmos.
 
-      RenderGroup_Begin(mode ? RenderZ_GIZMOS : RenderZ_UI);
-      RenderGroup_SetSortY(0);
+      DrawGroup_Begin(mode ? DrawZ_GIZMOS : DrawZ_UI);
+      DrawGroup_SetSortY(0);
 
-      FOR_RANGE (int, i, renderCommands.length) {
+      FOR_RANGE (int, i, drawCommands.length) {
         // Setup.
         // {  ///
-        auto& cmd = renderCommands.internalArray[i];
+        auto& cmd = drawCommands.internalArray[i];
 
         auto    beautifierAlpha = 1.0f;
         Vector2 beautifierTranslate{0, 0};
@@ -2620,7 +2620,7 @@ void DoUI(bool draw) {
           switch (cmd.commandType) {
           case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {  ///
             const auto& d = cmd.renderData.rectangle;
-            RenderGroup_CommandRect({
+            DrawGroup_CommandRect({
               .pos{bb.x, bb.y},
               .size{bb.width, bb.height},
               .anchor{},
@@ -2636,7 +2636,7 @@ void DoUI(bool draw) {
           case CLAY_RENDER_COMMAND_TYPE_IMAGE: {  ///
             const auto& d    = cmd.renderData.image;
             const auto& data = *(ClayImageData*)d.imageData;
-            RenderGroup_CommandTexture({
+            DrawGroup_CommandTexture({
               .texId = data.texId,
               .pos{bb.x + bb.width / 2, bb.y + bb.height / 2},
               .sourceMargins = data.sourceMargins,
@@ -2662,7 +2662,7 @@ void DoUI(bool draw) {
               (u8)d.textColor.b,
               (u8)((f32)d.textColor.a * beautifierAlpha),
             };
-            RenderGroup_CommandText({
+            DrawGroup_CommandText({
               .pos{bb.x, bb.y + bb.height},
               .anchor{},
               .font       = &g.meta.uiFont,
@@ -2693,7 +2693,7 @@ void DoUI(bool draw) {
             case ClayCustomElementType_NINE_SLICE: {
               const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
               const auto fb              = data.nineSlice;
-              RenderGroup_CommandTextureNineSlice({
+              DrawGroup_CommandTextureNineSlice({
                 .texId = data.nineSlice->texture_id(),
                 .pos{bb.x, bb.y},
                 .anchor{},
@@ -2727,7 +2727,7 @@ void DoUI(bool draw) {
                 pos.y -= d / 2;
               }
 
-              RenderGroup_CommandRect({
+              DrawGroup_CommandRect({
                 .pos  = pos,
                 .size = size,
                 .anchor{},
@@ -2744,7 +2744,7 @@ void DoUI(bool draw) {
         else {
           // UI elements' gizmos.
           if (ge.meta.debugEnabled && bb.width && bb.height) {  ///
-            RenderGroup_CommandRectLines({
+            DrawGroup_CommandRectLines({
               .pos = Vector2(bb.x, bb.y) + Vector2(bb.width, bb.height) / 2.0f,
               .size{bb.width, bb.height},
               .color = GREEN,
@@ -2753,7 +2753,7 @@ void DoUI(bool draw) {
         }
       }
 
-      RenderGroup_End();
+      DrawGroup_End();
     }
   }
 }
@@ -3785,13 +3785,13 @@ void GameDraw() {
 
   // Drawing floor.
   {  ///
-    RenderGroup_OneShotRect(
+    DrawGroup_OneShotRect(
       {
         .pos   = (Vector2)WORLD_SIZE / 2.0f,
         .size  = (Vector2)WORLD_SIZE,
         .color = {0x3a, 0x3a, 0x41, 0xff},
       },
-      RenderZ_FLOOR
+      DrawZ_FLOOR
     );
   }
 
@@ -3799,20 +3799,20 @@ void GameDraw() {
   {  ///
     const auto texId = glib->decal_pre_spawn_texture_id();
 
-    RenderGroup_Begin(RenderZ_FLOOR_DECALS);
-    RenderGroup_SetSortY(0);
+    DrawGroup_Begin(DrawZ_FLOOR_DECALS);
+    DrawGroup_SetSortY(0);
 
     for (auto& spawn : g.run.creaturePreSpawns) {
       const auto fb_creature  = fb_creatures->Get(spawn.type);
       const auto fb_hostility = fb_hostilities->Get(fb_creature->hostility_type());
-      RenderGroup_CommandTexture({
+      DrawGroup_CommandTexture({
         .texId = texId,
         .pos   = spawn.pos,
         .color = ColorFromRGB(fb_hostility->color()),
       });
     }
 
-    RenderGroup_End();
+    DrawGroup_End();
   }
 
   // Drawing creatures.
@@ -3881,14 +3881,14 @@ void GameDraw() {
         color = ColorLerp(color, RED, t);
       }
 
-      RenderGroup_OneShotTexture(
+      DrawGroup_OneShotTexture(
         {
           .texId = texId,
           .pos   = creature.pos,
           .scale = scale,
           .color = Fade(color, fade),
         },
-        RenderZ_DEFAULT
+        DrawZ_DEFAULT
       );
 
       if (creature.type == CreatureType_PLAYER) {
@@ -3910,7 +3910,7 @@ void GameDraw() {
             rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI : 0.0f);
           }
 
-          RenderGroup_OneShotTexture(
+          DrawGroup_OneShotTexture(
             {
               .texId    = fb->texture_ids()->Get(0),
               .rotation = rotation,
@@ -3918,7 +3918,7 @@ void GameDraw() {
               .scale    = scale,
               .color    = Fade(ColorFromRGB(fb->color()), fade),
             },
-            RenderZ_WEAPONS
+            DrawZ_WEAPONS
           );
         }
       }
@@ -3931,19 +3931,19 @@ void GameDraw() {
       continue;
 
     const auto fb = fb_projectiles->Get(projectile.type);
-    RenderGroup_OneShotTexture(
+    DrawGroup_OneShotTexture(
       {
         .texId    = fb->texture_ids()->Get(0),
         .rotation = Vector2Angle(projectile.dir),
         .pos      = projectile.pos,
         .color    = ColorFromRGB(fb->color()),
       },
-      RenderZ_DEFAULT
+      DrawZ_DEFAULT
     );
 
     // Gizmos.
     if (ge.meta.debugEnabled) {
-      RenderGroup_OneShotCircleLines({
+      DrawGroup_OneShotCircleLines({
         .pos    = projectile.pos,
         .radius = fb->collider_radius(),
         .color  = YELLOW,
@@ -3953,8 +3953,8 @@ void GameDraw() {
 
   // Drawing numbers.
   {  ///
-    RenderGroup_Begin(RenderZ_DAMAGE_NUMBERS);
-    RenderGroup_SetSortY(0);
+    DrawGroup_Begin(DrawZ_DAMAGE_NUMBERS);
+    DrawGroup_SetSortY(0);
 
     for (const auto& number : g.run.numbers) {
       ASSERT(number.type);
@@ -3990,7 +3990,7 @@ void GameDraw() {
         0, 1, e.value, DAMAGE_NUMBERS_FRAMES.value, DAMAGE_NUMBERS_FADE_FRAMES.value
       ));
 
-      RenderGroup_CommandText({
+      DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
         .scale      = Vector2(1, 1) * (p * 2),
         .font       = &g.meta.uiFont,
@@ -4000,7 +4000,7 @@ void GameDraw() {
       });
     }
 
-    RenderGroup_End();
+    DrawGroup_End();
   }
 
   // Drawing pickupables.
@@ -4017,13 +4017,13 @@ void GameDraw() {
       fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
     }
 
-    RenderGroup_OneShotTexture(
+    DrawGroup_OneShotTexture(
       {
         .texId = fb->texture_id(),
         .pos   = pickupable.pos,
         .color = Fade(WHITE, fade),
       },
-      RenderZ_PICKUPABLES
+      DrawZ_PICKUPABLES
     );
   }
 
@@ -4041,7 +4041,7 @@ void GameDraw() {
 
       switch (shape.type) {
       case BodyShapeType_CIRCLE: {
-        RenderGroup_OneShotCircleLines({
+        DrawGroup_OneShotCircleLines({
           .pos    = pos,
           .radius = shape.DataCircle().radius,
           .color  = color,
@@ -4049,7 +4049,7 @@ void GameDraw() {
       } break;
 
       case BodyShapeType_RECT: {
-        RenderGroup_OneShotRectLines({
+        DrawGroup_OneShotRectLines({
           .pos    = pos,
           .size   = shape.DataRect().size,
           .anchor = Vector2Half(),
@@ -4102,7 +4102,7 @@ void GameDraw() {
     );
 
     if (bytesToShow) {
-      RenderGroup_OneShotText(
+      DrawGroup_OneShotText(
         {
           .pos{
             (f32)LOGICAL_RESOLUTION.x / 2.0f,
@@ -4113,7 +4113,7 @@ void GameDraw() {
           .bytesCount = bytesToShow,
           .color      = WHITE,
         },
-        RenderZ_UI
+        DrawZ_UI
       );
     }
   }
@@ -4122,7 +4122,7 @@ void GameDraw() {
 
   EngineApplyStrips();
   EngineApplyVignette();
-  FlushRenderCommands();
+  FlushDrawCommands();
 
   // Drawing debug text.
   if (ge.meta.debugEnabled) {  ///

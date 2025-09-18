@@ -118,7 +118,6 @@
   - fast editing with audacity (fade in, fade out, compression, export macroses)
 * show melee weapon collider gizmos
 * weapons render z
-* ref draw/drawing -> render/rendering (for consistency)
 * can mobs drop consumables?
 * gather all weapon classes (e.g. primitive)
 * primitive weapons bonus (3,6,9,12,15 HP)
