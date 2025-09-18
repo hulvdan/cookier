@@ -648,7 +648,6 @@ struct GameData {
 
     b2WorldId    world                 = {};
     int          nextCreatureId        = 0;
-    LogicalFrame playerDiedAt          = {};
     int          toSpawn               = 3;
     LogicalFrame playerLastLifestealAt = {};
     LogicalFrame playerLastRegenAt     = {};
@@ -2887,7 +2886,7 @@ bool CanSpawnMoreCreatures() {  ///
 }
 
 f32 GetApproximatedMaxSpeed(f32 impulse, b2BodyId id) {  ///
-  return impulse / b2Body_GetMass(PLAYER_CREATURE.body.id);
+  return impulse / b2Body_GetMass(id);
 }
 
 void GameFixedUpdate() {
@@ -2960,7 +2959,7 @@ void GameFixedUpdate() {
           harvesting = Ceil((f32)harvesting * 1.05f);
       }
 
-      if (g.run.waveIndex >= TOTAL_WAVES - 1) {
+      if ((g.run.waveIndex >= TOTAL_WAVES - 1) || !g.run.waveWon) {
         g.run.scheduledEnd = true;
         g.run.won          = g.run.waveWon;
       }
@@ -3049,8 +3048,8 @@ void GameFixedUpdate() {
     // Finishing wave opens upgrades screen.
     if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
       if (!g.run.scheduledWaveCompleted.IsSet()) {
-        g.run.waveWon = true;
         g.run.scheduledWaveCompleted.SetNow();
+        g.run.waveWon = true;
       }
     }
 
@@ -3627,16 +3626,15 @@ void GameFixedUpdate() {
 
       if (creature.health <= 0) {
         DestroyBody(&creature.body);
+        creature.diedAt.SetNow();
 
         if (!index) {
-          if (g.run.scheduledWaveCompleted.IsSet()) {
+          if (!g.run.scheduledWaveCompleted.IsSet()) {
             g.run.scheduledWaveCompleted.SetNow();
             g.run.waveWon = false;
           }
         }
         else {
-          creature.diedAt.SetNow();
-
           // Spawning children if mob spawns the on death.
           if (fb->on_death_spawns_creature_type() && CanSpawnMoreCreatures()) {
             int toSpawn = GRAND.RandInt(
@@ -3665,9 +3663,6 @@ void GameFixedUpdate() {
             }
           }
         }
-
-        if (!index)
-          g.run.playerDiedAt.SetNow();
 
         if (creature.health != -f32_inf) {
           Pickupable pickupable{
@@ -3700,9 +3695,10 @@ void GameFixedUpdate() {
   DoUI(false);
 
   // Unactivating old died creatures.
-  for (auto& creature : g.run.creatures) {  ///
-    if (creature.active                     //
-        && creature.diedAt.IsSet()          //
+  for (auto& creature : g.run.creatures) {         ///
+    if (creature.active                            //
+        && (creature.type != CreatureType_PLAYER)  //
+        && creature.diedAt.IsSet()                 //
         && (creature.diedAt.Elapsed() >= DIE_FRAMES))
       creature.active = false;
   }
@@ -3743,10 +3739,11 @@ void GameFixedUpdate() {
   g.meta.frame++;
 }
 
-int GetTextureIdByProgress(const flatbuffers::Vector<int>* vectorOfTextures, f32 p) {  ///
-  int index = p * vectorOfTextures->size();
-  index     = MIN(index, vectorOfTextures->size());
-  return vectorOfTextures->Get(index);
+int GetTextureIdByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
+  ASSERT(p >= 0);
+  int index = p * texs->size();
+  index     = MIN(index, texs->size() - 1);
+  return texs->Get(index);
 }
 
 void GameDraw() {

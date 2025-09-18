@@ -1,5 +1,4 @@
 
-* fix player death wave lost
 * stat effect: LUCK
   100 Luck doubles the chances of Fruit to drop from enemies, while -100 Luck means none drop at all
   (except guaranteed Crates from Loot Aliens, Elites, and Bosses).
