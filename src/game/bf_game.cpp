@@ -3189,8 +3189,10 @@ void GameFixedUpdate() {
         FOR_RANGE (int, i, g.run.toSpawn) {
           do {
             posToSpawn = {
-              0.5f + GRAND.FRand() * (WORLD_X - 1),
-              0.5f + GRAND.FRand() * (WORLD_Y - 1),
+              CREATURES_SPAWN_MARGIN
+                + GRAND.FRand() * (WORLD_X - 2 * CREATURES_SPAWN_MARGIN),
+              CREATURES_SPAWN_MARGIN
+                + GRAND.FRand() * (WORLD_Y - 2 * CREATURES_SPAWN_MARGIN),
             };
           } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
                    < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
@@ -3629,34 +3631,49 @@ void GameFixedUpdate() {
         creature.diedAt.SetNow();
 
         if (!index) {
+          // Player died.
           if (!g.run.scheduledWaveCompleted.IsSet()) {
             g.run.scheduledWaveCompleted.SetNow();
             g.run.waveWon = false;
           }
         }
         else {
-          // Spawning children if mob spawns the on death.
+          // Mob died.
+
+          // Spawning children if mob spawns them on death.
           if (fb->on_death_spawns_creature_type() && CanSpawnMoreCreatures()) {
             int toSpawn = GRAND.RandInt(
               fb->on_death_spawns_count_min(), fb->on_death_spawns_count_max()
             );
             FOR_RANGE (int, i, toSpawn) {
-              const auto       t1 = GRAND.FRand();
-              const auto       t2 = GRAND.FRand();
+              constexpr Rect bounds{
+                .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
+                .size{
+                  WORLD_X - 2 * CREATURES_SPAWN_MARGIN,
+                  WORLD_Y - 2 * CREATURES_SPAWN_MARGIN
+                },
+              };
+
+              Vector2 pos{};
+              do {
+                const auto t1 = GRAND.FRand();
+                pos           = creature.pos
+                      + Vector2Rotate(
+                        Vector2(
+                          Lerp(
+                            fb->on_death_spawns_distance_min(),
+                            fb->on_death_spawns_distance_max(),
+                            t1
+                          ),
+                          0
+                        ),
+                        GRAND.FRand() * 2.0f * PI
+                      );
+              } while (!bounds.ContainsInside(pos));
+
               CreaturePreSpawn spawn{
                 .type = (CreatureType)fb->on_death_spawns_creature_type(),
-                .pos  = creature.pos
-                       + Vector2Rotate(
-                         Vector2(
-                           Lerp(
-                             fb->on_death_spawns_distance_min(),
-                             fb->on_death_spawns_distance_max(),
-                             t1
-                           ),
-                           0
-                         ),
-                         t2 * 2.0f * PI
-                       ),
+                .pos  = pos,
               };
               spawn.createdAt.SetNow();
               *g.run.creaturePreSpawns.Add() = spawn;
