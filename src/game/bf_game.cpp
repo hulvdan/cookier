@@ -641,6 +641,8 @@ struct GameData {
     bool         scheduledEnd           = false;
     bool         scheduledNextWave      = false;
 
+    bool showingSecondaryStats = false;
+
     Camera camera{
       .zoom          = METER_LOGICAL_SIZE,
       .texturesScale = 1.0f / METER_LOGICAL_SIZE,
@@ -1301,11 +1303,11 @@ void GameInit() {  ///
 
   g.meta.uiFont = LoadFont({
     .filepath        = "resources/correction_brush.ttf",
-    .size            = 22,
+    .size            = 16,
     .FIXME_sizeScale = 45.0f / 30.0f,
     .codepoints      = g_codepoints,
     .codepointsCount = ARRAY_COUNT(g_codepoints),
-    .outlineWidth    = 5,
+    .outlineWidth    = 4,
     .outlineAdvance  = 2,
   });
 
@@ -1336,8 +1338,8 @@ bool TryApplyDamage(
   if (FloatEquals(damage, 0))
     return false;
 
-  // Can't take damage when finishing wave.
-  if (g.run.scheduledWaveCompleted.IsSet())
+  // Player can't take damage when finishing wave.
+  if (!creatureIndex && g.run.scheduledWaveCompleted.IsSet())
     return false;
 
   auto& creature = g.run.creatures[creatureIndex];
@@ -1460,6 +1462,10 @@ void RefillUpgradesToPick() {  ///
         continue;
 
       const auto fb = fb_stats->Get(newStat);
+
+      // Can't upgrade secondary stats.
+      if (fb->is_secondary())
+        continue;
 
       // Can't upgrade `curse`.
       if (!fb->upgrade_texture_id())
@@ -1632,7 +1638,28 @@ void DoUI(bool draw) {
         BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_stats_locale());
       }
 
-      LAMBDA (void, statsEntry, (int iconTexId, int locale, int value, StatType stat)) {
+      // Primary / secondary buttons.
+      CLAY({.layout{.childGap = 9}}) {
+        const bool clickedPrimary
+          = componentButton(g.run.showingSecondaryStats, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
+            });
+
+        const bool clickedSecondary
+          = componentButton(!g.run.showingSecondaryStats, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
+            });
+
+        if (clickedPrimary)
+          g.run.showingSecondaryStats = false;
+        if (clickedSecondary)
+          g.run.showingSecondaryStats = true;
+      }
+
+      LAMBDA (
+        void, componentStatsEntry, (int iconTexId, int locale, int value, StatType stat)
+      )
+      {
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_X,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -1650,21 +1677,25 @@ void DoUI(bool draw) {
       };
 
       // Current level.
-      statsEntry(
-        glib->ui_shop_current_level_icon_texture_id(),
-        glib->ui_current_level_locale(),
-        g.run.xpLevel,
-        StatType_INVALID
-      );
+      if (!g.run.showingSecondaryStats) {
+        componentStatsEntry(
+          glib->ui_shop_current_level_icon_texture_id(),
+          glib->ui_current_level_locale(),
+          g.run.xpLevel,
+          StatType_INVALID
+        );
+      }
 
       // Stats.
       CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
       FOR_RANGE (int, i, (int)StatType_COUNT - 1) {
         const auto type = (StatType)(i + 1);
         const auto fb   = glib->stats()->Get(type);
-        statsEntry(
-          fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type], type
-        );
+        if (fb->is_secondary() == g.run.showingSecondaryStats) {
+          componentStatsEntry(
+            fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type], type
+          );
+        }
       }
     }
   };

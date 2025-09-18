@@ -111,6 +111,7 @@ table Stat {
     icon_texture_id: int;
     name_locale: int;
     is_percent: bool;
+    is_secondary: bool;
     upgrade_name_locale: int;
     upgrade_texture_id: int;
     upgrade_values: [int];
@@ -158,6 +159,8 @@ table GameLibrary {
     ui_button_restart_locale: int;
     ui_label_wave_won_locale: int;
     ui_label_wave_lost_locale: int;
+    ui_label_stats_primary_locale: int;
+    ui_label_stats_secondary_locale: int;
     // LOCALE_GEN_END.
 
     // GAME STUFF
