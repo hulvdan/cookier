@@ -18,7 +18,6 @@
 * stats: Free Rerolls: Provides an amount of free reroll at the beginning of each Shop
 * stats: Trees: Increases the amount of Trees that spawn. See the Wiki page for details.
 * stats: % Enemies
-* stats: % Enemy Speed
 * stats: % Reroll Price: Increases or decreases the price of rerolling in the Shop and when choosing Upgrades
 * spread mobs apart (use force?)
 * mob that rotates when moving?
