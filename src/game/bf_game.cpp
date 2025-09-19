@@ -3400,6 +3400,10 @@ void GameFixedUpdate() {
         if (g.meta.godMode)
           speedScale *= 1.5f;
       }
+      else {
+        speedScale *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
+        speedScale = MAX(0, speedScale);
+      };
 
       b2Body_ApplyLinearImpulseToCenter(
         creature.body.id,
