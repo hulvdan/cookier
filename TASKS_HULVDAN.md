@@ -19,13 +19,6 @@
 * stats: % Enemies
 * spread mobs apart (use force?)
 * mob that rotates when moving?
-* more mobs: default mob - стандартная с шоколадными крошками
-* more mobs: ranged mob стреляет шоколадными крошками
-* more mobs: heavy rusher mob
-* more mobs: heavy spawner mob - толстая шрек печенька
-* more mobs: tiny mob
-* more mobs: mob boss - галет (он сухой)
-* more mobs: tree - cow / apple tree
 *
 *
 * correct xp progression
@@ -71,3 +64,14 @@
 * record+replay system
 * internet shouldn't be required for building: check web debug yandex build with mocked ysdk
 * trim pngs of transparent pixels
+
+NOTES:
+================================================================================
+MOBS:
+- default mob - стандартная с шоколадными крошками
+- ranged mob стреляет шоколадными крошками
+- heavy rusher mob
+- heavy spawner mob - толстая шрек печенька
+- tiny mob
+- mob boss - галет (он сухой)
+- tree - cow / apple tree
