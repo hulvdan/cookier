@@ -1,22 +1,7 @@
 
-* spread mobs apart (use force?)
-* mob that rotates when moving?
-* more mobs: default mob - стандартная с шоколадными крошками
-* more mobs: ranged mob стреляет шоколадными крошками
-* more mobs: heavy rusher mob
-* more mobs: heavy spawner mob - толстая шрек печенька
-* more mobs: tiny mob
-* more mobs: mob boss - галет (он сухой)
-* more mobs: tree - cow / apple tree
-*
-*
-*
-* correct xp progression
-* mobs armor characteristic
-* mobs damage progression
-  consider spawning them with padding = radius of collider
-  + make the same thing with mobs that spawn others on death
-
+* stat effect: ENGINEERING
+  Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
+  Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
 * stats: Consumable Heal: Increases or decreases the healing done by consumables.
 * stats: % Materials Healing: Chance of being healed by 1 when picking up Materials.
 * stats: % XP Gain: Increases or decreases all forms of Experience you earn.
@@ -40,20 +25,24 @@
 * stats: % Enemy Speed
 * stats: % Reroll Price: Increases or decreases the price of rerolling in the Shop and when choosing Upgrades
 
-* stat effect: ARMOR
-  % of damage received after being reduced by positive armor = 1 / ( 1 + ( ARMOR / 15 ) )
-  % of damage received after being increased by negative armor = (15 - 2 * ARMOR) / (15 - ARMOR)
-  Tooltip for Damage Reduction % = ROUND( ( 1 - ( DmgReceived% ) ) * 100 )
-  Rounding:
-    The Tooltip for the Damage Reduction from Armor rounds to the nearest whole %.
-    However, the actual damage reduction the game uses does not round, and instead uses the precise number.
-    Also note that enemy damage is rounded before armor is calculated.
-    So if an enemy would deal 1.6 damage, that is rounded up to 2 damage, then armor is applied to the 2 damage.
-    And then that number is rounded. So you need 6+ armor to reduce 2 damage down to 1,
-    because you need to reduce it to under 1.5 damage for it to round down.
-* stat effect: ENGINEERING
-  Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
-  Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
+* spread mobs apart (use force?)
+* mob that rotates when moving?
+* more mobs: default mob - стандартная с шоколадными крошками
+* more mobs: ranged mob стреляет шоколадными крошками
+* more mobs: heavy rusher mob
+* more mobs: heavy spawner mob - толстая шрек печенька
+* more mobs: tiny mob
+* more mobs: mob boss - галет (он сухой)
+* more mobs: tree - cow / apple tree
+*
+*
+*
+* correct xp progression
+* mobs armor characteristic
+* mobs damage progression
+  consider spawning them with padding = radius of collider
+  + make the same thing with mobs that spawn others on death
+
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas
@@ -72,7 +61,7 @@
     (total commander: «Feed to listbox» then drag'n drop)
   - fast editing with audacity (fade in, fade out, compression, export macroses)
 * show melee weapon collider gizmos
-* weapons render z
+* weapons DrawZ
 * gather all weapon classes (e.g. primitive)
 * primitive weapons bonus (3,6,9,12,15 HP)
 * ethereal weapons bonus (3,6,9,12,15 ARMOR or 2,4,X or 1,2,X)
