@@ -2925,6 +2925,17 @@ f32 GetApproximatedMaxSpeed(f32 impulse, b2BodyId id) {  ///
   return impulse / b2Body_GetMass(id);
 }
 
+f32 ApplyPlayerArmorToIncomingDamage(f32 damage) {  ///
+  auto armor = (f32)g.run.playerStats[StatType_ARMOR];
+
+  if (armor > 0)
+    damage *= 1.0f / (1.0f + armor / 15.0f);
+  else if (armor < 0)
+    damage *= (15.0f - 2 * armor) / (15 - armor);
+
+  return damage;
+}
+
 f32 GetLuckFactor() {  ///
   return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
 }
@@ -3299,10 +3310,10 @@ void GameFixedUpdate() {
         if (Vector2DistanceSqr(playerPos, creature.pos)
             <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
         {
+          auto damage = fb_creatures->Get(creature.type)->contact_damage();
           TryApplyDamage(
             0,
-            fb_creatures->Get(creature.type)->contact_damage()
-              - (f32)g.run.playerStats[StatType_ARMOR],
+            ApplyPlayerArmorToIncomingDamage(damage),
             Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
             0,
             i,
@@ -3608,10 +3619,15 @@ void GameFixedUpdate() {
           f32  damage = projectile.damage;
           bool isCrit = false;
           if (!projectile.ownerCreatureIndex) {
+            // Player damages mob.
             damage *= GetPlayerStatDamageMultiplier();
             isCrit = IsCrit();
             if (isCrit)
               damage *= CRIT_DAMAGE_MULTIPLIER;
+          }
+          else {
+            // Mob damages player.
+            damage *= ApplyPlayerArmorToIncomingDamage(damage);
           }
 
           if (TryApplyDamage(
