@@ -15,7 +15,6 @@
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * stats: Knockback
 * stats: % Double Material Chance: Increases the chance of gaining double materials when picking up Materials
-* stats: Free Rerolls: Provides an amount of free reroll at the beginning of each Shop
 * stats: Trees: Increases the amount of Trees that spawn. See the Wiki page for details.
 * stats: % Enemies
 * spread mobs apart (use force?)
