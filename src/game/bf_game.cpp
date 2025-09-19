@@ -2943,6 +2943,13 @@ f32 GetLuckFactor() {  ///
   return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
 }
 
+void HealPlayer(f32 amount = 1) {  ///
+  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+    PLAYER_CREATURE.health
+      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+  }
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -3352,13 +3359,13 @@ void GameFixedUpdate() {
             case PickupableType_COIN: {
               g.run.coins++;
               AddXP(1);
+              auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;
+              if (GRAND.FRand() < healChance)
+                HealPlayer();
             } break;
 
             case PickupableType_CONSUMABLE: {
-              if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
-                PLAYER_CREATURE.health
-                  = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-              }
+              HealPlayer();
             } break;
 
             case PickupableType_CRATE: {

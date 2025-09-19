@@ -60,9 +60,27 @@ localization:
   STAT_LUCK: Удача
   STAT_HARVESTING: Сбор
   STAT_CONSUMABLE_HEAL: Лечение Яблоками
-  STAT_MATERIALS_HEALING: Лечение Монетами
+  STAT_COINS_HEAL: Лечение Монетами
   STAT_XP_GAIN: Получение Опыта
   STAT_PICKUP_RANGE: Радиус Подбора
+  STAT_ITEMS_PRICE: Цена Товаров
+  STAT_EXPLOSION_DAMAGE: Урон Взрывов
+  STAT_EXPLOSION_SIZE: Размер Взрывов
+  STAT_BOUNCES: Отскоки
+  STAT_PIERCING: Простреливание
+  STAT_PIERCING_DAMAGE: Урон Простреливания
+  STAT_DAMAGE_AGAINST_BOSSES: Урон Против Боссов
+  STAT_STRUCTURE_ATTACK_SPEED: Скорость Атаки Структур
+  STAT_STRUCTURE_RANGE: Дальность Структур
+  STAT_BURNING_SPEED: Скорость Горения
+  STAT_BURNING_SPREAD: Распространение Горения
+  STAT_KNOCKBACK: Отбрасывание
+  STAT_DOUBLE_MATERIAL_CHANCE: Шанс Удвоения Монет
+  STAT_FREE_REROLLS: Бесплатные Перебрасывания
+  STAT_TREES: Количество Деревьев
+  STAT_ENEMIES: Количество Врагов
+  STAT_ENEMY_SPEED: Скорость Врагов
+  STAT_REROLL_PRICE: Цена Перебрасывания
   UPGRADE_NAME_HP: Сердце
   UPGRADE_NAME_REGEN: Лёгкие
   UPGRADE_NAME_LIFE_STEAL: Челюсть
@@ -499,15 +517,91 @@ stats:
   - type: CONSUMABLE_HEAL
     icon_texture_id: ui_stat_icon_armor
     is_secondary: true
-  - type: MATERIALS_HEALING
+  - type: COINS_HEAL
     icon_texture_id: ui_stat_icon_armor
-    is_percent: true
     is_secondary: true
   - type: XP_GAIN
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   - type: PICKUP_RANGE
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  - type: ITEMS_PRICE
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  - type: EXPLOSION_DAMAGE
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  - type: EXPLOSION_SIZE
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  # Gives projectiles additional Bounces
+  - type: BOUNCES
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  # Gives projectiles additional Piercing
+  - type: PIERCING
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  # Increases or decreases the piercing damage falloff for projectile weapons.
+  - type: PIERCING_DAMAGE
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  # Multiplies the damage you do against Bosses and Elites.
+  - type: DAMAGE_AGAINST_BOSSES
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  # Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
+  - type: STRUCTURE_ATTACK_SPEED
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  # Increases or decreases the range of Structures.
+  - type: STRUCTURE_RANGE
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  # Increases or decreases the rate of which Burn ticks for damage.
+  - type: BURNING_SPEED
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  # Increases the amount of times Burn spreads.
+  - type: BURNING_SPREAD
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  - type: KNOCKBACK
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  # Increases the chance of gaining double materials when picking up Materials
+  - type: DOUBLE_MATERIAL_CHANCE
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  # Provides an amount of free reroll at the beginning of each Shop
+  - type: FREE_REROLLS
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  # Increases the amount of Trees that spawn. See the Wiki page for details.
+  - type: TREES
+    icon_texture_id: ui_stat_icon_armor
+    is_secondary: true
+  - type: ENEMIES
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  - type: ENEMY_SPEED
+    icon_texture_id: ui_stat_icon_armor
+    is_percent: true
+    is_secondary: true
+  # Increases or decreases the price of rerolling in the Shop and when choosing Upgrades
+  - type: REROLL_PRICE
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
