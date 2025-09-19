@@ -29,7 +29,7 @@ data_values.languages = ["russian", "english"]
 def _check_duplicates(values: list) -> None:
     for i in range(len(values)):
         for k in range(i + 1, len(values)):
-            assert values[i] != values[k]
+            assert values[i] != values[k], f"Found duplicate value: {values[i]}"
 
 
 @gamelib_processor

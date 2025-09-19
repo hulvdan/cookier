@@ -3,7 +3,6 @@
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
 * stats: Consumable Heal: Increases or decreases the healing done by consumables.
-* stats: % Materials Healing: Chance of being healed by 1 when picking up Materials.
 * stats: % Items Price: Increases or decreases Shop Prices.
 * stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * stats: % Explosion Size: Increases or decreases the size of Explosions
