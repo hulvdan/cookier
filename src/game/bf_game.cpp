@@ -3331,8 +3331,12 @@ void GameFixedUpdate() {
             = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
         }
         else {
+          auto pickupRange = (f32)(100 + g.run.playerStats[StatType_PICKUP_RANGE]);
+          pickupRange      = MAX(30, pickupRange);
+          pickupRange /= 100.0f;
+
           if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
-              <= SQR(PICKUPABLE_HURTBOX_RADIUS))
+              <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRange))
           {
             pickupable.pickedUpAt.SetNow();
             MakeNumber({
