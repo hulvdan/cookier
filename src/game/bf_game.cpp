@@ -902,7 +902,7 @@ MakeBodyResult MakeBody(Vector2 pos, MakeBodyData data) {  ///
   if (data.type == BodyType_CREATURE)
     bodyDef.type = b2_dynamicBody;
   bodyDef.position      = ToB2Vec2(pos);
-  bodyDef.linearDamping = 9;
+  bodyDef.linearDamping = BODY_LINEAR_DAMPING;
 
   b2BodyId body = b2CreateBody(g.run.world, &bodyDef);
 
@@ -2951,10 +2951,6 @@ bool CanSpawnMoreCreatures() {  ///
   return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
 }
 
-f32 GetApproximatedMaxSpeed(f32 impulse, b2BodyId id) {  ///
-  return impulse / b2Body_GetMass(id);
-}
-
 f32 ApplyPlayerArmorToIncomingDamage(f32 damage) {  ///
   auto armor = (f32)g.run.playerStats[StatType_ARMOR];
 
@@ -3251,13 +3247,13 @@ void GameFixedUpdate() {
           }
         }
         else {
-          auto dist  = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
-          auto speed = GetApproximatedMaxSpeed(fb->speed_force(), creature.body.id);
-          speed *= MOB_RUSHER_RUSH_SPEED_SCALE;
-          auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_PRE_FRAMES
-                            - MOB_RUSHER_RUSH_POST_FRAMES;
-          auto durSeconds   = (f32)rushingDur.value / FIXED_FPS;
-          auto rushDistance = speed * durSeconds;
+          const auto dist       = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
+          const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
+                                  - MOB_RUSHER_RUSH_PRE_FRAMES
+                                  - MOB_RUSHER_RUSH_POST_FRAMES;
+          const auto durSeconds = (f32)rushingDur.value / FIXED_FPS;
+          const auto rushDistance
+            = fb->speed() * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
 
           if (dist <= rushDistance) {
             data.startedRushingAt.SetNow();
@@ -3414,7 +3410,7 @@ void GameFixedUpdate() {
 
       const auto fb = fb_creatures->Get(creature.type);
 
-      auto speedScale = fb->speed_force() * SPEED_MULTIPLIER;
+      auto speedScale = fb->speed() * SPEED_MULTIPLIER;
       if (creature.type == CreatureType_PLAYER) {
         speedScale *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
 
@@ -3425,6 +3421,8 @@ void GameFixedUpdate() {
         speedScale *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
         speedScale = MAX(0, speedScale);
       };
+
+      speedScale *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING_SPEED_SCALE;
 
       b2Body_ApplyLinearImpulseToCenter(
         creature.body.id,
@@ -4250,6 +4248,8 @@ void GameDraw() {
       DebugText("F8 add level");
       DebugText("F9 add crate");
     }
+
+    DebugText(TextFormat("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x));
 
     LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
       DebugText(
