@@ -1452,8 +1452,13 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
                                     4, 4, 5, 5, 6, 6, 6, 7, 7, 8};
   VIEW_FROM_ARRAY_DANGER(rerollPriceIncreasePerWave);
 
-  return rerollPricesPerWave[waveIndex]
-         + rerolledTimes * rerollPriceIncreasePerWave[waveIndex];
+  auto price = rerollPricesPerWave[waveIndex]
+               + rerolledTimes * rerollPriceIncreasePerWave[waveIndex];
+
+  auto factor = (f32)(g.run.playerStats[StatType_REROLL_PRICE] + 100) / 100.0f;
+  factor      = MAX(0, factor);
+
+  return Round(price * factor);
 }
 
 void RefillUpgradesToPick() {  ///
