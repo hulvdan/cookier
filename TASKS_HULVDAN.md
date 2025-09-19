@@ -5,7 +5,6 @@
 * stats: Consumable Heal: Increases or decreases the healing done by consumables.
 * stats: % Materials Healing: Chance of being healed by 1 when picking up Materials.
 * stats: % XP Gain: Increases or decreases all forms of Experience you earn.
-* stats: % Pickup Range: Increases or decreases pick up materials / consumables range.
 * stats: % Items Price: Increases or decreases Shop Prices.
 * stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * stats: % Explosion Size: Increases or decreases the size of Explosions
@@ -24,7 +23,6 @@
 * stats: % Enemies
 * stats: % Enemy Speed
 * stats: % Reroll Price: Increases or decreases the price of rerolling in the Shop and when choosing Upgrades
-
 * spread mobs apart (use force?)
 * mob that rotates when moving?
 * more mobs: default mob - стандартная с шоколадными крошками
@@ -36,13 +34,11 @@
 * more mobs: tree - cow / apple tree
 *
 *
-*
 * correct xp progression
 * mobs armor characteristic
 * mobs damage progression
   consider spawning them with padding = radius of collider
   + make the same thing with mobs that spawn others on death
-
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas

@@ -60,9 +60,9 @@ localization:
   STAT_LUCK: Удача
   STAT_HARVESTING: Сбор
   STAT_CONSUMABLE_HEAL: Лечение Яблоками
-  STAT_PERCENT_MATERIALS_HEALING: Лечение Монетами
-  STAT_PERCENT_XP_GAIN: Получение Опыта
-  STAT_PERCENT_PICKUP_RANGE: Радиус Подбора
+  STAT_MATERIALS_HEALING: Лечение Монетами
+  STAT_XP_GAIN: Получение Опыта
+  STAT_PICKUP_RANGE: Радиус Подбора
   UPGRADE_NAME_HP: Сердце
   UPGRADE_NAME_REGEN: Лёгкие
   UPGRADE_NAME_LIFE_STEAL: Челюсть
@@ -499,15 +499,15 @@ stats:
   - type: CONSUMABLE_HEAL
     icon_texture_id: ui_stat_icon_armor
     is_secondary: true
-  - type: PERCENT_MATERIALS_HEALING
+  - type: MATERIALS_HEALING
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
-  - type: PERCENT_XP_GAIN
+  - type: XP_GAIN
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
-  - type: PERCENT_PICKUP_RANGE
+  - type: PICKUP_RANGE
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
