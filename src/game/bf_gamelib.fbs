@@ -36,7 +36,7 @@ table Creature {
     health: float;
     contact_damage: float;
     projectile_damage: float;
-    speed_force: float;
+    speed: float;
     hostility_type: int = 1;
     can_be_knocked_back: bool = true;
     consumable_drop_chance: float = 0.007;

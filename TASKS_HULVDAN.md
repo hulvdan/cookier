@@ -1,4 +1,5 @@
 
+* stats: % Double Material Chance: Increases the chance of gaining double materials when picking up Materials
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
@@ -14,7 +15,6 @@
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * stats: Knockback
-* stats: % Double Material Chance: Increases the chance of gaining double materials when picking up Materials
 * stats: Trees: Increases the amount of Trees that spawn. See the Wiki page for details.
 * stats: % Enemies
 * spread mobs apart (use force?)
@@ -64,6 +64,29 @@
 * record+replay system
 * internet shouldn't be required for building: check web debug yandex build with mocked ysdk
 * trim pngs of transparent pixels
+
+QA:
+================================================================================
+* StatType_REROLL_PRICE
+* StatType_ENEMY_SPEED
+* StatType_ITEMS_PRICE
+* StatType_XP_GAIN
+* StatType_PICKUP_RANGE
+* StatType_ARMOR
+* StatType_COINS_HEAL
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
 
 NOTES:
 ================================================================================
