@@ -2890,6 +2890,9 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
 }
 
 void AddXP(f32 xp) {  ///
+  if (xp > 0)
+    xp *= (f32)(MAX(1, g.run.playerStats[StatType_XP_GAIN] + 100)) / 100.0f;
+
   g.run.xp += xp;
   g.run.xp = MAX(0, g.run.xp);
 
