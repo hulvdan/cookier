@@ -609,6 +609,15 @@ struct Upgrade {
   int      tier = {};
 };
 
+struct Rerolls {
+  int freeRerolls   = 0;
+  int rerolledTimes = 0;
+  int price         = 0;
+
+  void Roll();
+  void Reset();
+};
+
 struct GameData {
   struct Meta {
     i64   frame      = 0;
@@ -694,16 +703,12 @@ struct GameData {
 
     struct {
       Array<Upgrade, 4> toPick = {};
-
-      int rerolledTimes = 0;
-      int rerollPrice   = 0;
+      Rerolls           rerolls;
     } upgrades;
 
     struct {
       Array<ShopItem, 4> toPick = {};
-
-      int rerolledTimes = 0;
-      int rerollPrice   = 0;
+      Rerolls            rerolls;
 
       int selectedWeaponIndex = -1;
     } shop;
@@ -1461,6 +1466,23 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
   return Round(price * factor);
 }
 
+void Rerolls::Roll() {  ///
+  g.run.coins -= price;
+  if (freeRerolls > 0)
+    freeRerolls--;
+  if (freeRerolls <= 0)
+    price = GetRerollPrice(g.run.waveIndex, ++rerolledTimes);
+}
+
+void Rerolls::Reset() {  ///
+  freeRerolls   = g.run.playerStats[StatType_FREE_REROLLS];
+  rerolledTimes = 0;
+  if (freeRerolls > 0)
+    price = 0;
+  else
+    price = GetRerollPrice(g.run.waveIndex, 0);
+}
+
 void RefillUpgradesToPick() {  ///
   const auto fb_stats = glib->stats();
 
@@ -2108,18 +2130,16 @@ void DoUI(bool draw) {
         }
 
         // Reroll button.
-        const bool canReroll = (g.run.upgrades.rerollPrice <= g.run.coins);
+        const bool canReroll = (g.run.upgrades.rerolls.price <= g.run.coins);
         const bool rerolled  = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
-            BF_CLAY_TEXT(TextFormat(" - %d ", g.run.upgrades.rerollPrice));
+            BF_CLAY_TEXT(TextFormat(" - %d ", g.run.upgrades.rerolls.price));
             BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
           }
         });
         if (rerolled) {
-          g.run.coins -= g.run.upgrades.rerollPrice;
-          g.run.upgrades.rerollPrice
-            = GetRerollPrice(g.run.waveIndex, ++g.run.upgrades.rerolledTimes);
+          g.run.upgrades.rerolls.Roll();
           RefillUpgradesToPick();
         }
       }
@@ -2177,7 +2197,7 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_HORIZONTAL;
 
           // Reroll button.
-          const bool canReroll = (g.run.coins >= g.run.shop.rerollPrice);
+          const bool canReroll = (g.run.coins >= g.run.shop.rerolls.price);
           const bool rerolled  = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{
               BF_CLAY_PADDING_ALL(8),
@@ -2185,18 +2205,16 @@ void DoUI(bool draw) {
             }}) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
 
-              ASSERT(g.run.shop.rerollPrice >= 0);
+              ASSERT(g.run.shop.rerolls.price >= 0);
 
-              if (g.run.shop.rerollPrice > 0) {
-                BF_CLAY_TEXT(TextFormat(" - %d ", g.run.shop.rerollPrice));
+              if (g.run.shop.rerolls.price > 0) {
+                BF_CLAY_TEXT(TextFormat(" - %d ", g.run.shop.rerolls.price));
                 BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
               }
             }
           });
           if (rerolled) {
-            g.run.coins -= g.run.shop.rerollPrice;
-            g.run.shop.rerollPrice
-              = GetRerollPrice(g.run.waveIndex, ++g.run.shop.rerolledTimes);
+            g.run.shop.rerolls.Roll();
             RefillShopToPick();
           }
         }
@@ -3053,8 +3071,7 @@ void GameFixedUpdate() {
     else
       g.run.scheduledUpgrades = true;
 
-    g.run.upgrades.rerolledTimes = 0;
-    g.run.upgrades.rerollPrice   = GetRerollPrice(g.run.waveIndex, 0);
+    g.run.upgrades.rerolls.Reset();
   }
 
   // Advancing to ScreenType_PICKED_UP_ITEM.
@@ -3083,8 +3100,7 @@ void GameFixedUpdate() {
     g.run.scheduledShop = false;
     g.run.screen        = ScreenType_SHOP;
 
-    g.run.shop.rerolledTimes = 0;
-    g.run.shop.rerollPrice   = GetRerollPrice(g.run.waveIndex, 0);
+    g.run.shop.rerolls.Reset();
     RefillShopToPick();
   }
 
