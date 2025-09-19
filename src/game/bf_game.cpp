@@ -1219,7 +1219,11 @@ ItemType GenerateRandomItem() {  ///
 }
 
 int GenerateItemPrice() {  ///
-  return 15 + (int)(GRAND.Rand() % 20);
+  auto price  = 15 + (int)(GRAND.Rand() % 20);
+  auto factor = (f32)(g.run.playerStats[StatType_ITEMS_PRICE] + 100) / 100.0f;
+  factor      = MAX(0, factor);
+  price       = Round(price * factor);
+  return price;
 }
 
 void RunInit() {
