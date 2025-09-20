@@ -670,7 +670,6 @@ struct GameData {
     int cratesDroppedThisWave = 0;
     int xpLevel               = 1;
     int previousLevel         = 1;
-    int pierceCount           = 0;
 
     int          waveIndex     = 0;
     LogicalFrame waveStartedAt = {};
@@ -3691,7 +3690,7 @@ void GameFixedUpdate() {
             auto maxPierce = fb->pierce();
             if (g.run.creatures[projectile.ownerCreatureIndex].type
                 == CreatureType_PLAYER)
-              maxPierce += g.run.pierceCount;
+              maxPierce += MAX(0, g.run.playerStats[StatType_PIERCING]);
 
             if (projectile.piercedCount < maxPierce)
               projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
