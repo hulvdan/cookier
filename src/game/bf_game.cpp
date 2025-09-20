@@ -3378,8 +3378,16 @@ void GameFixedUpdate() {
 
             switch (pickupable.type) {
             case PickupableType_COIN: {
-              g.run.coins++;
-              AddXP(1);
+              int amount = 1;
+
+              if (GRAND.FRand()
+                  < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+                amount += 1;
+
+              g.run.coins += amount;
+
+              AddXP((f32)amount);
+
               auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;
               if (GRAND.FRand() < healChance)
                 HealPlayer();
