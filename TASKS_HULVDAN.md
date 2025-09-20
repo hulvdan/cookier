@@ -1,7 +1,7 @@
 
 * INTERNET: brotato: pierce damage falloff
   * stats: % Piercing Damage: Increases or decreases the piercing damage falloff for projectile weapons.
-* INTERNET: brotato:
+* INTERNET: brotato: enemies spawn rate
 * INTERNET: brotato:
 * INTERNET: brotato:
 * stat effect: ENGINEERING

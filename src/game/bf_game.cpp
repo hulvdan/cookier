@@ -487,6 +487,7 @@ struct Creature {
   CreatureController controller          = {};
   LogicalFrame       lastDamagedAt       = {};
   LogicalFrame       diedAt              = {};
+  f32                speed               = {};
   f32                movementAccumulator = {};
   LogicalFrame       idleStartedAt       = {};
 
@@ -1047,8 +1048,8 @@ void MakeCreature(MakeCreatureData data) {  ///
   if (data.type != CreatureType_PLAYER)
     hurtboxRadius = MOB_HURTBOX_RADIUS;
 
-  const auto fb_creature = glib->creatures()->Get(data.type);
-  auto       health      = (f32)fb_creature->health();
+  const auto fb     = glib->creatures()->Get(data.type);
+  auto       health = (f32)fb->health();
   if (data.type == CreatureType_PLAYER)
     health = (f32)g.run.playerStats[StatType_HP];
 
@@ -1070,6 +1071,7 @@ void MakeCreature(MakeCreatureData data) {  ///
              .isPlayer = (data.type == CreatureType_PLAYER),
       },
     }),
+    .speed     = fb->speed() + Lerp(-1.0f, 1.0f, GRAND.FRand()) * fb->speed_variation(),
   };
   creature.idleStartedAt.SetNow();
 
@@ -3252,7 +3254,7 @@ void GameFixedUpdate() {
                                   - MOB_RUSHER_RUSH_POST_FRAMES;
           const auto durSeconds = (f32)rushingDur.value / FIXED_FPS;
           const auto rushDistance
-            = fb->speed() * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
+            = creature.speed * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
 
           if (dist <= rushDistance) {
             data.startedRushingAt.SetNow();
@@ -3417,7 +3419,7 @@ void GameFixedUpdate() {
 
       const auto fb = fb_creatures->Get(creature.type);
 
-      auto speedScale = fb->speed() * SPEED_MULTIPLIER;
+      auto speedScale = creature.speed * SPEED_MULTIPLIER;
       if (creature.type == CreatureType_PLAYER) {
         speedScale *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
 
@@ -3677,7 +3679,7 @@ void GameFixedUpdate() {
 
             if (fb_creature->is_boss()) {
               damage *= MAX(
-                0, (g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
+                0, (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
               );
             }
           }
