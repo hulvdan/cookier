@@ -1,5 +1,4 @@
 
-* stats: % Double Material Chance: Increases the chance of gaining double materials when picking up Materials
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
