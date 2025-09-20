@@ -1034,10 +1034,10 @@ void MakeCreature(MakeCreatureData data) {  ///
 
   ASSERT(health > 0);
 
-  const auto id = g.run.nextCreatureId++;
+  const auto creatureId = g.run.nextCreatureId++;
 
   Creature creature{
-    .id        = id,
+    .id        = creatureId,
     .type      = data.type,
     .health    = health,
     .maxHealth = health,
@@ -1048,7 +1048,7 @@ void MakeCreature(MakeCreatureData data) {  ///
            .hurtboxRadius = hurtboxRadius,
            .bodyData{
              .type     = BodyType_CREATURE,
-             .userData = ShapeUserData::Creature(id),
+             .userData = ShapeUserData::Creature(creatureId),
              .isPlayer = (data.type == CreatureType_PLAYER),
       },
     }),
@@ -2933,12 +2933,11 @@ void AddXP(f32 xp) {  ///
     // Increasing random stat.
     while (1) {
       const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
-      if (!stat)
+      const auto fb   = glib->stats()->Get(stat);
+      const auto vals = fb->upgrade_values();
+      if (!vals)
         continue;
-      if (stat == StatType_CURSE)
-        continue;
-
-      g.run.playerStats[stat]++;
+      g.run.playerStats[stat] += vals->Get(0);
       break;
     }
   }
