@@ -1,4 +1,9 @@
 
+* INTERNET: brotato: pierce damage falloff
+  * stats: % Piercing Damage: Increases or decreases the piercing damage falloff for projectile weapons.
+* INTERNET: brotato:
+* INTERNET: brotato:
+* INTERNET: brotato:
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
@@ -6,8 +11,6 @@
 * stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * stats: % Explosion Size: Increases or decreases the size of Explosions
 * stats: Bounces: Gives projectiles additional Bounces
-* stats: % Piercing Damage: Increases or decreases the piercing damage falloff for projectile weapons.
-* stats: % Damage against Bosses: Multiplies the damage you do against Bosses and Elites.
 * stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
 * stats: Structure Range: Increases or decreases the range of Structures.
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.

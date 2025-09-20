@@ -40,6 +40,7 @@ table Creature {
     hostility_type: int = 1;
     can_be_knocked_back: bool = true;
     consumable_drop_chance: float = 0.007;
+    is_boss: bool = false;
 
     on_death_spawns_creature_type: int;
     on_death_spawns_count_min: int;

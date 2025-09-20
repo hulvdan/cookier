@@ -3661,6 +3661,8 @@ void GameFixedUpdate() {
             ))
           continue;
 
+        const auto fb_creature = fb_creatures->Get(creature.type);
+
         const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
         const auto radius  = fb->collider_radius();
         if (distSqr < SQR(radius)) {
@@ -3672,6 +3674,12 @@ void GameFixedUpdate() {
             isCrit = IsCrit();
             if (isCrit)
               damage *= CRIT_DAMAGE_MULTIPLIER;
+
+            if (fb_creature->is_boss()) {
+              damage *= MAX(
+                0, (g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
+              );
+            }
           }
           else {
             // Mob damages player.
