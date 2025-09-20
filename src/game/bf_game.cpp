@@ -2930,7 +2930,7 @@ void AddXP(f32 xp) {  ///
 
     MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
 
-    // Increasing random stat.
+    // Increasing random stat that has `upgrade_values`.
     while (1) {
       const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
       const auto fb   = glib->stats()->Get(stat);
