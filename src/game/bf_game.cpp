@@ -344,23 +344,23 @@ enum ShapeUserDataType : u32 {
 
 struct ShapeUserData {
   ShapeUserDataType type   = {};
-  int               _index = {};
+  int               _value = {};
 
   static ShapeUserData Static() {  ///
     return {.type = ShapeUserDataType_STATIC};
   }
 
-  static ShapeUserData Creature(int index) {  ///
-    ASSERT(index >= 0);
+  static ShapeUserData Creature(int value) {  ///
+    ASSERT(value >= 0);
     return {
       .type   = ShapeUserDataType_CREATURE,
-      ._index = index,
+      ._value = value,
     };
   }
 
-  int GetCreatureIndex() const {  ///
+  int GetCreatureId() const {  ///
     ASSERT(type == ShapeUserDataType_CREATURE);
-    return _index;
+    return _value;
   }
 
   static ShapeUserData FromPointer(void* ptr) {  ///
@@ -374,16 +374,16 @@ struct ShapeUserData {
       // 32-bit. Little endian.
       auto p = (u8*)&ptr;
       u8   type[4]{};
-      u8   index[4]{};
+      u8   value[4]{};
 
       type[0]  = p[0];
-      index[0] = p[1];
-      index[1] = p[2];
-      index[2] = p[3];
+      value[0] = p[1];
+      value[1] = p[2];
+      value[2] = p[3];
 
       return {
         .type   = *(ShapeUserDataType*)type,
-        ._index = *(int*)index,
+        ._value = *(int*)value,
       };
     }
   }
@@ -397,9 +397,9 @@ struct ShapeUserData {
       // 32-bit. Little endian.
       u8 value[4]{};
       value[0] = ((u8*)&type)[0];
-      value[1] = ((u8*)&_index)[0];
-      value[2] = ((u8*)&_index)[1];
-      value[3] = ((u8*)&_index)[2];
+      value[1] = ((u8*)&_value)[0];
+      value[2] = ((u8*)&_value)[1];
+      value[3] = ((u8*)&_value)[2];
 
       return *(void**)value;
     }
@@ -476,7 +476,6 @@ struct CreatureController {
 };
 
 struct Creature {
-  bool               active              = true;
   int                id                  = {};
   CreatureType       type                = {};
   f32                health              = {};
@@ -535,9 +534,8 @@ struct CreaturePreSpawn {
 };
 
 struct Projectile {
-  bool                              active             = true;
   ProjectileType                    type               = {};
-  int                               ownerCreatureIndex = {};
+  CreatureType                      ownerCreatureType  = {};
   Vector2                           pos                = {};
   Vector2                           dir                = {};
   f32                               damage             = {};
@@ -549,12 +547,12 @@ struct Projectile {
 };
 
 struct MakeProjectileData {
-  ProjectileType type               = {};
-  int            ownerCreatureIndex = {};
-  Vector2        pos                = {};
-  Vector2        dir                = {};
-  f32            range              = {};
-  f32            damage             = {};
+  ProjectileType type              = {};
+  CreatureType   ownerCreatureType = {};
+  Vector2        pos               = {};
+  Vector2        dir               = {};
+  f32            range             = {};
+  f32            damage            = {};
 };
 
 struct Number {
@@ -1022,27 +1020,8 @@ void MakeCreature(MakeCreatureData data) {  ///
   if (!data.type)
     return;
 
-  int index = -1;
-  FOR_RANGE (int, i, g.run.creatures.count) {
-    if (!g.run.creatures[i].active) {
-      auto ok = false;
-
-      if ((i == 0) && (g.run.creatures.count == 0))
-        ok = true;
-      if ((i > 0) && (g.run.creatures.count > 0))
-        ok = true;
-
-      if (ok) {
-        index = i;
-        break;
-      }
-    }
-  }
-
-  if (index == -1) {
-    index = g.run.creatures.count;
-    g.run.creatures.Add();
-  }
+  auto index = g.run.creatures.count;
+  auto slot  = g.run.creatures.Add();
 
   auto hurtboxRadius = PLAYER_HURTBOX_RADIUS;
   if (data.type != CreatureType_PLAYER)
@@ -1055,8 +1034,10 @@ void MakeCreature(MakeCreatureData data) {  ///
 
   ASSERT(health > 0);
 
+  const auto id = g.run.nextCreatureId++;
+
   Creature creature{
-    .id        = g.run.nextCreatureId++,
+    .id        = id,
     .type      = data.type,
     .health    = health,
     .maxHealth = health,
@@ -1067,7 +1048,7 @@ void MakeCreature(MakeCreatureData data) {  ///
            .hurtboxRadius = hurtboxRadius,
            .bodyData{
              .type     = BodyType_CREATURE,
-             .userData = ShapeUserData::Creature(index),
+             .userData = ShapeUserData::Creature(id),
              .isPlayer = (data.type == CreatureType_PLAYER),
       },
     }),
@@ -1088,7 +1069,7 @@ void MakeCreature(MakeCreatureData data) {  ///
     break;
   }
 
-  g.run.creatures[index] = creature;
+  *slot = creature;
 }
 
 void MakeProjectile(MakeProjectileData data) {  ///
@@ -1096,12 +1077,12 @@ void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.dir != Vector2Zero());
 
   Projectile projectile{
-    .type               = data.type,
-    .ownerCreatureIndex = data.ownerCreatureIndex,
-    .pos                = data.pos,
-    .dir                = data.dir,
-    .damage             = data.damage,
-    .range              = data.range,
+    .type              = data.type,
+    .ownerCreatureType = data.ownerCreatureType,
+    .pos               = data.pos,
+    .dir               = data.dir,
+    .damage            = data.damage,
+    .range             = data.range,
   };
   projectile.createdAt.SetNow();
 
@@ -1336,12 +1317,12 @@ constexpr f32 GetLifestealChance(int level) {  ///
 }
 
 bool TryApplyDamage(
-  int     creatureIndex,
-  f32     damage,
-  Vector2 direction,
-  f32     impulse,
-  int     damageApplicatorCreatureIndex,
-  bool    isCrit
+  int          creatureIndex,
+  f32          damage,
+  Vector2      direction,
+  f32          impulse,
+  CreatureType damageApplicatorCreatureType,
+  bool         isCrit
 ) {  ///
   if (damage <= 0)
     return false;
@@ -1359,7 +1340,7 @@ bool TryApplyDamage(
   const auto fb = glib->creatures()->Get(creature.type);
 
   if (creatureIndex) {
-    if (!damageApplicatorCreatureIndex) {
+    if (damageApplicatorCreatureType == CreatureType_PLAYER) {
       MakeNumber({
         .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
         .value = Round(damage),
@@ -1385,7 +1366,7 @@ bool TryApplyDamage(
   }
 
   // Player lifesteals.
-  if (!damageApplicatorCreatureIndex) {
+  if (damageApplicatorCreatureType == CreatureType_PLAYER) {
     auto lifesteal = GetLifestealChance(g.run.playerStats[StatType_LIFE_STEAL]);
     while (lifesteal > 0) {
       if (GRAND.FRand() < lifesteal) {
@@ -2831,15 +2812,30 @@ bool IsCrit() {  ///
   return GRAND.FRand() < chance;
 }
 
+int TryGetCreatureIndexById(int id) {  ///
+  int i = -1;
+  for (const auto& creature : g.run.creatures) {
+    i++;
+    if (creature.id == id)
+      return i;
+  }
+  return -1;
+}
+
+int GetCreatureIndexById(int id) {  ///
+  int index = TryGetCreatureIndexById(id);
+  ASSERT(index >= 0);
+  return index;
+}
+
 bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
 
-  const auto  creatureIndex = userData.GetCreatureIndex();
+  const auto  creatureIndex = GetCreatureIndexById(userData.GetCreatureId());
   const auto& creature      = g.run.creatures[creatureIndex];
 
   ASSERT(creature.type);
-  ASSERT(creature.active);
 
   if (creature.type == CreatureType_PLAYER)
     return continueCollisions;
@@ -2860,7 +2856,9 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
     if (isCrit)
       damage *= CRIT_DAMAGE_MULTIPLIER;
 
-    TryApplyDamage(creatureIndex, damage, weapon->targetDir, fb->impulse(), 0, isCrit);
+    TryApplyDamage(
+      creatureIndex, damage, weapon->targetDir, fb->impulse(), CreatureType_PLAYER, isCrit
+    );
   }
   return continueCollisions;
 }
@@ -3025,10 +3023,11 @@ void GameFixedUpdate() {
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
     g.run.screen = ScreenType_WAVE_END_ANIMATION;
 
+    g.run.projectiles.Reset();
     for (int i = 1; i < g.run.creatures.count; i++) {
       auto& creature = g.run.creatures[i];
-      if (creature.active && !creature.diedAt.IsSet())
-        TryApplyDamage(i, f32_inf, {}, 0, -1, false);
+      if (!creature.diedAt.IsSet())
+        TryApplyDamage(i, f32_inf, {}, 0, CreatureType_INVALID, false);
     }
     g.run.creaturePreSpawns.Reset();
 
@@ -3138,7 +3137,7 @@ void GameFixedUpdate() {
       }
     }
 
-    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {
+    if (!PLAYER_CREATURE.diedAt.IsSet()) {
       // Player actions. Moving.
       {  ///
         Vector2 move{};
@@ -3181,7 +3180,7 @@ void GameFixedUpdate() {
     // Updating AI.
     for (int i = 1; i < g.run.creatures.count; i++) {  ///
       auto& creature = g.run.creatures[i];
-      if (!creature.active || creature.diedAt.IsSet())
+      if (creature.diedAt.IsSet())
         continue;
       if (creature.type == CreatureType_TREE)
         continue;
@@ -3217,9 +3216,9 @@ void GameFixedUpdate() {
           const auto e = data.startedShootingAt.Elapsed();
           if (e == MOB_RANGER_SHOOTING_FRAME) {
             MakeProjectile({
-              .type               = ProjectileType_MOB,
-              .ownerCreatureIndex = i,
-              .pos                = creature.pos,
+              .type              = ProjectileType_MOB,
+              .ownerCreatureType = creature.type,
+              .pos               = creature.pos,
               .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
               .range  = 12,
               .damage = fb->projectile_damage(),
@@ -3328,11 +3327,11 @@ void GameFixedUpdate() {
     }
 
     // Mobs contact-damage player.
-    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
       const auto playerPos = PLAYER_CREATURE.pos;
       for (int i = 1; i < g.run.creatures.count; i++) {
         const auto& creature = g.run.creatures[i];
-        if (!creature.active || creature.diedAt.IsSet())
+        if (creature.diedAt.IsSet())
           continue;
 
         const auto fb = fb_creatures->Get(creature.type);
@@ -3348,7 +3347,7 @@ void GameFixedUpdate() {
             ApplyPlayerArmorToIncomingDamage(damage),
             Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
             0,
-            i,
+            creature.type,
             false
           );
         }
@@ -3356,7 +3355,7 @@ void GameFixedUpdate() {
     }
 
     // Picking up pickupables.
-    if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
       for (auto& pickupable : g.run.pickupables) {
         if (pickupable.pickedUpAt.IsSet()) {
           pickupable.pos
@@ -3414,7 +3413,7 @@ void GameFixedUpdate() {
   // Creatures moving.
   {  ///
     for (auto& creature : g.run.creatures) {
-      if (!creature.active || creature.diedAt.IsSet())
+      if (creature.diedAt.IsSet())
         continue;
 
       const auto fb = fb_creatures->Get(creature.type);
@@ -3446,7 +3445,7 @@ void GameFixedUpdate() {
 
   // Updating body positions.
   for (auto& creature : g.run.creatures) {  ///
-    if (!creature.active || creature.diedAt.IsSet())
+    if (creature.diedAt.IsSet())
       continue;
 
     creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
@@ -3472,7 +3471,7 @@ void GameFixedUpdate() {
   }
 
   // Player weapons shooting.
-  if (PLAYER_CREATURE.active && !PLAYER_CREATURE.diedAt.IsSet()) {  ///
+  if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
     for (auto& weapon : g.run.playerWeapons) {
       if (!weapon.type)
         continue;
@@ -3494,9 +3493,7 @@ void GameFixedUpdate() {
         for (const auto& creature : g.run.creatures) {
           creatureIndex++;
 
-          if (!creature.active            //
-              || creature.diedAt.IsSet()  //
-              || (creature.type == CreatureType_PLAYER))
+          if (creature.diedAt.IsSet() || (creature.type == CreatureType_PLAYER))
             continue;
 
           const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
@@ -3573,12 +3570,12 @@ void GameFixedUpdate() {
 
           if (spawn) {
             MakeProjectile({
-              .type               = projectileType,
-              .ownerCreatureIndex = 0,
-              .pos                = pos,
-              .dir                = weapon.targetDir,
-              .range              = GetWeaponRange(weapon),
-              .damage             = damage,
+              .type              = projectileType,
+              .ownerCreatureType = PLAYER_CREATURE.type,
+              .pos               = pos,
+              .dir               = weapon.targetDir,
+              .range             = GetWeaponRange(weapon),
+              .damage            = damage,
             });
           }
         }
@@ -3647,14 +3644,14 @@ void GameFixedUpdate() {
       int start = 0;
       int end   = g.run.creatures.count;
 
-      if (g.run.creatures[projectile.ownerCreatureIndex].type == CreatureType_PLAYER)
+      if (projectile.ownerCreatureType == CreatureType_PLAYER)
         start = 1;
       else
         end = 1;
 
       for (int i = start; i < end; i++) {
         auto& creature = g.run.creatures[i];
-        if (!creature.active || creature.diedAt.IsSet())
+        if (creature.diedAt.IsSet())
           continue;
 
         // Not damaging already damaged creatures.
@@ -3670,7 +3667,7 @@ void GameFixedUpdate() {
         if (distSqr < SQR(radius)) {
           f32  damage = projectile.damage;
           bool isCrit = false;
-          if (!projectile.ownerCreatureIndex) {
+          if (projectile.ownerCreatureType == CreatureType_PLAYER) {
             // Player damages mob.
             damage *= GetPlayerStatDamageMultiplier();
             isCrit = IsCrit();
@@ -3693,13 +3690,12 @@ void GameFixedUpdate() {
                 damage,
                 Vector2DirectionOrRandom(projectile.pos, creature.pos),
                 fb->impulse(),
-                projectile.ownerCreatureIndex,
+                projectile.ownerCreatureType,
                 isCrit
               ))
           {
             auto maxPierce = fb->pierce();
-            if (g.run.creatures[projectile.ownerCreatureIndex].type
-                == CreatureType_PLAYER)
+            if (projectile.ownerCreatureType == CreatureType_PLAYER)
               maxPierce += MAX(0, g.run.playerStats[StatType_PIERCING]);
 
             if (projectile.piercedCount < maxPierce)
@@ -3735,7 +3731,6 @@ void GameFixedUpdate() {
 
     for (const auto index : g.run.justDamagedCreatures) {
       auto& creature = g.run.creatures[index];
-      ASSERT(creature.active);
 
       const auto fb = fb_creatures->Get(creature.type);
 
@@ -3835,13 +3830,21 @@ void GameFixedUpdate() {
 
   DoUI(false);
 
-  // Unactivating old died creatures.
-  for (auto& creature : g.run.creatures) {         ///
-    if (creature.active                            //
-        && (creature.type != CreatureType_PLAYER)  //
-        && creature.diedAt.IsSet()                 //
-        && (creature.diedAt.Elapsed() >= DIE_FRAMES))
-      creature.active = false;
+  // Removing old died creatures.
+  {  ///
+    const int total = g.run.creatures.count;
+    int       off   = 0;
+
+    FOR_RANGE (int, i, total) {
+      auto& creature = g.run.creatures[i - off];
+      if ((creature.type != CreatureType_PLAYER)  //
+          && creature.diedAt.IsSet()              //
+          && (creature.diedAt.Elapsed() >= DIE_FRAMES))
+      {
+        g.run.creatures.UnstableRemoveAt(i - off);
+        off++;
+      }
+    }
   }
 
   // Removing old damage numbers.
@@ -3942,9 +3945,6 @@ void GameDraw() {
   // Drawing creatures.
   {  ///
     for (const auto& creature : g.run.creatures) {
-      if (!creature.active)
-        continue;
-
       const auto fb = fb_creatures->Get(creature.type);
 
       f32 fade = 1;
@@ -4051,9 +4051,6 @@ void GameDraw() {
 
   // Drawing projectiles + their gizmos.
   for (const auto& projectile : g.run.projectiles) {  ///
-    if (!projectile.active)
-      continue;
-
     const auto fb = fb_projectiles->Get(projectile.type);
     DrawGroup_OneShotTexture(
       {
