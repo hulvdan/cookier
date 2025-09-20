@@ -6,7 +6,6 @@
 * stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * stats: % Explosion Size: Increases or decreases the size of Explosions
 * stats: Bounces: Gives projectiles additional Bounces
-* stats: Piercing: Gives projectiles additional Piercing
 * stats: % Piercing Damage: Increases or decreases the piercing damage falloff for projectile weapons.
 * stats: % Damage against Bosses: Multiplies the damage you do against Bosses and Elites.
 * stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
