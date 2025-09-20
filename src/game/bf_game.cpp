@@ -1594,6 +1594,10 @@ void DoUI(bool draw) {
     return !draw && Clay_Hovered() && IsMouseReleased(L);
   };
 
+  LAMBDA (bool, rightClicked, ()) {  ///
+    return !draw && Clay_Hovered() && IsMouseReleased(R);
+  };
+
   // LAMBDA (bool, componentButton, (bool enabled, auto innerLambda)) { ///
   const u32 buttonColors_[]{
     glib->ui_button_hovered_color(),
@@ -1678,8 +1682,12 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           // Increasing stat by clicking on it in debug mode.
-          if (stat && ge.meta.debugEnabled && clicked())
-            g.run.playerStats[stat]++;
+          if (stat && ge.meta.debugEnabled) {
+            if (clicked())
+              g.run.playerStats[stat]++;
+            if (rightClicked())
+              g.run.playerStats[stat] += 10;
+          }
 
           BF_CLAY_IMAGE({.texId = iconTexId});
           BF_CLAY_TEXT(" ");
@@ -3264,8 +3272,13 @@ void GameFixedUpdate() {
 
     // Making pre spawn decals.
     {  ///
+      int        spawnEnemiesEvery = FIXED_FPS;
+      const auto multiplier        = (g.run.playerStats[StatType_ENEMIES] + 100) / 100.0f;
+      spawnEnemiesEvery            = Round((f32)spawnEnemiesEvery / multiplier);
+      spawnEnemiesEvery            = MAX(1, spawnEnemiesEvery);
+
       if (CanSpawnMoreCreatures()
-          && (g.run.waveStartedAt.Elapsed().value % FIXED_FPS == 0))
+          && (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0))
       {
         const auto fb_wave = fb_waves->Get(g.run.waveIndex);
 

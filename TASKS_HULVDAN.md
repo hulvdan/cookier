@@ -17,7 +17,6 @@
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * stats: Knockback
 * stats: Trees: Increases the amount of Trees that spawn. See the Wiki page for details.
-* stats: % Enemies
 * spread mobs apart (use force?)
 * mob that rotates when moving?
 *
