@@ -4,7 +4,6 @@
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
-* stats: Consumable Heal: Increases or decreases the healing done by consumables.
 * stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * stats: % Explosion Size: Increases or decreases the size of Explosions
 * stats: Bounces: Gives projectiles additional Bounces

@@ -1224,6 +1224,7 @@ void RunInit() {
   // Initializing `playerStats`.
   g.run.playerStats[StatType_HP]              = 20;
   g.run.playerStats[StatType_PIERCING_DAMAGE] = 50;
+  g.run.playerStats[StatType_CONSUMABLE_HEAL] = 3;
 
   // Making player.
   MakeCreature({
@@ -2976,7 +2977,7 @@ f32 GetLuckFactor() {  ///
 void HealPlayer(f32 amount = 1) {  ///
   if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
     PLAYER_CREATURE.health
-      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
   }
 }
 
@@ -3389,6 +3390,9 @@ void GameFixedUpdate() {
               .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
             });
 
+            const int consumableOrCrateHeal
+              = MAX(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
+
             switch (pickupable.type) {
             case PickupableType_COIN: {
               int amount = 1;
@@ -3407,10 +3411,13 @@ void GameFixedUpdate() {
             } break;
 
             case PickupableType_CONSUMABLE: {
-              HealPlayer();
+              if (consumableOrCrateHeal > 0)
+                HealPlayer(consumableOrCrateHeal);
             } break;
 
             case PickupableType_CRATE: {
+              if (consumableOrCrateHeal > 0)
+                HealPlayer(consumableOrCrateHeal);
               g.run.crates++;
             } break;
 
