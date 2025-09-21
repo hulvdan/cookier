@@ -1341,6 +1341,15 @@ void RecalculateThisWaveMobs() {  ///
     g.run.thisWaveMobs[i].accumulatedFactor /= accumulatedFactor;
 }
 
+int GetWeaponPrice(WeaponType type, int tier) {  ///
+  const auto fb = glib->weapons()->Get(type);
+  return Round((f32)fb->price() * PRICE_SCALINGS_PER_TIER[tier]);
+}
+
+int GetWeaponRecyclePrice(WeaponType type, int tier) {  ///
+  return GetWeaponPrice(type, tier) / 3;
+}
+
 void RunInit() {
   // Creating box2d world.
   {  ///
@@ -1377,7 +1386,7 @@ void RunInit() {
     auto& weapon        = g.run.playerWeapons[i];
     weapon.type         = weapons[i].type;
     weapon.tier         = GRAND.Rand() % (TOTAL_TIERS - 1);
-    weapon.recyclePrice = GenerateItemPrice();
+    weapon.recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
   }
   RecalculatePlayerWeaponOffsets();
 
@@ -1646,10 +1655,8 @@ void RefillShopToPick() {  ///
   const auto fb_items   = glib->items();
   const auto fb_weapons = glib->weapons();
 
-  auto& toPick = g.run.shop.toPick;
-
-  for (auto& v : toPick) {
-    v = {.price = GenerateItemPrice()};
+  for (auto& v : g.run.shop.toPick) {
+    v = {};
 
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
@@ -1657,12 +1664,16 @@ void RefillShopToPick() {  ///
 
       const auto fb = fb_items->Get(v.item);
       v.tier        = fb->tier();
+      v.price       = fb->price();
     }
     else {
       while (!v.weapon) {
-        v.weapon = (WeaponType)(GRAND.Rand() % fb_weapons->size());
-        // Legendary weapons can't be sold in shop.
-        v.tier = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
+        v.weapon      = (WeaponType)(GRAND.Rand() % fb_weapons->size());
+        const auto fb = fb_weapons->Get(v.weapon);
+        // Legendary weapons can't be bought in shop.
+        // TODO: Check if it's possible to buy legendary weapons in Brotato.
+        v.tier  = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
+        v.price = GetWeaponPrice(v.weapon, v.tier);
       }
     }
   }
@@ -2460,11 +2471,11 @@ void DoUI(bool draw) {
                       }
                       else {
                         // Filling empty weapon slot if exists.
-                        weapon.type         = v.weapon;
-                        weapon.tier         = v.tier;
-                        weapon.recyclePrice = v.price;
-                        RecalculatePlayerWeaponOffsets();
+                        weapon.type = v.weapon;
+                        weapon.tier = v.tier;
                       }
+                      weapon.recyclePrice
+                        = GetWeaponRecyclePrice(weapon.type, weapon.tier);
                     }
                     else if (v.item) {
                       AddItem(v.item);
@@ -2634,6 +2645,8 @@ void DoUI(bool draw) {
                         if (combined) {
                           weapon.tier += 1;
                           StableRemoveWeapon(canCombineWithIndex);
+                          weapon.recyclePrice
+                            = GetWeaponRecyclePrice(weapon.type, weapon.tier);
                         }
                         if (recycled) {
                           g.run.coins += weapon.recyclePrice;
