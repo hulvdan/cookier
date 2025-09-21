@@ -310,16 +310,11 @@ items:
     texture_id: ui_item_milk
     tier: 0
     price: 30
-damages:
+weapon_kinds:
   - type: INVALID
   - type: MELEE
-    stat_type: DAMAGE_MELEE
   - type: RANGED
-    stat_type: DAMAGE_RANGED
   - type: ELEMENTAL
-    stat_type: DAMAGE_ELEMENTAL
-  - type: ENGINEERING
-    stat_type: ENGINEERING
 weapons:
   #
   # If a weapon doesn't have `projectile_type` specified,
@@ -345,13 +340,23 @@ weapons:
   #
   #     `range_meters` is how far a bullet goes.
   #
-  # `price` is the price of the max (aka Legendary) tier.
-  #
   - type: INVALID
   - type: SWORD
-    damage_type: MELEE
-    damage: 2
-    price: 122
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage:
+      - 6.0
+      - 9.0
+      - 12.0
+      - 20.0
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier:
+          - 80
+          - 80
+          - 80
+          - 80
+    max_price: 122
     cooldown_frames: 20
     shooting_duration_frames: 10
     range_meters: 2
@@ -360,10 +365,22 @@ weapons:
     texture_ids:
       - game_weapon_sword
   - type: GUN
-    damage_type: RANGED
+    min_tier_index: 0
+    base_damage:
+      - 6.0
+      - 9.0
+      - 12.0
+      - 20.0
+    weaponkind_type: RANGED
     projectile_type: BULLET
-    damage: 1.0
-    price: 130
+    damage_scalings:
+      - stat_type: DAMAGE_RANGED
+        percents_per_tier:
+          - 85
+          - 90
+          - 95
+          - 100
+    max_price: 130
     knockback_meters: 1
     cooldown_frames: 10
     shooting_duration_frames: 20
@@ -373,10 +390,22 @@ weapons:
     texture_ids:
       - game_weapon_gun
   - type: BOW
+    min_tier_index: 0
+    weaponkind_type: RANGED
+    base_damage:
+      - 6.0
+      - 9.0
+      - 12.0
+      - 20.0
+    damage_scalings:
+      - stat_type: DAMAGE_RANGED
+        percents_per_tier:
+          - 70
+          - 85
+          - 100
+          - 115
     projectile_type: ARROW
-    damage_type: RANGED
-    price: 140
-    damage: 1.5
+    max_price: 140
     knockback_meters: 2
     cooldown_frames: 16
     shooting_duration_frames: 10

@@ -1,5 +1,4 @@
 
-* weapon damage progression (mb range + piercing?)
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
