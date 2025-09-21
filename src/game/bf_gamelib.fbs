@@ -67,22 +67,31 @@ table Item {
     name_locale: int;
     texture_id: int;
     tier: int;
+    price: int;
 }
 
 table Damage {
     stat_type: int;
 }
 
+table WeaponDamageScaling {
+    stat_type: int;
+    values_per_tier: [float] (required);
+}
+
 table Weapon {
     name_locale: int;
     damage_type: int;
     damage: float;
+    min_tier: int;
+    damage_scalings: [WeaponDamageScaling];
     knockback_meters: float;
     cooldown_frames: int;
     shooting_duration_frames: int;
     projectile_type: int;
     projectile_spawn_frames: [int];
     range_meters: float;
+    price: int;
     melee_collider_height_px: float;
     color: uint = 0xffffff;
     texture_ids: [int];

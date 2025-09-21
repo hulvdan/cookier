@@ -41,6 +41,14 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     for x in gamelib["items"][1:]:
         x["name_locale"] = "ITEM_" + x["type"].upper()
 
+        mandatory_fields = [
+            "price",
+        ]
+        for field in mandatory_fields:
+            assert field in x, "Item {} has to have '{}' specified".format(
+                x["type"], field
+            )
+
     # Weapons.
     # ============================================================
     for x in gamelib["weapons"][1:]:
@@ -48,6 +56,14 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         assert "damage_type" in x, (
             f"Weapon {x['type']} must have `damage_type` specified!"
         )
+
+        mandatory_fields = [
+            "price",
+        ]
+        for field in mandatory_fields:
+            assert field in x, "Weapon {} has to have '{}' specified".format(
+                x["type"], field
+            )
 
     # Stats.
     # ============================================================
@@ -59,19 +75,20 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # Creatures.
     # ============================================================
-    mandatory_mob_fields = [
-        "appearing_wave_number",
-        "spawn_factor",
-        "health",
-        "health_increase_per_wave",
-        "contact_damage",
-        "contact_damage_increase_per_wave",
-        "knockback_resistance",
-    ]
     for i, x in enumerate(gamelib["creatures"]):
         if i >= 2:
-            for field in mandatory_mob_fields:
+            mandatory_fields = [
+                "appearing_wave_number",
+                "spawn_factor",
+                "health",
+                "health_increase_per_wave",
+                "contact_damage",
+                "contact_damage_increase_per_wave",
+                "knockback_resistance",
+            ]
+            for field in mandatory_fields:
                 assert field in x, "Mob {} needs `{}` specified".format(x["type"], field)
+
             assert 0 <= x["knockback_resistance"] <= 1, (
                 "Mob {} `knockback_resistance` must be in range [0; 1]".format(x["type"])
             )

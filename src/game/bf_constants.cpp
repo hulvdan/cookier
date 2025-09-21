@@ -130,7 +130,6 @@ constexpr f32 PLAYER_WEAPONS_STARTING_ANGLES_[]{
   -(f32)PI / 2.0f + 2.0f * (f32)PI / 5.0f,
   0
 };
-
 VIEW_FROM_ARRAY_DANGER(PLAYER_WEAPONS_STARTING_ANGLES);
 
 constexpr int TOTAL_TIERS = 4;
@@ -151,6 +150,14 @@ constexpr auto MOB_RUSHER_RUSH_POST_FRAMES  = lframe::MakeScaled(20);
 constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
 constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::MakeUnscaled(2.5f * FIXED_FPS);
 constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::MakeUnscaled(3.5f * FIXED_FPS);
+
+constexpr f32 PRICE_SCALINGS_PER_TIER_[]{
+  20.0f / 149.0f,
+  39.0f / 149.0f,
+  74.0f / 149.0f,
+  149.0f / 149.0f
+};
+VIEW_FROM_ARRAY_DANGER(PRICE_SCALINGS_PER_TIER);
 
 // constexpr f32 BODY_LINEAR_DAMPING             = 10;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 6.78f;

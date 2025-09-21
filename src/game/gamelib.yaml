@@ -305,9 +305,11 @@ items:
   - type: SUGAR
     texture_id: ui_item_sugar
     tier: 2
+    price: 40
   - type: MILK
     texture_id: ui_item_milk
     tier: 0
+    price: 30
 damages:
   - type: INVALID
   - type: MELEE
@@ -343,10 +345,13 @@ weapons:
   #
   #     `range_meters` is how far a bullet goes.
   #
+  # `price` is the price of the max (aka Legendary) tier.
+  #
   - type: INVALID
   - type: SWORD
     damage_type: MELEE
     damage: 2
+    price: 122
     cooldown_frames: 20
     shooting_duration_frames: 10
     range_meters: 2
@@ -358,6 +363,7 @@ weapons:
     damage_type: RANGED
     projectile_type: BULLET
     damage: 1.0
+    price: 130
     knockback_meters: 1
     cooldown_frames: 10
     shooting_duration_frames: 20
@@ -369,6 +375,7 @@ weapons:
   - type: BOW
     projectile_type: ARROW
     damage_type: RANGED
+    price: 140
     damage: 1.5
     knockback_meters: 2
     cooldown_frames: 16
