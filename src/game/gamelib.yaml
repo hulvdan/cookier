@@ -386,6 +386,7 @@ stats:
   - type: CURSE
     icon_texture_id: ui_stat_icon_armor
   - type: HP
+    player_value: 20
     upgrade_values:
       - 3
       - 6
@@ -520,6 +521,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_harvesting
     icon_texture_id: ui_stat_icon_armor
   - type: CONSUMABLE_HEAL
+    player_value: 3
     icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   - type: COINS_HEAL
@@ -555,6 +557,7 @@ stats:
     is_secondary: true
   # Increases or decreases the piercing damage falloff for projectile weapons.
   - type: PIERCING_DAMAGE
+    player_value: 50
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true

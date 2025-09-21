@@ -1221,10 +1221,11 @@ void RunInit() {
     g.run.world         = b2CreateWorld(&worldDef);
   }
 
-  // Initializing `playerStats`.
-  g.run.playerStats[StatType_HP]              = 20;
-  g.run.playerStats[StatType_PIERCING_DAMAGE] = 50;
-  g.run.playerStats[StatType_CONSUMABLE_HEAL] = 3;
+  // Initializing `g.run.playerStats`.
+  FOR_RANGE (int, stat, (int)StatType_COUNT) {  ///
+    const auto fb           = glib->stats()->Get(stat);
+    g.run.playerStats[stat] = fb->player_value();
+  }
 
   // Making player.
   MakeCreature({

@@ -114,6 +114,7 @@ table Stat {
     name_locale: int;
     is_percent: bool;
     is_secondary: bool;
+    player_value: int;
     upgrade_name_locale: int;
     upgrade_texture_id: int;
     upgrade_values: [int];
