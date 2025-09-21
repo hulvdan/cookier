@@ -1,4 +1,10 @@
 
+* item effects
+* weapon description
+* elemental weapon with bouncing projectile that slows down / burns mobs
+  (chech other types of elemental damage)
+*
+*
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
