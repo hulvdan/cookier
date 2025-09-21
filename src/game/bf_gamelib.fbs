@@ -33,7 +33,8 @@ table Hostility {
 }
 
 table Creature {
-    health: float;
+    health: int;
+    health_increase_per_wave: int;
     contact_damage: float;
     projectile_damage: float;
     speed: float;

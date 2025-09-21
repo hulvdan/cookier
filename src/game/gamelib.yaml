@@ -175,7 +175,7 @@ creatures:
       - game_creature_player_move_2
       - game_creature_player_move_3
       - game_creature_player_move_4
-  - type: MOB1
+  - type: MOB_SMALL
     health: 2
     contact_damage: 1
     speed: 6
@@ -191,7 +191,7 @@ creatures:
       - game_creature_player_move_2
       - game_creature_player_move_3
       - game_creature_player_move_4
-  - type: MOB2
+  - type: MOB_CHASER
     health: 3
     contact_damage: 2
     color: 0xb8560f
@@ -246,7 +246,7 @@ creatures:
     color: 0x82dcd7
     speed: 5
     speed_variation: 0.5
-    on_death_spawns_creature_type: MOB1
+    on_death_spawns_creature_type: MOB_SMALL
     on_death_spawns_count_min: 4
     on_death_spawns_count_max: 6
     on_death_spawns_distance_min: 3
@@ -616,9 +616,9 @@ stats:
 waves:
   # 1
   - creatures_to_spawn:
-      - creature_type: MOB1
+      - creature_type: MOB_SMALL
         spawn_factor: 20
-      - creature_type: MOB2
+      - creature_type: MOB_CHASER
         spawn_factor: 20
       - creature_type: SPAWNER
         spawn_factor: 35
@@ -628,9 +628,9 @@ waves:
         spawn_factor: 35
   # 2
   - creatures_to_spawn:
-      - creature_type: MOB1
+      - creature_type: MOB_SMALL
         spawn_factor: 30
-      - creature_type: MOB2
+      - creature_type: MOB_CHASER
         spawn_factor: 20
       - creature_type: SPAWNER
         spawn_factor: 35
@@ -640,9 +640,9 @@ waves:
         spawn_factor: 35
   # 3
   - creatures_to_spawn:
-      - creature_type: MOB1
+      - creature_type: MOB_SMALL
         spawn_factor: 10
-      - creature_type: MOB2
+      - creature_type: MOB_CHASER
         spawn_factor: 30
       - creature_type: SPAWNER
         spawn_factor: 35
@@ -652,9 +652,9 @@ waves:
         spawn_factor: 35
   # 4
   - creatures_to_spawn:
-      - creature_type: MOB1
+      - creature_type: MOB_SMALL
         spawn_factor: 40
-      - creature_type: MOB2
+      - creature_type: MOB_CHASER
         spawn_factor: 15
       - creature_type: SPAWNER
         spawn_factor: 15
@@ -664,9 +664,9 @@ waves:
         spawn_factor: 35
   # 5
   - creatures_to_spawn:
-      - creature_type: MOB1
+      - creature_type: MOB_SMALL
         spawn_factor: 50
-      - creature_type: MOB2
+      - creature_type: MOB_CHASER
         spawn_factor: 50
       - creature_type: SPAWNER
         spawn_factor: 35
