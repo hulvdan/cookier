@@ -149,6 +149,8 @@ constexpr auto MOB_RUSHER_RUSH_PRE_FRAMES   = lframe::MakeScaled(10);
 constexpr auto MOB_RUSHER_RUSH_TOTAL_FRAMES = lframe::MakeScaled(60);
 constexpr auto MOB_RUSHER_RUSH_POST_FRAMES  = lframe::MakeScaled(20);
 constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
+constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::MakeUnscaled(2.5f * FIXED_FPS);
+constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::MakeUnscaled(3.5f * FIXED_FPS);
 
 // constexpr f32 BODY_LINEAR_DAMPING             = 10;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 6.78f;

@@ -497,6 +497,8 @@ struct Creature {
 
     struct {
       LogicalFrame startedRushingAt;
+      LogicalFrame finishedRushingAt;
+      lframe       cooldown;
       Vector2      rushingDir;
     } rusher;
   } _mob;
@@ -1027,8 +1029,8 @@ void MakeCreature(MakeCreatureData data) {  ///
   if (data.type != CreatureType_PLAYER)
     hurtboxRadius = MOB_HURTBOX_RADIUS;
 
-  const auto fb     = glib->creatures()->Get(data.type);
-  auto       health = (f32)fb->health();
+  const auto fb = glib->creatures()->Get(data.type);
+  auto health   = (f32)(fb->health() + g.run.waveIndex * fb->health_increase_per_wave());
   if (data.type == CreatureType_PLAYER)
     health = (f32)g.run.playerStats[StatType_HP];
 
@@ -3292,21 +3294,34 @@ void GameFixedUpdate() {
 
           if (e >= MOB_RUSHER_RUSH_TOTAL_FRAMES) {
             data.startedRushingAt = {};
-            data.rushingDir       = {};
+            data.finishedRushingAt.SetNow();
+            data.rushingDir = {};
+            data.cooldown.SetRand(MOB_RUSHER_COOLDOWN_MIN, MOB_RUSHER_COOLDOWN_MAX);
           }
         }
         else {
-          const auto dist       = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
-          const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
-                                  - MOB_RUSHER_RUSH_PRE_FRAMES
-                                  - MOB_RUSHER_RUSH_POST_FRAMES;
-          const auto durSeconds = (f32)rushingDur.value / FIXED_FPS;
-          const auto rushDistance
-            = creature.speed * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
+          bool canRush = true;
 
-          if (dist <= rushDistance) {
-            data.startedRushingAt.SetNow();
-            data.rushingDir = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
+          if (data.finishedRushingAt.IsSet()) {
+            if (data.finishedRushingAt.Elapsed() < data.cooldown)
+              canRush = false;
+          }
+
+          if (canRush) {
+            const auto dist       = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
+            const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
+                                    - MOB_RUSHER_RUSH_PRE_FRAMES
+                                    - MOB_RUSHER_RUSH_POST_FRAMES;
+            const auto durSeconds = (f32)rushingDur.value / FIXED_FPS;
+            const auto rushDistance
+              = creature.speed * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
+
+            if (dist <= rushDistance) {
+              data.startedRushingAt.SetNow();
+              data.finishedRushingAt = {};
+              data.rushingDir
+                = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
+            }
           }
         }
       }

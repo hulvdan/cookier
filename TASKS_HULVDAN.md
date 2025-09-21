@@ -1,6 +1,4 @@
 
-* INTERNET: brotato:
-* INTERNET: brotato:
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
@@ -12,7 +10,6 @@
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * stats: Knockback
-* stats: Trees: Increases the amount of Trees that spawn. See the Wiki page for details.
 * spread mobs apart (use force?)
 * mob that rotates when moving?
 *
