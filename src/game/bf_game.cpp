@@ -1245,7 +1245,7 @@ int GetNumberOfTreesToSpawn() {  ///
   const f32 t = GRAND.FRand();
   FOR_RANGE (int, i, percentsCount) {
     if (t < factors[i])
-      return min + (((i + 1) % 3 == 0) ? 1 : 0);
+      return min + i;
   }
 
   INVALID_PATH;
