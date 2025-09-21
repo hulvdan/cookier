@@ -33,8 +33,10 @@ table Hostility {
 }
 
 table Creature {
+    appearing_wave_number: int;
+    spawn_factor: float;
     health: int;
-    health_increase_per_wave: int;
+    health_increase_per_wave: float;
     contact_damage: float;
     projectile_damage: float;
     speed: float;
@@ -43,6 +45,7 @@ table Creature {
     can_be_knocked_back: bool = true;
     consumable_drop_chance: float = 0.007;
     is_boss: bool = false;
+    coins_dropped: int = 1;
 
     on_death_spawns_creature_type: int;
     on_death_spawns_count_min: int;
@@ -104,10 +107,6 @@ table Number {
 table WaveCreature {
     creature_type: int;
     spawn_factor: float;
-}
-
-table Wave {
-    creatures_to_spawn: [WaveCreature] (required);
 }
 
 table Stat {
@@ -195,8 +194,6 @@ table GameLibrary {
     numbers: [Number] (required);
     stats: [Stat] (required);
     // TABLE_GEN_END
-
-    waves: [Wave] (required);
     // GAME STUFF END
 }
 

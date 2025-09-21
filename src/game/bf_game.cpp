@@ -564,11 +564,33 @@ struct Number {
   LogicalFrame createdAt = {};
 };
 
+struct MakePickupableData {
+  PickupableType type        = {};
+  Vector2        pos         = {};
+  int            coin_amount = {};
+};
+
 struct Pickupable {
   PickupableType type       = {};
   Vector2        pos        = {};
   LogicalFrame   createdAt  = {};
   LogicalFrame   pickedUpAt = {};
+
+  struct {
+    struct {
+      int amount;
+    } coin;
+  } _u;
+
+  auto& DataCoin() {  ///
+    ASSERT(type == PickupableType_COIN);
+    return _u.coin;
+  }
+
+  const auto& DataCoin() const {  ///
+    ASSERT(type == PickupableType_COIN);
+    return _u.coin;
+  }
 };
 
 struct MakeNumberData {
@@ -578,13 +600,12 @@ struct MakeNumberData {
 };
 
 lframe GetWaveDuration(int waveIndex) {  ///
-#if BF_RELEASE
   constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
                              60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
   VIEW_FROM_ARRAY_DANGER(durations);
-  const int seconds = durations[MIN(durations.count - 1, waveIndex)];
-#else
-  const int seconds = 3 + waveIndex * 5;
+  int seconds = durations[MIN(durations.count - 1, waveIndex)];
+#if BF_DEBUG
+  seconds /= 3;
 #endif
   return lframe::MakeUnscaled(seconds * FIXED_FPS);
 }
@@ -617,6 +638,11 @@ struct Rerolls {
 
   void Roll();
   void Reset();
+};
+
+struct ThisWaveMob {
+  CreatureType type              = {};
+  f32          accumulatedFactor = {};
 };
 
 struct GameData {
@@ -658,9 +684,13 @@ struct GameData {
       .texturesScale = 1.0f / METER_LOGICAL_SIZE,
     };
 
-    b2WorldId    world                 = {};
-    int          nextCreatureId        = 0;
-    int          toSpawn               = 3;
+    b2WorldId world          = {};
+    int       nextCreatureId = 0;
+    int       toSpawn        = 3;
+
+    Array<ThisWaveMob, CreatureType_COUNT> thisWaveMobs      = {};
+    int                                    thisWaveMobsCount = 0;
+
     LogicalFrame playerLastLifestealAt = {};
     LogicalFrame playerLastRegenAt     = {};
 
@@ -714,6 +744,34 @@ struct GameData {
     } shop;
   } run;
 } g = {};
+
+void MakePickupable(MakePickupableData data) {  ///
+  ASSERT(data.type);
+
+  Pickupable pickupable{
+    .type = data.type,
+    .pos  = data.pos,
+  };
+
+  switch (data.type) {
+  case PickupableType_COIN: {
+    auto& d  = pickupable.DataCoin();
+    d.amount = data.coin_amount;
+  } break;
+
+  case PickupableType_CONSUMABLE:
+  case PickupableType_CRATE: {
+    // Intentionally left blank.
+  } break;
+
+  default:
+    INVALID_PATH;
+    break;
+  }
+
+  pickupable.createdAt.SetNow();
+  *g.run.pickupables.Add() = pickupable;
+}
 
 template <typename T>
 void CheckCollisionsRect(
@@ -1029,8 +1087,10 @@ void MakeCreature(MakeCreatureData data) {  ///
   if (data.type != CreatureType_PLAYER)
     hurtboxRadius = MOB_HURTBOX_RADIUS;
 
-  const auto fb = glib->creatures()->Get(data.type);
-  auto health   = (f32)(fb->health() + g.run.waveIndex * fb->health_increase_per_wave());
+  const auto fb     = glib->creatures()->Get(data.type);
+  auto       health = (f32)fb->health()
+                + (f32)((g.run.waveIndex - fb->appearing_wave_number() + 1))
+                    * fb->health_increase_per_wave();
   if (data.type == CreatureType_PLAYER)
     health = (f32)g.run.playerStats[StatType_HP];
 
@@ -1254,6 +1314,30 @@ int GetNumberOfTreesToSpawn() {  ///
   return 0;
 }
 
+void RecalculateThisWaveMobs() {  ///
+  const auto fb_creatures = glib->creatures();
+
+  g.run.thisWaveMobsCount = 0;
+
+  f32 accumulatedFactor = 0;
+
+  FOR_RANGE (int, i, fb_creatures->size()) {
+    const auto fb     = fb_creatures->Get(i);
+    const auto factor = fb->spawn_factor();
+    if ((factor > 0) && (g.run.waveIndex + 1 >= fb->appearing_wave_number())) {
+      accumulatedFactor += factor;
+      g.run.thisWaveMobs[g.run.thisWaveMobsCount++] = {
+        .type              = (CreatureType)i,
+        .accumulatedFactor = accumulatedFactor,
+      };
+    }
+  }
+
+  // Normalization of `accumulatedFactor`.
+  FOR_RANGE (int, i, g.run.thisWaveMobsCount)
+    g.run.thisWaveMobs[i].accumulatedFactor /= accumulatedFactor;
+}
+
 void RunInit() {
   // Creating box2d world.
   {  ///
@@ -1313,6 +1397,8 @@ void RunInit() {
 
   g.run.waveStartedAt = {};
   g.run.waveStartedAt.SetNow();
+
+  RecalculateThisWaveMobs();
 }
 
 void GameInit() {  ///
@@ -3030,7 +3116,6 @@ void GameFixedUpdate() {
   const auto fb_damages     = glib->damages();
   const auto fb_weapons     = glib->weapons();
   const auto fb_projectiles = glib->projectiles();
-  const auto fb_waves       = glib->waves();
 
   // Reloading game.
   if (g.run.reload) {  ///
@@ -3067,6 +3152,12 @@ void GameFixedUpdate() {
       if (IsKeyPressed(SDL_SCANCODE_F9)) {  ///
         g.run.crates++;
       }
+    }
+
+    // N - increase wave.
+    if (IsKeyPressed(SDL_SCANCODE_N)) {  ///
+      g.run.waveIndex++;
+      RecalculateThisWaveMobs();
     }
   }
 
@@ -3169,7 +3260,8 @@ void GameFixedUpdate() {
     ge.settings.screenFade = 0;
     SDL_HideCursor();
 
-    IncrementSetZeroOn(&g.run.waveIndex, (int)fb_waves->size());
+    g.run.waveIndex++;
+    RecalculateThisWaveMobs();
     g.run.cratesDroppedThisWave = 0;
 
     g.run.waveStartedAt = {};
@@ -3359,14 +3451,14 @@ void GameFixedUpdate() {
       if (CanSpawnMoreCreatures()
           && (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0))
       {
-        const auto fb_wave = fb_waves->Get(g.run.waveIndex);
-
-        FOR_RANGE (int, i, g.run.toSpawn) {
+        FOR_RANGE (int, toSpawnIndex, g.run.toSpawn) {
           const auto   factor = GRAND.FRand();
           CreatureType spawnType{};
-          for (const auto creature : *fb_wave->creatures_to_spawn()) {
-            if (factor <= creature->spawn_factor()) {
-              spawnType = (CreatureType)creature->creature_type();
+
+          FOR_RANGE (int, k, g.run.thisWaveMobsCount) {
+            const auto& c = g.run.thisWaveMobs[k];
+            if (factor < c.accumulatedFactor) {
+              spawnType = c.type;
               break;
             }
           }
@@ -3439,12 +3531,12 @@ void GameFixedUpdate() {
             = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
         }
         else {
-          auto pickupRange = (f32)(100 + g.run.playerStats[StatType_PICKUP_RANGE]);
-          pickupRange      = MAX(30, pickupRange);
-          pickupRange /= 100.0f;
+          auto pickupRangeScale = (f32)(100 + g.run.playerStats[StatType_PICKUP_RANGE]);
+          pickupRangeScale      = MAX(30, pickupRangeScale);
+          pickupRangeScale /= 100.0f;
 
           if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
-              <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRange))
+              <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
           {
             pickupable.pickedUpAt.SetNow();
             MakeNumber({
@@ -3458,11 +3550,12 @@ void GameFixedUpdate() {
 
             switch (pickupable.type) {
             case PickupableType_COIN: {
-              int amount = 1;
+              const auto& data   = pickupable.DataCoin();
+              int         amount = data.amount;
 
               if (GRAND.FRand()
                   < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-                amount += 1;
+                amount *= 2;
 
               g.run.coins += amount;
 
@@ -3885,25 +3978,25 @@ void GameFixedUpdate() {
 
           // Mob drops coin / consumable / crate.
           if (creature.health != -f32_inf) {
-            Pickupable pickupable{
-              .type = PickupableType_COIN,
-              .pos  = creature.pos,
+            MakePickupableData data{
+              .type        = PickupableType_COIN,
+              .pos         = creature.pos,
+              .coin_amount = fb->coins_dropped(),
             };
-            pickupable.createdAt.SetNow();
-            *g.run.pickupables.Add() = pickupable;
+            MakePickupable(data);
 
             const auto luckFactor = GetLuckFactor();
             if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
-              pickupable.type = PickupableType_CONSUMABLE;
+              data.type = PickupableType_CONSUMABLE;
 
               const auto crateChance = CRATE_INSTEAD_OF_CONSUMABLE_FACTOR * luckFactor
                                        / (f32)(1 + g.run.cratesDroppedThisWave);
               if (GRAND.FRand() <= crateChance) {
-                pickupable.type = PickupableType_CRATE;
+                data.type = PickupableType_CRATE;
                 g.run.cratesDroppedThisWave++;
               }
 
-              *g.run.pickupables.Add() = pickupable;
+              MakePickupable(data);
             }
           }
         }
@@ -4352,6 +4445,8 @@ void GameDraw() {
       DebugText("F8 add level");
       DebugText("F9 add crate");
     }
+
+    DebugText("N increase wave");
 
     DebugText(TextFormat("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x));
 

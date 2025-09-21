@@ -57,6 +57,20 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         if i >= 2 and not x.get("is_secondary"):
             x["upgrade_name_locale"] = "UPGRADE_NAME_" + x["type"].upper()
 
+    # Creatures.
+    # ============================================================
+    mandatory_mob_fields = [
+        "appearing_wave_number",
+        "spawn_factor",
+        "health",
+        "health_increase_per_wave",
+        "contact_damage",
+    ]
+    for i, x in enumerate(gamelib["creatures"]):
+        if i >= 2:
+            for field in mandatory_mob_fields:
+                assert field in x, "Mob {} needs `{}` specified".format(x["type"], field)
+
     # Tables.
     # ============================================================
     if 1:
@@ -94,18 +108,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     {v: i for i, v in enumerate(types)},
                 )
             )
-
-    # Normalization of wave creature spawn_factors.
-    # ============================================================
-    for wave in gamelib["waves"]:
-        creatures = wave["creatures_to_spawn"]
-        spawn_factor_sum = sum(x["spawn_factor"] for x in creatures)
-
-        prev_factor = 0
-        for creature in creatures:
-            creature["spawn_factor"] = creature["spawn_factor"] / spawn_factor_sum
-            creature["spawn_factor"] += prev_factor
-            prev_factor = creature["spawn_factor"]
 
     # Codepoints.
     # ============================================================
