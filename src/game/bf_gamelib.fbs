@@ -38,11 +38,12 @@ table Creature {
     health: int;
     health_increase_per_wave: float;
     contact_damage: float;
+    contact_damage_increase_per_wave: float;
     projectile_damage: float;
     speed: float;
     speed_variation: float;
     hostility_type: int = 1;
-    can_be_knocked_back: bool = true;
+    knockback_resistance: float;
     consumable_drop_chance: float = 0.007;
     is_boss: bool = false;
     coins_dropped: int = 1;
@@ -76,7 +77,7 @@ table Weapon {
     name_locale: int;
     damage_type: int;
     damage: float;
-    impulse: float;
+    knockback_meters: float;
     cooldown_frames: int;
     shooting_duration_frames: int;
     projectile_type: int;
@@ -91,7 +92,6 @@ table Projectile {
     color: uint = 0xffffff;
     speed: float;
     collider_radius: float = 0.4;
-    impulse: float = 1;
     pierce: int = 0;
     texture_ids: [int];
 }

@@ -65,11 +65,16 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         "health",
         "health_increase_per_wave",
         "contact_damage",
+        "contact_damage_increase_per_wave",
+        "knockback_resistance",
     ]
     for i, x in enumerate(gamelib["creatures"]):
         if i >= 2:
             for field in mandatory_mob_fields:
                 assert field in x, "Mob {} needs `{}` specified".format(x["type"], field)
+            assert 0 <= x["knockback_resistance"] <= 1, (
+                "Mob {} `knockback_resistance` must be in range [0; 1]".format(x["type"])
+            )
 
     # Tables.
     # ============================================================

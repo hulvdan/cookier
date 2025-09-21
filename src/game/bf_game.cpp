@@ -544,6 +544,7 @@ struct Projectile {
   LogicalFrame                      createdAt          = {};
   Array<int, PROJECTILE_MAX_PIERCE> piercedCreatureIds = {};
   int                               piercedCount       = 0;
+  f32                               knockbackMeters    = {};
   f32                               range              = {};
   f32                               travelledDistance  = 0;
 };
@@ -555,6 +556,7 @@ struct MakeProjectileData {
   Vector2        dir               = {};
   f32            range             = {};
   f32            damage            = {};
+  f32            knockbackMeters   = {};
 };
 
 struct Number {
@@ -1144,6 +1146,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .pos               = data.pos,
     .dir               = data.dir,
     .damage            = data.damage,
+    .knockbackMeters   = data.knockbackMeters,
     .range             = data.range,
   };
   projectile.createdAt.SetNow();
@@ -1449,8 +1452,8 @@ constexpr f32 GetLifestealChance(int level) {  ///
 bool TryApplyDamage(
   int          creatureIndex,
   f32          damage,
-  Vector2      direction,
-  f32          impulse,
+  Vector2      directionOrZero,
+  f32          knockbackMeters,
   CreatureType damageApplicatorCreatureType,
   bool         isCrit
 ) {  ///
@@ -1458,6 +1461,9 @@ bool TryApplyDamage(
     return false;
   if (FloatEquals(damage, 0))
     return false;
+
+  if (directionOrZero != Vector2Zero())
+    ASSERT(FloatEquals(Vector2Length(directionOrZero), 1));
 
   // Player can't take damage when finishing wave.
   if (!creatureIndex && g.run.scheduledWaveCompleted.IsSet())
@@ -1521,10 +1527,11 @@ bool TryApplyDamage(
   creature.lastDamagedAt = {};
   creature.lastDamagedAt.SetNow();
 
-  if (!fb->can_be_knocked_back())
-    impulse = 0;
+  knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
+  knockbackMeters *= 1.0f - fb->knockback_resistance();
+
   b2Body_ApplyLinearImpulseToCenter(
-    creature.body.id, ToB2Vec2(direction * impulse), true
+    creature.body.id, ToB2Vec2(directionOrZero * knockbackMeters), true
   );
 
   if (!g.run.justDamagedCreatures.Contains(creatureIndex))
@@ -2995,7 +3002,12 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
       damage *= CRIT_DAMAGE_MULTIPLIER;
 
     TryApplyDamage(
-      creatureIndex, damage, weapon->targetDir, fb->impulse(), CreatureType_PLAYER, isCrit
+      creatureIndex,
+      damage,
+      Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      fb->knockback_meters(),
+      CreatureType_PLAYER,
+      isCrit
     );
   }
   return continueCollisions;
@@ -3443,10 +3455,11 @@ void GameFixedUpdate() {
         *g.run.creaturePreSpawns.Add() = spawn;
       };
 
-      int        spawnEnemiesEvery = FIXED_FPS;
-      const auto multiplier        = (g.run.playerStats[StatType_ENEMIES] + 100) / 100.0f;
-      spawnEnemiesEvery            = Round((f32)spawnEnemiesEvery / multiplier);
-      spawnEnemiesEvery            = MAX(1, spawnEnemiesEvery);
+      int  spawnEnemiesEvery = FIXED_FPS;
+      auto multiplier        = 1 + (f32)g.run.playerStats[StatType_ENEMIES] / 100.0f;
+      multiplier             = MAX(0.001f, multiplier);
+      spawnEnemiesEvery      = Round((f32)spawnEnemiesEvery / multiplier);
+      spawnEnemiesEvery      = MAX(1, spawnEnemiesEvery);
 
       if (CanSpawnMoreCreatures()
           && (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0))
@@ -3510,14 +3523,12 @@ void GameFixedUpdate() {
         if (Vector2DistanceSqr(playerPos, creature.pos)
             <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
         {
-          auto damage = fb_creatures->Get(creature.type)->contact_damage();
+          const f32 damage
+            = fb->contact_damage()
+              + fb->contact_damage_increase_per_wave()
+                  * (f32)(g.run.waveIndex + 1 - fb->appearing_wave_number());
           TryApplyDamage(
-            0,
-            ApplyPlayerArmorToIncomingDamage(damage),
-            Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
-            0,
-            creature.type,
-            false
+            0, ApplyPlayerArmorToIncomingDamage(damage), {}, 0, creature.type, false
           );
         }
       }
@@ -3752,6 +3763,7 @@ void GameFixedUpdate() {
               .dir               = weapon.targetDir,
               .range             = GetWeaponRange(weapon),
               .damage            = damage,
+              .knockbackMeters   = fb->knockback_meters(),
             });
           }
         }
@@ -3841,6 +3853,8 @@ void GameFixedUpdate() {
         const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
         const auto radius  = fb->collider_radius();
         if (distSqr < SQR(radius)) {
+          Vector2 knockbackDirection{};
+
           f32  damage = projectile.damage;
           bool isCrit = false;
           if (projectile.ownerCreatureType == CreatureType_PLAYER) {
@@ -3855,6 +3869,9 @@ void GameFixedUpdate() {
                 0, (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
               );
             }
+
+            knockbackDirection
+              = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos);
           }
           else {
             // Mob damages player.
@@ -3864,15 +3881,18 @@ void GameFixedUpdate() {
           const f32 piercingDamageMultiplier
             = (f32)g.run.playerStats[StatType_PIERCING_DAMAGE] / 100.0f;
 
+          f32 knockback = projectile.knockbackMeters;
+
           FOR_RANGE (int, i, projectile.piercedCount) {
             damage *= piercingDamageMultiplier;
+            knockback *= piercingDamageMultiplier;
           }
 
           if (TryApplyDamage(
                 creatureIndex,
                 damage,
-                Vector2DirectionOrRandom(projectile.pos, creature.pos),
-                fb->impulse(),
+                knockbackDirection,
+                knockback,
                 projectile.ownerCreatureType,
                 isCrit
               ))
