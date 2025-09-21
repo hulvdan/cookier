@@ -53,17 +53,30 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     for x in gamelib["weapons"][1:]:
         x["name_locale"] = "WEAPON_" + x["type"].upper()
-        assert "damage_type" in x, (
-            f"Weapon {x['type']} must have `damage_type` specified!"
-        )
 
         mandatory_fields = [
-            "price",
+            "max_price",
+            "min_tier_index",
+            "base_damage",
+            "damage_scalings",
         ]
         for field in mandatory_fields:
             assert field in x, "Weapon {} has to have '{}' specified".format(
                 x["type"], field
             )
+
+        for scalings in x["damage_scalings"]:
+            percents_count = len(scalings["percents_per_tier"])
+            assert percents_count == 4 - x["min_tier_index"], (
+                "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
+                    x["type"], 4 - x["min_tier_index"], x["min_tier_index"]
+                )
+            )
+        assert len(x["base_damage"]) == 4 - x["min_tier_index"], (
+            "Weapon {} must have {} `base_damage` because it's `min_tier_index` is {}".format(
+                x["type"], 4 - x["min_tier_index"], x["min_tier_index"]
+            )
+        )
 
     # Stats.
     # ============================================================

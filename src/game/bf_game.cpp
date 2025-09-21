@@ -1342,8 +1342,11 @@ void RecalculateThisWaveMobs() {  ///
 }
 
 int GetWeaponPrice(WeaponType type, int tier) {  ///
+  ASSERT(tier >= 0);
+  ASSERT(tier < 4);
   const auto fb = glib->weapons()->Get(type);
-  return Round((f32)fb->price() * PRICE_SCALINGS_PER_TIER[tier]);
+  ASSERT(fb->min_tier_index() <= tier);
+  return Round((f32)fb->max_price() * PRICE_SCALINGS_PER_TIER[tier]);
 }
 
 int GetWeaponRecyclePrice(WeaponType type, int tier) {  ///
@@ -1532,6 +1535,7 @@ bool TryApplyDamage(
     }
   }
   creature.health -= damage;
+  creature.health = MAX(0, creature.health);
 
   creature.lastDamagedAt = {};
   creature.lastDamagedAt.SetNow();
@@ -2473,6 +2477,7 @@ void DoUI(bool draw) {
                         // Filling empty weapon slot if exists.
                         weapon.type = v.weapon;
                         weapon.tier = v.tier;
+                        RecalculatePlayerWeaponOffsets();
                       }
                       weapon.recyclePrice
                         = GetWeaponRecyclePrice(weapon.type, weapon.tier);
@@ -2986,6 +2991,20 @@ int GetCreatureIndexById(int id) {  ///
   return index;
 }
 
+f32 GetWeaponDamage(WeaponType type, int tier) {  ///
+  ASSERT(tier < 4);
+  const auto fb = glib->weapons()->Get(type);
+  ASSERT(tier >= fb->min_tier_index());
+  f32 damage = fb->base_damage()->Get(tier - fb->min_tier_index());
+  for (auto scaling : *fb->damage_scalings()) {
+    auto statValue = g.run.playerStats[scaling->stat_type()];
+    auto percent   = scaling->percents_per_tier()->Get(tier - fb->min_tier_index());
+    damage += (f32)statValue * (f32)percent / 100.0f;
+  }
+  damage *= GetPlayerStatDamageMultiplier();
+  return damage;
+}
+
 bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
@@ -3006,13 +3025,12 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
     weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
 
-    f32        damage     = fb->damage();
-    const auto damageStat = glib->damages()->Get(fb->damage_type())->stat_type();
-    damage += g.run.playerStats[damageStat];
-    damage *= GetPlayerStatDamageMultiplier();
+    f32  damage = GetWeaponDamage(weapon->type, weapon->tier);
     bool isCrit = IsCrit();
     if (isCrit)
       damage *= CRIT_DAMAGE_MULTIPLIER;
+
+    damage = MAX(1, damage);
 
     TryApplyDamage(
       creatureIndex,
@@ -3138,7 +3156,6 @@ void GameFixedUpdate() {
   ZoneScoped;
 
   const auto fb_creatures   = glib->creatures();
-  const auto fb_damages     = glib->damages();
   const auto fb_weapons     = glib->weapons();
   const auto fb_projectiles = glib->projectiles();
 
@@ -3764,9 +3781,6 @@ void GameFixedUpdate() {
               break;
             }
           }
-          f32        damage     = fb->damage();
-          const auto damageStat = fb_damages->Get(fb->damage_type())->stat_type();
-          damage += g.run.playerStats[damageStat];
 
           if (spawn) {
             MakeProjectile({
@@ -3775,7 +3789,7 @@ void GameFixedUpdate() {
               .pos               = pos,
               .dir               = weapon.targetDir,
               .range             = GetWeaponRange(weapon),
-              .damage            = damage,
+              .damage            = GetWeaponDamage(weapon.type, weapon.tier),
               .knockbackMeters   = fb->knockback_meters(),
             });
           }

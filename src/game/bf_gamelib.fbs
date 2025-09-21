@@ -70,20 +70,20 @@ table Item {
     price: int;
 }
 
-table Damage {
+table WeaponKind {
     stat_type: int;
 }
 
 table WeaponDamageScaling {
     stat_type: int;
-    values_per_tier: [float] (required);
+    percents_per_tier: [float] (required);
 }
 
 table Weapon {
     name_locale: int;
-    damage_type: int;
-    damage: float;
-    min_tier: int;
+    min_tier_index: int;
+    weaponkind_type: int;
+    base_damage: [float];
     damage_scalings: [WeaponDamageScaling];
     knockback_meters: float;
     cooldown_frames: int;
@@ -91,7 +91,7 @@ table Weapon {
     projectile_type: int;
     projectile_spawn_frames: [int];
     range_meters: float;
-    price: int;
+    max_price: int;
     melee_collider_height_px: float;
     color: uint = 0xffffff;
     texture_ids: [int];
@@ -196,7 +196,7 @@ table GameLibrary {
     hostilities: [Hostility] (required);
     creatures: [Creature] (required);
     items: [Item] (required);
-    damages: [Damage] (required);
+    weapon_kinds: [WeaponKind] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
     pickupables: [Pickupable] (required);
