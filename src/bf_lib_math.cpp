@@ -161,6 +161,16 @@ int Ceilf(f32 value) {  ///
   return result;
 }
 
+int Floor(f64 value) {  ///
+  auto result = (int)std::floor(value);
+  return result;
+}
+
+int Floorf(f32 value) {  ///
+  auto result = (int)std::floorf(value);
+  return result;
+}
+
 u64 CeilDivisionU64(u64 value, u64 divisor) {  ///
   ASSERT(value >= 0);
   ASSERT(divisor > 0);

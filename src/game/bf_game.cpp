@@ -1222,7 +1222,8 @@ void RunInit() {
   }
 
   // Initializing `playerStats`.
-  g.run.playerStats[StatType_HP] = 20;
+  g.run.playerStats[StatType_HP]              = 20;
+  g.run.playerStats[StatType_PIERCING_DAMAGE] = 50;
 
   // Making player.
   MakeCreature({
@@ -3661,8 +3662,8 @@ void GameFixedUpdate() {
       else
         end = 1;
 
-      for (int i = start; i < end; i++) {
-        auto& creature = g.run.creatures[i];
+      for (int creatureIndex = start; creatureIndex < end; creatureIndex++) {
+        auto& creature = g.run.creatures[creatureIndex];
         if (creature.diedAt.IsSet())
           continue;
 
@@ -3697,8 +3698,15 @@ void GameFixedUpdate() {
             damage *= ApplyPlayerArmorToIncomingDamage(damage);
           }
 
+          const f32 piercingDamageMultiplier
+            = (f32)g.run.playerStats[StatType_PIERCING_DAMAGE] / 100.0f;
+
+          FOR_RANGE (int, i, projectile.piercedCount) {
+            damage *= piercingDamageMultiplier;
+          }
+
           if (TryApplyDamage(
-                i,
+                creatureIndex,
                 damage,
                 Vector2DirectionOrRandom(projectile.pos, creature.pos),
                 fb->impulse(),
