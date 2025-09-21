@@ -1213,6 +1213,45 @@ int GenerateItemPrice() {  ///
   return price;
 }
 
+int GetNumberOfTreesToSpawn() {  ///
+  // ref: https://brotato.wiki.spellsandguns.com/Trees#Spawn
+  const int stat = g.run.playerStats[StatType_TREES];
+
+  int min = stat / 3;
+
+  int percentsCount = 2;
+  if ((stat + 1) % 3 == 0)
+    percentsCount = 3;
+
+  f32 percents[3]{};
+  percents[0] = 49.5f - (f32)min;
+  percents[1] = 83.5f;
+  percents[2] = 16.0f - (f32)min / 2.0f;
+
+  f32 total = 0;
+  FOR_RANGE (int, i, percentsCount) {
+    total += percents[i];
+  }
+
+  f32 factors[3]{};
+  FOR_RANGE (int, i, percentsCount) {
+    factors[i] = percents[i] / total;
+  }
+
+  for (int i = 1; i < percentsCount; i++) {
+    factors[i] += factors[i - 1];
+  }
+
+  const f32 t = GRAND.FRand();
+  FOR_RANGE (int, i, percentsCount) {
+    if (t < factors[i])
+      return min + (((i + 1) % 3 == 0) ? 1 : 0);
+  }
+
+  INVALID_PATH;
+  return 0;
+}
+
 void RunInit() {
   // Creating box2d world.
   {  ///
@@ -3275,6 +3314,28 @@ void GameFixedUpdate() {
 
     // Making pre spawn decals.
     {  ///
+      LAMBDA (void, makePreSpawn, (CreatureType type)) {
+        ASSERT(type);
+
+        Vector2 posToSpawn{};
+        do {
+          posToSpawn = {
+            CREATURES_SPAWN_MARGIN
+              + GRAND.FRand() * (WORLD_X - 2 * CREATURES_SPAWN_MARGIN),
+            CREATURES_SPAWN_MARGIN
+              + GRAND.FRand() * (WORLD_Y - 2 * CREATURES_SPAWN_MARGIN),
+          };
+        } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
+                 < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
+
+        CreaturePreSpawn spawn{
+          .type = type,
+          .pos  = posToSpawn,
+        };
+        spawn.createdAt.SetNow();
+        *g.run.creaturePreSpawns.Add() = spawn;
+      };
+
       int        spawnEnemiesEvery = FIXED_FPS;
       const auto multiplier        = (g.run.playerStats[StatType_ENEMIES] + 100) / 100.0f;
       spawnEnemiesEvery            = Round((f32)spawnEnemiesEvery / multiplier);
@@ -3285,19 +3346,7 @@ void GameFixedUpdate() {
       {
         const auto fb_wave = fb_waves->Get(g.run.waveIndex);
 
-        Vector2 posToSpawn{};
-
         FOR_RANGE (int, i, g.run.toSpawn) {
-          do {
-            posToSpawn = {
-              CREATURES_SPAWN_MARGIN
-                + GRAND.FRand() * (WORLD_X - 2 * CREATURES_SPAWN_MARGIN),
-              CREATURES_SPAWN_MARGIN
-                + GRAND.FRand() * (WORLD_Y - 2 * CREATURES_SPAWN_MARGIN),
-            };
-          } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
-                   < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
-
           const auto   factor = GRAND.FRand();
           CreatureType spawnType{};
           for (const auto creature : *fb_wave->creatures_to_spawn()) {
@@ -3306,21 +3355,19 @@ void GameFixedUpdate() {
               break;
             }
           }
-
-          if (spawnType) {
-            CreaturePreSpawn spawn{
-              .type = spawnType,
-              .pos  = posToSpawn,
-            };
-            spawn.createdAt.SetNow();
-            *g.run.creaturePreSpawns.Add() = spawn;
-          }
-          else
-            INVALID_PATH;
+          makePreSpawn(spawnType);
         }
 
         if (g.run.toSpawn < 3)
           g.run.toSpawn++;
+      }
+
+      // Spawning trees every 10 seconds.
+      if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
+        const int toSpawn = GetNumberOfTreesToSpawn();
+        FOR_RANGE (int, i, toSpawn) {
+          makePreSpawn(CreatureType_TREE);
+        }
       }
     }
 

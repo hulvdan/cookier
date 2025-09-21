@@ -628,8 +628,6 @@ waves:
         spawn_factor: 35
   # 2
   - creatures_to_spawn:
-      - creature_type: TREE
-        spawn_factor: 20
       - creature_type: MOB1
         spawn_factor: 30
       - creature_type: MOB2
@@ -642,8 +640,6 @@ waves:
         spawn_factor: 35
   # 3
   - creatures_to_spawn:
-      - creature_type: TREE
-        spawn_factor: 20
       - creature_type: MOB1
         spawn_factor: 10
       - creature_type: MOB2
@@ -656,8 +652,6 @@ waves:
         spawn_factor: 35
   # 4
   - creatures_to_spawn:
-      - creature_type: TREE
-        spawn_factor: 20
       - creature_type: MOB1
         spawn_factor: 40
       - creature_type: MOB2
@@ -670,8 +664,6 @@ waves:
         spawn_factor: 35
   # 5
   - creatures_to_spawn:
-      - creature_type: TREE
-        spawn_factor: 20
       - creature_type: MOB1
         spawn_factor: 50
       - creature_type: MOB2
