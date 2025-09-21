@@ -1,4 +1,5 @@
 
+* weapon damage progression (mb range + piercing?)
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
@@ -9,7 +10,6 @@
 * stats: Structure Range: Increases or decreases the range of Structures.
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
-* stats: Knockback
 * spread mobs apart (use force?)
 * mob that rotates when moving?
 *

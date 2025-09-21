@@ -181,6 +181,8 @@ creatures:
     health: 3
     health_increase_per_wave: 2
     contact_damage: 1
+    contact_damage_increase_per_wave: 0.6
+    knockback_resistance: 0
     speed: 4.5
     speed_variation: 0.5
     color: 0xa13d77
@@ -200,6 +202,8 @@ creatures:
     health: 1
     health_increase_per_wave: 1
     contact_damage: 1
+    contact_damage_increase_per_wave: 0.6
+    knockback_resistance: 0
     color: 0xb8560f
     speed: 5
     speed_variation: 0.5
@@ -219,6 +223,8 @@ creatures:
     health: 8
     health_increase_per_wave: 1
     contact_damage: 1
+    contact_damage_increase_per_wave: 0.6
+    knockback_resistance: 0.95
     projectile_damage: 4
     color: 0xb59a66
     speed: 7
@@ -239,6 +245,8 @@ creatures:
     health: 20
     health_increase_per_wave: 1
     contact_damage: 2
+    contact_damage_increase_per_wave: 0.85
+    knockback_resistance: 0.9
     color: 0x7a7576
     speed: 5
     speed_variation: 0.5
@@ -259,6 +267,8 @@ creatures:
     health: 10
     health_increase_per_wave: 1
     contact_damage: 1
+    contact_damage_increase_per_wave: 0.85
+    knockback_resistance: 0.7
     color: 0x82dcd7
     speed: 5
     speed_variation: 0.5
@@ -283,8 +293,9 @@ creatures:
     health: 10
     health_increase_per_wave: 5
     contact_damage: 0
+    contact_damage_increase_per_wave: 0
+    knockback_resistance: 1
     hostility_type: NEUTRAL
-    can_be_knocked_back: false
     consumable_drop_chance: 1
     coins_dropped: 3
     idle_texture_ids:
@@ -339,7 +350,7 @@ weapons:
     cooldown_frames: 20
     shooting_duration_frames: 10
     range_meters: 2
-    impulse: 100
+    knockback_meters: 5
     melee_collider_height_px: 76
     texture_ids:
       - game_weapon_sword
@@ -347,6 +358,7 @@ weapons:
     damage_type: RANGED
     projectile_type: BULLET
     damage: 1.0
+    knockback_meters: 1
     cooldown_frames: 10
     shooting_duration_frames: 20
     projectile_spawn_frames:
@@ -358,6 +370,7 @@ weapons:
     projectile_type: ARROW
     damage_type: RANGED
     damage: 1.5
+    knockback_meters: 2
     cooldown_frames: 16
     shooting_duration_frames: 10
     projectile_spawn_frames:
