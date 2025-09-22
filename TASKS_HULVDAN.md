@@ -1,6 +1,4 @@
 
-* don't show player negative hp in bar
-* finishing wave shouldn't drop coins on killing creatures
 * item effects
 * weapon description
 * elemental weapon with bouncing projectile that slows down / burns mobs
