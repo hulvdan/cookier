@@ -696,12 +696,12 @@ struct GameData {
     LogicalFrame playerLastLifestealAt = {};
     LogicalFrame playerLastRegenAt     = {};
 
+    int xpLevel               = 1;
     f32 xp                    = 0;
-    f32 nextLevelXp           = 10;
+    f32 nextLevelXp           = 0;
     int coins                 = 0;
     int crates                = 0;
     int cratesDroppedThisWave = 0;
-    int xpLevel               = 1;
     int previousLevel         = 1;
 
     int          waveIndex     = 0;
@@ -1353,6 +1353,10 @@ int GetWeaponRecyclePrice(WeaponType type, int tier) {  ///
   return GetWeaponPrice(type, tier) / 3;
 }
 
+int GetNextLevelXp(int currentLevel) {  ///
+  return SQR(currentLevel + 3);
+}
+
 void RunInit() {
   // Creating box2d world.
   {  ///
@@ -1414,6 +1418,8 @@ void RunInit() {
   g.run.waveStartedAt.SetNow();
 
   RecalculateThisWaveMobs();
+
+  g.run.nextLevelXp = GetNextLevelXp(g.run.xpLevel);
 }
 
 void GameInit() {  ///
@@ -1535,7 +1541,6 @@ bool TryApplyDamage(
     }
   }
   creature.health -= damage;
-  creature.health = MAX(0, creature.health);
 
   creature.lastDamagedAt = {};
   creature.lastDamagedAt.SetNow();
@@ -1968,12 +1973,13 @@ void DoUI(bool draw) {
             },
           }) {
             FLOATING_BEAUTIFY;
+
+            const auto health = MAX(0, PLAYER_CREATURE.health);
+
             BF_CLAY_IMAGE({
               .texId = texs->Get(1),
               .sourceMargins{
-                .right = Clamp01(
-                  1.0f - (f32)PLAYER_CREATURE.health / (f32)PLAYER_CREATURE.maxHealth
-                )
+                .right = Clamp01(1.0f - (f32)health / (f32)PLAYER_CREATURE.maxHealth)
               },
               .color = RED,
             });
@@ -1988,9 +1994,9 @@ void DoUI(bool draw) {
               },
             }) {
               FLOATING_BEAUTIFY;
-              BF_CLAY_TEXT(TextFormat(
-                "%d / %d", Round(PLAYER_CREATURE.health), Round(PLAYER_CREATURE.maxHealth)
-              ));
+              BF_CLAY_TEXT(
+                TextFormat("%d / %d", Round(health), Round(PLAYER_CREATURE.maxHealth))
+              );
             }
           }
         });
@@ -3106,8 +3112,8 @@ void AddXP(f32 xp) {  ///
   // Handling level up.
   while (g.run.xp >= g.run.nextLevelXp) {
     g.run.xp -= g.run.nextLevelXp;
-    g.run.nextLevelXp *= 2;
     g.run.xpLevel++;
+    g.run.nextLevelXp = GetNextLevelXp(g.run.xpLevel);
 
     MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
 

@@ -1,4 +1,6 @@
 
+* don't show player negative hp in bar
+* finishing wave shouldn't drop coins on killing creatures
 * item effects
 * weapon description
 * elemental weapon with bouncing projectile that slows down / burns mobs
@@ -19,11 +21,6 @@
 * mob that rotates when moving?
 *
 *
-* correct xp progression
-* mobs armor characteristic
-* mobs damage progression
-  consider spawning them with padding = radius of collider
-  + make the same thing with mobs that spawn others on death
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas
