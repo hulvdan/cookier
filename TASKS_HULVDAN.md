@@ -1,5 +1,8 @@
+x added basic item effects that increase stats + showing them in SHOP on hover
+x weapon stats: damage
+x weapon stats: cooldown
+x weapon stats: knockback
 
-* weapon stats: cooldown
 * weapon stats: critical
 * weapon stats: piercing
 * weapon stats: bounces
