@@ -1749,6 +1749,17 @@ f32 GetWeaponDamage(WeaponType type, int tier) {  ///
   return damage;
 }
 
+f32 GetPlayerStatAttackSpeedMultiplier() {  ///
+  return (f32)(100 + g.run.playerStats[StatType_ATTACK_SPEED]) / 100.0f;
+}
+
+lframe ApplyAttackSpeedToDuration(int duration) {  ///
+  return lframe::MakeUnscaled(MAX(
+    1,
+    (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration) / GetPlayerStatAttackSpeedMultiplier())
+  ));
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -1792,7 +1803,12 @@ void DoUI(bool draw) {
     return !draw && Clay_Hovered() && IsMouseReleased(R);
   };
 
-  // LAMBDA (bool, componentButton, (bool enabled, auto innerLambda)) { ///
+  struct ComponentButtonData {
+    bool enabled = false;
+    bool growX   = false;
+  };
+
+  // LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) { ///
   const u32 buttonColors_[]{
     glib->ui_button_hovered_color(),
     glib->ui_button_default_color(),
@@ -1800,15 +1816,24 @@ void DoUI(bool draw) {
   };
   VIEW_FROM_ARRAY_DANGER(buttonColors);
 
-  LAMBDA (bool, componentButton, (bool enabled, auto innerLambda)) {
+  LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) {
     bool result = false;
 
+    Clay_Sizing sizing{};
+    if (data.growX)
+      sizing.width = CLAY_SIZING_GROW(0);
+
     CLAY({
-      .layout{BF_CLAY_PADDING_ALL(8)},
-      .backgroundColor
-      = ToClayColor(ColorFromRGB(buttonColors[(enabled ? (Clay_Hovered() ? 0 : 1) : 2)])),
+      .layout{
+        .sizing{sizing},
+        BF_CLAY_PADDING_ALL(8),
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      },
+      .backgroundColor = ToClayColor(
+        ColorFromRGB(buttonColors[(data.enabled ? (Clay_Hovered() ? 0 : 1) : 2)])
+      ),
     }) {
-      result = enabled && clicked();
+      result = data.enabled && clicked();
       innerLambda();
     }
 
@@ -1851,15 +1876,19 @@ void DoUI(bool draw) {
 
       // Primary / secondary buttons.
       CLAY({.layout{.childGap = 9}}) {
-        const bool clickedPrimary
-          = componentButton(g.run.showingSecondaryStats, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
-            });
+        const bool clickedPrimary = componentButton(
+          {.enabled = g.run.showingSecondaryStats},
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
+          }
+        );
 
-        const bool clickedSecondary
-          = componentButton(!g.run.showingSecondaryStats, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
-            });
+        const bool clickedSecondary = componentButton(
+          {.enabled = !g.run.showingSecondaryStats},
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
+          }
+        );
 
         if (clickedPrimary)
           g.run.showingSecondaryStats = false;
@@ -2093,8 +2122,10 @@ void DoUI(bool draw) {
       BF_CLAY_TEXT(": ");
 
       // Number.
-      const int cooldownFrames  = fb->shooting_duration_frames() + fb->cooldown_frames();
-      const f32 cooldownSeconds = (f32)cooldownFrames / (f32)FIXED_FPS;
+      const auto cooldownFrames = ApplyAttackSpeedToDuration(
+        fb->shooting_duration_frames() + fb->cooldown_frames()
+      );
+      const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
       BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), GREEN);
     }
 
@@ -2234,7 +2265,8 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
-        BF_CLAY_TEXT(TextFormat("%s %d", glib->ui_wave_locale(), g.run.waveIndex + 1));
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
+        BF_CLAY_TEXT(TextFormat(" %d", g.run.waveIndex + 1));
 
         if (g.run.screen == ScreenType_GAMEPLAY) {
           const auto remainingFrames
@@ -2340,18 +2372,20 @@ void DoUI(bool draw) {
 
           // Take and Recycle buttons.
           CLAY({.layout{.childGap = 8}}) {
-            const bool took = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
-            });
+            const bool took
+              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
+                });
 
-            const bool recycled = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-              CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
-                BF_CLAY_TEXT(TextFormat(" (+%d)", g.run.pickedUpItem.recyclePrice));
-                // BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                // BF_CLAY_TEXT(")");
-              }
-            });
+            const bool recycled
+              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
+                  CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
+                    BF_CLAY_TEXT(TextFormat(" (+%d)", g.run.pickedUpItem.recyclePrice));
+                    // BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                    // BF_CLAY_TEXT(")");
+                  }
+                });
 
             if (took)
               AddItem(g.run.pickedUpItem.toPick);
@@ -2431,9 +2465,10 @@ void DoUI(bool draw) {
               }
 
               // Choose button.
-              const auto clicked = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
-              });
+              const auto clicked
+                = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
+                  });
               if (clicked) {
                 if (g.run.previousLevel < g.run.xpLevel) {
                   g.run.previousLevel++;
@@ -2461,13 +2496,14 @@ void DoUI(bool draw) {
 
         // Reroll button.
         const bool canReroll = (g.run.upgrades.rerolls.price <= g.run.coins);
-        const bool rerolled  = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
-          CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
-            BF_CLAY_TEXT(TextFormat(" - %d ", g.run.upgrades.rerolls.price));
-            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-          }
-        });
+        const bool rerolled
+          = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
+              CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
+                BF_CLAY_TEXT(TextFormat(" - %d ", g.run.upgrades.rerolls.price));
+                BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+              }
+            });
         if (rerolled) {
           g.run.upgrades.rerolls.Roll();
           RefillUpgradesToPick();
@@ -2528,21 +2564,19 @@ void DoUI(bool draw) {
 
           // Reroll button.
           const bool canReroll = (g.run.coins >= g.run.shop.rerolls.price);
-          const bool rerolled  = componentButton(canReroll, [&]() BF_FORCE_INLINE_LAMBDA {
-            CLAY({.layout{
-              BF_CLAY_PADDING_ALL(8),
-              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-            }}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
+          const bool rerolled
+            = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
 
-              ASSERT(g.run.shop.rerolls.price >= 0);
+                  ASSERT(g.run.shop.rerolls.price >= 0);
 
-              if (g.run.shop.rerolls.price > 0) {
-                BF_CLAY_TEXT(TextFormat(" - %d ", g.run.shop.rerolls.price));
-                BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-              }
-            }
-          });
+                  if (g.run.shop.rerolls.price > 0) {
+                    BF_CLAY_TEXT(TextFormat(" - %d ", g.run.shop.rerolls.price));
+                    BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                  }
+                }
+              });
           if (rerolled) {
             g.run.shop.rerolls.Roll();
             RefillShopToPick();
@@ -2644,7 +2678,7 @@ void DoUI(bool draw) {
                 }}) {
                   // Buying item / weapon.
                   const auto bought
-                    = componentButton(canBuy, [&]() BF_FORCE_INLINE_LAMBDA {
+                    = componentButton({.enabled = canBuy}, [&]() BF_FORCE_INLINE_LAMBDA {
                         CLAY({.layout{
                           BF_CLAY_SIZING_GROW_X,
                           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -2826,7 +2860,7 @@ void DoUI(bool draw) {
 
                         // Combine button.
                         const bool combined = componentButton(
-                          canCombineWithIndex >= 0,
+                          {.enabled = canCombineWithIndex >= 0},
                           [&]() BF_FORCE_INLINE_LAMBDA {
                             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale()
                             );
@@ -2834,20 +2868,23 @@ void DoUI(bool draw) {
                         );
 
                         // Recycle button.
-                        const bool recycled
-                          = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-                              BF_CLAY_TEXT_LOCALIZED_DANGER(
-                                glib->ui_button_recycle_locale()
-                              );
-                              BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
-                            });
+                        const bool recycled = componentButton(
+                          {.enabled = true},
+                          [&]() BF_FORCE_INLINE_LAMBDA {
+                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale()
+                            );
+                            BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
+                          }
+                        );
 
                         // Cancel button.
-                        const bool cancelled
-                          = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-                              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale(
-                              ));
-                            });
+                        const bool cancelled = componentButton(
+                          {.enabled = true},
+                          [&]() BF_FORCE_INLINE_LAMBDA {
+                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale()
+                            );
+                          }
+                        );
 
                         if (combined) {
                           weapon.tier += 1;
@@ -2883,12 +2920,15 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_VERTICAL;
 
           // Advance to the next wave button.
-          g.run.scheduledNextWave = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_next_wave_locale());
-            BF_CLAY_TEXT(" (");
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
-            BF_CLAY_TEXT(TextFormat(" %d)", g.run.waveIndex + 2));
-          });
+          g.run.scheduledNextWave = componentButton(
+            {.enabled = true, .growX = true},
+            [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_next_wave_locale());
+              BF_CLAY_TEXT(" (");
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
+              BF_CLAY_TEXT(TextFormat(" %d)", g.run.waveIndex + 2));
+            }
+          );
         }
       }
     }
@@ -2982,7 +3022,7 @@ void DoUI(bool draw) {
         BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
-        g.run.reload = componentButton(true, [&]() BF_FORCE_INLINE_LAMBDA {
+        g.run.reload = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_restart_locale());
         });
       }
@@ -3236,17 +3276,6 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   return continueCollisions;
 }
 
-f32 GetPlayerStatAttackSpeedMultiplier() {  ///
-  return (f32)(100 + g.run.playerStats[StatType_ATTACK_SPEED]) / 100.0f;
-}
-
-lframe ApplyAttackSpeedToShootingDuration(int shootingDurationFrames) {  ///
-  return lframe::MakeUnscaled(CeilDivision(
-    (f32)(_BF_LOGICAL_FPS_SCALE * shootingDurationFrames),
-    GetPlayerStatAttackSpeedMultiplier()
-  ));
-}
-
 f32 GetWeaponRange(const Weapon& weapon) {  ///
   const auto fb = glib->weapons()->Get(weapon.type);
 
@@ -3269,10 +3298,9 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
     return basePos;
 
-  const auto e = weapon.startedShootingAt.Elapsed();
-  const auto shootingDur
-    = ApplyAttackSpeedToShootingDuration(fb->shooting_duration_frames());
-  auto p = e.Progress(shootingDur);
+  const auto e           = weapon.startedShootingAt.Elapsed();
+  const auto shootingDur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+  auto       p           = e.Progress(shootingDur);
   if (p > 0.5)
     p = 2.0f - p * 2;
   else
@@ -3893,7 +3921,7 @@ void GameFixedUpdate() {
       int closestCreatureIndex = -1;
 
       // Resetting cooldown.
-      const auto cooldownDur = ApplyAttackSpeedToShootingDuration(fb->cooldown_frames());
+      const auto cooldownDur = ApplyAttackSpeedToDuration(fb->cooldown_frames());
       if (weapon.cooldownStartedAt.IsSet()
           && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
         weapon.cooldownStartedAt = {};
@@ -3958,7 +3986,7 @@ void GameFixedUpdate() {
         const auto e              = weapon.startedShootingAt.Elapsed();
 
         const auto shootingDur
-          = ApplyAttackSpeedToShootingDuration(fb->shooting_duration_frames());
+          = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
 
         const auto projectileSpawnFrames = fb->projectile_spawn_frames();
 
