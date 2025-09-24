@@ -25,6 +25,10 @@ localization:
   UI_LABEL_ITEM_FOUND: Найден Предмет!
   # TODO: Может, не "задержка", а что-то другое?
   UI_LABEL_COOLDOWN: Задержка
+  UI_LABEL_RANGE: Дальность
+  UI_LABEL_KNOCKBACK: Откидывание
+  # UI_LABEL_CRITICAL: Крит
+  # UI_LABEL_CHANCE: шанс
   UI_BUTTON_COMBINE: Скомбинировать
   UI_BUTTON_CANCEL: Назад
   UI_BUTTON_TAKE: Взять
