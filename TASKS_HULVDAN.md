@@ -1,5 +1,6 @@
 
 * weapon stats: cooldown
+* weapon stats: critical
 * weapon stats: piercing
 * weapon stats: bounces
 * weapon stats: range

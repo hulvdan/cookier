@@ -165,6 +165,7 @@ table GameLibrary {
     ui_label_items_locale: int;
     ui_label_weapons_locale: int;
     ui_label_item_found_locale: int;
+    ui_label_cooldown_locale: int;
     ui_button_combine_locale: int;
     ui_button_cancel_locale: int;
     ui_button_take_locale: int;

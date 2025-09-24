@@ -1462,12 +1462,12 @@ void GameInit() {  ///
 
   g.meta.uiFont = LoadFont({
     .filepath        = "resources/correction_brush.ttf",
-    .size            = 13,
+    .size            = 15,
     .FIXME_sizeScale = 45.0f / 30.0f,
     .codepoints      = g_codepoints,
     .codepointsCount = ARRAY_COUNT(g_codepoints),
-    .outlineWidth    = 4,
-    .outlineAdvance  = 2,
+    .outlineWidth    = 3,
+    .outlineAdvance  = 1,
   });
 
   RunInit();
@@ -1873,7 +1873,7 @@ void DoUI(bool draw) {
       {
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_X,
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         }}) {
           // Increasing stat by clicking on it in debug mode.
           if (stat && ge.meta.debugEnabled) {
@@ -2087,6 +2087,16 @@ void DoUI(bool draw) {
     // Critical.
 
     // Cooldown.
+    CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
+      // Label.
+      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_cooldown_locale());
+      BF_CLAY_TEXT(": ");
+
+      // Number.
+      const int cooldownFrames  = fb->shooting_duration_frames() + fb->cooldown_frames();
+      const f32 cooldownSeconds = (f32)cooldownFrames / (f32)FIXED_FPS;
+      BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), GREEN);
+    }
 
     // Range.
 
@@ -2224,7 +2234,7 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
-        BF_CLAY_TEXT(TextFormat("Wave %d", g.run.waveIndex + 1));
+        BF_CLAY_TEXT(TextFormat("%s %d", glib->ui_wave_locale(), g.run.waveIndex + 1));
 
         if (g.run.screen == ScreenType_GAMEPLAY) {
           const auto remainingFrames
