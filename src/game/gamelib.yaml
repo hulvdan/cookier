@@ -23,6 +23,8 @@ localization:
   UI_LABEL_ITEMS: Предметы
   UI_LABEL_WEAPONS: Оружие
   UI_LABEL_ITEM_FOUND: Найден Предмет!
+  # TODO: Может, не "задержка", а что-то другое?
+  UI_LABEL_COOLDOWN: Задержка
   UI_BUTTON_COMBINE: Скомбинировать
   UI_BUTTON_CANCEL: Назад
   UI_BUTTON_TAKE: Взять
