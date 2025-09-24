@@ -1731,6 +1731,24 @@ void StableRemoveWeapon(int index) {  ///
   RecalculatePlayerWeaponOffsets();
 }
 
+f32 GetPlayerStatDamageMultiplier() {  ///
+  return (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
+}
+
+f32 GetWeaponDamage(WeaponType type, int tier) {  ///
+  ASSERT(tier < 4);
+  const auto fb = glib->weapons()->Get(type);
+  ASSERT(tier >= fb->min_tier_index());
+  f32 damage = fb->base_damage()->Get(tier - fb->min_tier_index());
+  for (auto scaling : *fb->damage_scalings()) {
+    auto statValue = g.run.playerStats[scaling->stat_type()];
+    auto percent   = scaling->percents_per_tier()->Get(tier - fb->min_tier_index());
+    damage += (f32)statValue * (f32)percent / 100.0f;
+  }
+  damage *= GetPlayerStatDamageMultiplier();
+  return damage;
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -2739,6 +2757,43 @@ void DoUI(bool draw) {
                           BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
                         }
 
+                        // Damage.
+                        CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
+                          BF_CLAY_TEXT_LOCALIZED_DANGER(
+                            fb_stats->Get(StatType_DAMAGE)->name_locale()
+                          );
+                          BF_CLAY_TEXT(": ");
+                          BF_CLAY_TEXT(
+                            TextFormat(
+                              "%d", (int)GetWeaponDamage(weapon.type, weapon.tier)
+                            ),
+                            GREEN
+                          );
+
+                          const auto fb_scalings = fb->damage_scalings();
+                          if (fb_scalings && fb_scalings->size()) {
+                            const auto tier = weapon.tier - fb->min_tier_index();
+                            BF_CLAY_TEXT(" (");
+                            FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
+                              const auto fb_scaling = fb_scalings->Get(scalingIndex);
+                              const auto fb_stat = fb_stats->Get(fb_scaling->stat_type());
+                              BF_CLAY_TEXT(TextFormat("+%d%%"));
+                              BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+                              if (scalingIndex < fb_scalings->size() - 1)
+                                BF_CLAY_TEXT(", ");
+                            }
+                            BF_CLAY_TEXT(")");
+                          }
+                        }
+
+                        // Critical.
+
+                        // Cooldown.
+
+                        // Range.
+
+                        // Life Steal.
+
                         int canCombineWithIndex = -1;
                         for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
                           if (i == weaponIndex)
@@ -3105,10 +3160,6 @@ void DoUI(bool draw) {
   }
 }
 
-f32 GetPlayerStatDamageMultiplier() {  ///
-  return (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
-}
-
 bool IsCrit() {  ///
   const f32 chance = (f32)g.run.playerStats[StatType_CRIT_CHANCE] / 100.0f;
   return GRAND.FRand() < chance;
@@ -3128,20 +3179,6 @@ int GetCreatureIndexById(int id) {  ///
   int index = TryGetCreatureIndexById(id);
   ASSERT(index >= 0);
   return index;
-}
-
-f32 GetWeaponDamage(WeaponType type, int tier) {  ///
-  ASSERT(tier < 4);
-  const auto fb = glib->weapons()->Get(type);
-  ASSERT(tier >= fb->min_tier_index());
-  f32 damage = fb->base_damage()->Get(tier - fb->min_tier_index());
-  for (auto scaling : *fb->damage_scalings()) {
-    auto statValue = g.run.playerStats[scaling->stat_type()];
-    auto percent   = scaling->percents_per_tier()->Get(tier - fb->min_tier_index());
-    damage += (f32)statValue * (f32)percent / 100.0f;
-  }
-  damage *= GetPlayerStatDamageMultiplier();
-  return damage;
 }
 
 bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
