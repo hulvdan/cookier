@@ -1462,7 +1462,7 @@ void GameInit() {  ///
 
   g.meta.uiFont = LoadFont({
     .filepath        = "resources/correction_brush.ttf",
-    .size            = 16,
+    .size            = 13,
     .FIXME_sizeScale = 45.0f / 30.0f,
     .codepoints      = g_codepoints,
     .codepointsCount = ARRAY_COUNT(g_codepoints),
