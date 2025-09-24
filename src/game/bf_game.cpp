@@ -541,6 +541,7 @@ struct Projectile {
   Vector2                           pos                = {};
   Vector2                           dir                = {};
   f32                               damage             = {};
+  int                               pierce             = {};
   LogicalFrame                      createdAt          = {};
   Array<int, PROJECTILE_MAX_PIERCE> piercedCreatureIds = {};
   int                               piercedCount       = 0;
@@ -557,6 +558,7 @@ struct MakeProjectileData {
   f32            range             = {};
   f32            damage            = {};
   f32            knockbackMeters   = {};
+  int            pierce            = {};
 };
 
 struct Number {
@@ -1162,6 +1164,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .pos               = data.pos,
     .dir               = data.dir,
     .damage            = data.damage,
+    .pierce            = data.pierce,
     .knockbackMeters   = data.knockbackMeters,
     .range             = data.range,
   };
@@ -2156,6 +2159,20 @@ void DoUI(bool draw) {
     // Range.
     componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
     });
+
+    // Pierce.
+    if (fb->projectile_type()
+        && (fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING] > 0))
+    {
+      componentWeaponStatEntry(
+        glib->ui_label_pierce_locale(),
+        [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_TEXT(TextFormat(
+            "%d", fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING]
+          ));
+        }
+      );
+    }
 
     // Life Steal.
     // componentWeaponStatEntry([&]() BF_FORCE_INLINE_LAMBDA {});
@@ -4039,6 +4056,7 @@ void GameFixedUpdate() {
               .range             = GetWeaponRange(weapon),
               .damage            = GetWeaponDamage(weapon.type, weapon.tier),
               .knockbackMeters   = fb->knockback_meters(),
+              .pierce            = fb->projectile_pierce(),
             });
           }
         }
@@ -4172,9 +4190,9 @@ void GameFixedUpdate() {
                 isCrit
               ))
           {
-            auto maxPierce = fb->pierce();
+            auto maxPierce = projectile.pierce;
             if (projectile.ownerCreatureType == CreatureType_PLAYER)
-              maxPierce += MAX(0, g.run.playerStats[StatType_PIERCING]);
+              maxPierce += g.run.playerStats[StatType_PIERCING];
 
             if (projectile.piercedCount < maxPierce)
               projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
