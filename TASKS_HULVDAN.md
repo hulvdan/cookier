@@ -1,5 +1,5 @@
 
-* item effects
+* item effects: piggy bank
 * weapon description
 * elemental weapon with bouncing projectile that slows down / burns mobs
   (chech other types of elemental damage)

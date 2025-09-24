@@ -63,11 +63,17 @@ table Creature {
     move_texture_ids: [int];
 }
 
+table ItemEffect {
+    stat_type: int;
+    value: int;
+}
+
 table Item {
     name_locale: int;
     texture_id: int;
     tier: int;
     price: int;
+    effects: [ItemEffect];
 }
 
 table WeaponKind {

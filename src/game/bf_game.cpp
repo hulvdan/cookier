@@ -709,7 +709,8 @@ struct GameData {
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
-    Array<int, StatType_COUNT> playerStats = {};
+    Array<int, StatType_COUNT> playerStatsWithoutItems = {};
+    Array<int, StatType_COUNT> playerStats             = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
 #define VECTORS_TABLE                    \
@@ -746,6 +747,21 @@ struct GameData {
     } shop;
   } run;
 } g = {};
+
+void RecalculatePlayerStats() {  ///
+  FOR_RANGE (int, i, StatType_COUNT) {
+    g.run.playerStats[i] = g.run.playerStatsWithoutItems[i];
+  }
+
+  for (auto& item : g.run.playerItems) {
+    const auto fb         = glib->items()->Get(item.type);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects)
+        g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
+    }
+  }
+}
 
 void MakePickupable(MakePickupableData data) {  ///
   ASSERT(data.type);
@@ -1365,11 +1381,12 @@ void RunInit() {
     g.run.world         = b2CreateWorld(&worldDef);
   }
 
-  // Initializing `g.run.playerStats`.
+  // Initializing `g.run.playerStatsWithoutItems`.
   FOR_RANGE (int, stat, (int)StatType_COUNT) {  ///
-    const auto fb           = glib->stats()->Get(stat);
-    g.run.playerStats[stat] = fb->player_value();
+    const auto fb                       = glib->stats()->Get(stat);
+    g.run.playerStatsWithoutItems[stat] = fb->player_value();
   }
+  RecalculatePlayerStats();
 
   // Making player.
   MakeCreature({
@@ -1703,6 +1720,8 @@ void AddItem(ItemType v) {  ///
     Item item{.type = v, .count = 1};
     *g.run.playerItems.Add() = item;
   }
+
+  RecalculatePlayerStats();
 }
 
 void StableRemoveWeapon(int index) {  ///
@@ -1840,10 +1859,14 @@ void DoUI(bool draw) {
         }}) {
           // Increasing stat by clicking on it in debug mode.
           if (stat && ge.meta.debugEnabled) {
-            if (clicked())
-              g.run.playerStats[stat]++;
-            if (rightClicked())
-              g.run.playerStats[stat] += 10;
+            if (clicked()) {
+              g.run.playerStatsWithoutItems[stat]++;
+              RecalculatePlayerStats();
+            }
+            if (rightClicked()) {
+              g.run.playerStatsWithoutItems[stat] += 10;
+              RecalculatePlayerStats();
+            }
           }
 
           BF_CLAY_IMAGE({.texId = iconTexId});
@@ -1902,6 +1925,86 @@ void DoUI(bool draw) {
         }
       }
     });
+  };
+
+  LAMBDA (void, componentItemStatsExploded, (ItemType type, int count)) {  ///
+    ASSERT(count > 0);
+    const auto fb         = fb_items->Get(type);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        CLAY({}) {
+          const auto format  = ((fb_effect->value() >= 0) ? "+%d " : "%d ");
+          const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
+          BF_CLAY_TEXT(
+            TextFormat(format, fb_effect->value() * count),
+            ((fb_effect->value() >= 0) ? GREEN : RED)
+          );
+          BF_CLAY_TEXT_LOCALIZED_DANGER(fb_stat->name_locale());
+        }
+      }
+    }
+  };
+
+  struct ComponentItemDetailsData {
+    int detailsRight = {};
+    int detailsBelow = {};
+  };
+
+  LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
+  {  ///
+    u16 padding[4]{8, 8, 8, 8};
+
+    Clay_FloatingAttachPointType attachElement{};
+    Clay_FloatingAttachPointType attachParent{};
+
+    if (data.detailsRight) {
+      padding[1] = 0;
+      if (data.detailsBelow) {
+        padding[3]    = 0;
+        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+      }
+      else {
+        padding[2]    = 0;
+        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      }
+    }
+    else {
+      padding[0] = 0;
+      if (data.detailsBelow) {
+        padding[3]    = 0;
+        attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
+      }
+      else {
+        padding[2]    = 0;
+        attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
+        attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+      }
+    }
+
+    CLAY({
+      .layout{.padding{padding[0], padding[1], padding[2], padding[3]}},
+      .floating{
+        .attachPoints{.element = attachElement, .parent = attachParent},
+        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+        .attachTo           = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+      CLAY({
+        .layout{
+          BF_CLAY_PADDING_ALL(8),
+          .childGap        = 8,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
+        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+      }) {
+        componentItemStatsExploded(item.type, item.count);
+      }
+    }
   };
 
   LAMBDA (void, componentWeapon, (int weaponIndex)) {  ///
@@ -2149,7 +2252,11 @@ void DoUI(bool draw) {
               const auto type = g.run.pickedUpItem.toPick;
               const auto fb   = fb_items->Get(type);
               const Item item{.type = type, .count = 1};
-              componentItem(item);
+              CLAY({}) {
+                componentItem(item);
+                if (Clay_Hovered())
+                  componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
+              }
 
               BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
             }
@@ -2261,12 +2368,13 @@ void DoUI(bool draw) {
                 else
                   g.run.scheduledShop = true;
 
-                g.run.playerStats[upgrade.stat] += amount;
+                g.run.playerStatsWithoutItems[upgrade.stat] += amount;
+                RecalculatePlayerStats();
 
                 switch (upgrade.stat) {
                 case StatType_HP: {
-                  PLAYER_CREATURE.health += amount;
-                  PLAYER_CREATURE.maxHealth += amount;
+                  PLAYER_CREATURE.health    = g.run.playerStats[StatType_HP];
+                  PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
                 } break;
 
                 default:
@@ -2410,6 +2518,7 @@ void DoUI(bool draw) {
                 .layout{
                   BF_CLAY_SIZING_GROW_XY,
                   BF_CLAY_PADDING_ALL(8),
+                  .childGap        = 8,
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
                 BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
@@ -2446,6 +2555,9 @@ void DoUI(bool draw) {
                   if (locale)
                     BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
                 }
+
+                if (v.item)
+                  componentItemStatsExploded(v.item, 1);
 
                 BF_CLAY_SPACER_VERTICAL;
 
@@ -2522,7 +2634,12 @@ void DoUI(bool draw) {
                   const int t = y * ITEMS_X + x;
                   if (t >= g.run.playerItems.count)
                     break;
-                  componentItem(g.run.playerItems[t]);
+                  CLAY({}) {
+                    const auto& item = g.run.playerItems[t];
+                    componentItem(item);
+                    if (Clay_Hovered())
+                      componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
+                  }
                 }
               }
             }
@@ -2766,8 +2883,16 @@ void DoUI(bool draw) {
             CLAY({.layout{.childGap = 8}})
             FOR_RANGE (int, x, ITEMS_X) {
               const auto t = y * ITEMS_X + x;
-              if (t < items.count)
-                componentItem(items[t]);
+              if (t < items.count) {
+                CLAY({}) {
+                  componentItem(g.run.playerItems[t]);
+                  if (Clay_Hovered()) {
+                    componentItemDetails(
+                      g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
+                    );
+                  }
+                }
+              }
             }
           }
         }
@@ -3124,7 +3249,8 @@ void AddXP(f32 xp) {  ///
       const auto vals = fb->upgrade_values();
       if (!vals)
         continue;
-      g.run.playerStats[stat] += vals->Get(0);
+      g.run.playerStatsWithoutItems[stat] += vals->Get(0);
+      RecalculatePlayerStats();
       break;
     }
   }
