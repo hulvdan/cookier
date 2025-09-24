@@ -28,8 +28,7 @@ localization:
   UI_LABEL_RANGE: Дальность
   UI_LABEL_KNOCKBACK: Откидывание
   UI_LABEL_PIERCE: Прострел
-  # UI_LABEL_CRITICAL: Крит
-  # UI_LABEL_CHANCE: шанс
+  UI_LABEL_CRIT: Крит
   UI_BUTTON_COMBINE: Скомбинировать
   UI_BUTTON_CANCEL: Назад
   UI_BUTTON_TAKE: Взять
@@ -371,6 +370,7 @@ weapons:
           - 80
           - 80
           - 80
+    critical_damage: 2
     max_price: 122
     cooldown_frames: 20
     shooting_duration_frames: 10

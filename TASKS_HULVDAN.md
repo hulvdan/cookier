@@ -3,12 +3,12 @@ x weapon stats: damage
 x weapon stats: cooldown
 x weapon stats: knockback
 x weapon stats: piercing
+x weapon stats: critical
 
-* weapon stats: critical
 * weapon stats: bounces
 * weapon stats: range
 * weapon stats: life steal
-* weapon stats:
+* weapon stats: «did X damage during this wave»
 * weapon stats:
 * weapon stats:
 * end: can hover on weapon

@@ -91,6 +91,7 @@ table Weapon {
     weaponkind_type: int;
     base_damage: [float];
     damage_scalings: [WeaponDamageScaling];
+    critical_damage: float = 1.5;
     knockback_meters: float;
     cooldown_frames: int;
     shooting_duration_frames: int;
@@ -169,6 +170,7 @@ table GameLibrary {
     ui_label_range_locale: int;
     ui_label_knockback_locale: int;
     ui_label_pierce_locale: int;
+    ui_label_crit_locale: int;
     ui_button_combine_locale: int;
     ui_button_cancel_locale: int;
     ui_button_take_locale: int;
