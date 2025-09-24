@@ -1,5 +1,6 @@
 
-* shop/end: show weapon stats
+* shop: show weapon stats
+* end: can hover on weapon
 * item effects: piggy bank
 * weapon description
 * elemental weapon with bouncing projectile that slows down / burns mobs
