@@ -37,8 +37,8 @@ localization:
   UI_BUTTON_RESTART: Начать Заново
   UI_LABEL_STATS_PRIMARY: Основные
   UI_LABEL_STATS_SECONDARY: Побочные
-  ITEM_SUGAR: Сахар
-  ITEM_MILK: Молоко
+  ITEM_HELMET: Шлем
+  ITEM_WHITE_FLAG: Белый Флаг
   WEAPON_GUN: Пистолет
   WEAPON_BOW: Лук
   WEAPON_SWORD: Меч
@@ -302,14 +302,22 @@ creatures:
       - game_creature_tree
 items:
   - type: INVALID
-  - type: SUGAR
-    texture_id: ui_item_sugar
+  - type: HELMET
+    texture_id: ui_item_helmet
     tier: 2
     price: 40
-  - type: MILK
-    texture_id: ui_item_milk
+    effects:
+      - stat_type: ARMOR
+        value: 1
+      - stat_type: SPEED
+        value: -2
+  - type: WHITE_FLAG
+    texture_id: ui_item_white_flag
     tier: 0
     price: 30
+    effects:
+      - stat_type: ENEMIES
+        value: -5
 weapon_kinds:
   - type: INVALID
   - type: MELEE
