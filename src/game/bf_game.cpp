@@ -2086,52 +2086,79 @@ void DoUI(bool draw) {
   LAMBDA (void, componentWeaponStatsExploded, (WeaponType type, int tier)) {  ///
     const auto fb = fb_weapons->Get(type);
 
-    // Damage.
-    CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
-      // Label.
-      BF_CLAY_TEXT_LOCALIZED_DANGER(fb_stats->Get(StatType_DAMAGE)->name_locale());
-      BF_CLAY_TEXT(": ");
-
-      // Number.
-      BF_CLAY_TEXT(TextFormat("%d", (int)GetWeaponDamage(type, tier)), GREEN);
-
-      // Scalings.
-      const auto fb_scalings = fb->damage_scalings();
-      if (fb_scalings && fb_scalings->size()) {
-        BF_CLAY_TEXT(" (");
-        FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
-          const auto fb_scaling = fb_scalings->Get(scalingIndex);
-          const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
-          BF_CLAY_TEXT(TextFormat(
-            "+%d%%", fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
-          ));
-          BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
-          if (scalingIndex < fb_scalings->size() - 1)
-            BF_CLAY_TEXT(", ");
-        }
-        BF_CLAY_TEXT(")");
+    LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {  ///
+      CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
+        BF_CLAY_TEXT_LOCALIZED_DANGER(labelLocale);
+        BF_CLAY_TEXT(": ");
+        innerLambda();
       }
-    }
+    };
 
-    // Critical.
+    // Damage.
+    componentWeaponStatEntry(
+      fb_stats->Get(StatType_DAMAGE)->name_locale(),
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_TEXT(TextFormat("%d", (int)GetWeaponDamage(type, tier)), GREEN);
+
+        // Scalings.
+        const auto fb_scalings = fb->damage_scalings();
+        if (fb_scalings && fb_scalings->size()) {
+          BF_CLAY_TEXT(" (");
+          FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
+            const auto fb_scaling = fb_scalings->Get(scalingIndex);
+            const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
+            BF_CLAY_TEXT(TextFormat(
+              "+%d%%", fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
+            ));
+            BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+            if (scalingIndex < fb_scalings->size() - 1)
+              BF_CLAY_TEXT(", ");
+          }
+          BF_CLAY_TEXT(")");
+        }
+      }
+    );
+
+    // // Critical.
+    // componentWeaponStatEntry([&]() BF_FORCE_INLINE_LAMBDA {});
 
     // Cooldown.
-    CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
-      // Label.
-      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_cooldown_locale());
-      BF_CLAY_TEXT(": ");
+    componentWeaponStatEntry(
+      glib->ui_label_cooldown_locale(),
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        const auto cooldownFrames = ApplyAttackSpeedToDuration(
+          fb->shooting_duration_frames() + fb->cooldown_frames()
+        );
+        const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
+        BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), GREEN);
+      }
+    );
 
-      // Number.
-      const auto cooldownFrames = ApplyAttackSpeedToDuration(
-        fb->shooting_duration_frames() + fb->cooldown_frames()
-      );
-      const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
-      BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), GREEN);
-    }
+    // Knockback.
+    componentWeaponStatEntry(
+      glib->ui_label_knockback_locale(),
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        const char* const formats[]{"%.1f", "%.0f"};
+        for (const auto format : formats) {
+          const auto formatted = TextFormat(
+            format,
+            fb->knockback_meters() * (f32)(100 + g.run.playerStats[StatType_KNOCKBACK])
+              / 100.0f
+          );
+          if (formatted[strlen(formatted) - 1] == '0')
+            continue;
+          BF_CLAY_TEXT(formatted);
+          break;
+        }
+      }
+    );
 
     // Range.
+    componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+    });
 
     // Life Steal.
+    // componentWeaponStatEntry([&]() BF_FORCE_INLINE_LAMBDA {});
   };
 
   // Gameplay.
