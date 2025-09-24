@@ -82,7 +82,7 @@ table WeaponKind {
 
 table WeaponDamageScaling {
     stat_type: int;
-    percents_per_tier: [float] (required);
+    percents_per_tier: [int] (required);
 }
 
 table Weapon {

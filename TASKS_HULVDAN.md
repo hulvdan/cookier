@@ -1,5 +1,12 @@
 
-* shop: show weapon stats
+* weapon stats: cooldown
+* weapon stats: piercing
+* weapon stats: bounces
+* weapon stats: range
+* weapon stats: life steal
+* weapon stats:
+* weapon stats:
+* weapon stats:
 * end: can hover on weapon
 * item effects: piggy bank
 * weapon description
