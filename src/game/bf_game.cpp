@@ -1783,7 +1783,7 @@ void DoUI(bool draw) {
   VIEW_FROM_ARRAY_DANGER(buttonColors);
 
   LAMBDA (bool, componentButton, (bool enabled, auto innerLambda)) {
-    bool result{};
+    bool result = false;
 
     CLAY({
       .layout{BF_CLAY_PADDING_ALL(8)},
@@ -1959,29 +1959,29 @@ void DoUI(bool draw) {
     Clay_FloatingAttachPointType attachParent{};
 
     if (data.detailsRight) {
-      padding[1] = 0;
-      if (data.detailsBelow) {
-        padding[3]    = 0;
-        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
-      }
-      else {
-        padding[2]    = 0;
-        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-      }
-    }
-    else {
       padding[0] = 0;
       if (data.detailsBelow) {
         padding[3]    = 0;
-        attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
-        attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
+        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
       }
       else {
         padding[2]    = 0;
+        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+      }
+    }
+    else {
+      padding[1] = 0;
+      if (data.detailsBelow) {
+        padding[3]    = 0;
         attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
         attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+      }
+      else {
+        padding[2]    = 0;
+        attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
       }
     }
 
@@ -2002,6 +2002,13 @@ void DoUI(bool draw) {
         },
         BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
       }) {
+        const auto fb_item = fb_items->Get(item.type);
+
+        CLAY({.layout{.childGap = 8}}) {
+          componentItem(item);
+          BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
+        }
+
         componentItemStatsExploded(item.type, item.count);
       }
     }
@@ -2694,6 +2701,7 @@ void DoUI(bool draw) {
                     }
 
                     CLAY({
+                      .layout{.padding{.bottom = 8}},
                       .floating{
                         .attachPoints{
                           .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
