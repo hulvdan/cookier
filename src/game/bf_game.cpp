@@ -541,6 +541,7 @@ struct Projectile {
   Vector2                           pos                = {};
   Vector2                           dir                = {};
   f32                               damage             = {};
+  f32                               crit               = {};
   int                               pierce             = {};
   LogicalFrame                      createdAt          = {};
   Array<int, PROJECTILE_MAX_PIERCE> piercedCreatureIds = {};
@@ -557,6 +558,7 @@ struct MakeProjectileData {
   Vector2        dir               = {};
   f32            range             = {};
   f32            damage            = {};
+  f32            crit              = {};
   f32            knockbackMeters   = {};
   int            pierce            = {};
 };
@@ -1164,6 +1166,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .pos               = data.pos,
     .dir               = data.dir,
     .damage            = data.damage,
+    .crit              = data.crit,
     .pierce            = data.pierce,
     .knockbackMeters   = data.knockbackMeters,
     .range             = data.range,
@@ -2122,8 +2125,12 @@ void DoUI(bool draw) {
       }
     );
 
-    // // Critical.
-    // componentWeaponStatEntry([&]() BF_FORCE_INLINE_LAMBDA {});
+    // Critical.
+    componentWeaponStatEntry(glib->ui_label_crit_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+      BF_CLAY_TEXT(TextFormat(
+        "x%.1f (%d%%)", fb->critical_damage(), g.run.playerStats[StatType_CRIT_CHANCE]
+      ));
+    });
 
     // Cooldown.
     componentWeaponStatEntry(
@@ -3304,7 +3311,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
     f32  damage = GetWeaponDamage(weapon->type, weapon->tier);
     bool isCrit = IsCrit();
     if (isCrit)
-      damage *= CRIT_DAMAGE_MULTIPLIER;
+      damage *= fb->critical_damage();
 
     damage = MAX(1, damage);
 
@@ -4055,6 +4062,7 @@ void GameFixedUpdate() {
               .dir               = weapon.targetDir,
               .range             = GetWeaponRange(weapon),
               .damage            = GetWeaponDamage(weapon.type, weapon.tier),
+              .crit              = fb->critical_damage(),
               .knockbackMeters   = fb->knockback_meters(),
               .pierce            = fb->projectile_pierce(),
             });
@@ -4155,7 +4163,7 @@ void GameFixedUpdate() {
             damage *= GetPlayerStatDamageMultiplier();
             isCrit = IsCrit();
             if (isCrit)
-              damage *= CRIT_DAMAGE_MULTIPLIER;
+              damage *= projectile.crit;
 
             if (fb_creature->is_boss()) {
               damage *= MAX(
