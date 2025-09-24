@@ -2054,6 +2054,45 @@ void DoUI(bool draw) {
     });
   };
 
+  LAMBDA (void, componentWeaponStatsExploded, (WeaponType type, int tier)) {  ///
+    const auto fb = fb_weapons->Get(type);
+
+    // Damage.
+    CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
+      // Label.
+      BF_CLAY_TEXT_LOCALIZED_DANGER(fb_stats->Get(StatType_DAMAGE)->name_locale());
+      BF_CLAY_TEXT(": ");
+
+      // Number.
+      BF_CLAY_TEXT(TextFormat("%d", (int)GetWeaponDamage(type, tier)), GREEN);
+
+      // Scalings.
+      const auto fb_scalings = fb->damage_scalings();
+      if (fb_scalings && fb_scalings->size()) {
+        BF_CLAY_TEXT(" (");
+        FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
+          const auto fb_scaling = fb_scalings->Get(scalingIndex);
+          const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
+          BF_CLAY_TEXT(TextFormat(
+            "+%d%%", fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
+          ));
+          BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+          if (scalingIndex < fb_scalings->size() - 1)
+            BF_CLAY_TEXT(", ");
+        }
+        BF_CLAY_TEXT(")");
+      }
+    }
+
+    // Critical.
+
+    // Cooldown.
+
+    // Range.
+
+    // Life Steal.
+  };
+
   // Gameplay.
   if ((g.run.screen == ScreenType_GAMEPLAY)               //
       || (g.run.screen == ScreenType_WAVE_END_ANIMATION)  //
@@ -2583,6 +2622,8 @@ void DoUI(bool draw) {
 
                 if (v.item)
                   componentItemStatsExploded(v.item, 1);
+                else if (v.weapon)
+                  componentWeaponStatsExploded(v.weapon, v.tier);
 
                 BF_CLAY_SPACER_VERTICAL;
 
@@ -2757,42 +2798,7 @@ void DoUI(bool draw) {
                           BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
                         }
 
-                        // Damage.
-                        CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
-                          BF_CLAY_TEXT_LOCALIZED_DANGER(
-                            fb_stats->Get(StatType_DAMAGE)->name_locale()
-                          );
-                          BF_CLAY_TEXT(": ");
-                          BF_CLAY_TEXT(
-                            TextFormat(
-                              "%d", (int)GetWeaponDamage(weapon.type, weapon.tier)
-                            ),
-                            GREEN
-                          );
-
-                          const auto fb_scalings = fb->damage_scalings();
-                          if (fb_scalings && fb_scalings->size()) {
-                            const auto tier = weapon.tier - fb->min_tier_index();
-                            BF_CLAY_TEXT(" (");
-                            FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
-                              const auto fb_scaling = fb_scalings->Get(scalingIndex);
-                              const auto fb_stat = fb_stats->Get(fb_scaling->stat_type());
-                              BF_CLAY_TEXT(TextFormat("+%d%%"));
-                              BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
-                              if (scalingIndex < fb_scalings->size() - 1)
-                                BF_CLAY_TEXT(", ");
-                            }
-                            BF_CLAY_TEXT(")");
-                          }
-                        }
-
-                        // Critical.
-
-                        // Cooldown.
-
-                        // Range.
-
-                        // Life Steal.
+                        componentWeaponStatsExploded(weapon.type, weapon.tier);
 
                         int canCombineWithIndex = -1;
                         for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
