@@ -27,6 +27,7 @@ localization:
   UI_LABEL_COOLDOWN: Задержка
   UI_LABEL_RANGE: Дальность
   UI_LABEL_KNOCKBACK: Откидывание
+  UI_LABEL_PIERCE: Прострел
   # UI_LABEL_CRITICAL: Крит
   # UI_LABEL_CHANCE: шанс
   UI_BUTTON_COMBINE: Скомбинировать
@@ -418,21 +419,21 @@ weapons:
           - 85
           - 100
           - 115
-    projectile_type: ARROW
-    max_price: 140
     knockback_meters: 2
     cooldown_frames: 16
-    shooting_duration_frames: 10
+    projectile_type: ARROW
     projectile_spawn_frames:
       - 4
+    projectile_pierce: 1
     range_meters: 8
+    max_price: 140
+    shooting_duration_frames: 10
     texture_ids:
       - game_weapon_bow
 projectiles:
   - type: INVALID
   - type: ARROW
     speed: 12
-    pierce: 1
     texture_ids:
       - game_projectile_arrow
   - type: BULLET

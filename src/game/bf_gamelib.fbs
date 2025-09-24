@@ -96,6 +96,7 @@ table Weapon {
     shooting_duration_frames: int;
     projectile_type: int;
     projectile_spawn_frames: [int];
+    projectile_pierce: int = 0;
     range_meters: float;
     max_price: int;
     melee_collider_height_px: float;
@@ -107,7 +108,6 @@ table Projectile {
     color: uint = 0xffffff;
     speed: float;
     collider_radius: float = 0.4;
-    pierce: int = 0;
     texture_ids: [int];
 }
 
@@ -168,6 +168,7 @@ table GameLibrary {
     ui_label_cooldown_locale: int;
     ui_label_range_locale: int;
     ui_label_knockback_locale: int;
+    ui_label_pierce_locale: int;
     ui_button_combine_locale: int;
     ui_button_cancel_locale: int;
     ui_button_take_locale: int;
