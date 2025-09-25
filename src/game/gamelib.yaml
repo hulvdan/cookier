@@ -29,6 +29,7 @@ localization:
   UI_LABEL_KNOCKBACK: Откидывание
   UI_LABEL_PIERCE: Прострел
   UI_LABEL_CRIT: Крит
+  UI_LABEL_DID_DAMAGE: Нанесено урона
   UI_BUTTON_COMBINE: Скомбинировать
   UI_BUTTON_CANCEL: Назад
   UI_BUTTON_TAKE: Взять
