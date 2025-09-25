@@ -461,6 +461,7 @@ struct Weapon {
   LogicalFrame cooldownStartedAt = {};
   int          tier              = {};
   int          recyclePrice      = {};
+  f32          didDamage         = 0;
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
@@ -538,6 +539,7 @@ struct CreaturePreSpawn {
 struct Projectile {
   ProjectileType                    type               = {};
   CreatureType                      ownerCreatureType  = {};
+  int                               weaponIndex        = -1;
   Vector2                           pos                = {};
   Vector2                           dir                = {};
   f32                               damage             = {};
@@ -554,6 +556,7 @@ struct Projectile {
 struct MakeProjectileData {
   ProjectileType type              = {};
   CreatureType   ownerCreatureType = {};
+  int            weaponIndex       = -1;
   Vector2        pos               = {};
   Vector2        dir               = {};
   f32            range             = {};
@@ -1159,10 +1162,13 @@ void MakeCreature(MakeCreatureData data) {  ///
 void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
   ASSERT(data.dir != Vector2Zero());
+  if (data.ownerCreatureType == CreatureType_PLAYER)
+    ASSERT(data.weaponIndex >= 0);
 
   Projectile projectile{
     .type              = data.type,
     .ownerCreatureType = data.ownerCreatureType,
+    .weaponIndex       = data.weaponIndex,
     .pos               = data.pos,
     .dir               = data.dir,
     .damage            = data.damage,
@@ -1802,7 +1808,9 @@ int GetCreatureIndexById(int id) {  ///
   return index;
 }
 
-bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
+bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
+  auto& weapon = g.run.playerWeapons[*weaponIndex];
+
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
 
@@ -1814,29 +1822,30 @@ bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
   if (creature.type == CreatureType_PLAYER)
     return continueCollisions;
 
-  const auto fb = glib->weapons()->Get(weapon->type);
+  const auto fb = glib->weapons()->Get(weapon.type);
 
-  if (ArrayContains(weapon->piercedCreatureIds.base, weapon->piercedCount, creature.id))
+  if (ArrayContains(weapon.piercedCreatureIds.base, weapon.piercedCount, creature.id))
     return continueCollisions;
 
-  if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
-    weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
+  if (weapon.piercedCount < weapon.piercedCreatureIds.count) {
+    weapon.piercedCreatureIds[weapon.piercedCount++] = creature.id;
 
-    f32  damage = GetWeaponDamage(weapon->type, weapon->tier);
+    f32  damage = GetWeaponDamage(weapon.type, weapon.tier);
     bool isCrit = IsCrit();
     if (isCrit)
       damage *= fb->critical_damage();
 
     damage = MAX(1, damage);
 
-    TryApplyDamage(
-      creatureIndex,
-      damage,
-      Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      fb->knockback_meters(),
-      CreatureType_PLAYER,
-      isCrit
-    );
+    if (TryApplyDamage(
+          creatureIndex,
+          damage,
+          Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+          fb->knockback_meters(),
+          CreatureType_PLAYER,
+          isCrit
+        ))
+      g.run.playerWeapons[*weaponIndex].didDamage += damage;
   }
   return continueCollisions;
 }
@@ -2250,16 +2259,17 @@ void DoUI(bool draw) {
     });
   };
 
-  LAMBDA (void, componentWeaponStatsExploded, (WeaponType type, int tier)) {  ///
-    const auto fb = fb_weapons->Get(type);
+  LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {  ///
+    CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
+      BF_CLAY_TEXT_LOCALIZED_DANGER(labelLocale);
+      BF_CLAY_TEXT(": ");
+      innerLambda();
+    }
+  };
 
-    LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {  ///
-      CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
-        BF_CLAY_TEXT_LOCALIZED_DANGER(labelLocale);
-        BF_CLAY_TEXT(": ");
-        innerLambda();
-      }
-    };
+  LAMBDA (void, componentWeaponStatsExploded, (WeaponType type, int tier, f32 didDamage))
+  {  ///
+    const auto fb = fb_weapons->Get(type);
 
     // Damage.
     componentWeaponStatEntry(
@@ -2354,6 +2364,15 @@ void DoUI(bool draw) {
 
     // Life Steal.
     // componentWeaponStatEntry([&]() BF_FORCE_INLINE_LAMBDA {});
+
+    // Did damage.
+    ASSERT(didDamage >= 0);
+    if (didDamage > 0) {
+      componentWeaponStatEntry(
+        glib->ui_label_did_damage_locale(),
+        [&]() BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT(TextFormat("%d", (int)didDamage)); }
+      );
+    }
   };
 
   // Gameplay.
@@ -2889,7 +2908,7 @@ void DoUI(bool draw) {
                 if (v.item)
                   componentItemStatsExploded(v.item, 1);
                 else if (v.weapon)
-                  componentWeaponStatsExploded(v.weapon, v.tier);
+                  componentWeaponStatsExploded(v.weapon, v.tier, 0);
 
                 BF_CLAY_SPACER_VERTICAL;
 
@@ -3064,7 +3083,9 @@ void DoUI(bool draw) {
                           BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
                         }
 
-                        componentWeaponStatsExploded(weapon.type, weapon.tier);
+                        componentWeaponStatsExploded(
+                          weapon.type, weapon.tier, weapon.didDamage
+                        );
 
                         int canCombineWithIndex = -1;
                         for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
@@ -3110,9 +3131,10 @@ void DoUI(bool draw) {
 
                         if (combined) {
                           weapon.tier += 1;
-                          StableRemoveWeapon(canCombineWithIndex);
                           weapon.recyclePrice
                             = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+                          weapon.didDamage = 0;
+                          StableRemoveWeapon(canCombineWithIndex);
                         }
                         if (recycled) {
                           g.run.coins += weapon.recyclePrice;
@@ -3594,6 +3616,9 @@ void GameFixedUpdate() {
 
     g.run.waveStartedAt = {};
     g.run.waveStartedAt.SetNow();
+
+    for (auto& weapon : g.run.playerWeapons)
+      weapon.didDamage = 0;
   }
 
   PLAYER_CREATURE.controller.move = {};
@@ -3622,10 +3647,8 @@ void GameFixedUpdate() {
         if (IsKeyDown(SDL_SCANCODE_D))
           move.x += 1;
 
-        if (move.x || move.y) {
-          move                = Vector2Normalize(move);
-          PLAYER_CREATURE.dir = move;
-        }
+        if (move.x || move.y)
+          move = Vector2Normalize(move);
 
         if (move == Vector2Zero()) {
           if (g.meta.touch.touchIDs[0] != InvalidTouchID)
@@ -3940,6 +3963,13 @@ void GameFixedUpdate() {
         ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
         true
       );
+
+      if (abs(creature.controller.move.x) > 0.2f) {
+        if (creature.controller.move.x > 0)
+          creature.dir.x = 1;
+        else
+          creature.dir.x = -1;
+      }
     }
   }
 
@@ -3975,7 +4005,9 @@ void GameFixedUpdate() {
 
   // Player weapons shooting.
   if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    int weaponIndex = -1;
     for (auto& weapon : g.run.playerWeapons) {
+      weaponIndex++;
       if (!weapon.type)
         continue;
 
@@ -4072,6 +4104,7 @@ void GameFixedUpdate() {
             MakeProjectile({
               .type              = projectileType,
               .ownerCreatureType = PLAYER_CREATURE.type,
+              .weaponIndex       = weaponIndex,
               .pos               = pos,
               .dir               = weapon.targetDir,
               .range             = GetWeaponRange(weapon.type),
@@ -4110,7 +4143,7 @@ void GameFixedUpdate() {
               colliderSize,
               weapon.targetDir,
               OnWeaponCollided,
-              &weapon
+              &weaponIndex
             );
           }
         }
@@ -4212,6 +4245,9 @@ void GameFixedUpdate() {
                 isCrit
               ))
           {
+            if (projectile.ownerCreatureType == CreatureType_PLAYER)
+              g.run.playerWeapons[projectile.weaponIndex].didDamage += damage;
+
             auto maxPierce = projectile.pierce;
             if (projectile.ownerCreatureType == CreatureType_PLAYER)
               maxPierce += g.run.playerStats[StatType_PIERCING];

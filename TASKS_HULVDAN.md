@@ -5,10 +5,11 @@ x weapon stats: knockback
 x weapon stats: piercing
 x weapon stats: critical
 x weapon stats: range
+x weapon stats: «did X damage during this wave»
+x small looking direction fix
 
 * weapon stats: bounces
 * weapon stats: life steal
-* weapon stats: «did X damage during this wave»
 * weapon stats:
 * weapon stats:
 * end: can hover on weapon
