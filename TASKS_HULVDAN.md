@@ -4,9 +4,9 @@ x weapon stats: cooldown
 x weapon stats: knockback
 x weapon stats: piercing
 x weapon stats: critical
+x weapon stats: range
 
 * weapon stats: bounces
-* weapon stats: range
 * weapon stats: life steal
 * weapon stats: «did X damage during this wave»
 * weapon stats:
