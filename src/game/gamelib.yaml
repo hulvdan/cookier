@@ -556,6 +556,7 @@ stats:
     upgrade_texture_id: ui_stat_upgrade_engineering
     icon_texture_id: ui_stat_icon_armor
   - type: RANGE
+    is_percent: true
     upgrade_values:
       - 15
       - 30
