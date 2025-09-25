@@ -44,11 +44,18 @@ localization:
   UI_BUTTON_RESTART: Начать Заново
   UI_LABEL_STATS_PRIMARY: Основные
   UI_LABEL_STATS_SECONDARY: Побочные
+  UI_LABEL_AT_THE_END_OF_THE_WAVE: в конце волны
+  UI_LABEL_AT_THE_START_OF_THE_WAVE: в начале волны
+  UI_LABEL_KILL_N_ENEMIES: за каждые %d врагов
   ITEM_HELMET: Шлем
   ITEM_WHITE_FLAG: Белый Флаг
+  ITEM_BLACK_FLAG: Чёрный Флаг
+  ITEM_TODO1: TODO1
+  ITEM_PIGGY_BANK: Копилка
   WEAPON_GUN: Пистолет
   WEAPON_BOW: Лук
   WEAPON_SWORD: Меч
+  STAT_COINS: Монеты
   STAT_CURSE: Проклятие
   STAT_HP: Здоровье
   STAT_REGEN: Восстановление
@@ -307,6 +314,11 @@ creatures:
     coins_dropped: 3
     idle_texture_ids:
       - game_creature_tree
+effect_conditions:
+  - type: INVALID
+  - type: KILL_N_ENEMIES_GET_STAT
+  - type: END_OF_THE_WAVE_GET_STAT
+  - type: START_OF_THE_WAVE_GET_STAT
 items:
   - type: INVALID
   - type: HELMET
@@ -325,6 +337,33 @@ items:
     effects:
       - stat_type: ENEMIES
         value: -5
+  - type: BLACK_FLAG
+    texture_id: ui_item_black_flag
+    tier: 0
+    price: 35
+    effects:
+      - stat_type: ENEMIES
+        value: 5
+  - type: TODO1
+    texture_id: ui_item_todo
+    tier: 2
+    price: 50
+    effects:
+      - effectcondition_type: KILL_N_ENEMIES_GET_STAT
+        stat_type: ATTACK_SPEED
+        value: 1
+        condition_value: 20
+      - effectcondition_type: END_OF_THE_WAVE_GET_STAT
+        stat_type: DAMAGE
+        value: 20
+  - type: PIGGY_BANK
+    texture_id: ui_item_piggy_bank
+    tier: 2
+    price: 50
+    effects:
+      - effectcondition_type: START_OF_THE_WAVE_GET_STAT
+        stat_type: COINS
+        value_multiplier: 1.2
 weapon_kinds:
   - type: INVALID
   - type: MELEE
@@ -469,8 +508,12 @@ numbers:
     color: 0x66a650
 stats:
   - type: INVALID
+  - type: COINS
+    icon_texture_id: ui_coin
+    hidden: true
   - type: CURSE
     icon_texture_id: ui_stat_icon_armor
+    hidden: true
   - type: HP
     player_value: 20
     upgrade_values:

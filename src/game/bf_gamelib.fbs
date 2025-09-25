@@ -63,9 +63,15 @@ table Creature {
     move_texture_ids: [int];
 }
 
+table EffectCondition {
+}
+
 table ItemEffect {
     stat_type: int;
+    effectcondition_type: int;
     value: int;
+    value_multiplier: float = 1;
+    condition_value: int;
 }
 
 table Item {
@@ -128,6 +134,7 @@ table WaveCreature {
 table Stat {
     icon_texture_id: int;
     name_locale: int;
+    hidden: bool;
     is_percent: bool;
     is_secondary: bool;
     player_value: int;
@@ -186,6 +193,9 @@ table GameLibrary {
     ui_label_wave_lost_locale: int;
     ui_label_stats_primary_locale: int;
     ui_label_stats_secondary_locale: int;
+    ui_label_at_the_end_of_the_wave_locale: int;
+    ui_label_at_the_start_of_the_wave_locale: int;
+    ui_label_kill_n_enemies_locale: int;
     // LOCALE_GEN_END.
 
     // GAME STUFF
@@ -208,6 +218,7 @@ table GameLibrary {
     // TABLE_GEN_START
     hostilities: [Hostility] (required);
     creatures: [Creature] (required);
+    effect_conditions: [EffectCondition] (required);
     items: [Item] (required);
     weapon_kinds: [WeaponKind] (required);
     weapons: [Weapon] (required);
