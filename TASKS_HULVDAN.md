@@ -7,14 +7,19 @@ x weapon stats: critical
 x weapon stats: range
 x weapon stats: «did X damage during this wave»
 x small looking direction fix
+x item effects: getting stats at the start of the wave (piggy bank gets coins)
+x item effects: getting stats after killing N enemies (increasing atk speed)
+x item effects: getting stats at the end of the wave (e.g. +1 damage)
 
+* engine: UI FLEXBOX SUPPORT !!! (ref randrew layout)
+* engine: better fonts rendering
+* engine: automatically scale fonts for current screenSize
+*
 * weapon stats: bounces
 * weapon stats: life steal
 * weapon stats:
 * weapon stats:
 * end: can hover on weapon
-* item effects: piggy bank
-* weapon description
 * elemental weapon with bouncing projectile that slows down / burns mobs
   (chech other types of elemental damage)
 *
@@ -33,7 +38,6 @@ x small looking direction fix
 * mob that rotates when moving?
 *
 *
-* engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation

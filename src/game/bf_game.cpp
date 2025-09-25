@@ -470,6 +470,8 @@ struct Weapon {
 struct Item {
   ItemType type  = {};
   int      count = {};
+
+  int killedEnemies = {};
 };
 
 struct CreatureController {
@@ -1632,8 +1634,10 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
   return Round(price * factor);
 }
 
+#define PLAYER_COINS (g.run.playerStatsWithoutItems[StatType_COINS])
+
 void Rerolls::Roll() {  ///
-  g.run.coins -= price;
+  PLAYER_COINS -= price;
   if (freeRerolls > 0)
     freeRerolls--;
   if (freeRerolls <= 0)
@@ -2112,10 +2116,10 @@ void DoUI(bool draw) {
 
       // Stats.
       CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
-      FOR_RANGE (int, i, (int)StatType_COUNT - 1) {
-        const auto type = (StatType)(i + 1);
+      FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
+        const auto type = (StatType)(i + 2);
         const auto fb   = glib->stats()->Get(type);
-        if (fb->is_secondary() == g.run.showingSecondaryStats) {
+        if (!fb->hidden() && (fb->is_secondary() == g.run.showingSecondaryStats)) {
           componentStatsEntry(
             fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type], type
           );
@@ -2156,14 +2160,59 @@ void DoUI(bool draw) {
     const auto fb_effects = fb->effects();
     if (fb_effects) {
       for (const auto fb_effect : *fb_effects) {
-        CLAY({}) {
-          const auto format  = ((fb_effect->value() >= 0) ? "+%d " : "%d ");
+        CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
           const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
-          BF_CLAY_TEXT(
-            TextFormat(format, fb_effect->value() * count),
-            ((fb_effect->value() >= 0) ? GREEN : RED)
-          );
+          if (fb_effect->value() != 0) {
+            const auto format = ((fb_effect->value() >= 0) ? "+%d " : "%d ");
+            BF_CLAY_TEXT(
+              TextFormat(format, fb_effect->value() * count),
+              ((fb_effect->value() >= 0) ? GREEN : RED)
+            );
+          }
+          else {
+            const auto format
+              = ((fb_effect->value_multiplier() >= 0) ? "+%d%% " : "%d%% ");
+            const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
+            BF_CLAY_TEXT(
+              TextFormat(
+                format, Round((fb_effect->value_multiplier() - 1) * 100.0f * count)
+              ),
+              ((fb_effect->value_multiplier() >= 0) ? GREEN : RED)
+            );
+          }
+
+          if (fb_stat->icon_texture_id())
+            BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
           BF_CLAY_TEXT_LOCALIZED_DANGER(fb_stat->name_locale());
+
+          const auto cond = (EffectConditionType)fb_effect->effectcondition_type();
+          switch (cond) {
+          case EffectConditionType_INVALID: {
+            // Intentionally left blank.
+          } break;
+
+          case EffectConditionType_END_OF_THE_WAVE_GET_STAT: {
+            BF_CLAY_TEXT(" ");
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_at_the_end_of_the_wave_locale());
+          } break;
+
+          case EffectConditionType_START_OF_THE_WAVE_GET_STAT: {
+            BF_CLAY_TEXT(" ");
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_at_the_start_of_the_wave_locale()
+            );
+          } break;
+
+          case EffectConditionType_KILL_N_ENEMIES_GET_STAT: {
+            BF_CLAY_TEXT(" ");
+            BF_CLAY_TEXT(TextFormat(
+              localization_strings->Get(glib->ui_label_kill_n_enemies_locale())->c_str(),
+              fb_effect->condition_value()
+            ));
+          } break;
+
+          default:
+            INVALID_PATH;
+          }
         }
       }
     }
@@ -2487,7 +2536,7 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         }}) {
           BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-          BF_CLAY_TEXT(TextFormat("%d", g.run.coins));
+          BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
         }
       }
       // }
@@ -2631,7 +2680,7 @@ void DoUI(bool draw) {
             if (took)
               AddItem(g.run.pickedUpItem.toPick);
             else if (recycled)
-              g.run.coins += g.run.pickedUpItem.recyclePrice;
+              PLAYER_COINS += g.run.pickedUpItem.recyclePrice;
 
             if (took || recycled) {
               g.run.crates--;
@@ -2736,7 +2785,7 @@ void DoUI(bool draw) {
         }
 
         // Reroll button.
-        const bool canReroll = (g.run.upgrades.rerolls.price <= g.run.coins);
+        const bool canReroll = (g.run.upgrades.rerolls.price <= PLAYER_COINS);
         const bool rerolled
           = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
               CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
@@ -2797,14 +2846,14 @@ void DoUI(bool draw) {
             },
           }) {
             FLOATING_BEAUTIFY;
-            BF_CLAY_TEXT(TextFormat("%d ", g.run.coins));
+            BF_CLAY_TEXT(TextFormat("%d ", PLAYER_COINS));
             BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
 
           // Reroll button.
-          const bool canReroll = (g.run.coins >= g.run.shop.rerolls.price);
+          const bool canReroll = (PLAYER_COINS >= g.run.shop.rerolls.price);
           const bool rerolled
             = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
@@ -2833,7 +2882,7 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_HORIZONTAL;
 
           for (auto& v : g.run.shop.toPick) {
-            bool canBuy = ((v.item || v.weapon) && (v.price <= g.run.coins));
+            bool canBuy = ((v.item || v.weapon) && (v.price <= PLAYER_COINS));
             int  emptyOrSameWeaponSlotIndex = -1;
             if (canBuy && v.weapon) {
               // Trying to find empty weapon slot.
@@ -2926,14 +2975,14 @@ void DoUI(bool draw) {
                         }}) {
                           BF_CLAY_TEXT(
                             TextFormat("%d ", v.price),
-                            (v.price <= g.run.coins ? WHITE : RED)
+                            (v.price <= PLAYER_COINS ? WHITE : RED)
                           );
                           BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                         }
                       });
 
                   if (bought) {
-                    g.run.coins -= v.price;
+                    PLAYER_COINS -= v.price;
                     if (v.weapon) {
                       auto& weapon = g.run.playerWeapons[emptyOrSameWeaponSlotIndex];
                       if (weapon.type) {
@@ -3137,7 +3186,7 @@ void DoUI(bool draw) {
                           StableRemoveWeapon(canCombineWithIndex);
                         }
                         if (recycled) {
-                          g.run.coins += weapon.recyclePrice;
+                          PLAYER_COINS += weapon.recyclePrice;
                           StableRemoveWeapon(weaponIndex);
                         }
                         if (cancelled || recycled || combined)
@@ -3460,6 +3509,23 @@ void DoUI(bool draw) {
   }
 }
 
+void IterateOverItemEffects(
+  EffectConditionType                               condition,
+  auto /* void (const Item& item, auto fb_effect)*/ innerLambda
+) {  ///
+  const auto fb_items = glib->items();
+  for (const auto& item : g.run.playerItems) {
+    const auto fb         = fb_items->Get(item.type);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(item, fb_effect);
+      }
+    }
+  }
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -3477,7 +3543,7 @@ void GameFixedUpdate() {
   if (ge.meta.debugEnabled) {
     // F5 - add 10 coins.
     if (IsKeyPressed(SDL_SCANCODE_F5)) {  ///
-      g.run.coins += 10;
+      PLAYER_COINS += 10;
     }
 
     // F6 - add random item.
@@ -3511,8 +3577,26 @@ void GameFixedUpdate() {
     }
   }
 
+  // LAMBDA (void, iterateOverItemEffects)
+
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
+
+    // Applying item effects: END_OF_THE_WAVE_GET_STAT.
+    if ((g.run.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
+      IterateOverItemEffects(
+        EffectConditionType_END_OF_THE_WAVE_GET_STAT,
+        [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+          g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+            += fb_effect->value() * item.count;
+          if (fb_effect->value_multiplier() != 1)
+            g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+              *= fb_effect->value_multiplier() * item.count;
+        }
+      );
+      RecalculatePlayerStats();
+    }
+
     g.run.screen = ScreenType_WAVE_END_ANIMATION;
 
     g.run.projectiles.Reset();
@@ -3527,8 +3611,8 @@ void GameFixedUpdate() {
       {
         // Applying StatType_HARVESTING.
         auto& harvesting = g.run.playerStats[StatType_HARVESTING];
-        g.run.coins += harvesting;
-        g.run.coins = MAX(0, g.run.coins);
+        PLAYER_COINS += harvesting;
+        PLAYER_COINS = MAX(0, PLAYER_COINS);
         AddXP(harvesting);
         // Harvesting stat (if positive) grows by 5% upon finishing each wave.
         if (harvesting > 0)
@@ -3619,6 +3703,18 @@ void GameFixedUpdate() {
 
     for (auto& weapon : g.run.playerWeapons)
       weapon.didDamage = 0;
+
+    IterateOverItemEffects(
+      EffectConditionType_START_OF_THE_WAVE_GET_STAT,
+      [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+        g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+          += fb_effect->value() * item.count;
+        if (fb_effect->value_multiplier() != 1)
+          g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+            *= fb_effect->value_multiplier() * item.count;
+      }
+    );
+    RecalculatePlayerStats();
   }
 
   PLAYER_CREATURE.controller.move = {};
@@ -3907,7 +4003,7 @@ void GameFixedUpdate() {
                   < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
                 amount *= 2;
 
-              g.run.coins += amount;
+              PLAYER_COINS += amount;
 
               AddXP((f32)amount);
 
@@ -4369,6 +4465,29 @@ void GameFixedUpdate() {
 
               MakePickupable(data);
             }
+          }
+
+          // Counting mob as player killed.
+          if (creature.health != -f32_inf) {
+            for (auto& item : g.run.playerItems)
+              item.killedEnemies += 1;
+
+            auto shouldRecalculate = false;
+            IterateOverItemEffects(
+              EffectConditionType_KILL_N_ENEMIES_GET_STAT,
+              [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                if (item.killedEnemies % fb_effect->condition_value() == 0) {
+                  g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+                    += fb_effect->value() * item.count;
+                  if (fb_effect->value_multiplier() != 1)
+                    g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+                      *= fb_effect->value_multiplier() * item.count;
+                  shouldRecalculate = true;
+                }
+              }
+            );
+            if (shouldRecalculate)
+              RecalculatePlayerStats();
           }
         }
       }
