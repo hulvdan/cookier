@@ -1766,6 +1766,163 @@ lframe ApplyAttackSpeedToDuration(int duration) {  ///
   ));
 }
 
+f32 GetWeaponRange(const Weapon& weapon) {  ///
+  const auto fb = glib->weapons()->Get(weapon.type);
+
+  f32 bonusRange = g.run.playerStats[StatType_RANGE] * RANGE_TO_METER_SCALE;
+
+  // Divided by 2 because range stat is half as effective for melee weapons.
+  // (don't confuse with weapons that have DamageType_MELEE).
+  // TODO: better naming to differentiate
+  // MELEE weapon from MELEE damage type. Ideas?
+  if (!fb->projectile_type())
+    bonusRange /= 2.0f;
+
+  return MAX(1, fb->range_meters() + bonusRange);
+}
+
+bool IsCrit() {  ///
+  const f32 chance = (f32)g.run.playerStats[StatType_CRIT_CHANCE] / 100.0f;
+  return GRAND.FRand() < chance;
+}
+
+int TryGetCreatureIndexById(int id) {  ///
+  int i = -1;
+  for (const auto& creature : g.run.creatures) {
+    i++;
+    if (creature.id == id)
+      return i;
+  }
+  return -1;
+}
+
+int GetCreatureIndexById(int id) {  ///
+  int index = TryGetCreatureIndexById(id);
+  ASSERT(index >= 0);
+  return index;
+}
+
+bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
+  const bool continueCollisions = true;
+  const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
+
+  const auto  creatureIndex = GetCreatureIndexById(userData.GetCreatureId());
+  const auto& creature      = g.run.creatures[creatureIndex];
+
+  ASSERT(creature.type);
+
+  if (creature.type == CreatureType_PLAYER)
+    return continueCollisions;
+
+  const auto fb = glib->weapons()->Get(weapon->type);
+
+  if (ArrayContains(weapon->piercedCreatureIds.base, weapon->piercedCount, creature.id))
+    return continueCollisions;
+
+  if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
+    weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
+
+    f32  damage = GetWeaponDamage(weapon->type, weapon->tier);
+    bool isCrit = IsCrit();
+    if (isCrit)
+      damage *= fb->critical_damage();
+
+    damage = MAX(1, damage);
+
+    TryApplyDamage(
+      creatureIndex,
+      damage,
+      Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      fb->knockback_meters(),
+      CreatureType_PLAYER,
+      isCrit
+    );
+  }
+  return continueCollisions;
+}
+
+Vector2 GetWeaponPos(const Weapon& weapon) {  ///
+  const auto fb = glib->weapons()->Get(weapon.type);
+
+  const auto basePos = PLAYER_CREATURE.pos + weapon.offset;
+  if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
+    return basePos;
+
+  const auto e           = weapon.startedShootingAt.Elapsed();
+  const auto shootingDur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+  auto       p           = e.Progress(shootingDur);
+  if (p > 0.5)
+    p = 2.0f - p * 2;
+  else
+    p *= 2;
+  const auto texId      = fb->texture_ids()->Get(0);
+  const auto fb_texture = glib->atlas_textures()->Get(texId);
+  const auto colliderSize
+    = (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+
+  const f32  movingDistance = MAX(1, GetWeaponRange(weapon));
+  const auto movedDistance  = EaseInOutQuad(p) * movingDistance;
+
+  return basePos + weapon.targetDir * movedDistance;
+}
+
+void AddXP(f32 xp) {  ///
+  if (xp > 0)
+    xp *= (f32)(MAX(1, g.run.playerStats[StatType_XP_GAIN] + 100)) / 100.0f;
+
+  g.run.xp += xp;
+  g.run.xp = MAX(0, g.run.xp);
+
+  // Handling level up.
+  while (g.run.xp >= g.run.nextLevelXp) {
+    g.run.xp -= g.run.nextLevelXp;
+    g.run.xpLevel++;
+    g.run.nextLevelXp = GetNextLevelXp(g.run.xpLevel);
+
+    MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
+
+    // Increasing random stat that has `upgrade_values`.
+    while (1) {
+      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
+      const auto fb   = glib->stats()->Get(stat);
+      const auto vals = fb->upgrade_values();
+      if (!vals)
+        continue;
+      g.run.playerStatsWithoutItems[stat] += vals->Get(0);
+      RecalculatePlayerStats();
+      break;
+    }
+  }
+}
+
+bool CanSpawnMoreCreatures() {  ///
+  const auto framesUntilTheEndOfTheWave
+    = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
+  return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
+}
+
+f32 ApplyPlayerArmorToIncomingDamage(f32 damage) {  ///
+  auto armor = (f32)g.run.playerStats[StatType_ARMOR];
+
+  if (armor > 0)
+    damage *= 1.0f / (1.0f + armor / 15.0f);
+  else if (armor < 0)
+    damage *= (15.0f - 2 * armor) / (15 - armor);
+
+  return damage;
+}
+
+f32 GetLuckFactor() {  ///
+  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
+}
+
+void HealPlayer(f32 amount = 1) {  ///
+  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+    PLAYER_CREATURE.health
+      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+  }
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -2165,6 +2322,7 @@ void DoUI(bool draw) {
 
     // Range.
     componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+      GetWeaponRange()
     });
 
     // Pierce.
@@ -3264,163 +3422,6 @@ void DoUI(bool draw) {
 
       DrawGroup_End();
     }
-  }
-}
-
-bool IsCrit() {  ///
-  const f32 chance = (f32)g.run.playerStats[StatType_CRIT_CHANCE] / 100.0f;
-  return GRAND.FRand() < chance;
-}
-
-int TryGetCreatureIndexById(int id) {  ///
-  int i = -1;
-  for (const auto& creature : g.run.creatures) {
-    i++;
-    if (creature.id == id)
-      return i;
-  }
-  return -1;
-}
-
-int GetCreatureIndexById(int id) {  ///
-  int index = TryGetCreatureIndexById(id);
-  ASSERT(index >= 0);
-  return index;
-}
-
-bool OnWeaponCollided(b2ShapeId shapeId, Weapon* weapon) {  ///
-  const bool continueCollisions = true;
-  const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
-
-  const auto  creatureIndex = GetCreatureIndexById(userData.GetCreatureId());
-  const auto& creature      = g.run.creatures[creatureIndex];
-
-  ASSERT(creature.type);
-
-  if (creature.type == CreatureType_PLAYER)
-    return continueCollisions;
-
-  const auto fb = glib->weapons()->Get(weapon->type);
-
-  if (ArrayContains(weapon->piercedCreatureIds.base, weapon->piercedCount, creature.id))
-    return continueCollisions;
-
-  if (weapon->piercedCount < weapon->piercedCreatureIds.count) {
-    weapon->piercedCreatureIds[weapon->piercedCount++] = creature.id;
-
-    f32  damage = GetWeaponDamage(weapon->type, weapon->tier);
-    bool isCrit = IsCrit();
-    if (isCrit)
-      damage *= fb->critical_damage();
-
-    damage = MAX(1, damage);
-
-    TryApplyDamage(
-      creatureIndex,
-      damage,
-      Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      fb->knockback_meters(),
-      CreatureType_PLAYER,
-      isCrit
-    );
-  }
-  return continueCollisions;
-}
-
-f32 GetWeaponRange(const Weapon& weapon) {  ///
-  const auto fb = glib->weapons()->Get(weapon.type);
-
-  f32 bonusRange = g.run.playerStats[StatType_RANGE] * RANGE_TO_METER_SCALE;
-
-  // Divided by 2 because range stat is half as effective for melee weapons.
-  // (don't confuse with weapons that have DamageType_MELEE).
-  // TODO: better naming to differentiate
-  // MELEE weapon from MELEE damage type. Ideas?
-  if (!fb->projectile_type())
-    bonusRange /= 2.0f;
-
-  return MAX(1, fb->range_meters() + bonusRange);
-}
-
-Vector2 GetWeaponPos(const Weapon& weapon) {  ///
-  const auto fb = glib->weapons()->Get(weapon.type);
-
-  const auto basePos = PLAYER_CREATURE.pos + weapon.offset;
-  if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
-    return basePos;
-
-  const auto e           = weapon.startedShootingAt.Elapsed();
-  const auto shootingDur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
-  auto       p           = e.Progress(shootingDur);
-  if (p > 0.5)
-    p = 2.0f - p * 2;
-  else
-    p *= 2;
-  const auto texId      = fb->texture_ids()->Get(0);
-  const auto fb_texture = glib->atlas_textures()->Get(texId);
-  const auto colliderSize
-    = (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-
-  const f32  movingDistance = MAX(1, GetWeaponRange(weapon));
-  const auto movedDistance  = EaseInOutQuad(p) * movingDistance;
-
-  return basePos + weapon.targetDir * movedDistance;
-}
-
-void AddXP(f32 xp) {  ///
-  if (xp > 0)
-    xp *= (f32)(MAX(1, g.run.playerStats[StatType_XP_GAIN] + 100)) / 100.0f;
-
-  g.run.xp += xp;
-  g.run.xp = MAX(0, g.run.xp);
-
-  // Handling level up.
-  while (g.run.xp >= g.run.nextLevelXp) {
-    g.run.xp -= g.run.nextLevelXp;
-    g.run.xpLevel++;
-    g.run.nextLevelXp = GetNextLevelXp(g.run.xpLevel);
-
-    MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
-
-    // Increasing random stat that has `upgrade_values`.
-    while (1) {
-      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
-      const auto fb   = glib->stats()->Get(stat);
-      const auto vals = fb->upgrade_values();
-      if (!vals)
-        continue;
-      g.run.playerStatsWithoutItems[stat] += vals->Get(0);
-      RecalculatePlayerStats();
-      break;
-    }
-  }
-}
-
-bool CanSpawnMoreCreatures() {  ///
-  const auto framesUntilTheEndOfTheWave
-    = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
-  return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
-}
-
-f32 ApplyPlayerArmorToIncomingDamage(f32 damage) {  ///
-  auto armor = (f32)g.run.playerStats[StatType_ARMOR];
-
-  if (armor > 0)
-    damage *= 1.0f / (1.0f + armor / 15.0f);
-  else if (armor < 0)
-    damage *= (15.0f - 2 * armor) / (15 - armor);
-
-  return damage;
-}
-
-f32 GetLuckFactor() {  ///
-  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
-}
-
-void HealPlayer(f32 amount = 1) {  ///
-  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
-    PLAYER_CREATURE.health
-      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
   }
 }
 

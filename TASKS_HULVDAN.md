@@ -63,8 +63,6 @@ x weapon stats: critical
 * upgrades screen:
 * upgrades screen:
 * upgrades screen:
-* better mob spawn rate (ref brotato)
-* item effects
 * weapons categorization. жидкое / твёрдое?
 * HTML game loading screen?
 * record+replay system
