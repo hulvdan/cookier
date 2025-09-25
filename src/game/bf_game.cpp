@@ -1766,8 +1766,8 @@ lframe ApplyAttackSpeedToDuration(int duration) {  ///
   ));
 }
 
-f32 GetWeaponRange(const Weapon& weapon) {  ///
-  const auto fb = glib->weapons()->Get(weapon.type);
+f32 GetWeaponRange(WeaponType type) {  ///
+  const auto fb = glib->weapons()->Get(type);
 
   f32 bonusRange = g.run.playerStats[StatType_RANGE] * RANGE_TO_METER_SCALE;
 
@@ -1860,7 +1860,7 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   const auto colliderSize
     = (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
-  const f32  movingDistance = MAX(1, GetWeaponRange(weapon));
+  const f32  movingDistance = MAX(1, GetWeaponRange(weapon.type));
   const auto movedDistance  = EaseInOutQuad(p) * movingDistance;
 
   return basePos + weapon.targetDir * movedDistance;
@@ -1930,10 +1930,11 @@ void DoUI(bool draw) {
   // e.g. updating mouse position, processing `clicked()`,
   // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 
-  const auto fb_items       = glib->items();
-  const auto fb_stats       = glib->stats();
-  const auto fb_weapons     = glib->weapons();
-  const auto fb_pickupables = glib->pickupables();
+  const auto fb_atlas_textures = glib->atlas_textures();
+  const auto fb_items          = glib->items();
+  const auto fb_stats          = glib->stats();
+  const auto fb_weapons        = glib->weapons();
+  const auto fb_pickupables    = glib->pickupables();
 
   // Setup.
   // {  ///
@@ -1951,8 +1952,6 @@ void DoUI(bool draw) {
   TEMP_USAGE(&g.meta.trashArena);
 
   Clay_BeginLayout();
-
-  auto textures = glib->atlas_textures();
 
   Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
   int                              beautifiersCount = 0;
@@ -2079,8 +2078,13 @@ void DoUI(bool draw) {
             }
           }
 
+          const auto fb = fb_stats->Get(stat);
+
           BF_CLAY_IMAGE({.texId = iconTexId});
-          BF_CLAY_TEXT(" ");
+          if (fb->is_percent())
+            BF_CLAY_TEXT(" % ");
+          else
+            BF_CLAY_TEXT(" ");
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
           BF_CLAY_SPACER_HORIZONTAL;
           BF_CLAY_TEXT(TextFormat("%d", value));
@@ -2322,7 +2326,16 @@ void DoUI(bool draw) {
 
     // Range.
     componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
-      GetWeaponRange()
+      const f32 rangeMeters = GetWeaponRange(type);
+      if (fb->projectile_type()) {
+        BF_CLAY_TEXT(TextFormat("%.1fm", rangeMeters));
+      }
+      else {
+        const f32 weaponRangeMeters
+          = (f32)fb_atlas_textures->Get(fb->texture_ids()->Get(0))->size_x()
+            * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+        BF_CLAY_TEXT(TextFormat("%.1fm + %.1fm", weaponRangeMeters, rangeMeters));
+      }
     });
 
     // Pierce.
@@ -3998,7 +4011,7 @@ void GameFixedUpdate() {
 
         if (closestCreatureIndex >= 0) {
           const auto& closestCreature = g.run.creatures[closestCreatureIndex];
-          auto        range           = GetWeaponRange(weapon);
+          auto        range           = GetWeaponRange(weapon.type);
 
           if (fb->projectile_type()) {
             const auto fb_projectile = glib->projectiles()->Get(fb->projectile_type());
@@ -4061,7 +4074,7 @@ void GameFixedUpdate() {
               .ownerCreatureType = PLAYER_CREATURE.type,
               .pos               = pos,
               .dir               = weapon.targetDir,
-              .range             = GetWeaponRange(weapon),
+              .range             = GetWeaponRange(weapon.type),
               .damage            = GetWeaponDamage(weapon.type, weapon.tier),
               .crit              = fb->critical_damage(),
               .knockbackMeters   = fb->knockback_meters(),
