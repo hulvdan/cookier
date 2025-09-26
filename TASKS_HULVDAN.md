@@ -13,6 +13,8 @@ x item effects: getting stats at the end of the wave (e.g. +1 damage)
 x engine: UI FLEXBOX SUPPORT !!!
 x localization strings with placeholders (UI_LABEL_KILL_N_ENEMIES)
 
+* picked up item shoudn't be able to hover
+* picked up item show stats in it's frame
 * BF_CLAY_TEXT_FORMATTED (saves strings transiently to trashArena)
 * fix: in SHOP when hovering item, counters of items apear above it! they shouldn't!
 * VERSION randrew_layout

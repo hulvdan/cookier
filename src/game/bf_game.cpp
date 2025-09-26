@@ -131,17 +131,6 @@ Clay_Color ToClayColor(Color color) {
     .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_BOTTOM \
   }
 
-#define BF_CLAY_TEXT_LOCALIZED_DANGER(locale_)               \
-  {                                                          \
-    auto        string = localization_strings->Get(locale_); \
-    Clay_String text{                                        \
-      .isStaticallyAllocated = true,                         \
-      .length                = (i32)string->size(),          \
-      .chars                 = string->c_str(),              \
-    };                                                       \
-    BF_CLAY_TEXT(text);                                      \
-  }
-
 #define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr) \
   .custom {                                            \
     .customData = PushClayCustomData({                 \
@@ -2106,6 +2095,16 @@ void DoUI(bool draw) {
   int                              beautifiersCount = 0;
   // }
 
+  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = WHITE)) {  ///
+    auto        string = localization_strings->Get(locale);
+    Clay_String text{
+      .isStaticallyAllocated = true,
+      .length                = (i32)string->size(),
+      .chars                 = string->c_str(),
+    };
+    BF_CLAY_TEXT(text, color);
+  };
+
   LAMBDA (bool, clicked, ()) {  ///
     return !draw && Clay_Hovered() && IsMouseReleased(L);
   };
@@ -2462,8 +2461,9 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {  ///
     CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
-      BF_CLAY_TEXT_LOCALIZED_DANGER(labelLocale);
-      BF_CLAY_TEXT(": ");
+      Color color{0xef, 0xcb, 0x84, 255};
+      BF_CLAY_TEXT_LOCALIZED_DANGER(labelLocale, color);
+      BF_CLAY_TEXT(": ", color);
       innerLambda();
     }
   };
