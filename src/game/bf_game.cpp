@@ -30,7 +30,6 @@
 #pragma once
 
 #include "box2d/box2d.h"
-#include "randrew_layout.h"
 
 // Clay.
 // ============================================================ {  ///
@@ -141,6 +140,16 @@ Clay_Color ToClayColor(Color color) {
       .chars                 = string->c_str(),              \
     };                                                       \
     BF_CLAY_TEXT(text);                                      \
+  }
+
+#define BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(locale_)                         \
+  for (auto string : *localization_broken_strings->Get(locale_)->strings()) { \
+    Clay_String text{                                                         \
+      .isStaticallyAllocated = true,                                          \
+      .length                = (i32)string->size(),                           \
+      .chars                 = string->c_str(),                               \
+    };                                                                        \
+    BF_CLAY_TEXT(text);                                                       \
   }
 
 #define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr) \
@@ -756,7 +765,57 @@ struct GameData {
       int selectedWeaponIndex = -1;
     } shop;
   } run;
+
+  struct {
+    bool active        = false;
+    bool addedChildren = false;
+    u16  childGap      = {};
+    int  currentWidth  = 0;
+    int  maxWidth      = {};
+  } uiFlex;
 } g = {};
+
+void FlexBegin(int maxWidth, u16 childGap) {  ///
+  ASSERT_FALSE(g.uiFlex.active);
+  g.uiFlex = {
+    .active   = true,
+    .childGap = childGap,
+    .maxWidth = maxWidth,
+  };
+}
+
+void FlexEnd() {  ///
+  if (g.uiFlex.addedChildren)
+    Clay__CloseElement();
+  g.uiFlex = {};
+}
+
+void FlexAddRowForChildIfNeeded(int childWidth) {  ///
+  bool shouldAddRow = !g.uiFlex.addedChildren;
+
+  if (g.uiFlex.addedChildren && (g.uiFlex.currentWidth + childWidth > g.uiFlex.maxWidth))
+  {
+    Clay__CloseElement();
+    shouldAddRow = true;
+  }
+
+  if (shouldAddRow) {
+    Clay__OpenElement();
+    Clay__ConfigureOpenElement(CLAY__CONFIG_WRAPPER(
+      Clay_ElementDeclaration,
+      {
+        .layout{
+          .childGap = g.uiFlex.childGap,
+          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+        },
+      }
+    ));
+    g.uiFlex.currentWidth = 0;
+  }
+
+  g.uiFlex.addedChildren = true;
+  g.uiFlex.currentWidth += childWidth + g.uiFlex.childGap;
+}
 
 void RecalculatePlayerStats() {  ///
   FOR_RANGE (int, i, StatType_COUNT) {
@@ -911,6 +970,10 @@ void* PushClayCustomData(ClayCustomData data) {  ///
 // TODO: ATLAS_D2.
 void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
   const auto texture = glib->atlas_textures()->Get(data.texId);
+
+  if (g.uiFlex.active)
+    FlexAddRowForChildIfNeeded(Ceil((f32)texture->size_x() * ASSETS_TO_LOGICAL_RATIO));
+
   CLAY({
     .layout{
       .sizing{
@@ -938,6 +1001,16 @@ void BF_CLAY_IMAGE(ClayImageData data) {  ///
 }
 
 void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
+  if (g.uiFlex.active) {
+    Clay_StringSlice s{
+      .length    = string.length,
+      .chars     = string.chars,
+      .baseChars = string.chars,
+    };
+    auto dim = MeasureText(s, nullptr, nullptr);
+    FlexAddRowForChildIfNeeded(dim.width);
+  }
+
   CLAY_TEXT(string, CLAY_TEXT_CONFIG({.textColor = ToClayColor(color)}));
 }
 
@@ -1486,6 +1559,8 @@ void GameInit() {  ///
   });
 
   RunInit();
+
+  // lay_init_context(&g.uiFlex.context);
 }
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
@@ -1962,6 +2037,7 @@ void DoUI(bool draw) {
   constexpr int MAX_BEAUTIFIERS      = 32;
   const auto    localization         = glib->localizations()->Get(ge.meta.localization);
   const auto    localization_strings = localization->strings();
+  const auto    localization_broken_strings = localization->broken_strings();
 
   TEMP_USAGE(&g.meta.trashArena);
 
@@ -2155,66 +2231,74 @@ void DoUI(bool draw) {
     });
   };
 
-  LAMBDA (void, componentItemStatsExploded, (ItemType type, int count)) {  ///
+  LAMBDA (void, componentItemStatsExploded, (ItemType type, int count, int maxWidth))
+  {  ///
     ASSERT(count > 0);
     const auto fb         = fb_items->Get(type);
     const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
-          const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
-          if (fb_effect->value() != 0) {
-            const auto format = ((fb_effect->value() >= 0) ? "+%d " : "%d ");
-            BF_CLAY_TEXT(
-              TextFormat(format, fb_effect->value() * count),
-              ((fb_effect->value() >= 0) ? GREEN : RED)
-            );
-          }
-          else {
-            const auto format
-              = ((fb_effect->value_multiplier() >= 0) ? "+%d%% " : "%d%% ");
-            const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
-            BF_CLAY_TEXT(
-              TextFormat(
-                format, Round((fb_effect->value_multiplier() - 1) * 100.0f * count)
-              ),
-              ((fb_effect->value_multiplier() >= 0) ? GREEN : RED)
-            );
-          }
+    if (!fb_effects)
+      return;
 
-          if (fb_stat->icon_texture_id())
-            BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
-          BF_CLAY_TEXT_LOCALIZED_DANGER(fb_stat->name_locale());
+    for (const auto fb_effect : *fb_effects) {
+      CLAY({.layout{
+        BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
+        FlexBegin(maxWidth, 8);
 
-          const auto cond = (EffectConditionType)fb_effect->effectcondition_type();
-          switch (cond) {
-          case EffectConditionType_INVALID: {
-            // Intentionally left blank.
-          } break;
-
-          case EffectConditionType_END_OF_THE_WAVE_GET_STAT: {
-            BF_CLAY_TEXT(" ");
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_at_the_end_of_the_wave_locale());
-          } break;
-
-          case EffectConditionType_START_OF_THE_WAVE_GET_STAT: {
-            BF_CLAY_TEXT(" ");
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_at_the_start_of_the_wave_locale()
-            );
-          } break;
-
-          case EffectConditionType_KILL_N_ENEMIES_GET_STAT: {
-            BF_CLAY_TEXT(" ");
-            BF_CLAY_TEXT(TextFormat(
-              localization_strings->Get(glib->ui_label_kill_n_enemies_locale())->c_str(),
-              fb_effect->condition_value()
-            ));
-          } break;
-
-          default:
-            INVALID_PATH;
-          }
+        const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
+        if (fb_effect->value() != 0) {
+          const auto format = ((fb_effect->value() >= 0) ? "+%d" : "%d");
+          BF_CLAY_TEXT(
+            TextFormat(format, fb_effect->value() * count),
+            ((fb_effect->value() >= 0) ? GREEN : RED)
+          );
         }
+        else {
+          const auto format  = ((fb_effect->value_multiplier() >= 0) ? "+%d%%" : "%d%%");
+          const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
+          BF_CLAY_TEXT(
+            TextFormat(
+              format, Round((fb_effect->value_multiplier() - 1) * 100.0f * count)
+            ),
+            ((fb_effect->value_multiplier() >= 0) ? GREEN : RED)
+          );
+        }
+
+        if (fb_stat->icon_texture_id())
+          BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_stat->name_locale());
+
+        const auto cond = (EffectConditionType)fb_effect->effectcondition_type();
+        switch (cond) {
+        case EffectConditionType_INVALID: {
+          // Intentionally left blank.
+        } break;
+
+        case EffectConditionType_END_OF_THE_WAVE_GET_STAT: {
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+            glib->ui_label_at_the_end_of_the_wave_locale()
+          );
+        } break;
+
+        case EffectConditionType_START_OF_THE_WAVE_GET_STAT: {
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+            glib->ui_label_at_the_start_of_the_wave_locale()
+          );
+        } break;
+
+        case EffectConditionType_KILL_N_ENEMIES_GET_STAT: {
+          BF_CLAY_TEXT(TextFormat(
+            localization_strings->Get(glib->ui_label_kill_n_enemies_locale())->c_str(),
+            fb_effect->condition_value()
+          ));
+        } break;
+
+        default:
+          INVALID_PATH;
+        }
+
+        FlexEnd();
       }
     }
   };
@@ -2258,8 +2342,13 @@ void DoUI(bool draw) {
       }
     }
 
+    const auto p        = 8;
+    const auto maxWidth = 219;
     CLAY({
-      .layout{.padding{padding[0], padding[1], padding[2], padding[3]}},
+      .layout{
+        .sizing{CLAY_SIZING_FIXED(maxWidth + 2 * p), CLAY_SIZING_GROW(0)},
+        .padding{padding[0], padding[1], padding[2], padding[3]},
+      },
       .floating{
         .attachPoints{.element = attachElement, .parent = attachParent},
         .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
@@ -2269,7 +2358,7 @@ void DoUI(bool draw) {
       FLOATING_BEAUTIFY;
       CLAY({
         .layout{
-          BF_CLAY_PADDING_ALL(8),
+          BF_CLAY_PADDING_ALL(p),
           .childGap        = 8,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
@@ -2282,7 +2371,7 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
         }
 
-        componentItemStatsExploded(item.type, item.count);
+        componentItemStatsExploded(item.type, item.count, maxWidth);
       }
     }
   };
@@ -2911,12 +3000,17 @@ void DoUI(bool draw) {
                 canBuy = false;
             }
 
-            CLAY({.layout{.sizing{CLAY_SIZING_FIXED(235), CLAY_SIZING_FIXED(320)}}})
+            const auto padding  = 8;
+            const auto maxWidth = 219;
+            CLAY({.layout{.sizing{
+              CLAY_SIZING_FIXED(maxWidth + 2 * padding),
+              CLAY_SIZING_FIXED(320),
+            }}})
             if (v.item || v.weapon) {
               CLAY({
                 .layout{
                   BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_PADDING_ALL(8),
+                  BF_CLAY_PADDING_ALL(padding),
                   .childGap        = 8,
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
@@ -2956,7 +3050,7 @@ void DoUI(bool draw) {
                 }
 
                 if (v.item)
-                  componentItemStatsExploded(v.item, 1);
+                  componentItemStatsExploded(v.item, 1, maxWidth);
                 else if (v.weapon)
                   componentWeaponStatsExploded(v.weapon, v.tier, 0);
 
