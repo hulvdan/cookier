@@ -11,8 +11,9 @@ x item effects: getting stats at the start of the wave (piggy bank gets coins)
 x item effects: getting stats after killing N enemies (increasing atk speed)
 x item effects: getting stats at the end of the wave (e.g. +1 damage)
 x engine: UI FLEXBOX SUPPORT !!!
+x localization strings with placeholders (UI_LABEL_KILL_N_ENEMIES)
 
-* localization strings with placeholders (UI_LABEL_KILL_N_ENEMIES)
+* BF_CLAY_TEXT_FORMATTED (saves strings transiently to trashArena)
 * fix: in SHOP when hovering item, counters of items apear above it! they shouldn't!
 * VERSION randrew_layout
 * engine: better fonts rendering

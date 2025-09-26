@@ -5,7 +5,7 @@ import tempfile
 from collections import defaultdict
 from math import radians
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeAlias
 
 import pydub
 import pyjson5 as json
@@ -95,7 +95,13 @@ def degrees_to_radians_recursive_transform(gamelib_recursed) -> None:
                     degrees_to_radians_recursive_transform(v)
 
 
-def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
+def _get_placeholder_from_string(string: str) -> str | None:
+    if string.startswith("{") and string.endswith("}"):
+        return string[1:-1]
+    return None
+
+
+def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
     gamelib["localization"] = {
         "INVALID": "<< LOCALE NOT SET >>",
         **gamelib["localization"],
@@ -160,18 +166,84 @@ def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
             translated = translated_values_[codename].strip()
             if not translated:
                 log.warn(f"Localization: {language}: Translation not found '{codename}'!")
-                translated = "<< LOCALE NOT TRANSLATED >>"
+                translated = "<< NOT TRANSLATED >>"
 
             strings.append(translated)
             codepoints.update(ord(c) for c in translated if c not in SKIP_CHARACTERS)
 
         gamelib["localizations"].append({"strings": strings})
 
+    # Making `broken_strings`.
     for loc in gamelib["localizations"]:
         broken_strings = []
         for string in loc["strings"]:
-            broken_strings.append({"strings": replace_double_spaces(string).split(" ")})
+            broken_strings.append(
+                {
+                    "strings": [
+                        {"string": x} for x in replace_double_spaces(string).split(" ")
+                    ]
+                }
+            )
         loc["broken_strings"] = broken_strings
+
+    # Verifying placeholders.
+    if 1:
+        locs = gamelib["localizations"]
+        next_placeholder_id = 1
+
+        StringIndex: TypeAlias = int
+        PlaceholderContent: TypeAlias = str
+        PlaceholderId: TypeAlias = int
+
+        all_placeholders: dict[tuple[StringIndex, PlaceholderContent], PlaceholderId] = {}
+
+        max_placeholders_in_string = 0
+
+        for i, string in enumerate(locs[0]["broken_strings"]):
+            placeholders = []
+            for x in string["strings"]:
+                if pl := _get_placeholder_from_string(x["string"]):
+                    placeholders.append(pl)
+                    all_placeholders[(i, pl)] = next_placeholder_id
+                    genline(
+                        "constexpr int BF_PL__{}__{} = {};".format(
+                            index_to_locale[i].upper(), pl, next_placeholder_id
+                        )
+                    )
+                    x["string"] = None
+                    x["placeholder_id"] = next_placeholder_id
+                    next_placeholder_id += 1
+            placeholders.sort()
+
+            max_placeholders_in_string = max(
+                max_placeholders_in_string, len(placeholders)
+            )
+
+            for lang_index, oloc in enumerate(locs[1:], 1):
+                other_placeholders = []
+                for x in oloc["broken_strings"][i]["strings"]:
+                    if pl := _get_placeholder_from_string(x["string"]):
+                        other_placeholders.append(pl)
+
+                        if pl in placeholders:
+                            x["string"] = None
+                            x["placeholder_id"] = all_placeholders[(i, pl)]
+
+                other_placeholders.sort()
+                assert placeholders == other_placeholders, str(
+                    (
+                        "Translated string differs in placeholders",
+                        data_values.languages[lang_index],
+                        index_to_locale[i],
+                    )
+                )
+
+        genline(
+            "constexpr int BF_MAX_PLACEHOLDERS_IN_STRING = {};".format(
+                max_placeholders_in_string
+            )
+        )
+        genline("")
 
     return codepoints, locale_to_index
 
@@ -299,7 +371,7 @@ def convert_gamelib_json_to_binary(
             field_name = lines[i].split(":", 1)[0].strip().removesuffix("_locale")
             gamelib["{}_locale".format(field_name)] = field_name.upper()
 
-    localization_codepoints, locale_to_index = _do_localization(gamelib)
+    localization_codepoints, locale_to_index = _do_localization(genline, gamelib)
 
     for gamelib_processing_function in gamelib_processing_functions:
         gamelib_processing_function(genline, gamelib, localization_codepoints)
