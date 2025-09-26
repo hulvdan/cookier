@@ -13,8 +13,13 @@ table Texture {
     baseline: int;
 }
 
+table BrokenLocalizationString {
+    strings: [string] (required);
+}
+
 table Localization {
     strings: [string] (required);
+    broken_strings: [BrokenLocalizationString] (required);
 }
 
 struct Posf {

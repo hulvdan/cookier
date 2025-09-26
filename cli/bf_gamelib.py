@@ -34,6 +34,7 @@ from bf_lib import (
     log,
     recursive_mkdir,
     recursive_replace_transform,
+    replace_double_spaces,
     run_command,
     stable_hash,
     timing,
@@ -165,6 +166,12 @@ def _do_localization(gamelib) -> tuple[set[int], dict[str, int]]:
             codepoints.update(ord(c) for c in translated if c not in SKIP_CHARACTERS)
 
         gamelib["localizations"].append({"strings": strings})
+
+    for loc in gamelib["localizations"]:
+        broken_strings = []
+        for string in loc["strings"]:
+            broken_strings.append({"strings": replace_double_spaces(string).split(" ")})
+        loc["broken_strings"] = broken_strings
 
     return codepoints, locale_to_index
 

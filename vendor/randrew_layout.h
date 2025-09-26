@@ -17,25 +17,25 @@
 
 #include <stdint.h>
 
-#if LAY_IMPLEMENTATION
-#    if _WIN32
-#        define LAY_EXPORT __declspec(dllexport)
-#    elif __GNUC__ >= 4
-#        define LAY_EXPORT __attribute__((visibility("default")))
-#    else
-#        define LAY_EXPORT
-#    endif
-#else
-#    if _WIN32
-#        define LAY_EXPORT __declspec(dllimport)
-#    else
-#        define LAY_EXPORT
-#    endif
-#endif
-
-// #ifndef LAY_EXPORT
-// #define LAY_EXPORT extern
+// #if LAY_IMPLEMENTATION
+// #    if _WIN32
+// #        define LAY_EXPORT __declspec(dllexport)
+// #    elif __GNUC__ >= 4
+// #        define LAY_EXPORT __attribute__((visibility("default")))
+// #    else
+// #        define LAY_EXPORT
+// #    endif
+// #else
+// #    if _WIN32
+// #        define LAY_EXPORT __declspec(dllimport)
+// #    else
+// #        define LAY_EXPORT
+// #    endif
 // #endif
+
+#ifndef LAY_EXPORT
+#define LAY_EXPORT extern
+#endif
 
 // Users of this library can define LAY_ASSERT if they would like to use an
 // assert other than the one from assert.h.
