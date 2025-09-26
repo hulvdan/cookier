@@ -142,16 +142,6 @@ Clay_Color ToClayColor(Color color) {
     BF_CLAY_TEXT(text);                                      \
   }
 
-#define BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(locale_)                         \
-  for (auto string : *localization_broken_strings->Get(locale_)->strings()) { \
-    Clay_String text{                                                         \
-      .isStaticallyAllocated = true,                                          \
-      .length                = (i32)string->size(),                           \
-      .chars                 = string->c_str(),                               \
-    };                                                                        \
-    BF_CLAY_TEXT(text);                                                       \
-  }
-
 #define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr) \
   .custom {                                            \
     .customData = PushClayCustomData({                 \
@@ -666,6 +656,11 @@ struct ThisWaveMob {
   f32          accumulatedFactor = {};
 };
 
+struct StringPlaceholderValue {
+  int         id    = {};
+  const char* value = {};
+};
+
 struct GameData {
   struct Meta {
     i64   frame      = 0;
@@ -772,6 +767,9 @@ struct GameData {
     u16  childGap      = {};
     int  currentWidth  = 0;
     int  maxWidth      = {};
+
+    Array<StringPlaceholderValue, BF_MAX_PLACEHOLDERS_IN_STRING> placeholders      = {};
+    int                                                          placeholdersCount = {};
   } uiFlex;
 } g = {};
 
@@ -815,6 +813,13 @@ void FlexAddRowForChildIfNeeded(int childWidth) {  ///
 
   g.uiFlex.addedChildren = true;
   g.uiFlex.currentWidth += childWidth + g.uiFlex.childGap;
+}
+
+void SetStringPlaceholder(int id, const char* value) {  ///
+  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = {
+    .id    = id,
+    .value = value,
+  };
 }
 
 void RecalculatePlayerStats() {  ///
@@ -1024,6 +1029,62 @@ void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
     .chars  = allocatedText,
   };
   BF_CLAY_TEXT(string, color);
+}
+
+void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
+  const auto localization = glib->localizations()->Get(ge.meta.localization);
+  const auto localization_broken_strings = localization->broken_strings();
+
+  if (BF_DEBUG) {
+    int requiredPlaceholders = 0;
+    for (auto string : *localization_broken_strings->Get(locale_)->strings()) {
+      if (string->placeholder_id())
+        requiredPlaceholders++;
+    }
+    ASSERT(requiredPlaceholders == g.uiFlex.placeholdersCount);
+
+    for (auto string : *localization_broken_strings->Get(locale_)->strings()) {
+      if (string->placeholder_id()) {
+        bool found = false;
+        FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
+          if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
+            found = true;
+            break;
+          }
+        }
+        ASSERT(found);
+      }
+    }
+  }
+
+  for (auto string : *localization_broken_strings->Get(locale_)->strings()) {
+    if (string->placeholder_id()) {
+      int pl = -1;
+      FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
+        if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
+          pl = i;
+          break;
+        }
+      }
+
+      Clay_String text{
+        .isStaticallyAllocated = true,
+        .length                = (i32)strlen(g.uiFlex.placeholders[pl].value),
+        .chars                 = g.uiFlex.placeholders[pl].value,
+      };
+      BF_CLAY_TEXT(text, GREEN);
+    }
+    else {
+      Clay_String text{
+        .isStaticallyAllocated = true,
+        .length                = (i32)string->string()->size(),
+        .chars                 = string->string()->c_str(),
+      };
+      BF_CLAY_TEXT(text);
+    }
+  }
+
+  g.uiFlex.placeholdersCount = 0;
 }
 
 void DestroyBody(Body* body) {  ///
@@ -1559,8 +1620,6 @@ void GameInit() {  ///
   });
 
   RunInit();
-
-  // lay_init_context(&g.uiFlex.context);
 }
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
@@ -2288,10 +2347,13 @@ void DoUI(bool draw) {
         } break;
 
         case EffectConditionType_KILL_N_ENEMIES_GET_STAT: {
-          BF_CLAY_TEXT(TextFormat(
-            localization_strings->Get(glib->ui_label_kill_n_enemies_locale())->c_str(),
-            fb_effect->condition_value()
-          ));
+          SetStringPlaceholder(
+            BF_PL__UI_LABEL_KILL_N_ENEMIES__ENEMIES,
+            PushTextToArena(
+              &g.meta.trashArena, TextFormat("%d", fb_effect->condition_value())
+            )
+          );
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_kill_n_enemies_locale());
         } break;
 
         default:

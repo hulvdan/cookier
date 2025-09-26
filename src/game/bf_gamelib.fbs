@@ -13,8 +13,13 @@ table Texture {
     baseline: int;
 }
 
+table BrokenString {
+    placeholder_id: int;
+    string: string;  // use only if placeholder_id is 0
+}
+
 table BrokenLocalizationString {
-    strings: [string] (required);
+    strings: [BrokenString] (required);
 }
 
 table Localization {
