@@ -2806,11 +2806,13 @@ const char* TextFormat(const char* text, ...) {  ///
   return currentBuffer;
 }
 
-const char* PushTextToArena(Arena* arena, const char* text) {  ///
+const char* PushTextToArena(Arena* arena, const char* text, int* outLen) {  ///
   size_t len = strlen(text);
   auto   s   = ALLOCATE_ARRAY(arena, u8, len + 1);
   memcpy(s, text, len);
   s[len] = 0;
+  if (outLen)
+    *outLen = (int)len;
   return (const char*)s;
 }
 

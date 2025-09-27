@@ -1015,6 +1015,7 @@ void BF_CLAY_IMAGE(ClayImageData data) {  ///
   BF_CLAY_IMAGE(data, [] {});
 }
 
+// NOTE: This overload DOESN'T SAVE string to trash arena.
 void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
   if (g.uiFlex.active) {
     Clay_StringSlice s{
@@ -1029,11 +1030,10 @@ void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
   CLAY_TEXT(string, CLAY_TEXT_CONFIG({.textColor = ToClayColor(color)}));
 }
 
+// NOTE: This overload SAVES string to trash arena.
 void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
-  auto len           = strlen(text);
-  auto allocatedText = ALLOCATE_ARRAY(&g.meta.trashArena, char, len);
-  memcpy(allocatedText, text, len + 1);
-
+  int         len           = 0;
+  const char* allocatedText = PushTextToArena(&g.meta.trashArena, text, &len);
   Clay_String string{
     .length = (i32)len,
     .chars  = allocatedText,
@@ -1077,12 +1077,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
         }
       }
 
-      Clay_String text{
-        .isStaticallyAllocated = true,
-        .length                = (i32)strlen(g.uiFlex.placeholders[pl].value),
-        .chars                 = g.uiFlex.placeholders[pl].value,
-      };
-      BF_CLAY_TEXT(text, GREEN);
+      BF_CLAY_TEXT(g.uiFlex.placeholders[pl].value, GREEN);
     }
     else {
       Clay_String text{
@@ -1607,7 +1602,7 @@ void GameInit() {  ///
   g.run.arena       = MakeArena(4 * 1024);
 
   // Initializing Clay.
-  {  ///
+  {
     auto size = Clay_MinMemorySize();
     Clay_Initialize(
       // TODO: remove malloc!
@@ -2374,9 +2369,7 @@ void DoUI(bool draw) {
         case EffectConditionType_KILL_N_ENEMIES_GET_STAT: {
           SetStringPlaceholder(
             BF_PL__UI_LABEL_KILL_N_ENEMIES__ENEMIES,
-            PushTextToArena(
-              &g.meta.trashArena, TextFormat("%d", fb_effect->condition_value())
-            )
+            TextFormat("%d", fb_effect->condition_value())
           );
           BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_kill_n_enemies_locale());
         } break;
