@@ -766,6 +766,23 @@ struct GameData {
   } uiFlex;
 } g = {};
 
+#define PLAYER_COINS (g.run.playerStatsWithoutItems[StatType_COINS])
+
+void AddCoins(int amount) {  ///
+  PLAYER_COINS += amount;
+  if (PLAYER_COINS < 0) {
+    if (amount >= 0)
+      PLAYER_COINS = int_max;
+    else
+      PLAYER_COINS = MAX(0, PLAYER_COINS);
+  }
+}
+
+void SanitizeCoins() {  ///
+  if (PLAYER_COINS < 0)
+    PLAYER_COINS = int_max;
+}
+
 void FlexBegin(int maxWidth, u16 childGap) {  ///
   ASSERT_FALSE(g.uiFlex.active);
   g.uiFlex = {
@@ -1762,10 +1779,9 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
   return Round(price * factor);
 }
 
-#define PLAYER_COINS (g.run.playerStatsWithoutItems[StatType_COINS])
-
 void Rerolls::Roll() {  ///
   PLAYER_COINS -= price;
+  ASSERT(PLAYER_COINS >= 0);
   if (freeRerolls > 0)
     freeRerolls--;
   if (freeRerolls <= 0)
@@ -2418,15 +2434,13 @@ void DoUI(bool draw) {
     CLAY({
       .layout{
         .sizing{
-          CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
-          CLAY_SIZING_GROW(0)
+          CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE), CLAY_SIZING_FIT(0)
         },
         .padding{padding[0], padding[1], padding[2], padding[3]},
       },
       .floating{
         .attachPoints{.element = attachElement, .parent = attachParent},
-        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-        .attachTo           = CLAY_ATTACH_TO_PARENT,
+        .attachTo = CLAY_ATTACH_TO_PARENT,
       },
     }) {
       FLOATING_BEAUTIFY;
@@ -2843,7 +2857,7 @@ void DoUI(bool draw) {
             if (took)
               AddItem(g.run.pickedUpItem.toPick);
             else if (recycled)
-              PLAYER_COINS += g.run.pickedUpItem.recyclePrice;
+              AddCoins(g.run.pickedUpItem.recyclePrice);
 
             if (took || recycled) {
               g.run.crates--;
@@ -3150,7 +3164,7 @@ void DoUI(bool draw) {
                       });
 
                   if (bought) {
-                    PLAYER_COINS -= v.price;
+                    AddCoins(-v.price);
                     if (v.weapon) {
                       auto& weapon = g.run.playerWeapons[emptyOrSameWeaponSlotIndex];
                       if (weapon.type) {
@@ -3202,10 +3216,13 @@ void DoUI(bool draw) {
                   if (t >= g.run.playerItems.count)
                     break;
                   CLAY({}) {
-                    const auto& item = g.run.playerItems[t];
+                    auto& item = g.run.playerItems[t];
                     componentItem(item);
-                    if (Clay_Hovered())
+                    if (Clay_Hovered()) {
                       componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
+                      if (ge.meta.debugEnabled && clicked())
+                        item.count++;
+                    }
                   }
                 }
               }
@@ -3353,7 +3370,7 @@ void DoUI(bool draw) {
                           StableRemoveWeapon(canCombineWithIndex);
                         }
                         if (recycled) {
-                          PLAYER_COINS += weapon.recyclePrice;
+                          AddCoins(weapon.recyclePrice);
                           StableRemoveWeapon(weaponIndex);
                         }
                         if (cancelled || recycled || combined)
@@ -3712,7 +3729,7 @@ void GameFixedUpdate() {
   if (ge.meta.debugEnabled) {
     // F5 - add 10 coins.
     if (IsKeyPressed(SDL_SCANCODE_F5)) {  ///
-      PLAYER_COINS += 10;
+      AddCoins(10);
     }
 
     // F6 - add random item.
@@ -3780,8 +3797,7 @@ void GameFixedUpdate() {
       {
         // Applying StatType_HARVESTING.
         auto& harvesting = g.run.playerStats[StatType_HARVESTING];
-        PLAYER_COINS += harvesting;
-        PLAYER_COINS = MAX(0, PLAYER_COINS);
+        AddCoins(harvesting);
         AddXP(harvesting);
         // Harvesting stat (if positive) grows by 5% upon finishing each wave.
         if (harvesting > 0)
@@ -3878,9 +3894,13 @@ void GameFixedUpdate() {
       [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
         g.run.playerStatsWithoutItems[fb_effect->stat_type()]
           += fb_effect->value() * item.count;
+        if ((StatType)fb_effect->stat_type() == StatType_COINS)
+          SanitizeCoins();
         if (fb_effect->value_multiplier() != 1)
           g.run.playerStatsWithoutItems[fb_effect->stat_type()]
             *= fb_effect->value_multiplier() * item.count;
+        if ((StatType)fb_effect->stat_type() == StatType_COINS)
+          SanitizeCoins();
       }
     );
     RecalculatePlayerStats();
@@ -4172,8 +4192,7 @@ void GameFixedUpdate() {
                   < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
                 amount *= 2;
 
-              PLAYER_COINS += amount;
-
+              AddCoins(amount);
               AddXP((f32)amount);
 
               auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;
