@@ -19,7 +19,6 @@ x shop: hovered item fix details modal positioning
 
 * BF_CLAY_TEXT_FORMATTED (saves strings transiently to trashArena)
 * fix: in SHOP when hovering item, counters of items apear above it! they shouldn't!
-* VERSION randrew_layout
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize
 *
