@@ -65,33 +65,37 @@ Clay_Color ToClayColor(Color color) {
     .height = CLAY_SIZING_GROW(0) \
   }
 
-#define BF_CLAY_PADDING_ALL(v)      \
-  .padding {                        \
-    (u16) v, (u16)v, (u16)v, (u16)v \
+#define BF_CLAY_PADDING_ALL(v)             \
+  .padding {                               \
+    (u16)(v), (u16)(v), (u16)(v), (u16)(v) \
+  }
+#define BF_CLAY_PADDING_HORIZONTAL_VERTICAL(h, v) \
+  .padding {                                      \
+    (u16)(h), (u16)(h), (u16)(v), (u16)(v)        \
   }
 #define BF_CLAY_PADDING_HORIZONTAL(v) \
   .padding {                          \
-    (u16) v, (u16)v, 0, 0             \
+    (u16)(v), (u16)(v), 0, 0          \
   }
 #define BF_CLAY_PADDING_VERTICAL(v) \
   .padding {                        \
-    0, 0, (u16)v, (u16)v            \
+    0, 0, (u16)(v), (u16)(v)        \
   }
 #define BF_CLAY_PADDING_LEFT(v) \
   .padding {                    \
-    (u16) v, 0, 0, 0            \
+    (u16)(v), 0, 0, 0           \
   }
 #define BF_CLAY_PADDING_RIGHT(v) \
   .padding {                     \
-    0, (u16)v, 0, 0              \
+    0, (u16)(v), 0, 0            \
   }
 #define BF_CLAY_PADDING_TOP(v) \
   .padding {                   \
-    0, 0, (u16)v, 0            \
+    0, 0, (u16)(v), 0          \
   }
 #define BF_CLAY_PADDING_BOTTOM(v) \
   .padding {                      \
-    0, 0, 0, (u16)v               \
+    0, 0, 0, (u16)(v)             \
   }
 
 #define BF_CLAY_CHILD_ALIGNMENT_LEFT_TOP          \
@@ -2093,6 +2097,12 @@ void DoUI(bool draw) {
 
   Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
   int                              beautifiersCount = 0;
+
+  constexpr u16 GAP_SMALL                = 8;
+  constexpr u16 GAP_BIG                  = 20;
+  constexpr u16 PADDING_NINE_SLICE       = 12;
+  constexpr u16 PADDING_OUTER_VERTICAL   = 10;
+  constexpr u16 PADDING_OUTER_HORIZONTAL = 12;
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = WHITE)) {  ///
@@ -2170,8 +2180,8 @@ void DoUI(bool draw) {
   LAMBDA (void, componentStats, ()) {  ///
     CLAY({
       .layout{
-        BF_CLAY_PADDING_ALL(8),
-        .childGap        = 8,
+        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+        .childGap        = GAP_SMALL,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
@@ -2185,7 +2195,7 @@ void DoUI(bool draw) {
       }
 
       // Primary / secondary buttons.
-      CLAY({.layout{.childGap = 9}}) {
+      CLAY({.layout{.childGap = GAP_SMALL}}) {
         const bool clickedPrimary = componentButton(
           {.enabled = g.run.showingSecondaryStats},
           [&]() BF_FORCE_INLINE_LAMBDA {
@@ -2250,7 +2260,7 @@ void DoUI(bool draw) {
       }
 
       // Stats.
-      CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+      CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
       FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
         const auto type = (StatType)(i + 2);
         const auto fb   = glib->stats()->Get(type);
@@ -2369,6 +2379,8 @@ void DoUI(bool draw) {
     int detailsBelow = {};
   };
 
+  constexpr int ITEM_FRAME_WIDTH = 219;
+
   LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
   {  ///
     u16 padding[4]{8, 8, 8, 8};
@@ -2403,11 +2415,12 @@ void DoUI(bool draw) {
       }
     }
 
-    const auto p        = 8;
-    const auto maxWidth = 219;
     CLAY({
       .layout{
-        .sizing{CLAY_SIZING_FIXED(maxWidth + 2 * p), CLAY_SIZING_GROW(0)},
+        .sizing{
+          CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+          CLAY_SIZING_GROW(0)
+        },
         .padding{padding[0], padding[1], padding[2], padding[3]},
       },
       .floating{
@@ -2419,20 +2432,20 @@ void DoUI(bool draw) {
       FLOATING_BEAUTIFY;
       CLAY({
         .layout{
-          BF_CLAY_PADDING_ALL(p),
-          .childGap        = 8,
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+          .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
       }) {
         const auto fb_item = fb_items->Get(item.type);
 
-        CLAY({.layout{.childGap = 8}}) {
+        CLAY({.layout{.childGap = GAP_SMALL}}) {
           componentItem(item);
           BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
         }
 
-        componentItemStatsExploded(item.type, item.count, maxWidth);
+        componentItemStatsExploded(item.type, item.count, ITEM_FRAME_WIDTH);
       }
     }
   };
@@ -2583,12 +2596,18 @@ void DoUI(bool draw) {
       || (g.run.screen == ScreenType_UPGRADES))
   {
     CLAY({
-      .layout{BF_CLAY_SIZING_GROW_XY},
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        )
+      },
       .floating{
         .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
         .attachTo           = CLAY_ATTACH_TO_PARENT,
       },
-    }) {
+    })
+    CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
       FLOATING_BEAUTIFY;
 
       // Health bar + coins.
@@ -2598,8 +2617,7 @@ void DoUI(bool draw) {
 
       CLAY({
         .layout{
-          .padding{.left = 32, .top = 32},
-          .childGap        = 8,
+          .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         .floating{
@@ -2684,7 +2702,7 @@ void DoUI(bool draw) {
         });
 
         CLAY({.layout{
-          .childGap = 8,
+          .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         }}) {
           BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
@@ -2696,7 +2714,6 @@ void DoUI(bool draw) {
       // Wave.
       // { ///
       CLAY({
-        .layout{.padding{.top = 32}},
         .floating{
           .attachPoints{
             .element = CLAY_ATTACH_POINT_CENTER_TOP,
@@ -2723,11 +2740,6 @@ void DoUI(bool draw) {
       // Game's version.
       // {  ///
       CLAY({
-        .layout{
-          BF_CLAY_PADDING_ALL(4),
-          .childGap = 0,
-          BF_CLAY_CHILD_ALIGNMENT_LEFT_BOTTOM,
-        },
         .floating{
           .attachPoints{
             .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
@@ -2750,7 +2762,7 @@ void DoUI(bool draw) {
       // Picked up crates.
       // { ///
       CLAY({
-        .layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+        .layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM},
         .floating{
           .attachPoints{
             .element = CLAY_ATTACH_POINT_RIGHT_TOP,
@@ -2777,43 +2789,42 @@ void DoUI(bool draw) {
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
     }}) {
       // Columns (1) picked up item, (2) stats
-      CLAY({.layout{
-        .childGap = 8,
-        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-      }}) {
-        // Picked up item.
-        CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+      CLAY({.layout{.childGap = GAP_BIG, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+        // Column 1. Picked up item.
+        CLAY({.layout{
+          .childGap        = GAP_SMALL,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
           // "Item Found" label.
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_item_found_locale());
 
           // Item.
           CLAY({
             .layout{
-              .sizing{CLAY_SIZING_FIXED(235), CLAY_SIZING_FIXED(320)},
-              BF_CLAY_PADDING_ALL(8),
-              .childGap        = 8,
+              .sizing{
+                CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+                CLAY_SIZING_FIXED(320)
+              },
+              BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+              .childGap        = GAP_SMALL,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
             BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
           }) {
-            CLAY({.layout{.childGap = 8}}) {
-              const auto type = g.run.pickedUpItem.toPick;
-              const auto fb   = fb_items->Get(type);
-              const Item item{.type = type, .count = 1};
-              CLAY({}) {
-                componentItem(item);
-                if (Clay_Hovered())
-                  componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
-              }
+            const auto type = g.run.pickedUpItem.toPick;
 
+            CLAY({.layout{.childGap = GAP_SMALL}}) {
+              const auto fb = fb_items->Get(type);
+              const Item item{.type = type, .count = 1};
+              componentItem(item);
               BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
             }
 
-            // TODO: Item stats.
+            componentItemStatsExploded(type, 1, ITEM_FRAME_WIDTH);
           }
 
           // Take and Recycle buttons.
-          CLAY({.layout{.childGap = 8}}) {
+          CLAY({.layout{.childGap = GAP_SMALL}}) {
             const bool took
               = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
@@ -2844,7 +2855,7 @@ void DoUI(bool draw) {
           }
         }
 
-        // Stats.
+        // Column 2. Stats.
         componentStats();
       }
     }
@@ -2858,7 +2869,7 @@ void DoUI(bool draw) {
     }}) {
       // Upgrades.
       CLAY({.layout{
-        .childGap = 20,
+        .childGap = GAP_BIG,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
@@ -2866,14 +2877,14 @@ void DoUI(bool draw) {
         BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_level_up_locale());
 
         // Upgrades.
-        CLAY({.layout{.childGap = 20}}) {
+        CLAY({.layout{.childGap = GAP_BIG}}) {
           const auto fb_stats = glib->stats();
 
           FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
             const auto upgrade = g.run.upgrades.toPick[i];
             const auto fb      = fb_stats->Get(upgrade.stat);
             CLAY({.layout{
-              .childGap        = 8,
+              .childGap        = GAP_SMALL,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               CLAY({}) {
@@ -2961,8 +2972,10 @@ void DoUI(bool draw) {
     // Columns.
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
-      BF_CLAY_PADDING_ALL(8),
-      .childGap = 8,
+      BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+        PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+      ),
+      .childGap = GAP_BIG,
     }}) {
       // Left column that contains:
       // 1. wave, coins, reroll.
@@ -2970,7 +2983,7 @@ void DoUI(bool draw) {
       // 3. player's items and weapons.
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_XY,
-        .childGap        = 8,
+        .childGap        = GAP_BIG,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
         // 1. Wave, coins, reroll.
@@ -3028,11 +3041,11 @@ void DoUI(bool draw) {
         BF_CLAY_SPACER_VERTICAL;
 
         // 2. Items to buy.
-        CLAY({.layout{BF_CLAY_SIZING_GROW_X, .childGap = 8}}) {
-          FLOATING_BEAUTIFY;
-
-          BF_CLAY_SPACER_HORIZONTAL;
-
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_X,
+          .childGap = GAP_SMALL,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
           for (auto& v : g.run.shop.toPick) {
             bool canBuy = ((v.item || v.weapon) && (v.price <= PLAYER_COINS));
             int  emptyOrSameWeaponSlotIndex = -1;
@@ -3062,18 +3075,16 @@ void DoUI(bool draw) {
                 canBuy = false;
             }
 
-            const auto padding  = 8;
-            const auto maxWidth = 219;
             CLAY({.layout{.sizing{
-              CLAY_SIZING_FIXED(maxWidth + 2 * padding),
+              CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
               CLAY_SIZING_FIXED(320),
             }}})
             if (v.item || v.weapon) {
               CLAY({
                 .layout{
                   BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_PADDING_ALL(padding),
-                  .childGap        = 8,
+                  BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+                  .childGap        = GAP_SMALL,
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
                 BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
@@ -3084,7 +3095,7 @@ void DoUI(bool draw) {
                 // TODO: Highlight price, not item's frame.
 
                 // Item's image + name.
-                CLAY({.layout{.childGap = 8}}) {
+                CLAY({.layout{.childGap = GAP_SMALL}}) {
                   // Image.
                   componentSlot(false, v.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{
@@ -3112,7 +3123,7 @@ void DoUI(bool draw) {
                 }
 
                 if (v.item)
-                  componentItemStatsExploded(v.item, 1, maxWidth);
+                  componentItemStatsExploded(v.item, 1, ITEM_FRAME_WIDTH);
                 else if (v.weapon)
                   componentWeaponStatsExploded(v.weapon, v.tier, 0);
 
@@ -3168,25 +3179,24 @@ void DoUI(bool draw) {
               }
             }
           }
-
-          BF_CLAY_SPACER_HORIZONTAL;
         }
 
         BF_CLAY_SPACER_VERTICAL;
 
         // 3. Player's items and weapons.
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
-          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
 
             // Items.
-            CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+            CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
+            ) {
               constexpr int ITEMS_X = 10;
               const int     ITEMS_Y = CeilDivision(g.run.playerItems.count, ITEMS_X);
 
               FOR_RANGE (int, y, ITEMS_Y) {
-                CLAY({.layout{.childGap = 8}})
+                CLAY({.layout{.childGap = GAP_SMALL}})
                 FOR_RANGE (int, x, ITEMS_X) {
                   const int t = y * ITEMS_X + x;
                   if (t >= g.run.playerItems.count)
@@ -3204,7 +3214,7 @@ void DoUI(bool draw) {
 
           BF_CLAY_SPACER_HORIZONTAL;
 
-          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Weapons label.
             CLAY({}) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
@@ -3224,9 +3234,9 @@ void DoUI(bool draw) {
             constexpr int WEAPONS_Y = 2;
             static_assert(WEAPONS_X * WEAPONS_Y == g.run.playerWeapons.count);
 
-            CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+            CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
             FOR_RANGE (int, y, 2) {
-              CLAY({.layout{.childGap = 8}})
+              CLAY({.layout{.childGap = GAP_SMALL}})
               FOR_RANGE (int, x, 3) {
                 const int weaponIndex = y * WEAPONS_X + x;
                 if (weaponIndex >= g.run.playerWeapons.count)
@@ -3265,15 +3275,15 @@ void DoUI(bool draw) {
 
                       CLAY({
                         .layout{
-                          BF_CLAY_PADDING_ALL(8),
-                          .childGap        = 8,
+                          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+                          .childGap        = GAP_SMALL,
                           .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         },
                         BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
                       }) {
                         FLOATING_BEAUTIFY;
 
-                        CLAY({.layout{.childGap = 8}}) {
+                        CLAY({.layout{.childGap = GAP_SMALL}}) {
                           componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                             CLAY({.layout{
                               BF_CLAY_SIZING_GROW_XY,
@@ -3387,8 +3397,10 @@ void DoUI(bool draw) {
   else if (g.run.screen == ScreenType_END) {  ///
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
-      BF_CLAY_PADDING_ALL(8),
-      .childGap = 8,
+      BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+        PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+      ),
+      .childGap = GAP_SMALL,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       .layoutDirection = CLAY_TOP_TO_BOTTOM,
     }}) {
@@ -3413,7 +3425,7 @@ void DoUI(bool draw) {
       // Main. Player's stats, weapons, items.
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_XY,
-        .childGap = 8,
+        .childGap = GAP_SMALL,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
         // Stats.
@@ -3422,14 +3434,14 @@ void DoUI(bool draw) {
         // Player's weapons and items.
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
-          .childGap        = 8,
+          .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           // Weapons label.
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
 
           // Weapons.
-          CLAY({.layout{.childGap = 8}}) {
+          CLAY({.layout{.childGap = GAP_SMALL}}) {
             int i = -1;
             for (auto& weapon : g.run.playerWeapons) {
               i++;
@@ -3447,9 +3459,9 @@ void DoUI(bool draw) {
           constexpr int ITEMS_X = 10;
           const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
 
-          CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+          CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
           FOR_RANGE (int, y, ITEMS_Y) {
-            CLAY({.layout{.childGap = 8}})
+            CLAY({.layout{.childGap = GAP_SMALL}})
             FOR_RANGE (int, x, ITEMS_X) {
               const auto t = y * ITEMS_X + x;
               if (t < items.count) {
