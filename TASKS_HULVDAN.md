@@ -1,24 +1,10 @@
-x added basic item effects that increase stats + showing them in SHOP on hover
-x weapon stats: damage
-x weapon stats: cooldown
-x weapon stats: knockback
-x weapon stats: piercing
-x weapon stats: critical
-x weapon stats: range
-x weapon stats: «did X damage during this wave»
-x small looking direction fix
-x item effects: getting stats at the start of the wave (piggy bank gets coins)
-x item effects: getting stats after killing N enemies (increasing atk speed)
-x item effects: getting stats at the end of the wave (e.g. +1 damage)
-x engine: UI FLEXBOX SUPPORT !!!
-x localization strings with placeholders (UI_LABEL_KILL_N_ENEMIES)
-x picked up item shouldn't be able to hover
-x picked up item show stats in it's frame
-x coins overflow
-x shop: hovered item fix details modal positioning
-x better upgrades screen
-x compact stats
 
+* buttons wide screen fix ZHEKA
+* range
+  negative -50 halves range
+  negative -100 quarters it (negative is `scale = -25/x`) !!! REWORK FORMULA
+  positive 100  =x2 range
+  positive 200  =x3 range (positive is linear `scale = (f32)(x + 100) / 100.0f`)
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
 * fix: in SHOP when hovering right player's item,
   counters of left ones appear above it! they shouldn't!
