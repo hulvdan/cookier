@@ -16,8 +16,8 @@ x picked up item shouldn't be able to hover
 x picked up item show stats in it's frame
 x coins overflow
 x shop: hovered item fix details modal positioning
+x better upgrades screen
 
-* upgrades: fixed upgrades widths
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
 * fix: in SHOP when hovering item, counters of items apear above it! they shouldn't!
 * engine: better fonts rendering

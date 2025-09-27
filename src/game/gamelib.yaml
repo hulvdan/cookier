@@ -58,7 +58,7 @@ localization:
   STAT_COINS: Монеты
   STAT_CURSE: Проклятие
   STAT_HP: Здоровье
-  STAT_REGEN: Восстановление
+  STAT_REGEN: Реген
   STAT_LIFE_STEAL: Вампиризм
   STAT_DAMAGE: Урон
   STAT_DAMAGE_MELEE: Рукопашный Урон
