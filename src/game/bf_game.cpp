@@ -2388,7 +2388,8 @@ void DoUI(bool draw) {
     int detailsBelow = {};
   };
 
-  constexpr int ITEM_FRAME_WIDTH = 219;
+  constexpr int ITEM_FRAME_WIDTH    = 219;
+  constexpr int UPGRADE_FRAME_WIDTH = 190;
 
   LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
   {  ///
@@ -2872,6 +2873,7 @@ void DoUI(bool draw) {
     // Vertical columns with upgrades and stats;
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
+      .childGap = GAP_BIG,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
     }}) {
       // Upgrades.
@@ -2884,17 +2886,26 @@ void DoUI(bool draw) {
         BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_level_up_locale());
 
         // Upgrades.
-        CLAY({.layout{.childGap = GAP_BIG}}) {
+        CLAY({.layout{.childGap = GAP_SMALL}}) {
           const auto fb_stats = glib->stats();
 
           FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
             const auto upgrade = g.run.upgrades.toPick[i];
             const auto fb      = fb_stats->Get(upgrade.stat);
-            CLAY({.layout{
-              .childGap        = GAP_SMALL,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            }}) {
-              CLAY({}) {
+            CLAY({
+              .layout{
+                .sizing{
+                  CLAY_SIZING_FIXED(UPGRADE_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+                  CLAY_SIZING_FIT(200),
+                },
+                BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+                .childGap = GAP_SMALL,
+                // BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+              },
+              BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+            }) {
+              CLAY({.layout{.childGap = GAP_SMALL}}) {
                 // Slot with upgrade's image.
                 componentSlot(false, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
                   CLAY({
@@ -2908,46 +2919,70 @@ void DoUI(bool draw) {
                 });
 
                 // Name.
-                BF_CLAY_TEXT_LOCALIZED_DANGER(fb->upgrade_name_locale());
+                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->upgrade_name_locale());
               }
 
-              // Amount.
+              BF_CLAY_SPACER_VERTICAL;
+
+              // Stat + amount.
               const auto amount = fb->upgrade_values()->Get(upgrade.tier);
-              CLAY({}) {
-                BF_CLAY_TEXT(TextFormat("+%d", amount));
+              CLAY({.layout{
+                BF_CLAY_SIZING_GROW_X,
+                .childGap = GAP_SMALL,
+                BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+              }}) {
+                const auto id = CLAY_IDI("upgrade", i);
+                CLAY({
+                  .id = id,
+                  .layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+                }) {
+                  BF_CLAY_TEXT(TextFormat("+%d", amount), GREEN);
 
-                if (fb->is_percent())
-                  BF_CLAY_TEXT("% ");
-                else
-                  BF_CLAY_TEXT(" ");
+                  BF_CLAY_IMAGE({.texId = fb->icon_texture_id()});
 
-                BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+                  if (fb->is_percent())
+                    BF_CLAY_TEXT("%");
+                }
+
+                const auto d = Clay_GetElementData(id);
+                if (d.found) {
+                  CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+                    FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 8);
+                    BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
+                    FlexEnd();
+                  }
+                }
               }
+
+              BF_CLAY_SPACER_VERTICAL;
 
               // Choose button.
-              const auto clicked
-                = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
-                  });
-              if (clicked) {
-                if (g.run.previousLevel < g.run.xpLevel) {
-                  g.run.previousLevel++;
-                  g.run.scheduledUpgrades = true;
-                }
-                else
-                  g.run.scheduledShop = true;
+              CLAY({.layout{BF_CLAY_SIZING_GROW_X, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}
+              ) {
+                const auto clicked
+                  = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
+                      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
+                    });
+                if (clicked) {
+                  if (g.run.previousLevel < g.run.xpLevel) {
+                    g.run.previousLevel++;
+                    g.run.scheduledUpgrades = true;
+                  }
+                  else
+                    g.run.scheduledShop = true;
 
-                g.run.playerStatsWithoutItems[upgrade.stat] += amount;
-                RecalculatePlayerStats();
+                  g.run.playerStatsWithoutItems[upgrade.stat] += amount;
+                  RecalculatePlayerStats();
 
-                switch (upgrade.stat) {
-                case StatType_HP: {
-                  PLAYER_CREATURE.health    = g.run.playerStats[StatType_HP];
-                  PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
-                } break;
+                  switch (upgrade.stat) {
+                  case StatType_HP: {
+                    PLAYER_CREATURE.health    = g.run.playerStats[StatType_HP];
+                    PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
+                  } break;
 
-                default:
-                  break;
+                  default:
+                    break;
+                  }
                 }
               }
             }
@@ -3722,7 +3757,10 @@ void GameFixedUpdate() {
   if (ge.meta.debugEnabled) {
     // F5 - add 10 coins.
     if (IsKeyPressed(SDL_SCANCODE_F5)) {  ///
-      AddCoins(10);
+      if (IsKeyDown(SDL_SCANCODE_LSHIFT))
+        AddCoins(int_max);
+      else
+        AddCoins(10);
     }
 
     // F6 - add random item.
