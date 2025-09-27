@@ -2249,11 +2249,23 @@ void DoUI(bool draw) {
 
           const auto fb = fb_stats->Get(stat);
 
-          BF_CLAY_IMAGE({.texId = iconTexId});
+          // Icon.
+          CLAY({.floating{
+            .attachPoints{
+              .element = CLAY_ATTACH_POINT_LEFT_CENTER,
+              .parent  = CLAY_ATTACH_POINT_LEFT_CENTER,
+            },
+            .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+            .attachTo           = CLAY_ATTACH_TO_PARENT,
+          }}) {
+            FLOATING_BEAUTIFY;
+            BF_CLAY_IMAGE({.texId = iconTexId});
+          }
+
           if (fb->is_percent())
-            BF_CLAY_TEXT(" % ");
+            BF_CLAY_TEXT("   % ");
           else
-            BF_CLAY_TEXT(" ");
+            BF_CLAY_TEXT("   ");
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
           BF_CLAY_SPACER_HORIZONTAL;
           BF_CLAY_TEXT(TextFormat("%d", value));
@@ -2303,6 +2315,7 @@ void DoUI(bool draw) {
             .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
             .attachTo           = CLAY_ATTACH_TO_PARENT,
           }}) {
+            FLOATING_BEAUTIFY;
             BF_CLAY_TEXT(TextFormat("x%d", item.count));
           }
         }
@@ -2896,7 +2909,7 @@ void DoUI(bool draw) {
               .layout{
                 .sizing{
                   CLAY_SIZING_FIXED(UPGRADE_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
-                  CLAY_SIZING_FIT(200),
+                  CLAY_SIZING_FIT(215),
                 },
                 BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
                 .childGap = GAP_SMALL,

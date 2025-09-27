@@ -81,9 +81,9 @@ localization:
   STAT_EXPLOSION_DAMAGE: Урон Взрывов
   STAT_EXPLOSION_SIZE: Размер Взрывов
   STAT_BOUNCES: Отскоки
-  STAT_PIERCING: Простреливание
-  STAT_PIERCING_DAMAGE: Урон Простреливания
-  STAT_DAMAGE_AGAINST_BOSSES: Урон Против Боссов
+  STAT_PIERCING: Прострел
+  STAT_PIERCING_DAMAGE: Урон Прострела
+  STAT_DAMAGE_AGAINST_BOSSES: Урон По Боссу
   STAT_STRUCTURE_ATTACK_SPEED: Скорость Атаки Структур
   STAT_STRUCTURE_RANGE: Дальность Структур
   STAT_BURNING_SPEED: Скорость Горения
