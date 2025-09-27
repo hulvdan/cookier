@@ -359,26 +359,34 @@ def deploy_yandex():
 
 @command
 def make_swatch():
-    result = bf_swatch.parse("c:/Users/user/Downloads/woodspark.ase")
-    print(result)
+    # result = bf_swatch.parse("c:/Users/user/Downloads/woodspark.ase")
+    # print(result)
     colors = [
         "#ffffff",
-        "#f5eeb0",
-        "#fabf61",
-        "#e08d51",
-        "#8a5865",
-        "#452b3f",
-        "#2c5e3b",
-        "#609c4f",
-        "#c6cc54",
-        "#78c2d6",
-        "#5479b0",
-        "#56546e",
-        "#839fa6",
-        "#e0d3c8",
-        "#f05b5b",
-        "#8f325f",
-        "#eb6c98",
+        "#2c4941",
+        "#66a650",
+        "#b9d850",
+        "#82dcd7",
+        "#208cb2",
+        "#253348",
+        "#1d1b24",
+        "#3a3a41",
+        "#7a7576",
+        "#b59a66",
+        "#cec7b1",
+        "#edefe2",
+        "#d78b98",
+        "#a13d77",
+        "#6d2047",
+        "#3c1c43",
+        "#2c2228",
+        "#5e3735",
+        "#885a44",
+        "#b8560f",
+        "#dc9824",
+        "#efcb84",
+        "#e68556",
+        "#c02931",
         "#000000",
     ]
 
