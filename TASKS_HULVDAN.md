@@ -20,7 +20,8 @@ x better upgrades screen
 x compact stats
 
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
-* fix: in SHOP when hovering item, counters of items apear above it! they shouldn't!
+* fix: in SHOP when hovering right player's item,
+  counters of left ones appear above it! they shouldn't!
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize
 *

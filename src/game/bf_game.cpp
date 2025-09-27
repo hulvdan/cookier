@@ -2573,13 +2573,13 @@ void DoUI(bool draw) {
     componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
       const f32 rangeMeters = GetWeaponRange(type);
       if (fb->projectile_type()) {
-        BF_CLAY_TEXT(TextFormat("%.1fm", rangeMeters));
+        BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
       }
       else {
         const f32 weaponRangeMeters
           = (f32)fb_atlas_textures->Get(fb->texture_ids()->Get(0))->size_x()
             * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-        BF_CLAY_TEXT(TextFormat("%.1fm + %.1fm", weaponRangeMeters, rangeMeters));
+        BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
       }
     });
 
