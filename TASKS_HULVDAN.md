@@ -17,8 +17,9 @@ x added more weapons for development
   + fire/lightning wands for elemental dmg
   + slingshot for bouncing
 x projectile: stone bounces
+x burning ailment works
 
-* projectile: fire works (burning)
+* StatType_RANGE brotato's min range is 25 (how much is it in meters?)
 * projectile: lightning works (slows down)
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
 * engine: better fonts rendering
