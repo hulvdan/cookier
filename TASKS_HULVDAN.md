@@ -1,5 +1,6 @@
+x correct piggy bank coins scaling
+x max dodge is 60
 
-* buttons wide screen fix ZHEKA
 * range
   negative -50 halves range
   negative -100 quarters it (negative is `scale = -25/x`) !!! REWORK FORMULA
