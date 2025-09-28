@@ -638,12 +638,11 @@ struct Upgrade {
 };
 
 struct Rerolls {
-  int freeRerolls   = 0;
-  int rerolledTimes = 0;
-  int price         = 0;
+  int rerolledFreeTimes = 0;
+  int rerolledTimes     = 0;
 
   void Roll();
-  void Reset();
+  int  GetPrice() const;
 };
 
 struct ThisWaveMob {
@@ -1782,21 +1781,18 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
 }
 
 void Rerolls::Roll() {  ///
-  PLAYER_COINS -= ApplyStatRerollPrice(price);
+  PLAYER_COINS -= ApplyStatRerollPrice(GetPrice());
   ASSERT(PLAYER_COINS >= 0);
-  if (freeRerolls > 0)
-    freeRerolls--;
-  if (freeRerolls <= 0)
-    price = GetRerollPrice(g.run.waveIndex, ++rerolledTimes);
+  if (rerolledFreeTimes < g.run.playerStats[StatType_FREE_REROLLS])
+    rerolledFreeTimes++;
+  else
+    rerolledTimes++;
 }
 
-void Rerolls::Reset() {  ///
-  freeRerolls   = g.run.playerStats[StatType_FREE_REROLLS];
-  rerolledTimes = 0;
-  if (freeRerolls > 0)
-    price = 0;
-  else
-    price = GetRerollPrice(g.run.waveIndex, 0);
+int Rerolls::GetPrice() const {  ///
+  if (rerolledFreeTimes < g.run.playerStats[StatType_FREE_REROLLS])
+    return 0;
+  return GetRerollPrice(g.run.waveIndex, rerolledTimes);
 }
 
 void RefillUpgradesToPick() {  ///
@@ -3040,7 +3036,7 @@ void DoUI(bool draw) {
 
         // Reroll button.
         const auto calculatedRerollPrice
-          = ApplyStatRerollPrice(g.run.upgrades.rerolls.price);
+          = ApplyStatRerollPrice(g.run.upgrades.rerolls.GetPrice());
         const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
         const bool rerolled
           = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
@@ -3115,7 +3111,7 @@ void DoUI(bool draw) {
 
           // Reroll button.
           const auto calculatedRerollPrice
-            = ApplyStatRerollPrice(g.run.shop.rerolls.price);
+            = ApplyStatRerollPrice(g.run.shop.rerolls.GetPrice());
           const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
           const bool rerolled
             = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
@@ -3989,7 +3985,7 @@ void GameFixedUpdate() {
     else
       g.run.scheduledUpgrades = true;
 
-    g.run.upgrades.rerolls.Reset();
+    g.run.upgrades.rerolls = {};
   }
 
   // Advancing to ScreenType_PICKED_UP_ITEM.
@@ -4019,7 +4015,7 @@ void GameFixedUpdate() {
     g.run.scheduledShop = false;
     g.run.screen        = ScreenType_SHOP;
 
-    g.run.shop.rerolls.Reset();
+    g.run.shop.rerolls = {};
     RefillShopToPick();
   }
 

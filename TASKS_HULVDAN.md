@@ -9,8 +9,8 @@ x using wheel for cheating
 x fix StatType_ITEMS_PRICE, StatType_REROLL_PRICE
 x weapon effects: giving +1 attack speed upon killing 20 enemies with this weapon
 x codegen so that i won't fail upon adding new EffectConditionType
+x buying item that gives StatType_FREE_REROLLS should give reroll in shop immediately
 
-* buying item that gives StatType_FREE_REROLLS should give reroll in shop immediately
 * fix: in SHOP when hovering right player's item,
   counters of left ones appear above it! they shouldn't!
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
