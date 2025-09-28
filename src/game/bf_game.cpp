@@ -2089,10 +2089,6 @@ void HealPlayer(f32 amount = 1) {  ///
   }
 }
 
-void ClayEffectCondition_INVALID(const BFGame::Effect* fb_effect) {  ///
-  // Intentionally left blank.
-}
-
 void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
   SetStringPlaceholder(
     BF_PL__UI_LABEL_KILL_N_ENEMIES__ENEMIES,
@@ -2416,9 +2412,9 @@ void DoUI(bool draw) {
           BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
         BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_stat->name_locale());
 
-        const auto cond = (EffectConditionType)fb_effect->effectcondition_type();
+        const auto cond = fb_effect->effectcondition_type();
         if (cond)
-          clayEffectConditionFunctions[cond](fb_effect);
+          clayEffectConditionFunctions[cond - 1](fb_effect);
 
         FlexEnd();
       }
