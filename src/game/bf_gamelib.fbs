@@ -76,7 +76,7 @@ table Creature {
 table EffectCondition {
 }
 
-table ItemEffect {
+table Effect {
     stat_type: int;
     effectcondition_type: int;
     value: int;
@@ -89,7 +89,7 @@ table Item {
     texture_id: int;
     tier: int;
     price: int;
-    effects: [ItemEffect];
+    effects: [Effect];
 }
 
 table WeaponKind {
@@ -117,6 +117,7 @@ table Weapon {
     range_meters: float;
     max_price: int;
     melee_collider_height_px: float;
+    effects: [Effect];
     color: uint = 0xffffff;
     texture_ids: [int];
 }
@@ -206,6 +207,7 @@ table GameLibrary {
     ui_label_at_the_end_of_the_wave_locale: int;
     ui_label_at_the_start_of_the_wave_locale: int;
     ui_label_kill_n_enemies_locale: int;
+    ui_label_kill_n_enemies_using_this_weapon_locale: int;
     // LOCALE_GEN_END.
 
     // GAME STUFF
