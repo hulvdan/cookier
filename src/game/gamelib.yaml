@@ -320,6 +320,12 @@ creatures:
     coins_dropped: 3
     idle_texture_ids:
       - game_creature_tree
+ailments:
+  - type: INVALID
+  - type: BURN
+    duration_seconds: 2
+  - type: ZAP
+    duration_seconds: 3
 effect_conditions:
   - type: INVALID
   # Universal (both weapons and items can have these).
@@ -409,7 +415,8 @@ weapons:
   #
   # In case of SHOOTING weapons:
   #
-  #     `range_meters` is how far a bullet goes.
+  #     `range_meters` is how far weapon's projectiles go.
+  #     It doesn't account for projectile's size.
   #
   - type: INVALID
   - type: SWORD
@@ -522,10 +529,10 @@ weapons:
     min_tier_index: 0
     weaponkind_type: RANGED
     base_damage:
-      - 6.0
-      - 9.0
-      - 12.0
-      - 20.0
+      - 1.0
+      - 1.5
+      - 2.0
+      - 2.5
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier:
@@ -540,7 +547,7 @@ weapons:
       - 7
     projectile_bounce: 2
     range_meters: 12
-    max_price: 120
+    max_price: 130
     shooting_duration_frames: 12
     texture_ids:
       - game_weapon_wand
@@ -587,10 +594,14 @@ projectiles:
       - game_projectile_stone
   - type: LIGHTNING
     speed: 12
+    ailment_type: ZAP
     texture_ids:
       - game_projectile_lightning
   - type: FIRE
     speed: 12
+    ailment_type: BURN
+    ailment_chance: 1
+    ailment_value: 3
     texture_ids:
       - game_projectile_fire
   - type: MOB

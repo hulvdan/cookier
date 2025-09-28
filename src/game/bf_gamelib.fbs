@@ -92,6 +92,10 @@ table Item {
     effects: [Effect];
 }
 
+table Ailment {
+    duration_seconds: float;
+}
+
 table WeaponKind {
     stat_type: int;
 }
@@ -126,6 +130,9 @@ table Weapon {
 table Projectile {
     color: uint = 0xffffff;
     speed: float;
+    ailment_type: int;
+    ailment_chance: float;
+    ailment_value: float;
     collider_radius: float = 0.4;
     texture_ids: [int];
 }
@@ -232,6 +239,7 @@ table GameLibrary {
     // TABLE_GEN_START
     hostilities: [Hostility] (required);
     creatures: [Creature] (required);
+    ailments: [Ailment] (required);
     effect_conditions: [EffectCondition] (required);
     items: [Item] (required);
     weapon_kinds: [WeaponKind] (required);
