@@ -36,6 +36,17 @@ def _check_duplicates(values: list) -> None:
 def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     transforms: list[tuple[str, str, dict[str, int]]] = []
 
+    # Effect conditions.
+    # ============================================================
+    params = "const BFGame::Effect* fb_effect"
+    genline("using ClayEffectConditionFunction = void(*)({});".format(params))
+    for x in gamelib["effect_conditions"]:
+        genline("void ClayEffectCondition_{}({});".format(x["type"], params))
+    genline("ClayEffectConditionFunction clayEffectConditionFunctions[]{")
+    for x in gamelib["effect_conditions"]:
+        genline("  ClayEffectCondition_{},".format(x["type"]))
+    genline("};\n")
+
     # Items.
     # ============================================================
     for x in gamelib["items"][1:]:
