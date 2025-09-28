@@ -136,7 +136,8 @@ constexpr int TOTAL_TIERS = 4;
 
 constexpr f32 CRATE_INSTEAD_OF_CONSUMABLE_FACTOR = 0.25f;
 
-const Color MODAL_OVERLAY_COLOR = Fade(BLACK, 0.75f);
+constexpr Color MODAL_OVERLAY_COLOR      = BLACK;
+constexpr f32   MODAL_OVERLAY_COLOR_FADE = 0.75f;
 
 constexpr f32 CRIT_DAMAGE_MULTIPLIER = 1.5f;
 

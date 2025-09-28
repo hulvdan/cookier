@@ -1907,16 +1907,19 @@ lframe ApplyAttackSpeedToDuration(int duration) {  ///
 f32 GetWeaponRange(WeaponType type) {  ///
   const auto fb = glib->weapons()->Get(type);
 
-  f32 bonusRange = g.run.playerStats[StatType_RANGE] * RANGE_TO_METER_SCALE;
+  auto range = (f32)g.run.playerStats[StatType_RANGE];
 
   // Divided by 2 because range stat is half as effective for melee weapons.
   // (don't confuse with weapons that have DamageType_MELEE).
   // TODO: better naming to differentiate
   // MELEE weapon from MELEE damage type. Ideas?
   if (!fb->projectile_type())
-    bonusRange /= 2.0f;
+    range /= 2.0f;
 
-  return MAX(1, fb->range_meters() + bonusRange);
+  if (range > 0)
+    return fb->range_meters() * (1 + range / 100.0f);
+  else
+    return 1.0f / powf(2, range / 50.0f);
 }
 
 bool IsCrit() {  ///
@@ -3318,7 +3321,9 @@ void DoUI(bool draw) {
                       },
                     }) {
                       if (g.run.shop.selectedWeaponIndex == weaponIndex)
-                        CLAY({BF_CLAY_CUSTOM_OVERLAY(MODAL_OVERLAY_COLOR)}) {}
+                        CLAY({BF_CLAY_CUSTOM_OVERLAY(
+                          Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)
+                        )}) {}
 
                       CLAY({
                         .layout{

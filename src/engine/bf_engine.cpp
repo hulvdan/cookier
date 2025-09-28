@@ -434,6 +434,7 @@ struct EngineData {
     u32     _mouseStatePressed  = {};
     u32     _mouseStateReleased = {};
     Vector2 _mousePos           = {};
+    int     _mouseScroll        = {};
 
     Vector<TouchID>    _touchIDs = {};
     Vector<_TouchData> _touches  = {};
@@ -2867,6 +2868,7 @@ SDL_AppResult EngineUpdate() {  ///
   // It allows re-simulation of game using prerecorded inputs
   // such that game's state is always the same during and after the simulation.
   // TODO: record / replay inputs.
+  // TODO: mb IsKeyPressed and other functions should also raise.
   ge.meta.logicRand._raise = true;
   GameDraw();
   ge.meta.logicRand._raise = false;
