@@ -114,6 +114,7 @@ table Weapon {
     projectile_type: int;
     projectile_spawn_frames: [int];
     projectile_pierce: int = 0;
+    projectile_bounce: int = 0;
     range_meters: float;
     max_price: int;
     melee_collider_height_px: float;
