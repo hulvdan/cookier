@@ -160,6 +160,9 @@ constexpr f32 PRICE_SCALINGS_PER_TIER_[]{
 };
 VIEW_FROM_ARRAY_DANGER(PRICE_SCALINGS_PER_TIER);
 
+constexpr int MAX_DODGE_PERCENT      = 60;
+constexpr f32 RANGE_GETS_HALVED_WHEN = -50;
+
 // constexpr f32 BODY_LINEAR_DAMPING             = 10;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 6.78f;
 constexpr f32 BODY_LINEAR_DAMPING             = 20;
@@ -170,7 +173,5 @@ constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 3.29f;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.55f;
 // constexpr f32 BODY_LINEAR_DAMPING             = 50;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.2f;
-
-constexpr int MAX_DODGE_PERCENT = 60;
 
 ///
