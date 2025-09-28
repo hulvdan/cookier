@@ -5,10 +5,12 @@ x range
   negative -100 quarters it (negative is `scale = -25/x`) !!! REWORK FORMULA
   positive 100  =x2 range
   positive 200  =x3 range (positive is linear `scale = (f32)(x + 100) / 100.0f`)
+x using wheel for cheating
 
-* ref malloc/free -> ALLOC/FREE (lib_instrument)
+* StatType_ITEMS_PRICE
 * fix: in SHOP when hovering right player's item,
   counters of left ones appear above it! they shouldn't!
+* ref malloc/free -> ALLOC/FREE (lib_instrument)
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize
 *
@@ -75,7 +77,6 @@ QA:
 ================================================================================
 * StatType_REROLL_PRICE
 * StatType_ENEMY_SPEED
-* StatType_ITEMS_PRICE
 * StatType_XP_GAIN
 * StatType_PICKUP_RANGE
 * StatType_ARMOR

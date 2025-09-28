@@ -434,7 +434,7 @@ struct EngineData {
     u32     _mouseStatePressed  = {};
     u32     _mouseStateReleased = {};
     Vector2 _mousePos           = {};
-    int     _mouseScroll        = {};
+    int     _mouseWheel         = {};
 
     Vector<TouchID>    _touchIDs = {};
     Vector<_TouchData> _touches  = {};
@@ -1821,7 +1821,7 @@ void _OnTouchDown(Touch touch) {  ///
 
 void _OnTouchUp(Touch touch) {  ///
   auto found = false;
-  // Marking as released. It will be removed on calling `ResetPressedReleasedStates`.
+  // Marking as released. It will be removed on calling `ResetInputState`.
   FOR_RANGE (int, i, ge.meta._touches.count) {
     auto id = ge.meta._touchIDs[i];
     if (id == touch._id) {
@@ -1850,9 +1850,10 @@ void _OnTouchMoved(Touch touch) {  ///
   ASSERT(found);
 }
 
-void ResetPressedReleasedStates() {  ///
+void ResetInputState() {  ///
   ge.meta._mouseStatePressed  = 0;
   ge.meta._mouseStateReleased = 0;
+  ge.meta._mouseWheel         = 0;
   FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
     ge.meta._keyboardStatePressed[i]  = false;
     ge.meta._keyboardStateReleased[i] = false;
@@ -1923,18 +1924,18 @@ TEST_CASE ("Touch controls") {  ///
     ASSERT(IsTouchPressed(id(1)));
     ASSERT(IsTouchDown(id(1)));
     ASSERT(!IsTouchReleased(id(1)));
-    ResetPressedReleasedStates();
+    ResetInputState();
 
     ASSERT(!IsTouchPressed(id(1)));
     ASSERT(IsTouchDown(id(1)));
     ASSERT(!IsTouchReleased(id(1)));
-    ResetPressedReleasedStates();
+    ResetInputState();
 
     _OnTouchUp(touch(1));
     ASSERT(!IsTouchPressed(id(1)));
     ASSERT(!IsTouchDown(id(1)));
     ASSERT(IsTouchReleased(id(1)));
-    ResetPressedReleasedStates();
+    ResetInputState();
 
     ASSERT(ge.meta._touches.count == 0);
   }
@@ -1945,12 +1946,12 @@ TEST_CASE ("Touch controls") {  ///
     ASSERT(ge.meta._touches.count == 2);
     ASSERT(ge.meta._touchIDs.count == 2);
 
-    ResetPressedReleasedStates();
+    ResetInputState();
 
     _OnTouchUp(touch(4));
     _OnTouchUp(touch(3));
 
-    ResetPressedReleasedStates();
+    ResetInputState();
 
     ASSERT(ge.meta._touches.count == 0);
     ASSERT(ge.meta._touchIDs.count == 0);
@@ -1960,12 +1961,12 @@ TEST_CASE ("Touch controls") {  ///
     _OnTouchDown(touch(5));
     _OnTouchDown(touch(6));
 
-    ResetPressedReleasedStates();
+    ResetInputState();
 
     _OnTouchUp(touch(5));
     _OnTouchUp(touch(6));
 
-    ResetPressedReleasedStates();
+    ResetInputState();
 
     ASSERT(ge.meta._touches.count == 0);
     ASSERT(ge.meta._touchIDs.count == 0);
@@ -2744,6 +2745,10 @@ Vector2 GetMouseScreenPos() {  ///
   return ge.meta._mousePos;
 }
 
+int GetMouseWheel() {  ///
+  return ge.meta._mouseWheel;
+}
+
 Vector2 ScreenPosToLogical(Vector2 pos) {  ///
   return pos * ge.meta._screenToLogicalScale + ge.meta._screenToLogicalAdd;
 }
@@ -2853,7 +2858,7 @@ SDL_AppResult EngineUpdate() {  ///
 
     GameFixedUpdate();
 
-    ResetPressedReleasedStates();
+    ResetInputState();
     ge.meta.frame++;
 
     // Skipping frames if there are too many of them.
