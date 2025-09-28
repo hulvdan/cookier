@@ -458,13 +458,13 @@ struct Weapon {
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
+
+  int killedEnemies = 0;
 };
 
 struct Item {
   ItemType type  = {};
   int      count = {};
-
-  int killedEnemies = {};
 };
 
 struct CreatureController {
@@ -485,6 +485,8 @@ struct Creature {
   f32                speed               = {};
   f32                movementAccumulator = {};
   LogicalFrame       idleStartedAt       = {};
+
+  int lastDamagedWeaponIndex = -1;
 
   union {
     struct {
@@ -704,6 +706,7 @@ struct GameData {
     LogicalFrame playerLastLifestealAt = {};
     LogicalFrame playerLastRegenAt     = {};
 
+    int playerKilledEnemies   = 0;
     int xpLevel               = 1;
     f32 xp                    = 0;
     f32 nextLevelXp           = 0;
@@ -1644,7 +1647,8 @@ bool TryApplyDamage(
   Vector2      directionOrZero,
   f32          knockbackMeters,
   CreatureType damageApplicatorCreatureType,
-  bool         isCrit
+  bool         isCrit,
+  int          indexOfWeaponThatDidDamage
 ) {  ///
   if (damage <= 0)
     return false;
@@ -1716,8 +1720,12 @@ bool TryApplyDamage(
   }
   creature.health -= damage;
 
+  if (indexOfWeaponThatDidDamage >= 0)
+    g.run.playerWeapons[indexOfWeaponThatDidDamage].didDamage += damage;
+
   creature.lastDamagedAt = {};
   creature.lastDamagedAt.SetNow();
+  creature.lastDamagedWeaponIndex = indexOfWeaponThatDidDamage;
 
   knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
   knockbackMeters *= 1.0f - fb->knockback_resistance();
@@ -1986,15 +1994,15 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
 
     damage = MAX(1, damage);
 
-    if (TryApplyDamage(
-          creatureIndex,
-          damage,
-          Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-          fb->knockback_meters(),
-          CreatureType_PLAYER,
-          isCrit
-        ))
-      g.run.playerWeapons[*weaponIndex].didDamage += damage;
+    TryApplyDamage(
+      creatureIndex,
+      damage,
+      Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      fb->knockback_meters(),
+      CreatureType_PLAYER,
+      isCrit,
+      *weaponIndex
+    );
   }
   return continueCollisions;
 }
@@ -2340,14 +2348,11 @@ void DoUI(bool draw) {
     });
   };
 
-  LAMBDA (void, componentItemStatsExploded, (ItemType type, int count, int maxWidth))
+  LAMBDA (void, componentEffectsExploded, (auto fb_effects, int count, int maxWidth))
   {  ///
     ASSERT(count > 0);
-    const auto fb         = fb_items->Get(type);
-    const auto fb_effects = fb->effects();
     if (!fb_effects)
       return;
-
     for (const auto fb_effect : *fb_effects) {
       CLAY({.layout{
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
@@ -2404,6 +2409,16 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_kill_n_enemies_locale());
         } break;
 
+        case EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT: {
+          SetStringPlaceholder(
+            BF_PL__UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON__ENEMIES,
+            TextFormat("%d", fb_effect->condition_value())
+          );
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+            glib->ui_label_kill_n_enemies_using_this_weapon_locale()
+          );
+        } break;
+
         default:
           INVALID_PATH;
         }
@@ -2411,6 +2426,11 @@ void DoUI(bool draw) {
         FlexEnd();
       }
     }
+  };
+
+  LAMBDA (void, componentItemStatsExploded, (ItemType type, int count, int maxWidth))
+  {  ///
+    componentEffectsExploded(fb_items->Get(type)->effects(), count, maxWidth);
   };
 
   struct ComponentItemDetailsData {
@@ -2519,7 +2539,11 @@ void DoUI(bool draw) {
     }
   };
 
-  LAMBDA (void, componentWeaponStatsExploded, (WeaponType type, int tier, f32 didDamage))
+  LAMBDA (
+    void,
+    componentWeaponStatsExploded,
+    (WeaponType type, int tier, f32 didDamage, int maxWidth)
+  )
   {  ///
     const auto fb = fb_weapons->Get(type);
 
@@ -2616,6 +2640,8 @@ void DoUI(bool draw) {
 
     // Life Steal.
     // componentWeaponStatEntry([&]() BF_FORCE_INLINE_LAMBDA {});
+
+    componentEffectsExploded(fb->effects(), 1, maxWidth);
 
     // Did damage.
     ASSERT(didDamage >= 0);
@@ -3205,7 +3231,7 @@ void DoUI(bool draw) {
                 if (v.item)
                   componentItemStatsExploded(v.item, 1, ITEM_FRAME_WIDTH);
                 else if (v.weapon)
-                  componentWeaponStatsExploded(v.weapon, v.tier, 0);
+                  componentWeaponStatsExploded(v.weapon, v.tier, 0, ITEM_FRAME_WIDTH);
 
                 BF_CLAY_SPACER_VERTICAL;
 
@@ -3366,6 +3392,10 @@ void DoUI(bool draw) {
 
                       CLAY({
                         .layout{
+                          .sizing{
+                            .width
+                            = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE)
+                          },
                           BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
                           .childGap        = GAP_SMALL,
                           .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -3391,7 +3421,7 @@ void DoUI(bool draw) {
                         }
 
                         componentWeaponStatsExploded(
-                          weapon.type, weapon.tier, weapon.didDamage
+                          weapon.type, weapon.tier, weapon.didDamage, ITEM_FRAME_WIDTH
                         );
 
                         int canCombineWithIndex = -1;
@@ -3440,7 +3470,11 @@ void DoUI(bool draw) {
                           weapon.tier += 1;
                           weapon.recyclePrice
                             = GetWeaponRecyclePrice(weapon.type, weapon.tier);
-                          weapon.didDamage = 0;
+                          weapon.didDamage     = 0;
+                          weapon.killedEnemies = MAX(
+                            weapon.killedEnemies,
+                            g.run.playerWeapons[canCombineWithIndex].killedEnemies
+                          );
                           StableRemoveWeapon(canCombineWithIndex);
                         }
                         if (recycled) {
@@ -3769,12 +3803,33 @@ void DoUI(bool draw) {
   }
 }
 
+void IterateOverWeaponEffects(
+  EffectConditionType                                              condition,
+  auto /* void (int weaponIndex, Weapon& weapon, auto fb_effect)*/ innerLambda
+) {  ///
+  const auto fb_weapons  = glib->weapons();
+  int        weaponIndex = -1;
+  for (auto& weapon : g.run.playerWeapons) {
+    weaponIndex++;
+    if (!weapon.type)
+      continue;
+    const auto fb         = fb_weapons->Get(weapon.type);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(weaponIndex, weapon, fb_effect);
+      }
+    }
+  }
+}
+
 void IterateOverItemEffects(
-  EffectConditionType                               condition,
-  auto /* void (const Item& item, auto fb_effect)*/ innerLambda
+  EffectConditionType                         condition,
+  auto /* void (Item& item, auto fb_effect)*/ innerLambda
 ) {  ///
   const auto fb_items = glib->items();
-  for (const auto& item : g.run.playerItems) {
+  for (auto& item : g.run.playerItems) {
     const auto fb         = fb_items->Get(item.type);
     const auto fb_effects = fb->effects();
     if (fb_effects) {
@@ -3786,7 +3841,7 @@ void IterateOverItemEffects(
   }
 }
 
-void ApplyEffect(const BFGame::ItemEffect* fb_effect, int itemCount) {  ///
+void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
   ASSERT(itemCount > 0);
   g.run.playerStatsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * itemCount;
   if ((StatType)fb_effect->stat_type() == StatType_COINS)
@@ -3878,6 +3933,11 @@ void GameFixedUpdate() {
 
     // Applying item effects: END_OF_THE_WAVE_GET_STAT.
     if ((g.run.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
+      IterateOverWeaponEffects(
+        EffectConditionType_END_OF_THE_WAVE_GET_STAT,
+        [&](int _, Weapon& weapon, auto fb_effect)
+          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, 1); }
+      );
       IterateOverItemEffects(
         EffectConditionType_END_OF_THE_WAVE_GET_STAT,
         [&](const Item& item, auto fb_effect)
@@ -3891,7 +3951,7 @@ void GameFixedUpdate() {
     for (int i = 1; i < g.run.creatures.count; i++) {
       auto& creature = g.run.creatures[i];
       if (!creature.diedAt.IsSet())
-        TryApplyDamage(i, f32_inf, {}, 0, CreatureType_INVALID, false);
+        TryApplyDamage(i, f32_inf, {}, 0, CreatureType_INVALID, false, -1);
     }
     g.run.creaturePreSpawns.Reset();
 
@@ -3992,6 +4052,11 @@ void GameFixedUpdate() {
     for (auto& weapon : g.run.playerWeapons)
       weapon.didDamage = 0;
 
+    IterateOverWeaponEffects(
+      EffectConditionType_START_OF_THE_WAVE_GET_STAT,
+      [&](int _, Weapon& weapon, auto fb_effect)
+        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, 1); }
+    );
     IterateOverItemEffects(
       EffectConditionType_START_OF_THE_WAVE_GET_STAT,
       [&](const Item& item, auto fb_effect)
@@ -4245,7 +4310,7 @@ void GameFixedUpdate() {
               + fb->contact_damage_increase_per_wave()
                   * (f32)(g.run.waveIndex + 1 - fb->appearing_wave_number());
           TryApplyDamage(
-            0, ApplyPlayerArmorToIncomingDamage(damage), {}, 0, creature.type, false
+            0, ApplyPlayerArmorToIncomingDamage(damage), {}, 0, creature.type, false, -1
           );
         }
       }
@@ -4619,12 +4684,10 @@ void GameFixedUpdate() {
                 knockbackDirection,
                 knockback,
                 projectile.ownerCreatureType,
-                isCrit
+                isCrit,
+                projectile.weaponIndex
               ))
           {
-            if (projectile.ownerCreatureType == CreatureType_PLAYER)
-              g.run.playerWeapons[projectile.weaponIndex].didDamage += damage;
-
             auto maxPierce = projectile.pierce;
             if (projectile.ownerCreatureType == CreatureType_PLAYER)
               maxPierce += g.run.playerStats[StatType_PIERCING];
@@ -4750,13 +4813,28 @@ void GameFixedUpdate() {
 
           // Counting mob as player killed.
           if (creature.health != -f32_inf) {
-            for (auto& item : g.run.playerItems)
-              item.killedEnemies += 1;
+            g.run.playerKilledEnemies++;
+            if (creature.lastDamagedWeaponIndex >= 0)
+              g.run.playerWeapons[creature.lastDamagedWeaponIndex].killedEnemies++;
 
+            IterateOverWeaponEffects(
+              EffectConditionType_KILL_N_ENEMIES_GET_STAT,
+              [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
+                  ApplyEffect(fb_effect, 1);
+              }
+            );
+            IterateOverWeaponEffects(
+              EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
+              [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                if (weapon.killedEnemies % fb_effect->condition_value() == 0)
+                  ApplyEffect(fb_effect, 1);
+              }
+            );
             IterateOverItemEffects(
               EffectConditionType_KILL_N_ENEMIES_GET_STAT,
               [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                if (item.killedEnemies % fb_effect->condition_value() == 0)
+                if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
                   ApplyEffect(fb_effect, item.count);
               }
             );

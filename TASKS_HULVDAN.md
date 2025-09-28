@@ -7,6 +7,7 @@ x range
   positive 200  =x3 range (positive is linear `scale = (f32)(x + 100) / 100.0f`)
 x using wheel for cheating
 x fix StatType_ITEMS_PRICE, StatType_REROLL_PRICE
+x weapon effects: giving +1 attack speed upon killing 20 enemies with this weapon
 
 * buying item that gives StatType_FREE_REROLLS should give reroll in shop immediately
 * fix: in SHOP when hovering right player's item,
@@ -45,8 +46,6 @@ x fix StatType_ITEMS_PRICE, StatType_REROLL_PRICE
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *
-* ZHEKA: ^ vs code /// collapsing
-* ZHEKA: ^ knows how to work with UI
 * ZHEKA: can web build
 * ZHEKA: total commander for working with sounds?
   instructions of how to work with sounds
@@ -59,16 +58,10 @@ x fix StatType_ITEMS_PRICE, StatType_REROLL_PRICE
 * gather all weapon classes (e.g. primitive)
 * primitive weapons bonus (3,6,9,12,15 HP)
 * ethereal weapons bonus (3,6,9,12,15 ARMOR or 2,4,X or 1,2,X)
+* weapons categorization. жидкое / твёрдое?
 *
 *
 * aseprite show image center
-* upgrades screen: fix width of upgrade's frame
-* upgrades screen:
-* upgrades screen:
-* upgrades screen:
-* upgrades screen:
-* upgrades screen:
-* weapons categorization. жидкое / твёрдое?
 * HTML game loading screen?
 * record+replay system
 * internet shouldn't be required for building: check web debug yandex build with mocked ysdk

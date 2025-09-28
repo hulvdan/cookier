@@ -47,6 +47,7 @@ localization:
   UI_LABEL_AT_THE_END_OF_THE_WAVE: в конце волны
   UI_LABEL_AT_THE_START_OF_THE_WAVE: в начале волны
   UI_LABEL_KILL_N_ENEMIES: за каждые {ENEMIES} убитых врагов
+  UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON: за каждые {ENEMIES} убитых этим оружием врагов
   ITEM_HELMET: Шлем
   ITEM_WHITE_FLAG: Белый Флаг
   ITEM_BLACK_FLAG: Чёрный Флаг
@@ -316,9 +317,13 @@ creatures:
       - game_creature_tree
 effect_conditions:
   - type: INVALID
+  # Universal (both weapons and items can have these).
   - type: KILL_N_ENEMIES_GET_STAT
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
+  # Weapons only.
+  - type: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT
+    # Items only.
 items:
   - type: INVALID
   - type: HELMET
@@ -417,6 +422,11 @@ weapons:
     range_meters: 2
     knockback_meters: 5
     melee_collider_height_px: 76
+    effects:
+      - effectcondition_type: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT
+        stat_type: ATTACK_SPEED
+        value: 1
+        condition_value: 20
     texture_ids:
       - game_weapon_sword
   - type: GUN
