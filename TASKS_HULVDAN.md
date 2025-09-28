@@ -11,9 +11,9 @@ x weapon effects: giving +1 attack speed upon killing 20 enemies with this weapo
 x codegen so that i won't fail upon adding new EffectConditionType
 x buying item that gives StatType_FREE_REROLLS should give reroll in shop immediately
 x fix: if game runs slow, skip fixed frames
-
-* fix: in SHOP when hovering right player's item,
+- fix: in SHOP when hovering right player's item,
   counters of left ones appear above it! they shouldn't!
+
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize
