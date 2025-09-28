@@ -833,21 +833,6 @@ void SetStringPlaceholder(int id, const char* value) {  ///
   };
 }
 
-void RecalculatePlayerStats() {  ///
-  FOR_RANGE (int, i, StatType_COUNT) {
-    g.run.playerStats[i] = g.run.playerStatsWithoutItems[i];
-  }
-
-  for (auto& item : g.run.playerItems) {
-    const auto fb         = glib->items()->Get(item.type);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects)
-        g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
-    }
-  }
-}
-
 void MakePickupable(MakePickupableData data) {  ///
   ASSERT(data.type);
 
@@ -3828,7 +3813,19 @@ void GameFixedUpdate() {
   // Recalculating player stats.
   if (g.run.recalculatePlayerStats) {  ///
     g.run.recalculatePlayerStats = false;
-    RecalculatePlayerStats();
+
+    FOR_RANGE (int, i, StatType_COUNT) {
+      g.run.playerStats[i] = g.run.playerStatsWithoutItems[i];
+    }
+
+    for (auto& item : g.run.playerItems) {
+      const auto fb         = glib->items()->Get(item.type);
+      const auto fb_effects = fb->effects();
+      if (fb_effects) {
+        for (const auto fb_effect : *fb_effects)
+          g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
+      }
+    }
   }
 
   // Advancing to UI after wave completion animation finishes.
