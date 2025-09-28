@@ -3621,6 +3621,7 @@ void DoUI(bool draw) {
 
   // Drawing UI.
   if (draw) {
+    ZoneScopedN("Drawing UI");
     Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
     int                              beautifiersCount = 0;
 
