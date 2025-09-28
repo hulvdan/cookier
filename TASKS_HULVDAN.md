@@ -1,11 +1,11 @@
 x correct piggy bank coins scaling
 x max dodge is 60
-
-* range
+x range
   negative -50 halves range
   negative -100 quarters it (negative is `scale = -25/x`) !!! REWORK FORMULA
   positive 100  =x2 range
   positive 200  =x3 range (positive is linear `scale = (f32)(x + 100) / 100.0f`)
+
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
 * fix: in SHOP when hovering right player's item,
   counters of left ones appear above it! they shouldn't!
