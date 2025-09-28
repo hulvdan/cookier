@@ -16,8 +16,10 @@ x fix: if game runs slow, skip fixed frames
 x added more weapons for development
   + fire/lightning wands for elemental dmg
   + slingshot for bouncing
+x projectile: stone bounces
 
-* weapon stats: bounces
+* projectile: fire works (burning)
+* projectile: lightning works (slows down)
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize

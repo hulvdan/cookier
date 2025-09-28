@@ -542,6 +542,7 @@ struct Projectile {
   f32                               damage             = {};
   f32                               crit               = {};
   int                               pierce             = {};
+  int                               bounce             = {};
   LogicalFrame                      createdAt          = {};
   Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds = {};
   int                               damagedCount       = {};
@@ -563,6 +564,7 @@ struct MakeProjectileData {
   f32            crit              = {};
   f32            knockbackMeters   = {};
   int            pierce            = {};
+  int            bounce            = {};
 };
 
 struct Number {
@@ -1306,6 +1308,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .damage            = data.damage,
     .crit              = data.crit,
     .pierce            = data.pierce,
+    .bounce            = data.bounce,
     .knockbackMeters   = data.knockbackMeters,
     .range             = data.range,
   };
@@ -2627,6 +2630,20 @@ void DoUI(bool draw) {
         [&]() BF_FORCE_INLINE_LAMBDA {
           BF_CLAY_TEXT(TextFormat(
             "%d", fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING]
+          ));
+        }
+      );
+    }
+
+    // Bounce.
+    if (fb->projectile_type()
+        && (fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES] > 0))
+    {
+      componentWeaponStatEntry(
+        glib->ui_label_bounce_locale(),
+        [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_TEXT(TextFormat(
+            "%d", fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES]
           ));
         }
       );
@@ -4575,6 +4592,7 @@ void GameFixedUpdate() {
               .crit              = fb->critical_damage(),
               .knockbackMeters   = fb->knockback_meters(),
               .pierce            = fb->projectile_pierce(),
+              .bounce            = fb->projectile_bounce(),
             });
           }
         }
@@ -4657,7 +4675,7 @@ void GameFixedUpdate() {
 
         // Not damaging already damaged creatures.
         if (ArrayContains(
-              projectile.damagedCreatureIds.base, projectile.piercedCount, creature.id
+              projectile.damagedCreatureIds.base, projectile.damagedCount, creature.id
             ))
           continue;
 
@@ -4712,11 +4730,44 @@ void GameFixedUpdate() {
               ))
           {
             auto maxPierce = projectile.pierce;
-            if (projectile.ownerCreatureType == CreatureType_PLAYER)
+            auto maxBounce = projectile.bounce;
+            if (projectile.ownerCreatureType == CreatureType_PLAYER) {
               maxPierce += g.run.playerStats[StatType_PIERCING];
+              maxBounce += g.run.playerStats[StatType_BOUNCES];
+            }
 
-            if (projectile.piercedCount < maxPierce)
-              projectile.damagedCreatureIds[projectile.piercedCount++] = creature.id;
+            if (projectile.piercedCount < maxPierce) {
+              projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
+              projectile.piercedCount++;
+            }
+            else if (projectile.bouncedCount < maxBounce) {
+              projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
+              projectile.bouncedCount++;
+              projectile.travelledDistance = 0;
+
+              Creature* closest = nullptr;
+              f32       distSqr = f32_inf;
+
+              bool found = false;
+              FOR_RANGE (int, i, 20) {
+                auto c = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
+                if (c->type == CreatureType_PLAYER)
+                  continue;
+                if (ArrayContains(
+                      projectile.damagedCreatureIds.base, projectile.damagedCount, c->id
+                    ))
+                  continue;
+                auto d = Vector2DistanceSqr(c->pos, projectile.pos);
+                if (d <= distSqr) {
+                  closest = c;
+                  distSqr = d;
+                }
+              }
+              if (closest)
+                projectile.dir = Vector2DirectionOrRandom(projectile.pos, closest->pos);
+              else
+                projectile.dir = Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
+            }
             else if (!g.run.projectilesToRemove.Contains(projectileIndex))
               *g.run.projectilesToRemove.Add() = projectileIndex;
           }

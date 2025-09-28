@@ -28,6 +28,7 @@ localization:
   UI_LABEL_RANGE: Дальность
   UI_LABEL_KNOCKBACK: Откидывание
   UI_LABEL_PIERCE: Прострел
+  UI_LABEL_BOUNCE: Отскок
   UI_LABEL_CRIT: Крит
   UI_LABEL_DID_DAMAGE: Нанесено урона
   UI_BUTTON_COMBINE: Скомбинировать
@@ -506,7 +507,7 @@ weapons:
           - 85
           - 100
           - 115
-    knockback_meters: 4
+    knockback_meters: 0.5
     cooldown_frames: 20
     projectile_type: STONE
     projectile_spawn_frames:
@@ -581,7 +582,7 @@ projectiles:
     texture_ids:
       - game_projectile_bullet
   - type: STONE
-    speed: 12
+    speed: 30
     texture_ids:
       - game_projectile_stone
   - type: LIGHTNING

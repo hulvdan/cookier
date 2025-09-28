@@ -189,6 +189,7 @@ table GameLibrary {
     ui_label_range_locale: int;
     ui_label_knockback_locale: int;
     ui_label_pierce_locale: int;
+    ui_label_bounce_locale: int;
     ui_label_crit_locale: int;
     ui_label_did_damage_locale: int;
     ui_button_combine_locale: int;
