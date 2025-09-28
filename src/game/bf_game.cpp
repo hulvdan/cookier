@@ -1741,14 +1741,21 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   creature.health -= data.damage;
 
   if (data.ailment && (GRAND.FRand() < data.ailmentChance)) {
-    auto fb_ailment = glib->ailments()->Get(data.ailment);
+    auto damage = data.ailmentValue;
+    if (data.damageApplicatorCreatureType == CreatureType_PLAYER)
+      damage += g.run.playerStats[StatType_DAMAGE_ELEMENTAL];
 
-    auto& a             = creature.ailments[data.ailment - 1];
-    a.ownerCreatureType = data.damageApplicatorCreatureType;
-    a.startedAt         = {};
-    a.startedAt.SetNow();
-    a.duration = lframe::MakeUnscaled((int)(FIXED_FPS * fb_ailment->duration_seconds()));
-    a.value    = MAX(a.value, data.ailmentValue);
+    if (damage > 0) {
+      auto fb_ailment = glib->ailments()->Get(data.ailment);
+
+      auto& a             = creature.ailments[data.ailment - 1];
+      a.ownerCreatureType = data.damageApplicatorCreatureType;
+      a.startedAt         = {};
+      a.startedAt.SetNow();
+      a.duration
+        = lframe::MakeUnscaled((int)(FIXED_FPS * fb_ailment->duration_seconds()));
+      a.value = MAX(a.value, damage);
+    }
   }
 
   if (data.indexOfWeaponThatDidDamage >= 0)

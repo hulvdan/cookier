@@ -19,6 +19,7 @@ x added more weapons for development
 x projectile: stone bounces
 x burning ailment works
 
+* burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
 * projectile: lightning works (slows down)
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
