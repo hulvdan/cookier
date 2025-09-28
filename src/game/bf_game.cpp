@@ -1909,17 +1909,21 @@ f32 GetWeaponRange(WeaponType type) {  ///
 
   auto range = (f32)g.run.playerStats[StatType_RANGE];
 
+  f32 bonusRange = 0;
+
+  if (range >= 0)
+    bonusRange = range * RANGE_TO_METER_SCALE;
+  else
+    bonusRange = (powf(2, range / -RANGE_GETS_HALVED_WHEN) - 1) * fb->range_meters();
+
   // Divided by 2 because range stat is half as effective for melee weapons.
   // (don't confuse with weapons that have DamageType_MELEE).
   // TODO: better naming to differentiate
   // MELEE weapon from MELEE damage type. Ideas?
   if (!fb->projectile_type())
-    range /= 2.0f;
+    bonusRange /= 2.0f;
 
-  if (range > 0)
-    return fb->range_meters() * (1 + range / 100.0f);
-  else
-    return 1.0f / powf(2, range / 50.0f);
+  return fb->range_meters() + bonusRange;
 }
 
 bool IsCrit() {  ///
