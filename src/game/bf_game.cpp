@@ -679,6 +679,7 @@ struct GameData {
 
     LogicalFrame scheduledWaveCompleted = {};
     bool         waveWon                = false;
+    bool         recalculatePlayerStats = false;
     bool         scheduledUI            = false;
     bool         scheduledPickedUpItems = false;
     bool         scheduledUpgrades      = false;
@@ -1259,7 +1260,7 @@ void MakeCreature(MakeCreatureData data) {  ///
                 + (f32)((g.run.waveIndex - fb->appearing_wave_number() + 1))
                     * fb->health_increase_per_wave();
   if (data.type == CreatureType_PLAYER)
-    health = (f32)g.run.playerStats[StatType_HP];
+    health = (f32)g.run.playerStatsWithoutItems[StatType_HP];
 
   ASSERT(health > 0);
 
@@ -1540,7 +1541,7 @@ void RunInit() {
     const auto fb                       = glib->stats()->Get(stat);
     g.run.playerStatsWithoutItems[stat] = fb->player_value();
   }
-  RecalculatePlayerStats();
+  g.run.recalculatePlayerStats = true;
 
   // Making player.
   MakeCreature({
@@ -1598,7 +1599,7 @@ void GameInit() {  ///
 
   SDL_HideCursor();
 
-  g.meta.trashArena = MakeArena(4 * 1024);
+  g.meta.trashArena = MakeArena(16 * 1024);
   g.run.arena       = MakeArena(4 * 1024);
 
   // Initializing Clay.
@@ -1680,7 +1681,10 @@ bool TryApplyDamage(
       return false;
 
     // Dodge.
-    if (GRAND.FRand() < (f32)g.run.playerStats[StatType_DODGE] / 100.0f) {
+    if (GRAND.FRand() < MIN(
+          (f32)MAX_DODGE_PERCENT / 100.0f, (f32)g.run.playerStats[StatType_DODGE] / 100.0f
+        ))
+    {
       MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
 
       // TODO: lastInvincibilityTriggeredAt?
@@ -1876,7 +1880,7 @@ void AddItem(ItemType v) {  ///
     *g.run.playerItems.Add() = item;
   }
 
-  RecalculatePlayerStats();
+  g.run.recalculatePlayerStats = true;
 }
 
 void StableRemoveWeapon(int index) {  ///
@@ -2041,7 +2045,7 @@ void AddXP(f32 xp) {  ///
       if (!vals)
         continue;
       g.run.playerStatsWithoutItems[stat] += vals->Get(0);
-      RecalculatePlayerStats();
+      g.run.recalculatePlayerStats = true;
       break;
     }
   }
@@ -2239,11 +2243,11 @@ void DoUI(bool draw) {
           if (stat && ge.meta.debugEnabled) {
             if (clicked()) {
               g.run.playerStatsWithoutItems[stat]++;
-              RecalculatePlayerStats();
+              g.run.recalculatePlayerStats = true;
             }
             if (rightClicked()) {
               g.run.playerStatsWithoutItems[stat] += 10;
-              RecalculatePlayerStats();
+              g.run.recalculatePlayerStats = true;
             }
           }
 
@@ -2985,7 +2989,7 @@ void DoUI(bool draw) {
                     g.run.scheduledShop = true;
 
                   g.run.playerStatsWithoutItems[upgrade.stat] += amount;
-                  RecalculatePlayerStats();
+                  g.run.recalculatePlayerStats = true;
 
                   switch (upgrade.stat) {
                   case StatType_HP: {
@@ -3753,6 +3757,20 @@ void IterateOverItemEffects(
   }
 }
 
+void ApplyEffect(const BFGame::ItemEffect* fb_effect, int itemCount) {  ///
+  ASSERT(itemCount > 0);
+  g.run.playerStatsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * itemCount;
+  if ((StatType)fb_effect->stat_type() == StatType_COINS)
+    SanitizeCoins();
+  if (fb_effect->value_multiplier() != 1)
+    g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+      *= 1 + (fb_effect->value_multiplier() - 1) * itemCount;
+  if ((StatType)fb_effect->stat_type() == StatType_COINS)
+    SanitizeCoins();
+
+  g.run.recalculatePlayerStats = true;
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -3807,7 +3825,11 @@ void GameFixedUpdate() {
     }
   }
 
-  // LAMBDA (void, iterateOverItemEffects)
+  // Recalculating player stats.
+  if (g.run.recalculatePlayerStats) {  ///
+    g.run.recalculatePlayerStats = false;
+    RecalculatePlayerStats();
+  }
 
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
@@ -3816,15 +3838,9 @@ void GameFixedUpdate() {
     if ((g.run.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
       IterateOverItemEffects(
         EffectConditionType_END_OF_THE_WAVE_GET_STAT,
-        [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-          g.run.playerStatsWithoutItems[fb_effect->stat_type()]
-            += fb_effect->value() * item.count;
-          if (fb_effect->value_multiplier() != 1)
-            g.run.playerStatsWithoutItems[fb_effect->stat_type()]
-              *= fb_effect->value_multiplier() * item.count;
-        }
+        [&](const Item& item, auto fb_effect)
+          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, item.count); }
       );
-      RecalculatePlayerStats();
     }
 
     g.run.screen = ScreenType_WAVE_END_ANIMATION;
@@ -3935,19 +3951,9 @@ void GameFixedUpdate() {
 
     IterateOverItemEffects(
       EffectConditionType_START_OF_THE_WAVE_GET_STAT,
-      [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-        g.run.playerStatsWithoutItems[fb_effect->stat_type()]
-          += fb_effect->value() * item.count;
-        if ((StatType)fb_effect->stat_type() == StatType_COINS)
-          SanitizeCoins();
-        if (fb_effect->value_multiplier() != 1)
-          g.run.playerStatsWithoutItems[fb_effect->stat_type()]
-            *= fb_effect->value_multiplier() * item.count;
-        if ((StatType)fb_effect->stat_type() == StatType_COINS)
-          SanitizeCoins();
-      }
+      [&](const Item& item, auto fb_effect)
+        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, item.count); }
     );
-    RecalculatePlayerStats();
   }
 
   PLAYER_CREATURE.controller.move = {};
@@ -4704,22 +4710,13 @@ void GameFixedUpdate() {
             for (auto& item : g.run.playerItems)
               item.killedEnemies += 1;
 
-            auto shouldRecalculate = false;
             IterateOverItemEffects(
               EffectConditionType_KILL_N_ENEMIES_GET_STAT,
               [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                if (item.killedEnemies % fb_effect->condition_value() == 0) {
-                  g.run.playerStatsWithoutItems[fb_effect->stat_type()]
-                    += fb_effect->value() * item.count;
-                  if (fb_effect->value_multiplier() != 1)
-                    g.run.playerStatsWithoutItems[fb_effect->stat_type()]
-                      *= fb_effect->value_multiplier() * item.count;
-                  shouldRecalculate = true;
-                }
+                if (item.killedEnemies % fb_effect->condition_value() == 0)
+                  ApplyEffect(fb_effect, item.count);
               }
             );
-            if (shouldRecalculate)
-              RecalculatePlayerStats();
           }
         }
       }
