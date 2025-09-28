@@ -1,6 +1,6 @@
-vim.keymap.set("n", "gD", "<C-w>o:vs<CR>gd", opts)
-
 local opts = { remap = false, silent = true }
+
+vim.keymap.set("n", "gD", "<C-w>o:vs<CR>gd", opts)
 
 function cli_command(cmd)
     return [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && .venv\Scripts\python.exe cli\cli.py ]]
@@ -87,6 +87,12 @@ end
 
 rebuild_tasks()
 
+vim.keymap.set(
+    "n",
+    "<leader>z",
+    '^wy$o<BS><BS><BS>ZoneScopedN("<ESC>pa");<ESC>VJ>o<ESC>',
+    { remap = true, silent = true }
+)
 vim.keymap.set("n", "<F4>", "<leader>aa", { remap = true, silent = true })
 vim.keymap.set("n", "<F5>", "<leader>ae", { remap = true, silent = true })
 vim.keymap.set("n", "<F6>", "<leader>ad", { remap = true, silent = true })
