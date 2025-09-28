@@ -1426,12 +1426,26 @@ ItemType GenerateRandomItem() {  ///
   return type;
 }
 
-int GenerateItemPrice() {  ///
-  auto price  = 15 + (int)(GRAND.Rand() % 20);
-  auto factor = (f32)(g.run.playerStats[StatType_ITEMS_PRICE] + 100) / 100.0f;
-  factor      = MAX(0, factor);
-  price       = Round(price * factor);
+int _ApplyStatPrice(StatType s, int price) {  ///
+  const StatType allowed_[]{StatType_ITEMS_PRICE, StatType_REROLL_PRICE};
+  VIEW_FROM_ARRAY_DANGER(allowed);
+  ASSERT(allowed.Contains(s));
+
+  int stat = g.run.playerStats[s];
+  if (stat == 0)
+    return price;
+  stat        = MAX(-100, stat);
+  auto factor = (f32)(stat + 100) / 100.0f;
+  price       = Round((f32)price * factor);
   return price;
+}
+
+int ApplyStatItemsPrice(int price) {  ///
+  return _ApplyStatPrice(StatType_ITEMS_PRICE, price);
+}
+
+int ApplyStatRerollPrice(int price) {  ///
+  return _ApplyStatPrice(StatType_REROLL_PRICE, price);
 }
 
 int GetNumberOfTreesToSpawn() {  ///
@@ -1506,7 +1520,7 @@ int GetWeaponPrice(WeaponType type, int tier) {  ///
 }
 
 int GetWeaponRecyclePrice(WeaponType type, int tier) {  ///
-  return GetWeaponPrice(type, tier) / 3;
+  return GetWeaponPrice(type, tier) / RECYCLE_PRICE_FACTOR;
 }
 
 int GetNextLevelXp(int currentLevel) {  ///
@@ -1756,15 +1770,11 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
 
   auto price = rerollPricesPerWave[waveIndex]
                + rerolledTimes * rerollPriceIncreasePerWave[waveIndex];
-
-  auto factor = (f32)(g.run.playerStats[StatType_REROLL_PRICE] + 100) / 100.0f;
-  factor      = MAX(0, factor);
-
-  return Round(price * factor);
+  return price;
 }
 
 void Rerolls::Roll() {  ///
-  PLAYER_COINS -= price;
+  PLAYER_COINS -= ApplyStatRerollPrice(price);
   ASSERT(PLAYER_COINS >= 0);
   if (freeRerolls > 0)
     freeRerolls--;
@@ -3010,12 +3020,14 @@ void DoUI(bool draw) {
         }
 
         // Reroll button.
-        const bool canReroll = (g.run.upgrades.rerolls.price <= PLAYER_COINS);
+        const auto calculatedRerollPrice
+          = ApplyStatRerollPrice(g.run.upgrades.rerolls.price);
+        const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
         const bool rerolled
           = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
               CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
-                BF_CLAY_TEXT(TextFormat(" - %d ", g.run.upgrades.rerolls.price));
+                BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
                 BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
               }
             });
@@ -3083,16 +3095,18 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_HORIZONTAL;
 
           // Reroll button.
-          const bool canReroll = (PLAYER_COINS >= g.run.shop.rerolls.price);
+          const auto calculatedRerollPrice
+            = ApplyStatRerollPrice(g.run.shop.rerolls.price);
+          const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
           const bool rerolled
             = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
                   BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
 
-                  ASSERT(g.run.shop.rerolls.price >= 0);
+                  ASSERT(calculatedRerollPrice >= 0);
 
-                  if (g.run.shop.rerolls.price > 0) {
-                    BF_CLAY_TEXT(TextFormat(" - %d ", g.run.shop.rerolls.price));
+                  if (calculatedRerollPrice > 0) {
+                    BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
                     BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                   }
                 }
@@ -3112,7 +3126,8 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           for (auto& v : g.run.shop.toPick) {
-            bool canBuy = ((v.item || v.weapon) && (v.price <= PLAYER_COINS));
+            const auto calculatedPrice = ApplyStatItemsPrice(v.price);
+            bool canBuy = ((v.item || v.weapon) && (calculatedPrice <= PLAYER_COINS));
             int  emptyOrSameWeaponSlotIndex = -1;
             if (canBuy && v.weapon) {
               // Trying to find empty weapon slot.
@@ -3207,15 +3222,15 @@ void DoUI(bool draw) {
                           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                         }}) {
                           BF_CLAY_TEXT(
-                            TextFormat("%d ", v.price),
-                            (v.price <= PLAYER_COINS ? WHITE : RED)
+                            TextFormat("%d ", calculatedPrice),
+                            (calculatedPrice <= PLAYER_COINS ? WHITE : RED)
                           );
                           BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                         }
                       });
 
                   if (bought) {
-                    AddCoins(-v.price);
+                    AddCoins(-calculatedPrice);
                     if (v.weapon) {
                       auto& weapon = g.run.playerWeapons[emptyOrSameWeaponSlotIndex];
                       if (weapon.type) {
@@ -3789,6 +3804,7 @@ void GameFixedUpdate() {
   ZoneScoped;
 
   const auto fb_creatures   = glib->creatures();
+  const auto fb_items       = glib->items();
   const auto fb_weapons     = glib->weapons();
   const auto fb_projectiles = glib->projectiles();
 
@@ -3921,9 +3937,10 @@ void GameFixedUpdate() {
   if (g.run.scheduledPickedUpItems) {  ///
     g.run.scheduledPickedUpItems = false;
 
-    g.run.screen                    = ScreenType_PICKED_UP_ITEM;
-    g.run.pickedUpItem.toPick       = GenerateRandomItem();
-    g.run.pickedUpItem.recyclePrice = GenerateItemPrice();
+    g.run.screen              = ScreenType_PICKED_UP_ITEM;
+    g.run.pickedUpItem.toPick = GenerateRandomItem();
+    g.run.pickedUpItem.recyclePrice
+      = fb_items->Get(g.run.pickedUpItem.toPick)->price() / RECYCLE_PRICE_FACTOR;
   }
 
   // Advancing to ScreenType_UPGRADES.

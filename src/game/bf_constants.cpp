@@ -162,6 +162,7 @@ VIEW_FROM_ARRAY_DANGER(PRICE_SCALINGS_PER_TIER);
 
 constexpr int MAX_DODGE_PERCENT      = 60;
 constexpr f32 RANGE_GETS_HALVED_WHEN = -50;
+constexpr int RECYCLE_PRICE_FACTOR   = 3;
 
 // constexpr f32 BODY_LINEAR_DAMPING             = 10;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 6.78f;

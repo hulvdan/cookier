@@ -6,8 +6,9 @@ x range
   positive 100  =x2 range
   positive 200  =x3 range (positive is linear `scale = (f32)(x + 100) / 100.0f`)
 x using wheel for cheating
+x fix StatType_ITEMS_PRICE, StatType_REROLL_PRICE
 
-* StatType_ITEMS_PRICE
+* buying item that gives StatType_FREE_REROLLS should give reroll in shop immediately
 * fix: in SHOP when hovering right player's item,
   counters of left ones appear above it! they shouldn't!
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
