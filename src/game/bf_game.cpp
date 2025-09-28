@@ -2106,6 +2106,13 @@ void DoUI(bool draw) {
   constexpr u16 PADDING_NINE_SLICE       = 12;
   constexpr u16 PADDING_OUTER_VERTICAL   = 10;
   constexpr u16 PADDING_OUTER_HORIZONTAL = 12;
+
+  int _wheel = GetMouseWheel();
+  if (IsKeyDown(SDL_SCANCODE_LSHIFT))
+    _wheel *= 10;
+  if (draw)
+    _wheel = 0;
+  const int wheel = _wheel;
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = WHITE)) {  ///
@@ -2235,6 +2242,10 @@ void DoUI(bool draw) {
             }
             if (rightClicked()) {
               g.run.playerStatsWithoutItems[stat] += 10;
+              g.run.recalculatePlayerStats = true;
+            }
+            if (wheel && Clay_Hovered()) {
+              g.run.playerStatsWithoutItems[stat] += wheel;
               g.run.recalculatePlayerStats = true;
             }
           }
@@ -3060,6 +3071,9 @@ void DoUI(bool draw) {
             FLOATING_BEAUTIFY;
             BF_CLAY_TEXT(TextFormat("%d ", PLAYER_COINS));
             BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+
+            if (ge.meta.debugEnabled && Clay_Hovered() && wheel)
+              AddCoins(wheel);
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -3253,8 +3267,14 @@ void DoUI(bool draw) {
                     componentItem(item);
                     if (Clay_Hovered()) {
                       componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
-                      if (ge.meta.debugEnabled && clicked())
-                        item.count++;
+                      if (ge.meta.debugEnabled) {
+                        if (clicked())
+                          item.count++;
+                        if (wheel && Clay_Hovered()) {
+                          item.count += wheel;
+                          item.count = MAX(1, item.count);
+                        }
+                      }
                     }
                   }
                 }

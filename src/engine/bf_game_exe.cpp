@@ -403,29 +403,34 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
-    auto& t = event->tfinger;
+    const auto& d = event->tfinger;
     _OnTouchDown({
-      ._id{._touchID = t.touchID, ._fingerID = t.fingerID},
-      ._screenPos = Vector2{t.x, 1 - t.y} * (Vector2)ge.meta.screenSize,
+      ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
+      ._screenPos = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
     });
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
-    auto& t = event->tfinger;
+    const auto& d = event->tfinger;
     _OnTouchUp({
-      ._id{._touchID = t.touchID, ._fingerID = t.fingerID},
-      ._screenPos = Vector2{t.x, 1 - t.y} * (Vector2)ge.meta.screenSize,
+      ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
+      ._screenPos = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
     });
   } break;
 
   case SDL_EVENT_FINGER_MOTION: {  ///
-    auto& t = event->tfinger;
+    const auto& d = event->tfinger;
     _OnTouchMoved({
-      ._id{._touchID = t.touchID, ._fingerID = t.fingerID},
-      ._screenPos  = Vector2{t.x, 1 - t.y} * (Vector2)ge.meta.screenSize,
-      ._screenDPos = Vector2{t.dx, -t.dy} * (Vector2)ge.meta.screenSize,
+      ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
+      ._screenPos  = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
+      ._screenDPos = Vector2{d.dx, -d.dy} * (Vector2)ge.meta.screenSize,
     });
   } break;
+
+  case SDL_EVENT_MOUSE_WHEEL: {
+    const auto& d       = event->wheel;
+    ge.meta._mouseWheel = MIN(1, MAX(-1, (d.direction ? -1 : 1) * d.integer_y));
+  };
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {
     // Required by yandex.
