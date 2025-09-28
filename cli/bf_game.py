@@ -40,12 +40,13 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     params = "const BFGame::Effect* fb_effect"
     genline("using ClayEffectConditionFunction = void(*)({});".format(params))
-    for x in gamelib["effect_conditions"]:
+    for x in gamelib["effect_conditions"][1:]:
         genline("void ClayEffectCondition_{}({});".format(x["type"], params))
-    genline("ClayEffectConditionFunction clayEffectConditionFunctions[]{")
-    for x in gamelib["effect_conditions"]:
+    genline("constexpr ClayEffectConditionFunction clayEffectConditionFunctions_[]{")
+    for x in gamelib["effect_conditions"][1:]:
         genline("  ClayEffectCondition_{},".format(x["type"]))
-    genline("};\n")
+    genline("};")
+    genline("VIEW_FROM_ARRAY_DANGER(clayEffectConditionFunctions);\n")
 
     # Items.
     # ============================================================
