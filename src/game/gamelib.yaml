@@ -53,6 +53,7 @@ localization:
   ITEM_BLACK_FLAG: Чёрный Флаг
   ITEM_TODO1: TODO1
   ITEM_PIGGY_BANK: Копилка
+  ITEM_TODO_REROLLER: TodoReroller
   WEAPON_GUN: Пистолет
   WEAPON_BOW: Лук
   WEAPON_SWORD: Меч
@@ -369,6 +370,13 @@ items:
       - effectcondition_type: START_OF_THE_WAVE_GET_STAT
         stat_type: COINS
         value_multiplier: 1.2
+  - type: TODO_REROLLER
+    texture_id: ui_item_todo
+    tier: 2
+    price: 40
+    effects:
+      - stat_type: FREE_REROLLS
+        value: 1
 weapon_kinds:
   - type: INVALID
   - type: MELEE
