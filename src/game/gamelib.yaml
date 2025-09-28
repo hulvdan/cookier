@@ -54,9 +54,12 @@ localization:
   ITEM_TODO1: TODO1
   ITEM_PIGGY_BANK: Копилка
   ITEM_TODO_REROLLER: TodoReroller
+  WEAPON_SWORD: Меч
   WEAPON_GUN: Пистолет
   WEAPON_BOW: Лук
-  WEAPON_SWORD: Меч
+  WEAPON_SLINGSHOT: Рогатка
+  WEAPON_WAND: Огнилка
+  WEAPON_WAND2: Молнилка
   STAT_COINS: Монеты
   STAT_CURSE: Проклятие
   STAT_HP: Здоровье
@@ -488,6 +491,84 @@ weapons:
     shooting_duration_frames: 10
     texture_ids:
       - game_weapon_bow
+  - type: SLINGSHOT
+    min_tier_index: 0
+    weaponkind_type: RANGED
+    base_damage:
+      - 6.0
+      - 9.0
+      - 12.0
+      - 20.0
+    damage_scalings:
+      - stat_type: DAMAGE_RANGED
+        percents_per_tier:
+          - 70
+          - 85
+          - 100
+          - 115
+    knockback_meters: 4
+    cooldown_frames: 20
+    projectile_type: STONE
+    projectile_spawn_frames:
+      - 7
+    projectile_bounce: 2
+    range_meters: 12
+    max_price: 120
+    shooting_duration_frames: 12
+    texture_ids:
+      - game_weapon_slingshot
+  - type: WAND
+    min_tier_index: 0
+    weaponkind_type: RANGED
+    base_damage:
+      - 6.0
+      - 9.0
+      - 12.0
+      - 20.0
+    damage_scalings:
+      - stat_type: DAMAGE_ELEMENTAL
+        percents_per_tier:
+          - 70
+          - 85
+          - 100
+          - 115
+    knockback_meters: 1
+    cooldown_frames: 20
+    projectile_type: FIRE
+    projectile_spawn_frames:
+      - 7
+    projectile_bounce: 2
+    range_meters: 12
+    max_price: 120
+    shooting_duration_frames: 12
+    texture_ids:
+      - game_weapon_wand
+  - type: WAND2
+    min_tier_index: 0
+    weaponkind_type: RANGED
+    base_damage:
+      - 6.0
+      - 9.0
+      - 12.0
+      - 20.0
+    damage_scalings:
+      - stat_type: DAMAGE_ELEMENTAL
+        percents_per_tier:
+          - 70
+          - 85
+          - 100
+          - 115
+    knockback_meters: 1
+    cooldown_frames: 20
+    projectile_type: LIGHTNING
+    projectile_spawn_frames:
+      - 7
+    projectile_bounce: 2
+    range_meters: 12
+    max_price: 120
+    shooting_duration_frames: 12
+    texture_ids:
+      - game_weapon_wand2
 projectiles:
   - type: INVALID
   - type: ARROW
@@ -499,6 +580,18 @@ projectiles:
     speed: 16
     texture_ids:
       - game_projectile_bullet
+  - type: STONE
+    speed: 12
+    texture_ids:
+      - game_projectile_stone
+  - type: LIGHTNING
+    speed: 12
+    texture_ids:
+      - game_projectile_lightning
+  - type: FIRE
+    speed: 12
+    texture_ids:
+      - game_projectile_fire
   - type: MOB
     color: 0xff0000
     speed: 10

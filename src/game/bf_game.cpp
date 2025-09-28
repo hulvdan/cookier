@@ -543,8 +543,10 @@ struct Projectile {
   f32                               crit               = {};
   int                               pierce             = {};
   LogicalFrame                      createdAt          = {};
-  Array<int, PROJECTILE_MAX_PIERCE> piercedCreatureIds = {};
+  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds = {};
+  int                               damagedCount       = {};
   int                               piercedCount       = 0;
+  int                               bouncedCount       = 0;
   f32                               knockbackMeters    = {};
   f32                               range              = {};
   f32                               travelledDistance  = 0;
@@ -1312,6 +1314,9 @@ void MakeProjectile(MakeProjectileData data) {  ///
   switch (data.type) {
   case ProjectileType_ARROW:
   case ProjectileType_BULLET:
+  case ProjectileType_STONE:
+  case ProjectileType_FIRE:
+  case ProjectileType_LIGHTNING:
   case ProjectileType_MOB: {
     // Intentionally left blank.
   } break;
@@ -4652,7 +4657,7 @@ void GameFixedUpdate() {
 
         // Not damaging already damaged creatures.
         if (ArrayContains(
-              projectile.piercedCreatureIds.base, projectile.piercedCount, creature.id
+              projectile.damagedCreatureIds.base, projectile.piercedCount, creature.id
             ))
           continue;
 
@@ -4711,7 +4716,7 @@ void GameFixedUpdate() {
               maxPierce += g.run.playerStats[StatType_PIERCING];
 
             if (projectile.piercedCount < maxPierce)
-              projectile.piercedCreatureIds[projectile.piercedCount++] = creature.id;
+              projectile.damagedCreatureIds[projectile.piercedCount++] = creature.id;
             else if (!g.run.projectilesToRemove.Contains(projectileIndex))
               *g.run.projectilesToRemove.Add() = projectileIndex;
           }
