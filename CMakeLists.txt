@@ -204,9 +204,14 @@ target_link_libraries(game
         vendor_and_codegen
         basisu_transcoder
         GameAnalytics
-        TracyClient
         miniaudio
 )
+if ("${PLATFORM}" STREQUAL "Win")
+    target_link_libraries(game
+        PRIVATE
+            TracyClient
+    )
+endif()
 target_include_directories(game
     PRIVATE
         "${CMAKE_SOURCE_DIR}/src"

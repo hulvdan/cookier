@@ -3622,6 +3622,7 @@ void DoUI(bool draw) {
   // Drawing UI.
   if (draw) {
     ZoneScopedN("Drawing UI");
+
     Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
     int                              beautifiersCount = 0;
 
@@ -3859,6 +3860,8 @@ void GameFixedUpdate() {
 
   // Reloading game.
   if (g.run.reload) {  ///
+    ZoneScopedN("Reloading game.");
+
     RunReset();
     RunInit();
   }
@@ -3906,6 +3909,8 @@ void GameFixedUpdate() {
 
   // Recalculating player stats.
   if (g.run.recalculatePlayerStats) {  ///
+    ZoneScopedN("Recalculating player stats.");
+
     g.run.recalculatePlayerStats = false;
 
     FOR_RANGE (int, i, StatType_COUNT) {
@@ -4062,6 +4067,8 @@ void GameFixedUpdate() {
 
   // Updating gameplay.
   if (g.run.screen == ScreenType_GAMEPLAY) {
+    ZoneScopedN("Updating gameplay.");
+
     // Finishing wave opens upgrades screen.
     if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
       if (!g.run.scheduledWaveCompleted.IsSet()) {
@@ -4109,98 +4116,102 @@ void GameFixedUpdate() {
     }
 
     // Updating AI.
-    for (int i = 1; i < g.run.creatures.count; i++) {  ///
-      auto& creature = g.run.creatures[i];
-      if (creature.diedAt.IsSet())
-        continue;
-      if (creature.type == CreatureType_TREE)
-        continue;
+    {  ///
+      ZoneScopedN("Updating AI.");
 
-      const auto fb = fb_creatures->Get(creature.type);
+      for (int i = 1; i < g.run.creatures.count; i++) {
+        auto& creature = g.run.creatures[i];
+        if (creature.diedAt.IsSet())
+          continue;
+        if (creature.type == CreatureType_TREE)
+          continue;
 
-      creature.controller.move
-        = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+        const auto fb = fb_creatures->Get(creature.type);
 
-      if (creature.controller.move.x >= 0)
-        creature.dir = {1, 0};
-      else
-        creature.dir = {-1, 0};
+        creature.controller.move
+          = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
 
-      if (creature.type == CreatureType_RANGER) {
-        constexpr f32 thresholdMeters = 0.5f;
-        constexpr f32 shootMeters     = 8;
-        const auto    distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
-
-        bool canShoot = true;
-
-        if (distSqr < SQR(shootMeters - thresholdMeters))
-          creature.controller.move *= -1.0f;
-        else if (distSqr < SQR(shootMeters + thresholdMeters))
-          creature.controller.move = {};
+        if (creature.controller.move.x >= 0)
+          creature.dir = {1, 0};
         else
-          canShoot = false;
+          creature.dir = {-1, 0};
 
-        auto& data = creature.DataRanger();
-        if (data.startedShootingAt.IsSet()) {
-          creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
+        if (creature.type == CreatureType_RANGER) {
+          constexpr f32 thresholdMeters = 0.5f;
+          constexpr f32 shootMeters     = 8;
+          const auto    distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
 
-          const auto e = data.startedShootingAt.Elapsed();
-          if (e == MOB_RANGER_SHOOTING_FRAME) {
-            MakeProjectile({
-              .type              = ProjectileType_MOB,
-              .ownerCreatureType = creature.type,
-              .pos               = creature.pos,
-              .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
-              .range  = 12,
-              .damage = fb->projectile_damage(),
-            });
+          bool canShoot = true;
+
+          if (distSqr < SQR(shootMeters - thresholdMeters))
+            creature.controller.move *= -1.0f;
+          else if (distSqr < SQR(shootMeters + thresholdMeters))
+            creature.controller.move = {};
+          else
+            canShoot = false;
+
+          auto& data = creature.DataRanger();
+          if (data.startedShootingAt.IsSet()) {
+            creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
+
+            const auto e = data.startedShootingAt.Elapsed();
+            if (e == MOB_RANGER_SHOOTING_FRAME) {
+              MakeProjectile({
+                .type              = ProjectileType_MOB,
+                .ownerCreatureType = creature.type,
+                .pos               = creature.pos,
+                .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
+                .range  = 12,
+                .damage = fb->projectile_damage(),
+              });
+            }
+            if (e >= MOB_RANGER_SHOOTING_FRAMES)
+              data.startedShootingAt = {};
           }
-          if (e >= MOB_RANGER_SHOOTING_FRAMES)
-            data.startedShootingAt = {};
+          else if (canShoot)
+            data.startedShootingAt.SetNow();
         }
-        else if (canShoot)
-          data.startedShootingAt.SetNow();
-      }
-      else if (creature.type == CreatureType_RUSHER) {
-        auto& data = creature.DataRusher();
+        else if (creature.type == CreatureType_RUSHER) {
+          auto& data = creature.DataRusher();
 
-        if (data.startedRushingAt.IsSet()) {
-          creature.controller.move = {};
+          if (data.startedRushingAt.IsSet()) {
+            creature.controller.move = {};
 
-          const auto e = data.startedRushingAt.Elapsed();
-          if ((MOB_RUSHER_RUSH_PRE_FRAMES < e)
-              && (e < MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_POST_FRAMES))
-            creature.controller.move = data.rushingDir * MOB_RUSHER_RUSH_SPEED_SCALE;
+            const auto e = data.startedRushingAt.Elapsed();
+            if ((MOB_RUSHER_RUSH_PRE_FRAMES < e)
+                && (e < MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_POST_FRAMES))
+              creature.controller.move = data.rushingDir * MOB_RUSHER_RUSH_SPEED_SCALE;
 
-          if (e >= MOB_RUSHER_RUSH_TOTAL_FRAMES) {
-            data.startedRushingAt = {};
-            data.finishedRushingAt.SetNow();
-            data.rushingDir = {};
-            data.cooldown.SetRand(MOB_RUSHER_COOLDOWN_MIN, MOB_RUSHER_COOLDOWN_MAX);
+            if (e >= MOB_RUSHER_RUSH_TOTAL_FRAMES) {
+              data.startedRushingAt = {};
+              data.finishedRushingAt.SetNow();
+              data.rushingDir = {};
+              data.cooldown.SetRand(MOB_RUSHER_COOLDOWN_MIN, MOB_RUSHER_COOLDOWN_MAX);
+            }
           }
-        }
-        else {
-          bool canRush = true;
+          else {
+            bool canRush = true;
 
-          if (data.finishedRushingAt.IsSet()) {
-            if (data.finishedRushingAt.Elapsed() < data.cooldown)
-              canRush = false;
-          }
+            if (data.finishedRushingAt.IsSet()) {
+              if (data.finishedRushingAt.Elapsed() < data.cooldown)
+                canRush = false;
+            }
 
-          if (canRush) {
-            const auto dist       = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
-            const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
-                                    - MOB_RUSHER_RUSH_PRE_FRAMES
-                                    - MOB_RUSHER_RUSH_POST_FRAMES;
-            const auto durSeconds = (f32)rushingDur.value / FIXED_FPS;
-            const auto rushDistance
-              = creature.speed * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
+            if (canRush) {
+              const auto dist       = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
+              const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
+                                      - MOB_RUSHER_RUSH_PRE_FRAMES
+                                      - MOB_RUSHER_RUSH_POST_FRAMES;
+              const auto durSeconds = (f32)rushingDur.value / FIXED_FPS;
+              const auto rushDistance
+                = creature.speed * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
 
-            if (dist <= rushDistance) {
-              data.startedRushingAt.SetNow();
-              data.finishedRushingAt = {};
-              data.rushingDir
-                = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
+              if (dist <= rushDistance) {
+                data.startedRushingAt.SetNow();
+                data.finishedRushingAt = {};
+                data.rushingDir
+                  = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
+              }
             }
           }
         }
@@ -4286,6 +4297,8 @@ void GameFixedUpdate() {
 
     // Mobs contact-damage player.
     if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      ZoneScopedN("Mobs contact-damage player.");
+
       const auto playerPos = PLAYER_CREATURE.pos;
       for (int i = 1; i < g.run.creatures.count; i++) {
         const auto& creature = g.run.creatures[i];
@@ -4312,6 +4325,8 @@ void GameFixedUpdate() {
 
     // Picking up pickupables.
     if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      ZoneScopedN("Picking up pickupables.");
+
       for (auto& pickupable : g.run.pickupables) {
         if (pickupable.pickedUpAt.IsSet()) {
           pickupable.pos
@@ -4374,6 +4389,8 @@ void GameFixedUpdate() {
 
   // Creatures moving.
   {  ///
+    ZoneScopedN("Creatures moving.");
+
     for (auto& creature : g.run.creatures) {
       if (creature.diedAt.IsSet())
         continue;
@@ -4410,37 +4427,46 @@ void GameFixedUpdate() {
   }
 
   // Updating box2d world.
-  b2World_Step(g.run.world, FIXED_DT, 4);
+  {  ///
+    ZoneScopedN("Updating box2d world.");
+    b2World_Step(g.run.world, FIXED_DT, 4);
+  }
 
   // Updating body positions.
-  for (auto& creature : g.run.creatures) {  ///
-    if (creature.diedAt.IsSet())
-      continue;
+  {  ///
+    ZoneScopedN("Updating body positions.");
 
-    creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
+    for (auto& creature : g.run.creatures) {
+      if (creature.diedAt.IsSet())
+        continue;
 
-    const auto velocity = ToVector2(b2Body_GetLinearVelocity(creature.body.id));
+      creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
 
-    const auto tolerance = 0.1f;
+      const auto velocity = ToVector2(b2Body_GetLinearVelocity(creature.body.id));
 
-    if ((abs(velocity.x) < tolerance) && (abs(velocity.y) < tolerance)) {
-      creature.movementAccumulator = 0;
-      if (!creature.idleStartedAt.IsSet())
-        creature.idleStartedAt.SetNow();
+      const auto tolerance = 0.1f;
+
+      if ((abs(velocity.x) < tolerance) && (abs(velocity.y) < tolerance)) {
+        creature.movementAccumulator = 0;
+        if (!creature.idleStartedAt.IsSet())
+          creature.idleStartedAt.SetNow();
+      }
+      else {
+        creature.movementAccumulator += Vector2Length(velocity) * FIXED_DT;
+        if (creature.idleStartedAt.IsSet())
+          creature.idleStartedAt = {};
+      }
+
+      const auto fb = fb_creatures->Get(creature.type);
+      creature.movementAccumulator
+        = fmodf(creature.movementAccumulator, fb->movement_accumulator_meters_cycle());
     }
-    else {
-      creature.movementAccumulator += Vector2Length(velocity) * FIXED_DT;
-      if (creature.idleStartedAt.IsSet())
-        creature.idleStartedAt = {};
-    }
-
-    const auto fb = fb_creatures->Get(creature.type);
-    creature.movementAccumulator
-      = fmodf(creature.movementAccumulator, fb->movement_accumulator_meters_cycle());
   }
 
   // Player weapons shooting.
   if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+    ZoneScopedN("Player weapons shooting.");
+
     int weaponIndex = -1;
     for (auto& weapon : g.run.playerWeapons) {
       weaponIndex++;
@@ -4599,6 +4625,8 @@ void GameFixedUpdate() {
   // - Mob collisions.
   // - Marking to remove because of pierce count.
   {  ///
+    ZoneScopedN("Updating projectiles.");
+
     int projectileIndex = -1;
     for (auto& projectile : g.run.projectiles) {
       projectileIndex++;
@@ -4697,7 +4725,9 @@ void GameFixedUpdate() {
   }
 
   // Processing `projectilesToRemove`.
-  if (g.run.projectilesToRemove.count) {  ///
+  if (g.run.projectilesToRemove.count > 0) {  ///
+    ZoneScopedN("Processing `projectilesToRemove`.");
+
     qsort(
       (void*)g.run.projectilesToRemove.base,
       g.run.projectilesToRemove.count,
@@ -4714,6 +4744,8 @@ void GameFixedUpdate() {
 
   // Processing `justDamagedCreatures`.
   {  ///
+    ZoneScopedN("Processing `justDamagedCreatures`.");
+
     // auto playerHurt = false;
     // auto mobHurt    = false;
 
@@ -4849,6 +4881,8 @@ void GameFixedUpdate() {
 
   // Removing old died creatures.
   {  ///
+    ZoneScopedN("Removing old died creatures.");
+
     const int total = g.run.creatures.count;
     int       off   = 0;
 
@@ -4866,6 +4900,8 @@ void GameFixedUpdate() {
 
   // Removing old damage numbers.
   {  ///
+    ZoneScopedN("Removing old damage numbers.");
+
     int removed = 0;
     int left    = -1;
     FOR_RANGE (int, i, g.run.numbers.count) {
@@ -4883,6 +4919,8 @@ void GameFixedUpdate() {
 
   // Removing old picked up pickupables.
   {  ///
+    ZoneScopedN("Removing old picked up pickupables.");
+
     const auto total = g.run.pickupables.count;
     int        off   = 0;
     FOR_RANGE (int, i, total) {
@@ -5067,25 +5105,27 @@ void GameDraw() {
   }
 
   // Drawing projectiles + their gizmos.
-  for (const auto& projectile : g.run.projectiles) {  ///
-    const auto fb = fb_projectiles->Get(projectile.type);
-    DrawGroup_OneShotTexture(
-      {
-        .texId    = fb->texture_ids()->Get(0),
-        .rotation = Vector2Angle(projectile.dir),
-        .pos      = projectile.pos,
-        .color    = ColorFromRGB(fb->color()),
-      },
-      DrawZ_DEFAULT
-    );
+  {  ///
+    for (const auto& projectile : g.run.projectiles) {
+      const auto fb = fb_projectiles->Get(projectile.type);
+      DrawGroup_OneShotTexture(
+        {
+          .texId    = fb->texture_ids()->Get(0),
+          .rotation = Vector2Angle(projectile.dir),
+          .pos      = projectile.pos,
+          .color    = ColorFromRGB(fb->color()),
+        },
+        DrawZ_DEFAULT
+      );
 
-    // Gizmos.
-    if (ge.meta.debugEnabled) {
-      DrawGroup_OneShotCircleLines({
-        .pos    = projectile.pos,
-        .radius = fb->collider_radius(),
-        .color  = YELLOW,
-      });
+      // Gizmos.
+      if (ge.meta.debugEnabled) {
+        DrawGroup_OneShotCircleLines({
+          .pos    = projectile.pos,
+          .radius = fb->collider_radius(),
+          .color  = YELLOW,
+        });
+      }
     }
   }
 
@@ -5142,61 +5182,65 @@ void GameDraw() {
   }
 
   // Drawing pickupables.
-  for (const auto& pickupable : g.run.pickupables) {  ///
-    const auto fb = fb_pickupables->Get(pickupable.type);
+  {  ///
+    for (const auto& pickupable : g.run.pickupables) {
+      const auto fb = fb_pickupables->Get(pickupable.type);
 
-    f32 fade = 1;
-    {
-      const auto e = pickupable.createdAt.Elapsed();
-      fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
-    }
-    if (pickupable.pickedUpAt.IsSet()) {
-      const auto e = pickupable.pickedUpAt.Elapsed();
-      fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
-    }
-
-    DrawGroup_OneShotTexture(
+      f32 fade = 1;
       {
-        .texId = fb->texture_id(),
-        .pos   = pickupable.pos,
-        .color = Fade(WHITE, fade),
-      },
-      DrawZ_PICKUPABLES
-    );
+        const auto e = pickupable.createdAt.Elapsed();
+        fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
+      }
+      if (pickupable.pickedUpAt.IsSet()) {
+        const auto e = pickupable.pickedUpAt.Elapsed();
+        fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
+      }
+
+      DrawGroup_OneShotTexture(
+        {
+          .texId = fb->texture_id(),
+          .pos   = pickupable.pos,
+          .color = Fade(WHITE, fade),
+        },
+        DrawZ_PICKUPABLES
+      );
+    }
   }
 
   // Gizmos. Colliders.
-  if (ge.meta.debugEnabled) {  ///
-    for (auto& shape : g.run.bodyShapes) {
-      if (!shape.active)
-        continue;
+  {  ///
+    if (ge.meta.debugEnabled) {
+      for (auto& shape : g.run.bodyShapes) {
+        if (!shape.active)
+          continue;
 
-      auto pos = ToVector2(b2Body_GetPosition(shape.body.id));
+        auto pos = ToVector2(b2Body_GetPosition(shape.body.id));
 
-      auto color = shape.color;
-      if (!b2Body_IsEnabled(shape.body.id))
-        color = GRAY;
+        auto color = shape.color;
+        if (!b2Body_IsEnabled(shape.body.id))
+          color = GRAY;
 
-      switch (shape.type) {
-      case BodyShapeType_CIRCLE: {
-        DrawGroup_OneShotCircleLines({
-          .pos    = pos,
-          .radius = shape.DataCircle().radius,
-          .color  = color,
-        });
-      } break;
+        switch (shape.type) {
+        case BodyShapeType_CIRCLE: {
+          DrawGroup_OneShotCircleLines({
+            .pos    = pos,
+            .radius = shape.DataCircle().radius,
+            .color  = color,
+          });
+        } break;
 
-      case BodyShapeType_RECT: {
-        DrawGroup_OneShotRectLines({
-          .pos    = pos,
-          .size   = shape.DataRect().size,
-          .anchor = Vector2Half(),
-          .color  = color,
-        });
-      } break;
+        case BodyShapeType_RECT: {
+          DrawGroup_OneShotRectLines({
+            .pos    = pos,
+            .size   = shape.DataRect().size,
+            .anchor = Vector2Half(),
+            .color  = color,
+          });
+        } break;
 
-      default:
-        INVALID_PATH;
+        default:
+          INVALID_PATH;
+        }
       }
     }
   }
@@ -5204,55 +5248,57 @@ void GameDraw() {
   EndMode2D();
 
   // Drawing wave completion animation.
-  if (g.run.scheduledWaveCompleted.IsSet()) {  ///
-    auto p
-      = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
+  {  ///
+    if (g.run.scheduledWaveCompleted.IsSet()) {
+      auto p
+        = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
-    int locale = glib->ui_label_wave_won_locale();
-    if (!g.run.waveWon)
-      locale = glib->ui_label_wave_lost_locale();
-    auto text = localization_strings->Get(locale);
+      int locale = glib->ui_label_wave_won_locale();
+      if (!g.run.waveWon)
+        locale = glib->ui_label_wave_lost_locale();
+      auto text = localization_strings->Get(locale);
 
-    int totalChars = 0;
-    IterateOverCodepoints(
-      text->c_str(),
-      text->size(),
-      [&totalChars](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
-        if (codepoint)
-          totalChars++;
-      }
-    );
-    int bytesToShow = 0;
-
-    p               = InOutLerp(0, 1, p, 1, 0.33f);
-    int charsToShow = MIN(totalChars, Ceil((f32)totalChars * p));
-
-    IterateOverCodepoints(
-      text->c_str(),
-      text->size(),
-      [&charsToShow, &bytesToShow](u32 codepoint, u32 codepointSize)
-        BF_FORCE_INLINE_LAMBDA {
-          if (codepoint && charsToShow) {
-            bytesToShow += codepointSize;
-            charsToShow--;
-          }
+      int totalChars = 0;
+      IterateOverCodepoints(
+        text->c_str(),
+        text->size(),
+        [&totalChars](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
+          if (codepoint)
+            totalChars++;
         }
-    );
-
-    if (bytesToShow) {
-      DrawGroup_OneShotText(
-        {
-          .pos{
-            (f32)LOGICAL_RESOLUTION.x / 2.0f,
-            (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
-          },
-          .font       = &g.meta.uiFont,
-          .text       = text->c_str(),
-          .bytesCount = bytesToShow,
-          .color      = WHITE,
-        },
-        DrawZ_UI
       );
+      int bytesToShow = 0;
+
+      p               = InOutLerp(0, 1, p, 1, 0.33f);
+      int charsToShow = MIN(totalChars, Ceil((f32)totalChars * p));
+
+      IterateOverCodepoints(
+        text->c_str(),
+        text->size(),
+        [&charsToShow, &bytesToShow](u32 codepoint, u32 codepointSize)
+          BF_FORCE_INLINE_LAMBDA {
+            if (codepoint && charsToShow) {
+              bytesToShow += codepointSize;
+              charsToShow--;
+            }
+          }
+      );
+
+      if (bytesToShow) {
+        DrawGroup_OneShotText(
+          {
+            .pos{
+              (f32)LOGICAL_RESOLUTION.x / 2.0f,
+              (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
+            },
+            .font       = &g.meta.uiFont,
+            .text       = text->c_str(),
+            .bytesCount = bytesToShow,
+            .color      = WHITE,
+          },
+          DrawZ_UI
+        );
+      }
     }
   }
 

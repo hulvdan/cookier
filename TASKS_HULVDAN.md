@@ -70,10 +70,8 @@ x codegen so that i won't fail upon adding new EffectConditionType
 
 QA:
 ================================================================================
-* StatType_REROLL_PRICE
 * StatType_ENEMY_SPEED
 * StatType_XP_GAIN
-* StatType_PICKUP_RANGE
 * StatType_ARMOR
 * StatType_COINS_HEAL
 *
