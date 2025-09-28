@@ -2861,8 +2861,10 @@ SDL_AppResult EngineUpdate() {  ///
     ResetInputState();
     ge.meta.frame++;
 
-    // Skipping frames if there are too many of them.
-    if (simulated++ >= FIXED_FPS / 2) {
+    simulated++;
+
+    // Skipping frames if there are too many of them to simulate.
+    if (simulated >= CeilDivision(FIXED_FPS, _BF_MIN_TARGET_FPS)) {
       frameTime = 0;
       break;
     }
