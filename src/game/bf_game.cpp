@@ -2089,6 +2089,39 @@ void HealPlayer(f32 amount = 1) {  ///
   }
 }
 
+void ClayEffectCondition_INVALID(const BFGame::Effect* fb_effect) {  ///
+  // Intentionally left blank.
+}
+
+void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
+  SetStringPlaceholder(
+    BF_PL__UI_LABEL_KILL_N_ENEMIES__ENEMIES,
+    TextFormat("%d", fb_effect->condition_value())
+  );
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_kill_n_enemies_locale());
+}
+
+void ClayEffectCondition_END_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect) {  ///
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_at_the_end_of_the_wave_locale());
+}
+
+void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect
+) {  ///
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_at_the_start_of_the_wave_locale());
+}
+
+void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
+  const BFGame::Effect* fb_effect
+) {  ///
+  SetStringPlaceholder(
+    BF_PL__UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON__ENEMIES,
+    TextFormat("%d", fb_effect->condition_value())
+  );
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+    glib->ui_label_kill_n_enemies_using_this_weapon_locale()
+  );
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -2384,44 +2417,8 @@ void DoUI(bool draw) {
         BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_stat->name_locale());
 
         const auto cond = (EffectConditionType)fb_effect->effectcondition_type();
-        switch (cond) {
-        case EffectConditionType_INVALID: {
-          // Intentionally left blank.
-        } break;
-
-        case EffectConditionType_END_OF_THE_WAVE_GET_STAT: {
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-            glib->ui_label_at_the_end_of_the_wave_locale()
-          );
-        } break;
-
-        case EffectConditionType_START_OF_THE_WAVE_GET_STAT: {
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-            glib->ui_label_at_the_start_of_the_wave_locale()
-          );
-        } break;
-
-        case EffectConditionType_KILL_N_ENEMIES_GET_STAT: {
-          SetStringPlaceholder(
-            BF_PL__UI_LABEL_KILL_N_ENEMIES__ENEMIES,
-            TextFormat("%d", fb_effect->condition_value())
-          );
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_kill_n_enemies_locale());
-        } break;
-
-        case EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT: {
-          SetStringPlaceholder(
-            BF_PL__UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON__ENEMIES,
-            TextFormat("%d", fb_effect->condition_value())
-          );
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-            glib->ui_label_kill_n_enemies_using_this_weapon_locale()
-          );
-        } break;
-
-        default:
-          INVALID_PATH;
-        }
+        if (cond)
+          clayEffectConditionFunctions[cond](fb_effect);
 
         FlexEnd();
       }
