@@ -17,10 +17,11 @@ x burning ailment works
 x projectiles, like weapons, change the sign of scaleX if dir.x < 0
   (+ 180 degrees rotation?)
 x bouncing forecasts enemy pos
+x bouncing to the first randomly found enemy in possible range
 x shader: flashing support
+x fix: bouncing towards projectile's enemy
 
 * is brotato arena squared?
-* bouncing to the first randomly found in possible range
 * burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
 * projectile: lightning works (slows down)
