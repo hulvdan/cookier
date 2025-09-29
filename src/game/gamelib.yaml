@@ -620,8 +620,10 @@ projectiles:
       - game_projectile_bullet
   - type: BULLET_EXPLOSIVE
     speed: 14
+    aoe_on_travel_end: false
     aoe_radius: 1.5
     aoe_particle_type: EXPLOSION
+    aoe_chance: 1
     texture_ids:
       - game_projectile_bullet_explosive
   - type: STONE
