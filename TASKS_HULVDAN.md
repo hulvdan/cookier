@@ -29,12 +29,17 @@ x fixed unmapped_allocator UNMAPPING_ALLOCATOR_ERROR_ON_RIGHT
 x added dev sprites for explosive bullet + smg
 x exlosion: particle
 x exlosion: damages enemies
+x exlosion: chance, can turn off on contact / on travel end
 
-* exlosion: chance
+* exlosion: don't create if
+* exlosion: show info about it in SMG (weapon stats)
 * exlosion: damage scalings
+* exlosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions
+* exlosion: stats: % Explosion Size: Increases or decreases the size of Explosions
 * exlosion: make sorting work
-* stats: % Explosion Damage: Increases or decreases the damage of Explosions
-* stats: % Explosion Size: Increases or decreases the size of Explosions
+* exlosion:
+* exlosion:
+* exlosion:
 * think about boss
   + shoots oooo oooo oooo rows of projectiles like in brotato?
   + what would cookie-boss do?

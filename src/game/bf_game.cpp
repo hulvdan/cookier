@@ -4802,9 +4802,14 @@ void GameFixedUpdate() {
       projectile.travelledDistance += distance;
       projectile.pos += projectile.dir * distance;
 
+      bool createAoe = false;
+
       if (projectile.travelledDistance >= projectile.range) {
-        if (!g.run.projectilesToRemove.Contains(projectileIndex))
+        if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
           *g.run.projectilesToRemove.Add() = projectileIndex;
+          if (fb->aoe_particle_type() && fb->aoe_on_travel_end())
+            createAoe = true;
+        }
       }
 
       int start = 0;
@@ -4936,32 +4941,17 @@ void GameFixedUpdate() {
               projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
               projectile.piercedCount++;
             }
-            else if (!g.run.projectilesToRemove.Contains(projectileIndex))
+            else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
               *g.run.projectilesToRemove.Add() = projectileIndex;
+              if (fb->aoe_on_contact())
+                createAoe = true;
+            }
           }
         }
       }
-    }
-  }
 
-  // Processing `projectilesToRemove`.
-  if (g.run.projectilesToRemove.count > 0) {  ///
-    ZoneScopedN("Processing `projectilesToRemove`.");
-
-    qsort(
-      (void*)g.run.projectilesToRemove.base,
-      g.run.projectilesToRemove.count,
-      sizeof(*g.run.projectilesToRemove.base),
-      (int (*)(const void*, const void*))IntCmp
-    );
-    FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
-      const auto projectileIndex
-        = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
-
-      // Creating particle.
-      auto& projectile = g.run.projectiles[projectileIndex];
-      auto  fb         = fb_projectiles->Get(projectile.type);
-      if (fb->aoe_particle_type()) {
+      // Creating AOE particle.
+      if (createAoe && fb->aoe_particle_type() && (GRAND.FRand() < fb->aoe_chance())) {
         const auto fb = fb_projectiles->Get(projectile.type);
 
         Particle p{
@@ -5016,7 +5006,22 @@ void GameFixedUpdate() {
         }
         *g.run.particles.Add() = p;
       }
+    }
+  }
 
+  // Processing `projectilesToRemove`.
+  if (g.run.projectilesToRemove.count > 0) {  ///
+    ZoneScopedN("Processing `projectilesToRemove`.");
+
+    qsort(
+      (void*)g.run.projectilesToRemove.base,
+      g.run.projectilesToRemove.count,
+      sizeof(*g.run.projectilesToRemove.base),
+      (int (*)(const void*, const void*))IntCmp
+    );
+    FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
+      const auto projectileIndex
+        = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
       g.run.projectiles.UnstableRemoveAt(projectileIndex);
     }
     g.run.projectilesToRemove.Reset();
