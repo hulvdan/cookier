@@ -1550,6 +1550,8 @@ int GetNextLevelXp(int currentLevel) {  ///
 }
 
 void RunInit() {
+  ZoneScoped;
+
   // Creating box2d world.
   {  ///
     b2WorldDef worldDef = b2DefaultWorldDef();
@@ -1779,6 +1781,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 }
 
 void RunReset() {  ///
+  ZoneScoped;
+
   ge.settings.screenFade = 0;
   SDL_HideCursor();
 
@@ -5236,11 +5240,20 @@ void GameDraw() {
   {  ///
     for (const auto& projectile : g.run.projectiles) {
       const auto fb = fb_projectiles->Get(projectile.type);
+
+      f32     rotation = Vector2Angle(projectile.dir);
+      Vector2 scale{1, 1};
+      if (projectile.dir.x < 0) {
+        rotation += (f32)PI;
+        scale.x = -1;
+      }
+
       DrawGroup_OneShotTexture(
         {
           .texId    = fb->texture_ids()->Get(0),
-          .rotation = Vector2Angle(projectile.dir),
+          .rotation = rotation,
           .pos      = projectile.pos,
+          .scale    = scale,
           .color    = ColorFromRGB(fb->color()),
         },
         DrawZ_DEFAULT
