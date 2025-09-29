@@ -17,8 +17,8 @@ x burning ailment works
 x projectiles, like weapons, change the sign of scaleX if dir.x < 0
   (+ 180 degrees rotation?)
 x bouncing forecasts enemy pos
+x shader: flashing support
 
-* shader for texture: color flashing
 * is brotato arena squared?
 * bouncing to the first randomly found in possible range
 * burning spread
