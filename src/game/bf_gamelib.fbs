@@ -122,7 +122,7 @@ table Weapon {
     range_meters: float;
     max_price: int;
     melee_collider_height_px: float;
-    life_steal: float;
+    life_steal_percent: float;
     effects: [Effect];
     color: uint = 0xffffff;
     texture_ids: [int];

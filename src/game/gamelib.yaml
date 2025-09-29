@@ -440,7 +440,7 @@ weapons:
     shooting_duration_frames: 10
     range_meters: 2
     knockback_meters: 5
-    life_steal: 1.5
+    life_steal_percent: 1.5
     melee_collider_height_px: 76
     effects:
       - effectcondition_type: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT

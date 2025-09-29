@@ -24,8 +24,8 @@ x bouncing: use `creature.speedModifier`
   (rusher should store here it's rushing bonus as well as lightning)
 x projectile: lightning works (slows down)
 x can set weapon lifesteal in gamelib
+x show life steal chance in weapon card
 
-* show life steal chance in weapon card
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * is brotato arena squared?
