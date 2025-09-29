@@ -1659,8 +1659,11 @@ constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
   return lframe::MakeUnscaled((i64)((f32)FIXED_FPS / regenPerSecond));
 }
 
-constexpr f32 GetLifestealChance(int level) {  ///
-  return (f32)level / 100.0f;
+f32 GetLifestealChance(int weaponIndex) {  ///
+  const auto statLifesteal = (f32)g.run.playerStats[StatType_LIFE_STEAL] / 100.0f;
+  const auto weaponLifesteal
+    = glib->weapons()->Get(g.run.playerWeapons[weaponIndex].type)->life_steal();
+  return statLifesteal + weaponLifesteal;
 }
 
 struct TryApplyDamageData {
@@ -1727,7 +1730,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   // Player lifesteals.
   if (data.damageApplicatorCreatureType == CreatureType_PLAYER) {
-    if (GRAND.FRand() < GetLifestealChance(g.run.playerStats[StatType_LIFE_STEAL])) {
+    if (GRAND.FRand() < GetLifestealChance(data.indexOfWeaponThatDidDamage)) {
       bool canLifesteal = true;
       if (g.run.playerLastLifestealAt.IsSet()
           && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
