@@ -20,11 +20,13 @@ x bouncing forecasts enemy pos
 x bouncing to the first randomly found enemy in possible range
 x shader: flashing support
 x fix: bouncing towards projectile's enemy
+x bouncing: use `creature.speedModifier`
+  (rusher should store here it's rushing bonus as well as lightning)
+x projectile: lightning works (slows down)
 
 * is brotato arena squared?
 * burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
-* projectile: lightning works (slows down)
 * ref malloc/free -> ALLOC/FREE (lib_instrument)
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize

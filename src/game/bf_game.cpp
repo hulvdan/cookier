@@ -493,6 +493,7 @@ struct Creature {
   LogicalFrame       lastDamagedAt       = {};
   LogicalFrame       diedAt              = {};
   f32                speed               = {};
+  f32                speedModifier       = 1;
   f32                movementAccumulator = {};
   LogicalFrame       idleStartedAt       = {};
 
@@ -1747,12 +1748,14 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     if (data.damageApplicatorCreatureType == CreatureType_PLAYER)
       damage += g.run.playerStats[StatType_DAMAGE_ELEMENTAL];
 
-    if (damage > 0) {
+    if ((data.ailmentValue == 0) || (damage > 0)) {
       auto fb_ailment = glib->ailments()->Get(data.ailment);
 
       auto& a             = creature.ailments[data.ailment - 1];
       a.ownerCreatureType = data.damageApplicatorCreatureType;
-      a.startedAt         = {};
+      if ((data.ailment == AilmentType_ZAP) && !a.startedAt.IsSet())
+        creature.speedModifier *= ZAP_SPEED_SCALE;
+      a.startedAt = {};
       a.startedAt.SetNow();
       a.duration
         = lframe::MakeUnscaled((int)(FIXED_FPS * fb_ailment->duration_seconds()));
@@ -4260,13 +4263,14 @@ void GameFixedUpdate() {
             const auto e = data.startedRushingAt.Elapsed();
             if ((MOB_RUSHER_RUSH_PRE_FRAMES < e)
                 && (e < MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_POST_FRAMES))
-              creature.controller.move = data.rushingDir * MOB_RUSHER_RUSH_SPEED_SCALE;
+              creature.controller.move = data.rushingDir;
 
             if (e >= MOB_RUSHER_RUSH_TOTAL_FRAMES) {
               data.startedRushingAt = {};
               data.finishedRushingAt.SetNow();
               data.rushingDir = {};
               data.cooldown.SetRand(MOB_RUSHER_COOLDOWN_MIN, MOB_RUSHER_COOLDOWN_MAX);
+              creature.speedModifier /= MOB_RUSHER_RUSH_SPEED_SCALE;
             }
           }
           else {
@@ -4282,15 +4286,16 @@ void GameFixedUpdate() {
               const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
                                       - MOB_RUSHER_RUSH_PRE_FRAMES
                                       - MOB_RUSHER_RUSH_POST_FRAMES;
-              const auto durSeconds = (f32)rushingDur.value / FIXED_FPS;
-              const auto rushDistance
-                = creature.speed * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
+              const auto durSeconds   = (f32)rushingDur.value / FIXED_FPS;
+              const auto rushDistance = creature.speed * creature.speedModifier
+                                        * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
 
               if (dist <= rushDistance) {
                 data.startedRushingAt.SetNow();
                 data.finishedRushingAt = {};
                 data.rushingDir
                   = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
+                creature.speedModifier *= MOB_RUSHER_RUSH_SPEED_SCALE;
               }
             }
           }
@@ -4497,8 +4502,11 @@ void GameFixedUpdate() {
           }
 
           // Decay.
-          if (a.startedAt.IsSet() && (a.startedAt.Elapsed() >= a.duration))
+          if (a.startedAt.IsSet() && (a.startedAt.Elapsed() >= a.duration)) {
+            if (i == AilmentType_ZAP)
+              creature.speedModifier /= ZAP_SPEED_SCALE;
             a = {};
+          }
         }
       }
     }
@@ -4514,7 +4522,7 @@ void GameFixedUpdate() {
 
       const auto fb = fb_creatures->Get(creature.type);
 
-      auto speedScale = creature.speed * SPEED_MULTIPLIER;
+      auto speedScale = creature.speed * creature.speedModifier * SPEED_MULTIPLIER;
       if (creature.type == CreatureType_PLAYER) {
         speedScale *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
 
@@ -4867,7 +4875,10 @@ void GameFixedUpdate() {
                   continue;
 
                 const auto forecastedCreaturePos = ForecastWhereProjectileWillHitCreature(
-                  c->pos, c->controller.move * c->speed, projectile.pos, fb->speed()
+                  c->pos,
+                  c->controller.move * c->speed * c->speedModifier,
+                  projectile.pos,
+                  fb->speed()
                 );
                 const auto d = Vector2DistanceSqr(forecastedCreaturePos, projectile.pos);
                 if (d <= SQR(projectile.range)) {
