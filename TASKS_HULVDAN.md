@@ -20,7 +20,7 @@ x bouncing forecasts enemy pos
 
 * shader for texture: color flashing
 * is brotato arena squared?
-* bouncing no to closest by to a first random found in possible range
+* bouncing to the first randomly found in possible range
 * burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
 * projectile: lightning works (slows down)
