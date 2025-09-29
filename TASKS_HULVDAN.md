@@ -19,6 +19,7 @@ x projectiles, like weapons, change the sign of scaleX if dir.x < 0
 x bouncing forecasts enemy pos
 
 * shader for texture: color flashing
+* is brotato arena squared?
 * bouncing no to closest by to a first random found in possible range
 * burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
