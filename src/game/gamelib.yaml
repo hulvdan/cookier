@@ -57,6 +57,7 @@ localization:
   ITEM_TODO_REROLLER: TodoReroller
   WEAPON_SWORD: Меч
   WEAPON_GUN: Пистолет
+  WEAPON_SMG: ПП
   WEAPON_BOW: Лук
   WEAPON_SLINGSHOT: Рогатка
   WEAPON_WAND: Огнилка
@@ -474,6 +475,33 @@ weapons:
     range_meters: 5
     texture_ids:
       - game_weapon_gun
+  - type: SMG
+    min_tier_index: 0
+    base_damage:
+      - 3.0
+      - 6.0
+      - 9.0
+      - 12.0
+    weaponkind_type: RANGED
+    projectile_type: BULLET_EXPLOSIVE
+    damage_scalings:
+      - stat_type: DAMAGE_RANGED
+        percents_per_tier:
+          - 85
+          - 90
+          - 95
+          - 100
+    max_price: 130
+    knockback_meters: 1
+    cooldown_frames: 15
+    shooting_duration_frames: 30
+    projectile_spawn_frames:
+      - 2
+      - 16
+      - 30
+    range_meters: 7
+    texture_ids:
+      - game_weapon_smg
   - type: BOW
     min_tier_index: 0
     weaponkind_type: RANGED
@@ -585,10 +613,13 @@ projectiles:
     texture_ids:
       - game_projectile_arrow
   - type: BULLET
-    color: 0xffff00
     speed: 16
     texture_ids:
       - game_projectile_bullet
+  - type: BULLET_EXPLOSIVE
+    speed: 14
+    texture_ids:
+      - game_projectile_bullet_explosive
   - type: STONE
     speed: 30
     texture_ids:
