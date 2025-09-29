@@ -26,7 +26,13 @@ x show life steal chance in weapon card
 x end: can hover on weapon
 x ref malloc/free -> BF_ALLOC/BF_FREE with easy-to-use unmapped allocator
 x fixed unmapped_allocator UNMAPPING_ALLOCATOR_ERROR_ON_RIGHT
+x added dev sprites for explosive bullet + smg
 
+* stats: % Explosion Damage: Increases or decreases the damage of Explosions
+* stats: % Explosion Size: Increases or decreases the size of Explosions
+* think about boss
+  + shoots oooo oooo oooo rows of projectiles like in brotato?
+  + what would cookie-boss do?
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * is brotato arena squared?
@@ -42,8 +48,6 @@ x fixed unmapped_allocator UNMAPPING_ALLOCATOR_ERROR_ON_RIGHT
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
-* stats: % Explosion Damage: Increases or decreases the damage of Explosions
-* stats: % Explosion Size: Increases or decreases the size of Explosions
 * stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
 * stats: Structure Range: Increases or decreases the range of Structures.
 * spread mobs apart (use force?)

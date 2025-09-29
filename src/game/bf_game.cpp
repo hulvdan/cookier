@@ -1327,20 +1327,6 @@ void MakeProjectile(MakeProjectileData data) {  ///
   };
   projectile.createdAt.SetNow();
 
-  switch (data.type) {
-  case ProjectileType_ARROW:
-  case ProjectileType_BULLET:
-  case ProjectileType_STONE:
-  case ProjectileType_FIRE:
-  case ProjectileType_LIGHTNING:
-  case ProjectileType_MOB: {
-    // Intentionally left blank.
-  } break;
-
-  default:
-    INVALID_PATH;
-  }
-
   *g.run.projectiles.Add() = projectile;
 }
 
