@@ -3906,6 +3906,18 @@ void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
   g.run.recalculatePlayerStats = true;
 }
 
+// NOTE: Current implementation assumes that `creatureSpeed` << `projectileSpeed`.
+Vector2 ForecastWhereProjectileWillHitCreature(
+  Vector2 creaturePos,
+  Vector2 creatureSpeed,
+  Vector2 projectilePos,
+  f32     projectileSpeed
+) {  ///
+  ASSERT(projectileSpeed > 0);
+  const auto dist = Vector2Distance(creaturePos, projectilePos);
+  return creaturePos + creatureSpeed * (dist / projectileSpeed);
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -4828,7 +4840,7 @@ void GameFixedUpdate() {
               f32       distSqr = f32_inf;
 
               bool found = false;
-              FOR_RANGE (int, i, 20) {
+              FOR_RANGE (int, i, 8) {
                 auto c = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
                 if (c->type == CreatureType_PLAYER)
                   continue;
@@ -4839,14 +4851,9 @@ void GameFixedUpdate() {
                     ))
                   continue;
 
-                const auto dd = Vector2DistanceSqr(c->pos, projectile.pos);
-                if (dd > distSqr)
-                  continue;
-
-                const auto projectileFlyingTime = sqrtf(dd) / fb->speed();
-                const auto forecastedCreaturePos
-                  = c->pos + c->controller.move * c->speed * projectileFlyingTime;
-
+                const auto forecastedCreaturePos = ForecastWhereProjectileWillHitCreature(
+                  c->pos, c->controller.move * c->speed, projectile.pos, fb->speed()
+                );
                 const auto d = Vector2DistanceSqr(forecastedCreaturePos, projectile.pos);
                 if (d <= distSqr) {
                   closest       = c;
