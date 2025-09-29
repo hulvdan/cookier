@@ -23,7 +23,11 @@ x fix: bouncing towards projectile's enemy
 x bouncing: use `creature.speedModifier`
   (rusher should store here it's rushing bonus as well as lightning)
 x projectile: lightning works (slows down)
+x can set weapon lifesteal in gamelib
 
+* show life steal chance in weapon card
+* stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
+* stats: Burning Spread: Increases the amount of times Burn spreads.
 * is brotato arena squared?
 * burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
@@ -47,8 +51,6 @@ x projectile: lightning works (slows down)
 * stats: Bounces: Gives projectiles additional Bounces
 * stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
 * stats: Structure Range: Increases or decreases the range of Structures.
-* stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
-* stats: Burning Spread: Increases the amount of times Burn spreads.
 * spread mobs apart (use force?)
 * mob that rotates when moving?
 *
