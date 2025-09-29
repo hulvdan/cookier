@@ -630,7 +630,7 @@ lframe GetWaveDuration(int waveIndex) {  ///
 #if BF_DEBUG
   seconds /= 3;
 #endif
-  return lframe::MakeUnscaled(seconds * FIXED_FPS);
+  return lframe::Unscaled(seconds * FIXED_FPS);
 }
 
 enum ScreenType {
@@ -670,6 +670,12 @@ struct ThisWaveMob {
 struct StringPlaceholderValue {
   int         id    = {};
   const char* value = {};
+};
+
+struct Particle {
+  ParticleType type      = {};
+  Vector2      pos       = {};
+  LogicalFrame createdAt = {};
 };
 
 struct GameData {
@@ -749,7 +755,8 @@ struct GameData {
   X(int, justDamagedCreatures)           \
   X(Number, numbers)                     \
   X(Pickupable, pickupables)             \
-  X(Item, playerItems)
+  X(Item, playerItems)                   \
+  X(Particle, particles)
 
 #define X(type_, name_) Vector<type_> name_ = {};
     VECTORS_TABLE;
@@ -933,7 +940,7 @@ void LogicalFrame::SetNow() {  ///
 
 lframe LogicalFrame::Elapsed() const {  ///
   ASSERT(IsSet());
-  return lframe::MakeUnscaled(FRAMES_ELAPSED(_value));
+  return lframe::Unscaled(FRAMES_ELAPSED(_value));
 }
 
 static BF_FORCE_INLINE Clay_Dimensions MeasureText(
@@ -1639,9 +1646,9 @@ void GameInit() {  ///
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
   if (regenLevel <= 0)
-    return lframe::MakeUnscaled(i64_max);
+    return lframe::Unscaled(i64_max);
   const f32 regenPerSecond = (f32)regenLevel / 11.25f + 1.0f / 9.0f;
-  return lframe::MakeUnscaled((i64)((f32)FIXED_FPS / regenPerSecond));
+  return lframe::Unscaled((i64)((f32)FIXED_FPS / regenPerSecond));
 }
 
 f32 GetLifestealChance(WeaponType type) {  ///
@@ -1746,9 +1753,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         creature.speedModifier *= ZAP_SPEED_SCALE;
       a.startedAt = {};
       a.startedAt.SetNow();
-      a.duration
-        = lframe::MakeUnscaled((int)(FIXED_FPS * fb_ailment->duration_seconds()));
-      a.value = MAX(a.value, damage);
+      a.duration = lframe::Unscaled((int)(FIXED_FPS * fb_ailment->duration_seconds()));
+      a.value    = MAX(a.value, damage);
     }
   }
 
@@ -1947,7 +1953,7 @@ f32 GetPlayerStatAttackSpeedMultiplier() {  ///
 }
 
 lframe ApplyAttackSpeedToDuration(int duration) {  ///
-  return lframe::MakeUnscaled(MAX(
+  return lframe::Unscaled(MAX(
     1,
     (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration) / GetPlayerStatAttackSpeedMultiplier())
   ));
@@ -3958,6 +3964,14 @@ bool AreEnemies(CreatureType t1, CreatureType t2) {  ///
   return false;
 }
 
+// #define SORT_NAME particles
+// #define SORT_TYPE Particle
+// #define SORT_CMP(x, y)                         \
+//   ((x.createdAt._value) < (y.createdAt._value) \
+//      ? -1                                      \
+//      : ((y.createdAt._value) < (x.createdAt._value) ? 1 : 0))
+// #include "sort.h"
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -3965,6 +3979,7 @@ void GameFixedUpdate() {
   const auto fb_items       = glib->items();
   const auto fb_weapons     = glib->weapons();
   const auto fb_projectiles = glib->projectiles();
+  const auto fb_particles   = glib->particles();
 
   // Reloading game.
   if (g.run.reload) {  ///
@@ -4942,6 +4957,18 @@ void GameFixedUpdate() {
     FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
       const auto projectileIndex
         = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
+
+      // Creating explosion.
+      auto& projectile = g.run.projectiles[projectileIndex];
+      if (projectile.type == ProjectileType_BULLET_EXPLOSIVE) {
+        Particle p{
+          .type = ParticleType_EXPLOSION,
+          .pos  = projectile.pos,
+        };
+        p.createdAt.SetNow();
+        *g.run.particles.Add() = p;
+      }
+
       g.run.projectiles.UnstableRemoveAt(projectileIndex);
     }
     g.run.projectilesToRemove.Reset();
@@ -5139,6 +5166,24 @@ void GameFixedUpdate() {
     }
   }
 
+  // Removing old particles.
+  {  ///
+    ZoneScopedN("Removing old particles.");
+
+    const auto total = g.run.particles.count;
+    int        off   = 0;
+    FOR_RANGE (int, i, total) {
+      const auto& particle = g.run.particles[i - off];
+      const auto  fb       = fb_particles->Get(particle.type);
+      if (particle.createdAt.Elapsed() >= lframe::FromSeconds(fb->duration_seconds())) {
+        g.run.particles.UnstableRemoveAt(i - off);
+        off++;
+      }
+    }
+
+    // particles_quick_sort(g.run.particles.base, g.run.particles.count);
+  }
+
   g.run.camera.pos = GetCameraTargetPos();
   g.meta.frame++;
 }
@@ -5166,6 +5211,7 @@ void GameDraw() {
   const auto fb_projectiles = glib->projectiles();
   const auto fb_pickupables = glib->pickupables();
   const auto fb_numbers     = glib->numbers();
+  const auto fb_particles   = glib->particles();
   // }
 
   BeginMode2D(&g.run.camera);
@@ -5220,7 +5266,7 @@ void GameDraw() {
     else {
       f32 p = 0.0f;
       if (creature.idleStartedAt.IsSet()) {
-        const auto idleDuration = lframe::MakeUnscaled(fb->idle_seconds() * FIXED_FPS);
+        const auto idleDuration = lframe::Unscaled(fb->idle_seconds() * FIXED_FPS);
         p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
       }
       texId = GetTextureIdByProgress(fb->idle_texture_ids(), p);
@@ -5326,7 +5372,7 @@ void GameDraw() {
         .scale    = scale,
         .color    = ColorFromRGB(fb->color()),
       },
-      DrawZ_DEFAULT
+      DrawZ_PROJECTILES
     );
 
     // Gizmos.
@@ -5413,6 +5459,24 @@ void GameDraw() {
       },
       DrawZ_PICKUPABLES
     );
+  }
+
+  // Drawing particles.
+  {  ///
+    DrawGroup_Begin(DrawZ_PARTICLES);
+    DrawGroup_SetSortY(0);
+    for (const auto& particle : g.run.particles) {
+      ASSERT(particle.type);
+      const auto fb  = fb_particles->Get(particle.type);
+      const auto dur = lframe::FromSeconds(fb->duration_seconds());
+      const auto p   = Clamp01(particle.createdAt.Elapsed().Progress(dur));
+      DrawGroup_CommandTexture({
+        .texId = fb->texture_ids()->Get(0),
+        .pos   = particle.pos,
+        .color = Fade(WHITE, EaseOutQuad(1 - p)),
+      });
+    }
+    DrawGroup_End();
   }
 
   // Gizmos. Colliders.

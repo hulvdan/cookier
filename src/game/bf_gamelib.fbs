@@ -170,6 +170,11 @@ table NineSlice {
     top: int;
     bottom: int;
 }
+
+table Particle {
+    duration_seconds: float;
+    texture_ids: [int];
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -249,6 +254,7 @@ table GameLibrary {
     pickupables: [Pickupable] (required);
     numbers: [Number] (required);
     stats: [Stat] (required);
+    particles: [Particle] (required);
     // TABLE_GEN_END
     // GAME STUFF END
 }
