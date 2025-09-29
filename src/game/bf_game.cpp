@@ -1659,10 +1659,9 @@ constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
   return lframe::MakeUnscaled((i64)((f32)FIXED_FPS / regenPerSecond));
 }
 
-f32 GetLifestealChance(int weaponIndex) {  ///
-  const auto statLifesteal = (f32)g.run.playerStats[StatType_LIFE_STEAL] / 100.0f;
-  const auto weaponLifesteal
-    = glib->weapons()->Get(g.run.playerWeapons[weaponIndex].type)->life_steal();
+f32 GetLifestealChance(WeaponType type) {  ///
+  const auto statLifesteal   = (f32)g.run.playerStats[StatType_LIFE_STEAL] / 100.0f;
+  const auto weaponLifesteal = glib->weapons()->Get(type)->life_steal_percent() / 100.0f;
   return statLifesteal + weaponLifesteal;
 }
 
@@ -1730,7 +1729,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   // Player lifesteals.
   if (data.damageApplicatorCreatureType == CreatureType_PLAYER) {
-    if (GRAND.FRand() < GetLifestealChance(data.indexOfWeaponThatDidDamage)) {
+    if (GRAND.FRand()
+        < GetLifestealChance(g.run.playerWeapons[data.indexOfWeaponThatDidDamage].type))
+    {
       bool canLifesteal = true;
       if (g.run.playerLastLifestealAt.IsSet()
           && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
@@ -2636,18 +2637,11 @@ void DoUI(bool draw) {
     componentWeaponStatEntry(
       glib->ui_label_knockback_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
-        const char* const formats[]{"%.1f", "%.0f"};
-        for (const auto format : formats) {
-          const auto formatted = TextFormat(
-            format,
-            fb->knockback_meters() * (f32)(100 + g.run.playerStats[StatType_KNOCKBACK])
-              / 100.0f
-          );
-          if (formatted[strlen(formatted) - 1] == '0')
-            continue;
-          BF_CLAY_TEXT(formatted);
-          break;
-        }
+        BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat(
+          "%.1f",
+          fb->knockback_meters() * (f32)(100 + g.run.playerStats[StatType_KNOCKBACK])
+            / 100.0f
+        )));
       }
     );
 
@@ -2694,7 +2688,22 @@ void DoUI(bool draw) {
     }
 
     // Life Steal.
-    // componentWeaponStatEntry([&]() BF_FORCE_INLINE_LAMBDA {});
+    {
+      auto chance = GetLifestealChance(type);
+      if (chance > 0) {
+        componentWeaponStatEntry(
+          fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT(
+              TextFormat(
+                "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
+              ),
+              GREEN
+            );
+          }
+        );
+      }
+    }
 
     componentEffectsExploded(fb->effects(), 1, maxWidth);
 

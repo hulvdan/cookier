@@ -2783,7 +2783,7 @@ void EngineApplyStrips() {  ///
   DrawGroup_End();
 }
 
-const char* TextFormat(const char* text, ...) {  ///
+char* TextFormat(const char* text, ...) {  ///
   // Maximum number of static buffers for text formatting.
 #ifndef MAX_TEXTFORMAT_BUFFERS
 #  define MAX_TEXTFORMAT_BUFFERS 4
@@ -2820,6 +2820,35 @@ const char* TextFormat(const char* text, ...) {  ///
     index = 0;
 
   return currentBuffer;
+}
+
+char* StripLeadingZerosInFloat(char* string) {  ///
+  const char* end = string;
+  int         len = 0;
+  while (*end) {
+    end++;
+    len++;
+  }
+  for (int i = len - 1; i >= 0; i--) {
+    if (string[i] == '0')
+      string[i] = '\0';
+    else if (string[i] == '.') {
+      string[i] = '\0';
+      break;
+    }
+    else
+      break;
+  }
+  return string;
+}
+
+TEST_CASE ("StripLeadingZerosInFloat") {  ///
+  char buffer[]{'1', '.', '0', '\0'};
+  ASSERT(strlen(buffer) == 3);
+  StripLeadingZerosInFloat(buffer);
+  ASSERT(strlen(buffer) == 1);
+  StripLeadingZerosInFloat(buffer);
+  ASSERT(strlen(buffer) == 1);
 }
 
 const char* PushTextToArena(Arena* arena, const char* text, int* outLen) {  ///
