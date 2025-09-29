@@ -5203,143 +5203,139 @@ void GameDraw() {
   }
 
   // Drawing creatures.
-  {  ///
-    for (const auto& creature : g.run.creatures) {
-      const auto fb = fb_creatures->Get(creature.type);
+  for (const auto& creature : g.run.creatures) {  ///
+    const auto fb = fb_creatures->Get(creature.type);
 
-      f32 fade = 1;
-      if (creature.diedAt.IsSet())
-        fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
+    f32 fade = 1;
+    if (creature.diedAt.IsSet())
+      fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
 
-      int texId = 0;
-      if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
-        texId = GetTextureIdByProgress(
-          fb->move_texture_ids(),
-          creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
-        );
-      }
-      else {
-        f32 p = 0.0f;
-        if (creature.idleStartedAt.IsSet()) {
-          const auto idleDuration = lframe::MakeUnscaled(fb->idle_seconds() * FIXED_FPS);
-          p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
-        }
-        texId = GetTextureIdByProgress(fb->idle_texture_ids(), p);
-      }
-
-      Vector2 scale{1, 1};
-      if (creature.dir.x < 0)
-        scale.x = -1;
-
-      auto color = ColorFromRGB(fb->color());
-      if (creature.type == CreatureType_RANGER) {
-        const auto& data = creature.DataRanger();
-        f32         t    = 0;
-        if (data.startedShootingAt.IsSet()) {
-          auto e = data.startedShootingAt.Elapsed();
-          if (e < MOB_RANGER_SHOOTING_FRAME)
-            t = e.Progress(MOB_RANGER_SHOOTING_FRAME);
-          else {
-            t = 1
-                - (e - MOB_RANGER_SHOOTING_FRAME)
-                    .Progress(MOB_RANGER_SHOOTING_FRAMES - MOB_RANGER_SHOOTING_FRAME);
-          }
-        }
-        t     = Clamp01(t);
-        color = ColorLerp(color, RED, t);
-      }
-      else if (creature.type == CreatureType_RUSHER) {
-        const auto& data = creature.DataRusher();
-        f32         t    = 0;
-        if (data.startedRushingAt.IsSet()) {
-          auto e = data.startedRushingAt.Elapsed();
-          if (e < MOB_RUSHER_RUSH_PRE_FRAMES)
-            t = e.Progress(MOB_RUSHER_RUSH_PRE_FRAMES);
-          else {
-            t = 1
-                - (e - MOB_RUSHER_RUSH_TOTAL_FRAMES + MOB_RUSHER_RUSH_PRE_FRAMES)
-                    .Progress(MOB_RUSHER_RUSH_POST_FRAMES);
-          }
-        }
-        t     = Clamp01(t);
-        color = ColorLerp(color, RED, t);
-      }
-
-      DrawGroup_OneShotTexture(
-        {
-          .texId = texId,
-          .pos   = creature.pos,
-          .scale = scale,
-          .color = Fade(color, fade),
-        },
-        DrawZ_DEFAULT
+    int texId = 0;
+    if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
+      texId = GetTextureIdByProgress(
+        fb->move_texture_ids(),
+        creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
       );
+    }
+    else {
+      f32 p = 0.0f;
+      if (creature.idleStartedAt.IsSet()) {
+        const auto idleDuration = lframe::MakeUnscaled(fb->idle_seconds() * FIXED_FPS);
+        p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
+      }
+      texId = GetTextureIdByProgress(fb->idle_texture_ids(), p);
+    }
 
-      if (creature.type == CreatureType_PLAYER) {
-        // Drawing player's weapons.
-        FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
-          const auto& weapon = g.run.playerWeapons[i];
-          if (!weapon.type)
-            continue;
+    Vector2 scale{1, 1};
+    if (creature.dir.x < 0)
+      scale.x = -1;
 
-          const auto fb = fb_weapons->Get(weapon.type);
-
-          f32     rotation = 0;
-          Vector2 scale{0, 1};
-
-          if (weapon.targetDir == Vector2Zero())
-            scale.x = (creature.dir.x >= 0 ? 1 : -1);
-          else {
-            scale.x  = (weapon.targetDir.x >= 0 ? 1 : -1);
-            rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI : 0.0f);
-          }
-
-          DrawGroup_OneShotTexture(
-            {
-              .texId    = fb->texture_ids()->Get(0),
-              .rotation = rotation,
-              .pos      = GetWeaponPos(weapon),
-              .scale    = scale,
-              .color    = Fade(ColorFromRGB(fb->color()), fade),
-            },
-            DrawZ_WEAPONS
-          );
+    auto color = ColorFromRGB(fb->color());
+    if (creature.type == CreatureType_RANGER) {
+      const auto& data = creature.DataRanger();
+      f32         t    = 0;
+      if (data.startedShootingAt.IsSet()) {
+        auto e = data.startedShootingAt.Elapsed();
+        if (e < MOB_RANGER_SHOOTING_FRAME)
+          t = e.Progress(MOB_RANGER_SHOOTING_FRAME);
+        else {
+          t = 1
+              - (e - MOB_RANGER_SHOOTING_FRAME)
+                  .Progress(MOB_RANGER_SHOOTING_FRAMES - MOB_RANGER_SHOOTING_FRAME);
         }
+      }
+      t     = Clamp01(t);
+      color = ColorLerp(color, RED, t);
+    }
+    else if (creature.type == CreatureType_RUSHER) {
+      const auto& data = creature.DataRusher();
+      f32         t    = 0;
+      if (data.startedRushingAt.IsSet()) {
+        auto e = data.startedRushingAt.Elapsed();
+        if (e < MOB_RUSHER_RUSH_PRE_FRAMES)
+          t = e.Progress(MOB_RUSHER_RUSH_PRE_FRAMES);
+        else {
+          t = 1
+              - (e - MOB_RUSHER_RUSH_TOTAL_FRAMES + MOB_RUSHER_RUSH_PRE_FRAMES)
+                  .Progress(MOB_RUSHER_RUSH_POST_FRAMES);
+        }
+      }
+      t     = Clamp01(t);
+      color = ColorLerp(color, RED, t);
+    }
+
+    DrawGroup_OneShotTexture(
+      {
+        .texId = texId,
+        .pos   = creature.pos,
+        .scale = scale,
+        .color = Fade(color, fade),
+      },
+      DrawZ_DEFAULT
+    );
+
+    if (creature.type == CreatureType_PLAYER) {
+      // Drawing player's weapons.
+      FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
+        const auto& weapon = g.run.playerWeapons[i];
+        if (!weapon.type)
+          continue;
+
+        const auto fb = fb_weapons->Get(weapon.type);
+
+        f32     rotation = 0;
+        Vector2 scale{0, 1};
+
+        if (weapon.targetDir == Vector2Zero())
+          scale.x = (creature.dir.x >= 0 ? 1 : -1);
+        else {
+          scale.x  = (weapon.targetDir.x >= 0 ? 1 : -1);
+          rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI : 0.0f);
+        }
+
+        DrawGroup_OneShotTexture(
+          {
+            .texId    = fb->texture_ids()->Get(0),
+            .rotation = rotation,
+            .pos      = GetWeaponPos(weapon),
+            .scale    = scale,
+            .color    = Fade(ColorFromRGB(fb->color()), fade),
+          },
+          DrawZ_WEAPONS
+        );
       }
     }
   }
 
   // Drawing projectiles + their gizmos.
-  {  ///
-    for (const auto& projectile : g.run.projectiles) {
-      const auto fb = fb_projectiles->Get(projectile.type);
+  for (const auto& projectile : g.run.projectiles) {  ///
+    const auto fb = fb_projectiles->Get(projectile.type);
 
-      f32     rotation = Vector2Angle(projectile.dir);
-      Vector2 scale{1, 1};
-      if (projectile.dir.x < 0) {
-        rotation += (f32)PI;
-        scale.x = -1;
-      }
+    f32     rotation = Vector2Angle(projectile.dir);
+    Vector2 scale{1, 1};
+    if (projectile.dir.x < 0) {
+      rotation += (f32)PI;
+      scale.x = -1;
+    }
 
-      DrawGroup_OneShotTexture(
-        {
-          .texId    = fb->texture_ids()->Get(0),
-          .rotation = rotation,
-          .pos      = projectile.pos,
-          .scale    = scale,
-          .color    = ColorFromRGB(fb->color()),
-        },
-        DrawZ_DEFAULT
-      );
+    DrawGroup_OneShotTexture(
+      {
+        .texId    = fb->texture_ids()->Get(0),
+        .rotation = rotation,
+        .pos      = projectile.pos,
+        .scale    = scale,
+        .color    = ColorFromRGB(fb->color()),
+      },
+      DrawZ_DEFAULT
+    );
 
-      // Gizmos.
-      if (ge.meta.debugEnabled) {
-        DrawGroup_OneShotCircleLines({
-          .pos    = projectile.pos,
-          .radius = fb->collider_radius(),
-          .color  = YELLOW,
-        });
-      }
+    // Gizmos.
+    if (ge.meta.debugEnabled) {
+      DrawGroup_OneShotCircleLines({
+        .pos    = projectile.pos,
+        .radius = fb->collider_radius(),
+        .color  = YELLOW,
+      });
     }
   }
 
@@ -5396,65 +5392,61 @@ void GameDraw() {
   }
 
   // Drawing pickupables.
-  {  ///
-    for (const auto& pickupable : g.run.pickupables) {
-      const auto fb = fb_pickupables->Get(pickupable.type);
+  for (const auto& pickupable : g.run.pickupables) {  ///
+    const auto fb = fb_pickupables->Get(pickupable.type);
 
-      f32 fade = 1;
-      {
-        const auto e = pickupable.createdAt.Elapsed();
-        fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
-      }
-      if (pickupable.pickedUpAt.IsSet()) {
-        const auto e = pickupable.pickedUpAt.Elapsed();
-        fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
-      }
-
-      DrawGroup_OneShotTexture(
-        {
-          .texId = fb->texture_id(),
-          .pos   = pickupable.pos,
-          .color = Fade(WHITE, fade),
-        },
-        DrawZ_PICKUPABLES
-      );
+    f32 fade = 1;
+    {
+      const auto e = pickupable.createdAt.Elapsed();
+      fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
     }
+    if (pickupable.pickedUpAt.IsSet()) {
+      const auto e = pickupable.pickedUpAt.Elapsed();
+      fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
+    }
+
+    DrawGroup_OneShotTexture(
+      {
+        .texId = fb->texture_id(),
+        .pos   = pickupable.pos,
+        .color = Fade(WHITE, fade),
+      },
+      DrawZ_PICKUPABLES
+    );
   }
 
   // Gizmos. Colliders.
-  {  ///
-    if (ge.meta.debugEnabled) {
-      for (auto& shape : g.run.bodyShapes) {
-        if (!shape.active)
-          continue;
+  if (ge.meta.debugEnabled) {  ///
+    for (auto& shape : g.run.bodyShapes) {
+      if (!shape.active)
+        continue;
 
-        auto pos = ToVector2(b2Body_GetPosition(shape.body.id));
+      auto pos = ToVector2(b2Body_GetPosition(shape.body.id));
 
-        auto color = shape.color;
-        if (!b2Body_IsEnabled(shape.body.id))
-          color = GRAY;
+      auto color = shape.color;
+      if (!b2Body_IsEnabled(shape.body.id))
+        color = GRAY;
 
-        switch (shape.type) {
-        case BodyShapeType_CIRCLE: {
-          DrawGroup_OneShotCircleLines({
-            .pos    = pos,
-            .radius = shape.DataCircle().radius,
-            .color  = color,
-          });
-        } break;
+      switch (shape.type) {
+      case BodyShapeType_CIRCLE: {
+        DrawGroup_OneShotCircleLines({
+          .pos    = pos,
+          .radius = shape.DataCircle().radius,
+          .color  = color,
+        });
+      } break;
 
-        case BodyShapeType_RECT: {
-          DrawGroup_OneShotRectLines({
-            .pos    = pos,
-            .size   = shape.DataRect().size,
-            .anchor = Vector2Half(),
-            .color  = color,
-          });
-        } break;
+      case BodyShapeType_RECT: {
+        DrawGroup_OneShotRectLines({
+          .pos    = pos,
+          .size   = shape.DataRect().size,
+          .anchor = Vector2Half(),
+          .color  = color,
+        });
+      } break;
 
-        default:
-          INVALID_PATH;
-        }
+      default:
+        INVALID_PATH;
       }
     }
   }
@@ -5462,57 +5454,55 @@ void GameDraw() {
   EndMode2D();
 
   // Drawing wave completion animation.
-  {  ///
-    if (g.run.scheduledWaveCompleted.IsSet()) {
-      auto p
-        = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
+  if (g.run.scheduledWaveCompleted.IsSet()) {  ///
+    auto p
+      = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
-      int locale = glib->ui_label_wave_won_locale();
-      if (!g.run.waveWon)
-        locale = glib->ui_label_wave_lost_locale();
-      auto text = localization_strings->Get(locale);
+    int locale = glib->ui_label_wave_won_locale();
+    if (!g.run.waveWon)
+      locale = glib->ui_label_wave_lost_locale();
+    auto text = localization_strings->Get(locale);
 
-      int totalChars = 0;
-      IterateOverCodepoints(
-        text->c_str(),
-        text->size(),
-        [&totalChars](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
-          if (codepoint)
-            totalChars++;
-        }
-      );
-      int bytesToShow = 0;
-
-      p               = InOutLerp(0, 1, p, 1, 0.33f);
-      int charsToShow = MIN(totalChars, Ceil((f32)totalChars * p));
-
-      IterateOverCodepoints(
-        text->c_str(),
-        text->size(),
-        [&charsToShow, &bytesToShow](u32 codepoint, u32 codepointSize)
-          BF_FORCE_INLINE_LAMBDA {
-            if (codepoint && charsToShow) {
-              bytesToShow += codepointSize;
-              charsToShow--;
-            }
-          }
-      );
-
-      if (bytesToShow) {
-        DrawGroup_OneShotText(
-          {
-            .pos{
-              (f32)LOGICAL_RESOLUTION.x / 2.0f,
-              (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
-            },
-            .font       = &g.meta.uiFont,
-            .text       = text->c_str(),
-            .bytesCount = bytesToShow,
-            .color      = WHITE,
-          },
-          DrawZ_UI
-        );
+    int totalChars = 0;
+    IterateOverCodepoints(
+      text->c_str(),
+      text->size(),
+      [&totalChars](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
+        if (codepoint)
+          totalChars++;
       }
+    );
+    int bytesToShow = 0;
+
+    p               = InOutLerp(0, 1, p, 1, 0.33f);
+    int charsToShow = MIN(totalChars, Ceil((f32)totalChars * p));
+
+    IterateOverCodepoints(
+      text->c_str(),
+      text->size(),
+      [&charsToShow, &bytesToShow](u32 codepoint, u32 codepointSize)
+        BF_FORCE_INLINE_LAMBDA {
+          if (codepoint && charsToShow) {
+            bytesToShow += codepointSize;
+            charsToShow--;
+          }
+        }
+    );
+
+    if (bytesToShow) {
+      DrawGroup_OneShotText(
+        {
+          .pos{
+            (f32)LOGICAL_RESOLUTION.x / 2.0f,
+            (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
+          },
+          .font       = &g.meta.uiFont,
+          .text       = text->c_str(),
+          .bytesCount = bytesToShow,
+          .color      = WHITE,
+        },
+        DrawZ_UI
+      );
     }
   }
 
