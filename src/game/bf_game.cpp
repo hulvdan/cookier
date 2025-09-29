@@ -2550,7 +2550,7 @@ void DoUI(bool draw) {
     }
   };
 
-  LAMBDA (void, componentWeapon, (int weaponIndex)) {  ///
+  LAMBDA (void, componentWeapon, (int weaponIndex, bool weAreInShop)) {  ///
     auto& weapon = g.run.playerWeapons[weaponIndex];
 
     componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
@@ -2566,7 +2566,7 @@ void DoUI(bool draw) {
           });
         }
 
-        if (clicked() && (g.run.shop.selectedWeaponIndex == -1))
+        if (weAreInShop && clicked() && (g.run.shop.selectedWeaponIndex == -1))
           g.run.shop.selectedWeaponIndex = weaponIndex;
       }
     });
@@ -2714,6 +2714,148 @@ void DoUI(bool draw) {
         glib->ui_label_did_damage_locale(),
         [&]() BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT(TextFormat("%d", (int)didDamage)); }
       );
+    }
+  };
+
+  LAMBDA (
+    void, componentWeaponDetails, (int weaponIndex, bool weAreInShop, bool detailsBelow)
+  )
+  {
+    auto& weapon = g.run.playerWeapons[weaponIndex];
+    ASSERT(weapon.type);
+    auto fb = fb_weapons->Get(weapon.type);
+
+    // Floating weapon details modal.
+    // Gets shown upon hovering. Gets sticked upon clicking on weapon.
+    if ((Clay_Hovered() || (g.run.shop.selectedWeaponIndex == weaponIndex))
+        && g.run.playerWeapons[weaponIndex].type)
+    {
+      if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndex)) {
+        // Pressing ESC closes modal.
+        if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
+          g.run.shop.selectedWeaponIndex = -1;
+      }
+
+      u16 padding[4]{0, 0, 8, 8};
+
+      Clay_FloatingAttachPointType attachElement{};
+      Clay_FloatingAttachPointType attachParent{};
+
+      if (detailsBelow) {
+        padding[3]    = 0;
+        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      }
+      else {
+        padding[2]    = 0;
+        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+      }
+
+      CLAY({
+        .layout{
+          .sizing{
+            CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+            CLAY_SIZING_FIT(0)
+          },
+          .padding{padding[0], padding[1], padding[2], padding[3]},
+        },
+        .floating{
+          .attachPoints{.element = attachElement, .parent = attachParent},
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+        if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndex))
+          CLAY({BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)
+          )}) {}
+
+        CLAY({
+          .layout{
+            .sizing{
+              .width = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE)
+            },
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+            .childGap        = GAP_SMALL,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+        }) {
+          CLAY({.layout{.childGap = GAP_SMALL}}) {
+            componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+              CLAY({.layout{
+                BF_CLAY_SIZING_GROW_XY,
+                BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+              }}) {
+                BF_CLAY_IMAGE({
+                  .texId = fb->texture_ids()->Get(0),
+                  .color = ColorFromRGB(fb->color()),
+                });
+              }
+            });
+
+            BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+          }
+
+          componentWeaponStatsExploded(
+            weapon.type, weapon.tier, weapon.didDamage, ITEM_FRAME_WIDTH
+          );
+
+          if (weAreInShop) {
+            int canCombineWithIndex = -1;
+            for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
+              if (i == weaponIndex)
+                continue;
+              auto& otherWeapon = g.run.playerWeapons[i];
+              if ((weapon.type == otherWeapon.type)     //
+                  && (weapon.tier == otherWeapon.tier)  //
+                  && (weapon.tier < TOTAL_TIERS - 1))
+              {
+                canCombineWithIndex = i;
+                break;
+              }
+            }
+
+            // Combine button.
+            const bool combined = componentButton(
+              {.enabled = canCombineWithIndex >= 0},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
+              }
+            );
+
+            // Recycle button.
+            const bool recycled
+              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
+                  BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
+                });
+
+            // Cancel button.
+            const bool cancelled
+              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale());
+                });
+
+            if (combined) {
+              weapon.tier += 1;
+              weapon.recyclePrice  = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+              weapon.didDamage     = 0;
+              weapon.killedEnemies = MAX(
+                weapon.killedEnemies,
+                g.run.playerWeapons[canCombineWithIndex].killedEnemies
+              );
+              StableRemoveWeapon(canCombineWithIndex);
+            }
+            if (recycled) {
+              AddCoins(weapon.recyclePrice);
+              StableRemoveWeapon(weaponIndex);
+            }
+            if (cancelled || recycled || combined)
+              g.run.shop.selectedWeaponIndex = -1;
+          }
+        }
+      }
     }
   };
 
@@ -3421,135 +3563,15 @@ void DoUI(bool draw) {
                 if (weaponIndex >= g.run.playerWeapons.count)
                   break;
 
-                auto&      weapon = g.run.playerWeapons[weaponIndex];
-                const auto fb     = fb_weapons->Get(weapon.type);
+                const auto& weapon = g.run.playerWeapons[weaponIndex];
 
                 CLAY({}) {
                   // Weapon.
-                  componentWeapon(weaponIndex);
+                  componentWeapon(weaponIndex, true && weapon.type);
 
-                  // Floating weapon details modal.
-                  // Gets shown upon hovering. Gets sticked upon clicking on weapon.
-                  if ((Clay_Hovered() || (g.run.shop.selectedWeaponIndex == weaponIndex))
-                      && g.run.playerWeapons[weaponIndex].type)
-                  {
-                    if (g.run.shop.selectedWeaponIndex == weaponIndex) {
-                      // Pressing ESC closes modal.
-                      if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
-                        g.run.shop.selectedWeaponIndex = -1;
-                    }
-
-                    CLAY({
-                      .layout{.padding{.bottom = 8}},
-                      .floating{
-                        .attachPoints{
-                          .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-                          .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
-                        },
-                        .attachTo = CLAY_ATTACH_TO_PARENT,
-                      },
-                    }) {
-                      if (g.run.shop.selectedWeaponIndex == weaponIndex)
-                        CLAY({BF_CLAY_CUSTOM_OVERLAY(
-                          Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)
-                        )}) {}
-
-                      CLAY({
-                        .layout{
-                          .sizing{
-                            .width
-                            = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE)
-                          },
-                          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
-                          .childGap        = GAP_SMALL,
-                          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                        },
-                        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
-                      }) {
-                        FLOATING_BEAUTIFY;
-
-                        CLAY({.layout{.childGap = GAP_SMALL}}) {
-                          componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                            CLAY({.layout{
-                              BF_CLAY_SIZING_GROW_XY,
-                              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                            }}) {
-                              BF_CLAY_IMAGE({
-                                .texId = fb->texture_ids()->Get(0),
-                                .color = ColorFromRGB(fb->color()),
-                              });
-                            }
-                          });
-
-                          BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
-                        }
-
-                        componentWeaponStatsExploded(
-                          weapon.type, weapon.tier, weapon.didDamage, ITEM_FRAME_WIDTH
-                        );
-
-                        int canCombineWithIndex = -1;
-                        for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
-                          if (i == weaponIndex)
-                            continue;
-                          auto& otherWeapon = g.run.playerWeapons[i];
-                          if ((weapon.type == otherWeapon.type)     //
-                              && (weapon.tier == otherWeapon.tier)  //
-                              && (weapon.tier < TOTAL_TIERS - 1))
-                          {
-                            canCombineWithIndex = i;
-                            break;
-                          }
-                        }
-
-                        // Combine button.
-                        const bool combined = componentButton(
-                          {.enabled = canCombineWithIndex >= 0},
-                          [&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale()
-                            );
-                          }
-                        );
-
-                        // Recycle button.
-                        const bool recycled = componentButton(
-                          {.enabled = true},
-                          [&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale()
-                            );
-                            BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
-                          }
-                        );
-
-                        // Cancel button.
-                        const bool cancelled = componentButton(
-                          {.enabled = true},
-                          [&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale()
-                            );
-                          }
-                        );
-
-                        if (combined) {
-                          weapon.tier += 1;
-                          weapon.recyclePrice
-                            = GetWeaponRecyclePrice(weapon.type, weapon.tier);
-                          weapon.didDamage     = 0;
-                          weapon.killedEnemies = MAX(
-                            weapon.killedEnemies,
-                            g.run.playerWeapons[canCombineWithIndex].killedEnemies
-                          );
-                          StableRemoveWeapon(canCombineWithIndex);
-                        }
-                        if (recycled) {
-                          AddCoins(weapon.recyclePrice);
-                          StableRemoveWeapon(weaponIndex);
-                        }
-                        if (cancelled || recycled || combined)
-                          g.run.shop.selectedWeaponIndex = -1;
-                      }
-                    }
-                  }
+                  // Hovering modal.
+                  if (weapon.type)
+                    componentWeaponDetails(weaponIndex, true, false);
                 }
               }
             }
@@ -3634,8 +3656,14 @@ void DoUI(bool draw) {
             int i = -1;
             for (auto& weapon : g.run.playerWeapons) {
               i++;
-              if (weapon.type)
-                componentWeapon(i);
+              if (weapon.type) {
+                CLAY({}) {
+                  // Weapon.
+                  componentWeapon(i, false);
+                  // Hovering modal.
+                  componentWeaponDetails(i, false, true);
+                }
+              }
             }
           }
 

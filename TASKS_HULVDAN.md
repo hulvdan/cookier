@@ -25,6 +25,8 @@ x bouncing: use `creature.speedModifier`
 x projectile: lightning works (slows down)
 x can set weapon lifesteal in gamelib
 x show life steal chance in weapon card
+- show melee weapon collider gizmos
+x end: can hover on weapon
 
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
@@ -35,10 +37,6 @@ x show life steal chance in weapon card
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize
 *
-* weapon stats: life steal
-* weapon stats:
-* weapon stats:
-* end: can hover on weapon
 * elemental weapon with bouncing projectile that slows down / burns mobs
   (chech other types of elemental damage)
 *
@@ -48,7 +46,6 @@ x show life steal chance in weapon card
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
 * stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * stats: % Explosion Size: Increases or decreases the size of Explosions
-* stats: Bounces: Gives projectiles additional Bounces
 * stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
 * stats: Structure Range: Increases or decreases the range of Structures.
 * spread mobs apart (use force?)
@@ -69,7 +66,6 @@ x show life steal chance in weapon card
   - sending them for listening to foobar2000
     (total commander: «Feed to listbox» then drag'n drop)
   - fast editing with audacity (fade in, fade out, compression, export macroses)
-* show melee weapon collider gizmos
 * weapons DrawZ
 * gather all weapon classes (e.g. primitive)
 * primitive weapons bonus (3,6,9,12,15 HP)
@@ -80,7 +76,8 @@ x show life steal chance in weapon card
 * aseprite show image center
 * HTML game loading screen?
 * record+replay system
-* internet shouldn't be required for building: check web debug yandex build with mocked ysdk
+* internet shouldn't be required for building:
+  check web debug yandex build with mocked ysdk
 * trim pngs of transparent pixels
 
 QA:
@@ -89,17 +86,6 @@ QA:
 * StatType_XP_GAIN
 * StatType_ARMOR
 * StatType_COINS_HEAL
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
 *
 *
 
