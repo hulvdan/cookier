@@ -3918,6 +3918,18 @@ Vector2 ForecastWhereProjectileWillHitCreature(
   return creaturePos + creatureSpeed * (dist / projectileSpeed);
 }
 
+bool AreEnemies(CreatureType t1, CreatureType t2) {  ///
+  ASSERT(t1);
+  ASSERT(t2);
+  if ((t1 == CreatureType_PLAYER) && (t2 == CreatureType_PLAYER))
+    return false;
+  if ((t1 == CreatureType_PLAYER) && (t2 != CreatureType_PLAYER))
+    return true;
+  if ((t2 == CreatureType_PLAYER) && (t1 != CreatureType_PLAYER))
+    return true;
+  return false;
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -4819,25 +4831,21 @@ void GameFixedUpdate() {
                 .ailmentValue                 = fb->ailment_value(),
               }))
           {
-            auto maxPierce = projectile.pierce;
             auto maxBounce = projectile.bounce;
+            auto maxPierce = projectile.pierce;
             if (projectile.ownerCreatureType == CreatureType_PLAYER) {
-              maxPierce += g.run.playerStats[StatType_PIERCING];
               maxBounce += g.run.playerStats[StatType_BOUNCES];
+              maxPierce += g.run.playerStats[StatType_PIERCING];
             }
 
-            bool canPierce = projectile.piercedCount < maxPierce;
             bool canBounce = projectile.bouncedCount < maxBounce;
+            bool canPierce = projectile.piercedCount < maxPierce;
             if (projectile.damagedCount >= projectile.damagedCreatureIds.count) {
-              canPierce = false;
               canBounce = false;
+              canPierce = false;
             }
 
-            if (canPierce) {
-              projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
-              projectile.piercedCount++;
-            }
-            else if (canBounce) {
+            if (canBounce) {
               projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
               projectile.bouncedCount++;
               projectile.travelledDistance = 0;
@@ -4848,7 +4856,8 @@ void GameFixedUpdate() {
               FOR_RANGE (int, i, 8) {
                 const auto c
                   = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
-                if (c->type == CreatureType_PLAYER)
+
+                if (!AreEnemies(c->type, CreatureType_PLAYER))
                   continue;
                 if (c->diedAt.IsSet())
                   continue;
@@ -4871,6 +4880,10 @@ void GameFixedUpdate() {
                 projectile.dir = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
               else
                 projectile.dir = Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
+            }
+            else if (canPierce) {
+              projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
+              projectile.piercedCount++;
             }
             else if (!g.run.projectilesToRemove.Contains(projectileIndex))
               *g.run.projectilesToRemove.Add() = projectileIndex;
