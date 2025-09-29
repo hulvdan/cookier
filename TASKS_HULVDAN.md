@@ -7,8 +7,6 @@ x weapon effects: giving +1 attack speed upon killing 20 enemies with this weapo
 x codegen so that i won't fail upon adding new EffectConditionType
 x buying item that gives StatType_FREE_REROLLS should give reroll in shop immediately
 x fix: if game runs slow, skip fixed frames
-- fix: in SHOP when hovering right player's item,
-  counters of left ones appear above it! they shouldn't!
 x added more weapons for development
   + fire/lightning wands for elemental dmg
   + slingshot for bouncing
@@ -25,15 +23,15 @@ x bouncing: use `creature.speedModifier`
 x projectile: lightning works (slows down)
 x can set weapon lifesteal in gamelib
 x show life steal chance in weapon card
-- show melee weapon collider gizmos
 x end: can hover on weapon
+x ref malloc/free -> BF_ALLOC/BF_FREE with easy-to-use unmapped allocator
+x fixed unmapped_allocator UNMAPPING_ALLOCATOR_ERROR_ON_RIGHT
 
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * is brotato arena squared?
 * burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
-* ref malloc/free -> ALLOC/FREE (lib_instrument)
 * engine: better fonts rendering
 * engine: automatically scale fonts for current screenSize
 *

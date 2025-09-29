@@ -1630,8 +1630,7 @@ void GameInit() {  ///
   {
     auto size = Clay_MinMemorySize();
     Clay_Initialize(
-      // TODO: remove malloc!
-      Clay_CreateArenaWithCapacityAndMemory(size, malloc(size)),
+      Clay_CreateArenaWithCapacityAndMemory(size, BF_ALLOC(size)),
       Clay_Dimensions{(f32)LOGICAL_RESOLUTION.x, (f32)LOGICAL_RESOLUTION.y},
       Clay_ErrorHandler{HandleClayErrors}
     );
@@ -2720,7 +2719,7 @@ void DoUI(bool draw) {
   LAMBDA (
     void, componentWeaponDetails, (int weaponIndex, bool weAreInShop, bool detailsBelow)
   )
-  {
+  {  ///
     auto& weapon = g.run.playerWeapons[weaponIndex];
     ASSERT(weapon.type);
     auto fb = fb_weapons->Get(weapon.type);

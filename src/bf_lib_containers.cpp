@@ -158,13 +158,13 @@ struct View {
     ASSERT(base == nullptr);
 
     count = count_;
-    base  = (T*)malloc(sizeof(T) * count);
+    base  = (T*)BF_ALLOC(sizeof(T) * count);
   }
 
   void Deinit() {  ///
     if (base) {
       ASSERT(count > 0);
-      free(base);
+      BF_FREE(base);
       base = nullptr;
     }
     else {
@@ -300,7 +300,7 @@ struct Vector {
       ASSERT(count == 0);
 
       maxCount = 8;
-      base     = (T*)malloc(sizeof(T) * maxCount);
+      base     = (T*)BF_ALLOC(sizeof(T) * maxCount);
     }
     else if (maxCount == count) {
       u32 newMaxCount = maxCount * 2;
@@ -309,9 +309,9 @@ struct Vector {
       auto oldSize = sizeof(T) * maxCount;
       auto oldPtr  = base;
 
-      base = (T*)malloc(oldSize * 2);
+      base = (T*)BF_ALLOC(oldSize * 2);
       memcpy((void*)base, (void*)oldPtr, oldSize);
-      free(oldPtr);
+      BF_FREE(oldPtr);
 
       maxCount = newMaxCount;
     }
@@ -369,14 +369,17 @@ struct Vector {
   // Вектор сможет содержать как минимум столько элементов без реаллокации.
   void Reserve(u32 elementsCount) {  ///
     if (base == nullptr) {
-      base     = (T*)malloc(sizeof(T) * elementsCount);
+      base     = (T*)BF_ALLOC(sizeof(T) * elementsCount);
       maxCount = elementsCount;
       return;
     }
 
     if (maxCount < elementsCount) {
-      // TODO test realloc
-      base     = (T*)realloc(base, sizeof(T) * elementsCount);
+      // TODO: Implement + use BF_REALLOC?
+      auto oldBase = base;
+      base         = (T*)BF_ALLOC(sizeof(T) * elementsCount);
+      memcpy(base, oldBase, sizeof(T) * maxCount);
+      BF_FREE(oldBase);
       maxCount = elementsCount;
     }
   }
@@ -388,7 +391,7 @@ struct Vector {
   void Deinit() {  ///
     if (base) {
       ASSERT(maxCount > 0);
-      free(base);
+      BF_FREE(base);
       base = nullptr;
     }
     else {

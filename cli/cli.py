@@ -123,7 +123,6 @@ def do_test() -> None:
 #         "_M_X64",
 #         "BF_DEBUG",
 #         "BF_ENABLE_ASSERTS",
-#         "BF_ENABLE_LOGGING",
 #         "TESTS",
 #     )
 #     run_command(
