@@ -152,15 +152,17 @@ u32 ColorToRGBA(Color color) {  ///
   return value;
 }
 
-constexpr Color WHITE   = Color{};
-constexpr Color BLACK   = Color{0, 0, 0, u8_max};
-constexpr Color GRAY    = Color{u8_max / 2, u8_max / 2, u8_max / 2, u8_max};
-constexpr Color RED     = Color{u8_max, 0, 0, u8_max};
-constexpr Color GREEN   = Color{0, u8_max, 0, u8_max};
-constexpr Color BLUE    = Color{0, 0, u8_max, u8_max};
-constexpr Color YELLOW  = Color{u8_max, u8_max, 0, u8_max};
-constexpr Color CYAN    = Color{0, u8_max, u8_max, u8_max};
-constexpr Color MAGENTA = Color{u8_max, 0, u8_max, u8_max};
+constexpr Color TRANSPARENT_BLACK = {0, 0, 0, 0};
+constexpr Color TRANSPARENT_WHITE = {u8_max, u8_max, u8_max, 0};
+constexpr Color WHITE             = {};
+constexpr Color BLACK             = {0, 0, 0, u8_max};
+constexpr Color GRAY              = {u8_max / 2, u8_max / 2, u8_max / 2, u8_max};
+constexpr Color RED               = {u8_max, 0, 0, u8_max};
+constexpr Color GREEN             = {0, u8_max, 0, u8_max};
+constexpr Color BLUE              = {0, 0, u8_max, u8_max};
+constexpr Color YELLOW            = {u8_max, u8_max, 0, u8_max};
+constexpr Color CYAN              = {0, u8_max, u8_max, u8_max};
+constexpr Color MAGENTA           = {u8_max, 0, u8_max, u8_max};
 
 Color Darken(Color value, f32 p) {  ///
   ASSERT(p >= 0);
@@ -204,15 +206,16 @@ struct Texture2D {
 
 const BFGame::GameLibrary* glib = nullptr;
 
-struct _PosColorTexVertex {  ///
+struct _PosColorFlashTexVertex {  ///
   f32 x, y, z;
   u32 abgr;
+  u32 abgrFlash;
   f32 u, v;
 
   static bgfx::VertexLayout layout;
 };
 
-bgfx::VertexLayout _PosColorTexVertex::layout;
+bgfx::VertexLayout _PosColorFlashTexVertex::layout;
 
 struct _PosColorVertex {  ///
   f32 x, y, z;
@@ -278,6 +281,7 @@ struct DrawTextureData {
   Vector2 scale         = {1, 1};
   Margins sourceMargins = {};
   Color   color         = WHITE;
+  Color   flash         = TRANSPARENT_WHITE;
   // bgfx::ProgramHandle program = {};
   // int materialsBufferStart = -1;
 };
@@ -289,6 +293,7 @@ struct DrawTextureNineSliceData {
   Vector2 anchor           = Vector2Half();
   Vector2 scale            = {1, 1};
   Color   color            = WHITE;
+  Color   flash            = TRANSPARENT_WHITE;
   Margins nineSliceMargins = {};
   Vector2 nineSliceSize    = {};
 };
@@ -340,6 +345,7 @@ struct DrawTextData {
   const char* text       = {};
   int         bytesCount = {};
   Color       color      = WHITE;
+  Color       flash      = TRANSPARENT_WHITE;
   // TODO: Color outlineColor = BLACK + shader.
 };
 
@@ -924,7 +930,7 @@ void FlushDrawCommands() {
   Shader shaders_[]{
     {
       .program              = ge.meta.programDefaultTexture,
-      .vertexLayout         = _PosColorTexVertex::layout,
+      .vertexLayout         = _PosColorFlashTexVertex::layout,
       .additionalStateFlags = 0,
     },
     {
@@ -939,7 +945,7 @@ void FlushDrawCommands() {
     },
     {
       .program              = ge.meta.programDefaultTexture,
-      .vertexLayout         = _PosColorTexVertex::layout,
+      .vertexLayout         = _PosColorFlashTexVertex::layout,
       .additionalStateFlags = 0,
     },
   };
@@ -1193,15 +1199,16 @@ void FlushDrawCommands() {
                 = (u16)(index + drawCallVerticesCount);
             }
 
-            const auto               color = *(u32*)&data.color;
-            const _PosColorTexVertex quadVertices[]{
-              {topLeft.x, topLeft.y, 0.0f, color, sx0, sy1},
-              {topRight.x, topRight.y, 0.0f, color, sx1, sy1},
-              {bottomLeft.x, bottomLeft.y, 0.0f, color, sx0, sy0},
-              {bottomRight.x, bottomRight.y, 0.0f, color, sx1, sy0},
+            const auto                    color = *(u32*)&data.color;
+            const auto                    flash = *(u32*)&data.flash;
+            const _PosColorFlashTexVertex quadVertices[]{
+              {topLeft.x, topLeft.y, 0.0f, color, flash, sx0, sy1},
+              {topRight.x, topRight.y, 0.0f, color, flash, sx1, sy1},
+              {bottomLeft.x, bottomLeft.y, 0.0f, color, flash, sx0, sy0},
+              {bottomRight.x, bottomRight.y, 0.0f, color, flash, sx1, sy0},
             };
             for (const auto& vertex : quadVertices)
-              ((_PosColorTexVertex*)tvb.data)[drawCallVerticesCount++] = vertex;
+              ((_PosColorFlashTexVertex*)tvb.data)[drawCallVerticesCount++] = vertex;
           }
 
           ASSERT_FALSE(drawCallIndicesCount % 6);
@@ -1340,13 +1347,14 @@ void FlushDrawCommands() {
             }
 
             const auto color  = *(u32*)&data.color;
+            const auto flash  = *(u32*)&data.flash;
             const f32  sx_[4] = {sx0, sx1, sx2, sx3};
             const f32  sy_[4] = {sy3, sy2, sy1, sy0};
             FOR_RANGE (int, y, 4) {
               FOR_RANGE (int, x, 4) {
                 const auto t = y * 4 + x;
-                ((_PosColorTexVertex*)tvb.data)[drawCallVerticesCount++]
-                  = {points[t].x, points[t].y, 0.0f, color, sx_[x], sy_[y]};
+                ((_PosColorFlashTexVertex*)tvb.data)[drawCallVerticesCount++]
+                  = {points[t].x, points[t].y, 0.0f, color, flash, sx_[x], sy_[y]};
               }
             }
           }
@@ -1696,15 +1704,16 @@ void FlushDrawCommands() {
                     = (u16)(index + drawCallVerticesCount);
                 }
 
-                const auto               color = *(u32*)&data.color;
-                const _PosColorTexVertex quadVertices[]{
-                  {topLeft.x, topLeft.y, 0.0f, color, sx0, sy1},
-                  {topRight.x, topRight.y, 0.0f, color, sx1, sy1},
-                  {bottomLeft.x, bottomLeft.y, 0.0f, color, sx0, sy0},
-                  {bottomRight.x, bottomRight.y, 0.0f, color, sx1, sy0},
+                const auto                    color = *(u32*)&data.color;
+                const auto                    flash = *(u32*)&data.flash;
+                const _PosColorFlashTexVertex quadVertices[]{
+                  {topLeft.x, topLeft.y, 0.0f, color, flash, sx0, sy1},
+                  {topRight.x, topRight.y, 0.0f, color, flash, sx1, sy1},
+                  {bottomLeft.x, bottomLeft.y, 0.0f, color, flash, sx0, sy0},
+                  {bottomRight.x, bottomRight.y, 0.0f, color, flash, sx1, sy0},
                 };
                 for (const auto& vertex : quadVertices)
-                  ((_PosColorTexVertex*)tvb.data)[drawCallVerticesCount++] = vertex;
+                  ((_PosColorFlashTexVertex*)tvb.data)[drawCallVerticesCount++] = vertex;
               }
             );
           }
@@ -2334,9 +2343,10 @@ void InitEngine() {  ///
   );
 
   // Remove Z?
-  _PosColorTexVertex::layout.begin()
+  _PosColorFlashTexVertex::layout.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+    .add(bgfx::Attrib::Color1, 4, bgfx::AttribType::Uint8, true)
     .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
     .end();
 
