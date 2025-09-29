@@ -2,8 +2,8 @@
 
 // Sizings + colliders.
 // ============================================================
-constexpr int        WORLD_X                              = 40;
-constexpr int        WORLD_Y                              = 40;
+constexpr int        WORLD_X                              = 34;
+constexpr int        WORLD_Y                              = 34;
 constexpr Vector2Int WORLD_SIZE                           = {WORLD_X, WORLD_Y};
 constexpr f32        RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER = 10;
 constexpr f32        SPEED_MULTIPLIER                     = 10;
