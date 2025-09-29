@@ -4826,22 +4826,28 @@ void GameFixedUpdate() {
               maxBounce += g.run.playerStats[StatType_BOUNCES];
             }
 
-            if (projectile.piercedCount < maxPierce) {
+            bool canPierce = projectile.piercedCount < maxPierce;
+            bool canBounce = projectile.bouncedCount < maxBounce;
+            if (projectile.damagedCount >= projectile.damagedCreatureIds.count) {
+              canPierce = false;
+              canBounce = false;
+            }
+
+            if (canPierce) {
               projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
               projectile.piercedCount++;
             }
-            else if (projectile.bouncedCount < maxBounce) {
+            else if (canBounce) {
               projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
               projectile.bouncedCount++;
               projectile.travelledDistance = 0;
 
-              Creature* closest = nullptr;
-              Vector2   forecastedPos{};
-              f32       distSqr = f32_inf;
+              const Creature* found = nullptr;
+              Vector2         forecastedPos{};
 
-              bool found = false;
               FOR_RANGE (int, i, 8) {
-                auto c = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
+                const auto c
+                  = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
                 if (c->type == CreatureType_PLAYER)
                   continue;
                 if (c->diedAt.IsSet())
@@ -4855,13 +4861,13 @@ void GameFixedUpdate() {
                   c->pos, c->controller.move * c->speed, projectile.pos, fb->speed()
                 );
                 const auto d = Vector2DistanceSqr(forecastedCreaturePos, projectile.pos);
-                if (d <= distSqr) {
-                  closest       = c;
+                if (d <= SQR(projectile.range)) {
+                  found         = c;
                   forecastedPos = forecastedCreaturePos;
-                  distSqr       = d;
+                  break;
                 }
               }
-              if (closest)
+              if (found)
                 projectile.dir = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
               else
                 projectile.dir = Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
