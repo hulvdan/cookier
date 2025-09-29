@@ -620,6 +620,8 @@ projectiles:
       - game_projectile_bullet
   - type: BULLET_EXPLOSIVE
     speed: 14
+    aoe_radius: 1.5
+    aoe_particle_type: EXPLOSION
     texture_ids:
       - game_projectile_bullet_explosive
   - type: STONE
@@ -645,6 +647,12 @@ projectiles:
     speed: 10
     texture_ids:
       - game_projectile_mob
+particles:
+  - type: INVALID
+  - type: EXPLOSION
+    duration_seconds: 0.4
+    texture_ids:
+      - game_particle_explosion_1
 pickupables:
   - type: INVALID
   - type: COIN
@@ -901,9 +909,3 @@ stats:
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
-particles:
-  - type: INVALID
-  - type: EXPLOSION
-    duration_seconds: 0.4
-    texture_ids:
-      - game_particle_explosion_1

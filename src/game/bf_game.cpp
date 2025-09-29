@@ -553,7 +553,7 @@ struct Projectile {
   Vector2                           pos                = {};
   Vector2                           dir                = {};
   f32                               damage             = {};
-  f32                               crit               = {};
+  f32                               critDamage         = {};
   int                               pierce             = {};
   int                               bounce             = {};
   LogicalFrame                      createdAt          = {};
@@ -574,7 +574,7 @@ struct MakeProjectileData {
   Vector2        dir               = {};
   f32            range             = {};
   f32            damage            = {};
-  f32            crit              = {};
+  f32            critDamage        = {};
   f32            knockbackMeters   = {};
   int            pierce            = {};
   int            bounce            = {};
@@ -1326,7 +1326,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .pos               = data.pos,
     .dir               = data.dir,
     .damage            = data.damage,
-    .crit              = data.crit,
+    .critDamage        = data.critDamage,
     .pierce            = data.pierce,
     .bounce            = data.bounce,
     .knockbackMeters   = data.knockbackMeters,
@@ -4528,14 +4528,14 @@ void GameFixedUpdate() {
             if (a.startedAt.IsSet()
                 && (a.startedAt.Elapsed().value % BURNING_RATE.value == 0))
             {
-              bool crit = false;
+              bool isCrit = false;
               if (a.ownerCreatureType == CreatureType_PLAYER)
-                crit = IsCrit();
+                isCrit = IsCrit();
               TryApplyDamage({
                 .creatureIndex                = creatureIndex,
                 .damage                       = a.value,
                 .damageApplicatorCreatureType = a.ownerCreatureType,
-                .isCrit                       = crit,
+                .isCrit                       = isCrit,
                 .indexOfWeaponThatDidDamage   = a.weaponIndex,
               });
             }
@@ -4736,7 +4736,7 @@ void GameFixedUpdate() {
               .dir               = weapon.targetDir,
               .range             = GetWeaponRange(weapon.type),
               .damage            = GetWeaponDamage(weapon.type, weapon.tier),
-              .crit              = fb->critical_damage(),
+              .critDamage        = fb->critical_damage(),
               .knockbackMeters   = fb->knockback_meters(),
               .pierce            = fb->projectile_pierce(),
               .bounce            = fb->projectile_bounce(),
@@ -4840,7 +4840,7 @@ void GameFixedUpdate() {
             damage *= GetPlayerStatDamageMultiplier();
             isCrit = IsCrit();
             if (isCrit)
-              damage *= projectile.crit;
+              damage *= projectile.critDamage;
 
             if (fb_creature->is_boss()) {
               damage *= MAX(
@@ -4958,14 +4958,62 @@ void GameFixedUpdate() {
       const auto projectileIndex
         = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
 
-      // Creating explosion.
+      // Creating particle.
       auto& projectile = g.run.projectiles[projectileIndex];
-      if (projectile.type == ProjectileType_BULLET_EXPLOSIVE) {
+      auto  fb         = fb_projectiles->Get(projectile.type);
+      if (fb->aoe_particle_type()) {
+        const auto fb = fb_projectiles->Get(projectile.type);
+
         Particle p{
-          .type = ParticleType_EXPLOSION,
+          .type = (ParticleType)fb->aoe_particle_type(),
           .pos  = projectile.pos,
         };
         p.createdAt.SetNow();
+
+        int creatureIndex = -1;
+        for (auto& creature : g.run.creatures) {
+          creatureIndex++;
+
+          if (creature.diedAt.IsSet())
+            continue;
+          if (!AreEnemies(projectile.ownerCreatureType, creature.type))
+            continue;
+          if (Vector2DistanceSqr(creature.pos, projectile.pos)
+              > SQR(fb->aoe_radius() + MOB_HURTBOX_RADIUS))
+            continue;
+
+          const auto fb_creature = fb_creatures->Get(creature.type);
+
+          f32  damage = projectile.damage;
+          bool isCrit = false;
+          if (projectile.ownerCreatureType == CreatureType_PLAYER) {
+            // Player damages mob.
+            damage *= GetPlayerStatDamageMultiplier();
+            isCrit = IsCrit();
+            if (isCrit)
+              damage *= projectile.critDamage;
+
+            if (fb_creature->is_boss()) {
+              damage *= MAX(
+                0, (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
+              );
+            }
+          }
+          else {
+            // Mob damages player.
+            damage *= ApplyPlayerArmorToIncomingDamage(damage);
+          }
+
+          TryApplyDamage({
+            .creatureIndex   = creatureIndex,
+            .damage          = damage,
+            .directionOrZero = Vector2DirectionOrRandom(projectile.pos, creature.pos),
+            .knockbackMeters = projectile.knockbackMeters,
+            .damageApplicatorCreatureType = projectile.ownerCreatureType,
+            .isCrit                       = isCrit,
+            .indexOfWeaponThatDidDamage   = projectile.weaponIndex,
+          });
+        }
         *g.run.particles.Add() = p;
       }
 
