@@ -135,6 +135,13 @@ table Projectile {
     ailment_chance: float;
     ailment_value: float;
     collider_radius: float = 0.4;
+    aoe_radius: float;
+    aoe_particle_type: int;
+    texture_ids: [int];
+}
+
+table Particle {
+    duration_seconds: float;
     texture_ids: [int];
 }
 
@@ -169,11 +176,6 @@ table NineSlice {
     right: int;
     top: int;
     bottom: int;
-}
-
-table Particle {
-    duration_seconds: float;
-    texture_ids: [int];
 }
 // GAME STUFF END
 
@@ -251,10 +253,10 @@ table GameLibrary {
     weapon_kinds: [WeaponKind] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
+    particles: [Particle] (required);
     pickupables: [Pickupable] (required);
     numbers: [Number] (required);
     stats: [Stat] (required);
-    particles: [Particle] (required);
     // TABLE_GEN_END
     // GAME STUFF END
 }
