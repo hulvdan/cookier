@@ -31,7 +31,6 @@ x exlosion: particle
 x exlosion: damages enemies
 x exlosion: chance, can turn off on contact / on travel end
 
-* exlosion: don't create if
 * exlosion: show info about it in SMG (weapon stats)
 * exlosion: damage scalings
 * exlosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions
