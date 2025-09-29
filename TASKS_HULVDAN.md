@@ -18,9 +18,9 @@ x added more weapons for development
   + slingshot for bouncing
 x projectile: stone bounces
 x burning ailment works
-
-* projectiles, like weapons, change the sign of scaleX if dir.x < 0
+x projectiles, like weapons, change the sign of scaleX if dir.x < 0
   (+ 180 degrees rotation?)
+
 * bouncing calculates enemy pos based on it's speed and distance from projectile
 * bouncing no to closest by to a first random found in possible range
 * burning spread
