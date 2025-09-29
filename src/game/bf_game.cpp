@@ -4824,6 +4824,7 @@ void GameFixedUpdate() {
               projectile.travelledDistance = 0;
 
               Creature* closest = nullptr;
+              Vector2   forecastedPos{};
               f32       distSqr = f32_inf;
 
               bool found = false;
@@ -4837,14 +4838,24 @@ void GameFixedUpdate() {
                       projectile.damagedCreatureIds.base, projectile.damagedCount, c->id
                     ))
                   continue;
-                auto d = Vector2DistanceSqr(c->pos, projectile.pos);
+
+                const auto dd = Vector2DistanceSqr(c->pos, projectile.pos);
+                if (dd > distSqr)
+                  continue;
+
+                const auto projectileFlyingTime = sqrtf(dd) / fb->speed();
+                const auto forecastedCreaturePos
+                  = c->pos + c->controller.move * c->speed * projectileFlyingTime;
+
+                const auto d = Vector2DistanceSqr(forecastedCreaturePos, projectile.pos);
                 if (d <= distSqr) {
-                  closest = c;
-                  distSqr = d;
+                  closest       = c;
+                  forecastedPos = forecastedCreaturePos;
+                  distSqr       = d;
                 }
               }
               if (closest)
-                projectile.dir = Vector2DirectionOrRandom(projectile.pos, closest->pos);
+                projectile.dir = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
               else
                 projectile.dir = Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
             }

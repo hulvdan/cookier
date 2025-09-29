@@ -1,10 +1,6 @@
 x correct piggy bank coins scaling
 x max dodge is 60
-x range
-  negative -50 halves range
-  negative -100 quarters it (negative is `scale = -25/x`) !!! REWORK FORMULA
-  positive 100  =x2 range
-  positive 200  =x3 range (positive is linear `scale = (f32)(x + 100) / 100.0f`)
+x range exponentially halves range (-50 = 1/2 range, -100 1/4, -150 = 1/8 etc)
 x using wheel for cheating
 x fix StatType_ITEMS_PRICE, StatType_REROLL_PRICE
 x weapon effects: giving +1 attack speed upon killing 20 enemies with this weapon
@@ -20,8 +16,9 @@ x projectile: stone bounces
 x burning ailment works
 x projectiles, like weapons, change the sign of scaleX if dir.x < 0
   (+ 180 degrees rotation?)
+x bouncing forecasts enemy pos
 
-* bouncing calculates enemy pos based on it's speed and distance from projectile
+* shader for texture: color flashing
 * bouncing no to closest by to a first random found in possible range
 * burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
