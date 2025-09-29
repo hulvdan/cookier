@@ -49,12 +49,16 @@ constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
 struct lframe {  ///
   i64 value = i64_max;
 
-  constexpr static lframe MakeScaled(i64 v) {
+  constexpr static lframe Scaled(i64 v) {
     return {.value = v * _BF_LOGICAL_FPS_SCALE};
   }
 
-  constexpr static lframe MakeUnscaled(i64 v) {
+  constexpr static lframe Unscaled(i64 v) {
     return {.value = v};
+  }
+
+  constexpr static lframe FromSeconds(f32 seconds) {
+    return {.value = (i64)(seconds * (f32)FIXED_FPS)};
   }
 
   f32 Progress(const lframe duration) const {
@@ -82,11 +86,11 @@ struct lframe {  ///
   }
 
   const lframe operator+(const lframe& other) const {
-    return lframe::MakeUnscaled(value + other.value);
+    return lframe::Unscaled(value + other.value);
   }
 
   const lframe operator-(const lframe& other) const {
-    return lframe::MakeUnscaled(value - other.value);
+    return lframe::Unscaled(value - other.value);
   }
 
   void SetRand(lframe v) {
@@ -99,15 +103,15 @@ struct lframe {  ///
   }
 };
 
-constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS = lframe::MakeScaled(10);
-constexpr auto SPAWN_FRAMES                      = lframe::MakeScaled(60);
-constexpr auto DIE_FRAMES                        = lframe::MakeScaled(10);
-constexpr auto PLAYER_INVINCIBILITY_FRAMES       = lframe::MakeScaled(10);
-constexpr auto DAMAGE_NUMBERS_FRAMES             = lframe::MakeScaled(30);
-constexpr auto DAMAGE_NUMBERS_FADE_FRAMES        = lframe::MakeScaled(10);
-constexpr auto PICKUPABLE_FADE_FRAMES            = lframe::MakeScaled(10);
-constexpr auto LIFESTEAL_COOLDOWN_FRAMES         = lframe::MakeScaled(3);
-constexpr auto WAVE_COMPLETED_FRAMES             = lframe::MakeScaled(60);
+constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS = lframe::Scaled(10);
+constexpr auto SPAWN_FRAMES                      = lframe::Scaled(60);
+constexpr auto DIE_FRAMES                        = lframe::Scaled(10);
+constexpr auto PLAYER_INVINCIBILITY_FRAMES       = lframe::Scaled(10);
+constexpr auto DAMAGE_NUMBERS_FRAMES             = lframe::Scaled(30);
+constexpr auto DAMAGE_NUMBERS_FADE_FRAMES        = lframe::Scaled(10);
+constexpr auto PICKUPABLE_FADE_FRAMES            = lframe::Scaled(10);
+constexpr auto LIFESTEAL_COOLDOWN_FRAMES         = lframe::Scaled(3);
+constexpr auto WAVE_COMPLETED_FRAMES             = lframe::Scaled(60);
 
 // Projectiles and weapons won't be able to damage
 // the same creatures they've already damaged
@@ -141,16 +145,16 @@ constexpr f32   MODAL_OVERLAY_COLOR_FADE = 0.75f;
 
 constexpr f32 CRIT_DAMAGE_MULTIPLIER = 1.5f;
 
-constexpr auto MOB_RANGER_SHOOTING_FRAMES      = lframe::MakeScaled(40);
-constexpr auto MOB_RANGER_SHOOTING_FRAME       = lframe::MakeScaled(36);
+constexpr auto MOB_RANGER_SHOOTING_FRAMES      = lframe::Scaled(40);
+constexpr auto MOB_RANGER_SHOOTING_FRAME       = lframe::Scaled(36);
 constexpr f32  MOB_RANGER_MOVEMENT_SPEED_SCALE = 0.3f;
 
-constexpr auto MOB_RUSHER_RUSH_PRE_FRAMES   = lframe::MakeScaled(10);
-constexpr auto MOB_RUSHER_RUSH_TOTAL_FRAMES = lframe::MakeScaled(60);
-constexpr auto MOB_RUSHER_RUSH_POST_FRAMES  = lframe::MakeScaled(20);
+constexpr auto MOB_RUSHER_RUSH_PRE_FRAMES   = lframe::Scaled(10);
+constexpr auto MOB_RUSHER_RUSH_TOTAL_FRAMES = lframe::Scaled(60);
+constexpr auto MOB_RUSHER_RUSH_POST_FRAMES  = lframe::Scaled(20);
 constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
-constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::MakeUnscaled(2.5f * FIXED_FPS);
-constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::MakeUnscaled(3.5f * FIXED_FPS);
+constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::Unscaled(2.5f * FIXED_FPS);
+constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::Unscaled(3.5f * FIXED_FPS);
 
 constexpr f32 PRICE_SCALINGS_PER_TIER_[]{
   20.0f / 149.0f,
@@ -164,7 +168,7 @@ constexpr int MAX_DODGE_PERCENT      = 60;
 constexpr f32 RANGE_GETS_HALVED_WHEN = -50;
 constexpr int RECYCLE_PRICE_FACTOR   = 3;
 
-constexpr auto BURNING_RATE    = lframe::MakeScaled(15);
+constexpr auto BURNING_RATE    = lframe::Scaled(15);
 constexpr auto ZAP_SPEED_SCALE = 0.4f;
 
 // constexpr f32 BODY_LINEAR_DAMPING             = 10;

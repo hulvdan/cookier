@@ -5,6 +5,8 @@ render_z:
   - FLOOR_DECALS
   - PICKUPABLES
   - DEFAULT
+  - PROJECTILES
+  - PARTICLES
   - WEAPONS
   - DAMAGE_NUMBERS
   - VIGNETTE
@@ -899,3 +901,9 @@ stats:
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
+particles:
+  - type: INVALID
+  - type: EXPLOSION
+    duration_seconds: 0.4
+    texture_ids:
+      - game_particle_explosion_1

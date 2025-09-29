@@ -146,6 +146,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
         for field_name, type_name in table_transform_data:
             types = [x.pop("type") for x in gamelib[field_name]]
+            for t in types:
+                assert t.upper() == t, (
+                    "{}. {}. `type` fields must be in CONSTANT_CASE".format(field_name, t)
+                )
             _check_duplicates(types)
             genenum(genline, type_name + "Type", types, add_count=True)
             transforms.append(

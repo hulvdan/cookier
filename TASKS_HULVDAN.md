@@ -27,7 +27,9 @@ x end: can hover on weapon
 x ref malloc/free -> BF_ALLOC/BF_FREE with easy-to-use unmapped allocator
 x fixed unmapped_allocator UNMAPPING_ALLOCATOR_ERROR_ON_RIGHT
 x added dev sprites for explosive bullet + smg
+x exlosion: particle
 
+* exlosion: damages enemies
 * stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * stats: % Explosion Size: Increases or decreases the size of Explosions
 * think about boss
