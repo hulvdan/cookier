@@ -1997,7 +1997,7 @@ void* LoadFileData(const char* filepath, int* out_size = nullptr) {  ///
   auto size = ftell(fp);
   rewind(fp);
 
-  auto buffer = malloc(size + 1);
+  auto buffer = BF_ALLOC(size + 1);
   if (!buffer) {
     LOGE("Failed to allocate buffer while opening file '%s'", filepath);
     fclose(fp);
@@ -2009,7 +2009,7 @@ void* LoadFileData(const char* filepath, int* out_size = nullptr) {  ///
   fclose(fp);
   if (read_size != size) {
     LOGE("Failed to read entire file '%s'", filepath);
-    free(buffer);
+    BF_FREE(buffer);
     return nullptr;
   }
 
@@ -2024,7 +2024,7 @@ void* LoadFileData(const char* filepath, int* out_size = nullptr) {  ///
 }
 
 void UnloadFileData(void* ptr) {  ///
-  free(ptr);
+  BF_FREE(ptr);
 }
 
 bgfx::ShaderHandle _LoadShader(const u8* data, u32 size) {  ///
@@ -2138,7 +2138,7 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
                          * (size_t)levelInfo.m_block_width
                          * (size_t)levelInfo.m_block_height * (size_t)pair.bytesPerPixel
                          / (size_t)pair.divideBytesPerPixel;
-      auto outData = (u8*)malloc(outDataSize);
+      auto outData = (u8*)BF_ALLOC(outDataSize);
 
       bool ok = false;
       {
@@ -2176,7 +2176,7 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
       else
         INVALID_PATH;
 
-      free(outData);
+      BF_FREE(outData);
     }
   }
 
@@ -2380,7 +2380,7 @@ void UnloadFont(Font* font) {  ///
   UnloadFileData((void*)font->fileData);
   font->fileData = nullptr;
 
-  free(font->chars);
+  BF_FREE(font->chars);
   font->chars = nullptr;
 
   bgfx::destroy(font->atlasTexture.handle);
@@ -2411,7 +2411,7 @@ Font LoadFont(LoadFontData data) {  ///
 
   const Vector2Int atlasSize{1024, 1024};
 
-  auto oneChannelAtlasData = (u8*)malloc(atlasSize.x * atlasSize.y * 1);
+  auto oneChannelAtlasData = (u8*)BF_ALLOC(atlasSize.x * atlasSize.y * 1);
 
   Font font{
     .loaded          = true,
@@ -2419,7 +2419,7 @@ Font LoadFont(LoadFontData data) {  ///
     .FIXME_sizeScale = data.FIXME_sizeScale,
     .atlasTexture{.size = atlasSize},
     .fileData = (u8*)LoadFileData(data.filepath),
-    .chars = (stbtt_packedchar*)malloc(sizeof(stbtt_packedchar) * data.codepointsCount),
+    .chars = (stbtt_packedchar*)BF_ALLOC(sizeof(stbtt_packedchar) * data.codepointsCount),
     .codepoints      = data.codepoints,
     .codepointsCount = data.codepointsCount,
     .outlineWidth    = data.outlineWidth,
@@ -2464,7 +2464,7 @@ Font LoadFont(LoadFontData data) {  ///
 
   stbtt_PackEnd(&context);
 
-  auto atlasData = (u8*)malloc(atlasSize.x * atlasSize.y * 4);
+  auto atlasData = (u8*)BF_ALLOC(atlasSize.x * atlasSize.y * 4);
 
   FOR_RANGE (int, i, atlasSize.x * atlasSize.y) {
     atlasData[i * 4 + 0] = 255;
@@ -2476,7 +2476,7 @@ Font LoadFont(LoadFontData data) {  ///
   if (data.outlineWidth) {
     ZoneScopedN("Outlining");
 
-    auto      dist_ = (f32*)malloc(atlasSize.x * atlasSize.y * sizeof(f32));
+    auto      dist_ = (f32*)BF_ALLOC(atlasSize.x * atlasSize.y * sizeof(f32));
     View<f32> dist{
       .count = atlasSize.x * atlasSize.y,
       .base  = dist_,
@@ -2582,7 +2582,7 @@ Font LoadFont(LoadFontData data) {  ///
       c.xadvance += data.outlineAdvance;
     }
 
-    free(dist_);
+    BF_FREE(dist_);
   }
 
 #if BF_DEBUG & !defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -2606,8 +2606,8 @@ Font LoadFont(LoadFontData data) {  ///
     bgfx::copy(atlasData, atlasSize.x * atlasSize.y * 4)
   );
 
-  free(oneChannelAtlasData);
-  free(atlasData);
+  BF_FREE(oneChannelAtlasData);
+  BF_FREE(atlasData);
 
   return font;
 }
