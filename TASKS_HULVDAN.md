@@ -29,6 +29,7 @@ x added dev sprites for explosive bullet + smg
 x explosion: particle
 x explosion: damages enemies
 x explosion: chance, can turn off on contact / on travel end
+x vim python errorformat
 
 * make `+{PLACEHOLDER}% chance to explode on hit` formatting work
 * explosion: show info about it in SMG (weapon stats)
