@@ -3,6 +3,8 @@ import os
 import shutil
 import tempfile
 from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum, unique
 from math import radians
 from pathlib import Path
 from typing import Any, TypeAlias
@@ -102,23 +104,113 @@ def _get_placeholder_from_string(string: str) -> str | None:
     return None
 
 
-def split_string_into_groups(string: str) -> list[list[str]]:
-    if not string:
-        return []
-    return []
+@unique
+class PSDatumType(Enum):
+    STRING = 1
+    PLACEHOLDER = 2
+
+
+@dataclass
+class PSDatum:
+    type: PSDatumType
+    string: str | None
+
+
+StringGroup: TypeAlias = list[PSDatum]
+StringLine: TypeAlias = list[StringGroup]
+
+
+def process_string(string: str) -> list[StringLine]:
+    string = replace_double_spaces(string.strip().replace("\t", " ").replace("\r", ""))
+
+    result = []
+
+    for line in string.split("\n"):
+        line_result = []
+
+        i = 0
+        can_push_previous = False
+        while i < len(line):
+            if line[i] == "{":
+                k = i + 1
+                while k < len(line):
+                    if line[k] == "}":
+                        i = k
+                        processed_groups
+                        can_push_previous = False
+                        break
+                    k += 1
+            i += 1
+
+    return result
 
 
 @pytest.mark.parametrize(
     ("string", "result"),
     [
-        ("ab", [["ab"]]),
-        ("ab ke", [["ab"], ["ke"]]),
-        (" ab ke ", [["ab"], ["ke"]]),
-        (" +{CHANCE}% to explode ", [["+", "{CHANCE}", "%"], ["to"], ["explode"]]),
+        ("", []),
+        ("\n\n", []),
+        ("\t\t", []),
+        ("ab", [[PSDatum(type=PSDatumType.STRING, string="ab")]]),
+        (
+            "ab ke",
+            [
+                [
+                    [PSDatum(type=PSDatumType.STRING, string="ab")],
+                    [PSDatum(type=PSDatumType.STRING, string="ke")],
+                ],
+            ],
+        ),
+        (
+            "ab\tke",
+            [
+                [
+                    [PSDatum(type=PSDatumType.STRING, string="ab")],
+                    [PSDatum(type=PSDatumType.STRING, string="ke")],
+                ],
+            ],
+        ),
+        (
+            " ab  ke ",
+            [
+                [
+                    [PSDatum(type=PSDatumType.STRING, string="ab")],
+                    [PSDatum(type=PSDatumType.STRING, string="ke")],
+                ],
+            ],
+        ),
+        (
+            " +{CHANCE}% to explode ",
+            [
+                [
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="+"),
+                        PSDatum(type=PSDatumType.PLACEHOLDER, string="{CHANCE}"),
+                        PSDatum(type=PSDatumType.STRING, string="%"),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="to"),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="explode"),
+                    ],
+                ],
+            ],
+        ),
+        (
+            "b\na c",
+            [[[PSDatum(type=PSDatumType.STRING, string="b")]]],
+            [
+                [
+                    [PSDatum(type=PSDatumType.STRING, string="a")],
+                    [PSDatum(type=PSDatumType.STRING, string="c")],
+                ]
+            ],
+        ),
     ],
 )
-def test_split_string_into_groups(string, result):
-    x = split_string_into_groups(string)
+def test_process_string(string, result):
+    x = process_string(string)
     assert x == result
 
 
@@ -966,3 +1058,6 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         texture_name_2_id, atlases_data = make_atlases(downscale_factors)
         assert len(downscale_factors) == 1
         convert_gamelib_json_to_binary(texture_name_2_id, genline, atlases_data[0])
+
+
+###

@@ -109,11 +109,19 @@ end, opts)
 
 -- Space + 0 -> Folding of `///`.
 vim.keymap.set("n", "<leader>0", function()
-    if (vim.bo.filetype == "cpp") or (vim.bo.filetype == "jsonc") or (vim.bo.filetype == "yaml") then
+    if
+        (vim.bo.filetype == "cpp")
+        or (vim.bo.filetype == "jsonc")
+        or (vim.bo.filetype == "yaml")
+        or (vim.bo.filetype == "python")
+    then
         vim.fn.execute([[silent!normal!zE]])
         vim.fn.execute([[silent!normal!mz]])
-        vim.fn.execute([[%g/\/\/\//silent!normal! $bbzf%]])
-        vim.fn.execute([[%g/###/silent!normal! j$zf%]])
+        if (vim.bo.filetype == "cpp") or (vim.bo.filetype == "jsonc") then
+            vim.fn.execute([[%g/\/\/\//silent!normal! $bbzf%]])
+        else
+            vim.fn.execute([[%g/###/silent!normal! j$zf%]])
+        end
         vim.api.nvim_input("hl0$`z")
     end
 end, opts)
@@ -123,6 +131,9 @@ end, opts)
 ------------------------------------------------------------------------------------
 
 vim.fn.execute([[set errorformat=]])
+
+-- Processing python errors.
+vim.fn.execute([[set errorformat+=%f:%l:%c:\ %m]])
 
 -- Обработка ошибок web.
 vim.fn.execute([[set errorformat+=%f(%l\\,%c):\ %t%[A-z]%#\ %m]])
@@ -139,6 +150,7 @@ vim.fn.execute([[set errorformat+=\\\ %#%f(%l\\\,%c-%*[0-9]):\ %#%t%[A-z]%#\ %m]
 -- Обработка ошибок FlatBuffers.
 vim.fn.execute([[set errorformat+=\ \ %f(%l\\,\ %c\\):\ %m]])
 
+-- Not sure what these are for.
 vim.fn.execute([[set errorformat+=%f:%l:\ %m]])
 
 -- Форматтер.

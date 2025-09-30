@@ -190,6 +190,7 @@ globals()["exit"] = timed_exit
 
 
 REPLACING_SPACES_PATTERN = re.compile(r"\s+")
+REPLACING_NEWLINES_PATTERN = re.compile(r"\n+")
 
 
 LOG_FILE_POSITION = False
@@ -273,6 +274,30 @@ log.addHandler(console_handler)
 
 def replace_double_spaces(string: str) -> str:
     return re.sub(REPLACING_SPACES_PATTERN, " ", string)
+
+
+def replace_double_newlines(string: str) -> str:
+    return re.sub(REPLACING_NEWLINES_PATTERN, "\n", string)
+
+
+def test_replace_double_spaces():
+    assert replace_double_spaces("") == ""
+    assert replace_double_spaces(" ") == " "
+    assert replace_double_spaces("  ") == " "
+    assert replace_double_spaces("   ") == " "
+    assert replace_double_spaces("\n") == "\n"
+    assert replace_double_spaces("\n\n") == "\n\n"
+    assert replace_double_spaces("\n\n\n") == "\n\n\n"
+
+
+def test_replace_double_newlines():
+    assert replace_double_newlines("") == ""
+    assert replace_double_newlines(" ") == " "
+    assert replace_double_newlines("  ") == "  "
+    assert replace_double_newlines("   ") == "   "
+    assert replace_double_newlines("\n") == "\n"
+    assert replace_double_newlines("\n\n") == "\n"
+    assert replace_double_newlines("\n\n\n") == "\n"
 
 
 def remove_spaces(string: str) -> str:
@@ -632,3 +657,5 @@ def stable_hash(value: str | int) -> int:
 
 
 from bf_game import *  # noqa
+
+###
