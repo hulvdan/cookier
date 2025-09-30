@@ -14,7 +14,7 @@ table Texture {
 }
 
 table StringDatum {
-    // Ref: PSDatumType.
+    // Ref: BrokenStringDatumType.
     type: int;
 
     placeholder_id: int;
