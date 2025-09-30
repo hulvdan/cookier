@@ -693,7 +693,7 @@ def convert_gamelib_json_to_binary(
 
     # Creation of `gamelib.bin`.
     intermediate_path = TEMP_DIR / "gamelib.intermediate.jsonc"
-    intermediate_path.write_text(json.dumps(gamelib))
+    intermediate_path.write_text(json.dumps(gamelib, indent=4))
     run_command(
         [
             FLATC_PATH,
