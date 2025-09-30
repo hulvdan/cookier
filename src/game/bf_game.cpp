@@ -2513,17 +2513,22 @@ void DoUI(bool draw) {
 
         PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
 
-        const bool  isPositive = fb_effect->value() >= 0;
+        bool isPercent = fb_stat->is_percent();
+        auto v         = (f32)fb_effect->value();
+        if (v == 0) {
+          v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
+          isPercent = true;
+        }
+
+        const bool  isPositive = v >= 0;
         const char* format     = "";
-        if (fb_stat->is_percent())
+        if (isPercent)
           format = (isPositive ? "+%s%%" : "%s%%");
         else
           format = (isPositive ? "+%s" : "%s");
         PlaceholdString(
           "STAT_MODIFIER",
-          TextFormat(
-            format, StripLeadingZerosInFloat(TextFormat("%.1f", (f32)fb_effect->value()))
-          ),
+          TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
           (isPositive == fb_stat->negative_is_good() ? RED : GREEN)
         );
 
