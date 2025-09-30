@@ -108,6 +108,7 @@ def _get_placeholder_from_string(string: str) -> str | None:
 class PSDatumType(Enum):
     STRING = 1
     PLACEHOLDER = 2
+    SPACE = 3
 
 
 @dataclass
@@ -159,11 +160,14 @@ def process_string(string: str) -> list[StringLine]:
         result.append(line_result)
 
         try:
-            for group in line.split(" "):
-                if line:
-                    line_result.append(process_group(group))
-                else:
-                    line_result.append([])
+            groups = line.split(" ")
+            for i, group in enumerate(groups):
+                if not line:
+                    continue
+                g = process_group(group)
+                if i < len(groups) - 1:
+                    g.append(PSDatum(type=PSDatumType.SPACE, string=None))
+                line_result.append(g)
 
         except StringMalformedError:
             print(f"Line is malformed! `{line}`")
@@ -231,6 +235,7 @@ def test_process_group():
                 [
                     [
                         PSDatum(type=PSDatumType.STRING, string="a."),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="b"),
@@ -244,6 +249,7 @@ def test_process_group():
                 [
                     [
                         PSDatum(type=PSDatumType.STRING, string="ab"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="ke"),
@@ -257,6 +263,7 @@ def test_process_group():
                 [
                     [
                         PSDatum(type=PSDatumType.STRING, string="ab"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="ke"),
@@ -270,6 +277,7 @@ def test_process_group():
                 [
                     [
                         PSDatum(type=PSDatumType.STRING, string="ab"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="ke"),
@@ -285,9 +293,11 @@ def test_process_group():
                         PSDatum(type=PSDatumType.STRING, string="+"),
                         PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
                         PSDatum(type=PSDatumType.STRING, string="%"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="to"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="explode"),
@@ -303,9 +313,11 @@ def test_process_group():
                         PSDatum(type=PSDatumType.STRING, string="+"),
                         PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
                         PSDatum(type=PSDatumType.STRING, string="%,"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="to"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
                     ],
                     [
                         PSDatum(type=PSDatumType.STRING, string="explode"),
@@ -334,9 +346,12 @@ def test_process_group():
                 ],
                 [
                     [
-                        [PSDatum(type=PSDatumType.STRING, string="a")],
-                        [PSDatum(type=PSDatumType.STRING, string="c")],
-                    ]
+                        PSDatum(type=PSDatumType.STRING, string="a"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="c"),
+                    ],
                 ],
             ],
         ),
@@ -351,9 +366,12 @@ def test_process_group():
                 [],
                 [
                     [
-                        [PSDatum(type=PSDatumType.STRING, string="a")],
-                        [PSDatum(type=PSDatumType.STRING, string="c")],
-                    ]
+                        PSDatum(type=PSDatumType.STRING, string="a"),
+                        PSDatum(type=PSDatumType.SPACE, string=None),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="c"),
+                    ],
                 ],
             ],
         ),

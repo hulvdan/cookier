@@ -23,7 +23,7 @@ table StringGroup {
 }
 
 table StringLine {
-    groups: [StringGroup] (required);
+    groups: [StringGroup];
 }
 
 table BrokenLocalizationString {
