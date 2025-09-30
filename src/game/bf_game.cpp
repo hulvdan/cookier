@@ -672,13 +672,17 @@ struct Placeholder {
   const char*     placeholder = {};
 
   union {
-    const char* string_value;
-    int         brokenLocale_value;
+    struct {
+      const char* value;
+      Color       color;
+    } string;
+
+    int brokenLocale_value;
   } _u;
 
-  const char* string_value() const {  ///
+  const auto& string() const {  ///
     ASSERT(type == PlaceholderType_STRING);
-    return _u.string_value;
+    return _u.string;
   }
 
   int brokenLocale_value() const {  ///
@@ -877,12 +881,16 @@ bool IsAlreadyPlaceholded(const char* placeholder) {  ///
   return false;
 }
 
-void PlaceholdString(const char* placeholder, const char* value) {  ///
+void PlaceholdString(
+  const char* placeholder,
+  const char* value,
+  Color       color = GREEN
+) {  ///
   ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
   Placeholder p{
     .type        = PlaceholderType_STRING,
     .placeholder = placeholder,
-    ._u{.string_value = value},
+    ._u{.string{.value = value, .color = color}},
   };
   g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = p;
 }
@@ -2218,7 +2226,8 @@ void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
 }
 
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
-  BF_CLAY_TEXT(placeholder->string_value(), GREEN);
+  const auto& string = placeholder->string();
+  BF_CLAY_TEXT(string.value, string.color);
 }
 
 void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
@@ -2501,16 +2510,21 @@ void DoUI(bool draw) {
 
         // if (fb_stat->icon_texture_id())
         //   BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
-        // BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_stat->name_locale());
 
-        PlaceholdBrokenLocale(
-          "STAT", fb_stats->Get(fb_effect->stat_type())->name_locale()
-        );
+        PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
+
+        const bool  isPositive = fb_effect->value() >= 0;
+        const char* format     = "";
+        if (fb_stat->is_percent())
+          format = (isPositive ? "+%s%%" : "%s%%");
+        else
+          format = (isPositive ? "+%s" : "%s");
         PlaceholdString(
           "STAT_MODIFIER",
           TextFormat(
-            "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", fb_effect->value() * 2))
-          )
+            format, StripLeadingZerosInFloat(TextFormat("%.1f", (f32)fb_effect->value()))
+          ),
+          (isPositive == fb_stat->negative_is_good() ? RED : GREEN)
         );
 
         const auto cond = fb_effect->effectcondition_type();

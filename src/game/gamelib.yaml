@@ -912,6 +912,7 @@ stats:
     is_secondary: true
   - type: ENEMIES
     icon_texture_id: ui_stat_icon_armor
+    negative_is_good: true
     is_percent: true
     is_secondary: true
   - type: ENEMY_SPEED
