@@ -37,6 +37,7 @@ x broken_strings: better formatting:
   + good placeholders
   + placeholders support referencing other locales (e.g. stat's name_locale)
 x explosion: show info about it in SMG (weapon stats)
+x explosion: make sorting work
 
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
@@ -45,7 +46,6 @@ x explosion: show info about it in SMG (weapon stats)
 * explosion: damage scalings (look at brotato)
 * explosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * explosion: stats: % Explosion Size: Increases or decreases the size of Explosions
-* explosion: make sorting work
 * explosion:
 * explosion:
 * explosion:

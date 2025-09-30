@@ -697,6 +697,18 @@ struct Particle {
   LogicalFrame createdAt = {};
 };
 
+int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
+  if (v1->createdAt._value > v2->createdAt._value)
+    return 1;
+  if (v1->createdAt._value < v2->createdAt._value)
+    return -1;
+  if (v1->pos.y > v2->pos.y)
+    return -1;
+  if (v1->pos.y < v2->pos.y)
+    return 1;
+  return 0;
+}
+
 struct GameData {
   struct Meta {
     i64   frame      = 0;
@@ -4080,14 +4092,6 @@ bool AreEnemies(CreatureType t1, CreatureType t2) {  ///
   return false;
 }
 
-// #define SORT_NAME particles
-// #define SORT_TYPE Particle
-// #define SORT_CMP(x, y)                         \
-//   ((x.createdAt._value) < (y.createdAt._value) \
-//      ? -1                                      \
-//      : ((y.createdAt._value) < (x.createdAt._value) ? 1 : 0))
-// #include "sort.h"
-
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -5350,7 +5354,12 @@ void GameFixedUpdate() {
       }
     }
 
-    // particles_quick_sort(g.run.particles.base, g.run.particles.count);
+    qsort(
+      (void*)g.run.particles.base,
+      g.run.particles.count,
+      sizeof(*g.run.particles.base),
+      (int (*)(const void*, const void*))ParticleCmp
+    );
   }
 
   g.run.camera.pos = GetCameraTargetPos();
