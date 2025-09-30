@@ -1,16 +1,17 @@
 import csv
+import json
 import os
 import shutil
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
+from itertools import groupby
 from math import radians
 from pathlib import Path
 from typing import Any, TypeAlias
 
 import pydub
-import pyjson5 as json
 import pytest
 import yaml
 from bf_game import *  # noqa
@@ -454,77 +455,84 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
 
         gamelib["localizations"].append({"strings": strings})
 
-    # Making `broken_strings`.
-    for loc in gamelib["localizations"]:
-        broken_strings = []
-        for string in loc["strings"]:
-            broken_strings.append(
-                {
-                    "strings": [
-                        {"string": x} for x in replace_double_spaces(string).split(" ")
-                    ]
-                }
-            )
-        loc["broken_strings"] = broken_strings
-
-    # Verifying placeholders.
+    # Making `broken_lines`.
     if 1:
-        locs = gamelib["localizations"]
-        next_placeholder_id = 1
+        genenum(genline, "PSDatumType", [x.name for x in PSDatumType])
+        all_russian_placeholders: list[tuple[int, str]] = []
 
-        StringIndex: TypeAlias = int
-        PlaceholderContent: TypeAlias = str
-        PlaceholderId: TypeAlias = int
+        for loc_index, loc in enumerate(gamelib["localizations"]):
+            is_russian = not loc_index
+            broken_lines: list = []
+            loc["broken_lines"] = broken_lines
 
-        all_placeholders: dict[tuple[StringIndex, PlaceholderContent], PlaceholderId] = {}
+            for string_index, string in enumerate(loc["strings"]):
+                string_lines: list = []
+                broken_lines.append({"lines": string_lines})
+                string_placeholders_to_verify = set()
 
-        max_placeholders_in_string = 0
+                for line in process_string(string):
+                    grs: list = []
+                    string_lines.append({"groups": grs})
 
-        for i, string in enumerate(locs[0]["broken_strings"]):
-            placeholders = []
-            for x in string["strings"]:
-                if pl := _get_placeholder_from_string(x["string"]):
-                    placeholders.append(pl)
-                    all_placeholders[(i, pl)] = next_placeholder_id
-                    genline(
-                        "constexpr int BF_PL__{}__{} = {};".format(
-                            index_to_locale[i].upper(), pl, next_placeholder_id
-                        )
+                    for group in line:
+                        gr: list = []
+                        grs.append({"strings": gr})
+
+                        for datum in group:
+                            placeholder_id = 0
+                            if datum.type == PSDatumType.PLACEHOLDER:
+                                assert datum.string
+                                placeholder_data = (string_index, datum.string)
+
+                                if is_russian and (
+                                    placeholder_data not in all_russian_placeholders
+                                ):
+                                    all_russian_placeholders.append(placeholder_data)
+                                    placeholder_id = len(all_russian_placeholders)
+                                    genline(
+                                        "constexpr int BF_PL__{}__{} = {};".format(
+                                            index_to_locale[string_index].upper(),
+                                            datum.string,
+                                            placeholder_id,
+                                        )
+                                    )
+                                else:
+                                    placeholder_id = (
+                                        all_russian_placeholders.index(placeholder_data)
+                                        + 1
+                                    )
+
+                                string_placeholders_to_verify.add(datum.string)
+
+                            gr.append(
+                                {
+                                    "type": datum.type.value,
+                                    "placeholder_id": placeholder_id,
+                                    "string": datum.string,
+                                }
+                            )
+
+                if not is_russian:
+                    russian_placeholders = set(
+                        x[1] for x in all_russian_placeholders if x[0] == string_index
                     )
-                    x["string"] = None
-                    x["placeholder_id"] = next_placeholder_id
-                    next_placeholder_id += 1
-            placeholders.sort()
-
-            max_placeholders_in_string = max(
-                max_placeholders_in_string, len(placeholders)
-            )
-
-            for lang_index, oloc in enumerate(locs[1:], 1):
-                other_placeholders = []
-                for x in oloc["broken_strings"][i]["strings"]:
-                    if pl := _get_placeholder_from_string(x["string"]):
-                        other_placeholders.append(pl)
-
-                        if pl in placeholders:
-                            x["string"] = None
-                            x["placeholder_id"] = all_placeholders[(i, pl)]
-
-                other_placeholders.sort()
-                assert placeholders == other_placeholders, str(
-                    (
+                    assert string_placeholders_to_verify == russian_placeholders, (
                         "Translated string differs in placeholders",
-                        data_values.languages[lang_index],
-                        index_to_locale[i],
+                        data_values.languages[loc_index],
+                        index_to_locale[string_index],
                     )
-                )
+
+        try:
+            max_placeholders = max(
+                len(list(placeholders))
+                for _, placeholders in groupby(all_russian_placeholders, lambda x: x[0])
+            )
+        except ValueError:
+            max_placeholders = 0
 
         genline(
-            "constexpr int BF_MAX_PLACEHOLDERS_IN_STRING = {};".format(
-                max_placeholders_in_string
-            )
+            "constexpr int BF_MAX_PLACEHOLDERS_IN_STRING = {};\n".format(max_placeholders)
         )
-        genline("")
 
     return codepoints, locale_to_index
 
@@ -685,7 +693,7 @@ def convert_gamelib_json_to_binary(
 
     # Creation of `gamelib.bin`.
     intermediate_path = TEMP_DIR / "gamelib.intermediate.jsonc"
-    intermediate_path.write_text(json.dumps(gamelib), newline="\n")
+    intermediate_path.write_text(json.dumps(gamelib))
     run_command(
         [
             FLATC_PATH,

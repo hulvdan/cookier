@@ -1054,18 +1054,18 @@ void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
 }
 
 void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
-  const auto localization = glib->localizations()->Get(ge.meta.localization);
-  const auto localization_broken_strings = localization->broken_strings();
+  const auto localization              = glib->localizations()->Get(ge.meta.localization);
+  const auto localization_broken_lines = localization->broken_lines();
 
   if (BF_DEBUG) {
     int requiredPlaceholders = 0;
-    for (auto string : *localization_broken_strings->Get(locale_)->strings()) {
+    for (auto string : *localization_broken_lines->Get(locale_)->strings()) {
       if (string->placeholder_id())
         requiredPlaceholders++;
     }
     ASSERT(requiredPlaceholders == g.uiFlex.placeholdersCount);
 
-    for (auto string : *localization_broken_strings->Get(locale_)->strings()) {
+    for (auto string : *localization_broken_lines->Get(locale_)->strings()) {
       if (string->placeholder_id()) {
         bool found = false;
         FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
@@ -1079,7 +1079,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
     }
   }
 
-  for (auto string : *localization_broken_strings->Get(locale_)->strings()) {
+  for (auto string : *localization_broken_lines->Get(locale_)->strings()) {
     if (string->placeholder_id()) {
       int pl = -1;
       FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
@@ -2184,7 +2184,7 @@ void DoUI(bool draw) {
   constexpr int MAX_BEAUTIFIERS      = 32;
   const auto    localization         = glib->localizations()->Get(ge.meta.localization);
   const auto    localization_strings = localization->strings();
-  const auto    localization_broken_strings = localization->broken_strings();
+  const auto    localization_broken_lines = localization->broken_lines();
 
   TEMP_USAGE(&g.meta.trashArena);
 
