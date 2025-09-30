@@ -118,6 +118,22 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 "Mob {} `knockback_resistance` must be in range [0; 1]".format(x["type"])
             )
 
+    # Placeholders.
+    # ============================================================
+    if 1:
+        genline("struct Placeholder;")
+        params = "const Placeholder* placeholder"
+        genline("using ClayPlaceholderFunction = void(*)({});".format(params))
+        for i, x in enumerate(gamelib["placeholders"]):
+            if i > 0:
+                genline("void ClayPlaceholderFunction_{}({});".format(x["type"], params))
+        genline("ClayPlaceholderFunction clayPlaceholderFunctions_[]{")
+        for i, x in enumerate(gamelib["placeholders"]):
+            if i > 0:
+                genline("  ClayPlaceholderFunction_{},".format(x["type"]))
+        genline("};")
+        genline("VIEW_FROM_ARRAY_DANGER(clayPlaceholderFunctions);\n")
+
     # Tables.
     # ============================================================
     if 1:

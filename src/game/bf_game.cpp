@@ -667,9 +667,24 @@ struct ThisWaveMob {
   f32          accumulatedFactor = {};
 };
 
-struct StringPlaceholderValue {
-  int         id    = {};
-  const char* value = {};
+struct Placeholder {
+  PlaceholderType type        = {};
+  const char*     placeholder = {};
+
+  union {
+    const char* string_value;
+    int         brokenLocale_value;
+  } _u;
+
+  const char* string_value() const {  ///
+    ASSERT(type == PlaceholderType_STRING);
+    return _u.string_value;
+  }
+
+  int brokenLocale_value() const {  ///
+    ASSERT(type == PlaceholderType_BROKEN_LOCALE);
+    return _u.brokenLocale_value;
+  }
 };
 
 struct Particle {
@@ -788,8 +803,8 @@ struct GameData {
     int  currentWidth  = 0;
     int  maxWidth      = {};
 
-    Array<StringPlaceholderValue, BF_MAX_PLACEHOLDERS_IN_STRING> placeholders      = {};
-    int                                                          placeholdersCount = {};
+    Array<Placeholder, BF_MAX_PLACEHOLDERS_IN_STRING> placeholders      = {};
+    int                                               placeholdersCount = {};
   } uiFlex;
 } g = {};
 
@@ -854,11 +869,32 @@ void FlexAddRowForChildIfNeeded(int childWidth) {  ///
   g.uiFlex.currentWidth += childWidth + g.uiFlex.childGap;
 }
 
-void SetStringPlaceholder(int id, const char* value) {  ///
-  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = {
-    .id    = id,
-    .value = value,
+bool IsAlreadyPlaceholded(const char* placeholder) {  ///
+  FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
+    if (!strcmp(g.uiFlex.placeholders[i].placeholder, placeholder))
+      return true;
+  }
+  return false;
+}
+
+void PlaceholdString(const char* placeholder, const char* value) {  ///
+  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
+  Placeholder p{
+    .type        = PlaceholderType_STRING,
+    .placeholder = placeholder,
+    ._u{.string_value = value},
   };
+  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = p;
+}
+
+void PlaceholdBrokenLocale(const char* placeholder, int locale) {  ///
+  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
+  Placeholder p{
+    .type        = PlaceholderType_BROKEN_LOCALE,
+    .placeholder = placeholder,
+    ._u{.brokenLocale_value = locale},
+  };
+  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = p;
 }
 
 void MakePickupable(MakePickupableData data) {  ///
@@ -1063,37 +1099,31 @@ void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
   BF_CLAY_TEXT(string, color);
 }
 
-void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
+void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+  int  locale_,
+  bool resetPlaceholders = true
+) {  ///
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
   const auto localization_broken_lines = localization->broken_lines();
 
   if (BF_DEBUG) {
-    int requiredPlaceholders = 0;
+    // Checking that all required placeholders were set.
     for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
       for (auto group : *line->groups()) {
         for (auto string : *group->strings()) {
-          if (string->placeholder_id()) {
-            requiredPlaceholders++;
-            ASSERT(string->type() == BrokenStringDatumType_PLACEHOLDER);
-          }
-        }
-      }
-    }
-    ASSERT(requiredPlaceholders == g.uiFlex.placeholdersCount);
-
-    for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
-      for (auto group : *line->groups()) {
-        for (auto string : *group->strings()) {
-          if (string->placeholder_id()) {
-            bool found = false;
-            FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-              if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
-                found = true;
-                break;
-              }
+          if (!string->placeholder())
+            continue;
+          bool found = false;
+          FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
+            if (!strcmp(
+                  g.uiFlex.placeholders[i].placeholder, string->placeholder()->c_str()
+                ))
+            {
+              found = true;
+              break;
             }
-            ASSERT(found);
           }
+          ASSERT(found);
         }
       }
     }
@@ -1109,16 +1139,19 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
           continue;
         }
 
-        if (string->placeholder_id()) {
-          int pl = -1;
+        if (string->placeholder()) {
+          const auto placeholderString = string->placeholder()->c_str();
+          int        pl                = -1;
           FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-            if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
+            if (!strcmp(g.uiFlex.placeholders[i].placeholder, placeholderString)) {
               pl = i;
               break;
             }
           }
 
-          BF_CLAY_TEXT(g.uiFlex.placeholders[pl].value, GREEN);
+          const auto& placeholder = g.uiFlex.placeholders[pl];
+          ASSERT(placeholder.type);
+          clayPlaceholderFunctions[(int)placeholder.type - 1](&placeholder);
         }
         else {
           Clay_String text{
@@ -1132,7 +1165,8 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
     }
   }
 
-  g.uiFlex.placeholdersCount = 0;
+  if (resetPlaceholders)
+    g.uiFlex.placeholdersCount = 0;
 }
 
 void DestroyBody(Body* body) {  ///
@@ -2161,10 +2195,7 @@ void HealPlayer(f32 amount = 1) {  ///
 }
 
 void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
-  SetStringPlaceholder(
-    BF_PL__UI_LABEL_KILL_N_ENEMIES__ENEMIES,
-    TextFormat("%d", fb_effect->condition_value())
-  );
+  PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_kill_n_enemies_locale());
 }
 
@@ -2180,13 +2211,18 @@ void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_eff
 void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
   const BFGame::Effect* fb_effect
 ) {  ///
-  SetStringPlaceholder(
-    BF_PL__UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON__ENEMIES,
-    TextFormat("%d", fb_effect->condition_value())
-  );
+  PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
     glib->ui_label_kill_n_enemies_using_this_weapon_locale()
   );
+}
+
+void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
+  BF_CLAY_TEXT(placeholder->string_value(), GREEN);
+}
+
+void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(placeholder->brokenLocale_value(), false);
 }
 
 void DoUI(bool draw) {
@@ -2463,39 +2499,26 @@ void DoUI(bool draw) {
 
         const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
 
-        if (fb_stat->icon_texture_id())
-          BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
-        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_stat->name_locale());
+        // if (fb_stat->icon_texture_id())
+        //   BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+        // BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_stat->name_locale());
+
+        PlaceholdBrokenLocale(
+          "STAT", fb_stats->Get(fb_effect->stat_type())->name_locale()
+        );
+        PlaceholdString(
+          "STAT_MODIFIER",
+          TextFormat(
+            "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", fb_effect->value() * 2))
+          )
+        );
 
         const auto cond = fb_effect->effectcondition_type();
-        if (cond) {
-          SetStringPlaceholder(
-            BF_PL__UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION__CHANCE,
-            TextFormat(
-              "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
-            )
-          );
+        if (cond)
           clayEffectConditionFunctions[cond - 1](fb_effect);
-        }
-        else {
-          if (fb_effect->value() != 0) {
-            const auto format = ((fb_effect->value() >= 0) ? "+%d" : "%d");
-            BF_CLAY_TEXT(
-              TextFormat(format, fb_effect->value() * count),
-              ((fb_effect->value() >= 0) ? GREEN : RED)
-            );
-          }
-          else {
-            const auto format = ((fb_effect->value_multiplier() >= 0) ? "+%d%%" : "%d%%");
-            const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
-            BF_CLAY_TEXT(
-              TextFormat(
-                format, Round((fb_effect->value_multiplier() - 1) * 100.0f * count)
-              ),
-              ((fb_effect->value_multiplier() >= 0) ? GREEN : RED)
-            );
-          }
-        }
+        else
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_default_weapon_stat_locale()
+          );
 
         FlexEnd();
       }
@@ -2744,8 +2767,8 @@ void DoUI(bool draw) {
         CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
           FlexBegin(maxWidth, 0);
 
-          SetStringPlaceholder(
-            BF_PL__UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION__CHANCE,
+          PlaceholdString(
+            "CHANCE",
             TextFormat(
               "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
             )
