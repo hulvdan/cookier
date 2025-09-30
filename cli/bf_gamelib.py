@@ -106,7 +106,7 @@ def _get_placeholder_from_string(string: str) -> str | None:
 
 
 @unique
-class PSDatumType(Enum):
+class BrokenStringDatumType(Enum):
     INVALID = 0
     STRING = 1
     PLACEHOLDER = 2
@@ -114,12 +114,12 @@ class PSDatumType(Enum):
 
 
 @dataclass
-class PSDatum:
-    type: PSDatumType
+class BrokenStringDatum:
+    type: BrokenStringDatumType
     string: str | None
 
 
-StringGroup: TypeAlias = list[PSDatum]
+StringGroup: TypeAlias = list[BrokenStringDatum]
 StringLine: TypeAlias = list[StringGroup]
 
 
@@ -138,12 +138,18 @@ def process_group(string: str) -> StringGroup:
         l = string.find("{")
         r = string.find("}")
         if l:
-            result.append(PSDatum(type=PSDatumType.STRING, string=string[:l]))
-        result.append(PSDatum(type=PSDatumType.PLACEHOLDER, string=string[l + 1 : r]))
+            result.append(
+                BrokenStringDatum(type=BrokenStringDatumType.STRING, string=string[:l])
+            )
+        result.append(
+            BrokenStringDatum(
+                type=BrokenStringDatumType.PLACEHOLDER, string=string[l + 1 : r]
+            )
+        )
         string = string[r + 1 :]
 
     if string:
-        result.append(PSDatum(type=PSDatumType.STRING, string=string))
+        result.append(BrokenStringDatum(type=BrokenStringDatumType.STRING, string=string))
 
     return result
 
@@ -168,7 +174,9 @@ def process_string(string: str) -> list[StringLine]:
                     continue
                 g = process_group(group)
                 if i < len(groups) - 1:
-                    g.append(PSDatum(type=PSDatumType.SPACE, string=None))
+                    g.append(
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None)
+                    )
                 line_result.append(g)
 
         except StringMalformedError:
@@ -179,39 +187,45 @@ def process_string(string: str) -> list[StringLine]:
 
 
 def test_process_group():
-    assert process_group("a") == [PSDatum(type=PSDatumType.STRING, string="a")]
-    assert process_group("ab") == [PSDatum(type=PSDatumType.STRING, string="ab")]
-    assert process_group("a,b") == [PSDatum(type=PSDatumType.STRING, string="a,b")]
+    assert process_group("a") == [
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a")
+    ]
+    assert process_group("ab") == [
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ab")
+    ]
+    assert process_group("a,b") == [
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a,b")
+    ]
     assert process_group("a{ABOBA}") == [
-        PSDatum(type=PSDatumType.STRING, string="a"),
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="ABOBA"),
     ]
     assert process_group("{ABOBA}a") == [
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
-        PSDatum(type=PSDatumType.STRING, string="a"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="ABOBA"),
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a"),
     ]
     assert process_group("+{ABOBA},") == [
-        PSDatum(type=PSDatumType.STRING, string="+"),
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
-        PSDatum(type=PSDatumType.STRING, string=","),
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="+"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="ABOBA"),
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string=","),
     ]
     assert process_group("{ABOBA},") == [
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
-        PSDatum(type=PSDatumType.STRING, string=","),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="ABOBA"),
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string=","),
     ]
     assert process_group("{A}{B}") == [
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="A"),
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="B"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="A"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="B"),
     ]
     assert process_group("{A}b{C}") == [
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="A"),
-        PSDatum(type=PSDatumType.STRING, string="b"),
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="C"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="A"),
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="b"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="C"),
     ]
     assert process_group("{AB}cd{EF}") == [
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="AB"),
-        PSDatum(type=PSDatumType.STRING, string="cd"),
-        PSDatum(type=PSDatumType.PLACEHOLDER, string="EF"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="AB"),
+        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="cd"),
+        BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="EF"),
     ]
 
 
@@ -226,7 +240,7 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="ab"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ab"),
                     ],
                 ],
             ],
@@ -236,11 +250,11 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="a."),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a."),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="b"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="b"),
                     ],
                 ],
             ],
@@ -250,11 +264,11 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="ab"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ab"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="ke"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ke"),
                     ],
                 ],
             ],
@@ -264,11 +278,11 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="ab"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ab"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="ke"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ke"),
                     ],
                 ],
             ],
@@ -278,11 +292,11 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="ab"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ab"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="ke"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="ke"),
                     ],
                 ],
             ],
@@ -292,17 +306,21 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="+"),
-                        PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
-                        PSDatum(type=PSDatumType.STRING, string="%"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="+"),
+                        BrokenStringDatum(
+                            type=BrokenStringDatumType.PLACEHOLDER, string="CHANCE"
+                        ),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="%"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="to"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="to"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="explode"),
+                        BrokenStringDatum(
+                            type=BrokenStringDatumType.STRING, string="explode"
+                        ),
                     ],
                 ],
             ],
@@ -312,17 +330,21 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="+"),
-                        PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
-                        PSDatum(type=PSDatumType.STRING, string="%,"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="+"),
+                        BrokenStringDatum(
+                            type=BrokenStringDatumType.PLACEHOLDER, string="CHANCE"
+                        ),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="%,"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="to"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="to"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="explode"),
+                        BrokenStringDatum(
+                            type=BrokenStringDatumType.STRING, string="explode"
+                        ),
                     ],
                 ],
             ],
@@ -332,8 +354,12 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
-                        PSDatum(type=PSDatumType.STRING, string="..."),
+                        BrokenStringDatum(
+                            type=BrokenStringDatumType.PLACEHOLDER, string="CHANCE"
+                        ),
+                        BrokenStringDatum(
+                            type=BrokenStringDatumType.STRING, string="..."
+                        ),
                     ],
                 ],
             ],
@@ -343,16 +369,16 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="b"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="b"),
                     ],
                 ],
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="a"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="c"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="c"),
                     ],
                 ],
             ],
@@ -362,17 +388,17 @@ def test_process_group():
             [
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="b"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="b"),
                     ],
                 ],
                 [],
                 [
                     [
-                        PSDatum(type=PSDatumType.STRING, string="a"),
-                        PSDatum(type=PSDatumType.SPACE, string=None),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a"),
+                        BrokenStringDatum(type=BrokenStringDatumType.SPACE, string=None),
                     ],
                     [
-                        PSDatum(type=PSDatumType.STRING, string="c"),
+                        BrokenStringDatum(type=BrokenStringDatumType.STRING, string="c"),
                     ],
                 ],
             ],
@@ -458,7 +484,7 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
 
     # Making `broken_lines`.
     if 1:
-        genenum(genline, "PSDatumType", [x.name for x in PSDatumType])
+        genenum(genline, "BrokenStringDatumType", [x.name for x in BrokenStringDatumType])
         all_russian_placeholders: list[tuple[int, str]] = []
 
         for loc_index, loc in enumerate(gamelib["localizations"]):
@@ -481,7 +507,7 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
 
                         for datum in group:
                             placeholder_id = 0
-                            if datum.type == PSDatumType.PLACEHOLDER:
+                            if datum.type == BrokenStringDatumType.PLACEHOLDER:
                                 assert datum.string
                                 placeholder_data = (string_index, datum.string)
 

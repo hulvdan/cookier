@@ -47,10 +47,14 @@ localization:
   UI_BUTTON_RESTART: Начать Заново
   UI_LABEL_STATS_PRIMARY: Основные
   UI_LABEL_STATS_SECONDARY: Побочные
-  UI_LABEL_AT_THE_END_OF_THE_WAVE: в конце волны
-  UI_LABEL_AT_THE_START_OF_THE_WAVE: в начале волны
-  UI_LABEL_KILL_N_ENEMIES: за каждые {ENEMIES} убитых врагов
-  UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON: за каждые {ENEMIES} убитых этим оружием врагов
+  UI_LABEL_AT_THE_END_OF_THE_WAVE: |
+    {STAT} {STAT_MODIFIER} в конце волны
+  UI_LABEL_AT_THE_START_OF_THE_WAVE: |
+    {STAT} {STAT_MODIFIER} в начале волны
+  UI_LABEL_KILL_N_ENEMIES: |
+    {STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых врагов
+  UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON: |
+    {STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых этим оружием врагов
   UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION: |
     {CHANCE} шанс взрыва при попадании
   ITEM_HELMET: Шлем

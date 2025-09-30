@@ -1074,7 +1074,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
         for (auto string : *group->strings()) {
           if (string->placeholder_id()) {
             requiredPlaceholders++;
-            ASSERT(string->type() == PSDatumType_PLACEHOLDER);
+            ASSERT(string->type() == BrokenStringDatumType_PLACEHOLDER);
           }
         }
       }
@@ -1103,7 +1103,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
     // TODO: Proper lines support!
     for (auto group : *line->groups()) {
       for (auto string : *group->strings()) {
-        if (string->type() == PSDatumType_SPACE) {
+        if (string->type() == BrokenStringDatumType_SPACE) {
           Clay_String text{.isStaticallyAllocated = true, .length = 1, .chars = " "};
           BF_CLAY_TEXT(text);
           continue;
@@ -2462,31 +2462,40 @@ void DoUI(bool draw) {
         FlexBegin(maxWidth, 0);
 
         const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
-        if (fb_effect->value() != 0) {
-          const auto format = ((fb_effect->value() >= 0) ? "+%d" : "%d");
-          BF_CLAY_TEXT(
-            TextFormat(format, fb_effect->value() * count),
-            ((fb_effect->value() >= 0) ? GREEN : RED)
-          );
-        }
-        else {
-          const auto format  = ((fb_effect->value_multiplier() >= 0) ? "+%d%%" : "%d%%");
-          const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
-          BF_CLAY_TEXT(
-            TextFormat(
-              format, Round((fb_effect->value_multiplier() - 1) * 100.0f * count)
-            ),
-            ((fb_effect->value_multiplier() >= 0) ? GREEN : RED)
-          );
-        }
 
         if (fb_stat->icon_texture_id())
           BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
         BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_stat->name_locale());
 
         const auto cond = fb_effect->effectcondition_type();
-        if (cond)
+        if (cond) {
+          SetStringPlaceholder(
+            BF_PL__UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION__CHANCE,
+            TextFormat(
+              "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
+            )
+          );
           clayEffectConditionFunctions[cond - 1](fb_effect);
+        }
+        else {
+          if (fb_effect->value() != 0) {
+            const auto format = ((fb_effect->value() >= 0) ? "+%d" : "%d");
+            BF_CLAY_TEXT(
+              TextFormat(format, fb_effect->value() * count),
+              ((fb_effect->value() >= 0) ? GREEN : RED)
+            );
+          }
+          else {
+            const auto format = ((fb_effect->value_multiplier() >= 0) ? "+%d%%" : "%d%%");
+            const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
+            BF_CLAY_TEXT(
+              TextFormat(
+                format, Round((fb_effect->value_multiplier() - 1) * 100.0f * count)
+              ),
+              ((fb_effect->value_multiplier() >= 0) ? GREEN : RED)
+            );
+          }
+        }
 
         FlexEnd();
       }
