@@ -33,6 +33,8 @@ x vim python errorformat
 x gamelib compiles wth support for broken lines + placeholders inside groups
 
 * make `+{PLACEHOLDER}% chance to explode on hit` formatting work
+* broken_strings: proper lines support
+* broken_strings: proper spaces support
 * explosion: show info about it in SMG (weapon stats)
 * explosion: damage scalings (look at brotato)
 * explosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions

@@ -825,16 +825,18 @@ void FlexEnd() {  ///
   g.uiFlex = {};
 }
 
-void FlexAddRowForChildIfNeeded(int childWidth) {  ///
+bool FlexShouldAddRowForChild(int childWidth) {  ///
   bool shouldAddRow = !g.uiFlex.addedChildren;
-
   if (g.uiFlex.addedChildren && (g.uiFlex.currentWidth + childWidth > g.uiFlex.maxWidth))
-  {
-    Clay__CloseElement();
     shouldAddRow = true;
-  }
+  return shouldAddRow;
+}
 
-  if (shouldAddRow) {
+void FlexAddRowForChildIfNeeded(int childWidth) {  ///
+  if (FlexShouldAddRowForChild(childWidth)) {
+    if (g.uiFlex.addedChildren)
+      Clay__CloseElement();
+
     Clay__OpenElement();
     Clay__ConfigureOpenElement(CLAY__CONFIG_WRAPPER(
       Clay_ElementDeclaration,
@@ -1036,6 +1038,14 @@ void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
       .baseChars = string.chars,
     };
     auto dim = MeasureText(s, nullptr, nullptr);
+
+    // In flex space shouldn't break the line.
+    // It's only other elements (which need more width) break the line.
+    if (FlexShouldAddRowForChild(dim.width)) {
+      if ((string.length == 1) && (string.chars[0] == ' '))
+        return;
+    }
+
     FlexAddRowForChildIfNeeded(dim.width);
   }
 
@@ -1059,45 +1069,66 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(int locale_) {  ///
 
   if (BF_DEBUG) {
     int requiredPlaceholders = 0;
-    for (auto string : *localization_broken_lines->Get(locale_)->strings()) {
-      if (string->placeholder_id())
-        requiredPlaceholders++;
+    for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
+      for (auto group : *line->groups()) {
+        for (auto string : *group->strings()) {
+          if (string->placeholder_id()) {
+            requiredPlaceholders++;
+            ASSERT(string->type() == PSDatumType_PLACEHOLDER);
+          }
+        }
+      }
     }
     ASSERT(requiredPlaceholders == g.uiFlex.placeholdersCount);
 
-    for (auto string : *localization_broken_lines->Get(locale_)->strings()) {
-      if (string->placeholder_id()) {
-        bool found = false;
-        FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-          if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
-            found = true;
-            break;
+    for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
+      for (auto group : *line->groups()) {
+        for (auto string : *group->strings()) {
+          if (string->placeholder_id()) {
+            bool found = false;
+            FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
+              if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
+                found = true;
+                break;
+              }
+            }
+            ASSERT(found);
           }
         }
-        ASSERT(found);
       }
     }
   }
 
-  for (auto string : *localization_broken_lines->Get(locale_)->strings()) {
-    if (string->placeholder_id()) {
-      int pl = -1;
-      FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-        if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
-          pl = i;
-          break;
+  for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
+    // TODO: Proper lines support!
+    for (auto group : *line->groups()) {
+      for (auto string : *group->strings()) {
+        if (string->type() == PSDatumType_SPACE) {
+          Clay_String text{.isStaticallyAllocated = true, .length = 1, .chars = " "};
+          BF_CLAY_TEXT(text);
+          continue;
+        }
+
+        if (string->placeholder_id()) {
+          int pl = -1;
+          FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
+            if (g.uiFlex.placeholders[i].id == string->placeholder_id()) {
+              pl = i;
+              break;
+            }
+          }
+
+          BF_CLAY_TEXT(g.uiFlex.placeholders[pl].value, GREEN);
+        }
+        else {
+          Clay_String text{
+            .isStaticallyAllocated = true,
+            .length                = (i32)string->string()->size(),
+            .chars                 = string->string()->c_str(),
+          };
+          BF_CLAY_TEXT(text);
         }
       }
-
-      BF_CLAY_TEXT(g.uiFlex.placeholders[pl].value, GREEN);
-    }
-    else {
-      Clay_String text{
-        .isStaticallyAllocated = true,
-        .length                = (i32)string->string()->size(),
-        .chars                 = string->string()->c_str(),
-      };
-      BF_CLAY_TEXT(text);
     }
   }
 
@@ -2428,7 +2459,7 @@ void DoUI(bool draw) {
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
-        FlexBegin(maxWidth, 8);
+        FlexBegin(maxWidth, 0);
 
         const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
         if (fb_effect->value() != 0) {
@@ -2702,13 +2733,17 @@ void DoUI(bool draw) {
       auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
       if (chance > 0) {
         CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
-          FlexBegin(maxWidth, GAP_SMALL);
+          FlexBegin(maxWidth, 0);
 
           SetStringPlaceholder(
             BF_PL__UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION__CHANCE,
-            TextFormat("%d", fb_effect->condition_value())
+            TextFormat(
+              "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
+            )
           );
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER();
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+            glib->ui_label_weapon_chance_of_explosion_locale()
+          );
 
           FlexEnd();
         }
@@ -3229,8 +3264,8 @@ void DoUI(bool draw) {
 
                 const auto d = Clay_GetElementData(id);
                 if (d.found) {
-                  CLAY({.layout{.childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
-                    FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 8);
+                  CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+                    FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 0);
                     BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
                     FlexEnd();
                   }
