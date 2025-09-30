@@ -13,26 +13,31 @@ table Texture {
     baseline: int;
 }
 
-table SingleString {
+table StringDatum {
+    // Ref: PSDatumType.
+    type: int;
+
     placeholder_id: int;
-    string: string;  // use only if placeholder_id is 0
+
+    // Used only when `type` is STRING.
+    string: string;
 }
 
 table StringGroup {
-    strings: [SingleString] (required);
+    strings: [StringDatum] (required);
 }
 
 table StringLine {
     groups: [StringGroup];
 }
 
-table BrokenLocalizationString {
-    lines: [StringLine] (required);
+table StringLines {
+    lines: [StringLine];
 }
 
 table Localization {
     strings: [string] (required);
-    broken_strings: [BrokenLocalizationString] (required);
+    broken_lines: [StringLines] (required);
 }
 
 struct Posf {

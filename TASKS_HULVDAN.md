@@ -30,6 +30,7 @@ x explosion: particle
 x explosion: damages enemies
 x explosion: chance, can turn off on contact / on travel end
 x vim python errorformat
+x gamelib compiles wth support for broken lines + placeholders inside groups
 
 * make `+{PLACEHOLDER}% chance to explode on hit` formatting work
 * explosion: show info about it in SMG (weapon stats)
