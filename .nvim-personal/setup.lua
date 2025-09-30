@@ -48,6 +48,10 @@ function rebuild_tasks()
         { "f_run_in_debugger_tests", cli_command("run_in_debugger tests Debug") },
         { "u_update_template", cli_command("update_template") },
         { "t_test", cli_command("test") },
+        {
+            "y_test_python",
+            [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && poetry run pytest ]],
+        },
         { "r_build_all_and_test", cli_command("build_all_and_test") },
         {
             "z_serve_web_debug",

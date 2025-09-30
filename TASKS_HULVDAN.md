@@ -13,7 +13,6 @@ x added more weapons for development
 x projectile: stone bounces
 x burning ailment works
 x projectiles, like weapons, change the sign of scaleX if dir.x < 0
-  (+ 180 degrees rotation?)
 x bouncing forecasts enemy pos
 x bouncing to the first randomly found enemy in possible range
 x shader: flashing support
@@ -27,18 +26,19 @@ x end: can hover on weapon
 x ref malloc/free -> BF_ALLOC/BF_FREE with easy-to-use unmapped allocator
 x fixed unmapped_allocator UNMAPPING_ALLOCATOR_ERROR_ON_RIGHT
 x added dev sprites for explosive bullet + smg
-x exlosion: particle
-x exlosion: damages enemies
-x exlosion: chance, can turn off on contact / on travel end
+x explosion: particle
+x explosion: damages enemies
+x explosion: chance, can turn off on contact / on travel end
 
-* exlosion: show info about it in SMG (weapon stats)
-* exlosion: damage scalings
-* exlosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions
-* exlosion: stats: % Explosion Size: Increases or decreases the size of Explosions
-* exlosion: make sorting work
-* exlosion:
-* exlosion:
-* exlosion:
+* make `+{PLACEHOLDER}% chance to explode on hit` formatting work
+* explosion: show info about it in SMG (weapon stats)
+* explosion: damage scalings (look at brotato)
+* explosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions
+* explosion: stats: % Explosion Size: Increases or decreases the size of Explosions
+* explosion: make sorting work
+* explosion:
+* explosion:
+* explosion:
 * think about boss
   + shoots oooo oooo oooo rows of projectiles like in brotato?
   + what would cookie-boss do?
@@ -79,8 +79,10 @@ x exlosion: chance, can turn off on contact / on travel end
   - fast editing with audacity (fade in, fade out, compression, export macroses)
 * weapons DrawZ
 * gather all weapon classes (e.g. primitive)
-* primitive weapons bonus (3,6,9,12,15 HP)
-* ethereal weapons bonus (3,6,9,12,15 ARMOR or 2,4,X or 1,2,X)
+* weapon tag: primitive 3 6 9 12 15 hp
+* weapon tag: ethereal 3 6 9 12 15 armor
+* weapon tag: explosive: 5 10 15 20 25 explosion size
+* weapon tag: elemental: 1 2 3 4 5 elemental damage
 * weapons categorization. жидкое / твёрдое?
 *
 *

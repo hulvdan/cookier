@@ -33,9 +33,6 @@ def gamelib_processor(func):
     return func
 
 
-from bf_game import *  # noqa
-
-
 class StrEnum(str, Enum):
     def __str__(self):
         return self.value
@@ -632,3 +629,6 @@ def stable_hash(value: str | int) -> int:
     if isinstance(value, str):
         return int(hashlib.md5(value.encode("utf-8")).hexdigest(), 16)
     assert False, "Not supported type of value"
+
+
+from bf_game import *  # noqa

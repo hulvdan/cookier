@@ -2169,6 +2169,7 @@ void DoUI(bool draw) {
   const auto fb_items          = glib->items();
   const auto fb_stats          = glib->stats();
   const auto fb_weapons        = glib->weapons();
+  const auto fb_projectiles    = glib->projectiles();
   const auto fb_pickupables    = glib->pickupables();
 
   // Setup.
@@ -2682,6 +2683,35 @@ void DoUI(bool draw) {
     {
       auto chance = GetLifestealChance(type);
       if (chance > 0) {
+        componentWeaponStatEntry(
+          fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT(
+              TextFormat(
+                "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
+              ),
+              GREEN
+            );
+          }
+        );
+      }
+    }
+
+    // Explosion.
+    {
+      auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
+      if (chance > 0) {
+        CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          FlexBegin(maxWidth, GAP_SMALL);
+
+          SetStringPlaceholder(
+            BF_PL__UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION__CHANCE,
+            TextFormat("%d", fb_effect->condition_value())
+          );
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER();
+
+          FlexEnd();
+        }
         componentWeaponStatEntry(
           fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
           [&]() BF_FORCE_INLINE_LAMBDA {

@@ -13,13 +13,17 @@ table Texture {
     baseline: int;
 }
 
-table BrokenString {
+table SingleString {
     placeholder_id: int;
     string: string;  // use only if placeholder_id is 0
 }
 
+table StringGroup {
+    strings: [SingleString] (required);
+}
+
 table BrokenLocalizationString {
-    strings: [BrokenString] (required);
+    groups: [StringGroup] (required);
 }
 
 table Localization {
@@ -228,6 +232,7 @@ table GameLibrary {
     ui_label_at_the_start_of_the_wave_locale: int;
     ui_label_kill_n_enemies_locale: int;
     ui_label_kill_n_enemies_using_this_weapon_locale: int;
+    ui_label_weapon_chance_of_explosion_locale: int;
     // LOCALE_GEN_END.
 
     // GAME STUFF
