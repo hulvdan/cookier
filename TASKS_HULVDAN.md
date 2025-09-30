@@ -32,10 +32,13 @@ x explosion: chance, can turn off on contact / on travel end
 x vim python errorformat
 x gamelib compiles wth support for broken lines + placeholders inside groups
 x make `+{PLACEHOLDER}% chance to explode on hit` formatting work
-x broken_strings: proper spaces support
-x fix weapon stats percents
+x broken_strings: better formatting:
+  + proper spaces support
+  + good placeholders
+  + placeholders support referencing other locales (e.g. stat's name_locale)
 x explosion: show info about it in SMG (weapon stats)
 
+. linear decay of mob spawning near player (min_dist, max_dist)
 * broken_strings: proper lines support
 * explosion: damage scalings (look at brotato)
 * explosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions
