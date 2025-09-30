@@ -506,35 +506,24 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
                         grs.append({"strings": gr})
 
                         for datum in group:
-                            placeholder_id = 0
+                            placeholder: str | None = None
+
                             if datum.type == BrokenStringDatumType.PLACEHOLDER:
                                 assert datum.string
                                 placeholder_data = (string_index, datum.string)
+                                placeholder = datum.string
 
                                 if is_russian and (
                                     placeholder_data not in all_russian_placeholders
                                 ):
                                     all_russian_placeholders.append(placeholder_data)
-                                    placeholder_id = len(all_russian_placeholders)
-                                    genline(
-                                        "constexpr int BF_PL__{}__{} = {};".format(
-                                            index_to_locale[string_index].upper(),
-                                            datum.string,
-                                            placeholder_id,
-                                        )
-                                    )
-                                else:
-                                    placeholder_id = (
-                                        all_russian_placeholders.index(placeholder_data)
-                                        + 1
-                                    )
 
                                 string_placeholders_to_verify.add(datum.string)
 
                             gr.append(
                                 {
                                     "type": datum.type.value,
-                                    "placeholder_id": placeholder_id,
+                                    "placeholder": placeholder,
                                     "string": datum.string,
                                 }
                             )

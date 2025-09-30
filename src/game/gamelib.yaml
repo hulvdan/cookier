@@ -55,6 +55,8 @@ localization:
     {STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых врагов
   UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON: |
     {STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых этим оружием врагов
+  UI_LABEL_DEFAULT_WEAPON_STAT: |
+    {STAT} {STAT_MODIFIER}
   UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION: |
     {CHANCE} шанс взрыва при попадании
   ITEM_HELMET: Шлем
@@ -369,6 +371,10 @@ items:
     effects:
       - stat_type: ENEMIES
         value: 5
+      - effectcondition_type: KILL_N_ENEMIES_GET_STAT
+        stat_type: ENEMIES
+        value: 1
+        condition_value: 20
   - type: TODO1
     texture_id: ui_item_todo
     tier: 2
@@ -917,3 +923,7 @@ stats:
     icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
+placeholders:
+  - type: INVALID
+  - type: STRING
+  - type: BROKEN_LOCALE

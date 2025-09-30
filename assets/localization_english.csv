@@ -35,6 +35,7 @@ UI_LABEL_AT_THE_END_OF_THE_WAVE,{STAT_MODIFIER} {STAT} at the end of the wave,{S
 UI_LABEL_AT_THE_START_OF_THE_WAVE,{STAT_MODIFIER} {STAT} at the start of the wave,{STAT} {STAT_MODIFIER} в начале волны,
 UI_LABEL_KILL_N_ENEMIES,{STAT_MODIFIER} {STAT} for every {ENEMIES} killed enemies,{STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых врагов,
 UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON,{STAT_MODIFIER} {STAT} for every {ENEMIES} killed enemies using this weapon,{STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых этим оружием врагов,
+UI_LABEL_DEFAULT_WEAPON_STAT,{STAT_MODIFIER} {STAT},{STAT} {STAT_MODIFIER},
 UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION,{CHANCE} chance to explode on hit,{CHANCE} шанс взрыва при попадании,
 ITEM_HELMET,Helmet,Шлем,
 ITEM_WHITE_FLAG,White Flag,Белый Флаг,
