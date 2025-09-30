@@ -120,29 +120,93 @@ StringGroup: TypeAlias = list[PSDatum]
 StringLine: TypeAlias = list[StringGroup]
 
 
+class StringMalformedError(Exception): ...
+
+
+def process_group(string: str) -> StringGroup:
+    assert string
+    assert " " not in string
+    assert "\t" not in string
+    assert "\n" not in string
+
+    result: StringGroup = []
+
+    while "{" in string:
+        l = string.find("{")
+        r = string.find("}")
+        if l:
+            result.append(PSDatum(type=PSDatumType.STRING, string=string[:l]))
+        result.append(PSDatum(type=PSDatumType.PLACEHOLDER, string=string[l + 1 : r]))
+        string = string[r + 1 :]
+
+    if string:
+        result.append(PSDatum(type=PSDatumType.STRING, string=string))
+
+    return result
+
+
 def process_string(string: str) -> list[StringLine]:
     string = replace_double_spaces(string.strip().replace("\t", " ").replace("\r", ""))
 
-    result = []
+    result: list[StringLine] = []
 
-    for line in string.split("\n"):
-        line_result = []
+    sp = string.split("\n")
+    if not any(sp):
+        return result
 
-        i = 0
-        can_push_previous = False
-        while i < len(line):
-            if line[i] == "{":
-                k = i + 1
-                while k < len(line):
-                    if line[k] == "}":
-                        i = k
-                        processed_groups
-                        can_push_previous = False
-                        break
-                    k += 1
-            i += 1
+    for line in sp:
+        line_result: list[StringGroup] = []
+        result.append(line_result)
+
+        try:
+            for group in line.split(" "):
+                if line:
+                    line_result.append(process_group(group))
+                else:
+                    line_result.append([])
+
+        except StringMalformedError:
+            print(f"Line is malformed! `{line}`")
+            raise
 
     return result
+
+
+def test_process_group():
+    assert process_group("a") == [PSDatum(type=PSDatumType.STRING, string="a")]
+    assert process_group("ab") == [PSDatum(type=PSDatumType.STRING, string="ab")]
+    assert process_group("a,b") == [PSDatum(type=PSDatumType.STRING, string="a,b")]
+    assert process_group("a{ABOBA}") == [
+        PSDatum(type=PSDatumType.STRING, string="a"),
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
+    ]
+    assert process_group("{ABOBA}a") == [
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
+        PSDatum(type=PSDatumType.STRING, string="a"),
+    ]
+    assert process_group("+{ABOBA},") == [
+        PSDatum(type=PSDatumType.STRING, string="+"),
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
+        PSDatum(type=PSDatumType.STRING, string=","),
+    ]
+    assert process_group("{ABOBA},") == [
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="ABOBA"),
+        PSDatum(type=PSDatumType.STRING, string=","),
+    ]
+    assert process_group("{A}{B}") == [
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="A"),
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="B"),
+    ]
+    assert process_group("{A}b{C}") == [
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="A"),
+        PSDatum(type=PSDatumType.STRING, string="b"),
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="C"),
+    ]
+    assert process_group("{AB}cd{EF}") == [
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="AB"),
+        PSDatum(type=PSDatumType.STRING, string="cd"),
+        PSDatum(type=PSDatumType.PLACEHOLDER, string="EF"),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -151,13 +215,39 @@ def process_string(string: str) -> list[StringLine]:
         ("", []),
         ("\n\n", []),
         ("\t\t", []),
-        ("ab", [[PSDatum(type=PSDatumType.STRING, string="ab")]]),
+        (
+            "ab",
+            [
+                [
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="ab"),
+                    ],
+                ],
+            ],
+        ),
+        (
+            "a. b",
+            [
+                [
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="a."),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="b"),
+                    ],
+                ],
+            ],
+        ),
         (
             "ab ke",
             [
                 [
-                    [PSDatum(type=PSDatumType.STRING, string="ab")],
-                    [PSDatum(type=PSDatumType.STRING, string="ke")],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="ab"),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="ke"),
+                    ],
                 ],
             ],
         ),
@@ -165,8 +255,12 @@ def process_string(string: str) -> list[StringLine]:
             "ab\tke",
             [
                 [
-                    [PSDatum(type=PSDatumType.STRING, string="ab")],
-                    [PSDatum(type=PSDatumType.STRING, string="ke")],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="ab"),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="ke"),
+                    ],
                 ],
             ],
         ),
@@ -174,8 +268,12 @@ def process_string(string: str) -> list[StringLine]:
             " ab  ke ",
             [
                 [
-                    [PSDatum(type=PSDatumType.STRING, string="ab")],
-                    [PSDatum(type=PSDatumType.STRING, string="ke")],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="ab"),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="ke"),
+                    ],
                 ],
             ],
         ),
@@ -185,7 +283,7 @@ def process_string(string: str) -> list[StringLine]:
                 [
                     [
                         PSDatum(type=PSDatumType.STRING, string="+"),
-                        PSDatum(type=PSDatumType.PLACEHOLDER, string="{CHANCE}"),
+                        PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
                         PSDatum(type=PSDatumType.STRING, string="%"),
                     ],
                     [
@@ -198,18 +296,70 @@ def process_string(string: str) -> list[StringLine]:
             ],
         ),
         (
-            "b\na c",
-            [[[PSDatum(type=PSDatumType.STRING, string="b")]]],
+            " +{CHANCE}%, to explode ",
             [
                 [
-                    [PSDatum(type=PSDatumType.STRING, string="a")],
-                    [PSDatum(type=PSDatumType.STRING, string="c")],
-                ]
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="+"),
+                        PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
+                        PSDatum(type=PSDatumType.STRING, string="%,"),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="to"),
+                    ],
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="explode"),
+                    ],
+                ],
+            ],
+        ),
+        (
+            "{CHANCE}...",
+            [
+                [
+                    [
+                        PSDatum(type=PSDatumType.PLACEHOLDER, string="CHANCE"),
+                        PSDatum(type=PSDatumType.STRING, string="..."),
+                    ],
+                ],
+            ],
+        ),
+        (
+            "b\na c",
+            [
+                [
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="b"),
+                    ],
+                ],
+                [
+                    [
+                        [PSDatum(type=PSDatumType.STRING, string="a")],
+                        [PSDatum(type=PSDatumType.STRING, string="c")],
+                    ]
+                ],
+            ],
+        ),
+        (
+            "b\n\na c",
+            [
+                [
+                    [
+                        PSDatum(type=PSDatumType.STRING, string="b"),
+                    ],
+                ],
+                [],
+                [
+                    [
+                        [PSDatum(type=PSDatumType.STRING, string="a")],
+                        [PSDatum(type=PSDatumType.STRING, string="c")],
+                    ]
+                ],
             ],
         ),
     ],
 )
-def test_process_string(string, result):
+def test_process_string(string: str, result: list[StringLine]) -> None:
     x = process_string(string)
     assert x == result
 

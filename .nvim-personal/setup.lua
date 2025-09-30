@@ -50,7 +50,7 @@ function rebuild_tasks()
         { "t_test", cli_command("test") },
         {
             "y_test_python",
-            [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && poetry run pytest ]],
+            [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && poetry run pytest -x -vv]],
         },
         { "r_build_all_and_test", cli_command("build_all_and_test") },
         {
