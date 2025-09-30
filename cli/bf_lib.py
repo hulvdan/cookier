@@ -189,7 +189,7 @@ def timed_exit(code: int) -> NoReturn:
 globals()["exit"] = timed_exit
 
 
-REPLACING_SPACES_PATTERN = re.compile(r"\s+")
+REPLACING_SPACES_PATTERN = re.compile(r"\ +")
 REPLACING_NEWLINES_PATTERN = re.compile(r"\n+")
 
 
