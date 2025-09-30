@@ -9,6 +9,7 @@ from typing import Any, TypeAlias
 
 import pydub
 import pyjson5 as json
+import pytest
 import yaml
 from bf_game import *  # noqa
 from bf_lib import (
@@ -99,6 +100,26 @@ def _get_placeholder_from_string(string: str) -> str | None:
     if string.startswith("{") and string.endswith("}"):
         return string[1:-1]
     return None
+
+
+def split_string_into_groups(string: str) -> list[list[str]]:
+    if not string:
+        return []
+    return []
+
+
+@pytest.mark.parametrize(
+    ("string", "result"),
+    [
+        ("ab", [["ab"]]),
+        ("ab ke", [["ab"], ["ke"]]),
+        (" ab ke ", [["ab"], ["ke"]]),
+        (" +{CHANCE}% to explode ", [["+", "{CHANCE}", "%"], ["to"], ["explode"]]),
+    ],
+)
+def test_split_string_into_groups(string, result):
+    x = split_string_into_groups(string)
+    assert x == result
 
 
 def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:

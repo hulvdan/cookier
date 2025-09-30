@@ -51,6 +51,7 @@ localization:
   UI_LABEL_AT_THE_START_OF_THE_WAVE: в начале волны
   UI_LABEL_KILL_N_ENEMIES: за каждые {ENEMIES} убитых врагов
   UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON: за каждые {ENEMIES} убитых этим оружием врагов
+  UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION: +{CHANCE}% шанс создать взрыв при попадании
   ITEM_HELMET: Шлем
   ITEM_WHITE_FLAG: Белый Флаг
   ITEM_BLACK_FLAG: Чёрный Флаг
