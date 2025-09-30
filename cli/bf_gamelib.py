@@ -107,6 +107,7 @@ def _get_placeholder_from_string(string: str) -> str | None:
 
 @unique
 class PSDatumType(Enum):
+    INVALID = 0
     STRING = 1
     PLACEHOLDER = 2
     SPACE = 3
