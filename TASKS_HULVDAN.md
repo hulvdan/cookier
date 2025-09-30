@@ -1,43 +1,28 @@
-x correct piggy bank coins scaling
-x max dodge is 60
-x range exponentially halves range (-50 = 1/2 range, -100 1/4, -150 = 1/8 etc)
-x using wheel for cheating
+x fix скалирования выдачи монет копилкой
+x max dodge 60%
+x Stat RANGE экспоненциально делит дальность (-50 = 1/2 дальности, -100 1/4, -150 = 1/8 etc)
+x колесо мыши для читинга (увеличение/уменьшение статов, кол-ва предметов)
 x fix StatType_ITEMS_PRICE, StatType_REROLL_PRICE
-x weapon effects: giving +1 attack speed upon killing 20 enemies with this weapon
-x codegen so that i won't fail upon adding new EffectConditionType
-x buying item that gives StatType_FREE_REROLLS should give reroll in shop immediately
-x fix: if game runs slow, skip fixed frames
-x added more weapons for development
-  + fire/lightning wands for elemental dmg
-  + slingshot for bouncing
-x projectile: stone bounces
-x burning ailment works
-x projectiles, like weapons, change the sign of scaleX if dir.x < 0
-x bouncing forecasts enemy pos
-x bouncing to the first randomly found enemy in possible range
-x shader: flashing support
-x fix: bouncing towards projectile's enemy
-x bouncing: use `creature.speedModifier`
-  (rusher should store here it's rushing bonus as well as lightning)
-x projectile: lightning works (slows down)
-x can set weapon lifesteal in gamelib
-x show life steal chance in weapon card
-x end: can hover on weapon
-x ref malloc/free -> BF_ALLOC/BF_FREE with easy-to-use unmapped allocator
-x fixed unmapped_allocator UNMAPPING_ALLOCATOR_ERROR_ON_RIGHT
-x added dev sprites for explosive bullet + smg
-x explosion: particle
-x explosion: damages enemies
-x explosion: chance, can turn off on contact / on travel end
-x vim python errorformat
-x gamelib compiles wth support for broken lines + placeholders inside groups
-x make `+{PLACEHOLDER}% chance to explode on hit` formatting work
-x broken_strings: better formatting:
-  + proper spaces support
-  + good placeholders
-  + placeholders support referencing other locales (e.g. stat's name_locale)
-x explosion: show info about it in SMG (weapon stats)
-x explosion: make sorting work
+x weapon effects: давание +1 скорости атаки при убийстве 20 врагов этим оружием
+x покупка предмета, что даёт StatType_FREE_REROLLS сразу разрешает бесплатное перебрасывание в магазе
+x fix: если игра тормозит, не симулируем слишком много фреймов
+x больше оружий для разработки
+  + огне/молние палки для элементального урона
+  + рогатка для "bouncing" механики
+x горение минимально работает
+  (нужно сделать spread + tick-rate)
+x projectile-ы "правильно смотрят" в направлении их полёта
+x bouncing предсказывает позицию врага
+x shader: "flashing"
+  перевод всех пикселей спрайта, к примеру,
+  целиком в белый цвет, как в brotato при нанесении урона врагу
+x замедление врагов при использовании молние-палки
+x можно указать доп. lifesteal оружию, отображение его в карточке
+x можно ховерить на оружие в экране завершения
+x взрывная пуля + "частица" взрыва
+  (нужно прикрутить explosion size + explosion damage статы)
+x клёвое форматирование / перенос слов в своём flexbox-е
+x отображение инфы по взрыву в карточке оружия
 
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
