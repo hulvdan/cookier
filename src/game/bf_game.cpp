@@ -5353,6 +5353,11 @@ void GameFixedUpdate() {
         off++;
       }
     }
+  }
+
+  // Sorting particles.
+  {  ///
+    ZoneScopedN("Sorting particles.");
 
     qsort(
       (void*)g.run.particles.base,
