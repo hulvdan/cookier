@@ -22,8 +22,12 @@ table StringGroup {
     strings: [SingleString] (required);
 }
 
-table BrokenLocalizationString {
+table StringLine {
     groups: [StringGroup] (required);
+}
+
+table BrokenLocalizationString {
+    lines: [StringLine] (required);
 }
 
 table Localization {
