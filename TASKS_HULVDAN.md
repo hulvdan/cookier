@@ -38,6 +38,8 @@ x broken_strings: better formatting:
   + placeholders support referencing other locales (e.g. stat's name_locale)
 x explosion: show info about it in SMG (weapon stats)
 
+* using `value_multiplier` with stat that has `is_percent=true` can confuse people.
+  assert that value_multiplier && is_percent is false during codegen
 * linear decay of mob spawning near player (min_dist, max_dist)
 * broken_strings: proper lines support
 * explosion: damage scalings (look at brotato)
