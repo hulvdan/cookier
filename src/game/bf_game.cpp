@@ -2069,7 +2069,10 @@ f32 GetWeaponDamage(WeaponType type, int tier) {  ///
 }
 
 f32 GetPlayerStatAttackSpeedMultiplier() {  ///
-  return (f32)(100 + g.run.playerStats[StatType_ATTACK_SPEED]) / 100.0f;
+  auto v = g.run.playerStats[StatType_ATTACK_SPEED];
+  if (v >= 0)
+    return (f32)(100 + v) / 100.0f;
+  return -100.0f / (f32)(v - 100);
 }
 
 lframe ApplyAttackSpeedToDuration(int duration) {  ///
