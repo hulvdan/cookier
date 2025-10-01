@@ -32,6 +32,7 @@ x StatType_ATTACK_SPEED correct scaling
 x ref FrameGame / FrameVisual. Gameplay must use only FrameGame
 x pause works
 
+* not giving stat on buying item if it has condition
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
 * explosion: damage scalings (look at brotato)
@@ -49,8 +50,6 @@ x pause works
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
 * stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
 * stats: Structure Range: Increases or decreases the range of Structures.
-* spread mobs apart (use force?)
-* mob that rotates when moving?
 *
 *
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
@@ -95,6 +94,7 @@ MOBS:
 - tiny mob
 - mob boss - галет (он сухой)
 - tree - cow / apple tree
+* mob that rotates when moving?
 
 TECH DEBT
 ============================================================
