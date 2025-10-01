@@ -2,13 +2,14 @@
 
 // Sizings + colliders.
 // ============================================================
-constexpr int        WORLD_X                              = 34;
-constexpr int        WORLD_Y                              = 34;
-constexpr Vector2Int WORLD_SIZE                           = {WORLD_X, WORLD_Y};
-constexpr f32        RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER = 10;
-constexpr f32        SPEED_MULTIPLIER                     = 10;
-constexpr f32        WORLD_CORNER_MARGIN_X                = 3.0f;
-constexpr f32        WORLD_CORNER_MARGIN_Y                = 3.0f * 9.0f / 16.0f;
+constexpr int        WORLD_X                                  = 34;
+constexpr int        WORLD_Y                                  = 34;
+constexpr Vector2Int WORLD_SIZE                               = {WORLD_X, WORLD_Y};
+constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX = 10;
+constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MIN = 4;
+constexpr f32        SPEED_MULTIPLIER                         = 10;
+constexpr f32        WORLD_CORNER_MARGIN_X                    = 3.0f;
+constexpr f32        WORLD_CORNER_MARGIN_Y                    = 3.0f * 9.0f / 16.0f;
 
 constexpr f32 CREATURES_SPAWN_MARGIN = 0.5f;
 
