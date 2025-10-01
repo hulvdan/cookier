@@ -2049,19 +2049,17 @@ void RefillShopToPick() {  ///
   }
 }
 
-void AddItem(ItemType v) {  ///
+void AddItem(ItemType type) {  ///
   bool increasedExistingItemCount = false;
-  int  i                          = 0;
   for (auto& item : g.run.playerItems) {
-    i++;
-    if (item.type == v) {
+    if (item.type == type) {
       item.count++;
       increasedExistingItemCount = true;
       break;
     }
   }
   if (!increasedExistingItemCount) {
-    Item item{.type = v, .count = 1};
+    Item item{.type = type, .count = 1};
     *g.run.playerItems.Add() = item;
   }
 
@@ -3644,9 +3642,8 @@ void DoUI(bool draw) {
                       weapon.recyclePrice
                         = GetWeaponRecyclePrice(weapon.type, weapon.tier);
                     }
-                    else if (v.item) {
+                    else if (v.item)
                       AddItem(v.item);
-                    }
                     else
                       INVALID_PATH;
                     v = {};
@@ -4230,8 +4227,10 @@ void GameFixedUpdate() {
       const auto fb         = glib->items()->Get(item.type);
       const auto fb_effects = fb->effects();
       if (fb_effects) {
-        for (const auto fb_effect : *fb_effects)
-          g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
+        for (const auto fb_effect : *fb_effects) {
+          if (!fb_effect->effectcondition_type())
+            g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
+        }
       }
     }
   }
