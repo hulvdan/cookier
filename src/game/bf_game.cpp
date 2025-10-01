@@ -243,6 +243,10 @@ b2Vec2 ToB2Vec2(Vector2 value) {  ///
   return {value.x, value.y};
 }
 
+Clay_Vector2 ToClayVector2(Vector2 value) {  ///
+  return {value.x, value.y};
+}
+
 Vector2 ToVector2(b2Vec2 value) {  ///
   return {value.x, value.y};
 }
@@ -2560,36 +2564,19 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
   {  ///
-    u16 padding[4]{8, 8, 8, 8};
-
+    f32                          offsetY{};
     Clay_FloatingAttachPointType attachElement{};
     Clay_FloatingAttachPointType attachParent{};
 
-    if (data.detailsRight) {
-      padding[0] = 0;
-      if (data.detailsBelow) {
-        padding[3]    = 0;
-        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-      }
-      else {
-        padding[2]    = 0;
-        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
-      }
+    if (data.detailsBelow) {
+      offsetY       = GAP_SMALL;
+      attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+      attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
     }
     else {
-      padding[1] = 0;
-      if (data.detailsBelow) {
-        padding[3]    = 0;
-        attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
-        attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
-      }
-      else {
-        padding[2]    = 0;
-        attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
-        attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
-      }
+      offsetY       = -GAP_SMALL;
+      attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
     }
 
     CLAY({
@@ -2597,9 +2584,9 @@ void DoUI(bool draw) {
         .sizing{
           CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE), CLAY_SIZING_FIT(0)
         },
-        .padding{padding[0], padding[1], padding[2], padding[3]},
       },
       .floating{
+        .offset{0, offsetY},
         .attachPoints{.element = attachElement, .parent = attachParent},
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
@@ -2844,18 +2831,17 @@ void DoUI(bool draw) {
           g.run.shop.selectedWeaponIndex = -1;
       }
 
-      u16 padding[4]{0, 0, 8, 8};
-
+      f32                          offsetY{};
       Clay_FloatingAttachPointType attachElement{};
       Clay_FloatingAttachPointType attachParent{};
 
       if (detailsBelow) {
-        padding[3]    = 0;
+        offsetY       = GAP_SMALL;
         attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
         attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
       }
       else {
-        padding[2]    = 0;
+        offsetY       = -GAP_SMALL;
         attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
         attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
       }
@@ -2866,9 +2852,9 @@ void DoUI(bool draw) {
             CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
             CLAY_SIZING_FIT(0)
           },
-          .padding{padding[0], padding[1], padding[2], padding[3]},
         },
         .floating{
+          .offset{0, offsetY},
           .attachPoints{.element = attachElement, .parent = attachParent},
           .attachTo = CLAY_ATTACH_TO_PARENT,
         },
