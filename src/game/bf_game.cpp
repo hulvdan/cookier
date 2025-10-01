@@ -624,10 +624,11 @@ struct MakePickupableData {
 };
 
 struct Pickupable {
-  PickupableType type       = {};
-  Vector2        pos        = {};
-  FrameGame      createdAt  = {};
-  FrameGame      pickedUpAt = {};
+  PickupableType type            = {};
+  Vector2        pos             = {};
+  FrameGame      createdAt       = {};
+  FrameGame      pickedUpAt      = {};
+  FrameVisual    startedFlyingAt = {};
 
   struct {
     struct {
@@ -764,15 +765,15 @@ struct GameData {
     bool       won    = false;
     ScreenType screen = ScreenType_GAMEPLAY;
 
-    FrameGame scheduledWaveCompleted = {};
-    bool      waveWon                = false;
-    bool      recalculatePlayerStats = false;
-    bool      scheduledUI            = false;
-    bool      scheduledPickedUpItems = false;
-    bool      scheduledUpgrades      = false;
-    bool      scheduledShop          = false;
-    bool      scheduledEnd           = false;
-    bool      scheduledNextWave      = false;
+    FrameVisual scheduledWaveCompleted = {};
+    bool        waveWon                = false;
+    bool        recalculatePlayerStats = false;
+    bool        scheduledUI            = false;
+    bool        scheduledPickedUpItems = false;
+    bool        scheduledUpgrades      = false;
+    bool        scheduledShop          = false;
+    bool        scheduledEnd           = false;
+    bool        scheduledNextWave      = false;
 
     bool showingSecondaryStats = false;
 
@@ -795,7 +796,7 @@ struct GameData {
     int xpLevel               = 1;
     f32 xp                    = 0;
     f32 nextLevelXp           = 0;
-    int coins                 = 0;
+    int notPickedUpCoins      = 0;
     int crates                = 0;
     int cratesDroppedThisWave = 0;
     int previousLevel         = 1;
@@ -854,6 +855,10 @@ struct GameData {
     Array<Placeholder, BF_MAX_PLACEHOLDERS_IN_STRING> placeholders      = {};
     int                                               placeholdersCount = {};
   } uiFlex;
+
+  struct {
+    Vector2 notPickedUpCoinsLogicalPos = {};
+  } ui;
 } g = {};
 
 void ApplyAilment(
@@ -1726,7 +1731,7 @@ void RunInit() {
   struct {
     WeaponType type = {};
   } weapons_[]{
-    {.type = WeaponType_SWORD},
+    {.type = WeaponType_SLINGSHOT},
     // {.type = WeaponType_BOW},
     // {.type = WeaponType_GUN},
   };
@@ -3042,7 +3047,7 @@ void DoUI(bool draw) {
     CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
       FLOATING_BEAUTIFY;
 
-      // Health bar + coins.
+      // Health bar + coins + not picked up coins.
       // {  ///
       const auto  texs   = glib->ui_health_texture_ids();
       const auto& player = PLAYER_CREATURE;
@@ -3139,6 +3144,28 @@ void DoUI(bool draw) {
         }}) {
           BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
           BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
+        }
+
+        CLAY({.layout{
+          .childGap = GAP_SMALL,
+          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+        }}) {
+          const auto color = Fade(WHITE, (g.run.notPickedUpCoins > 0 ? 1 : 0));
+          const auto id    = CLAY_ID("notPickedUpCoins");
+          CLAY({.id = id}) {
+            BF_CLAY_IMAGE({
+              .texId = glib->ui_coin_x2_texture_id(),
+              .color = color,
+            });
+          }
+          const auto d = Clay_GetElementData(id);
+          if (d.found) {
+            const auto& bb = d.boundingBox;
+            g.ui.notPickedUpCoinsLogicalPos
+              = {bb.x + bb.width / 2, LOGICAL_RESOLUTION.y - bb.y - bb.height / 2};
+          }
+
+          BF_CLAY_TEXT(TextFormat("%d", g.run.notPickedUpCoins), color);
         }
       }
       // }
@@ -4237,9 +4264,8 @@ void GameFixedUpdate() {
 
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
-
-    // Applying item effects: END_OF_THE_WAVE_GET_STAT.
     if ((g.run.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
+      // Applying item effects: END_OF_THE_WAVE_GET_STAT.
       IterateOverWeaponEffects(
         EffectConditionType_END_OF_THE_WAVE_GET_STAT,
         [&](int _, Weapon& weapon, auto fb_effect)
@@ -4250,6 +4276,20 @@ void GameFixedUpdate() {
         [&](const Item& item, auto fb_effect)
           BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, item.count); }
       );
+
+      // Making coins fly.
+      for (auto& pickupable : g.run.pickupables) {
+        if (pickupable.pickedUpAt.IsSet())
+          continue;
+        if (pickupable.type != PickupableType_COIN)
+          continue;
+
+        pickupable.startedFlyingAt.SetNow();
+
+        const auto durVariation
+          = WAVE_COMPLETED_FRAMES.value - WAVE_COMPLETED_COINS_FLYING_FRAMES.value;
+        pickupable.startedFlyingAt._value += (i64)(GRAND.FRand() * (f32)durVariation);
+      }
     }
 
     g.run.screen = ScreenType_WAVE_END_ANIMATION;
@@ -5488,6 +5528,13 @@ void GameFixedUpdate() {
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
         }
+        else if (pickupable.startedFlyingAt.IsSet()
+                 && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
+        {
+          g.run.notPickedUpCoins++;
+          g.run.pickupables.UnstableRemoveAt(i - off);
+          off++;
+        }
       }
     }
 
@@ -5776,30 +5823,6 @@ void GameDraw() {
     DrawGroup_End();
   }
 
-  // Drawing pickupables.
-  for (const auto& pickupable : g.run.pickupables) {  ///
-    const auto fb = fb_pickupables->Get(pickupable.type);
-
-    f32 fade = 1;
-    {
-      const auto e = pickupable.createdAt.Elapsed();
-      fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
-    }
-    if (pickupable.pickedUpAt.IsSet()) {
-      const auto e = pickupable.pickedUpAt.Elapsed();
-      fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
-    }
-
-    DrawGroup_OneShotTexture(
-      {
-        .texId = fb->texture_id(),
-        .pos   = pickupable.pos,
-        .color = Fade(WHITE, fade),
-      },
-      DrawZ_PICKUPABLES
-    );
-  }
-
   // Drawing particles.
   {  ///
     DrawGroup_Begin(DrawZ_PARTICLES);
@@ -5856,6 +5879,41 @@ void GameDraw() {
   }
 
   EndMode2D();
+
+  // Drawing pickupables.
+  for (const auto& pickupable : g.run.pickupables) {  ///
+    const auto fb = fb_pickupables->Get(pickupable.type);
+
+    f32 fade = 1;
+    {
+      const auto e = pickupable.createdAt.Elapsed();
+      fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
+    }
+    if (pickupable.pickedUpAt.IsSet()) {
+      const auto e = pickupable.pickedUpAt.Elapsed();
+      fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
+    }
+
+    auto pos = WorldToLogical(pickupable.pos, &g.run.camera);
+    if (pickupable.startedFlyingAt.IsSet()) {
+      auto p
+        = pickupable.startedFlyingAt.Elapsed().Progress(WAVE_COMPLETED_COINS_FLYING_FRAMES
+        );
+      p = Clamp01(p);
+      // p   = EaseInOutQuad(p);
+      p   = EaseInOutCubic(p);
+      pos = Vector2Lerp(pos, g.ui.notPickedUpCoinsLogicalPos, p);
+    }
+
+    DrawGroup_OneShotTexture(
+      {
+        .texId = fb->texture_id(),
+        .pos   = pos,
+        .color = Fade(WHITE, fade),
+      },
+      DrawZ_PICKUPABLES
+    );
+  }
 
   // Drawing wave completion animation.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///

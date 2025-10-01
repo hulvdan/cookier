@@ -575,6 +575,14 @@ BF_FORCE_INLINE void DrawGroup_SetSortY(f32 value) {  ///
     INVALID_PATH;
 }
 
+Vector2 WorldToLogical(Vector2 pos, Camera* camera) {  ///
+  ASSERT(camera->zoom > 0);
+  pos -= camera->pos;
+  pos *= camera->zoom;
+  pos += (Vector2)LOGICAL_RESOLUTION / 2.0f;
+  return pos;
+}
+
 void _ApplyCurrentCamera(Vector2* point, Vector2* size, bool isTexture = false) {  ///
   if (ge.meta._currentCamera) {
     ASSERT(ge.meta._currentCamera->zoom > 0);
