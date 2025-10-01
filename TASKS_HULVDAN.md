@@ -34,6 +34,7 @@ x Пауза (P в вебе, ESC/P на десктопе)
 x not giving stat on buying item if it has condition
 x не поднятые с прошлой волны монеты отправляются в «хранилище».
   во время следующей волны игрок получает x2 монеты, пока они не закончатся в хранилище
+x buying with 1234 keys, rerolling with r, клик теперь по нажатию мышки (а не релизу)
 
 * turrel
 * melee weapons attack from player's center of player
