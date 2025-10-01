@@ -29,8 +29,9 @@ x чем ближе моб спавнится к игроку, тем меньш
 x распространение горения
 x stats: % Explosion Damage + Size
 x StatType_ATTACK_SPEED correct scaling
+x ref FrameGame / FrameVisual. Gameplay must use only FrameGame
+x pause works
 
-* ref visualFrame / logicalFrame. gameplay should only use logicalFrame
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
 * explosion: damage scalings (look at brotato)

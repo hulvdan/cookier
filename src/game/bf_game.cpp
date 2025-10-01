@@ -303,11 +303,28 @@ static const char* const g_gameVersion = BF_VERSION
   ;
 // }
 
-struct LogicalFrame {
+struct FrameGame {
   i64 _value = i64_max;
 
-  [[nodiscard]] static LogicalFrame Now() {  ///
-    LogicalFrame frame{};
+  [[nodiscard]] static FrameGame Now() {  ///
+    FrameGame frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {  ///
+    return _value != i64_max;
+  }
+  void   SetNow();
+  lframe Elapsed() const;
+  f32    Progress(lframe duration) const;
+};
+
+struct FrameVisual {
+  i64 _value = i64_max;
+
+  [[nodiscard]] static FrameVisual Now() {  ///
+    FrameVisual frame{};
     frame.SetNow();
     return frame;
   }
@@ -450,15 +467,15 @@ struct MakeBodyData {
 };
 
 struct Weapon {
-  WeaponType   type              = {};
-  Vector2      offset            = {};
-  Vector2      detachedPos       = {};
-  Vector2      targetDir         = {};
-  LogicalFrame startedShootingAt = {};
-  LogicalFrame cooldownStartedAt = {};
-  int          tier              = {};
-  int          recyclePrice      = {};
-  f32          didDamage         = 0;
+  WeaponType type              = {};
+  Vector2    offset            = {};
+  Vector2    detachedPos       = {};
+  Vector2    targetDir         = {};
+  FrameGame  startedShootingAt = {};
+  FrameGame  cooldownStartedAt = {};
+  int        tier              = {};
+  int        recyclePrice      = {};
+  f32        didDamage         = 0;
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
@@ -479,9 +496,9 @@ struct Ailment {
   CreatureType ownerCreatureType = {};
   int          weaponIndex       = {};
 
-  int          spread    = {};
-  LogicalFrame startedAt = {};
-  lframe       duration  = {};
+  int       spread    = {};
+  FrameGame startedAt = {};
+  lframe    duration  = {};
 
   f32 value = {};
 };
@@ -501,12 +518,12 @@ struct Creature {
   Vector2            dir                 = {};
   Body               body                = {};
   CreatureController controller          = {};
-  LogicalFrame       lastDamagedAt       = {};
-  LogicalFrame       diedAt              = {};
+  FrameGame          lastDamagedAt       = {};
+  FrameGame          diedAt              = {};
   f32                speed               = {};
   f32                speedModifier       = 1;
   f32                movementAccumulator = {};
-  LogicalFrame       idleStartedAt       = {};
+  FrameGame          idleStartedAt       = {};
 
   // WARN: Note -1! To get burning ailment,
   // index into it using `AilmentType_BURN - 1`.
@@ -516,14 +533,14 @@ struct Creature {
 
   union {
     struct {
-      LogicalFrame startedShootingAt;
+      FrameGame startedShootingAt;
     } ranger;
 
     struct {
-      LogicalFrame startedRushingAt;
-      LogicalFrame finishedRushingAt;
-      lframe       cooldown;
-      Vector2      rushingDir;
+      FrameGame startedRushingAt;
+      FrameGame finishedRushingAt;
+      lframe    cooldown;
+      Vector2   rushingDir;
     } rusher;
   } _mob;
 
@@ -556,7 +573,7 @@ struct MakeCreatureData {
 struct CreaturePreSpawn {
   CreatureType type      = {};
   Vector2      pos       = {};
-  LogicalFrame createdAt = {};
+  FrameGame    createdAt = {};
 };
 
 struct Projectile {
@@ -569,7 +586,7 @@ struct Projectile {
   f32                               critDamage         = {};
   int                               pierce             = {};
   int                               bounce             = {};
-  LogicalFrame                      createdAt          = {};
+  FrameGame                         createdAt          = {};
   Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds = {};
   int                               damagedCount       = {};
   int                               piercedCount       = 0;
@@ -594,10 +611,10 @@ struct MakeProjectileData {
 };
 
 struct Number {
-  NumberType   type      = {};
-  int          value     = {};
-  Vector2      pos       = {};
-  LogicalFrame createdAt = {};
+  NumberType type      = {};
+  int        value     = {};
+  Vector2    pos       = {};
+  FrameGame  createdAt = {};
 };
 
 struct MakePickupableData {
@@ -609,8 +626,8 @@ struct MakePickupableData {
 struct Pickupable {
   PickupableType type       = {};
   Vector2        pos        = {};
-  LogicalFrame   createdAt  = {};
-  LogicalFrame   pickedUpAt = {};
+  FrameGame      createdAt  = {};
+  FrameGame      pickedUpAt = {};
 
   struct {
     struct {
@@ -708,7 +725,7 @@ struct Particle {
   ParticleType type      = {};
   Vector2      pos       = {};
   f32          scale     = 1;
-  LogicalFrame createdAt = {};
+  FrameGame    createdAt = {};
 };
 
 int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
@@ -725,9 +742,10 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
 
 struct GameData {
   struct Meta {
-    i64   frame      = 0;
-    Arena trashArena = {};
-    Font  uiFont     = {};
+    i64   frameGame   = 0;
+    i64   frameVisual = 0;
+    Arena trashArena  = {};
+    Font  uiFont      = {};
 
     bool godMode = false;
 
@@ -735,7 +753,7 @@ struct GameData {
       Array<Vector2, 4> pos      = {};  // lstarted, ltarget, rstarted, rtarget.
       Array<Vector2, 2> dir      = {};
       Array<TouchID, 2> touchIDs = {};
-      // LogicalFrame      rightLastPressedAt = {};
+      // FrameGame      rightLastPressedAt = {};
     } touch;
   } meta;
 
@@ -746,15 +764,15 @@ struct GameData {
     bool       won    = false;
     ScreenType screen = ScreenType_GAMEPLAY;
 
-    LogicalFrame scheduledWaveCompleted = {};
-    bool         waveWon                = false;
-    bool         recalculatePlayerStats = false;
-    bool         scheduledUI            = false;
-    bool         scheduledPickedUpItems = false;
-    bool         scheduledUpgrades      = false;
-    bool         scheduledShop          = false;
-    bool         scheduledEnd           = false;
-    bool         scheduledNextWave      = false;
+    FrameGame scheduledWaveCompleted = {};
+    bool      waveWon                = false;
+    bool      recalculatePlayerStats = false;
+    bool      scheduledUI            = false;
+    bool      scheduledPickedUpItems = false;
+    bool      scheduledUpgrades      = false;
+    bool      scheduledShop          = false;
+    bool      scheduledEnd           = false;
+    bool      scheduledNextWave      = false;
 
     bool showingSecondaryStats = false;
 
@@ -770,8 +788,8 @@ struct GameData {
     Array<ThisWaveMob, CreatureType_COUNT> thisWaveMobs      = {};
     int                                    thisWaveMobsCount = 0;
 
-    LogicalFrame playerLastLifestealAt = {};
-    LogicalFrame playerLastRegenAt     = {};
+    FrameGame playerLastLifestealAt = {};
+    FrameGame playerLastRegenAt     = {};
 
     int playerKilledEnemies   = 0;
     int xpLevel               = 1;
@@ -782,8 +800,8 @@ struct GameData {
     int cratesDroppedThisWave = 0;
     int previousLevel         = 1;
 
-    int          waveIndex     = 0;
-    LogicalFrame waveStartedAt = {};
+    int       waveIndex     = 0;
+    FrameGame waveStartedAt = {};
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
@@ -1021,9 +1039,6 @@ void CheckCollisionsRect(
   );
 }
 
-#define FRAMES_ELAPSED(value) (g.meta.frame - (value))
-#define PROGRESS(elapsed, duration) ((f32)(elapsed) / (f32)(duration))
-
 void MakeNumber(MakeNumberData data) {  ///
   ASSERT(data.type);
   Number number{
@@ -1035,14 +1050,24 @@ void MakeNumber(MakeNumberData data) {  ///
   *g.run.numbers.Add() = number;
 }
 
-void LogicalFrame::SetNow() {  ///
+void FrameGame::SetNow() {  ///
   ASSERT_FALSE(IsSet());
-  _value = g.meta.frame;
+  _value = g.meta.frameGame;
 }
 
-lframe LogicalFrame::Elapsed() const {  ///
+lframe FrameGame::Elapsed() const {  ///
   ASSERT(IsSet());
-  return lframe::Unscaled(FRAMES_ELAPSED(_value));
+  return lframe::Unscaled(g.meta.frameGame - _value);
+}
+
+void FrameVisual::SetNow() {  ///
+  ASSERT_FALSE(IsSet());
+  _value = g.meta.frameVisual;
+}
+
+lframe FrameVisual::Elapsed() const {  ///
+  ASSERT(IsSet());
+  return lframe::Unscaled(g.meta.frameVisual - _value);
 }
 
 static BF_FORCE_INLINE Clay_Dimensions MeasureText(
@@ -2300,6 +2325,8 @@ void DoUI(bool draw) {
   // e.g. updating mouse position, processing `clicked()`,
   // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 
+  // Setup.
+  // {  ///
   const auto fb_atlas_textures = glib->atlas_textures();
   const auto fb_items          = glib->items();
   const auto fb_stats          = glib->stats();
@@ -2307,8 +2334,6 @@ void DoUI(bool draw) {
   const auto fb_projectiles    = glib->projectiles();
   const auto fb_pickupables    = glib->pickupables();
 
-  // Setup.
-  // {  ///
   if (!draw) {
     // Updating clay mouse pos.
     // TODO: TOUCH!
@@ -3855,6 +3880,26 @@ void DoUI(bool draw) {
   else
     INVALID_PATH;
 
+  if (ge.meta.paused) {
+    CLAY({
+      .floating{
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {
+#if defined(SDL_PLATFORM_DESKTOP)
+      int locale = glib->ui_label_pause_desktop_locale();
+#else
+      int locale = glib->ui_label_pause_locale();
+#endif
+      BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
+    }
+  }
+
   auto drawCommands = Clay_EndLayout();
 
   // Drawing UI.
@@ -4328,336 +4373,356 @@ void GameFixedUpdate() {
 
   PLAYER_CREATURE.controller.move = {};
 
-  // Updating gameplay.
+  // P - Pause button.
   if (g.run.screen == ScreenType_GAMEPLAY) {
+    bool togglePause = IsKeyPressed(SDL_SCANCODE_P);
+
+#if defined(SDL_PLATFORM_DESKTOP)
+    if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
+      togglePause = true;
+#endif
+
+    if (togglePause)
+      ge.meta.paused = !ge.meta.paused;
+  }
+  else
+    ge.meta.paused = false;
+
+  const auto gameplayOrWaveEndScreen = (g.run.screen == ScreenType_GAMEPLAY)
+                                       || (g.run.screen == ScreenType_WAVE_END_ANIMATION);
+
+  // Updating gameplay.
+  if (!ge.meta.paused && gameplayOrWaveEndScreen) {
     ZoneScopedN("Updating gameplay.");
 
-    // Finishing wave opens upgrades screen.
-    if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
-      if (!g.run.scheduledWaveCompleted.IsSet()) {
-        g.run.scheduledWaveCompleted.SetNow();
-        g.run.waveWon = true;
+    if (g.run.screen == ScreenType_GAMEPLAY) {
+      // Finishing wave opens upgrades screen.
+      if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
+        if (!g.run.scheduledWaveCompleted.IsSet()) {
+          g.run.scheduledWaveCompleted.SetNow();
+          g.run.waveWon = true;
+        }
       }
-    }
 
-    if (!PLAYER_CREATURE.diedAt.IsSet()) {
-      // Player actions. Moving.
+      if (!PLAYER_CREATURE.diedAt.IsSet()) {
+        // Player actions. Moving.
+        {  ///
+          Vector2 move{};
+
+          if (IsKeyDown(SDL_SCANCODE_W))
+            move.y += 1;
+          if (IsKeyDown(SDL_SCANCODE_A))
+            move.x -= 1;
+          if (IsKeyDown(SDL_SCANCODE_S))
+            move.y -= 1;
+          if (IsKeyDown(SDL_SCANCODE_D))
+            move.x += 1;
+
+          if (move.x || move.y)
+            move = Vector2Normalize(move);
+
+          if (move == Vector2Zero()) {
+            if (g.meta.touch.touchIDs[0] != InvalidTouchID)
+              move = g.meta.touch.dir[0];
+          }
+
+          PLAYER_CREATURE.controller.move = move;
+        }
+
+        // Player HP regen.
+        if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {  ///
+          const bool canRegen = g.run.playerLastRegenAt.Elapsed()
+                                >= GetFramesPerRegen(g.run.playerStats[StatType_REGEN]);
+          if (canRegen) {
+            PLAYER_CREATURE.health
+              = MIN(PLAYER_CREATURE.health + 1, PLAYER_CREATURE.maxHealth);
+            g.run.playerLastRegenAt = {};
+            g.run.playerLastRegenAt.SetNow();
+          }
+        }
+      }
+
+      // Updating AI.
       {  ///
-        Vector2 move{};
+        ZoneScopedN("Updating AI.");
 
-        if (IsKeyDown(SDL_SCANCODE_W))
-          move.y += 1;
-        if (IsKeyDown(SDL_SCANCODE_A))
-          move.x -= 1;
-        if (IsKeyDown(SDL_SCANCODE_S))
-          move.y -= 1;
-        if (IsKeyDown(SDL_SCANCODE_D))
-          move.x += 1;
+        for (int i = 1; i < g.run.creatures.count; i++) {
+          auto& creature = g.run.creatures[i];
+          if (creature.diedAt.IsSet())
+            continue;
+          if (creature.type == CreatureType_TREE)
+            continue;
 
-        if (move.x || move.y)
-          move = Vector2Normalize(move);
+          const auto fb = fb_creatures->Get(creature.type);
 
-        if (move == Vector2Zero()) {
-          if (g.meta.touch.touchIDs[0] != InvalidTouchID)
-            move = g.meta.touch.dir[0];
-        }
+          creature.controller.move
+            = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
 
-        PLAYER_CREATURE.controller.move = move;
-      }
-
-      // Player HP regen.
-      if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {  ///
-        const bool canRegen = g.run.playerLastRegenAt.Elapsed()
-                              >= GetFramesPerRegen(g.run.playerStats[StatType_REGEN]);
-        if (canRegen) {
-          PLAYER_CREATURE.health
-            = MIN(PLAYER_CREATURE.health + 1, PLAYER_CREATURE.maxHealth);
-          g.run.playerLastRegenAt = {};
-          g.run.playerLastRegenAt.SetNow();
-        }
-      }
-    }
-
-    // Updating AI.
-    {  ///
-      ZoneScopedN("Updating AI.");
-
-      for (int i = 1; i < g.run.creatures.count; i++) {
-        auto& creature = g.run.creatures[i];
-        if (creature.diedAt.IsSet())
-          continue;
-        if (creature.type == CreatureType_TREE)
-          continue;
-
-        const auto fb = fb_creatures->Get(creature.type);
-
-        creature.controller.move
-          = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
-
-        if (creature.controller.move.x >= 0)
-          creature.dir = {1, 0};
-        else
-          creature.dir = {-1, 0};
-
-        if (creature.type == CreatureType_RANGER) {
-          constexpr f32 thresholdMeters = 0.5f;
-          constexpr f32 shootMeters     = 8;
-          const auto    distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
-
-          bool canShoot = true;
-
-          if (distSqr < SQR(shootMeters - thresholdMeters))
-            creature.controller.move *= -1.0f;
-          else if (distSqr < SQR(shootMeters + thresholdMeters))
-            creature.controller.move = {};
+          if (creature.controller.move.x >= 0)
+            creature.dir = {1, 0};
           else
-            canShoot = false;
+            creature.dir = {-1, 0};
 
-          auto& data = creature.DataRanger();
-          if (data.startedShootingAt.IsSet()) {
-            creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
+          if (creature.type == CreatureType_RANGER) {
+            constexpr f32 thresholdMeters = 0.5f;
+            constexpr f32 shootMeters     = 8;
+            const auto    distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
 
-            const auto e = data.startedShootingAt.Elapsed();
-            if (e == MOB_RANGER_SHOOTING_FRAME) {
-              MakeProjectile({
-                .type              = ProjectileType_MOB,
-                .ownerCreatureType = creature.type,
-                .pos               = creature.pos,
-                .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
-                .range  = 12,
-                .damage = fb->projectile_damage(),
-              });
+            bool canShoot = true;
+
+            if (distSqr < SQR(shootMeters - thresholdMeters))
+              creature.controller.move *= -1.0f;
+            else if (distSqr < SQR(shootMeters + thresholdMeters))
+              creature.controller.move = {};
+            else
+              canShoot = false;
+
+            auto& data = creature.DataRanger();
+            if (data.startedShootingAt.IsSet()) {
+              creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
+
+              const auto e = data.startedShootingAt.Elapsed();
+              if (e == MOB_RANGER_SHOOTING_FRAME) {
+                MakeProjectile({
+                  .type              = ProjectileType_MOB,
+                  .ownerCreatureType = creature.type,
+                  .pos               = creature.pos,
+                  .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
+                  .range  = 12,
+                  .damage = fb->projectile_damage(),
+                });
+              }
+              if (e >= MOB_RANGER_SHOOTING_FRAMES)
+                data.startedShootingAt = {};
             }
-            if (e >= MOB_RANGER_SHOOTING_FRAMES)
-              data.startedShootingAt = {};
+            else if (canShoot)
+              data.startedShootingAt.SetNow();
           }
-          else if (canShoot)
-            data.startedShootingAt.SetNow();
-        }
-        else if (creature.type == CreatureType_RUSHER) {
-          auto& data = creature.DataRusher();
+          else if (creature.type == CreatureType_RUSHER) {
+            auto& data = creature.DataRusher();
 
-          if (data.startedRushingAt.IsSet()) {
-            creature.controller.move = {};
+            if (data.startedRushingAt.IsSet()) {
+              creature.controller.move = {};
 
-            const auto e = data.startedRushingAt.Elapsed();
-            if ((MOB_RUSHER_RUSH_PRE_FRAMES < e)
-                && (e < MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_POST_FRAMES))
-              creature.controller.move = data.rushingDir;
+              const auto e = data.startedRushingAt.Elapsed();
+              if ((MOB_RUSHER_RUSH_PRE_FRAMES < e)
+                  && (e < MOB_RUSHER_RUSH_TOTAL_FRAMES - MOB_RUSHER_RUSH_POST_FRAMES))
+                creature.controller.move = data.rushingDir;
 
-            if (e >= MOB_RUSHER_RUSH_TOTAL_FRAMES) {
-              data.startedRushingAt = {};
-              data.finishedRushingAt.SetNow();
-              data.rushingDir = {};
-              data.cooldown.SetRand(MOB_RUSHER_COOLDOWN_MIN, MOB_RUSHER_COOLDOWN_MAX);
-              creature.speedModifier /= MOB_RUSHER_RUSH_SPEED_SCALE;
+              if (e >= MOB_RUSHER_RUSH_TOTAL_FRAMES) {
+                data.startedRushingAt = {};
+                data.finishedRushingAt.SetNow();
+                data.rushingDir = {};
+                data.cooldown.SetRand(MOB_RUSHER_COOLDOWN_MIN, MOB_RUSHER_COOLDOWN_MAX);
+                creature.speedModifier /= MOB_RUSHER_RUSH_SPEED_SCALE;
+              }
             }
-          }
-          else {
-            bool canRush = true;
+            else {
+              bool canRush = true;
 
-            if (data.finishedRushingAt.IsSet()) {
-              if (data.finishedRushingAt.Elapsed() < data.cooldown)
-                canRush = false;
-            }
+              if (data.finishedRushingAt.IsSet()) {
+                if (data.finishedRushingAt.Elapsed() < data.cooldown)
+                  canRush = false;
+              }
 
-            if (canRush) {
-              const auto dist       = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
-              const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
-                                      - MOB_RUSHER_RUSH_PRE_FRAMES
-                                      - MOB_RUSHER_RUSH_POST_FRAMES;
-              const auto durSeconds   = (f32)rushingDur.value / FIXED_FPS;
-              const auto rushDistance = creature.speed * creature.speedModifier
-                                        * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
+              if (canRush) {
+                const auto dist = Vector2Distance(PLAYER_CREATURE.pos, creature.pos);
+                const auto rushingDur = MOB_RUSHER_RUSH_TOTAL_FRAMES
+                                        - MOB_RUSHER_RUSH_PRE_FRAMES
+                                        - MOB_RUSHER_RUSH_POST_FRAMES;
+                const auto durSeconds   = (f32)rushingDur.value / FIXED_FPS;
+                const auto rushDistance = creature.speed * creature.speedModifier
+                                          * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
 
-              if (dist <= rushDistance) {
-                data.startedRushingAt.SetNow();
-                data.finishedRushingAt = {};
-                data.rushingDir
-                  = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
-                creature.speedModifier *= MOB_RUSHER_RUSH_SPEED_SCALE;
+                if (dist <= rushDistance) {
+                  data.startedRushingAt.SetNow();
+                  data.finishedRushingAt = {};
+                  data.rushingDir
+                    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
+                  creature.speedModifier *= MOB_RUSHER_RUSH_SPEED_SCALE;
+                }
               }
             }
           }
         }
       }
-    }
 
-    // Making pre spawn decals.
-    {  ///
-      LAMBDA (void, makePreSpawn, (CreatureType type)) {
-        ASSERT(type);
+      // Making pre spawn decals.
+      {  ///
+        LAMBDA (void, makePreSpawn, (CreatureType type)) {
+          ASSERT(type);
 
-        Vector2 posToSpawn{};
-        while (1) {
-          posToSpawn = {
-            CREATURES_SPAWN_MARGIN
-              + GRAND.FRand() * (WORLD_X - 2 * CREATURES_SPAWN_MARGIN),
-            CREATURES_SPAWN_MARGIN
-              + GRAND.FRand() * (WORLD_Y - 2 * CREATURES_SPAWN_MARGIN),
-          };
-          auto t = MIN(
-            1,
-            Unlerp(
-              Vector2Distance(PLAYER_CREATURE.pos, posToSpawn),
-              ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MIN,
-              ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX
-            )
-          );
-          if (t <= 0)
-            continue;
-          if (t > GRAND.FRand())
-            break;
-        };
-
-        CreaturePreSpawn spawn{
-          .type = type,
-          .pos  = posToSpawn,
-        };
-        spawn.createdAt.SetNow();
-        *g.run.creaturePreSpawns.Add() = spawn;
-      };
-
-      int  spawnEnemiesEvery = FIXED_FPS;
-      auto multiplier        = 1 + (f32)g.run.playerStats[StatType_ENEMIES] / 100.0f;
-      multiplier             = MAX(0.001f, multiplier);
-      spawnEnemiesEvery      = Round((f32)spawnEnemiesEvery / multiplier);
-      spawnEnemiesEvery      = MAX(1, spawnEnemiesEvery);
-
-      if (CanSpawnMoreCreatures()
-          && (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0))
-      {
-        FOR_RANGE (int, toSpawnIndex, g.run.toSpawn) {
-          const auto   factor = GRAND.FRand();
-          CreatureType spawnType{};
-
-          FOR_RANGE (int, k, g.run.thisWaveMobsCount) {
-            const auto& c = g.run.thisWaveMobs[k];
-            if (factor < c.accumulatedFactor) {
-              spawnType = c.type;
+          Vector2 posToSpawn{};
+          while (1) {
+            posToSpawn = {
+              CREATURES_SPAWN_MARGIN
+                + GRAND.FRand() * (WORLD_X - 2 * CREATURES_SPAWN_MARGIN),
+              CREATURES_SPAWN_MARGIN
+                + GRAND.FRand() * (WORLD_Y - 2 * CREATURES_SPAWN_MARGIN),
+            };
+            auto t = MIN(
+              1,
+              Unlerp(
+                Vector2Distance(PLAYER_CREATURE.pos, posToSpawn),
+                ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MIN,
+                ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX
+              )
+            );
+            if (t <= 0)
+              continue;
+            if (t > GRAND.FRand())
               break;
-            }
-          }
-          makePreSpawn(spawnType);
-        }
+          };
 
-        if (g.run.toSpawn < 3)
-          g.run.toSpawn++;
-      }
+          CreaturePreSpawn spawn{
+            .type = type,
+            .pos  = posToSpawn,
+          };
+          spawn.createdAt.SetNow();
+          *g.run.creaturePreSpawns.Add() = spawn;
+        };
 
-      // Spawning trees every 10 seconds.
-      if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
-        const int toSpawn = GetNumberOfTreesToSpawn();
-        FOR_RANGE (int, i, toSpawn) {
-          makePreSpawn(CreatureType_TREE);
-        }
-      }
-    }
+        int  spawnEnemiesEvery = FIXED_FPS;
+        auto multiplier        = 1 + (f32)g.run.playerStats[StatType_ENEMIES] / 100.0f;
+        multiplier             = MAX(0.001f, multiplier);
+        spawnEnemiesEvery      = Round((f32)spawnEnemiesEvery / multiplier);
+        spawnEnemiesEvery      = MAX(1, spawnEnemiesEvery);
 
-    // Spawning.
-    {  ///
-      const int total = g.run.creaturePreSpawns.count;
-      int       off   = 0;
-      FOR_RANGE (int, i, total) {
-        auto& v = g.run.creaturePreSpawns[i - off];
-        if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
-          MakeCreature({
-            .type = v.type,
-            .pos  = v.pos,
-          });
-          g.run.creaturePreSpawns.UnstableRemoveAt(i - off);
-          off++;
-        }
-      }
-    }
-
-    // Mobs contact-damage player.
-    if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
-      ZoneScopedN("Mobs contact-damage player.");
-
-      const auto playerPos = PLAYER_CREATURE.pos;
-      for (int i = 1; i < g.run.creatures.count; i++) {
-        const auto& creature = g.run.creatures[i];
-        if (creature.diedAt.IsSet())
-          continue;
-
-        const auto fb = fb_creatures->Get(creature.type);
-        if (fb->hostility_type() != HostilityType_MOB)
-          continue;
-
-        if (Vector2DistanceSqr(playerPos, creature.pos)
-            <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
+        if (CanSpawnMoreCreatures()
+            && (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0))
         {
-          const f32 damage
-            = fb->contact_damage()
-              + fb->contact_damage_increase_per_wave()
-                  * (f32)(g.run.waveIndex + 1 - fb->appearing_wave_number());
-          TryApplyDamage({
-            .creatureIndex                = 0,
-            .damage                       = ApplyPlayerArmorToIncomingDamage(damage),
-            .damageApplicatorCreatureType = creature.type,
-          });
+          FOR_RANGE (int, toSpawnIndex, g.run.toSpawn) {
+            const auto   factor = GRAND.FRand();
+            CreatureType spawnType{};
+
+            FOR_RANGE (int, k, g.run.thisWaveMobsCount) {
+              const auto& c = g.run.thisWaveMobs[k];
+              if (factor < c.accumulatedFactor) {
+                spawnType = c.type;
+                break;
+              }
+            }
+            makePreSpawn(spawnType);
+          }
+
+          if (g.run.toSpawn < 3)
+            g.run.toSpawn++;
+        }
+
+        // Spawning trees every 10 seconds.
+        if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
+          const int toSpawn = GetNumberOfTreesToSpawn();
+          FOR_RANGE (int, i, toSpawn) {
+            makePreSpawn(CreatureType_TREE);
+          }
         }
       }
-    }
 
-    // Picking up pickupables.
-    if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
-      ZoneScopedN("Picking up pickupables.");
-
-      for (auto& pickupable : g.run.pickupables) {
-        if (pickupable.pickedUpAt.IsSet()) {
-          pickupable.pos
-            = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
-        }
-        else {
-          auto pickupRangeScale = (f32)(100 + g.run.playerStats[StatType_PICKUP_RANGE]);
-          pickupRangeScale      = MAX(30, pickupRangeScale);
-          pickupRangeScale /= 100.0f;
-
-          if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
-              <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
-          {
-            pickupable.pickedUpAt.SetNow();
-            MakeNumber({
-              .type  = NumberType_PICKUPABLE,
-              .value = 1,
-              .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+      // Spawning.
+      {  ///
+        const int total = g.run.creaturePreSpawns.count;
+        int       off   = 0;
+        FOR_RANGE (int, i, total) {
+          auto& v = g.run.creaturePreSpawns[i - off];
+          if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
+            MakeCreature({
+              .type = v.type,
+              .pos  = v.pos,
             });
+            g.run.creaturePreSpawns.UnstableRemoveAt(i - off);
+            off++;
+          }
+        }
+      }
 
-            const int consumableOrCrateHeal
-              = MAX(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
+      // Mobs contact-damage player.
+      if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+        ZoneScopedN("Mobs contact-damage player.");
 
-            switch (pickupable.type) {
-            case PickupableType_COIN: {
-              const auto& data   = pickupable.DataCoin();
-              int         amount = data.amount;
+        const auto playerPos = PLAYER_CREATURE.pos;
+        for (int i = 1; i < g.run.creatures.count; i++) {
+          const auto& creature = g.run.creatures[i];
+          if (creature.diedAt.IsSet())
+            continue;
 
-              if (GRAND.FRand()
-                  < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-                amount *= 2;
+          const auto fb = fb_creatures->Get(creature.type);
+          if (fb->hostility_type() != HostilityType_MOB)
+            continue;
 
-              AddCoins(amount);
-              AddXP((f32)amount);
+          if (Vector2DistanceSqr(playerPos, creature.pos)
+              <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
+          {
+            const f32 damage
+              = fb->contact_damage()
+                + fb->contact_damage_increase_per_wave()
+                    * (f32)(g.run.waveIndex + 1 - fb->appearing_wave_number());
+            TryApplyDamage({
+              .creatureIndex                = 0,
+              .damage                       = ApplyPlayerArmorToIncomingDamage(damage),
+              .damageApplicatorCreatureType = creature.type,
+            });
+          }
+        }
+      }
 
-              auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;
-              if (GRAND.FRand() < healChance)
-                HealPlayer();
-            } break;
+      // Picking up pickupables.
+      if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+        ZoneScopedN("Picking up pickupables.");
 
-            case PickupableType_CONSUMABLE: {
-              if (consumableOrCrateHeal > 0)
-                HealPlayer(consumableOrCrateHeal);
-            } break;
+        for (auto& pickupable : g.run.pickupables) {
+          if (pickupable.pickedUpAt.IsSet()) {
+            pickupable.pos
+              = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
+          }
+          else {
+            auto pickupRangeScale = (f32)(100 + g.run.playerStats[StatType_PICKUP_RANGE]);
+            pickupRangeScale      = MAX(30, pickupRangeScale);
+            pickupRangeScale /= 100.0f;
 
-            case PickupableType_CRATE: {
-              if (consumableOrCrateHeal > 0)
-                HealPlayer(consumableOrCrateHeal);
-              g.run.crates++;
-            } break;
+            if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
+                <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
+            {
+              pickupable.pickedUpAt.SetNow();
+              MakeNumber({
+                .type  = NumberType_PICKUPABLE,
+                .value = 1,
+                .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+              });
 
-            default:
-              INVALID_PATH;
+              const int consumableOrCrateHeal
+                = MAX(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
+
+              switch (pickupable.type) {
+              case PickupableType_COIN: {
+                const auto& data   = pickupable.DataCoin();
+                int         amount = data.amount;
+
+                if (GRAND.FRand()
+                    < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+                  amount *= 2;
+
+                AddCoins(amount);
+                AddXP((f32)amount);
+
+                auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;
+                if (GRAND.FRand() < healChance)
+                  HealPlayer();
+              } break;
+
+              case PickupableType_CONSUMABLE: {
+                if (consumableOrCrateHeal > 0)
+                  HealPlayer(consumableOrCrateHeal);
+              } break;
+
+              case PickupableType_CRATE: {
+                if (consumableOrCrateHeal > 0)
+                  HealPlayer(consumableOrCrateHeal);
+                g.run.crates++;
+              } break;
+
+              default:
+                INVALID_PATH;
+              }
             }
           }
         }
@@ -4739,211 +4804,211 @@ void GameFixedUpdate() {
         }
       }
     }
-  }
 
-  // Creatures moving.
-  {  ///
-    ZoneScopedN("Creatures moving.");
+    // Creatures moving.
+    {  ///
+      ZoneScopedN("Creatures moving.");
 
-    for (auto& creature : g.run.creatures) {
-      if (creature.diedAt.IsSet())
-        continue;
+      for (auto& creature : g.run.creatures) {
+        if (creature.diedAt.IsSet())
+          continue;
 
-      const auto fb = fb_creatures->Get(creature.type);
+        const auto fb = fb_creatures->Get(creature.type);
 
-      auto speedScale = creature.speed * creature.speedModifier * SPEED_MULTIPLIER;
-      if (creature.type == CreatureType_PLAYER) {
-        speedScale *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
+        auto speedScale = creature.speed * creature.speedModifier * SPEED_MULTIPLIER;
+        if (creature.type == CreatureType_PLAYER) {
+          speedScale *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
 
-        if (g.meta.godMode)
-          speedScale *= 1.5f;
-      }
-      else {
-        speedScale *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
-        speedScale = MAX(0, speedScale);
-      };
-
-      speedScale *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING_SPEED_SCALE;
-
-      b2Body_ApplyLinearImpulseToCenter(
-        creature.body.id,
-        ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
-        true
-      );
-
-      if (abs(creature.controller.move.x) > 0.2f) {
-        if (creature.controller.move.x > 0)
-          creature.dir.x = 1;
-        else
-          creature.dir.x = -1;
-      }
-    }
-  }
-
-  // Updating box2d world.
-  {  ///
-    ZoneScopedN("Updating box2d world.");
-    b2World_Step(g.run.world, FIXED_DT, 4);
-  }
-
-  // Updating body positions.
-  {  ///
-    ZoneScopedN("Updating body positions.");
-
-    for (auto& creature : g.run.creatures) {
-      if (creature.diedAt.IsSet())
-        continue;
-
-      creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
-
-      const auto velocity = ToVector2(b2Body_GetLinearVelocity(creature.body.id));
-
-      const auto tolerance = 0.1f;
-
-      if ((abs(velocity.x) < tolerance) && (abs(velocity.y) < tolerance)) {
-        creature.movementAccumulator = 0;
-        if (!creature.idleStartedAt.IsSet())
-          creature.idleStartedAt.SetNow();
-      }
-      else {
-        creature.movementAccumulator += Vector2Length(velocity) * FIXED_DT;
-        if (creature.idleStartedAt.IsSet())
-          creature.idleStartedAt = {};
-      }
-
-      const auto fb = fb_creatures->Get(creature.type);
-      creature.movementAccumulator
-        = fmodf(creature.movementAccumulator, fb->movement_accumulator_meters_cycle());
-    }
-  }
-
-  // Player weapons shooting.
-  if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
-    ZoneScopedN("Player weapons shooting.");
-
-    int weaponIndex = -1;
-    for (auto& weapon : g.run.playerWeapons) {
-      weaponIndex++;
-      if (!weapon.type)
-        continue;
-
-      const auto fb  = fb_weapons->Get(weapon.type);
-      const auto pos = PLAYER_CREATURE.pos + weapon.offset;
-
-      f32 minDistSqr           = f32_inf;
-      int closestCreatureIndex = -1;
-
-      // Resetting cooldown.
-      const auto cooldownDur = ApplyAttackSpeedToDuration(fb->cooldown_frames());
-      if (weapon.cooldownStartedAt.IsSet()
-          && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
-        weapon.cooldownStartedAt = {};
-
-      if (!weapon.cooldownStartedAt.IsSet()) {
-        int creatureIndex = -1;
-        for (const auto& creature : g.run.creatures) {
-          creatureIndex++;
-
-          if (creature.diedAt.IsSet() || (creature.type == CreatureType_PLAYER))
-            continue;
-
-          const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
-
-          if (distSqr < minDistSqr) {
-            minDistSqr           = distSqr;
-            closestCreatureIndex = creatureIndex;
-          }
-        }
-
-        bool targetSet = false;
-
-        if (closestCreatureIndex >= 0) {
-          const auto& closestCreature = g.run.creatures[closestCreatureIndex];
-          auto        range           = GetWeaponRange(weapon.type);
-
-          if (fb->projectile_type()) {
-            const auto fb_projectile = glib->projectiles()->Get(fb->projectile_type());
-            range += fb_projectile->collider_radius();
-          }
-          else {
-            const auto fb_texture
-              = glib->atlas_textures()->Get(fb->texture_ids()->Get(0));
-            // TODO: ATLAS_D2.
-            range += (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO
-                     / METER_LOGICAL_SIZE / 2.0f;
-          }
-
-          if (minDistSqr < SQR(range)) {
-            const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
-
-            // Only ranged weapons continue tracking target
-            // in the middle of shooting.
-            if (fb->projectile_type())
-              weapon.targetDir = dir;
-
-            if (!weapon.startedShootingAt.IsSet()) {
-              weapon.targetDir   = dir;
-              weapon.detachedPos = GetWeaponPos(weapon);
-              weapon.startedShootingAt.SetNow();
-            }
-            targetSet = true;
-          }
-        }
-
-        if (!targetSet && !weapon.startedShootingAt.IsSet())
-          weapon.targetDir = {};
-      }
-
-      if (weapon.startedShootingAt.IsSet()) {
-        const auto projectileType = (ProjectileType)fb->projectile_type();
-        const auto e              = weapon.startedShootingAt.Elapsed();
-
-        const auto shootingDur
-          = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
-
-        const auto projectileSpawnFrames = fb->projectile_spawn_frames();
-
-        if (projectileType) {
-          // It's a weapon that shoots projectiles (RANGED / ELEMENTAL damage types).
-          ASSERT(projectileSpawnFrames);
-
-          bool       spawn     = false;
-          const auto speedMult = GetPlayerStatAttackSpeedMultiplier();
-          for (auto value : *projectileSpawnFrames) {
-            if (Ceil((f32)value / speedMult) == e.value) {
-              spawn = true;
-              break;
-            }
-          }
-
-          if (spawn) {
-            MakeProjectile({
-              .type              = projectileType,
-              .ownerCreatureType = PLAYER_CREATURE.type,
-              .weaponIndex       = weaponIndex,
-              .pos               = pos,
-              .dir               = weapon.targetDir,
-              .range             = GetWeaponRange(weapon.type),
-              .damage            = GetWeaponDamage(weapon.type, weapon.tier),
-              .critDamage        = fb->critical_damage(),
-              .knockbackMeters   = fb->knockback_meters(),
-              .pierce            = fb->projectile_pierce(),
-              .bounce            = fb->projectile_bounce(),
-            });
-          }
+          if (g.meta.godMode)
+            speedScale *= 1.5f;
         }
         else {
-          // It's a weapon that gets "shot" itself (MELEE / ELEMENTAL damage types).
-          ASSERT(!projectileSpawnFrames);
+          speedScale *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
+          speedScale = MAX(0, speedScale);
+        };
 
-          auto p = e.Progress(shootingDur);
+        speedScale *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING_SPEED_SCALE;
 
-          const auto colliderActiveStart = 0.25f;
-          const auto colliderActiveEnd   = 0.5f;
+        b2Body_ApplyLinearImpulseToCenter(
+          creature.body.id,
+          ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
+          true
+        );
 
-          const auto texId      = fb->texture_ids()->Get(0);
-          const auto fb_texture = glib->atlas_textures()->Get(texId);
-          const auto    colliderSize = Vector2{
+        if (abs(creature.controller.move.x) > 0.2f) {
+          if (creature.controller.move.x > 0)
+            creature.dir.x = 1;
+          else
+            creature.dir.x = -1;
+        }
+      }
+    }
+
+    // Updating box2d world.
+    {  ///
+      ZoneScopedN("Updating box2d world.");
+      b2World_Step(g.run.world, FIXED_DT, 4);
+    }
+
+    // Updating body positions.
+    {  ///
+      ZoneScopedN("Updating body positions.");
+
+      for (auto& creature : g.run.creatures) {
+        if (creature.diedAt.IsSet())
+          continue;
+
+        creature.pos = ToVector2(b2Body_GetPosition(creature.body.id));
+
+        const auto velocity = ToVector2(b2Body_GetLinearVelocity(creature.body.id));
+
+        const auto tolerance = 0.1f;
+
+        if ((abs(velocity.x) < tolerance) && (abs(velocity.y) < tolerance)) {
+          creature.movementAccumulator = 0;
+          if (!creature.idleStartedAt.IsSet())
+            creature.idleStartedAt.SetNow();
+        }
+        else {
+          creature.movementAccumulator += Vector2Length(velocity) * FIXED_DT;
+          if (creature.idleStartedAt.IsSet())
+            creature.idleStartedAt = {};
+        }
+
+        const auto fb = fb_creatures->Get(creature.type);
+        creature.movementAccumulator
+          = fmodf(creature.movementAccumulator, fb->movement_accumulator_meters_cycle());
+      }
+    }
+
+    // Player weapons shooting.
+    if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      ZoneScopedN("Player weapons shooting.");
+
+      int weaponIndex = -1;
+      for (auto& weapon : g.run.playerWeapons) {
+        weaponIndex++;
+        if (!weapon.type)
+          continue;
+
+        const auto fb  = fb_weapons->Get(weapon.type);
+        const auto pos = PLAYER_CREATURE.pos + weapon.offset;
+
+        f32 minDistSqr           = f32_inf;
+        int closestCreatureIndex = -1;
+
+        // Resetting cooldown.
+        const auto cooldownDur = ApplyAttackSpeedToDuration(fb->cooldown_frames());
+        if (weapon.cooldownStartedAt.IsSet()
+            && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
+          weapon.cooldownStartedAt = {};
+
+        if (!weapon.cooldownStartedAt.IsSet()) {
+          int creatureIndex = -1;
+          for (const auto& creature : g.run.creatures) {
+            creatureIndex++;
+
+            if (creature.diedAt.IsSet() || (creature.type == CreatureType_PLAYER))
+              continue;
+
+            const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
+
+            if (distSqr < minDistSqr) {
+              minDistSqr           = distSqr;
+              closestCreatureIndex = creatureIndex;
+            }
+          }
+
+          bool targetSet = false;
+
+          if (closestCreatureIndex >= 0) {
+            const auto& closestCreature = g.run.creatures[closestCreatureIndex];
+            auto        range           = GetWeaponRange(weapon.type);
+
+            if (fb->projectile_type()) {
+              const auto fb_projectile = glib->projectiles()->Get(fb->projectile_type());
+              range += fb_projectile->collider_radius();
+            }
+            else {
+              const auto fb_texture
+                = glib->atlas_textures()->Get(fb->texture_ids()->Get(0));
+              // TODO: ATLAS_D2.
+              range += (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO
+                       / METER_LOGICAL_SIZE / 2.0f;
+            }
+
+            if (minDistSqr < SQR(range)) {
+              const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
+
+              // Only ranged weapons continue tracking target
+              // in the middle of shooting.
+              if (fb->projectile_type())
+                weapon.targetDir = dir;
+
+              if (!weapon.startedShootingAt.IsSet()) {
+                weapon.targetDir   = dir;
+                weapon.detachedPos = GetWeaponPos(weapon);
+                weapon.startedShootingAt.SetNow();
+              }
+              targetSet = true;
+            }
+          }
+
+          if (!targetSet && !weapon.startedShootingAt.IsSet())
+            weapon.targetDir = {};
+        }
+
+        if (weapon.startedShootingAt.IsSet()) {
+          const auto projectileType = (ProjectileType)fb->projectile_type();
+          const auto e              = weapon.startedShootingAt.Elapsed();
+
+          const auto shootingDur
+            = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+
+          const auto projectileSpawnFrames = fb->projectile_spawn_frames();
+
+          if (projectileType) {
+            // It's a weapon that shoots projectiles (RANGED / ELEMENTAL damage
+            // types).
+            ASSERT(projectileSpawnFrames);
+
+            bool       spawn     = false;
+            const auto speedMult = GetPlayerStatAttackSpeedMultiplier();
+            for (auto value : *projectileSpawnFrames) {
+              if (Ceil((f32)value / speedMult) == e.value) {
+                spawn = true;
+                break;
+              }
+            }
+
+            if (spawn) {
+              MakeProjectile({
+                .type              = projectileType,
+                .ownerCreatureType = PLAYER_CREATURE.type,
+                .weaponIndex       = weaponIndex,
+                .pos               = pos,
+                .dir               = weapon.targetDir,
+                .range             = GetWeaponRange(weapon.type),
+                .damage            = GetWeaponDamage(weapon.type, weapon.tier),
+                .critDamage        = fb->critical_damage(),
+                .knockbackMeters   = fb->knockback_meters(),
+                .pierce            = fb->projectile_pierce(),
+                .bounce            = fb->projectile_bounce(),
+              });
+            }
+          }
+          else {
+            // It's a weapon that gets "shot" itself (MELEE / ELEMENTAL damage types).
+            ASSERT(!projectileSpawnFrames);
+
+            auto p = e.Progress(shootingDur);
+
+            const auto colliderActiveStart = 0.25f;
+            const auto colliderActiveEnd   = 0.5f;
+
+            const auto texId      = fb->texture_ids()->Get(0);
+            const auto fb_texture = glib->atlas_textures()->Get(texId);
+            const auto    colliderSize = Vector2{
               // TODO: ATLAS_D2.
               (f32)fb_texture->size_x(),
               // NOTE:
@@ -4952,235 +5017,86 @@ void GameFixedUpdate() {
               (f32)fb->melee_collider_height_px() / 2.0f,
             } * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
-          if ((colliderActiveStart <= p) && (p <= colliderActiveEnd)) {
-            CheckCollisionsRect(
-              ShapeCategory_STATIC,
-              (u32)ShapeCategory_CREATURE,
-              GetWeaponPos(weapon),
-              colliderSize,
-              weapon.targetDir,
-              OnWeaponCollided,
-              &weaponIndex
-            );
+            if ((colliderActiveStart <= p) && (p <= colliderActiveEnd)) {
+              CheckCollisionsRect(
+                ShapeCategory_STATIC,
+                (u32)ShapeCategory_CREATURE,
+                GetWeaponPos(weapon),
+                colliderSize,
+                weapon.targetDir,
+                OnWeaponCollided,
+                &weaponIndex
+              );
+            }
           }
-        }
 
-        if (e >= shootingDur) {
-          weapon.startedShootingAt = {};
-          weapon.piercedCount      = 0;
-          weapon.cooldownStartedAt.SetNow();
+          if (e >= shootingDur) {
+            weapon.startedShootingAt = {};
+            weapon.piercedCount      = 0;
+            weapon.cooldownStartedAt.SetNow();
+          }
         }
       }
     }
-  }
 
-  // Updating projectiles:
-  // - Movement.
-  // - Marking to remove because of travel distance.
-  // - Mob collisions.
-  // - Marking to remove because of pierce count.
-  {  ///
-    ZoneScopedN("Updating projectiles.");
+    // Updating projectiles:
+    // - Movement.
+    // - Marking to remove because of travel distance.
+    // - Mob collisions.
+    // - Marking to remove because of pierce count.
+    {  ///
+      ZoneScopedN("Updating projectiles.");
 
-    int projectileIndex = -1;
-    for (auto& projectile : g.run.projectiles) {
-      projectileIndex++;
+      int projectileIndex = -1;
+      for (auto& projectile : g.run.projectiles) {
+        projectileIndex++;
 
-      const auto fb       = fb_projectiles->Get(projectile.type);
-      const auto distance = FIXED_DT * fb->speed();
-      projectile.travelledDistance += distance;
-      projectile.pos += projectile.dir * distance;
+        const auto fb       = fb_projectiles->Get(projectile.type);
+        const auto distance = FIXED_DT * fb->speed();
+        projectile.travelledDistance += distance;
+        projectile.pos += projectile.dir * distance;
 
-      bool createAoe = false;
+        bool createAoe = false;
 
-      if (projectile.travelledDistance >= projectile.range) {
-        if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
-          *g.run.projectilesToRemove.Add() = projectileIndex;
-          if (fb->aoe_particle_type() && fb->aoe_on_travel_end())
-            createAoe = true;
-        }
-      }
-
-      int start = 0;
-      int end   = g.run.creatures.count;
-
-      if (projectile.ownerCreatureType == CreatureType_PLAYER)
-        start = 1;
-      else
-        end = 1;
-
-      for (int creatureIndex = start; creatureIndex < end; creatureIndex++) {
-        auto& creature = g.run.creatures[creatureIndex];
-        if (creature.diedAt.IsSet())
-          continue;
-
-        // Not damaging already damaged creatures.
-        if (ArrayContains(
-              projectile.damagedCreatureIds.base, projectile.damagedCount, creature.id
-            ))
-          continue;
-
-        const auto fb_creature = fb_creatures->Get(creature.type);
-
-        const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
-        const auto radius  = fb->collider_radius();
-        if (distSqr < SQR(radius)) {
-          Vector2 knockbackDirection{};
-
-          f32  damage = projectile.damage;
-          bool isCrit = false;
-          if (projectile.ownerCreatureType == CreatureType_PLAYER) {
-            // Player damages mob.
-            damage *= GetPlayerStatDamageMultiplier();
-            isCrit = IsCrit();
-            if (isCrit)
-              damage *= projectile.critDamage;
-
-            if (fb_creature->is_boss()) {
-              damage *= MAX(
-                0, (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
-              );
-            }
-
-            knockbackDirection
-              = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos);
-          }
-          else {
-            // Mob damages player.
-            damage *= ApplyPlayerArmorToIncomingDamage(damage);
-          }
-
-          const f32 piercingDamageMultiplier
-            = (f32)g.run.playerStats[StatType_PIERCING_DAMAGE] / 100.0f;
-
-          f32 knockback = projectile.knockbackMeters;
-
-          FOR_RANGE (int, i, projectile.piercedCount) {
-            damage *= piercingDamageMultiplier;
-            knockback *= piercingDamageMultiplier;
-          }
-
-          int ailmentSpread = 0;
-          if (fb->ailment_type() == AilmentType_BURN)
-            ailmentSpread = MAX(0, g.run.playerStats[StatType_BURNING_SPREAD]);
-
-          if (TryApplyDamage({
-                .creatureIndex                = creatureIndex,
-                .damage                       = damage,
-                .directionOrZero              = knockbackDirection,
-                .knockbackMeters              = knockback,
-                .damageApplicatorCreatureType = projectile.ownerCreatureType,
-                .isCrit                       = isCrit,
-                .indexOfWeaponThatDidDamage   = projectile.weaponIndex,
-                .ailment{
-                  .type   = (AilmentType)fb->ailment_type(),
-                  .value  = fb->ailment_value(),
-                  .spread = ailmentSpread,
-                },
-                .ailmentChance = fb->ailment_chance(),
-              }))
-          {
-            auto maxBounce = projectile.bounce;
-            auto maxPierce = projectile.pierce;
-            if (projectile.ownerCreatureType == CreatureType_PLAYER) {
-              maxBounce += g.run.playerStats[StatType_BOUNCES];
-              maxPierce += g.run.playerStats[StatType_PIERCING];
-            }
-
-            bool canBounce = projectile.bouncedCount < maxBounce;
-            bool canPierce = projectile.piercedCount < maxPierce;
-            if (projectile.damagedCount >= projectile.damagedCreatureIds.count) {
-              canBounce = false;
-              canPierce = false;
-            }
-
-            if (canBounce) {
-              projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
-              projectile.bouncedCount++;
-              projectile.travelledDistance = 0;
-
-              const Creature* found = nullptr;
-              Vector2         forecastedPos{};
-
-              FOR_RANGE (int, i, 8) {
-                const auto c
-                  = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
-
-                if (!AreEnemies(c->type, CreatureType_PLAYER))
-                  continue;
-                if (c->diedAt.IsSet())
-                  continue;
-                if (ArrayContains(
-                      projectile.damagedCreatureIds.base, projectile.damagedCount, c->id
-                    ))
-                  continue;
-
-                const auto forecastedCreaturePos = ForecastWhereProjectileWillHitCreature(
-                  c->pos,
-                  c->controller.move * c->speed * c->speedModifier,
-                  projectile.pos,
-                  fb->speed()
-                );
-                const auto d = Vector2DistanceSqr(forecastedCreaturePos, projectile.pos);
-                if (d <= SQR(projectile.range)) {
-                  found         = c;
-                  forecastedPos = forecastedCreaturePos;
-                  break;
-                }
-              }
-              if (found)
-                projectile.dir = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
-              else
-                projectile.dir = Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
-            }
-            else if (canPierce) {
-              projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
-              projectile.piercedCount++;
-            }
-            else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
-              *g.run.projectilesToRemove.Add() = projectileIndex;
-              if (fb->aoe_on_contact())
-                createAoe = true;
-            }
+        if (projectile.travelledDistance >= projectile.range) {
+          if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
+            *g.run.projectilesToRemove.Add() = projectileIndex;
+            if (fb->aoe_particle_type() && fb->aoe_on_travel_end())
+              createAoe = true;
           }
         }
-      }
 
-      // Creating AOE particle.
-      if (createAoe && fb->aoe_particle_type() && (GRAND.FRand() < fb->aoe_chance())) {
-        const auto fb = fb_projectiles->Get(projectile.type);
+        int start = 0;
+        int end   = g.run.creatures.count;
 
-        auto sizeMultiplier = GetExplosionSizeMultiplier();
+        if (projectile.ownerCreatureType == CreatureType_PLAYER)
+          start = 1;
+        else
+          end = 1;
 
-        Particle p{
-          .type  = (ParticleType)fb->aoe_particle_type(),
-          .pos   = projectile.pos,
-          .scale = sizeMultiplier,
-        };
-        p.createdAt.SetNow();
-
-        int creatureIndex = -1;
-        for (auto& creature : g.run.creatures) {
-          creatureIndex++;
-
+        for (int creatureIndex = start; creatureIndex < end; creatureIndex++) {
+          auto& creature = g.run.creatures[creatureIndex];
           if (creature.diedAt.IsSet())
             continue;
-          if (!AreEnemies(projectile.ownerCreatureType, creature.type))
-            continue;
-          if (Vector2DistanceSqr(creature.pos, projectile.pos)
-              > SQR(fb->aoe_radius() * sizeMultiplier + MOB_HURTBOX_RADIUS))
+
+          // Not damaging already damaged creatures.
+          if (ArrayContains(
+                projectile.damagedCreatureIds.base, projectile.damagedCount, creature.id
+              ))
             continue;
 
           const auto fb_creature = fb_creatures->Get(creature.type);
 
-          f32  damage = projectile.damage * GetExplosionDamageMultiplier();
-          bool isCrit = false;
-          if (projectile.ownerCreatureType == CreatureType_PLAYER) {
-            // Player damages mob.
-            damage *= GetPlayerStatDamageMultiplier();
-            damage *= (f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1;
+          const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
+          const auto radius  = fb->collider_radius();
+          if (distSqr < SQR(radius)) {
+            Vector2 knockbackDirection{};
 
-            if (damage > 0) {
+            f32  damage = projectile.damage;
+            bool isCrit = false;
+            if (projectile.ownerCreatureType == CreatureType_PLAYER) {
+              // Player damages mob.
+              damage *= GetPlayerStatDamageMultiplier();
               isCrit = IsCrit();
               if (isCrit)
                 damage *= projectile.critDamage;
@@ -5191,268 +5107,424 @@ void GameFixedUpdate() {
                   (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
                 );
               }
+
+              knockbackDirection
+                = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos);
+            }
+            else {
+              // Mob damages player.
+              damage *= ApplyPlayerArmorToIncomingDamage(damage);
+            }
+
+            const f32 piercingDamageMultiplier
+              = (f32)g.run.playerStats[StatType_PIERCING_DAMAGE] / 100.0f;
+
+            f32 knockback = projectile.knockbackMeters;
+
+            FOR_RANGE (int, i, projectile.piercedCount) {
+              damage *= piercingDamageMultiplier;
+              knockback *= piercingDamageMultiplier;
+            }
+
+            int ailmentSpread = 0;
+            if (fb->ailment_type() == AilmentType_BURN)
+              ailmentSpread = MAX(0, g.run.playerStats[StatType_BURNING_SPREAD]);
+
+            if (TryApplyDamage({
+                  .creatureIndex                = creatureIndex,
+                  .damage                       = damage,
+                  .directionOrZero              = knockbackDirection,
+                  .knockbackMeters              = knockback,
+                  .damageApplicatorCreatureType = projectile.ownerCreatureType,
+                  .isCrit                       = isCrit,
+                  .indexOfWeaponThatDidDamage   = projectile.weaponIndex,
+                  .ailment{
+                    .type   = (AilmentType)fb->ailment_type(),
+                    .value  = fb->ailment_value(),
+                    .spread = ailmentSpread,
+                  },
+                  .ailmentChance = fb->ailment_chance(),
+                }))
+            {
+              auto maxBounce = projectile.bounce;
+              auto maxPierce = projectile.pierce;
+              if (projectile.ownerCreatureType == CreatureType_PLAYER) {
+                maxBounce += g.run.playerStats[StatType_BOUNCES];
+                maxPierce += g.run.playerStats[StatType_PIERCING];
+              }
+
+              bool canBounce = projectile.bouncedCount < maxBounce;
+              bool canPierce = projectile.piercedCount < maxPierce;
+              if (projectile.damagedCount >= projectile.damagedCreatureIds.count) {
+                canBounce = false;
+                canPierce = false;
+              }
+
+              if (canBounce) {
+                projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
+                projectile.bouncedCount++;
+                projectile.travelledDistance = 0;
+
+                const Creature* found = nullptr;
+                Vector2         forecastedPos{};
+
+                FOR_RANGE (int, i, 8) {
+                  const auto c
+                    = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
+
+                  if (!AreEnemies(c->type, CreatureType_PLAYER))
+                    continue;
+                  if (c->diedAt.IsSet())
+                    continue;
+                  if (ArrayContains(
+                        projectile.damagedCreatureIds.base, projectile.damagedCount, c->id
+                      ))
+                    continue;
+
+                  const auto forecastedCreaturePos
+                    = ForecastWhereProjectileWillHitCreature(
+                      c->pos,
+                      c->controller.move * c->speed * c->speedModifier,
+                      projectile.pos,
+                      fb->speed()
+                    );
+                  const auto d
+                    = Vector2DistanceSqr(forecastedCreaturePos, projectile.pos);
+                  if (d <= SQR(projectile.range)) {
+                    found         = c;
+                    forecastedPos = forecastedCreaturePos;
+                    break;
+                  }
+                }
+                if (found)
+                  projectile.dir
+                    = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
+                else
+                  projectile.dir = Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
+              }
+              else if (canPierce) {
+                projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
+                projectile.piercedCount++;
+              }
+              else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
+                *g.run.projectilesToRemove.Add() = projectileIndex;
+                if (fb->aoe_on_contact())
+                  createAoe = true;
+              }
+            }
+          }
+        }
+
+        // Creating AOE particle.
+        if (createAoe && fb->aoe_particle_type() && (GRAND.FRand() < fb->aoe_chance())) {
+          const auto fb = fb_projectiles->Get(projectile.type);
+
+          auto sizeMultiplier = GetExplosionSizeMultiplier();
+
+          Particle p{
+            .type  = (ParticleType)fb->aoe_particle_type(),
+            .pos   = projectile.pos,
+            .scale = sizeMultiplier,
+          };
+          p.createdAt.SetNow();
+
+          int creatureIndex = -1;
+          for (auto& creature : g.run.creatures) {
+            creatureIndex++;
+
+            if (creature.diedAt.IsSet())
+              continue;
+            if (!AreEnemies(projectile.ownerCreatureType, creature.type))
+              continue;
+            if (Vector2DistanceSqr(creature.pos, projectile.pos)
+                > SQR(fb->aoe_radius() * sizeMultiplier + MOB_HURTBOX_RADIUS))
+              continue;
+
+            const auto fb_creature = fb_creatures->Get(creature.type);
+
+            f32  damage = projectile.damage * GetExplosionDamageMultiplier();
+            bool isCrit = false;
+            if (projectile.ownerCreatureType == CreatureType_PLAYER) {
+              // Player damages mob.
+              damage *= GetPlayerStatDamageMultiplier();
+              damage *= (f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1;
+
+              if (damage > 0) {
+                isCrit = IsCrit();
+                if (isCrit)
+                  damage *= projectile.critDamage;
+
+                if (fb_creature->is_boss()) {
+                  damage *= MAX(
+                    0,
+                    (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100)
+                      / 100.0f
+                  );
+                }
+              }
+            }
+            else {
+              // Mob damages player.
+              damage *= ApplyPlayerArmorToIncomingDamage(damage);
+            }
+
+            TryApplyDamage({
+              .creatureIndex   = creatureIndex,
+              .damage          = damage,
+              .directionOrZero = Vector2DirectionOrRandom(projectile.pos, creature.pos),
+              .knockbackMeters = projectile.knockbackMeters,
+              .damageApplicatorCreatureType = projectile.ownerCreatureType,
+              .isCrit                       = isCrit,
+              .indexOfWeaponThatDidDamage   = projectile.weaponIndex,
+            });
+          }
+          *g.run.particles.Add() = p;
+        }
+      }
+    }
+
+    // Processing `projectilesToRemove`.
+    if (g.run.projectilesToRemove.count > 0) {  ///
+      ZoneScopedN("Processing `projectilesToRemove`.");
+
+      qsort(
+        (void*)g.run.projectilesToRemove.base,
+        g.run.projectilesToRemove.count,
+        sizeof(*g.run.projectilesToRemove.base),
+        (int (*)(const void*, const void*))IntCmp
+      );
+      FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
+        const auto projectileIndex
+          = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
+        g.run.projectiles.UnstableRemoveAt(projectileIndex);
+      }
+      g.run.projectilesToRemove.Reset();
+    }
+
+    // Processing `justDamagedCreatures`.
+    {  ///
+      ZoneScopedN("Processing `justDamagedCreatures`.");
+
+      // auto playerHurt = false;
+      // auto mobHurt    = false;
+
+      for (const auto index : g.run.justDamagedCreatures) {
+        auto& creature = g.run.creatures[index];
+
+        const auto fb = fb_creatures->Get(creature.type);
+
+        // if (index == 0)
+        //   playerHurt = true;
+        // else
+        //   mobHurt = true;
+
+        if (creature.health <= 0) {
+          DestroyBody(&creature.body);
+          creature.diedAt.SetNow();
+
+          if (!index) {
+            // Player died.
+            if (!g.run.scheduledWaveCompleted.IsSet()) {
+              g.run.scheduledWaveCompleted.SetNow();
+              g.run.waveWon = false;
             }
           }
           else {
-            // Mob damages player.
-            damage *= ApplyPlayerArmorToIncomingDamage(damage);
-          }
+            // Mob died.
 
-          TryApplyDamage({
-            .creatureIndex   = creatureIndex,
-            .damage          = damage,
-            .directionOrZero = Vector2DirectionOrRandom(projectile.pos, creature.pos),
-            .knockbackMeters = projectile.knockbackMeters,
-            .damageApplicatorCreatureType = projectile.ownerCreatureType,
-            .isCrit                       = isCrit,
-            .indexOfWeaponThatDidDamage   = projectile.weaponIndex,
-          });
-        }
-        *g.run.particles.Add() = p;
-      }
-    }
-  }
+            // Spawning children if mob spawns them on death.
+            if (fb->on_death_spawns_creature_type() && CanSpawnMoreCreatures()) {
+              int toSpawn = GRAND.RandInt(
+                fb->on_death_spawns_count_min(), fb->on_death_spawns_count_max()
+              );
+              FOR_RANGE (int, i, toSpawn) {
+                constexpr Rect bounds{
+                  .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
+                  .size{
+                    WORLD_X - 2 * CREATURES_SPAWN_MARGIN,
+                    WORLD_Y - 2 * CREATURES_SPAWN_MARGIN
+                  },
+                };
 
-  // Processing `projectilesToRemove`.
-  if (g.run.projectilesToRemove.count > 0) {  ///
-    ZoneScopedN("Processing `projectilesToRemove`.");
-
-    qsort(
-      (void*)g.run.projectilesToRemove.base,
-      g.run.projectilesToRemove.count,
-      sizeof(*g.run.projectilesToRemove.base),
-      (int (*)(const void*, const void*))IntCmp
-    );
-    FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
-      const auto projectileIndex
-        = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
-      g.run.projectiles.UnstableRemoveAt(projectileIndex);
-    }
-    g.run.projectilesToRemove.Reset();
-  }
-
-  // Processing `justDamagedCreatures`.
-  {  ///
-    ZoneScopedN("Processing `justDamagedCreatures`.");
-
-    // auto playerHurt = false;
-    // auto mobHurt    = false;
-
-    for (const auto index : g.run.justDamagedCreatures) {
-      auto& creature = g.run.creatures[index];
-
-      const auto fb = fb_creatures->Get(creature.type);
-
-      // if (index == 0)
-      //   playerHurt = true;
-      // else
-      //   mobHurt = true;
-
-      if (creature.health <= 0) {
-        DestroyBody(&creature.body);
-        creature.diedAt.SetNow();
-
-        if (!index) {
-          // Player died.
-          if (!g.run.scheduledWaveCompleted.IsSet()) {
-            g.run.scheduledWaveCompleted.SetNow();
-            g.run.waveWon = false;
-          }
-        }
-        else {
-          // Mob died.
-
-          // Spawning children if mob spawns them on death.
-          if (fb->on_death_spawns_creature_type() && CanSpawnMoreCreatures()) {
-            int toSpawn = GRAND.RandInt(
-              fb->on_death_spawns_count_min(), fb->on_death_spawns_count_max()
-            );
-            FOR_RANGE (int, i, toSpawn) {
-              constexpr Rect bounds{
-                .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
-                .size{
-                  WORLD_X - 2 * CREATURES_SPAWN_MARGIN,
-                  WORLD_Y - 2 * CREATURES_SPAWN_MARGIN
-                },
-              };
-
-              Vector2 pos{};
-              do {
-                const auto t1 = GRAND.FRand();
-                pos           = creature.pos
-                      + Vector2Rotate(
-                        Vector2(
-                          Lerp(
-                            fb->on_death_spawns_distance_min(),
-                            fb->on_death_spawns_distance_max(),
-                            t1
+                Vector2 pos{};
+                do {
+                  const auto t1 = GRAND.FRand();
+                  pos           = creature.pos
+                        + Vector2Rotate(
+                          Vector2(
+                            Lerp(
+                              fb->on_death_spawns_distance_min(),
+                              fb->on_death_spawns_distance_max(),
+                              t1
+                            ),
+                            0
                           ),
-                          0
-                        ),
-                        GRAND.FRand() * 2.0f * PI
-                      );
-              } while (!bounds.ContainsInside(pos));
+                          GRAND.FRand() * 2.0f * PI
+                        );
+                } while (!bounds.ContainsInside(pos));
 
-              CreaturePreSpawn spawn{
-                .type = (CreatureType)fb->on_death_spawns_creature_type(),
-                .pos  = pos,
+                CreaturePreSpawn spawn{
+                  .type = (CreatureType)fb->on_death_spawns_creature_type(),
+                  .pos  = pos,
+                };
+                spawn.createdAt.SetNow();
+                *g.run.creaturePreSpawns.Add() = spawn;
+              }
+            }
+
+            // Mob drops coin / consumable / crate.
+            if (creature.health != -f32_inf) {
+              MakePickupableData data{
+                .type        = PickupableType_COIN,
+                .pos         = creature.pos,
+                .coin_amount = fb->coins_dropped(),
               };
-              spawn.createdAt.SetNow();
-              *g.run.creaturePreSpawns.Add() = spawn;
-            }
-          }
-
-          // Mob drops coin / consumable / crate.
-          if (creature.health != -f32_inf) {
-            MakePickupableData data{
-              .type        = PickupableType_COIN,
-              .pos         = creature.pos,
-              .coin_amount = fb->coins_dropped(),
-            };
-            MakePickupable(data);
-
-            const auto luckFactor = GetLuckFactor();
-            if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
-              data.type = PickupableType_CONSUMABLE;
-
-              const auto crateChance = CRATE_INSTEAD_OF_CONSUMABLE_FACTOR * luckFactor
-                                       / (f32)(1 + g.run.cratesDroppedThisWave);
-              if (GRAND.FRand() <= crateChance) {
-                data.type = PickupableType_CRATE;
-                g.run.cratesDroppedThisWave++;
-              }
-
               MakePickupable(data);
+
+              const auto luckFactor = GetLuckFactor();
+              if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
+                data.type = PickupableType_CONSUMABLE;
+
+                const auto crateChance = CRATE_INSTEAD_OF_CONSUMABLE_FACTOR * luckFactor
+                                         / (f32)(1 + g.run.cratesDroppedThisWave);
+                if (GRAND.FRand() <= crateChance) {
+                  data.type = PickupableType_CRATE;
+                  g.run.cratesDroppedThisWave++;
+                }
+
+                MakePickupable(data);
+              }
+            }
+
+            // Counting mob as player killed.
+            if (creature.health != -f32_inf) {
+              g.run.playerKilledEnemies++;
+              if (creature.lastDamagedWeaponIndex >= 0)
+                g.run.playerWeapons[creature.lastDamagedWeaponIndex].killedEnemies++;
+
+              IterateOverWeaponEffects(
+                EffectConditionType_KILL_N_ENEMIES_GET_STAT,
+                [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                  if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
+                    ApplyEffect(fb_effect, 1);
+                }
+              );
+              IterateOverWeaponEffects(
+                EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
+                [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                  if (weapon.killedEnemies % fb_effect->condition_value() == 0)
+                    ApplyEffect(fb_effect, 1);
+                }
+              );
+              IterateOverItemEffects(
+                EffectConditionType_KILL_N_ENEMIES_GET_STAT,
+                [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                  if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
+                    ApplyEffect(fb_effect, item.count);
+                }
+              );
             }
           }
+        }
+      }
 
-          // Counting mob as player killed.
-          if (creature.health != -f32_inf) {
-            g.run.playerKilledEnemies++;
-            if (creature.lastDamagedWeaponIndex >= 0)
-              g.run.playerWeapons[creature.lastDamagedWeaponIndex].killedEnemies++;
+      // if (playerHurt)
+      //   PlaySound(Sound_GAME_PLAYER_HURT);
+      // if (mobHurt)
+      //   PlaySound(Sound_GAME_HURT);
 
-            IterateOverWeaponEffects(
-              EffectConditionType_KILL_N_ENEMIES_GET_STAT,
-              [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
-                  ApplyEffect(fb_effect, 1);
-              }
-            );
-            IterateOverWeaponEffects(
-              EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
-              [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                if (weapon.killedEnemies % fb_effect->condition_value() == 0)
-                  ApplyEffect(fb_effect, 1);
-              }
-            );
-            IterateOverItemEffects(
-              EffectConditionType_KILL_N_ENEMIES_GET_STAT,
-              [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
-                  ApplyEffect(fb_effect, item.count);
-              }
-            );
-          }
+      g.run.justDamagedCreatures.Reset();
+    }
+
+    // Removing old died creatures.
+    {  ///
+      ZoneScopedN("Removing old died creatures.");
+
+      const int total = g.run.creatures.count;
+      int       off   = 0;
+
+      FOR_RANGE (int, i, total) {
+        auto& creature = g.run.creatures[i - off];
+        if ((creature.type != CreatureType_PLAYER)  //
+            && creature.diedAt.IsSet()              //
+            && (creature.diedAt.Elapsed() >= DIE_FRAMES))
+        {
+          g.run.creatures.UnstableRemoveAt(i - off);
+          off++;
         }
       }
     }
 
-    // if (playerHurt)
-    //   PlaySound(Sound_GAME_PLAYER_HURT);
-    // if (mobHurt)
-    //   PlaySound(Sound_GAME_HURT);
+    // Removing old damage numbers.
+    {  ///
+      ZoneScopedN("Removing old damage numbers.");
 
-    g.run.justDamagedCreatures.Reset();
+      int removed = 0;
+      int left    = -1;
+      FOR_RANGE (int, i, g.run.numbers.count) {
+        const auto& number = g.run.numbers[i];
+        if (number.createdAt.Elapsed() >= DAMAGE_NUMBERS_FRAMES) {
+          if (left == -1)
+            left = i;
+          removed++;
+        }
+        else if (left >= 0)
+          g.run.numbers[left++] = number;
+      }
+      g.run.numbers.count -= removed;
+    }
+
+    // Removing old picked up pickupables.
+    {  ///
+      ZoneScopedN("Removing old picked up pickupables.");
+
+      const auto total = g.run.pickupables.count;
+      int        off   = 0;
+      FOR_RANGE (int, i, total) {
+        const auto& pickupable = g.run.pickupables[i - off];
+        if (pickupable.pickedUpAt.IsSet()
+            && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
+        {
+          g.run.pickupables.UnstableRemoveAt(i - off);
+          off++;
+        }
+      }
+    }
+
+    // Removing old particles.
+    {  ///
+      ZoneScopedN("Removing old particles.");
+
+      const auto total = g.run.particles.count;
+      int        off   = 0;
+      FOR_RANGE (int, i, total) {
+        const auto& particle = g.run.particles[i - off];
+        const auto  fb       = fb_particles->Get(particle.type);
+        if (particle.createdAt.Elapsed() >= lframe::FromSeconds(fb->duration_seconds())) {
+          g.run.particles.UnstableRemoveAt(i - off);
+          off++;
+        }
+      }
+    }
+
+    // Sorting particles.
+    {  ///
+      ZoneScopedN("Sorting particles.");
+
+      qsort(
+        (void*)g.run.particles.base,
+        g.run.particles.count,
+        sizeof(*g.run.particles.base),
+        (int (*)(const void*, const void*))ParticleCmp
+      );
+    }
+
+    g.run.camera.pos = GetCameraTargetPos();
+    g.meta.frameGame++;
   }
 
   DoUI(false);
-
-  // Removing old died creatures.
-  {  ///
-    ZoneScopedN("Removing old died creatures.");
-
-    const int total = g.run.creatures.count;
-    int       off   = 0;
-
-    FOR_RANGE (int, i, total) {
-      auto& creature = g.run.creatures[i - off];
-      if ((creature.type != CreatureType_PLAYER)  //
-          && creature.diedAt.IsSet()              //
-          && (creature.diedAt.Elapsed() >= DIE_FRAMES))
-      {
-        g.run.creatures.UnstableRemoveAt(i - off);
-        off++;
-      }
-    }
-  }
-
-  // Removing old damage numbers.
-  {  ///
-    ZoneScopedN("Removing old damage numbers.");
-
-    int removed = 0;
-    int left    = -1;
-    FOR_RANGE (int, i, g.run.numbers.count) {
-      const auto& number = g.run.numbers[i];
-      if (number.createdAt.Elapsed() >= DAMAGE_NUMBERS_FRAMES) {
-        if (left == -1)
-          left = i;
-        removed++;
-      }
-      else if (left >= 0)
-        g.run.numbers[left++] = number;
-    }
-    g.run.numbers.count -= removed;
-  }
-
-  // Removing old picked up pickupables.
-  {  ///
-    ZoneScopedN("Removing old picked up pickupables.");
-
-    const auto total = g.run.pickupables.count;
-    int        off   = 0;
-    FOR_RANGE (int, i, total) {
-      const auto& pickupable = g.run.pickupables[i - off];
-      if (pickupable.pickedUpAt.IsSet()
-          && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
-      {
-        g.run.pickupables.UnstableRemoveAt(i - off);
-        off++;
-      }
-    }
-  }
-
-  // Removing old particles.
-  {  ///
-    ZoneScopedN("Removing old particles.");
-
-    const auto total = g.run.particles.count;
-    int        off   = 0;
-    FOR_RANGE (int, i, total) {
-      const auto& particle = g.run.particles[i - off];
-      const auto  fb       = fb_particles->Get(particle.type);
-      if (particle.createdAt.Elapsed() >= lframe::FromSeconds(fb->duration_seconds())) {
-        g.run.particles.UnstableRemoveAt(i - off);
-        off++;
-      }
-    }
-  }
-
-  // Sorting particles.
-  {  ///
-    ZoneScopedN("Sorting particles.");
-
-    qsort(
-      (void*)g.run.particles.base,
-      g.run.particles.count,
-      sizeof(*g.run.particles.base),
-      (int (*)(const void*, const void*))ParticleCmp
-    );
-  }
-
-  g.run.camera.pos = GetCameraTargetPos();
-  g.meta.frame++;
+  g.meta.frameVisual++;
 }
 
 int GetTextureIdByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
