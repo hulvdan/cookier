@@ -5,7 +5,7 @@
 constexpr int        WORLD_X                                  = 34;
 constexpr int        WORLD_Y                                  = 34;
 constexpr Vector2Int WORLD_SIZE                               = {WORLD_X, WORLD_Y};
-constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX = 10;
+constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX = 12;
 constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MIN = 4;
 constexpr f32        SPEED_MULTIPLIER                         = 10;
 constexpr f32        WORLD_CORNER_MARGIN_X                    = 3.0f;
@@ -44,6 +44,7 @@ constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.6f;
 constexpr f32 MOB_HURTBOX_RADIUS        = 0.7f;
 constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
+constexpr f32 BURNING_SPREAD_DISTANCE   = MOB_HURTBOX_RADIUS * 3.5f;
 
 // Other.
 // ============================================================
