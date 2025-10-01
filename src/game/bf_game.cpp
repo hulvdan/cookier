@@ -707,6 +707,7 @@ struct Placeholder {
 struct Particle {
   ParticleType type      = {};
   Vector2      pos       = {};
+  f32          scale     = 1;
   LogicalFrame createdAt = {};
 };
 
@@ -2076,6 +2077,18 @@ lframe ApplyAttackSpeedToDuration(int duration) {  ///
     1,
     (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration) / GetPlayerStatAttackSpeedMultiplier())
   ));
+}
+
+f32 GetExplosionDamageMultiplier() {  ///
+  auto v = (f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE];
+  return MAX(0, 1.0f + v / 100.0f);
+}
+
+f32 GetExplosionSizeMultiplier() {  ///
+  auto v = (f32)g.run.playerStats[StatType_EXPLOSION_SIZE];
+  if (v >= 0)
+    return 1 + v / 100.0f;
+  return powf(2, v / 50);
 }
 
 f32 GetWeaponRange(WeaponType type) {  ///
@@ -5134,9 +5147,12 @@ void GameFixedUpdate() {
       if (createAoe && fb->aoe_particle_type() && (GRAND.FRand() < fb->aoe_chance())) {
         const auto fb = fb_projectiles->Get(projectile.type);
 
+        auto sizeMultiplier = GetExplosionSizeMultiplier();
+
         Particle p{
-          .type = (ParticleType)fb->aoe_particle_type(),
-          .pos  = projectile.pos,
+          .type  = (ParticleType)fb->aoe_particle_type(),
+          .pos   = projectile.pos,
+          .scale = sizeMultiplier,
         };
         p.createdAt.SetNow();
 
@@ -5149,24 +5165,29 @@ void GameFixedUpdate() {
           if (!AreEnemies(projectile.ownerCreatureType, creature.type))
             continue;
           if (Vector2DistanceSqr(creature.pos, projectile.pos)
-              > SQR(fb->aoe_radius() + MOB_HURTBOX_RADIUS))
+              > SQR(fb->aoe_radius() * sizeMultiplier + MOB_HURTBOX_RADIUS))
             continue;
 
           const auto fb_creature = fb_creatures->Get(creature.type);
 
-          f32  damage = projectile.damage;
+          f32  damage = projectile.damage * GetExplosionDamageMultiplier();
           bool isCrit = false;
           if (projectile.ownerCreatureType == CreatureType_PLAYER) {
             // Player damages mob.
             damage *= GetPlayerStatDamageMultiplier();
-            isCrit = IsCrit();
-            if (isCrit)
-              damage *= projectile.critDamage;
+            damage *= (f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1;
 
-            if (fb_creature->is_boss()) {
-              damage *= MAX(
-                0, (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
-              );
+            if (damage > 0) {
+              isCrit = IsCrit();
+              if (isCrit)
+                damage *= projectile.critDamage;
+
+              if (fb_creature->is_boss()) {
+                damage *= MAX(
+                  0,
+                  (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
+                );
+              }
             }
           }
           else {
@@ -5716,6 +5737,7 @@ void GameDraw() {
       DrawGroup_CommandTexture({
         .texId = fb->texture_ids()->Get(0),
         .pos   = particle.pos,
+        .scale = Vector2One() * particle.scale,
         .color = Fade(WHITE, EaseOutQuad(1 - p)),
       });
     }
