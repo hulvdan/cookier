@@ -25,11 +25,13 @@ x клёвое форматирование / перенос слов в сво�
 x отображение инфы по взрыву в карточке оружия
 x fix данные оружия: поверх неё них не рисуются теперь иконки статов из списка статов
 x ref clay use floating.offset
-x linear decay of mob spawning near player
+x чем ближе моб спавнится к игроку, тем меньше вероятность его спавна (в опред радиусе)
+x распространение горения
 
+* ref visualFrame / logicalFrame. gameplay should only use logicalFrame
+* StatType_ATTACK_SPEED exponential divide by 2 when negative
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
-* broken_strings: proper lines support
 * explosion: damage scalings (look at brotato)
 * explosion: stats: % Explosion Damage: Increases or decreases the damage of Explosions
 * explosion: stats: % Explosion Size: Increases or decreases the size of Explosions
@@ -42,13 +44,7 @@ x linear decay of mob spawning near player
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * stats: Burning Spread: Increases the amount of times Burn spreads.
 * is brotato arena squared?
-* burning spread
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
-* engine: better fonts rendering
-* engine: automatically scale fonts for current screenSize
-*
-* elemental weapon with bouncing projectile that slows down / burns mobs
-  (chech other types of elemental damage)
 *
 *
 * stat effect: ENGINEERING
@@ -60,8 +56,6 @@ x linear decay of mob spawning near player
 * mob that rotates when moving?
 *
 *
-* engine: different atlases for different resolutions
-* engine: handle the case when there's too much textures to pack into 1 atlas
 * wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 * wave completed: stashed coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
@@ -84,11 +78,6 @@ x linear decay of mob spawning near player
 *
 *
 * aseprite show image center
-* HTML game loading screen?
-* record+replay system
-* internet shouldn't be required for building:
-  check web debug yandex build with mocked ysdk
-* trim pngs of transparent pixels
 
 QA:
 ================================================================================
@@ -109,3 +98,16 @@ MOBS:
 - tiny mob
 - mob boss - галет (он сухой)
 - tree - cow / apple tree
+
+TECH DEBT
+============================================================
+* broken_strings: proper lines support
+* engine: better fonts rendering
+* engine: automatically scale fonts for current screenSize
+* engine: different atlases for different resolutions
+* engine: handle the case when there's too much textures to pack into 1 atlas
+* HTML game loading screen?
+* record+replay system
+* trim pngs of transparent pixels
+* internet shouldn't be required for building:
+  check web debug yandex build with mocked ysdk
