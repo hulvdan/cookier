@@ -32,9 +32,9 @@ x StatType_ATTACK_SPEED correct scaling
 x ref FrameGame / FrameVisual. Gameplay must use only FrameGame
 x Пауза (P в вебе, ESC/P на десктопе)
 x not giving stat on buying item if it has condition
-x wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
+x не поднятые с прошлой волны монеты отправляются в «хранилище».
+  во время следующей волны игрок получает x2 монеты, пока они не закончатся в хранилище
 
-* wave completed: stashed coins drop during the next wave with x2 value
 * turrel
 * melee weapons attack from player's center of player
 * slashing melee attacks
