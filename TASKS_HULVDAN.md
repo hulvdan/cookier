@@ -24,8 +24,8 @@ x взрывная пуля + "частица" взрыва
 x клёвое форматирование / перенос слов в своём flexbox-е
 x отображение инфы по взрыву в карточке оружия
 x fix данные оружия: поверх неё них не рисуются теперь иконки статов из списка статов
+x ref clay use floating.offset
 
-* ref clay use floating.offset
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
 * linear decay of mob spawning near player (min_dist, max_dist)
