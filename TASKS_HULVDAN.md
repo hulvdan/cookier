@@ -28,9 +28,9 @@ x ref clay use floating.offset
 x чем ближе моб спавнится к игроку, тем меньше вероятность его спавна (в опред радиусе)
 x распространение горения
 x stats: % Explosion Damage + Size
+x StatType_ATTACK_SPEED correct scaling
 
 * ref visualFrame / logicalFrame. gameplay should only use logicalFrame
-* StatType_ATTACK_SPEED exponential divide by 2 when negative
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
 * explosion: damage scalings (look at brotato)
