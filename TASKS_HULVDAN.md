@@ -32,6 +32,7 @@ x StatType_ATTACK_SPEED correct scaling
 x ref FrameGame / FrameVisual. Gameplay must use only FrameGame
 x pause works
 
+* stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * not giving stat on buying item if it has condition
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
@@ -39,8 +40,6 @@ x pause works
 * think about boss
   + shoots oooo oooo oooo rows of projectiles like in brotato?
   + what would cookie-boss do?
-* stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
-* stats: Burning Spread: Increases the amount of times Burn spreads.
 * is brotato arena squared?
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
 *
