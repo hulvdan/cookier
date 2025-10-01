@@ -857,7 +857,7 @@ BF_FORCE_INLINE int _DrawGroupCmp(
 }
 
 // clang-format off
-static const u8 _utf8d[364]{  ///
+static const u8 _utf8d[364] {  ///
 	// The first part of the table maps bytes to character classes that
 	// to reduce the size of the transition table and create bitmasks.
 	 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

@@ -38,12 +38,36 @@ x клик теперь по нажатию мышки, а не релизу, т
 x fix: рогатка учитывает стат ENEMY_SPEED при предсказании позиции мобов
 x fix: end screen item counts should be drawn BELOW weapon modals
 
+* fix: weapons DrawZ
 * turrel
+* coin pickup particles
+* keyboard input prompts
+* navigating in pickedup item /upgrades / shop / end with keyboard
+* button 9slice
+* stats coloring
+* weapon tags (primitive etc.) + set bonuses
+* weapon effect: +dmg for a number of the same weapon
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
 * melee weapons attack from player's center of player
 * slashing melee attacks
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * pause: unpause on touch
 * pause: touch support
+* stat descriptions
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
 * explosion: damage scalings (look at brotato)
@@ -69,7 +93,6 @@ x fix: end screen item counts should be drawn BELOW weapon modals
   - sending them for listening to foobar2000
     (total commander: «Feed to listbox» then drag'n drop)
   - fast editing with audacity (fade in, fade out, compression, export macroses)
-* weapons DrawZ
 * gather all weapon classes (e.g. primitive)
 * weapon tag: primitive 3 6 9 12 15 hp
 * weapon tag: ethereal 3 6 9 12 15 armor
@@ -112,3 +135,4 @@ TECH DEBT
 * trim pngs of transparent pixels
 * internet shouldn't be required for building:
   check web debug yandex build with mocked ysdk
+* font shader that remaps fillColor and outlineColor
