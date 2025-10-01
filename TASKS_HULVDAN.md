@@ -23,19 +23,20 @@ x взрывная пуля + "частица" взрыва
   (нужно прикрутить explosion size + explosion damage статы)
 x клёвое форматирование / перенос слов в своём flexbox-е
 x отображение инфы по взрыву в карточке оружия
-x fix данные оружия: поверх неё них не рисуются теперь иконки статов из списка статов
-x ref clay use floating.offset
+x fix данные оружия: поверх них не рисуются теперь иконки статов из списка статов
 x чем ближе моб спавнится к игроку, тем меньше вероятность его спавна (в опред радиусе)
 x распространение горения
 x stats: % Explosion Damage + Size
-x StatType_ATTACK_SPEED correct scaling
-x ref FrameGame / FrameVisual. Gameplay must use only FrameGame
+x StatType_ATTACK_SPEED корректное скалирование
 x Пауза (P в вебе, ESC/P на десктопе)
-x not giving stat on buying item if it has condition
+x фикс - при покупке предмета не даём игроку статы, на которых висит условие получения
+  (т.е. получение «в конце волны» не даёт стт сразу при покупке - нужно пройти след волну)
 x не поднятые с прошлой волны монеты отправляются в «хранилище».
   во время следующей волны игрок получает x2 монеты, пока они не закончатся в хранилище
-x buying with 1234 keys, rerolling with r, клик теперь по нажатию мышки (а не релизу)
+x покупать можно кнопками 1234, перебрасывать R
+x клик теперь по нажатию мышки, а не релизу, т.к. Женя достал
 
+* fix end screen item counts should draw BELOW weapon modals
 * turrel
 * melee weapons attack from player's center of player
 * slashing melee attacks
