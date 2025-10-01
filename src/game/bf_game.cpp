@@ -4286,8 +4286,9 @@ void GameFixedUpdate() {
 
         pickupable.startedFlyingAt.SetNow();
 
-        const auto durVariation
-          = WAVE_COMPLETED_FRAMES.value - WAVE_COMPLETED_COINS_FLYING_FRAMES.value;
+        const auto durVariation = WAVE_COMPLETED_FRAMES.value
+                                  - WAVE_COMPLETED_COINS_FLYING_FRAMES.value
+                                  - WAVE_COMPLETED_COINS_FLYING_FRAMES_RIGHT.value;
         pickupable.startedFlyingAt._value += (i64)(GRAND.FRand() * (f32)durVariation);
       }
     }
@@ -4723,23 +4724,37 @@ void GameFixedUpdate() {
                 <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
             {
               pickupable.pickedUpAt.SetNow();
-              MakeNumber({
-                .type  = NumberType_PICKUPABLE,
-                .value = 1,
-                .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
-              });
 
               const int consumableOrCrateHeal
                 = MAX(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
 
               switch (pickupable.type) {
               case PickupableType_COIN: {
-                const auto& data   = pickupable.DataCoin();
-                int         amount = data.amount;
+                const auto& data    = pickupable.DataCoin();
+                int         amount  = data.amount;
+                int         xNumber = 1;
 
                 if (GRAND.FRand()
                     < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+                {
                   amount *= 2;
+                  xNumber *= 2;
+                }
+
+                if (g.run.notPickedUpCoins > 0) {
+                  g.run.notPickedUpCoins--;
+                  amount *= 2;
+                  xNumber *= 2;
+                }
+
+                if (xNumber > 1) {
+                  MakeNumber({
+                    .type  = NumberType_PICKUPABLE,
+                    .value = xNumber,
+                    .pos
+                    = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+                  });
+                }
 
                 AddCoins(amount);
                 AddXP((f32)amount);
@@ -5796,7 +5811,7 @@ void GameDraw() {
       else {
         const char* format = "%d";
         if (number.type == NumberType_PICKUPABLE)
-          format = "+%d";
+          format = "x%d";
 
         const auto text = TextFormat(format, MAX(1, number.value));
         bytesCount      = strlen(text);
@@ -5899,9 +5914,8 @@ void GameDraw() {
       auto p
         = pickupable.startedFlyingAt.Elapsed().Progress(WAVE_COMPLETED_COINS_FLYING_FRAMES
         );
-      p = Clamp01(p);
-      // p   = EaseInOutQuad(p);
-      p   = EaseInOutCubic(p);
+      p   = Clamp01(p);
+      p   = EaseInQuad(p);
       pos = Vector2Lerp(pos, g.ui.notPickedUpCoinsLogicalPos, p);
     }
 
