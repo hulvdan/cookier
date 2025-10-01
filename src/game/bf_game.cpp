@@ -2382,11 +2382,11 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (bool, clicked, ()) {  ///
-    return !draw && Clay_Hovered() && IsMouseReleased(L);
+    return !draw && Clay_Hovered() && IsMousePressed(L);
   };
 
   LAMBDA (bool, rightClicked, ()) {  ///
-    return !draw && Clay_Hovered() && IsMouseReleased(R);
+    return !draw && Clay_Hovered() && IsMousePressed(R);
   };
 
   struct ComponentButtonData {
@@ -3410,11 +3410,13 @@ void DoUI(bool draw) {
               // Choose button.
               CLAY({.layout{BF_CLAY_SIZING_GROW_X, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}
               ) {
-                const auto clicked
+                bool chosen
                   = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
                       BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
                     });
-                if (clicked) {
+                if (!draw && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + i)))
+                  chosen = true;
+                if (chosen) {
                   if (g.run.previousLevel < g.run.xpLevel) {
                     g.run.previousLevel++;
                     g.run.scheduledUpgrades = true;
@@ -3444,7 +3446,7 @@ void DoUI(bool draw) {
         const auto calculatedRerollPrice
           = ApplyStatRerollPrice(g.run.upgrades.rerolls.GetPrice());
         const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-        const bool rerolled
+        bool       rerolled
           = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
               CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
@@ -3452,6 +3454,8 @@ void DoUI(bool draw) {
                 BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
               }
             });
+        if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
+          rerolled = true;
         if (rerolled) {
           g.run.upgrades.rerolls.Roll();
           RefillUpgradesToPick();
@@ -3519,7 +3523,7 @@ void DoUI(bool draw) {
           const auto calculatedRerollPrice
             = ApplyStatRerollPrice(g.run.shop.rerolls.GetPrice());
           const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-          const bool rerolled
+          bool       rerolled
             = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
                   BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
@@ -3532,6 +3536,8 @@ void DoUI(bool draw) {
                   }
                 }
               });
+          if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
+            rerolled = true;
           if (rerolled) {
             g.run.shop.rerolls.Roll();
             RefillShopToPick();
@@ -3546,7 +3552,9 @@ void DoUI(bool draw) {
           .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
+          int toPickIndex = -1;
           for (auto& v : g.run.shop.toPick) {
+            toPickIndex++;
             const auto calculatedPrice = ApplyStatItemsPrice(v.price);
             bool canBuy = ((v.item || v.weapon) && (calculatedPrice <= PLAYER_COINS));
             int  emptyOrSameWeaponSlotIndex = -1;
@@ -3636,7 +3644,7 @@ void DoUI(bool draw) {
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                 }}) {
                   // Buying item / weapon.
-                  const auto bought
+                  auto bought
                     = componentButton({.enabled = canBuy}, [&]() BF_FORCE_INLINE_LAMBDA {
                         CLAY({.layout{
                           BF_CLAY_SIZING_GROW_X,
@@ -3649,6 +3657,9 @@ void DoUI(bool draw) {
                           BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                         }
                       });
+                  if (!draw && canBuy
+                      && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + toPickIndex)))
+                    bought = true;
 
                   if (bought) {
                     AddCoins(-calculatedPrice);
