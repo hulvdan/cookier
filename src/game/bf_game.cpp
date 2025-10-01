@@ -4444,15 +4444,26 @@ void GameFixedUpdate() {
         ASSERT(type);
 
         Vector2 posToSpawn{};
-        do {
+        while (1) {
           posToSpawn = {
             CREATURES_SPAWN_MARGIN
               + GRAND.FRand() * (WORLD_X - 2 * CREATURES_SPAWN_MARGIN),
             CREATURES_SPAWN_MARGIN
               + GRAND.FRand() * (WORLD_Y - 2 * CREATURES_SPAWN_MARGIN),
           };
-        } while (Vector2DistanceSqr(PLAYER_CREATURE.pos, posToSpawn)
-                 < SQR(RADIUS_OF_NOT_SPAWNING_AROUND_PLAYER));
+          auto t = MIN(
+            1,
+            Unlerp(
+              Vector2Distance(PLAYER_CREATURE.pos, posToSpawn),
+              ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MIN,
+              ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX
+            )
+          );
+          if (t <= 0)
+            continue;
+          if (t > GRAND.FRand())
+            break;
+        };
 
         CreaturePreSpawn spawn{
           .type = type,

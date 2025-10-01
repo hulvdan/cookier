@@ -6,13 +6,19 @@
 #  define PI 3.14159265358979323846
 #endif
 
-f32 Unlerp(f32 a, f32 b, f32 c) {  ///
-  auto result = (c - a) / (b - a);
-  return result;
+bool FloatEquals(f32 v1, f32 v2) {  ///
+  return abs(v1 - v2) < 0.00001f;
+}
+
+f32 Unlerp(f32 value, f32 rangeMin, f32 rangeMax) {  ///
+  auto v1 = (value - rangeMin);
+  auto v2 = (rangeMax - rangeMin);
+  return v1 / v2;
 }
 
 TEST_CASE ("Unlerp") {  ///
-  ASSERT(Unlerp(10.0f, 20.0f, 18.0f) == 0.8f);
+  auto v = Unlerp(18.0f, 10.0f, 20.0f);
+  ASSERT(FloatEquals(v, 0.8f));
 }
 
 #define REVOLUTIONS2RAD (3.14159265358979f)
@@ -205,10 +211,6 @@ f32 GetLesserAngle(f32 aa, f32 bb) {  ///
   if (abs(a) > abs(b))
     return bb;
   return aa;
-}
-
-bool FloatEquals(f32 v1, f32 v2) {  ///
-  return abs(v1 - v2) < 0.00001f;
 }
 
 TEST_CASE ("GetLesserAngle") {  ///
@@ -600,6 +602,15 @@ f32 EaseBounceSmall(f32 p) {  ///
 
 f32 Lerp(f32 start, f32 end, f32 amount) {  ///
   return start + amount * (end - start);
+}
+
+f32 Remap(f32 v, f32 range1min, f32 range1max, f32 range2min, f32 range2max) {  ///
+  const auto t = Unlerp(v, range1min, range1max);
+  return Lerp(range2min, range2max, t);
+}
+
+TEST_CASE ("Remap") {  ///
+  ASSERT(FloatEquals(Remap(18.0f, 10.0f, 20.0f, 5.0f, 10.0f), 9.0f));
 }
 
 Vector2 Vector2ExponentialDecay(Vector2 a, Vector2 b, f32 decay, f32 dt) {  ///
