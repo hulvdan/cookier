@@ -2281,6 +2281,7 @@ void DoUI(bool draw) {
   Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
   int                              beautifiersCount = 0;
 
+  constexpr u16 GAP_VERY_SMALL           = 2;
   constexpr u16 GAP_SMALL                = 8;
   constexpr u16 GAP_BIG                  = 20;
   constexpr u16 PADDING_NINE_SLICE       = 12;
@@ -2433,22 +2434,10 @@ void DoUI(bool draw) {
           const auto fb = fb_stats->Get(stat);
 
           // Icon.
-          CLAY({.floating{
-            .attachPoints{
-              .element = CLAY_ATTACH_POINT_LEFT_CENTER,
-              .parent  = CLAY_ATTACH_POINT_LEFT_CENTER,
-            },
-            .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-            .attachTo           = CLAY_ATTACH_TO_PARENT,
-          }}) {
-            FLOATING_BEAUTIFY;
-            BF_CLAY_IMAGE({.texId = iconTexId});
-          }
+          BF_CLAY_IMAGE({.texId = iconTexId});
 
           if (fb->is_percent())
-            BF_CLAY_TEXT("   % ");
-          else
-            BF_CLAY_TEXT("   ");
+            BF_CLAY_TEXT("% ");
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
           BF_CLAY_SPACER_HORIZONTAL;
           BF_CLAY_TEXT(TextFormat("%d", value));
@@ -2466,7 +2455,7 @@ void DoUI(bool draw) {
       }
 
       // Stats.
-      CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+      CLAY({.layout{.childGap = GAP_VERY_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
       FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
         const auto type = (StatType)(i + 2);
         const auto fb   = glib->stats()->Get(type);
