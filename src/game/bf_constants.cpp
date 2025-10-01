@@ -7,7 +7,6 @@ constexpr int        WORLD_Y                                  = 34;
 constexpr Vector2Int WORLD_SIZE                               = {WORLD_X, WORLD_Y};
 constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX = 12;
 constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MIN = 4;
-constexpr f32        SPEED_MULTIPLIER                         = 10;
 constexpr f32        WORLD_CORNER_MARGIN_X                    = 3.0f;
 constexpr f32        WORLD_CORNER_MARGIN_Y                    = 3.0f * 9.0f / 16.0f;
 
@@ -184,14 +183,14 @@ constexpr auto BURNING_RATE    = lframe::Scaled(15);
 constexpr auto ZAP_SPEED_SCALE = 0.4f;
 
 // constexpr f32 BODY_LINEAR_DAMPING             = 10;
-// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 6.78f;
+// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 6.78f * 10.0f;
 constexpr f32 BODY_LINEAR_DAMPING             = 20;
-constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 3.29f;
+constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 3.29f * 10.0f;
 // constexpr f32 BODY_LINEAR_DAMPING             = 30;
-// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 2.13f;
+// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 2.13f * 10.0f;
 // constexpr f32 BODY_LINEAR_DAMPING             = 40;
-// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.55f;
+// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.55f * 10.0f;
 // constexpr f32 BODY_LINEAR_DAMPING             = 50;
-// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.2f;
+// constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.2f * 10.0f;
 
 ///

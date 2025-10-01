@@ -11,7 +11,7 @@ x больше оружий для разработки
   + рогатка для "bouncing" механики
 x горение минимально работает
   (нужно сделать spread + tick-rate)
-x projectile-ы "правильно смотрят" в направлении их полёта
+x fix: projectile-ы "правильно смотрят" в направлении их полёта
 x bouncing предсказывает позицию врага
 x shader: "flashing"
   перевод всех пикселей спрайта, к примеру,
@@ -35,8 +35,9 @@ x не поднятые с прошлой волны монеты отправл
   во время следующей волны игрок получает x2 монеты, пока они не закончатся в хранилище
 x покупать можно кнопками 1234, перебрасывать R
 x клик теперь по нажатию мышки, а не релизу, т.к. Женя достал
+x fix: рогатка учитывает стат ENEMY_SPEED при предсказании позиции мобов
 
-* fix end screen item counts should draw BELOW weapon modals
+* fix: end screen item counts should be drawn BELOW weapon modals
 * turrel
 * melee weapons attack from player's center of player
 * slashing melee attacks
@@ -82,7 +83,6 @@ x клик теперь по нажатию мышки, а не релизу, т
 QA:
 ================================================================================
 * StatType_ENEMY_SPEED
-* StatType_XP_GAIN
 * StatType_ARMOR
 * StatType_COINS_HEAL
 *
