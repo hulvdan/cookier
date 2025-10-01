@@ -4193,6 +4193,15 @@ bool AreEnemies(CreatureType t1, CreatureType t2) {  ///
   return false;
 }
 
+f32 GetCreatureSpeed(const Creature& creature) {  ///
+  f32 speed = creature.speed * creature.speedModifier;
+  if (AreEnemies(creature.type, CreatureType_PLAYER)) {
+    speed *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
+    speed = MAX(0, speed);
+  }
+  return speed;
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -4881,24 +4890,17 @@ void GameFixedUpdate() {
 
         const auto fb = fb_creatures->Get(creature.type);
 
-        auto speedScale = creature.speed * creature.speedModifier * SPEED_MULTIPLIER;
+        f32 speed = GetCreatureSpeed(creature);
         if (creature.type == CreatureType_PLAYER) {
-          speedScale *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
-
+          speed *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
           if (g.meta.godMode)
-            speedScale *= 1.5f;
+            speed *= 1.5f;
         }
-        else {
-          speedScale *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
-          speedScale = MAX(0, speedScale);
-        };
 
-        speedScale *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING_SPEED_SCALE;
+        speed *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING_SPEED_SCALE;
 
         b2Body_ApplyLinearImpulseToCenter(
-          creature.body.id,
-          ToB2Vec2(creature.controller.move * (FIXED_DT * speedScale)),
-          true
+          creature.body.id, ToB2Vec2(creature.controller.move * (FIXED_DT * speed)), true
         );
 
         if (abs(creature.controller.move.x) > 0.2f) {
@@ -5250,7 +5252,7 @@ void GameFixedUpdate() {
                   const auto forecastedCreaturePos
                     = ForecastWhereProjectileWillHitCreature(
                       c->pos,
-                      c->controller.move * c->speed * c->speedModifier,
+                      c->controller.move * GetCreatureSpeed(*c),
                       projectile.pos,
                       fb->speed()
                     );
