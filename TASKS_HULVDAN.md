@@ -32,7 +32,12 @@ x StatType_ATTACK_SPEED correct scaling
 x ref FrameGame / FrameVisual. Gameplay must use only FrameGame
 x Пауза (P в вебе, ESC/P на десктопе)
 x not giving stat on buying item if it has condition
+x wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
 
+* wave completed: stashed coins drop during the next wave with x2 value
+* turrel
+* melee weapons attack from player's center of player
+* slashing melee attacks
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * pause: unpause on touch
 * pause: touch support
@@ -51,10 +56,6 @@ x not giving stat on buying item if it has condition
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
 * stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
 * stats: Structure Range: Increases or decreases the range of Structures.
-*
-*
-* wave completed: not picked up coins fly to "stash" during the "WAVE COMPLETED" animation
-* wave completed: stashed coins drop during the next wave with x2 value
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *

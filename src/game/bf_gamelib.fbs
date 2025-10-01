@@ -255,6 +255,7 @@ table GameLibrary {
     ui_health_texture_ids: [int] (required);
     ui_modal_fade: float;
     ui_coin_texture_id: int;
+    ui_coin_x2_texture_id: int;
     ui_item_slot_texture_ids: [int] (required);
     ui_item_slot_colors: [uint] (required);
     ui_button_default_color: uint;

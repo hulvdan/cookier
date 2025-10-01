@@ -105,15 +105,16 @@ struct lframe {  ///
   }
 };
 
-constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS = lframe::Scaled(10);
-constexpr auto SPAWN_FRAMES                      = lframe::Scaled(60);
-constexpr auto DIE_FRAMES                        = lframe::Scaled(10);
-constexpr auto PLAYER_INVINCIBILITY_FRAMES       = lframe::Scaled(10);
-constexpr auto DAMAGE_NUMBERS_FRAMES             = lframe::Scaled(30);
-constexpr auto DAMAGE_NUMBERS_FADE_FRAMES        = lframe::Scaled(10);
-constexpr auto PICKUPABLE_FADE_FRAMES            = lframe::Scaled(10);
-constexpr auto LIFESTEAL_COOLDOWN_FRAMES         = lframe::Scaled(3);
-constexpr auto WAVE_COMPLETED_FRAMES             = lframe::Scaled(60);
+constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS  = lframe::Scaled(10);
+constexpr auto SPAWN_FRAMES                       = lframe::Scaled(60);
+constexpr auto DIE_FRAMES                         = lframe::Scaled(10);
+constexpr auto PLAYER_INVINCIBILITY_FRAMES        = lframe::Scaled(10);
+constexpr auto DAMAGE_NUMBERS_FRAMES              = lframe::Scaled(30);
+constexpr auto DAMAGE_NUMBERS_FADE_FRAMES         = lframe::Scaled(10);
+constexpr auto PICKUPABLE_FADE_FRAMES             = lframe::Scaled(10);
+constexpr auto LIFESTEAL_COOLDOWN_FRAMES          = lframe::Scaled(3);
+constexpr auto WAVE_COMPLETED_FRAMES              = lframe::FromSeconds(2);
+constexpr auto WAVE_COMPLETED_COINS_FLYING_FRAMES = lframe::FromSeconds(1.0f);
 
 // Projectiles and weapons won't be able to damage
 // the same creatures they've already damaged
