@@ -2368,7 +2368,8 @@ void DoUI(bool draw) {
     _wheel *= 10;
   if (draw)
     _wheel = 0;
-  const int wheel = _wheel;
+  const int wheel  = _wheel;
+  i16       zIndex = 0;
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = WHITE)) {  ///
@@ -2660,6 +2661,7 @@ void DoUI(bool draw) {
       },
       .floating{
         .offset{0, offsetY},
+        .zIndex = ++zIndex,
         .attachPoints{.element = attachElement, .parent = attachParent},
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
@@ -2683,6 +2685,7 @@ void DoUI(bool draw) {
         componentItemStatsExploded(item.type, item.count, ITEM_FRAME_WIDTH);
       }
     }
+    zIndex--;
   };
 
   LAMBDA (void, componentWeapon, (int weaponIndex, bool weAreInShop)) {  ///
@@ -2928,6 +2931,7 @@ void DoUI(bool draw) {
         },
         .floating{
           .offset{0, offsetY},
+          .zIndex = ++zIndex,
           .attachPoints{.element = attachElement, .parent = attachParent},
           .attachTo = CLAY_ATTACH_TO_PARENT,
         },
@@ -3023,6 +3027,7 @@ void DoUI(bool draw) {
           }
         }
       }
+      zIndex--;
     }
   };
 

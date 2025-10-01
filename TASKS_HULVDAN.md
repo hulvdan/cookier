@@ -36,8 +36,8 @@ x не поднятые с прошлой волны монеты отправл
 x покупать можно кнопками 1234, перебрасывать R
 x клик теперь по нажатию мышки, а не релизу, т.к. Женя достал
 x fix: рогатка учитывает стат ENEMY_SPEED при предсказании позиции мобов
+x fix: end screen item counts should be drawn BELOW weapon modals
 
-* fix: end screen item counts should be drawn BELOW weapon modals
 * turrel
 * melee weapons attack from player's center of player
 * slashing melee attacks
