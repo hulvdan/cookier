@@ -30,10 +30,12 @@ x распространение горения
 x stats: % Explosion Damage + Size
 x StatType_ATTACK_SPEED correct scaling
 x ref FrameGame / FrameVisual. Gameplay must use only FrameGame
-x pause works
+x Пауза (P в вебе, ESC/P на десктопе)
+x not giving stat on buying item if it has condition
 
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
-* not giving stat on buying item if it has condition
+* pause: unpause on touch
+* pause: touch support
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
 * explosion: damage scalings (look at brotato)
