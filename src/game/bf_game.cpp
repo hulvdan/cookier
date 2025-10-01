@@ -3880,7 +3880,8 @@ void DoUI(bool draw) {
   else
     INVALID_PATH;
 
-  if (ge.meta.paused) {
+  // Pause.
+  if (ge.meta.paused) {  ///
     CLAY({
       .floating{
         .attachPoints{
