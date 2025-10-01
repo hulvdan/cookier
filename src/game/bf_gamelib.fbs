@@ -227,6 +227,8 @@ table GameLibrary {
     ui_label_bounce_locale: int;
     ui_label_crit_locale: int;
     ui_label_did_damage_locale: int;
+    ui_label_pause_locale: int;
+    ui_label_pause_desktop_locale: int;
     ui_button_combine_locale: int;
     ui_button_cancel_locale: int;
     ui_button_take_locale: int;
