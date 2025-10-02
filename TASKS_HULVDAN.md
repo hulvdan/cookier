@@ -3,8 +3,8 @@ x button 9slice + указание color и flash
 x fix padding статов
 x can set weapon icon texture_id
 x engine: multiple fonts loading that use the same atlas and can use different outlines, codepoints
+x using smaller font to display stats
 
-* smaller stats font
 * turrel
 * coin pickup particles
 * keyboard input prompts

@@ -752,8 +752,9 @@ struct GameData {
     Arena trashArena  = {};
 
     // WARNING: Reorder loading upon reordering fonts.
-    Font fontUI    = {};
-    Font fontStats = {};
+    Font fontUI             = {};
+    Font fontStats          = {};
+    Font fontWaveCompletion = {};
 
     bool godMode = false;
 
@@ -864,7 +865,8 @@ struct GameData {
   } uiFlex;
 
   struct {
-    Vector2 notPickedUpCoinsLogicalPos = {};
+    Vector2     notPickedUpCoinsLogicalPos = {};
+    const Font* overriddenFont             = {};
   } ui;
 } g = {};
 
@@ -1087,9 +1089,10 @@ static BF_FORCE_INLINE Clay_Dimensions MeasureText(
   Clay_TextElementConfig* config,
   void*                   userData
 ) noexcept {  ///
-  // TODO: fontId, fontSize, letterSpacing
-  auto font  = &g.meta.fontUI;
-  f32  width = 0;
+  ASSERT(config);
+  // TODO: fontSize, letterSpacing
+  const auto font  = &g.meta.fontUI + config->fontId;
+  f32        width = 0;
 
   IterateOverCodepoints(
     text.chars,
@@ -1166,15 +1169,22 @@ void BF_CLAY_IMAGE(ClayImageData data) {  ///
   BF_CLAY_IMAGE(data, [] {});
 }
 
-// NOTE: This overload DOESN'T SAVE string to trash arena.
+// WARNING: This overload DOESN'T SAVE string to trash arena.
 void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
+  u16 fontId = 0;
+  if (g.ui.overriddenFont)
+    fontId = (UINT_FROM_PTR(g.ui.overriddenFont) - UINT_FROM_PTR(&g.meta.fontUI))
+             / sizeof(Font);
+  ASSERT(fontId >= 0);
+
   if (g.uiFlex.active) {
     Clay_StringSlice s{
       .length    = string.length,
       .chars     = string.chars,
       .baseChars = string.chars,
     };
-    auto dim = MeasureText(s, nullptr, nullptr);
+    Clay_TextElementConfig cfg{.fontId = fontId};
+    auto                   dim = MeasureText(s, &cfg, nullptr);
 
     // In flex space shouldn't break the line.
     // It's only other elements (which need more width) break the line.
@@ -1186,7 +1196,13 @@ void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
     FlexAddRowForChildIfNeeded(dim.width);
   }
 
-  CLAY_TEXT(string, CLAY_TEXT_CONFIG({.textColor = ToClayColor(color)}));
+  CLAY_TEXT(
+    string,
+    CLAY_TEXT_CONFIG({
+      .textColor = ToClayColor(color),
+      .fontId    = fontId,
+    })
+  );
 }
 
 // NOTE: This overload SAVES string to trash arena.
@@ -1811,10 +1827,22 @@ void GameInit() {  ///
     // fontStats.
     {
       .filepath        = "resources/correction_brush.ttf",
-      .size            = 10,
+      .size            = 13,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 0,
+    },
+    // fontWaveCompletion.
+    {
+      .filepath        = "resources/correction_brush.ttf",
+      .size            = 40,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 0,
     },
   };
   VIEW_FROM_ARRAY_DANGER(loadFontData);
@@ -2341,6 +2369,16 @@ void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  //
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(placeholder->brokenLocale_value(), false);
 }
 
+void FontBegin(Font* font) {  ///
+  ASSERT_FALSE(g.ui.overriddenFont);
+  g.ui.overriddenFont = font;
+}
+
+void FontEnd() {  ///
+  ASSERT(g.ui.overriddenFont);
+  g.ui.overriddenFont = nullptr;
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -2536,6 +2574,8 @@ void DoUI(bool draw) {
           // Icon.
           BF_CLAY_IMAGE({.texId = iconTexId});
 
+          FontBegin(&g.meta.fontStats);
+
           if (fb->is_percent())
             BF_CLAY_TEXT(" % ");
           else
@@ -2543,6 +2583,8 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
           BF_CLAY_SPACER_HORIZONTAL;
           BF_CLAY_TEXT(TextFormat("%d", value));
+
+          FontEnd();
         }
       };
 
@@ -3588,7 +3630,6 @@ void DoUI(bool draw) {
         // 2. Items to buy.
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_X,
-          .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           int toPickIndex = -1;
@@ -3730,6 +3771,9 @@ void DoUI(bool draw) {
                 }
               }
             }
+
+            if (toPickIndex < g.run.shop.toPick.count - 1)
+              BF_CLAY_SPACER_HORIZONTAL;
           }
         }
 
@@ -3977,6 +4021,7 @@ void DoUI(bool draw) {
     }
   }
 
+  ASSERT_FALSE(g.ui.overriddenFont);
   auto drawCommands = Clay_EndLayout();
 
   // Drawing UI.
@@ -4051,7 +4096,6 @@ void DoUI(bool draw) {
           } break;
 
           case CLAY_RENDER_COMMAND_TYPE_TEXT: {  ///
-            // TODO: uint16_t text.fontId
             // TODO: uint16_t text.fontSize
             // TODO: letterSpacing
             // TODO: lineHeight
@@ -4066,7 +4110,7 @@ void DoUI(bool draw) {
             DrawGroup_CommandText({
               .pos{bb.x, bb.y + bb.height},
               .anchor{},
-              .font       = &g.meta.fontUI,
+              .font       = &g.meta.fontUI + d.fontId,
               .text       = d.stringContents.chars,
               .bytesCount = d.stringContents.length,
               .color      = c,
@@ -6034,10 +6078,9 @@ void GameDraw() {
             (f32)LOGICAL_RESOLUTION.x / 2.0f,
             (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
           },
-          .font       = &g.meta.fontUI,
+          .font       = &g.meta.fontWaveCompletion,
           .text       = text->c_str(),
           .bytesCount = bytesToShow,
-          .color      = WHITE,
         },
         DrawZ_UI
       );
