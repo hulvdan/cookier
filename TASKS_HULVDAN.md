@@ -1,5 +1,5 @@
+x fix: weapons DrawZ
 
-* fix: weapons DrawZ
 * turrel
 * coin pickup particles
 * keyboard input prompts
