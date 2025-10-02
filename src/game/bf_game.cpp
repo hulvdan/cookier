@@ -2711,7 +2711,7 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           BF_CLAY_IMAGE({
-            .texId = fb->texture_ids()->Get(0),
+            .texId = fb->icon_texture_id(),
             .color = ColorFromRGBA(fb->color()),
           });
         }
@@ -2973,7 +2973,7 @@ void DoUI(bool draw) {
                 BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
               }}) {
                 BF_CLAY_IMAGE({
-                  .texId = fb->texture_ids()->Get(0),
+                  .texId = fb->icon_texture_id(),
                   .color = ColorFromRGBA(fb->color()),
                 });
               }
@@ -3640,7 +3640,7 @@ void DoUI(bool draw) {
                         if (v.item)
                           texId = fb_item->texture_id();
                         if (v.weapon)
-                          texId = fb_weapon->texture_ids()->Get(0);
+                          texId = fb_weapon->icon_texture_id();
                         BF_CLAY_IMAGE({.texId = texId});
                       }
                     }
