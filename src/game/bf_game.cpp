@@ -4798,7 +4798,7 @@ void GameFixedUpdate() {
             continue;
 
           if (Vector2DistanceSqr(playerPos, creature.pos)
-              <= SQR(PLAYER_HURTBOX_RADIUS + MOB_HURTBOX_RADIUS))
+              <= SQR(PLAYER_HURTBOX_RADIUS + CREATURE_COLLIDER_RADIUS))
           {
             const f32 damage
               = fb->contact_damage()
