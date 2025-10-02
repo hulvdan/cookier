@@ -5,10 +5,10 @@ x can set weapon icon texture_id
 x engine: multiple fonts loading that use the same atlas and can use different outlines, codepoints
 x using smaller font to display stats
 x fix: accurate contact damage hitbox
+x fix: upgrading HP immediately shows up in HP bar
 
-* upgrades also recalculate player stats
-* save system
 * rework wave remaining seconds like in brotato
+* save system
 * turrel
 * coin pickup particles
 * keyboard input prompts
