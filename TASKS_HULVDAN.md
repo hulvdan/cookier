@@ -1,17 +1,17 @@
 x fix: weapons DrawZ
-x button 9slice
-x fix current level padding `componentStats`
+x button 9slice + указание color и flash
+x fix padding статов
+x can set weapon icon texture_id
 
-* weapon icon texture_id
 * turrel
 * coin pickup particles
 * keyboard input prompts
-* navigating in pickedup item /upgrades / shop / end with keyboard
+* navigating in pickedup item / upgrades / shop / end with keyboard
 * stats coloring
 * weapon tags (primitive etc.) + set bonuses
 * weapon effect: +dmg for a number of the same weapon
-*
-*
+* smaller stats font
+* on-player-equipped item layers (hats, decals, etc.) (isaac-like)
 *
 *
 *

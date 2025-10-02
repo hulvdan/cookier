@@ -492,6 +492,7 @@ weapons:
         stat_type: ATTACK_SPEED
         value: 1
         condition_value: 20
+    icon_texture_id: game_weapon_sword
     texture_ids:
       - game_weapon_sword
   - type: GUN
@@ -517,6 +518,7 @@ weapons:
     projectile_spawn_frames:
       - 6
     range_meters: 5
+    icon_texture_id: game_weapon_gun
     texture_ids:
       - game_weapon_gun
   - type: SMG
@@ -544,6 +546,7 @@ weapons:
       - 16
       - 30
     range_meters: 7
+    icon_texture_id: game_weapon_smg
     texture_ids:
       - game_weapon_smg
   - type: BOW
@@ -570,6 +573,7 @@ weapons:
     range_meters: 8
     max_price: 140
     shooting_duration_frames: 10
+    icon_texture_id: ui_weapon_bow
     texture_ids:
       - game_weapon_bow
   - type: SLINGSHOT
@@ -596,6 +600,7 @@ weapons:
     range_meters: 12
     max_price: 120
     shooting_duration_frames: 12
+    icon_texture_id: game_weapon_slingshot
     texture_ids:
       - game_weapon_slingshot
   - type: WAND
@@ -622,6 +627,7 @@ weapons:
     range_meters: 12
     max_price: 130
     shooting_duration_frames: 12
+    icon_texture_id: game_weapon_wand
     texture_ids:
       - game_weapon_wand
   - type: WAND2
@@ -648,6 +654,7 @@ weapons:
     range_meters: 4
     max_price: 120
     shooting_duration_frames: 12
+    icon_texture_id: game_weapon_wand2
     texture_ids:
       - game_weapon_wand2
 projectiles:

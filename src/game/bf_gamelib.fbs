@@ -141,6 +141,7 @@ table Weapon {
     life_steal_percent: float;
     effects: [Effect];
     color: uint = 0xffffffff;
+    icon_texture_id: int;
     texture_ids: [int];
 }
 

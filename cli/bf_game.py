@@ -71,6 +71,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             "min_tier_index",
             "base_damage",
             "damage_scalings",
+            "icon_texture_id",
+            "texture_ids",
         ]
         for field in mandatory_fields:
             assert field in x, "Weapon {} has to have '{}' specified".format(
