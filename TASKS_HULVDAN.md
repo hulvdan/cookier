@@ -2,11 +2,9 @@ x fix: weapons DrawZ
 x button 9slice + указание color и flash
 x fix padding статов
 x can set weapon icon texture_id
+x engine: multiple fonts loading that use the same atlas and can use different outlines, codepoints
 
 * smaller stats font
-  + implement optimal multiple fonts loading that:
-    + use the same atlas
-    + can use different outlines, codepoints, etc.
 * turrel
 * coin pickup particles
 * keyboard input prompts

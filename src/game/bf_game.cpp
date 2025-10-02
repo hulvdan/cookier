@@ -1797,40 +1797,28 @@ void GameInit() {  ///
     Clay_SetMeasureTextFunction(MeasureText, 0);
   }
 
-  g.meta.fontUI = LoadFont({
-    .filepath        = "resources/correction_brush.ttf",
-    .size            = 15,
-    .FIXME_sizeScale = 45.0f / 30.0f,
-    .codepoints      = g_codepoints,
-    .codepointsCount = ARRAY_COUNT(g_codepoints),
-    .outlineWidth    = 3,
-    .outlineAdvance  = 1,
-  });
-
-  // LoadFontData loadFontData_[]{
-  //   // fontUI.
-  //   {
-  //     .filepath        = "resources/correction_brush.ttf",
-  //     .size            = 15,
-  //     .FIXME_sizeScale = 45.0f / 30.0f,
-  //     .codepoints      = g_codepoints,
-  //     .codepointsCount = ARRAY_COUNT(g_codepoints),
-  //     .outlineWidth    = 3,
-  //     .outlineAdvance  = 1,
-  //   },
-  //   // fontStats.
-  //   {
-  //     .filepath        = "resources/correction_brush.ttf",
-  //     .size            = 12,
-  //     .FIXME_sizeScale = 45.0f / 30.0f,
-  //     .codepoints      = g_codepoints,
-  //     .codepointsCount = ARRAY_COUNT(g_codepoints),
-  //     .outlineWidth    = 0,
-  //     .outlineAdvance  = 0,
-  //   },
-  // };
-  // VIEW_FROM_ARRAY_DANGER(loadFontData);
-  // LoadFonts({.count = 2, .base = &g.meta.fontUI}, loadFontData);
+  LoadFontData loadFontData_[]{
+    // fontUI.
+    {
+      .filepath        = "resources/correction_brush.ttf",
+      .size            = 15,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 1,
+    },
+    // fontStats.
+    {
+      .filepath        = "resources/correction_brush.ttf",
+      .size            = 10,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+    },
+  };
+  VIEW_FROM_ARRAY_DANGER(loadFontData);
+  LoadFonts({.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData);
 
   RunInit();
 }
