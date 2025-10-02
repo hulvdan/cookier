@@ -11,6 +11,7 @@ x fix: раньше на слишком большом расстоянии иг
 x fix: увеличение HP при повышении уровня (выборе апгрейда) отображается в HP bar-е сразу
 x оставшиеся до конца волны секунды отображаются, как в brotato:
   вверху "WAVE #". под этим - оставшиеся секунды
+x showing "run completed!" after completing the last wave
 
 * save system
 * turrel
