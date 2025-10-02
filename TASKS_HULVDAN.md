@@ -1,10 +1,12 @@
 x fix: weapons DrawZ
+x button 9slice
 
+* fix current level padding
+* weapon icon texture_id
 * turrel
 * coin pickup particles
 * keyboard input prompts
 * navigating in pickedup item /upgrades / shop / end with keyboard
-* button 9slice
 * stats coloring
 * weapon tags (primitive etc.) + set bonuses
 * weapon effect: +dmg for a number of the same weapon
@@ -91,6 +93,7 @@ TECH DEBT
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas
+* engine: nine slice should work even if width/height of image is very small
 * HTML game loading screen?
 * record+replay system
 * trim pngs of transparent pixels

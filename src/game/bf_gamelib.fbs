@@ -80,7 +80,7 @@ table Creature {
     on_death_spawns_distance_min: float;
     on_death_spawns_distance_max: float;
 
-    color: uint = 0xffffff;
+    color: uint = 0xffffffff;
 
     movement_accumulator_meters_cycle: float = 4;
     idle_seconds: float = 0.75;
@@ -140,12 +140,12 @@ table Weapon {
     melee_collider_height_px: float;
     life_steal_percent: float;
     effects: [Effect];
-    color: uint = 0xffffff;
+    color: uint = 0xffffffff;
     texture_ids: [int];
 }
 
 table Projectile {
-    color: uint = 0xffffff;
+    color: uint = 0xffffffff;
     speed: float;
     ailment_type: int;
     ailment_chance: float;
@@ -169,7 +169,7 @@ table Pickupable {
 }
 
 table Number {
-    color: uint = 0xffffff;
+    color: uint = 0xffffffff;
 }
 
 table WaveCreature {
@@ -258,12 +258,11 @@ table GameLibrary {
     ui_coin_x2_texture_id: int;
     ui_item_slot_texture_ids: [int] (required);
     ui_item_slot_colors: [uint] (required);
-    ui_button_default_color: uint;
-    ui_button_hovered_color: uint;
-    ui_button_disabled_color: uint;
+    ui_button_colors: [uint] (required);
     ui_item_big_frame_color: uint;
     ui_shop_current_level_icon_texture_id: uint;
     ui_frame_nine_slice: NineSlice;
+    ui_button_nine_slice: NineSlice;
     decal_pre_spawn_texture_id: int;
 
     // NOTE: «Table Gen» works in Python `bf_game.py`.

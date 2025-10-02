@@ -135,12 +135,14 @@ Clay_Color ToClayColor(Color color) {
     .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_BOTTOM \
   }
 
-#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr) \
-  .custom {                                            \
-    .customData = PushClayCustomData({                 \
-      .type      = ClayCustomElementType_NINE_SLICE,   \
-      .nineSlice = (gamelibNineSlicePtr),              \
-    }),                                                \
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, color_, flash_) \
+  .custom {                                                             \
+    .customData = PushClayCustomData({                                  \
+      .type           = ClayCustomElementType_NINE_SLICE,               \
+      .nineSlice      = (gamelibNineSlicePtr_),                         \
+      .nineSliceColor = (color_),                                       \
+      .nineSliceFlash = (flash_),                                       \
+    }),                                                                 \
   }
 
 #define BF_CLAY_CUSTOM_OVERLAY(color)                \
@@ -213,6 +215,7 @@ struct ClayImageData {
   int     texId         = {};
   Margins sourceMargins = {0, 0};
   Color   color         = WHITE;
+  Color   flash         = TRANSPARENT_BLACK;
   // f32   scale     = {};
   // ImageFitType fitType   = {};
 };
@@ -232,6 +235,7 @@ struct ClayCustomData {
   Vector2                  scale          = {1, 1};
   const BFGame::NineSlice* nineSlice      = nullptr;
   Color                    nineSliceColor = WHITE;
+  Color                    nineSliceFlash = TRANSPARENT_BLACK;
   Color                    overlayColor   = MAGENTA;
 };
 
@@ -2395,52 +2399,56 @@ void DoUI(bool draw) {
     bool growX   = false;
   };
 
-  // LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) { ///
-  const u32 buttonColors_[]{
-    glib->ui_button_hovered_color(),
-    glib->ui_button_default_color(),
-    glib->ui_button_disabled_color(),
-  };
-  VIEW_FROM_ARRAY_DANGER(buttonColors);
-
-  LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) {
+  LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) {  ///
     bool result = false;
 
     Clay_Sizing sizing{};
     if (data.growX)
       sizing.width = CLAY_SIZING_GROW(0);
 
-    CLAY({
-      .layout{
-        .sizing{sizing},
-        BF_CLAY_PADDING_ALL(8),
-        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-      },
-      .backgroundColor = ToClayColor(
-        ColorFromRGB(buttonColors[(data.enabled ? (Clay_Hovered() ? 0 : 1) : 2)])
-      ),
-    }) {
-      result = data.enabled && clicked();
-      innerLambda();
+    CLAY({.layout{.sizing{sizing}}}) {
+      auto      fb_colors = glib->ui_button_colors();
+      const int t         = (data.enabled ? (Clay_Hovered() ? 0 : 1) : 2);
+
+      CLAY({
+        .layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        },
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(),
+          ColorFromRGBA(fb_colors->Get(t)),
+          ColorFromRGBA(fb_colors->Get(t + 3))
+        ),
+      }) {
+        result = data.enabled && clicked();
+        innerLambda();
+      }
     }
 
     return result;
   };
-  // }
 
   // LAMBDA (void, componentSlot, (bool enabled, int tier, auto innerLambda)) { ///
   const auto slotTexs   = glib->ui_item_slot_texture_ids();
   const auto slotColors = glib->ui_item_slot_colors();
 
   LAMBDA (void, componentSlot, (bool enabled, int tier, auto innerLambda)) {
-    const int t = (enabled ? (Clay_Hovered() ? 0 : 1) : 2) + 3 * tier;
-    BF_CLAY_IMAGE(
-      {
-        .texId = slotTexs->Get(t),
-        .color = ColorFromRGB(slotColors->Get(t)),
-      },
-      innerLambda
-    );
+    CLAY({}) {
+      const int b      = (enabled ? (Clay_Hovered() ? 0 : 1) : 2);
+      const int t      = b + 3 * tier;
+      const int tColor = b + 6 * tier;
+      const int tFlash = b + 6 * tier + 3;
+      BF_CLAY_IMAGE(
+        {
+          .texId = slotTexs->Get(t),
+          .color = ColorFromRGBA(slotColors->Get(tColor)),
+          .flash = ColorFromRGBA(slotColors->Get(tFlash)),
+        },
+        innerLambda
+      );
+    }
   };
   // }
 
@@ -2451,7 +2459,7 @@ void DoUI(bool draw) {
         .childGap        = GAP_SMALL,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK),
     }) {
       // Stats label.
       CLAY({.layout{
@@ -2673,7 +2681,7 @@ void DoUI(bool draw) {
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
-        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK),
       }) {
         const auto fb_item = fb_items->Get(item.type);
 
@@ -2700,7 +2708,7 @@ void DoUI(bool draw) {
         }}) {
           BF_CLAY_IMAGE({
             .texId = fb->texture_ids()->Get(0),
-            .color = ColorFromRGB(fb->color()),
+            .color = ColorFromRGBA(fb->color()),
           });
         }
 
@@ -2950,7 +2958,9 @@ void DoUI(bool draw) {
             .childGap        = GAP_SMALL,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+          ),
         }) {
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
@@ -2960,7 +2970,7 @@ void DoUI(bool draw) {
               }}) {
                 BF_CLAY_IMAGE({
                   .texId = fb->texture_ids()->Get(0),
-                  .color = ColorFromRGB(fb->color()),
+                  .color = ColorFromRGBA(fb->color()),
                 });
               }
             });
@@ -3273,7 +3283,9 @@ void DoUI(bool draw) {
               .childGap        = GAP_SMALL,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+            BF_CLAY_CUSTOM_NINE_SLICE(
+              glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+            ),
           }) {
             const auto type = g.run.pickedUpItem.toPick;
 
@@ -3359,7 +3371,9 @@ void DoUI(bool draw) {
                 // BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP,
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               },
-              BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+              BF_CLAY_CUSTOM_NINE_SLICE(
+                glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+              ),
             }) {
               CLAY({.layout{.childGap = GAP_SMALL}}) {
                 // Slot with upgrade's image.
@@ -3601,7 +3615,9 @@ void DoUI(bool draw) {
                   .childGap        = GAP_SMALL,
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
-                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice()),
+                BF_CLAY_CUSTOM_NINE_SLICE(
+                  glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+                ),
               }) {
                 const auto fb_item   = (v.item ? fb_items->Get(v.item) : nullptr);
                 const auto fb_weapon = (v.weapon ? fb_weapons->Get(v.weapon) : nullptr);
@@ -4010,6 +4026,7 @@ void DoUI(bool draw) {
                 data.color.b,
                 (u8)((f32)data.color.a * beautifierAlpha)
               },
+              .flash = data.flash,
             });
           } break;
 
@@ -4067,6 +4084,7 @@ void DoUI(bool draw) {
                   data.nineSliceColor.b,
                   (u8)((f32)data.nineSliceColor.a * beautifierAlpha)
                 },
+                .flash = data.nineSliceFlash,
                 .nineSliceMargins{
                   (f32)fb->left() / downscaleFactor,
                   (f32)fb->right() / downscaleFactor,
@@ -5660,7 +5678,7 @@ void GameDraw() {
       DrawGroup_CommandTexture({
         .texId = texId,
         .pos   = spawn.pos,
-        .color = ColorFromRGB(fb_hostility->color()),
+        .color = ColorFromRGBA(fb_hostility->color()),
       });
     }
 
@@ -5695,7 +5713,7 @@ void GameDraw() {
     if (creature.dir.x < 0)
       scale.x = -1;
 
-    auto color = ColorFromRGB(fb->color());
+    auto color = ColorFromRGBA(fb->color());
     if (creature.type == CreatureType_RANGER) {
       const auto& data = creature.DataRanger();
       f32         t    = 0;
@@ -5770,7 +5788,7 @@ void GameDraw() {
             .rotation = rotation,
             .pos      = GetWeaponPos(weapon),
             .scale    = scale,
-            .color    = Fade(ColorFromRGB(fb->color()), fade),
+            .color    = Fade(ColorFromRGBA(fb->color()), fade),
           },
           PLAYER_WEAPONS_DRAW_Z[weaponsCount - 1][i]
         );
@@ -5795,7 +5813,7 @@ void GameDraw() {
         .rotation = rotation,
         .pos      = projectile.pos,
         .scale    = scale,
-        .color    = ColorFromRGB(fb->color()),
+        .color    = ColorFromRGBA(fb->color()),
       },
       DrawZ_PROJECTILES
     );
@@ -5855,7 +5873,7 @@ void GameDraw() {
         .font       = &g.meta.uiFont,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
-        .color      = Fade(ColorFromRGB(fb->color()), fade),
+        .color      = Fade(ColorFromRGBA(fb->color()), fade),
       });
     }
 
