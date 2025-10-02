@@ -3,6 +3,10 @@ x button 9slice + указание color и flash
 x fix padding статов
 x can set weapon icon texture_id
 
+* smaller stats font
+  + implement optimal multiple fonts loading that:
+    + use the same atlas
+    + can use different outlines, codepoints, etc.
 * turrel
 * coin pickup particles
 * keyboard input prompts
@@ -10,7 +14,6 @@ x can set weapon icon texture_id
 * stats coloring
 * weapon tags (primitive etc.) + set bonuses
 * weapon effect: +dmg for a number of the same weapon
-* smaller stats font
 * on-player-equipped item layers (hats, decals, etc.) (isaac-like)
 *
 *

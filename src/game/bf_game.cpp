@@ -750,7 +750,10 @@ struct GameData {
     i64   frameGame   = 0;
     i64   frameVisual = 0;
     Arena trashArena  = {};
-    Font  uiFont      = {};
+
+    // WARNING: Reorder loading upon reordering fonts.
+    Font fontUI    = {};
+    Font fontStats = {};
 
     bool godMode = false;
 
@@ -1085,7 +1088,7 @@ static BF_FORCE_INLINE Clay_Dimensions MeasureText(
   void*                   userData
 ) noexcept {  ///
   // TODO: fontId, fontSize, letterSpacing
-  auto font  = &g.meta.uiFont;
+  auto font  = &g.meta.fontUI;
   f32  width = 0;
 
   IterateOverCodepoints(
@@ -1794,7 +1797,7 @@ void GameInit() {  ///
     Clay_SetMeasureTextFunction(MeasureText, 0);
   }
 
-  g.meta.uiFont = LoadFont({
+  g.meta.fontUI = LoadFont({
     .filepath        = "resources/correction_brush.ttf",
     .size            = 15,
     .FIXME_sizeScale = 45.0f / 30.0f,
@@ -1803,6 +1806,31 @@ void GameInit() {  ///
     .outlineWidth    = 3,
     .outlineAdvance  = 1,
   });
+
+  // LoadFontData loadFontData_[]{
+  //   // fontUI.
+  //   {
+  //     .filepath        = "resources/correction_brush.ttf",
+  //     .size            = 15,
+  //     .FIXME_sizeScale = 45.0f / 30.0f,
+  //     .codepoints      = g_codepoints,
+  //     .codepointsCount = ARRAY_COUNT(g_codepoints),
+  //     .outlineWidth    = 3,
+  //     .outlineAdvance  = 1,
+  //   },
+  //   // fontStats.
+  //   {
+  //     .filepath        = "resources/correction_brush.ttf",
+  //     .size            = 12,
+  //     .FIXME_sizeScale = 45.0f / 30.0f,
+  //     .codepoints      = g_codepoints,
+  //     .codepointsCount = ARRAY_COUNT(g_codepoints),
+  //     .outlineWidth    = 0,
+  //     .outlineAdvance  = 0,
+  //   },
+  // };
+  // VIEW_FROM_ARRAY_DANGER(loadFontData);
+  // LoadFonts({.count = 2, .base = &g.meta.fontUI}, loadFontData);
 
   RunInit();
 }
@@ -4050,7 +4078,7 @@ void DoUI(bool draw) {
             DrawGroup_CommandText({
               .pos{bb.x, bb.y + bb.height},
               .anchor{},
-              .font       = &g.meta.uiFont,
+              .font       = &g.meta.fontUI,
               .text       = d.stringContents.chars,
               .bytesCount = d.stringContents.length,
               .color      = c,
@@ -5874,7 +5902,7 @@ void GameDraw() {
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
         .scale      = Vector2(1, 1) * (p * 2),
-        .font       = &g.meta.uiFont,
+        .font       = &g.meta.fontUI,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
         .color      = Fade(ColorFromRGBA(fb->color()), fade),
@@ -6018,7 +6046,7 @@ void GameDraw() {
             (f32)LOGICAL_RESOLUTION.x / 2.0f,
             (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
           },
-          .font       = &g.meta.uiFont,
+          .font       = &g.meta.fontUI,
           .text       = text->c_str(),
           .bytesCount = bytesToShow,
           .color      = WHITE,
