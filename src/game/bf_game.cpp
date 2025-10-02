@@ -6044,6 +6044,8 @@ void GameDraw() {
     int locale = glib->ui_label_wave_won_locale();
     if (!g.run.waveWon)
       locale = glib->ui_label_wave_lost_locale();
+    if (g.run.waveWon && (g.run.waveIndex >= TOTAL_WAVES - 1))
+      locale = glib->ui_won_locale();
     auto text = localization_strings->Get(locale);
 
     int totalChars = 0;
