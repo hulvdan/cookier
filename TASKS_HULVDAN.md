@@ -1,13 +1,17 @@
-x fix: weapons DrawZ
-x button 9slice + указание color и flash
+x fix: weapons Z оружий, чтобы не "мелькали" в некоторых случаях
+x кнопке можно указать 9slice + color + flash
 x fix padding статов
-x can set weapon icon texture_id
+x оружию можно указать иконку
 x engine: multiple fonts loading that use the same atlas and can use different outlines, codepoints
-x using smaller font to display stats
-x fix: accurate contact damage hitbox
-x fix: upgrading HP immediately shows up in HP bar
+x движок: можно загрузить несколько шрифтов, чтобы они использовали один и тот же атлас
+  (минимизируя draw call-ы), но имели разные настройки размера, обводки и т.п.
+x мелкий шрифт для отображения статов
+x fix: раньше на слишком большом расстоянии игрок получал контактный урон.
+  Теперь оно правильное
+x fix: увеличение HP при повышении уровня (выборе апгрейда) отображается в HP bar-е сразу
+x оставшиеся до конца волны секунды отображаются, как в brotato:
+  вверху "WAVE #". под этим - оставшиеся секунды
 
-* rework wave remaining seconds like in brotato
 * save system
 * turrel
 * coin pickup particles

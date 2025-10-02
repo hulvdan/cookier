@@ -3250,6 +3250,11 @@ void DoUI(bool draw) {
       // Wave.
       // { ///
       CLAY({
+        .layout{
+          .childGap = GAP_SMALL,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
         .floating{
           .attachPoints{
             .element = CLAY_ATTACH_POINT_CENTER_TOP,
@@ -3260,15 +3265,19 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
-        BF_CLAY_TEXT(TextFormat(" %d", g.run.waveIndex + 1));
+        CLAY({}) {
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
+          BF_CLAY_TEXT(TextFormat(" %d", g.run.waveIndex + 1));
+        }
 
         if (g.run.screen == ScreenType_GAMEPLAY) {
-          const auto remainingFrames
-            = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
-          const int remainingSeconds
-            = CeilDivision(MAX(1, remainingFrames.value), FIXED_FPS);
-          BF_CLAY_TEXT(TextFormat(". %d...", remainingSeconds));
+          CLAY({}) {
+            const auto remainingFrames
+              = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
+            const int remainingSeconds
+              = CeilDivision(MAX(1, remainingFrames.value), FIXED_FPS);
+            BF_CLAY_TEXT(TextFormat("%d", remainingSeconds));
+          }
         }
       }
       // }
