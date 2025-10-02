@@ -137,15 +137,54 @@ constexpr f32 SHOP_ITEM_RATIO = 0.4f;  // X% of items in shop, (1-X)% of weapons
 constexpr int TOTAL_WAVES = 20;
 
 constexpr int PLAYER_WEAPONS_COUNT = 6;
-constexpr f32 PLAYER_WEAPONS_STARTING_ANGLES_[]{
+constexpr f32 PLAYER_WEAPONS_STARTING_ANGLES_[PLAYER_WEAPONS_COUNT]{
   0,
   0,
-  -(f32)PI / 2.0f,
+  (f32)PI / 6.0f,
   (f32)PI / 4.0f,
   -(f32)PI / 2.0f + 2.0f * (f32)PI / 5.0f,
   0
 };
 VIEW_FROM_ARRAY_DANGER(PLAYER_WEAPONS_STARTING_ANGLES);
+constexpr DrawZ PLAYER_WEAPONS_DRAW_Z_[PLAYER_WEAPONS_COUNT][PLAYER_WEAPONS_COUNT]{
+  {DrawZ_WEAPONS_1,  // 1 weapon.
+   DrawZ_INVALID,
+   DrawZ_INVALID,
+   DrawZ_INVALID,
+   DrawZ_INVALID,
+   DrawZ_INVALID},
+  {DrawZ_WEAPONS_2,  // 2 weapons.
+   DrawZ_WEAPONS_1,
+   DrawZ_INVALID,
+   DrawZ_INVALID,
+   DrawZ_INVALID,
+   DrawZ_INVALID},
+  {DrawZ_WEAPONS_2,  // 3 weapons.
+   DrawZ_WEAPONS_1,
+   DrawZ_WEAPONS_3,
+   DrawZ_INVALID,
+   DrawZ_INVALID,
+   DrawZ_INVALID},
+  {DrawZ_WEAPONS_2,  // 4 weapons.
+   DrawZ_WEAPONS_1,
+   DrawZ_WEAPONS_3,
+   DrawZ_WEAPONS_4,
+   DrawZ_INVALID,
+   DrawZ_INVALID},
+  {DrawZ_WEAPONS_4,  // 5 weapons.
+   DrawZ_WEAPONS_2,
+   DrawZ_WEAPONS_1,
+   DrawZ_WEAPONS_3,
+   DrawZ_WEAPONS_5,
+   DrawZ_INVALID},
+  {DrawZ_WEAPONS_4,  // 6 weapons.
+   DrawZ_WEAPONS_2,
+   DrawZ_WEAPONS_1,
+   DrawZ_WEAPONS_3,
+   DrawZ_WEAPONS_5,
+   DrawZ_WEAPONS_6},
+};
+VIEW_FROM_ARRAY_DANGER(PLAYER_WEAPONS_DRAW_Z);
 
 constexpr int TOTAL_TIERS = 4;
 

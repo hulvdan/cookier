@@ -5740,6 +5740,12 @@ void GameDraw() {
     );
 
     if (creature.type == CreatureType_PLAYER) {
+      int weaponsCount = 0;
+      for (const auto& weapon : g.run.playerWeapons) {
+        if (weapon.type)
+          weaponsCount++;
+      }
+
       // Drawing player's weapons.
       FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
         const auto& weapon = g.run.playerWeapons[i];
@@ -5766,7 +5772,7 @@ void GameDraw() {
             .scale    = scale,
             .color    = Fade(ColorFromRGB(fb->color()), fade),
           },
-          DrawZ_WEAPONS
+          PLAYER_WEAPONS_DRAW_Z[weaponsCount - 1][i]
         );
       }
     }
