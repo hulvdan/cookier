@@ -3507,16 +3507,6 @@ void DoUI(bool draw) {
 
                   g.run.playerStatsWithoutItems[upgrade.stat] += amount;
                   g.run.recalculatePlayerStats = true;
-
-                  switch (upgrade.stat) {
-                  case StatType_HP: {
-                    PLAYER_CREATURE.health    = g.run.playerStats[StatType_HP];
-                    PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
-                  } break;
-
-                  default:
-                    break;
-                  }
                 }
               }
             }
@@ -4367,6 +4357,8 @@ void GameFixedUpdate() {
         }
       }
     }
+
+    PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
   }
 
   // Advancing to UI after wave completion animation finishes.
