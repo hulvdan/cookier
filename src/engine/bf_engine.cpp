@@ -143,6 +143,31 @@ Color ColorFromRGB(u32 color) {  ///
   return color_;
 }
 
+TEST_CASE ("ColorFromRGB") {  ///
+  auto c = ColorFromRGB(0xff0001);
+  ASSERT(c.r == 255);
+  ASSERT(c.g == 0);
+  ASSERT(c.b == 1);
+  ASSERT(c.a == 255);
+}
+
+Color ColorFromRGBA(u32 color) {  ///
+  return {
+    .r = (color >> 24) & 255,
+    .g = (color >> 16) & 255,
+    .b = (color >> 8) & 255,
+    .a = (color >> 0) & 255,
+  };
+}
+
+TEST_CASE ("ColorFromRGBA") {  ///
+  auto c = ColorFromRGBA(0xff000102);
+  ASSERT(c.r == 255);
+  ASSERT(c.g == 0);
+  ASSERT(c.b == 1);
+  ASSERT(c.a == 2);
+}
+
 u32 ColorToRGBA(Color color) {  ///
   u32 value = 0;
   value += (u32)color.r << 24;
@@ -150,6 +175,22 @@ u32 ColorToRGBA(Color color) {  ///
   value += (u32)color.b << 8;
   value += (u32)color.a << 0;
   return value;
+}
+
+Color ColorFromABGR(u32 color) {  ///
+  return *(Color*)&color;
+}
+
+TEST_CASE ("ColorFromABGR") {  ///
+  auto c = ColorFromABGR(0xff000102);
+  ASSERT(c.r == 2);
+  ASSERT(c.g == 1);
+  ASSERT(c.b == 0);
+  ASSERT(c.a == 255);
+}
+
+u32 ColorToABGR(Color color) {  ///
+  return *(u32*)&color;
 }
 
 constexpr Color TRANSPARENT_BLACK = {0, 0, 0, 0};

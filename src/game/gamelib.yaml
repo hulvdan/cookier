@@ -142,45 +142,67 @@ ui_coin_texture_id: ui_coin
 ui_coin_x2_texture_id: ui_coin_x2
 ui_modal_fade: 0.75
 ui_item_slot_texture_ids:
-  # tier 0 (default, hovered, disabled)
+  # Tier 0 (default, hovered, disabled).
   - ui_item_slot
   - ui_item_slot
   - ui_item_slot
-  # tier 1
+  # Tier 1.
   - ui_item_slot
   - ui_item_slot
   - ui_item_slot
-  # tier 2
+  # Tier 2.
   - ui_item_slot
   - ui_item_slot
   - ui_item_slot
-  # tier 3
+  # Tier 3.
   - ui_item_slot
   - ui_item_slot
   - ui_item_slot
 ui_item_slot_colors:
-  # tier 0 (default, hovered, disabled)
-  - 0x5e3735
-  - 0x885a44
-  - 0x3a3a41
-  # tier 1
-  - 0x208cb2
-  - 0x82dcd7
-  - 0x253348
-  # tier 2
-  - 0x6d2047
-  - 0xa13d77
-  - 0x3c1c43
-  # tier 3
-  - 0xdc9824
-  - 0xefcb84
-  - 0xb8560f
-ui_button_default_color: 0x5e3735
-ui_button_hovered_color: 0x885a44
-ui_button_disabled_color: 0x3a3a41
+  # Tier 0 (default, hovered, disabled)
+  - 0x5e3735ff # Colors.
+  - 0x885a44ff
+  - 0x3a3a41ff
+  - 0 # Flashes.
+  - 0
+  - 0
+  # Tier 1.
+  - 0x208cb2ff # Colors.
+  - 0x82dcd7ff
+  - 0x253348ff
+  - 0 # Flashes.
+  - 0
+  - 0
+  # Tier 2.
+  - 0x6d2047ff # Colors.
+  - 0xa13d77ff
+  - 0x3c1c43ff
+  - 0 # Flashes.
+  - 0
+  - 0
+  # Tier 3.
+  - 0xdc9824ff
+  - 0xefcb84ff
+  - 0xb8560fff
+  - 0 # Flashes.
+  - 0
+  - 0
+ui_button_colors:
+  - 0x5e3735ff # default color
+  - 0x885a44ff # hovered color
+  - 0x3a3a41ff # disabled color
+  - 0 # default flash
+  - 0 # hovered flash
+  - 0 # disabled flash
 ui_item_big_frame_color: 0x1d1b24
 ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
 ui_frame_nine_slice:
+  texture_id: ui_frame
+  left: 60
+  right: 60
+  top: 60
+  bottom: 60
+ui_button_nine_slice:
   texture_id: ui_frame
   left: 60
   right: 60
@@ -193,17 +215,17 @@ decal_pre_spawn_texture_id: game_decal_pre_spawn
 hostilities:
   - type: INVALID
   - type: MOB
-    color: 0xc02931
+    color: 0xc02931ff
   - type: NEUTRAL
-    color: 0x66a650
+    color: 0x66a650ff
   - type: FRIENDLY
-    color: 0x208cb2
+    color: 0x208cb2ff
 creatures:
   - type: INVALID
   - type: PLAYER
     speed: 7.5
     hostility_type: FRIENDLY
-    color: 0x208cb2
+    color: 0x208cb2ff
     idle_texture_ids:
       - game_creature_player_idle_1
       - game_creature_player_idle_2
@@ -224,7 +246,7 @@ creatures:
     knockback_resistance: 0
     speed: 4.5
     speed_variation: 0.8
-    color: 0xa13d77
+    color: 0xa13d77ff
     idle_texture_ids:
       - game_creature_player_idle_1
       - game_creature_player_idle_2
@@ -243,7 +265,7 @@ creatures:
     contact_damage: 1
     contact_damage_increase_per_wave: 0.6
     knockback_resistance: 0
-    color: 0xb8560f
+    color: 0xb8560fff
     speed: 5
     speed_variation: 0.8
     idle_texture_ids:
@@ -265,7 +287,7 @@ creatures:
     contact_damage_increase_per_wave: 0.6
     knockback_resistance: 0.95
     projectile_damage: 4
-    color: 0xb59a66
+    color: 0xb59a66ff
     speed: 7
     speed_variation: 0.8
     idle_texture_ids:
@@ -286,7 +308,7 @@ creatures:
     contact_damage: 2
     contact_damage_increase_per_wave: 0.85
     knockback_resistance: 0.9
-    color: 0x7a7576
+    color: 0x7a7576ff
     speed: 5
     speed_variation: 0.8
     coins_dropped: 3
@@ -308,7 +330,7 @@ creatures:
     contact_damage: 1
     contact_damage_increase_per_wave: 0.85
     knockback_resistance: 0.7
-    color: 0x82dcd7
+    color: 0x82dcd7ff
     speed: 5
     speed_variation: 0.8
     on_death_spawns_creature_type: MOB_SMALL
@@ -665,7 +687,7 @@ projectiles:
     texture_ids:
       - game_projectile_fire
   - type: MOB
-    color: 0xff0000
+    color: 0xff0000ff
     speed: 10
     texture_ids:
       - game_projectile_mob
@@ -686,15 +708,15 @@ pickupables:
 numbers:
   - type: INVALID
   - type: DAMAGE
-    color: 0xefcb84
+    color: 0xefcb84ff
   - type: DAMAGE_CRIT
-    color: 0xdc9824
+    color: 0xdc9824ff
   - type: DODGE
-    color: 0x7a7576
+    color: 0x7a7576ff
   - type: PICKUPABLE
-    color: 0x66a650
+    color: 0x66a650ff
   - type: LEVEL_UP
-    color: 0x66a650
+    color: 0x66a650ff
 stats:
   - type: INVALID
   - type: COINS
