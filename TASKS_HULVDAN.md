@@ -78,7 +78,6 @@ x showing "run completed!" after completing the last wave
 
 QA:
 ================================================================================
-* StatType_ENEMY_SPEED
 * StatType_ARMOR
 * StatType_COINS_HEAL
 *
