@@ -366,7 +366,7 @@ struct Font {
   Texture2D atlasTexture = {};
 
   const u8*         fileData = {};
-  stbtt_packedchar* chars    = {};
+  stbtt_packedchar* chars    = {};  // It's length is `codepointsCount`.
   stbtt_fontinfo    info     = {};
 
   int* codepoints      = {};
@@ -2449,6 +2449,148 @@ struct LoadFontData {
   f32 outlineAdvance = 0;  // Optional.
 };
 
+void _OutlineFonts(
+  u8*        oneChannelAtlasData,
+  u8*        atlasData,
+  Vector2Int atlasSize,
+  View<Font> fonts
+) {  ///
+  ZoneScoped;
+
+  int maxCodepointWidth  = 0;
+  int maxCodepointHeight = 0;
+  for (const auto& font : fonts) {
+    FOR_RANGE (int, i, font.codepointsCount) {
+      const auto& c      = font.chars[i];
+      maxCodepointWidth  = MAX(maxCodepointWidth, c.x1 - c.x0 + 2 * font.outlineWidth);
+      maxCodepointHeight = MAX(maxCodepointHeight, c.y1 - c.y0 + 2 * font.outlineWidth);
+    }
+  }
+
+  auto      dist_ = (f32*)BF_ALLOC(sizeof(f32) * maxCodepointWidth * maxCodepointHeight);
+  View<f32> dist{.count = maxCodepointWidth * maxCodepointHeight, .base = dist_};
+
+  for (auto& font : fonts) {
+    if (font.outlineWidth > 0) {
+      FOR_RANGE (int, codepointIndex, font.codepointsCount) {
+        auto& fontChar = font.chars[codepointIndex];
+        fontChar.x0 -= font.outlineWidth;
+        fontChar.x1 += font.outlineWidth;
+        fontChar.y0 -= font.outlineWidth;
+        fontChar.y1 += font.outlineWidth;
+      }
+    }
+  }
+
+  for (auto& font : fonts) {
+    FOR_RANGE (int, codepointIndex, font.codepointsCount) {
+      auto& fontChar = font.chars[codepointIndex];
+
+      const Vector2Int codepointSize{
+        fontChar.x1 - fontChar.x0, fontChar.y1 - fontChar.y0
+      };
+
+      for (int oy = 0; oy < codepointSize.y; oy++) {
+        for (int ox = 0; ox < codepointSize.x; ox++) {
+          int distT  = oy * maxCodepointWidth + ox;
+          int atlasT = (fontChar.y0 + oy) * atlasSize.x + fontChar.x0 + ox;
+          if (oneChannelAtlasData[atlasT])
+            dist[distT] = 1 - (f32)oneChannelAtlasData[atlasT] / 255.0f;
+          else
+            dist[distT] = f32_inf;
+        }
+      }
+
+#define INDEX(y_, x_) ((y_) * maxCodepointWidth + (x_))
+
+      // First pass: top-left to bottom-right
+      for (int y = 0; y < codepointSize.y; y++) {
+        for (int x = 0; x < codepointSize.x; x++) {
+          int idx = INDEX(y, x);
+          // Check neighbor above
+          if (y > 0) {
+            auto t    = INDEX(y - 1, x);
+            f32  val  = dist[t] + 1;
+            dist[idx] = MIN(dist[idx], val);
+          }
+          // Check neighbor to the left
+          if (x > 0) {
+            auto t    = INDEX(y, x - 1);
+            f32  val  = dist[t] + 1;
+            dist[idx] = MIN(dist[idx], val);
+          }
+          // Check neighbor diagonally above-left
+          if ((y > 0) && (x > 0)) {
+            auto t    = INDEX(y - 1, x - 1);
+            f32  val  = dist[t] + SQRT_2;
+            dist[idx] = MIN(dist[idx], val);
+          }
+          // Check neighbor diagonally above-right
+          if ((y > 0) && (x < codepointSize.x - 1)) {
+            auto t    = INDEX(y - 1, x + 1);
+            f32  val  = dist[t] + SQRT_2;
+            dist[idx] = MIN(dist[idx], val);
+          }
+        }
+      }
+
+      // Second pass: bottom-right to top-left
+      for (int y = codepointSize.y - 1; y >= 0; y--) {
+        for (int x = codepointSize.x - 1; x >= 0; x--) {
+          int idx = INDEX(y, x);
+          // Check neighbor below
+          if (y + 1 < codepointSize.y) {
+            auto t    = INDEX(y + 1, x);
+            f32  val  = dist[t] + 1;
+            dist[idx] = MIN(dist[idx], val);
+          }
+          // Check neighbor to the right
+          if (x + 1 < codepointSize.x) {
+            auto t    = INDEX(y, x + 1);
+            f32  val  = dist[t] + 1;
+            dist[idx] = MIN(dist[idx], val);
+          }
+          // Check neighbor diagonally below-right
+          if ((y + 1 < codepointSize.y) && (x + 1 < codepointSize.x)) {
+            auto t    = INDEX(y + 1, x + 1);
+            f32  val  = dist[t] + SQRT_2;
+            dist[idx] = MIN(dist[idx], val);
+          }
+          // Check neighbor diagonally below-left
+          if ((y + 1 < codepointSize.y) && (x > 0)) {
+            auto t    = INDEX(y + 1, x - 1);
+            f32  val  = dist[t] + SQRT_2;
+            dist[idx] = MIN(dist[idx], val);
+          }
+        }
+      }
+
+#undef INDEX
+
+      FOR_RANGE (int, y, codepointSize.y) {
+        FOR_RANGE (int, x, codepointSize.x) {
+          auto distT  = y * maxCodepointWidth + x;
+          auto atlasT = (y + fontChar.y0) * atlasSize.x + x + fontChar.x0;
+
+          auto v                    = oneChannelAtlasData[atlasT];
+          atlasData[atlasT * 4 + 0] = v;
+          atlasData[atlasT * 4 + 1] = v;
+          atlasData[atlasT * 4 + 2] = v;
+
+          if (dist[distT] > 0) {
+            u8 alpha = 255;
+            if (dist[distT] > (f32)font.outlineWidth - 1)
+              alpha = (u8)(255.0f * MAX((f32)font.outlineWidth - dist[distT], 0));
+            atlasData[atlasT * 4 + 3] = alpha;
+          }
+        }
+      }
+    }
+  }
+
+  BF_FREE(dist_);
+}
+
 Font LoadFont(LoadFontData data) {  ///
   ZoneScoped;
 
@@ -2458,7 +2600,7 @@ Font LoadFont(LoadFontData data) {  ///
   ASSERT(data.codepointsCount > 0);
   ASSERT(data.outlineWidth >= 0);
 
-  const Vector2Int atlasSize{1024, 1024};
+  Vector2Int atlasSize{1024, 1024};
 
   auto oneChannelAtlasData = (u8*)BF_ALLOC(atlasSize.x * atlasSize.y * 1);
 
@@ -2523,115 +2665,8 @@ Font LoadFont(LoadFontData data) {  ///
   }
 
   if (data.outlineWidth) {
-    ZoneScopedN("Outlining");
-
-    auto      dist_ = (f32*)BF_ALLOC(atlasSize.x * atlasSize.y * sizeof(f32));
-    View<f32> dist{
-      .count = atlasSize.x * atlasSize.y,
-      .base  = dist_,
-    };
-
-    for (int i = 0; i < atlasSize.x * atlasSize.y; i++) {
-      if (oneChannelAtlasData[i])
-        dist[i] = 1 - (f32)oneChannelAtlasData[i] / 255.0f;
-      else
-        dist[i] = f32_inf;
-    }
-
-#define INDEX(y_, x_) ((y_) * atlasSize.x + (x_))
-
-    // First pass: top-left to bottom-right
-    for (int y = 0; y < atlasSize.y; y++) {
-      for (int x = 0; x < atlasSize.x; x++) {
-        int idx = INDEX(y, x);
-        // Check neighbor above
-        if (y > 0) {
-          auto t    = INDEX(y - 1, x);
-          f32  val  = dist[t] + 1;
-          dist[idx] = MIN(dist[idx], val);
-        }
-        // Check neighbor to the left
-        if (x > 0) {
-          auto t    = INDEX(y, x - 1);
-          f32  val  = dist[t] + 1;
-          dist[idx] = MIN(dist[idx], val);
-        }
-        // Check neighbor diagonally above-left
-        if ((y > 0) && (x > 0)) {
-          auto t    = INDEX(y - 1, x - 1);
-          f32  val  = dist[t] + SQRT_2;
-          dist[idx] = MIN(dist[idx], val);
-        }
-        // Check neighbor diagonally above-right
-        if ((y > 0) && (x < atlasSize.x - 1)) {
-          auto t    = INDEX(y - 1, x + 1);
-          f32  val  = dist[t] + SQRT_2;
-          dist[idx] = MIN(dist[idx], val);
-        }
-      }
-    }
-
-    // Second pass: bottom-right to top-left
-    for (int y = atlasSize.y - 1; y >= 0; y--) {
-      for (int x = atlasSize.x - 1; x >= 0; x--) {
-        int idx = INDEX(y, x);
-        // Check neighbor below
-        if (y + 1 < atlasSize.y) {
-          auto t    = INDEX(y + 1, x);
-          f32  val  = dist[t] + 1;
-          dist[idx] = MIN(dist[idx], val);
-        }
-        // Check neighbor to the right
-        if (x + 1 < atlasSize.x) {
-          auto t    = INDEX(y, x + 1);
-          f32  val  = dist[t] + 1;
-          dist[idx] = MIN(dist[idx], val);
-        }
-        // Check neighbor diagonally below-right
-        if ((y + 1 < atlasSize.y) && (x + 1 < atlasSize.x)) {
-          auto t    = INDEX(y + 1, x + 1);
-          f32  val  = dist[t] + SQRT_2;
-          dist[idx] = MIN(dist[idx], val);
-        }
-        // Check neighbor diagonally below-left
-        if ((y + 1 < atlasSize.y) && (x > 0)) {
-          auto t    = INDEX(y + 1, x - 1);
-          f32  val  = dist[t] + SQRT_2;
-          dist[idx] = MIN(dist[idx], val);
-        }
-      }
-    }
-
-#undef INDEX
-
-    FOR_RANGE (int, y, atlasSize.y) {
-      FOR_RANGE (int, x, atlasSize.x) {
-        auto t = y * atlasSize.x + x;
-
-        auto v               = oneChannelAtlasData[t];
-        atlasData[t * 4 + 0] = v;
-        atlasData[t * 4 + 1] = v;
-        atlasData[t * 4 + 2] = v;
-
-        if (dist[t] > 0) {
-          u8 alpha = 255;
-          if (dist[t] > (f32)data.outlineWidth - 1)
-            alpha = (u8)(255.0f * MAX((f32)data.outlineWidth - dist[t], 0));
-          atlasData[t * 4 + 3] = alpha;
-        }
-      }
-    }
-
-    FOR_RANGE (int, i, data.codepointsCount) {
-      auto& c = font.chars[i];
-      c.x0 -= data.outlineWidth;
-      c.x1 += data.outlineWidth;
-      c.y0 -= data.outlineWidth;
-      c.y1 += data.outlineWidth;
-      c.xadvance += data.outlineAdvance;
-    }
-
-    BF_FREE(dist_);
+    View<Font> fonts{.count = 1, .base = &font};
+    _OutlineFonts(oneChannelAtlasData, atlasData, atlasSize, fonts);
   }
 
 #if BF_DEBUG & !defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -2659,6 +2694,10 @@ Font LoadFont(LoadFontData data) {  ///
   BF_FREE(atlasData);
 
   return font;
+}
+
+void LoadFonts(View<Font> outFonts, View<LoadFontData> data) {  ///
+  ASSERT(outFonts.count == data.count);
 }
 
 i64 GetTicks() {  ///
