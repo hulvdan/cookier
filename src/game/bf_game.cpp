@@ -2541,7 +2541,11 @@ void DoUI(bool draw) {
       }
 
       // Stats.
-      CLAY({.layout{.childGap = GAP_VERY_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+      CLAY({.layout{
+        BF_CLAY_SIZING_GROW_XY,
+        .childGap        = GAP_VERY_SMALL,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }})
       FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
         const auto type = (StatType)(i + 2);
         const auto fb   = glib->stats()->Get(type);

@@ -1,7 +1,7 @@
 x fix: weapons DrawZ
 x button 9slice
+x fix current level padding `componentStats`
 
-* fix current level padding
 * weapon icon texture_id
 * turrel
 * coin pickup particles
