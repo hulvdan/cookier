@@ -153,10 +153,10 @@ TEST_CASE ("ColorFromRGB") {  ///
 
 Color ColorFromRGBA(u32 color) {  ///
   return {
-    .r = (color >> 24) & 255,
-    .g = (color >> 16) & 255,
-    .b = (color >> 8) & 255,
-    .a = (color >> 0) & 255,
+    .r = (u8)((color >> 24) & 255),
+    .g = (u8)((color >> 16) & 255),
+    .b = (u8)((color >> 8) & 255),
+    .a = (u8)((color >> 0) & 255),
   };
 }
 
