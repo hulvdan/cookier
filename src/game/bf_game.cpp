@@ -751,7 +751,7 @@ struct GameData {
     i64   frameVisual = 0;
     Arena trashArena  = {};
 
-    // WARNING: Reorder loading upon reordering fonts.
+    // NOTE: Reorder loading upon reordering fonts.
     Font fontUI             = {};
     Font fontStats          = {};
     Font fontWaveCompletion = {};
@@ -1171,7 +1171,7 @@ void BF_CLAY_IMAGE(ClayImageData data) {  ///
   BF_CLAY_IMAGE(data, [] {});
 }
 
-// WARNING: This overload DOESN'T SAVE string to trash arena.
+// NOTE: This overload DOESN'T SAVE string to trash arena.
 void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
   u16 fontId = 0;
   if (g.ui.overriddenFont)
@@ -1693,8 +1693,11 @@ void RecalculateThisWaveMobs() {  ///
   f32 accumulatedFactor = 0;
 
   FOR_RANGE (int, i, fb_creatures->size()) {
-    const auto fb     = fb_creatures->Get(i);
-    const auto factor = fb->spawn_factor();
+    const auto fb = fb_creatures->Get(i);
+    const auto factor
+      = fb->spawn_factor()
+        / ArithmeticSumAverage(fb->spawn_group_count_min(), fb->spawn_group_count_max());
+    ASSERT(factor >= 0);
     if ((factor > 0) && (g.run.waveIndex + 1 >= fb->appearing_wave_number())) {
       accumulatedFactor += factor;
       g.run.thisWaveMobs[g.run.thisWaveMobsCount++] = {
@@ -4546,6 +4549,11 @@ void GameFixedUpdate() {
   if (!ge.meta.paused && gameplayOrWaveEndScreen) {
     ZoneScopedN("Updating gameplay.");
 
+    constexpr Rect creaturesWorldSpawnBounds{
+      .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
+      .size{WORLD_X - 2 * CREATURES_SPAWN_MARGIN, WORLD_Y - 2 * CREATURES_SPAWN_MARGIN},
+    };
+
     if (g.run.screen == ScreenType_GAMEPLAY) {
       // Finishing wave opens upgrades screen.
       if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
@@ -4700,7 +4708,8 @@ void GameFixedUpdate() {
 
       // Making pre spawn decals.
       {  ///
-        LAMBDA (void, makePreSpawn, (CreatureType type)) {
+
+        LAMBDA (void, makePreSpawns, (CreatureType type)) {
           ASSERT(type);
 
           Vector2 posToSpawn{};
@@ -4725,12 +4734,22 @@ void GameFixedUpdate() {
               break;
           };
 
-          CreaturePreSpawn spawn{
-            .type = type,
-            .pos  = posToSpawn,
-          };
-          spawn.createdAt.SetNow();
-          *g.run.creaturePreSpawns.Add() = spawn;
+          auto      fb = fb_creatures->Get(type);
+          const int toSpawnCount
+            = GRAND.RandInt(fb->spawn_group_count_min(), fb->spawn_group_count_max());
+
+          FOR_RANGE (int, i, toSpawnCount) {
+            Vector2 p{};
+            do {
+              const f32 off = Lerp(
+                fb->spawn_group_radius_min(), fb->spawn_group_radius_max(), GRAND.FRand()
+              );
+              p = posToSpawn + Vector2Rotate({off, 0}, 2 * PI * GRAND.FRand());
+            } while (!creaturesWorldSpawnBounds.ContainsInside(p));
+            CreaturePreSpawn spawn{.type = type, .pos = p};
+            spawn.createdAt.SetNow();
+            *g.run.creaturePreSpawns.Add() = spawn;
+          }
         };
 
         int  spawnEnemiesEvery = FIXED_FPS;
@@ -4753,7 +4772,8 @@ void GameFixedUpdate() {
                 break;
               }
             }
-            makePreSpawn(spawnType);
+
+            makePreSpawns(spawnType);
           }
 
           if (g.run.toSpawn < 3)
@@ -4764,7 +4784,7 @@ void GameFixedUpdate() {
         if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
           const int toSpawn = GetNumberOfTreesToSpawn();
           FOR_RANGE (int, i, toSpawn)
-            makePreSpawn(CreatureType_TREE);
+            makePreSpawns(CreatureType_TREE);
         }
       }
 
@@ -5515,14 +5535,6 @@ void GameFixedUpdate() {
                 fb->on_death_spawns_count_min(), fb->on_death_spawns_count_max()
               );
               FOR_RANGE (int, i, toSpawn) {
-                constexpr Rect bounds{
-                  .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
-                  .size{
-                    WORLD_X - 2 * CREATURES_SPAWN_MARGIN,
-                    WORLD_Y - 2 * CREATURES_SPAWN_MARGIN
-                  },
-                };
-
                 Vector2 pos{};
                 do {
                   const auto t1 = GRAND.FRand();
@@ -5538,7 +5550,7 @@ void GameFixedUpdate() {
                           ),
                           GRAND.FRand() * 2.0f * PI
                         );
-                } while (!bounds.ContainsInside(pos));
+                } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
                 CreaturePreSpawn spawn{
                   .type = (CreatureType)fb->on_death_spawns_creature_type(),

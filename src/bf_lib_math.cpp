@@ -670,4 +670,57 @@ void IncrementSetZeroOn(int* value, int mod) {  ///
     *value = 0;
 }
 
+// TODO: Use optimal math formula of arithmetic sum!
+// NOTE: `start` and `end` values must be accessible via `step`!
+int ArithmeticSum(int start, int end, int step = 1) {  ///
+  ASSERT_FALSE((end - start) % step);
+
+  int result = 0;
+  if (end >= start) {
+    ASSERT(step > 0);
+    for (int i = start; i <= end; i += step)
+      result += i;
+    return result;
+  }
+  else if (end < start) {
+    ASSERT(step < 0);
+    for (int i = start; i >= end; i += step)
+      result += i;
+    return result;
+  }
+  else {
+    INVALID_PATH;
+    return 0;
+  }
+}
+
+TEST_CASE ("ArithmeticSum") {  ///
+  // ASSERT(ArithmeticSum(1, 4, 2) == 4);
+  ASSERT(ArithmeticSum(1, 1) == 1);
+  ASSERT(ArithmeticSum(2, 2) == 2);
+  // ASSERT(ArithmeticSum(4, 1, -2) == 6);
+  ASSERT(ArithmeticSum(1, 4) == 10);
+  ASSERT(ArithmeticSum(4, 1, -1) == 10);
+  ASSERT(ArithmeticSum(1, 5) == 15);
+  ASSERT(ArithmeticSum(2, 5) == 14);
+}
+
+// NOTE: `start` and `end` values must be accessible via `step`!
+f32 ArithmeticSumAverage(int start, int end, int step = 1) {  ///
+  int sum = ArithmeticSum(start, end, step);
+  if (start > end) {
+    auto t = start;
+    start  = end;
+    end    = t;
+  }
+  return (f32)sum / (f32)(end - start + 1);
+}
+
+TEST_CASE ("AverageOfArithmeticSum") {  ///
+  ASSERT(FloatEquals(ArithmeticSumAverage(1, 4), 2.5f));
+  ASSERT(FloatEquals(ArithmeticSumAverage(4, 1, -1), 2.5f));
+  ASSERT(FloatEquals(ArithmeticSumAverage(1, 5), 3.0f));
+  ASSERT(FloatEquals(ArithmeticSumAverage(2, 5), 3.5f));
+}
+
 ///

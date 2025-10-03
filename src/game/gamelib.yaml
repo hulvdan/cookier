@@ -259,7 +259,11 @@ creatures:
       - game_creature_player_move_4
   - type: MOB_CHASER
     appearing_wave_number: 2
-    spawn_factor: 60
+    spawn_factor: 80
+    spawn_group_count_min: 5
+    spawn_group_count_max: 8
+    spawn_group_radius_min: 1
+    spawn_group_radius_max: 3
     health: 1
     health_increase_per_wave: 1
     contact_damage: 1
