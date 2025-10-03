@@ -5207,16 +5207,16 @@ void GameFixedUpdate() {
                 // Y is divided by 2 because it's grabbed from a texture that targets
                 // 4K.
                 // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).
-                (f32)fb->melee_collider_height_px() / 2.0f,
+                (f32)fb->melee_collider_height_px(),
               };
               colliderSize *= ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
-              colliderSize.x += GetWeaponRangeMeters(weapon.type) * MIN(1, p * 2);
+              colliderSize.x += GetWeaponRangeMeters(weapon.type);
 
               CheckCollisionsRect(
                 ShapeCategory_STATIC,
                 (u32)ShapeCategory_CREATURE,
-                PLAYER_CREATURE.pos,
+                PLAYER_CREATURE.pos + weapon.targetDir * colliderSize.x / 2.0f,
                 colliderSize,
                 weapon.targetDir,
                 OnWeaponCollided,
@@ -5886,6 +5886,19 @@ void GameDraw() {
 
         const auto fb = fb_weapons->Get(weapon.type);
 
+        auto pos = GetWeaponPos(weapon);
+        if (!fb->projectile_type() && weapon.startedShootingAt.IsSet()) {
+          const auto dur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+          const f32  t   = InOutLerp(
+            0,
+            1,
+            (f32)weapon.startedShootingAt.Elapsed().value,
+            (f32)dur.value,
+            (f32)dur.value / 6
+          );
+          pos = Vector2Lerp(PLAYER_CREATURE.pos + weapon.offset, pos, t);
+        }
+
         f32     rotation = 0;
         Vector2 scale{0, 1};
 
@@ -5900,7 +5913,7 @@ void GameDraw() {
           {
             .texId    = fb->texture_ids()->Get(0),
             .rotation = rotation,
-            .pos      = GetWeaponPos(weapon),
+            .pos      = pos,
             .scale    = scale,
             .color    = Fade(ColorFromRGBA(fb->color()), fade),
           },

@@ -510,7 +510,7 @@ weapons:
     max_price: 122
     cooldown_frames: 20
     shooting_duration_frames: 10
-    range_meters: 2
+    range_meters: 3
     knockback_meters: 5
     life_steal_percent: 1.5
     melee_collider_height_px: 76
