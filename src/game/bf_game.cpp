@@ -812,6 +812,8 @@ struct GameData {
     int       waveIndex     = 0;
     FrameGame waveStartedAt = {};
 
+    bool bossSpawned = false;
+
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
     Array<int, StatType_COUNT> playerStatsWithoutItems = {};
@@ -1444,12 +1446,13 @@ void MakeCreature(MakeCreatureData data) {  ///
   auto index = g.run.creatures.count;
   auto slot  = g.run.creatures.Add();
 
-  auto hurtboxRadius = PLAYER_HURTBOX_RADIUS;
-  if (data.type != CreatureType_PLAYER)
-    hurtboxRadius = MOB_HURTBOX_RADIUS;
+  const auto fb = glib->creatures()->Get(data.type);
 
-  const auto fb     = glib->creatures()->Get(data.type);
-  auto       health = (f32)fb->health()
+  f32 hurtboxRadius = PLAYER_HURTBOX_RADIUS;
+  if (data.type != CreatureType_PLAYER)
+    hurtboxRadius = MOB_HURTBOX_RADIUS * fb->hurtbox_scale();
+
+  auto health = (f32)fb->health()
                 + (f32)((g.run.waveIndex - fb->appearing_wave_number() + 1))
                     * fb->health_increase_per_wave();
   if (data.type == CreatureType_PLAYER)
@@ -1467,7 +1470,7 @@ void MakeCreature(MakeCreatureData data) {  ///
     .pos       = data.pos,
     .body      = MakeCircleBody({
            .pos           = data.pos,
-           .radius        = CREATURE_COLLIDER_RADIUS,
+           .radius        = CREATURE_COLLIDER_RADIUS * fb->collider_scale(),
            .hurtboxRadius = hurtboxRadius,
            .bodyData{
              .type     = BodyType_CREATURE,
@@ -1662,18 +1665,15 @@ int GetNumberOfTreesToSpawn() {  ///
   percents[2] = 16.0f - (f32)min / 2.0f;
 
   f32 total = 0;
-  FOR_RANGE (int, i, percentsCount) {
+  FOR_RANGE (int, i, percentsCount)
     total += percents[i];
-  }
 
   f32 factors[3]{};
-  FOR_RANGE (int, i, percentsCount) {
+  FOR_RANGE (int, i, percentsCount)
     factors[i] = percents[i] / total;
-  }
 
-  for (int i = 1; i < percentsCount; i++) {
+  for (int i = 1; i < percentsCount; i++)
     factors[i] += factors[i - 1];
-  }
 
   const f32 t = GRAND.FRand();
   FOR_RANGE (int, i, percentsCount) {
@@ -4351,9 +4351,8 @@ void GameFixedUpdate() {
 
     g.run.recalculatePlayerStats = false;
 
-    FOR_RANGE (int, i, StatType_COUNT) {
+    FOR_RANGE (int, i, StatType_COUNT)
       g.run.playerStats[i] = g.run.playerStatsWithoutItems[i];
-    }
 
     for (auto& item : g.run.playerItems) {
       const auto fb         = glib->items()->Get(item.type);
@@ -4491,6 +4490,7 @@ void GameFixedUpdate() {
   // Advancing to the next wave (ScreenType_GAMEPLAY).
   if (g.run.scheduledNextWave) {  ///
     g.run.scheduledNextWave = false;
+    g.run.bossSpawned       = false;
 
     const auto health         = (f32)g.run.playerStats[StatType_HP];
     PLAYER_CREATURE.health    = health;
@@ -4763,9 +4763,8 @@ void GameFixedUpdate() {
         // Spawning trees every 10 seconds.
         if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
           const int toSpawn = GetNumberOfTreesToSpawn();
-          FOR_RANGE (int, i, toSpawn) {
+          FOR_RANGE (int, i, toSpawn)
             makePreSpawn(CreatureType_TREE);
-          }
         }
       }
 
@@ -4776,14 +4775,20 @@ void GameFixedUpdate() {
         FOR_RANGE (int, i, total) {
           auto& v = g.run.creaturePreSpawns[i - off];
           if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
-            MakeCreature({
-              .type = v.type,
-              .pos  = v.pos,
-            });
+            MakeCreature({.type = v.type, .pos = v.pos});
             g.run.creaturePreSpawns.UnstableRemoveAt(i - off);
             off++;
           }
         }
+      }
+
+      // Spawning boss during the last wave.
+      if ((g.run.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossSpawned) {  ///
+        g.run.bossSpawned      = true;
+        const auto worldCenter = (Vector2)WORLD_SIZE / 2.0f;
+        const auto dir     = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, worldCenter);
+        const auto bossPos = worldCenter + dir * BOSS_SPAWN_OFFSET_METERS;
+        MakeCreature({.type = CreatureType_BOSS, .pos = bossPos});
       }
 
       // Mobs contact-damage player.
@@ -4800,8 +4805,9 @@ void GameFixedUpdate() {
           if (fb->hostility_type() != HostilityType_MOB)
             continue;
 
-          if (Vector2DistanceSqr(playerPos, creature.pos)
-              <= SQR(PLAYER_HURTBOX_RADIUS + CREATURE_COLLIDER_RADIUS))
+          if (Vector2DistanceSqr(playerPos, creature.pos) <= SQR(
+                PLAYER_HURTBOX_RADIUS + CREATURE_COLLIDER_RADIUS * fb->collider_scale()
+              ))
           {
             const f32 damage
               = fb->contact_damage()
@@ -5404,11 +5410,14 @@ void GameFixedUpdate() {
               continue;
             if (!AreEnemies(projectile.ownerCreatureType, creature.type))
               continue;
-            if (Vector2DistanceSqr(creature.pos, projectile.pos)
-                > SQR(fb->aoe_radius() * sizeMultiplier + MOB_HURTBOX_RADIUS))
-              continue;
 
             const auto fb_creature = fb_creatures->Get(creature.type);
+
+            if (Vector2DistanceSqr(creature.pos, projectile.pos) > SQR(
+                  fb->aoe_radius() * sizeMultiplier
+                  + MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
+                ))
+              continue;
 
             f32  damage = projectile.damage * GetExplosionDamageMultiplier();
             bool isCrit = false;
@@ -5591,6 +5600,14 @@ void GameFixedUpdate() {
                     ApplyEffect(fb_effect, item.count);
                 }
               );
+            }
+
+            // Wave gets set to completed upon killing boss.
+            if (fb->is_boss()) {
+              if (!g.run.scheduledWaveCompleted.IsSet()) {
+                g.run.scheduledWaveCompleted.SetNow();
+                g.run.waveWon = true;
+              }
             }
           }
         }

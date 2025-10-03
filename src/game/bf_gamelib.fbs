@@ -72,6 +72,8 @@ table Creature {
     knockback_resistance: float;
     consumable_drop_chance: float = 0.007;
     is_boss: bool = false;
+    collider_scale: float = 1;
+    hurtbox_scale: float = 1;
     coins_dropped: int = 1;
 
     on_death_spawns_creature_type: int;
