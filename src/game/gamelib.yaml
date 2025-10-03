@@ -348,6 +348,25 @@ creatures:
       - game_creature_player_move_2
       - game_creature_player_move_3
       - game_creature_player_move_4
+  - type: BOSS
+    appearing_wave_number: 20
+    spawn_factor: 0
+    health: 900 # TODO: Check Brotato.
+    health_increase_per_wave: 100
+    contact_damage: 5 # TODO: Check Brotato.
+    contact_damage_increase_per_wave: 5
+    knockback_resistance: 1
+    consumable_drop_chance: 0
+    is_boss: true
+    color: 0xffaa00ff
+    speed: 3.5
+    collider_scale: 2
+    hurtbox_scale: 1.7
+    speed_variation: 0
+    idle_texture_ids:
+      - game_creature_boss_idle_1
+    move_texture_ids:
+      - game_creature_boss_idle_1
   - type: TREE
     appearing_wave_number: 1
     spawn_factor: 0
