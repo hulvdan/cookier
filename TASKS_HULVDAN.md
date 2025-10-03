@@ -29,8 +29,9 @@ x updated ui frame + button sprites
   + forecasts enemy positions
   + damages enemies
   + doesn't get hurt by enemies
+  + doesn't get hurt by player's explosions
   * proper spawning (via items)
-  * can specify range + proejctile_type
+  * can specify range + projectile_type
   * correct gun texture placement
   * correct bullet spawn pos
   * knockback / pierce / bounce
