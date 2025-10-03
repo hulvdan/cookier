@@ -192,9 +192,9 @@ ui_item_slot_colors:
   - 0
   - 0
 ui_button_colors:
-  - 0x5e3735ff # default color
-  - 0x885a44ff # hovered color
-  - 0x3a3a41ff # disabled color
+  - 0x2c5e3bff # default color
+  - 0x609c4fff # hovered color
+  - 0x56546eff # disabled color
   - 0 # default flash
   - 0 # hovered flash
   - 0 # disabled flash
@@ -202,16 +202,16 @@ ui_item_big_frame_color: 0x1d1b24
 ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
 ui_frame_nine_slice:
   texture_id: ui_frame
-  left: 60
-  right: 60
-  top: 60
-  bottom: 60
+  left: 64
+  right: 64
+  top: 64
+  bottom: 64
 ui_button_nine_slice:
-  texture_id: ui_frame
-  left: 60
-  right: 60
-  top: 60
-  bottom: 60
+  texture_id: ui_button
+  left: 64
+  right: 64
+  top: 64
+  bottom: 64
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 # «Hostility» is about colors of «spawn crosses» in brotato.
 # Colors differ based on whether a creature that will be spawned

@@ -1523,7 +1523,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
 
 void GamePreInit() {  ///
   ge.meta.logicRand           = Random(SDL_GetPerformanceCounter());
-  ge.settings.backgroundColor = {0x1d, 0x1b, 0x24, 0xff};
+  ge.settings.backgroundColor = ColorFromRGBA(0x241207ff);
 }
 
 struct Line {
@@ -2463,7 +2463,7 @@ void DoUI(bool draw) {
 
     CLAY({.layout{.sizing{sizing}}}) {
       auto      fb_colors = glib->ui_button_colors();
-      const int t         = (data.enabled ? (Clay_Hovered() ? 0 : 1) : 2);
+      const int t         = (data.enabled ? (Clay_Hovered() ? 1 : 0) : 2);
 
       CLAY({
         .layout{
@@ -2472,7 +2472,7 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(),
+          glib->ui_button_nine_slice(),
           ColorFromRGBA(fb_colors->Get(t)),
           ColorFromRGBA(fb_colors->Get(t + 3))
         ),
@@ -2491,7 +2491,7 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentSlot, (bool enabled, int tier, auto innerLambda)) {
     CLAY({}) {
-      const int b      = (enabled ? (Clay_Hovered() ? 0 : 1) : 2);
+      const int b      = (enabled ? (Clay_Hovered() ? 1 : 0) : 2);
       const int t      = b + 3 * tier;
       const int tColor = b + 6 * tier;
       const int tFlash = b + 6 * tier + 3;
@@ -5767,7 +5767,7 @@ void GameDraw() {
       {
         .pos   = (Vector2)WORLD_SIZE / 2.0f,
         .size  = (Vector2)WORLD_SIZE,
-        .color = {0x3a, 0x3a, 0x41, 0xff},
+        .color = ColorFromRGBA(0x362316ff),
       },
       DrawZ_FLOOR
     );
