@@ -471,15 +471,15 @@ struct MakeBodyData {
 };
 
 struct Weapon {
-  WeaponType type              = {};
-  Vector2    offset            = {};
-  Vector2    detachedPos       = {};
-  Vector2    targetDir         = {};
-  FrameGame  startedShootingAt = {};
-  FrameGame  cooldownStartedAt = {};
-  int        tier              = {};
-  int        recyclePrice      = {};
-  f32        didDamage         = 0;
+  WeaponType type                               = {};
+  Vector2    offset                             = {};
+  Vector2    targetDir                          = {};
+  FrameGame  startedShootingAt                  = {};
+  FrameGame  cooldownStartedAt                  = {};
+  int        tier                               = {};
+  int        recyclePrice                       = {};
+  f32        didDamage                          = 0;
+  f32        lastCollisionCheckShootingProgress = 0;
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
@@ -1754,7 +1754,8 @@ void RunInit() {
   struct {
     WeaponType type = {};
   } weapons_[]{
-    {.type = WeaponType_SLINGSHOT},
+    {.type = WeaponType_SWORD},
+    // {.type = WeaponType_SLINGSHOT},
     // {.type = WeaponType_BOW},
     // {.type = WeaponType_GUN},
   };
@@ -2153,7 +2154,7 @@ f32 GetPlayerStatAttackSpeedMultiplier() {  ///
 
 lframe ApplyAttackSpeedToDuration(int duration) {  ///
   return lframe::Unscaled(MAX(
-    1,
+    2,
     (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration) / GetPlayerStatAttackSpeedMultiplier())
   ));
 }
@@ -2170,7 +2171,8 @@ f32 GetExplosionSizeMultiplier() {  ///
   return powf(2, v / 50);
 }
 
-f32 GetWeaponRange(WeaponType type) {  ///
+// NOTE: Doesn't include melee weapon's size.
+f32 GetWeaponRangeMeters(WeaponType type) {  ///
   const auto fb = glib->weapons()->Get(type);
 
   auto range = (f32)g.run.playerStats[StatType_RANGE];
@@ -2271,7 +2273,7 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
 
   p = EaseInOutQuad(p);
 
-  const f32  movingDistance = MAX(1, GetWeaponRange(weapon.type));
+  const f32  movingDistance = MAX(1, GetWeaponRangeMeters(weapon.type));
   const auto movedDistance  = p * movingDistance;
 
   return PLAYER_CREATURE.pos + weapon.targetDir * movedDistance;
@@ -2852,7 +2854,7 @@ void DoUI(bool draw) {
 
     // Range.
     componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
-      const f32 rangeMeters = GetWeaponRange(type);
+      const f32 rangeMeters = GetWeaponRangeMeters(type);
       if (fb->projectile_type()) {
         BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
       }
@@ -5079,7 +5081,7 @@ void GameFixedUpdate() {
 
           if (closestCreatureIndex >= 0) {
             const auto& closestCreature = g.run.creatures[closestCreatureIndex];
-            auto        range           = GetWeaponRange(weapon.type);
+            auto        range           = GetWeaponRangeMeters(weapon.type);
 
             if (fb->projectile_type()) {
               const auto fb_projectile = glib->projectiles()->Get(fb->projectile_type());
@@ -5094,7 +5096,8 @@ void GameFixedUpdate() {
             }
 
             if (minDistSqr < SQR(range)) {
-              const auto dir = Vector2DirectionOrRandom(pos, closestCreature.pos);
+              const auto dir
+                = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, closestCreature.pos);
 
               // Only ranged weapons continue tracking target
               // in the middle of shooting.
@@ -5102,8 +5105,7 @@ void GameFixedUpdate() {
                 weapon.targetDir = dir;
 
               if (!weapon.startedShootingAt.IsSet()) {
-                weapon.targetDir   = dir;
-                weapon.detachedPos = GetWeaponPos(weapon);
+                weapon.targetDir = dir;
                 weapon.startedShootingAt.SetNow();
               }
               targetSet = true;
@@ -5144,7 +5146,7 @@ void GameFixedUpdate() {
                 .weaponIndex       = weaponIndex,
                 .pos               = pos,
                 .dir               = weapon.targetDir,
-                .range             = GetWeaponRange(weapon.type),
+                .range             = GetWeaponRangeMeters(weapon.type),
                 .damage            = GetWeaponDamage(weapon.type, weapon.tier),
                 .critDamage        = fb->critical_damage(),
                 .knockbackMeters   = fb->knockback_meters(),
@@ -5155,29 +5157,38 @@ void GameFixedUpdate() {
           }
           else {
             // It's a weapon that gets "shot" itself (MELEE / ELEMENTAL damage types).
+            // Not projectile.
             ASSERT(!projectileSpawnFrames);
 
-            auto p = e.Progress(shootingDur);
+            const auto colliderActiveStart = shootingDur.value / 4;
+            const auto colliderActiveEnd   = shootingDur.value / 2;
 
-            const auto colliderActiveStart = 0.25f;
-            const auto colliderActiveEnd   = 0.5f;
+            const auto p = e.Progress(shootingDur);
 
-            const auto texId      = fb->texture_ids()->Get(0);
-            const auto fb_texture = glib->atlas_textures()->Get(texId);
-            const auto    colliderSize = Vector2{
-              // TODO: ATLAS_D2.
-              (f32)fb_texture->size_x(),
-              // NOTE:
-              // Y is divided by 2 because it's grabbed from a texture that targets 4K.
-              // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).
-              (f32)fb->melee_collider_height_px() / 2.0f,
-            } * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+            if ((0.25f <= p)
+                && ((p <= 0.5f) || ((weapon.lastCollisionCheckShootingProgress < 0.5f) && (p >= 0.5f))))
+            {
+              weapon.lastCollisionCheckShootingProgress = p;
 
-            if ((colliderActiveStart <= p) && (p <= colliderActiveEnd)) {
+              const auto texId      = fb->texture_ids()->Get(0);
+              const auto fb_texture = glib->atlas_textures()->Get(texId);
+              Vector2    colliderSize{
+                // TODO: ATLAS_D2.
+                (f32)fb_texture->size_x(),
+                // NOTE:
+                // Y is divided by 2 because it's grabbed from a texture that targets
+                // 4K.
+                // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).
+                (f32)fb->melee_collider_height_px() / 2.0f,
+              };
+              colliderSize *= ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+
+              colliderSize.x += GetWeaponRangeMeters(weapon.type) * MIN(1, p * 2);
+
               CheckCollisionsRect(
                 ShapeCategory_STATIC,
                 (u32)ShapeCategory_CREATURE,
-                GetWeaponPos(weapon),
+                PLAYER_CREATURE.pos,
                 colliderSize,
                 weapon.targetDir,
                 OnWeaponCollided,
@@ -5190,6 +5201,7 @@ void GameFixedUpdate() {
             weapon.startedShootingAt = {};
             weapon.piercedCount      = 0;
             weapon.cooldownStartedAt.SetNow();
+            weapon.lastCollisionCheckShootingProgress = 0;
           }
         }
       }
