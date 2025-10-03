@@ -670,35 +670,24 @@ void IncrementSetZeroOn(int* value, int mod) {  ///
     *value = 0;
 }
 
-// TODO: Use optimal math formula of arithmetic sum!
 // NOTE: `start` and `end` values must be accessible via `step`!
 int ArithmeticSum(int start, int end, int step = 1) {  ///
   ASSERT_FALSE((end - start) % step);
-
-  int result = 0;
   if (end >= start) {
     ASSERT(step > 0);
-    for (int i = start; i <= end; i += step)
-      result += i;
-    return result;
+    return (start + end) * (end - start + 1) / 2;
   }
   else if (end < start) {
     ASSERT(step < 0);
-    for (int i = start; i >= end; i += step)
-      result += i;
-    return result;
+    return (start + end) * (start - end + 1) / 2;
   }
-  else {
-    INVALID_PATH;
-    return 0;
-  }
+  INVALID_PATH;
+  return 0;
 }
 
 TEST_CASE ("ArithmeticSum") {  ///
-  // ASSERT(ArithmeticSum(1, 4, 2) == 4);
   ASSERT(ArithmeticSum(1, 1) == 1);
   ASSERT(ArithmeticSum(2, 2) == 2);
-  // ASSERT(ArithmeticSum(4, 1, -2) == 6);
   ASSERT(ArithmeticSum(1, 4) == 10);
   ASSERT(ArithmeticSum(4, 1, -1) == 10);
   ASSERT(ArithmeticSum(1, 5) == 15);
