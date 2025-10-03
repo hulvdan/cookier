@@ -5122,11 +5122,15 @@ void GameFixedUpdate() {
             }
 
             if (minDistSqr < SQR(range)) {
+              // Melee weapons attack from center.
+              // Ranged - from their offset positions.
+              Vector2 targetFromPos = PLAYER_CREATURE.pos;
+              if (fb->projectile_type())
+                targetFromPos += weapon.offset;
               const auto dir
-                = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, closestCreature.pos);
+                = Vector2DirectionOrRandom(targetFromPos, closestCreature.pos);
 
-              // Only ranged weapons continue tracking target
-              // in the middle of shooting.
+              // Only ranged weapons continue tracking target during shooting.
               if (fb->projectile_type())
                 weapon.targetDir = dir;
 
