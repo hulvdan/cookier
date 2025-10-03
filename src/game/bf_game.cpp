@@ -890,7 +890,7 @@ struct GameData {
 
 void ApplyAilment(
   Creature*        creature,
-  CreatureType     damageApplicatorCreatureType,
+  CreatureType     damagerCreatureType,
   ApplyAilmentData data
 ) {  ///
   ASSERT(data.type);
@@ -898,7 +898,7 @@ void ApplyAilment(
   auto fb_ailment = glib->ailments()->Get(data.type);
 
   auto& a             = creature->ailments[data.type - 1];
-  a.ownerCreatureType = damageApplicatorCreatureType;
+  a.ownerCreatureType = damagerCreatureType;
   if ((data.type == AilmentType_ZAP) && !a.startedAt.IsSet())
     creature->speedModifier *= ZAP_SPEED_SCALE;
 
@@ -1898,15 +1898,15 @@ f32 GetLifestealChance(WeaponType type) {  ///
 }
 
 struct TryApplyDamageData {
-  int              creatureIndex                = {};
-  f32              damage                       = {};
-  Vector2          directionOrZero              = {0, 0};
-  f32              knockbackMeters              = 0;
-  CreatureType     damageApplicatorCreatureType = CreatureType_INVALID;
-  bool             isCrit                       = false;
-  int              indexOfWeaponThatDidDamage   = -1;
-  ApplyAilmentData ailment                      = {};
-  f32              ailmentChance                = 0;
+  int              creatureIndex              = {};
+  f32              damage                     = {};
+  Vector2          directionOrZero            = {0, 0};
+  f32              knockbackMeters            = 0;
+  CreatureType     damagerCreatureType        = CreatureType_INVALID;
+  bool             isCrit                     = false;
+  int              indexOfWeaponThatDidDamage = -1;
+  ApplyAilmentData ailment                    = {};
+  f32              ailmentChance              = 0;
 };
 
 bool TryApplyDamage(TryApplyDamageData data) {  ///
@@ -1930,7 +1930,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   const auto fb = glib->creatures()->Get(creature.type);
 
   if (data.creatureIndex) {
-    if (data.damageApplicatorCreatureType == CreatureType_PLAYER) {
+    auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
+    if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
       MakeNumber({
         .type  = (data.isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
         .value = Round(data.damage),
@@ -1959,7 +1960,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   }
 
   // Player lifesteals.
-  if (data.damageApplicatorCreatureType == CreatureType_PLAYER) {
+  if (data.damagerCreatureType == CreatureType_PLAYER) {
     if (GRAND.FRand()
         < GetLifestealChance(g.run.playerWeapons[data.indexOfWeaponThatDidDamage].type))
     {
@@ -1991,12 +1992,12 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance)) {
     auto damage = data.ailment.value;
-    if (data.damageApplicatorCreatureType == CreatureType_PLAYER)
+    if (data.damagerCreatureType == CreatureType_PLAYER)
       damage += g.run.playerStats[StatType_DAMAGE_ELEMENTAL];
 
     if ((data.ailment.value == 0) || (damage > 0)) {
       data.ailment.value = damage;
-      ApplyAilment(&creature, data.damageApplicatorCreatureType, data.ailment);
+      ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
     }
   }
 
@@ -2289,13 +2290,13 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
     damage = MAX(1, damage);
 
     TryApplyDamage({
-      .creatureIndex   = creatureIndex,
-      .damage          = damage,
-      .directionOrZero = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      .knockbackMeters = fb->knockback_meters(),
-      .damageApplicatorCreatureType = CreatureType_PLAYER,
-      .isCrit                       = isCrit,
-      .indexOfWeaponThatDidDamage   = *weaponIndex,
+      .creatureIndex       = creatureIndex,
+      .damage              = damage,
+      .directionOrZero     = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      .knockbackMeters     = fb->knockback_meters(),
+      .damagerCreatureType = CreatureType_PLAYER,
+      .isCrit              = isCrit,
+      .indexOfWeaponThatDidDamage = *weaponIndex,
     });
   }
   return continueCollisions;
@@ -4745,7 +4746,7 @@ void GameFixedUpdate() {
             auto& data = creature.DataTurrel();
 
             // TODO TURREL
-            const f32 rangeMeters = 15;
+            const f32 rangeMeters = 3;
             // TODO TURREL
             const auto projectileSpawnPos = creature.pos;
             const auto projectileType     = ProjectileType_BULLET_EXPLOSIVE;
@@ -4760,7 +4761,9 @@ void GameFixedUpdate() {
               const auto& otherCreature = g.run.creatures[otherCreatureIndex];
               if (otherCreature.id == creature.id)
                 continue;
-              if (otherCreature.type == creature.type)
+
+              auto fb_otherCreature = fb_creatures->Get(otherCreature.type);
+              if (fb_otherCreature->hostility_type() == fb->hostility_type())
                 continue;
 
               const auto forecastedCreaturePos = ForecastWhereProjectileWillHitCreature(
@@ -4941,9 +4944,9 @@ void GameFixedUpdate() {
                 + fb->contact_damage_increase_per_wave()
                     * (f32)(g.run.waveIndex + 1 - fb->appearing_wave_number());
             TryApplyDamage({
-              .creatureIndex                = 0,
-              .damage                       = ApplyPlayerArmorToIncomingDamage(damage),
-              .damageApplicatorCreatureType = creature.type,
+              .creatureIndex       = 0,
+              .damage              = ApplyPlayerArmorToIncomingDamage(damage),
+              .damagerCreatureType = creature.type,
             });
           }
         }
@@ -5099,11 +5102,11 @@ void GameFixedUpdate() {
               if (a.ownerCreatureType == CreatureType_PLAYER)
                 isCrit = IsCrit();
               TryApplyDamage({
-                .creatureIndex                = creatureIndex,
-                .damage                       = a.value,
-                .damageApplicatorCreatureType = a.ownerCreatureType,
-                .isCrit                       = isCrit,
-                .indexOfWeaponThatDidDamage   = a.weaponIndex,
+                .creatureIndex              = creatureIndex,
+                .damage                     = a.value,
+                .damagerCreatureType        = a.ownerCreatureType,
+                .isCrit                     = isCrit,
+                .indexOfWeaponThatDidDamage = a.weaponIndex,
               });
             }
           }
@@ -5393,7 +5396,8 @@ void GameFixedUpdate() {
         int start = 0;
         int end   = g.run.creatures.count;
 
-        if (projectile.ownerCreatureType == CreatureType_PLAYER)
+        auto fb_owner = fb_creatures->Get(projectile.ownerCreatureType);
+        if (fb_owner->hostility_type() == HostilityType_FRIENDLY)
           start = 1;
         else
           end = 1;
@@ -5410,6 +5414,9 @@ void GameFixedUpdate() {
             continue;
 
           const auto fb_creature = fb_creatures->Get(creature.type);
+
+          if (fb_owner->hostility_type() == fb_creature->hostility_type())
+            continue;
 
           const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
           const auto radius  = fb->collider_radius();
@@ -5455,13 +5462,13 @@ void GameFixedUpdate() {
               ailmentSpread = MAX(0, g.run.playerStats[StatType_BURNING_SPREAD]);
 
             if (TryApplyDamage({
-                  .creatureIndex                = creatureIndex,
-                  .damage                       = damage,
-                  .directionOrZero              = knockbackDirection,
-                  .knockbackMeters              = knockback,
-                  .damageApplicatorCreatureType = projectile.ownerCreatureType,
-                  .isCrit                       = isCrit,
-                  .indexOfWeaponThatDidDamage   = projectile.weaponIndex,
+                  .creatureIndex              = creatureIndex,
+                  .damage                     = damage,
+                  .directionOrZero            = knockbackDirection,
+                  .knockbackMeters            = knockback,
+                  .damagerCreatureType        = projectile.ownerCreatureType,
+                  .isCrit                     = isCrit,
+                  .indexOfWeaponThatDidDamage = projectile.weaponIndex,
                   .ailment{
                     .type   = (AilmentType)fb->ailment_type(),
                     .value  = fb->ailment_value(),
@@ -5600,9 +5607,9 @@ void GameFixedUpdate() {
               .damage          = damage,
               .directionOrZero = Vector2DirectionOrRandom(projectile.pos, creature.pos),
               .knockbackMeters = projectile.knockbackMeters,
-              .damageApplicatorCreatureType = projectile.ownerCreatureType,
-              .isCrit                       = isCrit,
-              .indexOfWeaponThatDidDamage   = projectile.weaponIndex,
+              .damagerCreatureType        = projectile.ownerCreatureType,
+              .isCrit                     = isCrit,
+              .indexOfWeaponThatDidDamage = projectile.weaponIndex,
             });
           }
           *g.run.particles.Add() = p;

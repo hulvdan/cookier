@@ -27,8 +27,14 @@ x updated ui frame + button sprites
   + doesn't get hurt by player
   + targets enemies
   + forecasts enemy positions
-  * damages enemies
+  + damages enemies
   * doesn't get hurt by enemies
+  * proper spawning (via items)
+  * can specify range + proejctile_type
+  * correct gun texture placement
+  * correct bullet spawn pos
+  * knockback / pierce / bounce
+  * damage scaling
 * stat descriptions
 * draw melee weapon attack colliders
 * store texture "original size" disregarding atlas_d2 / atlas_d4
