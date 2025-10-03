@@ -22,8 +22,9 @@ x correct melee weapons damage registration
 x updated ui frame + button sprites
 
 * turrel
-  + can't burn
+  + can't burn (can specify ailment resistances for mobs (e.g. for burning / zap))
   + can't move
+  x doesn't get hurt by player
   * targets enemies
   * doesn't get hurt by enemies
 * stat descriptions
