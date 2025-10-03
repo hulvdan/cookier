@@ -1,35 +1,70 @@
-x fix: weapons Z оружий, чтобы не "мелькали" в некоторых случаях
-x кнопке можно указать 9slice + color + flash
-x fix padding статов
+Привет, Жень
+Думаю, было бы клёво вживую подвести итоги по игре и определить, что остаётся для её релиза в плане кода, гейдизайна. Почти месяц разработки накапал.
+Что думаешь?
+
+
+Если будет время накинуть тем перед встречей, полагаю, можешь заранее подготовить их.
+
+
+Ниже - для информации.
+
+Предварительно по темам:
+
+GAMEDESIGN:
+- Типы эффектов оружий
+  - "Инженерка". Стоит реализовывать туррели / мины?
+- Мб кастомные projectile-ы? Что у них было бы по эффектам?
+  - Ускорение
+  - Замедление
+- Эффекты предметов
+- Мобы
+  - доп мобы (хилер)
+  - доп механики мобам (в brotato некоторые мобы "блуждают" всё время или пока не заагрятся на игрока)
+  - как будет работать босс
+
+VISUAL:
+- Как будет выглядеть начало игры (т.е. катсцена -> переход к гейплею). Есть ли что-то по коду, что можно начать делать
+
+PRODUCTION:
+- яндекс
+  - сохранение во время игры
+  - прикручивание аналитики, воронки
+  - проверить скалирование на ВСЕХ устройствах / топ браузерах
+-
+-
+
+
+PS шо сделал
+
+```
+GAMEPLAY
+x melee атаки оружиями игрока исходят из центра игрока
+x fix: melee оружия гарантированно нанесут урон даже при запределеных значениях RANGE / ATTACK SPEED
+x можно указать, чтобы некоторые мобы спавнились группами
+x враг-босс. его убийство сразу завершает последнюю волну
+x boss HP bar
+x моб-туррель из Brotato (дружественна к игроку)
+  + не горит (мобам можно указать сопротивляемость ailment-ам (горение, молниевое замедление))
+  + игрок и враги ей не наносят урон, а сама - таргетит врагов, стреляет, убивает
+  (правильный её спавн через предметы не делал)
+
+UI
+x кнопке можно указать 9slice + color + flash.
+x подредачил спрайты UI frame-ов и кнопок
 x оружию можно указать иконку
-x движок: можно загрузить несколько шрифтов, чтобы они использовали один и тот же атлас
-  (минимизируя draw call-ы), но имели разные настройки размера, обводки и т.п.
 x мелкий шрифт для отображения статов
+x оставшиеся до конца волны секунды отображаются, как в Brotato
+x победа в последней волне отображает "run completed!", а не wave completed
+
+FIX
+x fix: weapons Z оружий, чтобы не "мелькали" в некоторых случаях
+x fix padding статов
 x фикс расстояния получения контактного урона
 x fix: увеличение HP при повышении уровня (выборе апгрейда) отображается в HP bar-е сразу
-x оставшиеся до конца волны секунды отображаются, как в brotato
-  (вверху "WAVE #", под этим - оставшиеся секунды)
-x showing "run completed!" after completing the last wave
-x fix: reset damage numbers / projectiles upon getting into shop
-x melee weapons attack from player's center of player
-x melee weapons have guaranteed collision detection disregarding ATTACK_SPEED and RANGE
-x boss enemy that forces wave to finish upon getting killed
-x can spawn certain enemies in groups
-x fix ranged weapons shooting trajectory
-x boss HP bar
-x correct melee weapons damage registration
-  + better easing of melee weapons attacking from player's center
-x updated ui frame + button sprites
+x fix: удаление всех damage numbers / projectiles на карте при переходе в магазин
+```
 
 * turrel
-  + can't burn (can specify ailment resistances for mobs (e.g. for burning / zap))
-  + can't move
-  + doesn't get hurt by player
-  + targets enemies
-  + forecasts enemy positions
-  + damages enemies
-  + doesn't get hurt by enemies
-  + doesn't get hurt by player's explosions
   * proper spawning (via items)
   * can specify range + projectile_type
   * correct gun texture placement
