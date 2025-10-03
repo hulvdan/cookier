@@ -538,6 +538,12 @@ struct Creature {
   union {
     struct {
       FrameGame startedShootingAt;
+      FrameGame finishedShootingAt;
+      lframe    cooldown;
+    } turrel;
+
+    struct {
+      FrameGame startedShootingAt;
     } ranger;
 
     struct {
@@ -547,6 +553,16 @@ struct Creature {
       Vector2   rushingDir;
     } rusher;
   } _mob;
+
+  auto& DataTurrel() {  ///
+    ASSERT(type == CreatureType_TURREL);
+    return _mob.turrel;
+  };
+
+  const auto& DataTurrel() const {  ///
+    ASSERT(type == CreatureType_TURREL);
+    return _mob.turrel;
+  };
 
   auto& DataRanger() {  ///
     ASSERT(type == CreatureType_RANGER);
@@ -1481,6 +1497,10 @@ int MakeCreature(MakeCreatureData data) {  ///
   creature.idleStartedAt.SetNow();
 
   switch (creature.type) {
+  case CreatureType_TURREL: {
+    creature.DataTurrel() = {};
+  } break;
+
   case CreatureType_RANGER: {
     creature.DataRanger() = {};
   } break;
@@ -1948,7 +1968,11 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   }
   creature.health -= data.damage;
 
-  if (data.ailment.type && (GRAND.FRand() < data.ailmentChance)) {
+  bool ailmentCanBeApplied = true;
+  if (!fb->can_burn() && (data.ailment.type == AilmentTyp_BURN))
+    ailmentCanBeApplied = false;
+
+  if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance)) {
     auto damage = data.ailment.value;
     if (data.damageApplicatorCreatureType == CreatureType_PLAYER)
       damage += g.run.playerStats[StatType_DAMAGE_ELEMENTAL];
@@ -4271,13 +4295,10 @@ Vector2 ForecastWhereProjectileWillHitCreature(
 bool AreEnemies(CreatureType t1, CreatureType t2) {  ///
   ASSERT(t1);
   ASSERT(t2);
-  if ((t1 == CreatureType_PLAYER) && (t2 == CreatureType_PLAYER))
-    return false;
-  if ((t1 == CreatureType_PLAYER) && (t2 != CreatureType_PLAYER))
-    return true;
-  if ((t2 == CreatureType_PLAYER) && (t1 != CreatureType_PLAYER))
-    return true;
-  return false;
+  auto fb_creatures = glib->creatures();
+  auto fb1          = fb_creatures->Get(t1);
+  auto fb2          = fb_creatures->Get(t1);
+  return fb1->hostility_type() != fb2->hostility_type();
 }
 
 f32 GetCreatureSpeed(const Creature& creature) {  ///
@@ -4608,13 +4629,13 @@ void GameFixedUpdate() {
           auto& creature = g.run.creatures[i];
           if (creature.diedAt.IsSet())
             continue;
-          if (creature.type == CreatureType_TREE)
-            continue;
 
           const auto fb = fb_creatures->Get(creature.type);
 
-          creature.controller.move
-            = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+          if (fb->can_move()) {
+            creature.controller.move
+              = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+          }
 
           if (creature.controller.move.x >= 0)
             creature.dir = {1, 0};
@@ -4699,6 +4720,15 @@ void GameFixedUpdate() {
                     = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
                   creature.speedModifier *= MOB_RUSHER_RUSH_SPEED_SCALE;
                 }
+              }
+            }
+          }
+          else if (creature.type == CreatureType_TURREL) {
+            for (int otherCreatureIndex = 1; otherCreatureIndex <= g.run.creatures.count;
+                 otherCreatureIndex++)
+            {
+              const auto& otherCreature = g.run.creatures[otherCreatureIndex];
+              if (!AreEnemies(creature.type, otherCreature.type)) {
               }
             }
           }
@@ -4934,6 +4964,10 @@ void GameFixedUpdate() {
         if (otherCreature.diedAt.IsSet())
           continue;
         if (AreEnemies(creature.type, otherCreature.type))
+          continue;
+
+        auto fb = fb_creatures->Get(otherCreature.type);
+        if (!fb->can_burn())
           continue;
 
         const auto& aa = otherCreature.ailments[AilmentType_BURN - 1];

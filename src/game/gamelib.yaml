@@ -240,6 +240,14 @@ creatures:
       - game_creature_player_move_2
       - game_creature_player_move_3
       - game_creature_player_move_4
+  - type: TURREL
+    hostility_type: FRIENDLY
+    idle_texture_ids:
+      - game_creature_turrel_base
+    turrel_gun_texture_id: game_creature_turrel_gun
+    turrel_gun_anchor_y: 0.75
+    can_move: false
+    can_burn: false
   - type: MOB_SMALL
     appearing_wave_number: 1
     spawn_factor: 100
@@ -386,6 +394,7 @@ creatures:
     hostility_type: NEUTRAL
     consumable_drop_chance: 1
     coins_dropped: 3
+    can_move: false
     idle_texture_ids:
       - game_creature_tree
 ailments:
