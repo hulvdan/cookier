@@ -24,8 +24,10 @@ x updated ui frame + button sprites
 * turrel
   + can't burn (can specify ailment resistances for mobs (e.g. for burning / zap))
   + can't move
-  x doesn't get hurt by player
-  * targets enemies
+  + doesn't get hurt by player
+  + targets enemies
+  + forecasts enemy positions
+  * damages enemies
   * doesn't get hurt by enemies
 * stat descriptions
 * draw melee weapon attack colliders

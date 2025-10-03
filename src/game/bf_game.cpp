@@ -4746,9 +4746,13 @@ void GameFixedUpdate() {
 
             // TODO TURREL
             const f32 rangeMeters = 15;
+            // TODO TURREL
+            const auto projectileSpawnPos = creature.pos;
+            const auto projectileType     = ProjectileType_BULLET_EXPLOSIVE;
+            auto       fb_projectile      = fb_projectiles->Get(projectileType);
 
-            Creature* closest     = nullptr;
-            f32       closestDist = f32_inf;
+            f32     closestDist = f32_inf;
+            Vector2 forecastedPos{};
             for (int otherCreatureIndex = 1;                  //
                  otherCreatureIndex < g.run.creatures.count;  //
                  otherCreatureIndex++)
@@ -4759,17 +4763,24 @@ void GameFixedUpdate() {
               if (otherCreature.type == creature.type)
                 continue;
 
-              auto d = Vector2DistanceSqr(otherCreature.pos, creature.pos);
+              const auto forecastedCreaturePos = ForecastWhereProjectileWillHitCreature(
+                otherCreature.pos,
+                otherCreature.controller.move * GetCreatureSpeed(otherCreature),
+                projectileSpawnPos,
+                fb_projectile->speed()
+              );
+
+              auto d = Vector2DistanceSqr(forecastedCreaturePos, creature.pos);
               if (d <= SQR(rangeMeters)) {
                 if (d < closestDist) {
-                  closestDist = d;
-                  closest     = g.run.creatures.base + otherCreatureIndex;
+                  closestDist   = d;
+                  forecastedPos = forecastedCreaturePos;
                 }
               }
             }
 
-            if (closest) {
-              data.aimDirection = Vector2DirectionOrRandom(creature.pos, closest->pos);
+            if (closestDist != f32_inf) {
+              data.aimDirection = Vector2DirectionOrRandom(creature.pos, forecastedPos);
               if (!data.startedShootingAt.IsSet())
                 data.startedShootingAt.SetNow();
             }
@@ -4779,11 +4790,11 @@ void GameFixedUpdate() {
 
               if (e == MOB_TURREL_SHOOT_FRAME) {
                 MakeProjectile({
-                  .type              = ProjectileType_BULLET_EXPLOSIVE,
+                  .type              = projectileType,
                   .ownerCreatureType = creature.type,
                   .weaponIndex       = -1,
                   // TODO TURREL pos from gun
-                  .pos   = creature.pos,
+                  .pos   = projectileSpawnPos,
                   .dir   = data.aimDirection,
                   .range = rangeMeters,
                   // TODO TURREL
