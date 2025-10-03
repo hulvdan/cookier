@@ -81,6 +81,8 @@ table Creature {
     collider_scale: float = 1;
     hurtbox_scale: float = 1;
     coins_dropped: int = 1;
+    can_move: bool = true;
+    can_burn: bool = false;
 
     on_death_spawns_creature_type: int;
     on_death_spawns_count_min: int;
@@ -95,6 +97,9 @@ table Creature {
 
     idle_texture_ids: [int];
     move_texture_ids: [int];
+
+    turrel_gun_texture_id: int;
+    turrel_gun_anchor_y: float;
 }
 
 table EffectCondition {

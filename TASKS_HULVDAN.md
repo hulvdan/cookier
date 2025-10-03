@@ -19,13 +19,19 @@ x fix ranged weapons shooting trajectory
 x boss HP bar
 x correct melee weapons damage registration
   + better easing of melee weapons attacking from player's center
+x updated ui frame + button sprites
 
+* turrel
+  + can't burn
+  + can't move
+  * targets enemies
+  * doesn't get hurt by enemies
+* stat descriptions
 * draw melee weapon attack colliders
 * store texture "original size" disregarding atlas_d2 / atlas_d4
   + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO
 * save system
 * shadows (shadow offsets, sizes)
-* turrel
 * coin pickup particles
 * keyboard input prompts
 * navigating in pickedup item / upgrades / shop / end with keyboard
@@ -39,7 +45,6 @@ x correct melee weapons damage registration
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * pause: unpause on touch
 * pause: touch support
-* stat descriptions
 * using `value_multiplier` with stat that has `is_percent=true` can confuse people.
   assert that value_multiplier && is_percent is false during codegen
 * explosion: damage scalings (look at brotato)
