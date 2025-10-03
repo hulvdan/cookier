@@ -241,7 +241,7 @@ creatures:
       - game_creature_player_move_3
       - game_creature_player_move_4
   - type: TURREL
-    health: 10
+    health: 1
     hostility_type: FRIENDLY
     idle_texture_ids:
       - game_creature_turrel_base

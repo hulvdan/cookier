@@ -28,7 +28,7 @@ x updated ui frame + button sprites
   + targets enemies
   + forecasts enemy positions
   + damages enemies
-  * doesn't get hurt by enemies
+  + doesn't get hurt by enemies
   * proper spawning (via items)
   * can specify range + proejctile_type
   * correct gun texture placement

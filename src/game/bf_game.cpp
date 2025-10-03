@@ -4746,7 +4746,7 @@ void GameFixedUpdate() {
             auto& data = creature.DataTurrel();
 
             // TODO TURREL
-            const f32 rangeMeters = 3;
+            const f32 rangeMeters = 0.1f;
             // TODO TURREL
             const auto projectileSpawnPos = creature.pos;
             const auto projectileType     = ProjectileType_BULLET_EXPLOSIVE;
@@ -5414,7 +5414,6 @@ void GameFixedUpdate() {
             continue;
 
           const auto fb_creature = fb_creatures->Get(creature.type);
-
           if (fb_owner->hostility_type() == fb_creature->hostility_type())
             continue;
 
@@ -5565,10 +5564,10 @@ void GameFixedUpdate() {
 
             if (creature.diedAt.IsSet())
               continue;
-            if (!AreEnemies(projectile.ownerCreatureType, creature.type))
-              continue;
 
             const auto fb_creature = fb_creatures->Get(creature.type);
+            if (fb_owner->hostility_type() == fb_creature->hostility_type())
+              continue;
 
             if (Vector2DistanceSqr(creature.pos, projectile.pos) > SQR(
                   fb->aoe_radius() * sizeMultiplier
