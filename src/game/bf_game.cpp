@@ -538,8 +538,8 @@ struct Creature {
   union {
     struct {
       FrameGame startedShootingAt;
-      FrameGame finishedShootingAt;
       lframe    cooldown;
+      Vector2   aimDirection;
     } turrel;
 
     struct {
@@ -1498,7 +1498,9 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   switch (creature.type) {
   case CreatureType_TURREL: {
-    creature.DataTurrel() = {};
+    creature.DataTurrel() = {
+      .aimDirection = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI),
+    };
   } break;
 
   case CreatureType_RANGER: {
@@ -1773,6 +1775,14 @@ void RunInit() {
 
   g.run.camera.pos = GetCameraTargetPos();
 
+  // TODO TURREL
+  FOR_RANGE (int, _, 10) {
+    MakeCreature({
+      .type = CreatureType_TURREL,
+      .pos{GRAND.FRand() * WORLD_X, GRAND.FRand() * WORLD_Y},
+    });
+  }
+
   struct {
     WeaponType type = {};
   } weapons_[]{
@@ -1969,8 +1979,15 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   creature.health -= data.damage;
 
   bool ailmentCanBeApplied = true;
-  if (!fb->can_burn() && (data.ailment.type == AilmentTyp_BURN))
-    ailmentCanBeApplied = false;
+  auto resists             = fb->resists_ailment_types();
+  if (resists) {
+    for (auto v : *resists) {
+      if (v == data.ailment.type) {
+        ailmentCanBeApplied = false;
+        break;
+      }
+    }
+  }
 
   if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance)) {
     auto damage = data.ailment.value;
@@ -2252,7 +2269,8 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
 
   ASSERT(creature.type);
 
-  if (creature.type == CreatureType_PLAYER)
+  auto fb_creature = glib->creatures()->Get(creature.type);
+  if (fb_creature->hostility_type() == HostilityType_FRIENDLY)
     return continueCollisions;
 
   const auto fb = glib->weapons()->Get(weapon.type);
@@ -4724,12 +4742,62 @@ void GameFixedUpdate() {
             }
           }
           else if (creature.type == CreatureType_TURREL) {
-            for (int otherCreatureIndex = 1; otherCreatureIndex <= g.run.creatures.count;
+            auto& data = creature.DataTurrel();
+
+            // TODO TURREL
+            const f32 rangeMeters = 15;
+
+            Creature* closest     = nullptr;
+            f32       closestDist = f32_inf;
+            for (int otherCreatureIndex = 1;                  //
+                 otherCreatureIndex < g.run.creatures.count;  //
                  otherCreatureIndex++)
             {
               const auto& otherCreature = g.run.creatures[otherCreatureIndex];
-              if (!AreEnemies(creature.type, otherCreature.type)) {
+              if (otherCreature.id == creature.id)
+                continue;
+              if (otherCreature.type == creature.type)
+                continue;
+
+              auto d = Vector2DistanceSqr(otherCreature.pos, creature.pos);
+              if (d <= SQR(rangeMeters)) {
+                if (d < closestDist) {
+                  closestDist = d;
+                  closest     = g.run.creatures.base + otherCreatureIndex;
+                }
               }
+            }
+
+            if (closest) {
+              data.aimDirection = Vector2DirectionOrRandom(creature.pos, closest->pos);
+              if (!data.startedShootingAt.IsSet())
+                data.startedShootingAt.SetNow();
+            }
+
+            if (data.startedShootingAt.IsSet()) {
+              auto e = data.startedShootingAt.Elapsed();
+
+              if (e == MOB_TURREL_SHOOT_FRAME) {
+                MakeProjectile({
+                  .type              = ProjectileType_BULLET_EXPLOSIVE,
+                  .ownerCreatureType = creature.type,
+                  .weaponIndex       = -1,
+                  // TODO TURREL pos from gun
+                  .pos   = creature.pos,
+                  .dir   = data.aimDirection,
+                  .range = rangeMeters,
+                  // TODO TURREL
+                  .damage     = 1,
+                  .critDamage = 2,
+                  // TODO TURREL
+                  // .knockbackMeters   =0,
+                  // .pierce            =,
+                  // .bounce            =,
+                });
+              }
+
+              if (e >= MOB_TURREL_SHOOTING_FRAMES)
+                data.startedShootingAt = {};
             }
           }
         }
@@ -4967,7 +5035,18 @@ void GameFixedUpdate() {
           continue;
 
         auto fb = fb_creatures->Get(otherCreature.type);
-        if (!fb->can_burn())
+
+        bool canBurn = true;
+        auto resists = fb->resists_ailment_types();
+        if (resists) {
+          for (auto v : *resists) {
+            if (v == AilmentType_BURN) {
+              canBurn = false;
+              break;
+            }
+          }
+        }
+        if (!canBurn)
           continue;
 
         const auto& aa = otherCreature.ailments[AilmentType_BURN - 1];
@@ -5124,7 +5203,11 @@ void GameFixedUpdate() {
           for (const auto& creature : g.run.creatures) {
             creatureIndex++;
 
-            if (creature.diedAt.IsSet() || (creature.type == CreatureType_PLAYER))
+            if (creature.diedAt.IsSet())
+              continue;
+
+            auto fb_creature = fb_creatures->Get(creature.type);
+            if (fb_creature->hostility_type() == HostilityType_FRIENDLY)
               continue;
 
             const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
@@ -5895,15 +5978,31 @@ void GameDraw() {
       color = ColorLerp(color, RED, t);
     }
 
-    DrawGroup_OneShotTexture(
+    DrawGroup_Begin(DrawZ_DEFAULT);
+
+    DrawGroup_CommandTexture(
       {
         .texId = texId,
         .pos   = creature.pos,
         .scale = scale,
         .color = Fade(color, fade),
       },
-      DrawZ_DEFAULT
+      DrawCommandSetSortY_SET_BASELINE
     );
+
+    if (creature.type == CreatureType_TURREL) {
+      const auto& d = creature.DataTurrel();
+      DrawGroup_CommandTexture({
+        .texId    = fb->turrel_gun_texture_id(),
+        .rotation = Vector2Angle(d.aimDirection),
+        // TODO TURREL correct gun pos
+        .pos   = creature.pos,
+        .scale = scale,
+        .color = Fade(color, fade),
+      });
+    }
+
+    DrawGroup_End();
 
     if (creature.type == CreatureType_PLAYER) {
       int weaponsCount = 0;

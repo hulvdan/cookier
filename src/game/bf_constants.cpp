@@ -208,6 +208,9 @@ constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
 constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::Unscaled(2.5f * FIXED_FPS);
 constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::Unscaled(3.5f * FIXED_FPS);
 
+constexpr auto MOB_TURREL_SHOOTING_FRAMES = lframe::Scaled(10);
+constexpr auto MOB_TURREL_SHOOT_FRAME     = lframe::Scaled(3);
+
 constexpr f32 PRICE_SCALINGS_PER_TIER_[]{
   20.0f / 149.0f,
   39.0f / 149.0f,

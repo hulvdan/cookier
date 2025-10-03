@@ -82,7 +82,7 @@ table Creature {
     hurtbox_scale: float = 1;
     coins_dropped: int = 1;
     can_move: bool = true;
-    can_burn: bool = false;
+    resists_ailment_types: [int];
 
     on_death_spawns_creature_type: int;
     on_death_spawns_count_min: int;

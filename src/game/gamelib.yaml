@@ -241,13 +241,16 @@ creatures:
       - game_creature_player_move_3
       - game_creature_player_move_4
   - type: TURREL
+    health: 10
     hostility_type: FRIENDLY
     idle_texture_ids:
       - game_creature_turrel_base
     turrel_gun_texture_id: game_creature_turrel_gun
     turrel_gun_anchor_y: 0.75
     can_move: false
-    can_burn: false
+    coins_dropped: 0
+    resists_ailment_types:
+      - BURN
   - type: MOB_SMALL
     appearing_wave_number: 1
     spawn_factor: 100
@@ -384,7 +387,6 @@ creatures:
     move_texture_ids:
       - game_creature_boss_idle_1
   - type: TREE
-    appearing_wave_number: 1
     spawn_factor: 0
     health: 10
     health_increase_per_wave: 5
