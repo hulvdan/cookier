@@ -47,9 +47,9 @@ localization:
   UI_BUTTON_CHOOSE: Выбрать
   UI_BUTTON_REROLL: Перебросить
   UI_BUTTON_NEXT_WAVE: Продолжить
-  UI_WON: Победа
-  UI_LOST: Поражение
-  UI_LABEL_WAVE_WON: Волна Пройдена!
+  UI_WON: Забег Пройден
+  UI_LOST: Забег Провален
+  UI_LABEL_WAVE_WON: Волна Зачищена!
   UI_LABEL_WAVE_LOST: Забег Провален!
   UI_BUTTON_RESTART: Начать Заново
   UI_LABEL_STATS_PRIMARY: Основные
