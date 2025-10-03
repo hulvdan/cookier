@@ -6,6 +6,7 @@ render_z:
   - PICKUPABLES
   - DEFAULT
   - PROJECTILES
+  - BOSS_HP
   - PARTICLES
   - WEAPONS_1
   - WEAPONS_2
@@ -135,9 +136,12 @@ localization:
   UPGRADE_NAME_SPEED: Ноги
   UPGRADE_NAME_LUCK: Нос
   UPGRADE_NAME_HARVESTING: Руки
-ui_health_texture_ids:
-  - ui_health_back
-  - ui_health_top
+ui_health_player_texture_ids:
+  - ui_health_player_back
+  - ui_health_player_top
+ui_health_boss_texture_ids:
+  - ui_health_boss_back
+  - ui_health_boss_top
 ui_coin_texture_id: ui_coin
 ui_coin_x2_texture_id: ui_coin_x2
 ui_modal_fade: 0.75

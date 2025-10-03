@@ -791,7 +791,7 @@ struct GameData {
     };
 
     b2WorldId world          = {};
-    int       nextCreatureId = 0;
+    int       nextCreatureId = 1;
     int       toSpawn        = 3;
 
     Array<ThisWaveMob, CreatureType_COUNT> thisWaveMobs      = {};
@@ -812,7 +812,7 @@ struct GameData {
     int       waveIndex     = 0;
     FrameGame waveStartedAt = {};
 
-    bool bossSpawned = false;
+    int bossCreatureId = 0;
 
     Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
 
@@ -1438,10 +1438,8 @@ Body MakeCircleBody(MakeCircleBodyData data) {  ///
   return makeBodyResult.body;
 }
 
-void MakeCreature(MakeCreatureData data) {  ///
+int MakeCreature(MakeCreatureData data) {  ///
   ASSERT(data.type);
-  if (!data.type)
-    return;
 
   auto index = g.run.creatures.count;
   auto slot  = g.run.creatures.Add();
@@ -1496,6 +1494,7 @@ void MakeCreature(MakeCreatureData data) {  ///
   }
 
   *slot = creature;
+  return creature.id;
 }
 
 void MakeProjectile(MakeProjectileData data) {  ///
@@ -3128,7 +3127,7 @@ void DoUI(bool draw) {
 
       // Health bar + coins + not picked up coins.
       // {  ///
-      const auto  texs   = glib->ui_health_texture_ids();
+      const auto  texs   = glib->ui_health_player_texture_ids();
       const auto& player = PLAYER_CREATURE;
 
       CLAY({
@@ -4493,7 +4492,7 @@ void GameFixedUpdate() {
   // Advancing to the next wave (ScreenType_GAMEPLAY).
   if (g.run.scheduledNextWave) {  ///
     g.run.scheduledNextWave = false;
-    g.run.bossSpawned       = false;
+    g.run.bossCreatureId    = 0;
 
     const auto health         = (f32)g.run.playerStats[StatType_HP];
     PLAYER_CREATURE.health    = health;
@@ -4803,12 +4802,11 @@ void GameFixedUpdate() {
       }
 
       // Spawning boss during the last wave.
-      if ((g.run.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossSpawned) {  ///
-        g.run.bossSpawned      = true;
+      if ((g.run.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossCreatureId) {  ///
         const auto worldCenter = (Vector2)WORLD_SIZE / 2.0f;
-        const auto dir     = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, worldCenter);
-        const auto bossPos = worldCenter + dir * BOSS_SPAWN_OFFSET_METERS;
-        MakeCreature({.type = CreatureType_BOSS, .pos = bossPos});
+        const auto dir       = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, worldCenter);
+        const auto bossPos   = worldCenter + dir * BOSS_SPAWN_OFFSET_METERS;
+        g.run.bossCreatureId = MakeCreature({.type = CreatureType_BOSS, .pos = bossPos});
       }
 
       // Mobs contact-damage player.
@@ -5796,8 +5794,14 @@ void GameDraw() {
   }
 
   // Drawing creatures.
+  int bossCreatureIndex = -1;
+  int creatureIndex     = -1;
   for (const auto& creature : g.run.creatures) {  ///
+    creatureIndex++;
     const auto fb = fb_creatures->Get(creature.type);
+
+    if (fb->is_boss())
+      bossCreatureIndex = creatureIndex;
 
     f32 fade = 1;
     if (creature.diedAt.IsSet())
@@ -5904,6 +5908,29 @@ void GameDraw() {
         );
       }
     }
+  }
+
+  // Drawing boss hp bar.
+  if (bossCreatureIndex >= 0) {  ///
+    const auto& creature = g.run.creatures[bossCreatureIndex];
+    auto        texs     = glib->ui_health_boss_texture_ids();
+
+    DrawGroup_Begin(DrawZ_BOSS_HP);
+    DrawGroup_SetSortY(0);
+
+    FOR_RANGE (int, i, 2) {
+      f32 rightMargin = 0;
+      if (i)
+        rightMargin = Clamp01(1 - creature.health / creature.maxHealth);
+      DrawGroup_CommandTexture({
+        .texId = texs->Get(i),
+        .pos   = creature.pos - Vector2(0, 1),
+        .sourceMargins{.right = rightMargin},
+        .color = (i ? RED : WHITE),
+      });
+    }
+
+    DrawGroup_End();
   }
 
   // Drawing projectiles + their gizmos.

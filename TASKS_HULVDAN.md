@@ -16,9 +16,9 @@ x melee weapons have guaranteed collision detection disregarding ATTACK_SPEED an
 x boss enemy that forces wave to finish upon getting killed
 x can spawn certain enemies in groups
 x fix ranged weapons shooting trajectory
+x boss HP bar
 
 * draw melee weapons colliders
-* boss HP bar
 * store texture "original size" disregarding atlas_d2 / atlas_d4
   + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO
 * save system
