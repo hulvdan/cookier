@@ -14,8 +14,11 @@ x reset damage numbers / projectiles upon getting into shop
 x melee weapons attack from player's center of player
 x melee weapons have guaranteed collision detection disregarding ATTACK_SPEED and RANGE
 x boss enemy that forces wave to finish upon getting killed
+x can spawn certain enemies in groups
 
-* «enemy group» spawning strategy
+* draw melee weapons colliders
+* fix ranged weapons shooting trajectory
+* boss HP bar
 * store texture «original size» disregarding atlas_d2 / atlas_d4
   + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO
 * save system

@@ -60,7 +60,13 @@ table Hostility {
 
 table Creature {
     appearing_wave_number: int;
+
     spawn_factor: float;
+    spawn_group_count_min: int = 1;
+    spawn_group_count_max: int = 1;
+    spawn_group_radius_min: float = 0;
+    spawn_group_radius_max: float = 0;
+
     health: int;
     health_increase_per_wave: float;
     contact_damage: float;
@@ -173,11 +179,6 @@ table Pickupable {
 
 table Number {
     color: uint = 0xffffffff;
-}
-
-table WaveCreature {
-    creature_type: int;
-    spawn_factor: float;
 }
 
 table Stat {
