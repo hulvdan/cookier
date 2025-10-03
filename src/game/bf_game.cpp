@@ -4403,7 +4403,6 @@ void GameFixedUpdate() {
 
     g.run.screen = ScreenType_WAVE_END_ANIMATION;
 
-    g.run.projectiles.Reset();
     for (int i = 1; i < g.run.creatures.count; i++) {
       auto& creature = g.run.creatures[i];
       if (!creature.diedAt.IsSet())
@@ -4475,6 +4474,10 @@ void GameFixedUpdate() {
   if (g.run.scheduledShop) {  ///
     g.run.scheduledShop = false;
     g.run.screen        = ScreenType_SHOP;
+
+    g.run.projectiles.Reset();
+    g.run.numbers.Reset();
+    g.run.particles.Reset();
 
     g.run.shop.rerolls = {};
     RefillShopToPick();
