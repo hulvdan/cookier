@@ -2255,7 +2255,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
   return continueCollisions;
 }
 
-Vector2 GetWeaponPos(const Weapon& weapon, bool draw) {  ///
+Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   const auto fb = glib->weapons()->Get(weapon.type);
 
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
@@ -2270,8 +2270,6 @@ Vector2 GetWeaponPos(const Weapon& weapon, bool draw) {  ///
     = (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
   p = EaseInOutQuad(p);
-  // if (draw)
-  //   p = EaseInOutQuad(p);
 
   const f32  movingDistance = MAX(1, GetWeaponRange(weapon.type));
   const auto movedDistance  = p * movingDistance;
@@ -5105,7 +5103,7 @@ void GameFixedUpdate() {
 
               if (!weapon.startedShootingAt.IsSet()) {
                 weapon.targetDir   = dir;
-                weapon.detachedPos = GetWeaponPos(weapon, false);
+                weapon.detachedPos = GetWeaponPos(weapon);
                 weapon.startedShootingAt.SetNow();
               }
               targetSet = true;
@@ -5179,7 +5177,7 @@ void GameFixedUpdate() {
               CheckCollisionsRect(
                 ShapeCategory_STATIC,
                 (u32)ShapeCategory_CREATURE,
-                GetWeaponPos(weapon, false),
+                GetWeaponPos(weapon),
                 colliderSize,
                 weapon.targetDir,
                 OnWeaponCollided,
@@ -5853,7 +5851,7 @@ void GameDraw() {
           {
             .texId    = fb->texture_ids()->Get(0),
             .rotation = rotation,
-            .pos      = GetWeaponPos(weapon, true),
+            .pos      = GetWeaponPos(weapon),
             .scale    = scale,
             .color    = Fade(ColorFromRGBA(fb->color()), fade),
           },
