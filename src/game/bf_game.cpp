@@ -444,6 +444,7 @@ struct Weapon {
   FrameGame  cooldownStartedAt                  = {};
   int        tier                               = {};
   int        recyclePrice                       = {};
+  f32        calculatedDamage                   = 0;
   f32        didDamage                          = 0;
   f32        lastCollisionCheckShootingProgress = 0;
 
@@ -1694,6 +1695,34 @@ int GetNextLevelXp(int currentLevel) {  ///
   return SQR(currentLevel + 3);
 }
 
+// NOTE: Doesn't apply `StatType_DAMAGE`.
+f32 ApplyDamageScalings(f32 baseDamage, int tier, auto fb_damageScalings) {  ///
+  if (fb_damageScalings) {
+    for (auto scaling : *fb_damageScalings) {
+      auto statValue = g.run.playerStats[scaling->stat_type()];
+      auto percent   = scaling->percents_per_tier()->Get(tier);
+      baseDamage += (f32)statValue * (f32)percent / 100.0f;
+    }
+  }
+  return baseDamage;
+}
+
+f32 GetPlayerStatDamageMultiplier() {  ///
+  return (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
+}
+
+f32 CalculateWeaponDamage(WeaponType type, int tier) {  ///
+  ASSERT(tier < 4);
+  const auto fb = glib->weapons()->Get(type);
+  ASSERT(tier >= fb->min_tier_index());
+  f32 damage = fb->base_damage()->Get(tier - fb->min_tier_index());
+  damage
+    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
+  damage *= GetPlayerStatDamageMultiplier();
+  damage = MAX(1, damage);
+  return damage;
+}
+
 void OnWaveStarted() {  ///
   g.run.bossCreatureId = 0;
 
@@ -1703,8 +1732,11 @@ void OnWaveStarted() {  ///
 
   RecalculateThisWaveMobs();
 
-  for (auto& weapon : g.run.playerWeapons)
+  for (auto& weapon : g.run.playerWeapons) {
     weapon.didDamage = 0;
+    if (weapon.type)
+      weapon.calculatedDamage = CalculateWeaponDamage(weapon.type, weapon.tier);
+  }
 
   g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
 }
@@ -2120,33 +2152,6 @@ void StableRemoveWeapon(int index) {  ///
   RecalculatePlayerWeaponOffsets();
 }
 
-f32 GetPlayerStatDamageMultiplier() {  ///
-  return (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
-}
-
-// NOTE: Doesn't apply `StatType_DAMAGE`.
-f32 ApplyDamageScalings(f32 baseDamage, int tier, auto fb_damageScalings) {  ///
-  if (fb_damageScalings) {
-    for (auto scaling : *fb_damageScalings) {
-      auto statValue = g.run.playerStats[scaling->stat_type()];
-      auto percent   = scaling->percents_per_tier()->Get(tier);
-      baseDamage += (f32)statValue * (f32)percent / 100.0f;
-    }
-  }
-  return baseDamage;
-}
-
-f32 GetWeaponDamage(WeaponType type, int tier) {  ///
-  ASSERT(tier < 4);
-  const auto fb = glib->weapons()->Get(type);
-  ASSERT(tier >= fb->min_tier_index());
-  f32 damage = fb->base_damage()->Get(tier - fb->min_tier_index());
-  damage
-    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
-  damage *= GetPlayerStatDamageMultiplier();
-  return damage;
-}
-
 f32 GetPlayerStatAttackSpeedMultiplier() {  ///
   auto v = g.run.playerStats[StatType_ATTACK_SPEED];
   if (v >= 0)
@@ -2240,7 +2245,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
   if (weapon.piercedCount < weapon.piercedCreatureIds.count) {
     weapon.piercedCreatureIds[weapon.piercedCount++] = creature.id;
 
-    f32  damage = GetWeaponDamage(weapon.type, weapon.tier);
+    f32  damage = weapon.calculatedDamage;
     bool isCrit = IsCrit();
     if (isCrit)
       damage *= fb->crit_damage_multiplier();
@@ -2341,16 +2346,16 @@ void HealPlayer(f32 amount = 1) {  ///
 
 void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
   PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_kill_n_enemies_locale());
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_kill_n_enemies_locale());
 }
 
 void ClayEffectCondition_END_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_at_the_end_of_the_wave_locale());
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_at_the_end_of_the_wave_locale());
 }
 
 void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect
 ) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_at_the_start_of_the_wave_locale());
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_at_the_start_of_the_wave_locale());
 }
 
 void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
@@ -2358,7 +2363,17 @@ void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
 ) {  ///
   PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-    glib->ui_label_kill_n_enemies_using_this_weapon_locale()
+    glib->weapon_effect_kill_n_enemies_using_this_weapon_locale()
+  );
+}
+
+void ClayEffectCondition_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY(
+  const BFGame::Effect* fb_effect
+) {  ///
+  PlaceholdString("MODIFIER", TextFormat("%d", fb_effect->value()));
+  auto fb_prop = glib->weapon_properties()->Get(fb_effect->weaponproperty_type());
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+    glib->weapon_effect_more_of_the_same_weapon_more_property_locale()
   );
 }
 
@@ -2390,12 +2405,13 @@ void DoUI(bool draw) {
 
   // Setup.
   // {  ///
-  const auto fb_atlas_textures = glib->atlas_textures();
-  const auto fb_items          = glib->items();
-  const auto fb_stats          = glib->stats();
-  const auto fb_weapons        = glib->weapons();
-  const auto fb_projectiles    = glib->projectiles();
-  const auto fb_pickupables    = glib->pickupables();
+  const auto fb_atlas_textures    = glib->atlas_textures();
+  const auto fb_items             = glib->items();
+  const auto fb_stats             = glib->stats();
+  const auto fb_weapon_properties = glib->weapon_properties();
+  const auto fb_weapons           = glib->weapons();
+  const auto fb_projectiles       = glib->projectiles();
+  const auto fb_pickupables       = glib->pickupables();
 
   if (!draw) {
     // Updating clay mouse pos.
@@ -2657,38 +2673,47 @@ void DoUI(bool draw) {
       }}) {
         FlexBegin(maxWidth, 0);
 
-        const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
+        if (fb_effect->stat_type()) {
+          const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
 
-        // if (fb_stat->icon_texture_id())
-        //   BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+          // if (fb_stat->icon_texture_id())
+          //   BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
 
-        PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
+          PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
 
-        bool isPercent = fb_stat->is_percent();
-        auto v         = (f32)fb_effect->value();
-        if (v == 0) {
-          v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
-          isPercent = true;
-        }
+          bool isPercent = fb_stat->is_percent();
+          auto v         = (f32)fb_effect->value();
+          if (v == 0) {
+            v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
+            isPercent = true;
+          }
 
-        const bool  isPositive = v >= 0;
-        const char* format     = "";
-        if (isPercent)
-          format = (isPositive ? "+%s%%" : "%s%%");
-        else
-          format = (isPositive ? "+%s" : "%s");
-        PlaceholdString(
-          "STAT_MODIFIER",
-          TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
-          (isPositive == fb_stat->negative_is_good() ? RED : GREEN)
-        );
-
-        const auto cond = fb_effect->effectcondition_type();
-        if (cond)
-          clayEffectConditionFunctions[cond - 1](fb_effect);
-        else
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->ui_label_default_weapon_stat_locale()
+          const bool  isPositive = v >= 0;
+          const char* format     = "";
+          if (isPercent)
+            format = (isPositive ? "+%s%%" : "%s%%");
+          else
+            format = (isPositive ? "+%s" : "%s");
+          PlaceholdString(
+            "MODIFIER",
+            TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
+            (isPositive == fb_stat->negative_is_good() ? RED : GREEN)
           );
+
+          const auto cond = fb_effect->effectcondition_type();
+          if (cond)
+            clayEffectConditionFunctions[cond - 1](fb_effect);
+          else
+            BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_default_weapon_stat_locale()
+            );
+        }
+        else if (fb_effect->weaponproperty_type()) {
+          const auto fb_prop
+            = fb_weapon_properties->Get(fb_effect->weaponproperty_type());
+          PlaceholdBrokenLocale("PROPERTY", fb_prop->name_locale());
+        }
+        else
+          INVALID_PATH;
 
         FlexEnd();
       }
@@ -2803,7 +2828,7 @@ void DoUI(bool draw) {
     componentWeaponStatEntry(
       fb_stats->Get(StatType_DAMAGE)->name_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_TEXT(TextFormat("%d", (int)GetWeaponDamage(type, tier)), GREEN);
+        BF_CLAY_TEXT(TextFormat("%d", (int)CalculateWeaponDamage(type, tier)), GREEN);
 
         // Scalings.
         const auto fb_scalings = fb->damage_scalings();
@@ -2931,7 +2956,7 @@ void DoUI(bool draw) {
             )
           );
           BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-            glib->ui_label_weapon_chance_of_explosion_locale()
+            glib->weapon_effect_chance_of_explosion_locale()
           );
 
           FlexEnd();
@@ -4247,14 +4272,17 @@ void IterateOverItemEffects(
 
 void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
   ASSERT(itemCount > 0);
-  g.run.playerStatsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * itemCount;
-  if ((StatType)fb_effect->stat_type() == StatType_COINS)
-    SanitizeCoins();
-  if (fb_effect->value_multiplier() != 1)
+  if (fb_effect->stat_type()) {
     g.run.playerStatsWithoutItems[fb_effect->stat_type()]
-      *= 1 + (fb_effect->value_multiplier() - 1) * itemCount;
-  if ((StatType)fb_effect->stat_type() == StatType_COINS)
-    SanitizeCoins();
+      += fb_effect->value() * itemCount;
+    if ((StatType)fb_effect->stat_type() == StatType_COINS)
+      SanitizeCoins();
+    if (fb_effect->value_multiplier() != 1)
+      g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+        *= 1 + (fb_effect->value_multiplier() - 1) * itemCount;
+    if ((StatType)fb_effect->stat_type() == StatType_COINS)
+      SanitizeCoins();
+  }
 
   g.run.recalculatePlayerStats = true;
 }
@@ -5274,7 +5302,7 @@ void GameFixedUpdate() {
                 .pos                  = pos,
                 .dir                  = weapon.targetDir,
                 .range                = GetWeaponRangeMeters(weapon.type),
-                .damage               = GetWeaponDamage(weapon.type, weapon.tier),
+                .damage               = weapon.calculatedDamage,
                 .critDamageMultiplier = fb->crit_damage_multiplier(),
                 .knockbackMeters      = fb->knockback_meters(),
                 .pierce               = fb->projectile_pierce(),
