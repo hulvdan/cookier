@@ -4368,7 +4368,12 @@ void GameFixedUpdate() {
       }
     }
 
+    f32 addedHealth = (f32)g.run.playerStats[StatType_HP] - PLAYER_CREATURE.maxHealth;
     PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
+    if (addedHealth > 0)
+      PLAYER_CREATURE.health += addedHealth;
+    if (PLAYER_CREATURE.health > PLAYER_CREATURE.maxHealth)
+      PLAYER_CREATURE.health = PLAYER_CREATURE.maxHealth;
   }
 
   // Advancing to UI after wave completion animation finishes.
