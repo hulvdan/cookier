@@ -3,8 +3,8 @@ x turrel: pierce / bounce
 x ref move FrameGame, FrameVisual, lframe to engine
 x turrel: remove gun texture
 x turrel: proper spawning via item
+x turrel: correct bullet spawn pos
 
-* turrel: correct bullet spawn pos
 * turrel: show damage in item
 * stat descriptions
 * draw melee weapon attack colliders
