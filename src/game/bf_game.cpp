@@ -4271,18 +4271,9 @@ Vector2 ForecastWhereProjectileWillHitCreature(
   return creaturePos + creatureSpeed * (dist / projectileSpeed);
 }
 
-bool AreEnemies(CreatureType t1, CreatureType t2) {  ///
-  ASSERT(t1);
-  ASSERT(t2);
-  auto fb_creatures = glib->creatures();
-  auto fb1          = fb_creatures->Get(t1);
-  auto fb2          = fb_creatures->Get(t1);
-  return fb1->hostility_type() != fb2->hostility_type();
-}
-
 f32 GetCreatureSpeed(const Creature& creature) {  ///
   f32 speed = creature.speed * creature.speedModifier;
-  if (AreEnemies(creature.type, CreatureType_PLAYER)) {
+  if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
     speed *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
     speed = MAX(0, speed);
   }
@@ -5013,18 +5004,23 @@ void GameFixedUpdate() {
       if ((a.spread <= 0))
         continue;
 
+      auto       fb         = fb_creatures->Get(creature.type);
+      const auto isFriendly = (fb->hostility_type() == HostilityType_FRIENDLY);
+
       for (auto& otherCreature : g.run.creatures) {
         if (creature.id == otherCreature.id)
           continue;
         if (otherCreature.diedAt.IsSet())
           continue;
-        if (AreEnemies(creature.type, otherCreature.type))
+
+        auto       fb_other = fb_creatures->Get(otherCreature.type);
+        const auto otherIsFriendly
+          = (fb_other->hostility_type() == HostilityType_FRIENDLY);
+        if (isFriendly == otherIsFriendly)
           continue;
 
-        auto fb = fb_creatures->Get(otherCreature.type);
-
         bool canBurn = true;
-        auto resists = fb->resists_ailment_types();
+        auto resists = fb_other->resists_ailment_types();
         if (resists) {
           for (auto v : *resists) {
             if (v == AilmentType_BURN) {
@@ -5470,17 +5466,29 @@ void GameFixedUpdate() {
                 const Creature* found = nullptr;
                 Vector2         forecastedPos{};
 
-                FOR_RANGE (int, i, 8) {
+                FOR_RANGE (int, i, 16) {
                   const auto c
                     = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
-
-                  if (!AreEnemies(c->type, CreatureType_PLAYER))
-                    continue;
                   if (c->diedAt.IsSet())
                     continue;
                   if (ArrayContains(
                         projectile.damagedCreatureIds.base, projectile.damagedCount, c->id
                       ))
+                    continue;
+
+                  const auto ownerHost = (HostilityType)fb_owner->hostility_type();
+                  ASSERT(ownerHost);
+                  ASSERT(ownerHost != HostilityType_NEUTRAL);
+
+                  const bool ownerIsHostile = (ownerHost == HostilityType_MOB);
+                  bool       canDamage      = false;
+                  canDamage |= ownerIsHostile && (c->type == CreatureType_PLAYER);
+                  const auto otherIsFriendly
+                    = fb_creatures->Get(c->type)->hostility_type()
+                      == HostilityType_FRIENDLY;
+                  canDamage |= !ownerIsHostile && !otherIsFriendly;
+
+                  if (!canDamage)
                     continue;
 
                   const auto forecastedCreaturePos
