@@ -4292,11 +4292,12 @@ f32 GetCreatureSpeed(const Creature& creature) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
-  const auto fb_creatures   = glib->creatures();
-  const auto fb_items       = glib->items();
-  const auto fb_weapons     = glib->weapons();
-  const auto fb_projectiles = glib->projectiles();
-  const auto fb_particles   = glib->particles();
+  const auto fb_atlas_textures = glib->atlas_textures();
+  const auto fb_creatures      = glib->creatures();
+  const auto fb_items          = glib->items();
+  const auto fb_weapons        = glib->weapons();
+  const auto fb_projectiles    = glib->projectiles();
+  const auto fb_particles      = glib->particles();
 
   // Reloading game.
   if (g.run.reload) {  ///
@@ -4698,10 +4699,17 @@ void GameFixedUpdate() {
             auto& data = creature.DataTurrel();
 
             const f32 rangeMeters = fb->turrel_range_meters();
-            // TODO TURREL correct projectile spawn pos (from end of the gun)
-            const auto projectileSpawnPos = creature.pos;
-            const auto projectileType     = ProjectileType_BULLET_EXPLOSIVE;
-            auto       fb_projectile      = fb_projectiles->Get(projectileType);
+            // TODO: ATLAS_D2.
+            auto       tex = fb_atlas_textures->Get(fb->idle_texture_ids()->Get(0));
+            const auto projectileSpawnPos
+              = creature.pos
+                + Vector2(
+                  0,
+                  (fb->turrel_projectile_shoot_anchor_y() - 0.5f) * (f32)tex->size_y()
+                    * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE
+                );
+            const auto projectileType = ProjectileType_BULLET_EXPLOSIVE;
+            auto       fb_projectile  = fb_projectiles->Get(projectileType);
 
             f32     closestDist = f32_inf;
             Vector2 forecastedPos{};
