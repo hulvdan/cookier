@@ -69,9 +69,13 @@ table Creature {
 
     health: int;
     health_increase_per_wave: float;
+
     contact_damage: float;
     contact_damage_increase_per_wave: float;
+    // For ranged mobs or turrel.
     projectile_damage: float;
+    crit_damage_multiplier: float = 1.5;
+
     speed: float;
     speed_variation: float;
     hostility_type: int = 1;
@@ -89,6 +93,8 @@ table Creature {
     on_death_spawns_count_max: int;
     on_death_spawns_distance_min: float;
     on_death_spawns_distance_max: float;
+
+    turrel_damage_scalings: [DamageScaling];
 
     color: uint = 0xffffffff;
 
@@ -129,7 +135,7 @@ table WeaponKind {
     stat_type: int;
 }
 
-table WeaponDamageScaling {
+table DamageScaling {
     stat_type: int;
     percents_per_tier: [int] (required);
 }
@@ -139,8 +145,8 @@ table Weapon {
     min_tier_index: int;
     weaponkind_type: int;
     base_damage: [float];
-    damage_scalings: [WeaponDamageScaling];
-    critical_damage: float = 1.5;
+    damage_scalings: [DamageScaling];
+    crit_damage_multiplier: float = 1.5;
     knockback_meters: float;
     cooldown_frames: int;
     shooting_duration_frames: int;

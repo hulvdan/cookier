@@ -597,37 +597,37 @@ struct CreaturePreSpawn {
 };
 
 struct Projectile {
-  ProjectileType                    type               = {};
-  CreatureType                      ownerCreatureType  = {};
-  int                               weaponIndex        = -1;
-  Vector2                           pos                = {};
-  Vector2                           dir                = {};
-  f32                               damage             = {};
-  f32                               critDamage         = {};
-  int                               pierce             = {};
-  int                               bounce             = {};
-  FrameGame                         createdAt          = {};
-  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds = {};
-  int                               damagedCount       = {};
-  int                               piercedCount       = 0;
-  int                               bouncedCount       = 0;
-  f32                               knockbackMeters    = {};
-  f32                               range              = {};
-  f32                               travelledDistance  = 0;
+  ProjectileType                    type                 = {};
+  CreatureType                      ownerCreatureType    = {};
+  int                               weaponIndex          = -1;
+  Vector2                           pos                  = {};
+  Vector2                           dir                  = {};
+  f32                               damage               = {};
+  f32                               critDamageMultiplier = {};
+  int                               pierce               = {};
+  int                               bounce               = {};
+  FrameGame                         createdAt            = {};
+  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds   = {};
+  int                               damagedCount         = {};
+  int                               piercedCount         = 0;
+  int                               bouncedCount         = 0;
+  f32                               knockbackMeters      = {};
+  f32                               range                = {};
+  f32                               travelledDistance    = 0;
 };
 
 struct MakeProjectileData {
-  ProjectileType type              = {};
-  CreatureType   ownerCreatureType = {};
-  int            weaponIndex       = -1;
-  Vector2        pos               = {};
-  Vector2        dir               = {};
-  f32            range             = {};
-  f32            damage            = {};
-  f32            critDamage        = {};
-  f32            knockbackMeters   = {};
-  int            pierce            = {};
-  int            bounce            = {};
+  ProjectileType type                 = {};
+  CreatureType   ownerCreatureType    = {};
+  int            weaponIndex          = -1;
+  Vector2        pos                  = {};
+  Vector2        dir                  = {};
+  f32            range                = {};
+  f32            damage               = {};
+  f32            critDamageMultiplier = {};
+  f32            knockbackMeters      = {};
+  int            pierce               = {};
+  int            bounce               = {};
 };
 
 struct Number {
@@ -1526,17 +1526,17 @@ void MakeProjectile(MakeProjectileData data) {  ///
     ASSERT(data.weaponIndex >= 0);
 
   Projectile projectile{
-    .type              = data.type,
-    .ownerCreatureType = data.ownerCreatureType,
-    .weaponIndex       = data.weaponIndex,
-    .pos               = data.pos,
-    .dir               = data.dir,
-    .damage            = data.damage,
-    .critDamage        = data.critDamage,
-    .pierce            = data.pierce,
-    .bounce            = data.bounce,
-    .knockbackMeters   = data.knockbackMeters,
-    .range             = data.range,
+    .type                 = data.type,
+    .ownerCreatureType    = data.ownerCreatureType,
+    .weaponIndex          = data.weaponIndex,
+    .pos                  = data.pos,
+    .dir                  = data.dir,
+    .damage               = data.damage,
+    .critDamageMultiplier = data.critDamageMultiplier,
+    .pierce               = data.pierce,
+    .bounce               = data.bounce,
+    .knockbackMeters      = data.knockbackMeters,
+    .range                = data.range,
   };
   projectile.createdAt.SetNow();
 
@@ -2175,16 +2175,25 @@ f32 GetPlayerStatDamageMultiplier() {  ///
   return (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
 }
 
+// NOTE: Doesn't apply `StatType_DAMAGE`.
+f32 ApplyDamageScalings(f32 baseDamage, int tier, auto fb_damageScalings) {  ///
+  if (fb_damageScalings) {
+    for (auto scaling : *fb_damageScalings()) {
+      auto statValue = g.run.playerStats[scaling->stat_type()];
+      auto percent   = scaling->percents_per_tier()->Get(tier);
+      baseDamage += (f32)statValue * (f32)percent / 100.0f;
+    }
+  }
+  return baseDamage;
+}
+
 f32 GetWeaponDamage(WeaponType type, int tier) {  ///
   ASSERT(tier < 4);
   const auto fb = glib->weapons()->Get(type);
   ASSERT(tier >= fb->min_tier_index());
   f32 damage = fb->base_damage()->Get(tier - fb->min_tier_index());
-  for (auto scaling : *fb->damage_scalings()) {
-    auto statValue = g.run.playerStats[scaling->stat_type()];
-    auto percent   = scaling->percents_per_tier()->Get(tier - fb->min_tier_index());
-    damage += (f32)statValue * (f32)percent / 100.0f;
-  }
+  damage
+    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
   damage *= GetPlayerStatDamageMultiplier();
   return damage;
 }
@@ -4792,21 +4801,23 @@ void GameFixedUpdate() {
               auto e = data.startedShootingAt.Elapsed();
 
               if (e == MOB_TURREL_SHOOT_FRAME) {
-                MakeProjectile({
+                f32 damage = fb->projectile_damage();
+                damage     = ApplyDamageScalings(damage, fb->turrel_damage_scalings());
+                damage *= GetPlayerStatDamageMultiplier();
+                auto scalings = MakeProjectile({
                   .type              = projectileType,
                   .ownerCreatureType = creature.type,
                   .weaponIndex       = -1,
                   // TODO TURREL pos from gun
-                  .pos   = projectileSpawnPos,
-                  .dir   = data.aimDirection,
-                  .range = rangeMeters,
+                  .pos                  = projectileSpawnPos,
+                  .dir                  = data.aimDirection,
+                  .range                = rangeMeters,
+                  .damage               = damage,
+                  .critDamageMultiplier = fb->crit_damage_multiplier(),
                   // TODO TURREL
-                  .damage     = 1,
-                  .critDamage = 2,
-                  // TODO TURREL
-                  // .knockbackMeters   =0,
-                  // .pierce            =,
-                  // .bounce            =,
+                  // .knockbackMeters   = 0,
+                  // .pierce            = 0,
+                  // .bounce            = 0,
                 });
               }
 
@@ -5285,8 +5296,7 @@ void GameFixedUpdate() {
           const auto projectileSpawnFrames = fb->projectile_spawn_frames();
 
           if (projectileType) {
-            // It's a weapon that shoots projectiles (RANGED / ELEMENTAL damage
-            // types).
+            // It's a weapon that shoots projectiles (RANGED / ELEMENTAL damage types).
             ASSERT(projectileSpawnFrames);
 
             bool       spawn     = false;
@@ -5300,17 +5310,17 @@ void GameFixedUpdate() {
 
             if (spawn) {
               MakeProjectile({
-                .type              = projectileType,
-                .ownerCreatureType = PLAYER_CREATURE.type,
-                .weaponIndex       = weaponIndex,
-                .pos               = pos,
-                .dir               = weapon.targetDir,
-                .range             = GetWeaponRangeMeters(weapon.type),
-                .damage            = GetWeaponDamage(weapon.type, weapon.tier),
-                .critDamage        = fb->critical_damage(),
-                .knockbackMeters   = fb->knockback_meters(),
-                .pierce            = fb->projectile_pierce(),
-                .bounce            = fb->projectile_bounce(),
+                .type                 = projectileType,
+                .ownerCreatureType    = PLAYER_CREATURE.type,
+                .weaponIndex          = weaponIndex,
+                .pos                  = pos,
+                .dir                  = weapon.targetDir,
+                .range                = GetWeaponRangeMeters(weapon.type),
+                .damage               = GetWeaponDamage(weapon.type, weapon.tier),
+                .critDamageMultiplier = fb->crit_damage_multiplier(),
+                .knockbackMeters      = fb->knockback_meters(),
+                .pierce               = fb->projectile_pierce(),
+                .bounce               = fb->projectile_bounce(),
               });
             }
           }
@@ -5429,7 +5439,7 @@ void GameFixedUpdate() {
               damage *= GetPlayerStatDamageMultiplier();
               isCrit = IsCrit();
               if (isCrit)
-                damage *= projectile.critDamage;
+                damage *= projectile.critDamageMultiplier;
 
               if (fb_creature->is_boss()) {
                 damage *= MAX(
@@ -5585,7 +5595,7 @@ void GameFixedUpdate() {
               if (damage > 0) {
                 isCrit = IsCrit();
                 if (isCrit)
-                  damage *= projectile.critDamage;
+                  damage *= projectile.critDamageMultiplier;
 
                 if (fb_creature->is_boss()) {
                   damage *= MAX(
