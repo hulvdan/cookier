@@ -1,11 +1,11 @@
 x can specify range + projectile_type + knockback + damage scalings
 x turrel: pierce / bounce
 x ref move FrameGame, FrameVisual, lframe to engine
+x turrel: remove gun texture
+x turrel: proper spawning via item
 
-* turrel: remove gun texture
-* turrel: proper spawning (via items)
-* turrel: correct gun texture placement
 * turrel: correct bullet spawn pos
+* turrel: show damage in item
 * stat descriptions
 * draw melee weapon attack colliders
 * store texture "original size" disregarding atlas_d2 / atlas_d4
