@@ -243,14 +243,19 @@ creatures:
   - type: TURREL
     health: 1
     hostility_type: FRIENDLY
-    idle_texture_ids:
-      - game_creature_turrel_base
-    turrel_gun_texture_id: game_creature_turrel_gun
-    turrel_gun_anchor_y: 0.75
     can_move: false
     coins_dropped: 0
     resists_ailment_types:
       - BURN
+    projectile_damage: 1
+    turrel_damage_scalings:
+      - stat_type: ENGINEERING
+        percents_per_tier:
+          - 100
+    idle_texture_ids:
+      - game_creature_turrel_base
+    turrel_gun_texture_id: game_creature_turrel_gun
+    turrel_gun_anchor_y: 0.75
   - type: MOB_SMALL
     appearing_wave_number: 1
     spawn_factor: 100
@@ -517,7 +522,7 @@ weapons:
           - 80
           - 80
           - 80
-    critical_damage: 2
+    crit_damage_multiplier: 1.5
     max_price: 122
     cooldown_frames: 20
     shooting_duration_frames: 10
