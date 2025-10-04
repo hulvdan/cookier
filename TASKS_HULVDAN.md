@@ -1,11 +1,9 @@
+x can specify range + projectile_type + knockback + damage scalings
+x turrel: pierce / bounce
 
-* turrel
-  * proper spawning (via items)
-  * can specify range + projectile_type
-  * correct gun texture placement
-  * correct bullet spawn pos
-  * knockback / pierce / bounce
-  * damage scaling
+* turrel: proper spawning (via items)
+* turrel: correct gun texture placement
+* turrel: correct bullet spawn pos
 * stat descriptions
 * draw melee weapon attack colliders
 * store texture "original size" disregarding atlas_d2 / atlas_d4

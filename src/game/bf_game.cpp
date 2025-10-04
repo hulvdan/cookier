@@ -2178,7 +2178,7 @@ f32 GetPlayerStatDamageMultiplier() {  ///
 // NOTE: Doesn't apply `StatType_DAMAGE`.
 f32 ApplyDamageScalings(f32 baseDamage, int tier, auto fb_damageScalings) {  ///
   if (fb_damageScalings) {
-    for (auto scaling : *fb_damageScalings()) {
+    for (auto scaling : *fb_damageScalings) {
       auto statValue = g.run.playerStats[scaling->stat_type()];
       auto percent   = scaling->percents_per_tier()->Get(tier);
       baseDamage += (f32)statValue * (f32)percent / 100.0f;
@@ -2294,7 +2294,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
     f32  damage = GetWeaponDamage(weapon.type, weapon.tier);
     bool isCrit = IsCrit();
     if (isCrit)
-      damage *= fb->critical_damage();
+      damage *= fb->crit_damage_multiplier();
 
     damage = MAX(1, damage);
 
@@ -2878,7 +2878,9 @@ void DoUI(bool draw) {
     // Critical.
     componentWeaponStatEntry(glib->ui_label_crit_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
       BF_CLAY_TEXT(TextFormat(
-        "x%.1f (%d%%)", fb->critical_damage(), g.run.playerStats[StatType_CRIT_CHANCE]
+        "x%.1f (%d%%)",
+        fb->crit_damage_multiplier(),
+        g.run.playerStats[StatType_CRIT_CHANCE]
       ));
     });
 
@@ -4754,9 +4756,8 @@ void GameFixedUpdate() {
           else if (creature.type == CreatureType_TURREL) {
             auto& data = creature.DataTurrel();
 
-            // TODO TURREL
-            const f32 rangeMeters = 0.1f;
-            // TODO TURREL
+            const f32 rangeMeters = fb->turrel_range_meters();
+            // TODO TURREL correct projectile spawn pos (from end of the gun)
             const auto projectileSpawnPos = creature.pos;
             const auto projectileType     = ProjectileType_BULLET_EXPLOSIVE;
             auto       fb_projectile      = fb_projectiles->Get(projectileType);
@@ -4802,22 +4803,20 @@ void GameFixedUpdate() {
 
               if (e == MOB_TURREL_SHOOT_FRAME) {
                 f32 damage = fb->projectile_damage();
-                damage     = ApplyDamageScalings(damage, fb->turrel_damage_scalings());
+                damage     = ApplyDamageScalings(damage, 0, fb->turrel_damage_scalings());
                 damage *= GetPlayerStatDamageMultiplier();
-                auto scalings = MakeProjectile({
-                  .type              = projectileType,
-                  .ownerCreatureType = creature.type,
-                  .weaponIndex       = -1,
-                  // TODO TURREL pos from gun
+                MakeProjectile({
+                  .type                 = projectileType,
+                  .ownerCreatureType    = creature.type,
+                  .weaponIndex          = -1,
                   .pos                  = projectileSpawnPos,
                   .dir                  = data.aimDirection,
                   .range                = rangeMeters,
                   .damage               = damage,
                   .critDamageMultiplier = fb->crit_damage_multiplier(),
-                  // TODO TURREL
-                  // .knockbackMeters   = 0,
-                  // .pierce            = 0,
-                  // .bounce            = 0,
+                  .knockbackMeters      = fb->turrel_knockback_meters(),
+                  .pierce               = fb->turrel_pierce(),
+                  .bounce               = fb->turrel_bounce(),
                 });
               }
 
