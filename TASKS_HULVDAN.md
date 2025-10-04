@@ -6,24 +6,25 @@ x turrel: proper spawning via item
 x turrel: correct bullet spawn pos
 x fix fonts outline advance
 x fix getting more health from upgrade ADDS HP to player (not only to max HP)
+x fix slingshot bouncing
 
-* fix slingshot bouncing
+* weapon effect: +dmg for a number of the same weapon
+  * ref usage of stat_type
+* creature shadows (shadow offsets, sizes)
+* turrel: show damage in item
 * ZHEKA
   Cheats?
 * clay hovered modal shadows
-* turrel: show damage in item
 * stat descriptions
 * draw melee weapon attack colliders
 * store texture "original size" disregarding atlas_d2 / atlas_d4
   + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO
 * save system
-* shadows (shadow offsets, sizes)
 * coin pickup particles
 * keyboard input prompts
 * navigating in pickedup item / upgrades / shop / end with keyboard
 * stats coloring
 * weapon tags (primitive etc.) + set bonuses
-* weapon effect: +dmg for a number of the same weapon
 * on-player-equipped item layers (hats, decals, etc.) (isaac-like)
 *
 *

@@ -55,18 +55,20 @@ localization:
   UI_BUTTON_RESTART: Начать Заново
   UI_LABEL_STATS_PRIMARY: Основные
   UI_LABEL_STATS_SECONDARY: Побочные
-  UI_LABEL_AT_THE_END_OF_THE_WAVE: |
-    {STAT} {STAT_MODIFIER} в конце волны
-  UI_LABEL_AT_THE_START_OF_THE_WAVE: |
-    {STAT} {STAT_MODIFIER} в начале волны
-  UI_LABEL_KILL_N_ENEMIES: |
-    {STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых врагов
-  UI_LABEL_KILL_N_ENEMIES_USING_THIS_WEAPON: |
-    {STAT} {STAT_MODIFIER} за каждые {ENEMIES} убитых этим оружием врагов
-  UI_LABEL_DEFAULT_WEAPON_STAT: |
-    {STAT} {STAT_MODIFIER}
-  UI_LABEL_WEAPON_CHANCE_OF_EXPLOSION: |
+  EFFECT_AT_THE_END_OF_THE_WAVE: |
+    {STAT} {MODIFIER} в конце волны
+  EFFECT_AT_THE_START_OF_THE_WAVE: |
+    {STAT} {MODIFIER} в начале волны
+  EFFECT_KILL_N_ENEMIES: |
+    {STAT} {MODIFIER} за каждые {ENEMIES} убитых врагов
+  WEAPON_EFFECT_CHANCE_OF_EXPLOSION: |
     {CHANCE} шанс взрыва при попадании
+  WEAPON_EFFECT_KILL_N_ENEMIES_USING_THIS_WEAPON: |
+    {STAT} {MODIFIER} за каждые {ENEMIES} убитых этим оружием врагов
+  WEAPON_EFFECT_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY: |
+    {PROPERTY} {MODIFIER} за каждое такое же оружие
+  EFFECT_DEFAULT_WEAPON_STAT: |
+    {STAT} {MODIFIER}
   ITEM_HELMET: Шлем
   ITEM_WHITE_FLAG: Белый Флаг
   ITEM_BLACK_FLAG: Чёрный Флаг
@@ -414,6 +416,10 @@ ailments:
     duration_seconds: 2
   - type: ZAP
     duration_seconds: 3
+weapon_properties:
+  - type: INVALID
+  - type: DAMAGE
+    name_locale: STAT_DAMAGE
 effect_conditions:
   - type: INVALID
   # Universal (both weapons and items can have these).
@@ -422,6 +428,7 @@ effect_conditions:
   - type: START_OF_THE_WAVE_GET_STAT
   # Weapons only.
   - type: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT
+  - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
     # Items only.
 items:
   - type: INVALID
@@ -654,6 +661,10 @@ weapons:
     range_meters: 12
     max_price: 120
     shooting_duration_frames: 12
+    effects:
+      - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
+        weaponproperty_type: DAMAGE
+        value: 3
     icon_texture_id: game_weapon_slingshot
     texture_ids:
       - game_weapon_slingshot

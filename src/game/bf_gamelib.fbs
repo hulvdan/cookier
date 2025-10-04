@@ -114,8 +114,13 @@ table Creature {
 table EffectCondition {
 }
 
+table WeaponProperty {
+    name_locale: int;
+}
+
 table Effect {
     stat_type: int;
+    weaponproperty_type: int;
     effectcondition_type: int;
     value: int;
     value_multiplier: float = 1;
@@ -261,12 +266,13 @@ table GameLibrary {
     ui_label_wave_lost_locale: int;
     ui_label_stats_primary_locale: int;
     ui_label_stats_secondary_locale: int;
-    ui_label_at_the_end_of_the_wave_locale: int;
-    ui_label_at_the_start_of_the_wave_locale: int;
-    ui_label_kill_n_enemies_locale: int;
-    ui_label_kill_n_enemies_using_this_weapon_locale: int;
-    ui_label_default_weapon_stat_locale: int;
-    ui_label_weapon_chance_of_explosion_locale: int;
+    effect_at_the_end_of_the_wave_locale: int;
+    effect_at_the_start_of_the_wave_locale: int;
+    effect_kill_n_enemies_locale: int;
+    effect_default_weapon_stat_locale: int;
+    weapon_effect_kill_n_enemies_using_this_weapon_locale: int;
+    weapon_effect_more_of_the_same_weapon_more_property_locale: int;
+    weapon_effect_chance_of_explosion_locale: int;
     // LOCALE_GEN_END.
 
     // GAME STUFF
@@ -290,6 +296,7 @@ table GameLibrary {
     // TABLE_GEN_START
     hostilities: [Hostility] (required);
     creatures: [Creature] (required);
+    weapon_properties: [WeaponProperty] (required);
     ailments: [Ailment] (required);
     effect_conditions: [EffectCondition] (required);
     items: [Item] (required);
