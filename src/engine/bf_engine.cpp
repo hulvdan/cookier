@@ -457,7 +457,8 @@ struct Camera {
 
 struct EngineData {
   struct Meta {
-    i64 frame = 0;
+    i64 frameGame   = 0;
+    i64 frameVisual = 0;
 
     Texture2D           atlas                 = {};
     Vector2Int          atlasSize             = {};
@@ -2997,6 +2998,111 @@ const char* PushTextToArena(Arena* arena, const char* text, int* outLen) {  ///
   return (const char*)s;
 }
 
+struct lframe {  ///
+  i64 value = i64_max;
+
+  constexpr static lframe Scaled(i64 v) {
+    return {.value = v * _BF_LOGICAL_FPS_SCALE};
+  }
+
+  constexpr static lframe Unscaled(i64 v) {
+    return {.value = v};
+  }
+
+  constexpr static lframe FromSeconds(f32 seconds) {
+    return {.value = (i64)(seconds * (f32)FIXED_FPS)};
+  }
+
+  f32 Progress(const lframe duration) const {
+    return (f32)value / (f32)duration.value;
+  }
+
+  bool operator==(const lframe& other) const {
+    return value == other.value;
+  }
+
+  bool operator>(const lframe& other) const {
+    return value > other.value;
+  }
+
+  bool operator<(const lframe& other) const {
+    return value < other.value;
+  }
+
+  bool operator>=(const lframe& other) const {
+    return value >= other.value;
+  }
+
+  bool operator<=(const lframe& other) const {
+    return value <= other.value;
+  }
+
+  const lframe operator+(const lframe& other) const {
+    return lframe::Unscaled(value + other.value);
+  }
+
+  const lframe operator-(const lframe& other) const {
+    return lframe::Unscaled(value - other.value);
+  }
+
+  void SetRand(lframe v) {
+    value = ge.meta.logicRand.Rand() % v.value;
+  }
+
+  void SetRand(lframe v1, lframe v2) {
+    ASSERT(v2.value > v1.value);
+    value = v1.value + ge.meta.logicRand.Rand() % (v2.value - v1.value);
+  }
+};
+
+struct FrameGame {
+  i64 _value = i64_max;
+
+  [[nodiscard]] static FrameGame Now() {  ///
+    FrameGame frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {  ///
+    return _value != i64_max;
+  }
+
+  void SetNow() {  ///
+    ASSERT_FALSE(IsSet());
+    _value = ge.meta.frameGame;
+  }
+
+  lframe Elapsed() const {  ///
+    ASSERT(IsSet());
+    return lframe::Unscaled(ge.meta.frameGame - _value);
+  }
+};
+
+struct FrameVisual {
+  i64 _value = i64_max;
+
+  [[nodiscard]] static FrameVisual Now() {  ///
+    FrameVisual frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {  ///
+    return _value != i64_max;
+  }
+
+  void SetNow() {  ///
+    ASSERT_FALSE(IsSet());
+    _value = ge.meta.frameVisual;
+  }
+
+  lframe Elapsed() const {  ///
+    ASSERT(IsSet());
+    return lframe::Unscaled(ge.meta.frameVisual - _value);
+  }
+};
+
 void GameInit();
 void GameReady();
 void GameFixedUpdate();
@@ -3034,7 +3140,6 @@ SDL_AppResult EngineUpdate() {  ///
     GameFixedUpdate();
 
     ResetInputState();
-    ge.meta.frame++;
 
     simulated++;
 

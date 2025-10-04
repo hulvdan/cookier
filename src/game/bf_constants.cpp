@@ -49,63 +49,6 @@ constexpr f32 BURNING_SPREAD_DISTANCE   = MOB_HURTBOX_RADIUS * 3.5f;
 
 // Other.
 // ============================================================
-struct lframe {  ///
-  i64 value = i64_max;
-
-  constexpr static lframe Scaled(i64 v) {
-    return {.value = v * _BF_LOGICAL_FPS_SCALE};
-  }
-
-  constexpr static lframe Unscaled(i64 v) {
-    return {.value = v};
-  }
-
-  constexpr static lframe FromSeconds(f32 seconds) {
-    return {.value = (i64)(seconds * (f32)FIXED_FPS)};
-  }
-
-  f32 Progress(const lframe duration) const {
-    return (f32)value / (f32)duration.value;
-  }
-
-  bool operator==(const lframe& other) const {
-    return value == other.value;
-  }
-
-  bool operator>(const lframe& other) const {
-    return value > other.value;
-  }
-
-  bool operator<(const lframe& other) const {
-    return value < other.value;
-  }
-
-  bool operator>=(const lframe& other) const {
-    return value >= other.value;
-  }
-
-  bool operator<=(const lframe& other) const {
-    return value <= other.value;
-  }
-
-  const lframe operator+(const lframe& other) const {
-    return lframe::Unscaled(value + other.value);
-  }
-
-  const lframe operator-(const lframe& other) const {
-    return lframe::Unscaled(value - other.value);
-  }
-
-  void SetRand(lframe v) {
-    value = ge.meta.logicRand.Rand() % v.value;
-  }
-
-  void SetRand(lframe v1, lframe v2) {
-    ASSERT(v2.value > v1.value);
-    value = v1.value + ge.meta.logicRand.Rand() % (v2.value - v1.value);
-  }
-};
-
 constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS        = lframe::Scaled(10);
 constexpr auto SPAWN_FRAMES                             = lframe::Scaled(60);
 constexpr auto DIE_FRAMES                               = lframe::Scaled(10);
