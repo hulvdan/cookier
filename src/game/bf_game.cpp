@@ -5960,18 +5960,6 @@ void GameDraw() {
       DrawCommandSetSortY_SET_BASELINE
     );
 
-    if (creature.type == CreatureType_TURREL) {
-      const auto& d = creature.DataTurrel();
-      DrawGroup_CommandTexture({
-        .texId    = fb->turrel_gun_texture_id(),
-        .rotation = Vector2Angle(d.aimDirection),
-        // TODO TURREL correct gun pos
-        .pos   = creature.pos,
-        .scale = scale,
-        .color = Fade(color, fade),
-      });
-    }
-
     DrawGroup_End();
 
     if (creature.type == CreatureType_PLAYER) {

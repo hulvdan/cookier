@@ -99,6 +99,7 @@ table Creature {
     turrel_knockback_meters: float;
     turrel_pierce: int;
     turrel_bounce: int;
+    turrel_projectile_shoot_anchor_y: float;
 
     color: uint = 0xffffffff;
 
@@ -107,9 +108,6 @@ table Creature {
 
     idle_texture_ids: [int];
     move_texture_ids: [int];
-
-    turrel_gun_texture_id: int;
-    turrel_gun_anchor_y: float;
 }
 
 table EffectCondition {
