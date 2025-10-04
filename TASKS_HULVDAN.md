@@ -1,6 +1,7 @@
 x can specify range + projectile_type + knockback + damage scalings
 x turrel: pierce / bounce
 
+* ref move FrameGame, FrameVisual, lframe to engine
 * turrel: proper spawning (via items)
 * turrel: correct gun texture placement
 * turrel: correct bullet spawn pos

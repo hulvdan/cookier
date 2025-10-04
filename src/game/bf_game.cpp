@@ -307,40 +307,6 @@ static const char* const g_gameVersion = BF_VERSION
   ;
 // }
 
-struct FrameGame {
-  i64 _value = i64_max;
-
-  [[nodiscard]] static FrameGame Now() {  ///
-    FrameGame frame{};
-    frame.SetNow();
-    return frame;
-  }
-
-  bool IsSet() const {  ///
-    return _value != i64_max;
-  }
-  void   SetNow();
-  lframe Elapsed() const;
-  f32    Progress(lframe duration) const;
-};
-
-struct FrameVisual {
-  i64 _value = i64_max;
-
-  [[nodiscard]] static FrameVisual Now() {  ///
-    FrameVisual frame{};
-    frame.SetNow();
-    return frame;
-  }
-
-  bool IsSet() const {  ///
-    return _value != i64_max;
-  }
-  void   SetNow();
-  lframe Elapsed() const;
-  f32    Progress(lframe duration) const;
-};
-
 enum ShapeCategory : u32 {
   ShapeCategory_STATIC     = 1 << 0,
   ShapeCategory_PLAYER     = 1 << 1,
@@ -763,9 +729,7 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
 
 struct GameData {
   struct Meta {
-    i64   frameGame   = 0;
-    i64   frameVisual = 0;
-    Arena trashArena  = {};
+    Arena trashArena = {};
 
     // NOTE: Reorder loading upon reordering fonts.
     Font fontUI             = {};
@@ -1080,26 +1044,6 @@ void MakeNumber(MakeNumberData data) {  ///
   };
   number.createdAt.SetNow();
   *g.run.numbers.Add() = number;
-}
-
-void FrameGame::SetNow() {  ///
-  ASSERT_FALSE(IsSet());
-  _value = g.meta.frameGame;
-}
-
-lframe FrameGame::Elapsed() const {  ///
-  ASSERT(IsSet());
-  return lframe::Unscaled(g.meta.frameGame - _value);
-}
-
-void FrameVisual::SetNow() {  ///
-  ASSERT_FALSE(IsSet());
-  _value = g.meta.frameVisual;
-}
-
-lframe FrameVisual::Elapsed() const {  ///
-  ASSERT(IsSet());
-  return lframe::Unscaled(g.meta.frameVisual - _value);
 }
 
 static BF_FORCE_INLINE Clay_Dimensions MeasureText(
@@ -5869,11 +5813,11 @@ void GameFixedUpdate() {
     }
 
     g.run.camera.pos = GetCameraTargetPos();
-    g.meta.frameGame++;
+    ge.meta.frameGame++;
   }
 
   DoUI(false);
-  g.meta.frameVisual++;
+  ge.meta.frameVisual++;
 }
 
 int GetTextureIdByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
