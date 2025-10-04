@@ -1814,7 +1814,7 @@ void GameInit() {  ///
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
       .outlineWidth    = 3,
-      .outlineAdvance  = 0,
+      .outlineAdvance  = 1,
     },
     // fontWaveCompletion.
     {

@@ -4,7 +4,12 @@ x ref move FrameGame, FrameVisual, lframe to engine
 x turrel: remove gun texture
 x turrel: proper spawning via item
 x turrel: correct bullet spawn pos
+x fix fonts outline advance
 
+* fix getting more healh from upgrade ADDS HP to player (not only to max HP)
+* ZHEKA
+  Cheats?
+* clay hovered modal shadows
 * turrel: show damage in item
 * stat descriptions
 * draw melee weapon attack colliders
