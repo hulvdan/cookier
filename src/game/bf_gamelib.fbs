@@ -95,6 +95,10 @@ table Creature {
     on_death_spawns_distance_max: float;
 
     turrel_damage_scalings: [DamageScaling];
+    turrel_range_meters: float;
+    turrel_knockback_meters: float;
+    turrel_pierce: int;
+    turrel_bounce: int;
 
     color: uint = 0xffffffff;
 
