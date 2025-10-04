@@ -5,8 +5,9 @@ x turrel: remove gun texture
 x turrel: proper spawning via item
 x turrel: correct bullet spawn pos
 x fix fonts outline advance
+x fix getting more health from upgrade ADDS HP to player (not only to max HP)
 
-* fix getting more healh from upgrade ADDS HP to player (not only to max HP)
+* fix slingshot bouncing
 * ZHEKA
   Cheats?
 * clay hovered modal shadows
