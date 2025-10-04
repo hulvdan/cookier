@@ -197,7 +197,7 @@ table Number {
 table Stat {
     icon_texture_id: int;
     name_locale: int;
-    hidden: bool;
+    is_hidden: bool;
     negative_is_good: bool;
     is_percent: bool;
     is_secondary: bool;

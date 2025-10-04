@@ -788,6 +788,7 @@ struct GameData {
     int crates                = 0;
     int cratesDroppedThisWave = 0;
     int previousLevel         = 1;
+    int turrelsToSpawn        = 0;
 
     int       waveIndex     = 0;
     FrameGame waveStartedAt = {};
@@ -1693,6 +1694,21 @@ int GetNextLevelXp(int currentLevel) {  ///
   return SQR(currentLevel + 3);
 }
 
+void OnWaveStarted() {  ///
+  g.run.bossCreatureId = 0;
+
+  g.run.waveStartedAt = {};
+  g.run.waveStartedAt.SetNow();
+  g.run.cratesDroppedThisWave = 0;
+
+  RecalculateThisWaveMobs();
+
+  for (auto& weapon : g.run.playerWeapons)
+    weapon.didDamage = 0;
+
+  g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
+}
+
 void RunInit() {
   ZoneScoped;
 
@@ -1718,14 +1734,6 @@ void RunInit() {
   g.run.playerLastRegenAt.SetNow();
 
   g.run.camera.pos = GetCameraTargetPos();
-
-  // TODO TURREL
-  FOR_RANGE (int, _, 10) {
-    MakeCreature({
-      .type = CreatureType_TURREL,
-      .pos{GRAND.FRand() * WORLD_X, GRAND.FRand() * WORLD_Y},
-    });
-  }
 
   struct {
     WeaponType type = {};
@@ -1762,12 +1770,9 @@ void RunInit() {
     MakeWalls({.lines = lines});
   }
 
-  g.run.waveStartedAt = {};
-  g.run.waveStartedAt.SetNow();
-
-  RecalculateThisWaveMobs();
-
   g.run.nextLevelXp = GetNextLevelXp(g.run.xpLevel);
+
+  OnWaveStarted();
 }
 
 void GameInit() {  ///
@@ -2604,7 +2609,7 @@ void DoUI(bool draw) {
       FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
         const auto type = (StatType)(i + 2);
         const auto fb   = glib->stats()->Get(type);
-        if (!fb->hidden() && (fb->is_secondary() == g.run.showingSecondaryStats)) {
+        if (!fb->is_hidden() && (fb->is_secondary() == g.run.showingSecondaryStats)) {
           componentStatsEntry(
             fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type], type
           );
@@ -4487,7 +4492,6 @@ void GameFixedUpdate() {
   // Advancing to the next wave (ScreenType_GAMEPLAY).
   if (g.run.scheduledNextWave) {  ///
     g.run.scheduledNextWave = false;
-    g.run.bossCreatureId    = 0;
 
     const auto health         = (f32)g.run.playerStats[StatType_HP];
     PLAYER_CREATURE.health    = health;
@@ -4498,14 +4502,7 @@ void GameFixedUpdate() {
     SDL_HideCursor();
 
     g.run.waveIndex++;
-    RecalculateThisWaveMobs();
-    g.run.cratesDroppedThisWave = 0;
-
-    g.run.waveStartedAt = {};
-    g.run.waveStartedAt.SetNow();
-
-    for (auto& weapon : g.run.playerWeapons)
-      weapon.didDamage = 0;
+    OnWaveStarted();
 
     IterateOverWeaponEffects(
       EffectConditionType_START_OF_THE_WAVE_GET_STAT,
@@ -4521,7 +4518,7 @@ void GameFixedUpdate() {
 
   PLAYER_CREATURE.controller.move = {};
 
-  // P - Pause button.
+  // Handling ESC or P to handle pause.
   if (g.run.screen == ScreenType_GAMEPLAY) {
     bool togglePause = IsKeyPressed(SDL_SCANCODE_P);
 
@@ -4823,33 +4820,41 @@ void GameFixedUpdate() {
         spawnEnemiesEvery      = Round((f32)spawnEnemiesEvery / multiplier);
         spawnEnemiesEvery      = MAX(1, spawnEnemiesEvery);
 
-        if (CanSpawnMoreCreatures()
-            && (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0))
-        {
-          FOR_RANGE (int, toSpawnIndex, g.run.toSpawn) {
-            const auto   factor = GRAND.FRand();
-            CreatureType spawnType{};
+        if (CanSpawnMoreCreatures()) {
+          if (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0) {
+            FOR_RANGE (int, toSpawnIndex, g.run.toSpawn) {
+              const auto   factor = GRAND.FRand();
+              CreatureType spawnType{};
 
-            FOR_RANGE (int, k, g.run.thisWaveMobsCount) {
-              const auto& c = g.run.thisWaveMobs[k];
-              if (factor < c.accumulatedFactor) {
-                spawnType = c.type;
-                break;
+              FOR_RANGE (int, k, g.run.thisWaveMobsCount) {
+                const auto& c = g.run.thisWaveMobs[k];
+                if (factor < c.accumulatedFactor) {
+                  spawnType = c.type;
+                  break;
+                }
               }
+
+              makePreSpawns(spawnType);
             }
 
-            makePreSpawns(spawnType);
+            if (g.run.toSpawn < 3)
+              g.run.toSpawn++;
           }
 
-          if (g.run.toSpawn < 3)
-            g.run.toSpawn++;
-        }
+          // Spawning turrels every 3 seconds.
+          if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 3) == 0) {
+            if (g.run.turrelsToSpawn > 0) {
+              g.run.turrelsToSpawn--;
+              makePreSpawns(CreatureType_TURREL);
+            }
+          }
 
-        // Spawning trees every 10 seconds.
-        if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
-          const int toSpawn = GetNumberOfTreesToSpawn();
-          FOR_RANGE (int, i, toSpawn)
-            makePreSpawns(CreatureType_TREE);
+          // Spawning trees every 10 seconds.
+          if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
+            const int toSpawn = GetNumberOfTreesToSpawn();
+            FOR_RANGE (int, i, toSpawn)
+              makePreSpawns(CreatureType_TREE);
+          }
         }
       }
 
