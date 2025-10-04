@@ -2489,6 +2489,7 @@ void _OutlineFonts(
         fontChar.x1 += font.outlineWidth;
         fontChar.y0 -= font.outlineWidth;
         fontChar.y1 += font.outlineWidth;
+        fontChar.xadvance += font.outlineAdvance;
       }
     }
   }
