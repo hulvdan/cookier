@@ -4708,8 +4708,9 @@ void GameFixedUpdate() {
                   (fb->turrel_projectile_shoot_anchor_y() - 0.5f) * (f32)tex->size_y()
                     * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE
                 );
-            const auto projectileType = ProjectileType_BULLET_EXPLOSIVE;
-            auto       fb_projectile  = fb_projectiles->Get(projectileType);
+            auto projectileType = (ProjectileType)fb->turrel_projectile_type();
+            ASSERT(projectileType);
+            auto fb_projectile = fb_projectiles->Get(projectileType);
 
             f32     closestDist = f32_inf;
             Vector2 forecastedPos{};

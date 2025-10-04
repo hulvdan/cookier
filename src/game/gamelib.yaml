@@ -250,6 +250,7 @@ creatures:
     resists_ailment_types:
       - BURN
     projectile_damage: 1
+    turrel_projectile_type: BULLET
     turrel_damage_scalings:
       - stat_type: ENGINEERING
         percents_per_tier:
