@@ -4795,7 +4795,10 @@ void GameFixedUpdate() {
           else if (creature.type == CreatureType_TURREL) {
             auto& data = creature.DataTurrel();
 
-            const f32 rangeMeters = fb->turrel_range_meters();
+            f32 rangeMeters = fb->turrel_range_meters();
+            rangeMeters *= (f32)g.run.playerStats[STRUCTURE_RANGE] / 100.0f + 1;
+            rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
+
             // TODO: ATLAS_D2.
             auto       tex = fb_atlas_textures->Get(fb->idle_texture_ids()->Get(0));
             const auto projectileSpawnPos

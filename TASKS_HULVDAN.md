@@ -13,16 +13,21 @@ x worked a bit on making lint work
 x weapon effect same weapon more damage: shows up correctly in weapon's card
 x weapon effect same weapon more damage: make effect actually apply on weapon's damage
 x show numbers of damage that mobs deal to player
+x stats: Structure Range
 
-* weapon effect same weapon more damage: ref usage of stat_type
-* clang-tidy to show f32 int / int f32 conversions
+* stat structure atk speed: rate of turrets attacking
+* stat structure atk speed: Landmines spawning
+* stat structure atk speed: Gardens spawning Consumables
+* landmine: item with damage scalings, explosion size damage etc
+* landmine: spawning object in the world
+* landmine: detonation
+* garden that spawns consumables
 * creature shadows (shadow offsets, sizes)
 * turrel: show damage in item
 * ZHEKA
   Cheats?
 * clay hovered modal shadows
 * stat descriptions
-* draw melee weapon attack colliders
 * store texture "original size" disregarding atlas_d2 / atlas_d4
   + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO
 * save system
@@ -38,8 +43,9 @@ x show numbers of damage that mobs deal to player
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * pause: unpause on touch
 * pause: touch support
-* using `value_multiplier` with stat that has `is_percent=true` can confuse people.
-  assert that value_multiplier && is_percent is false during codegen
+* fb effects: using `value_multiplier` with stat that has `is_percent=true`
+  will mislead players / developer.
+  assert that `value_multiplier && is_percent` is false during codegen
 * explosion: damage scalings (look at brotato)
 * think about boss
   + shoots oooo oooo oooo rows of projectiles like in brotato?
@@ -51,8 +57,6 @@ x show numbers of damage that mobs deal to player
 * stat effect: ENGINEERING
   Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
   Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
-* stats: % Structure Attack Speed: Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
-* stats: Structure Range: Increases or decreases the range of Structures.
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *
@@ -71,8 +75,6 @@ x show numbers of damage that mobs deal to player
 * weapons categorization. жидкое / твёрдое?
 *
 *
-* when player can be burnt:
-  make sure that burn ticks don't set player to be invincible
 *
 *
 * aseprite show image center
@@ -110,3 +112,10 @@ TECH DEBT
 * internet shouldn't be required for building:
   check web debug yandex build with mocked ysdk
 * font shader that remaps fillColor and outlineColor
+* clang-tidy to show f32 int / int f32 conversions
+
+IRRELEVANT:
+================================================================================
+* draw melee weapon attack colliders
+* when player can be burnt:
+  make sure that burn ticks don't set player to be invincible

@@ -180,4 +180,6 @@ constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 3.29f * 10.0f;
 // constexpr f32 BODY_LINEAR_DAMPING             = 50;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.2f * 10.0f;
 
+constexpr f32 STRUCTURE_MIN_RANGE_METERS = 2;
+
 ///
