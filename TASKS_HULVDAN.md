@@ -8,6 +8,7 @@ x fix fonts outline advance
 x fix getting more health from upgrade ADDS HP to player (not only to max HP)
 x fix slingshot bouncing
 x ref damage int
+x fix mob spawning bug
 
 * show numbers of damage that mobs deal to player
 * weapon effect: +dmg for a number of the same weapon

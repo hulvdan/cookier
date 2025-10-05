@@ -4889,7 +4889,7 @@ void GameFixedUpdate() {
                 GRAND.FRand()
               ),
             };
-            ASSERT(creaturesWorldSpawnBounds.ContainsInside(p));
+            ASSERT(creaturesWorldSpawnBounds.ContainsInside(posToSpawn));
             auto t = MIN(
               1,
               Unlerp(
