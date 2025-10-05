@@ -70,10 +70,10 @@ table Creature {
     health: int;
     health_increase_per_wave: float;
 
-    contact_damage: float;
+    contact_damage: int;
     contact_damage_increase_per_wave: float;
     // For ranged mobs or turrel.
-    projectile_damage: float;
+    projectile_damage: int;
     crit_damage_multiplier: float = 1.5;
 
     speed: float;
@@ -152,7 +152,7 @@ table Weapon {
     name_locale: int;
     min_tier_index: int;
     weaponkind_type: int;
-    base_damage: [float];
+    base_damage: [int];
     damage_scalings: [DamageScaling];
     crit_damage_multiplier: float = 1.5;
     knockback_meters: float;
