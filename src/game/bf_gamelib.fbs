@@ -177,7 +177,7 @@ table Projectile {
     speed: float;
     ailment_type: int;
     ailment_chance: float;
-    ailment_value: float;
+    ailment_value: int;
     collider_radius: float = 0.4;
     aoe_on_contact: bool = true;
     aoe_on_travel_end: bool = true;

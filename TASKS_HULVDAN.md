@@ -7,8 +7,9 @@ x turrel: correct bullet spawn pos
 x fix fonts outline advance
 x fix getting more health from upgrade ADDS HP to player (not only to max HP)
 x fix slingshot bouncing
+x ref damage int
 
-* ref damage int
+* show numbers of damage that mobs deal to player
 * weapon effect: +dmg for a number of the same weapon
   x shows up correctly in weapon's card
   * make effect actually apply on weapon's damage
