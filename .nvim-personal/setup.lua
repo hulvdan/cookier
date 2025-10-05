@@ -77,7 +77,7 @@ function rebuild_tasks()
         { "i_make_swatch", cli_command("make_swatch") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
-        -- { "l_lint_cpp", cli_command("lint") },
+        { "l_lint_cpp", cli_command("lint") },
         -- { "k_lint_python", [[.venv\Scripts\ruff.exe check cli]] },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },

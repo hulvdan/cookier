@@ -269,7 +269,7 @@ Vector2Int ToVector2Int(const BFGame::Pos* value) {  ///
 
 Vector2 Vector2DirectionOrRandom(Vector2 from, Vector2 to) {  ///
   if (from == to)
-    return Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
+    return Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
   return Vector2Normalize(to - from);
 }
 
@@ -1415,7 +1415,7 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   int health = fb->health()
                + Round(
-                 (f32)((g.run.waveIndex - fb->appearing_wave_number() + 1))
+                 ((g.run.waveIndex - fb->appearing_wave_number() + 1))
                  * fb->health_increase_per_wave()
                );
   if (data.type == CreatureType_PLAYER)
@@ -1448,7 +1448,7 @@ int MakeCreature(MakeCreatureData data) {  ///
   switch (creature.type) {
   case CreatureType_TURREL: {
     creature.DataTurrel() = {
-      .aimDirection = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI),
+      .aimDirection = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
     };
   } break;
 
@@ -1582,7 +1582,7 @@ void RecalculatePlayerWeaponOffsets() {  ///
   // Recalculating offsets.
   if (weaponsCount > 0) {
     const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
-    const auto angleDelta    = 2.0f * (f32)PI / (f32)weaponsCount;
+    const auto angleDelta    = 2.0f * (f32)PI32 / (f32)weaponsCount;
     FOR_RANGE (int, i, weaponsCount) {
       g.run.playerWeapons[i].offset
         = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
@@ -4914,7 +4914,7 @@ void GameFixedUpdate() {
               const f32 off = Lerp(
                 fb->spawn_group_radius_min(), fb->spawn_group_radius_max(), GRAND.FRand()
               );
-              p = posToSpawn + Vector2Rotate({off, 0}, 2 * PI * GRAND.FRand());
+              p = posToSpawn + Vector2Rotate({off, 0}, 2 * PI32 * GRAND.FRand());
             } while (!creaturesWorldSpawnBounds.ContainsInside(p));
             CreaturePreSpawn spawn{.type = type, .pos = p};
             spawn.createdAt.SetNow();
@@ -5609,7 +5609,7 @@ void GameFixedUpdate() {
                   projectile.dir
                     = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
                 else
-                  projectile.dir = Vector2Rotate({1, 0}, 2 * PI * GRAND.FRand());
+                  projectile.dir = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
               }
               else if (canPierce) {
                 projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
@@ -5764,7 +5764,7 @@ void GameFixedUpdate() {
                             ),
                             0
                           ),
-                          GRAND.FRand() * 2.0f * PI
+                          GRAND.FRand() * 2.0f * PI32
                         );
                 } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
@@ -6124,7 +6124,7 @@ void GameDraw() {
           scale.x = (creature.dir.x >= 0 ? 1 : -1);
         else {
           scale.x  = (weapon.targetDir.x >= 0 ? 1 : -1);
-          rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI : 0.0f);
+          rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
         }
 
         DrawGroup_OneShotTexture(
@@ -6171,7 +6171,7 @@ void GameDraw() {
     f32     rotation = Vector2Angle(projectile.dir);
     Vector2 scale{1, 1};
     if (projectile.dir.x < 0) {
-      rotation += (f32)PI;
+      rotation += (f32)PI32;
       scale.x = -1;
     }
 

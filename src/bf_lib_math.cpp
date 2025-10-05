@@ -2,8 +2,11 @@
 
 #pragma once
 
-#ifndef PI
-#  define PI 3.14159265358979323846
+#ifndef PI32
+#  define PI32 3.14159265358979323846f
+#endif
+#ifndef PI64
+#  define PI64 3.14159265358979323846
 #endif
 
 bool FloatEquals(f32 v1, f32 v2) {  ///
@@ -199,14 +202,14 @@ TEST_CASE ("CeilDivision") {  ///
 f32 GetLesserAngle(f32 aa, f32 bb) {  ///
   auto a = aa;
   auto b = bb;
-  while (a < -PI)
-    a += 2 * PI;
-  while (b < -PI)
-    b += 2 * PI;
-  while (a >= PI)
-    a -= 2 * PI;
-  while (b >= PI)
-    b -= 2 * PI;
+  while (a < -PI32)
+    a += 2 * PI32;
+  while (b < -PI32)
+    b += 2 * PI32;
+  while (a >= PI32)
+    a -= 2 * PI32;
+  while (b >= PI32)
+    b -= 2 * PI32;
 
   if (abs(a) > abs(b))
     return bb;
@@ -214,9 +217,9 @@ f32 GetLesserAngle(f32 aa, f32 bb) {  ///
 }
 
 TEST_CASE ("GetLesserAngle") {  ///
-  ASSERT(FloatEquals(GetLesserAngle(PI * 1 / 2, PI), PI * 1 / 2));
-  ASSERT(FloatEquals(GetLesserAngle(-PI * 1 / 2, PI), -PI * 1 / 2));
-  ASSERT(FloatEquals(GetLesserAngle(PI / 2, PI * 15 / 8), PI * 15 / 8));
+  ASSERT(FloatEquals(GetLesserAngle(PI32 * 1 / 2, PI32), PI32 * 1 / 2));
+  ASSERT(FloatEquals(GetLesserAngle(-PI32 * 1 / 2, PI32), -PI32 * 1 / 2));
+  ASSERT(FloatEquals(GetLesserAngle(PI32 / 2, PI32 * 15 / 8), PI32 * 15 / 8));
 }
 
 f32 Clamp(f32 value, f32 min, f32 max) {  ///
@@ -461,15 +464,15 @@ f32 EaseInOutQuint(f32 p) {  ///
 }
 
 f32 EaseInSin(f32 p) {  ///
-  return sinf((p - 1) * 2 * PI) + 1;
+  return sinf((p - 1) * 2 * PI32) + 1;
 }
 
 f32 EaseOutSin(f32 p) {  ///
-  return sinf(p * 2 * PI);
+  return sinf(p * 2 * PI32);
 }
 
 f32 EaseInOutSin(f32 p) {  ///
-  return 0.5f * (1 - cosf(p * PI));
+  return 0.5f * (1 - cosf(p * PI32));
 }
 
 f32 EaseInCirc(f32 p) {  ///
@@ -505,38 +508,38 @@ f32 EaseInOutExpo(f32 p) {  ///
 }
 
 f32 EaseInElastic(f32 p) {  ///
-  return sinf(13 * 2 * PI * p) * powf(2, 10 * (p - 1));
+  return sinf(13 * 2 * PI32 * p) * powf(2, 10 * (p - 1));
 }
 
 f32 EaseOutElastic(f32 p) {  ///
-  return sinf(-13 * 2 * PI * (p + 1)) * powf(2, -10 * p) + 1;
+  return sinf(-13 * 2 * PI32 * (p + 1)) * powf(2, -10 * p) + 1;
 }
 
 f32 EaseInOutElastic(f32 p) {  ///
   if (p < 0.5f)
-    return 0.5f * sinf(13 * 2 * PI * (2 * p)) * powf(2, 10 * ((2 * p) - 1));
+    return 0.5f * sinf(13 * 2 * PI32 * (2 * p)) * powf(2, 10 * ((2 * p) - 1));
   else
     return 0.5f
-           * (sinf(-13 * 2 * PI * ((2 * p - 1) + 1)) * powf(2, -10 * (2 * p - 1)) + 2);
+           * (sinf(-13 * 2 * PI32 * ((2 * p - 1) + 1)) * powf(2, -10 * (2 * p - 1)) + 2);
 }
 
 f32 EaseInBack(f32 p) {  ///
-  return p * p * p - p * sinf(p * PI);
+  return p * p * p - p * sinf(p * PI32);
 }
 
 f32 EaseOutBack(f32 p) {  ///
   f32 f = (1 - p);
-  return 1 - (f * f * f - f * sinf(f * PI));
+  return 1 - (f * f * f - f * sinf(f * PI32));
 }
 
 f32 EaseInOutBack(f32 p) {  ///
   if (p < 0.5f) {
     f32 f = 2 * p;
-    return 0.5f * (f * f * f - f * sinf(f * PI));
+    return 0.5f * (f * f * f - f * sinf(f * PI32));
   }
   else {
     f32 f = (1 - (2 * p - 1));
-    return 0.5f * (1 - (f * f * f - f * sinf(f * PI))) + 0.5f;
+    return 0.5f * (1 - (f * f * f - f * sinf(f * PI32))) + 0.5f;
   }
 }
 

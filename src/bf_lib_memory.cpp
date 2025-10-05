@@ -16,12 +16,12 @@ struct UnmappedAllocation {
 };
 
 static struct {
-  std::vector<UnmappedAllocation> allocs;
-  size_t                          pageSize;
-} _unmappingAllocatorData;
+  std::vector<UnmappedAllocation> allocs   = {};
+  size_t                          pageSize = {};
+} g_unmappingAllocatorData;
 
 void* unmapped_alloc(size_t size) {  ///
-  auto& data = _unmappingAllocatorData;
+  auto& data = g_unmappingAllocatorData;
 
   static bool initialized = false;
   if (!initialized) {
@@ -33,7 +33,7 @@ void* unmapped_alloc(size_t size) {  ///
 
   auto pages
     = CeilDivisionU64(size, data.pageSize) + 2 * UNMAPPING_ALLOCATOR_PAGES_MARGIN;
-  auto base   = VirtualAlloc(0, pages * data.pageSize, MEM_RESERVE, PAGE_NOACCESS);
+  auto base   = VirtualAlloc(nullptr, pages * data.pageSize, MEM_RESERVE, PAGE_NOACCESS);
   auto addr   = (void*)((u8*)base + UNMAPPING_ALLOCATOR_PAGES_MARGIN * data.pageSize);
   auto result = VirtualAlloc(addr, size, MEM_COMMIT, PAGE_READWRITE);
 
@@ -49,7 +49,7 @@ void* unmapped_alloc(size_t size) {  ///
 }
 
 void unmapped_free(void* ptr) {  ///
-  auto& data = _unmappingAllocatorData;
+  auto& data = g_unmappingAllocatorData;
 
   FOR_RANGE (int, i, data.allocs.size()) {
     auto& v = data.allocs[i];

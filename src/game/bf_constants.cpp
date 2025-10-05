@@ -85,9 +85,9 @@ constexpr int PLAYER_WEAPONS_COUNT = 6;
 constexpr f32 PLAYER_WEAPONS_STARTING_ANGLES_[PLAYER_WEAPONS_COUNT]{
   0,
   0,
-  (f32)PI / 6.0f,
-  (f32)PI / 4.0f,
-  -(f32)PI / 2.0f + 2.0f * (f32)PI / 5.0f,
+  (f32)PI32 / 6.0f,
+  (f32)PI32 / 4.0f,
+  -(f32)PI32 / 2.0f + 2.0f * (f32)PI32 / 5.0f,
   0
 };
 VIEW_FROM_ARRAY_DANGER(PLAYER_WEAPONS_STARTING_ANGLES);
