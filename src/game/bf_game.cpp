@@ -1413,11 +1413,13 @@ int MakeCreature(MakeCreatureData data) {  ///
   if (data.type != CreatureType_PLAYER)
     hurtboxRadius = MOB_HURTBOX_RADIUS * fb->hurtbox_scale();
 
-  auto health = (f32)fb->health()
-                + (f32)((g.run.waveIndex - fb->appearing_wave_number() + 1))
-                    * fb->health_increase_per_wave();
+  int health = fb->health()
+               + Round(
+                 (f32)((g.run.waveIndex - fb->appearing_wave_number() + 1))
+                 * fb->health_increase_per_wave()
+               );
   if (data.type == CreatureType_PLAYER)
-    health = (f32)g.run.playerStatsWithoutItems[StatType_HP];
+    health = g.run.playerStatsWithoutItems[StatType_HP];
 
   ASSERT(health > 0);
 
@@ -1796,12 +1798,12 @@ int CalculateWeaponDamage(int weaponIndex, WeaponType type, int tier) {  ///
     EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
     type,
     [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-      if (fb_effect->weaponproperty_type() != PropertyType_DAMAGE)
-        continue;
+      if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+        return;
 
       int sameWeapons = 0;
       int wi          = -1;
-      for (const auto& weapon : g.run.weapons) {
+      for (const auto& weapon : g.run.playerWeapons) {
         wi++;
         if ((weaponIndex != wi) && (weapon.type == type))
           sameWeapons++;
@@ -1829,10 +1831,14 @@ void OnWaveStarted() {  ///
 
   RecalculateThisWaveMobs();
 
+  int weaponIndex = -1;
   for (auto& weapon : g.run.playerWeapons) {
+    weaponIndex++;
     weapon.didDamage = 0;
-    if (weapon.type)
-      weapon.calculatedDamage = CalculateWeaponDamage(weapon.type, weapon.tier);
+    if (weapon.type) {
+      weapon.calculatedDamage
+        = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier);
+    }
   }
 
   g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
@@ -2040,7 +2046,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
     else if (armor < 0)
       data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
-    data.damage = MAX(1, damage);
+    data.damage = MAX(1, data.damage);
   }
 
   // Player lifesteals.
@@ -2933,7 +2939,7 @@ void DoUI(bool draw) {
   LAMBDA (
     void,
     componentWeaponStatsExploded,
-    (WeaponType type, int tier, int didDamage, int maxWidth)
+    (int weaponIndex, WeaponType type, int tier, int didDamage, int maxWidth)
   )
   {  ///
     const auto fb = fb_weapons->Get(type);
@@ -2942,7 +2948,9 @@ void DoUI(bool draw) {
     componentWeaponStatEntry(
       fb_stats->Get(StatType_DAMAGE)->name_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_TEXT(TextFormat("%d", CalculateWeaponDamage(type, tier)), GREEN);
+        BF_CLAY_TEXT(
+          TextFormat("%d", CalculateWeaponDamage(weaponIndex, type, tier)), GREEN
+        );
 
         // Scalings.
         const auto fb_scalings = fb->damage_scalings();
@@ -3184,7 +3192,7 @@ void DoUI(bool draw) {
           }
 
           componentWeaponStatsExploded(
-            weapon.type, weapon.tier, weapon.didDamage, ITEM_FRAME_WIDTH
+            weaponIndex, weapon.type, weapon.tier, weapon.didDamage, ITEM_FRAME_WIDTH
           );
 
           if (weAreInShop) {
@@ -3858,7 +3866,7 @@ void DoUI(bool draw) {
                 if (v.item)
                   componentItemStatsExploded(v.item, 1, ITEM_FRAME_WIDTH);
                 else if (v.weapon)
-                  componentWeaponStatsExploded(v.weapon, v.tier, 0, ITEM_FRAME_WIDTH);
+                  componentWeaponStatsExploded(-1, v.weapon, v.tier, 0, ITEM_FRAME_WIDTH);
 
                 BF_CLAY_SPACER_VERTICAL;
 
