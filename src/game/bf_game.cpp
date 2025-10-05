@@ -1811,9 +1811,9 @@ int CalculateWeaponDamage(int weaponIndex, WeaponType type, int tier) {  ///
       if (sameWeapons > 0) {
         auto v = fb_effect->value();
         if (v == 0)
-          damage *= fb_effect->value_multiplier();
+          damage = Round(damage * fb_effect->value_multiplier() * (f32)sameWeapons);
         else
-          damage += v;
+          damage += v * sameWeapons;
       }
     }
   );
