@@ -782,6 +782,8 @@ numbers:
     color: 0xefcb84ff
   - type: DAMAGE_CRIT
     color: 0xdc9824ff
+  - type: DAMAGE_MOB
+    color: 0xff4444ff
   - type: DODGE
     color: 0x7a7576ff
   - type: PICKUPABLE

@@ -12,10 +12,10 @@ x fix mob spawning bug
 x worked a bit on making lint work
 x weapon effect same weapon more damage: shows up correctly in weapon's card
 x weapon effect same weapon more damage: make effect actually apply on weapon's damage
+x show numbers of damage that mobs deal to player
 
 * weapon effect same weapon more damage: ref usage of stat_type
 * clang-tidy to show f32 int / int f32 conversions
-* show numbers of damage that mobs deal to player
 * creature shadows (shadow offsets, sizes)
 * turrel: show damage in item
 * ZHEKA
