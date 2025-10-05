@@ -2016,7 +2016,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
       MakeNumber({
         .type  = (data.isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
-        .value = Round(data.damage),
+        .value = data.damage,
         .pos   = creature.pos,
       });
     }
@@ -2047,6 +2047,12 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     else if (armor < 0)
       data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
     data.damage = MAX(1, data.damage);
+
+    MakeNumber({
+      .type  = NumberType_DAMAGE_MOB,
+      .value = data.damage,
+      .pos   = creature.pos,
+    });
   }
 
   // Player lifesteals.
