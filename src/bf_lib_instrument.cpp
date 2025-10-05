@@ -1,13 +1,22 @@
 // Other stuff.
 // ============================================================
 
-#define BF_PROFILING (BF_DEBUG && defined(SDL_PLATFORM_WIN32))
+#ifdef SDL_PLATFORM_WIN32
+#  define BF_PROFILING (BF_DEBUG)
+#else
+#  define BF_PROFILING (0)
+#endif
 
 #define BF_ENABLE_ASSERTS (1 && BF_DEBUG)
 #define BF_ENABLE_SLOW_ASSERTS (1 && BF_ENABLE_ASSERTS)
 
-#define BF_SHOW_VERSION (BF_RELEASE && !defined(BF_PLATFORM_WebYandex))
-#define BF_DEBUG_VIGNETTE_AND_STRIPS 0
+#ifdef BF_PLATFORM_WebYandex
+#  define BF_SHOW_VERSION (0)
+#else
+#  define BF_SHOW_VERSION (BF_RELEASE)
+#endif
+
+#define BF_DEBUG_VIGNETTE_AND_STRIPS (0)
 
 // Unmapping allocator.
 // ============================================================

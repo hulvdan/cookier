@@ -120,8 +120,12 @@ EM_JS(void, js_LogWebGLVersion, (), {  ///
 
 class BGFXCallbackHandler : public bgfx::CallbackI {  ///
   public:
-  void fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code, const char* str)
-    override {
+  void fatal(
+    const char* filePath,
+    uint16_t    line,
+    bgfx::Fatal::Enum /* code */,
+    const char* str
+  ) override {
     LOGE("bgfx fatal [%s:%d]: %s\n", filePath, line, str);
     INVALID_PATH;
     exit(EXIT_FAILURE);
@@ -147,11 +151,11 @@ class BGFXCallbackHandler : public bgfx::CallbackI {  ///
 
   void profilerEnd() override {}
 
-  uint32_t cacheReadSize(uint64_t id) override {
+  uint32_t cacheReadSize(uint64_t /* id */) override {
     return 0;
   }
 
-  bool cacheRead(uint64_t id, void* data, uint32_t size) override {
+  bool cacheRead(uint64_t /* id */, void* /* data */, uint32_t /* size */) override {
     return false;
   }
 
@@ -180,7 +184,7 @@ class BGFXCallbackHandler : public bgfx::CallbackI {  ///
   void captureFrame(const void* data, uint32_t size) override {}
 };
 
-SDL_AppResult SDL_AppInit(void** /* appstate */, int argc, char** argv) {  ///
+SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv */) {  ///
   ZoneScopedN("SDL_AppInit");
 
   GamePreInit();
@@ -399,6 +403,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       SDL_SetWindowFullscreen(window, !fullscreen);
     } break;
 #endif
+
+    default:
+      break;
     }
   } break;
 
@@ -443,12 +450,15 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     // TODO: check if it works.
     ma_engine_set_volume(&ge.meta._soundManager.engine, 1);
   } break;
+
+  default:
+    break;
   }
 
   return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit(void* /* appstate */, SDL_AppResult result) {  ///
+void SDL_AppQuit(void* /* appstate */, SDL_AppResult /* result */) {  ///
   DeinitEngine();
 
   bgfx::shutdown();

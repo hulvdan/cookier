@@ -9,12 +9,14 @@ x fix getting more health from upgrade ADDS HP to player (not only to max HP)
 x fix slingshot bouncing
 x ref damage int
 x fix mob spawning bug
+x worked a bit on making lint work
 
-* show numbers of damage that mobs deal to player
 * weapon effect: +dmg for a number of the same weapon
   x shows up correctly in weapon's card
   * make effect actually apply on weapon's damage
   * ref usage of stat_type
+* clang-tidy to show f32 int / int f32 conversions
+* show numbers of damage that mobs deal to player
 * creature shadows (shadow offsets, sizes)
 * turrel: show damage in item
 * ZHEKA
