@@ -4876,12 +4876,20 @@ void GameFixedUpdate() {
 
           Vector2 posToSpawn{};
           while (1) {
-            posToSpawn = {
-              CREATURES_SPAWN_MARGIN
-                + GRAND.FRand() * (WORLD_X - 2 * CREATURES_SPAWN_MARGIN),
-              CREATURES_SPAWN_MARGIN
-                + GRAND.FRand() * (WORLD_Y - 2 * CREATURES_SPAWN_MARGIN),
+            constexpr f32 epsilon = 0.001f;
+            posToSpawn            = {
+              Lerp(
+                CREATURES_SPAWN_MARGIN + epsilon,
+                (f32)WORLD_X - CREATURES_SPAWN_MARGIN - epsilon,
+                GRAND.FRand()
+              ),
+              Lerp(
+                CREATURES_SPAWN_MARGIN + epsilon,
+                (f32)WORLD_Y - CREATURES_SPAWN_MARGIN - epsilon,
+                GRAND.FRand()
+              ),
             };
+            ASSERT(creaturesWorldSpawnBounds.ContainsInside(p));
             auto t = MIN(
               1,
               Unlerp(
