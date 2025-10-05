@@ -8,7 +8,10 @@ x fix fonts outline advance
 x fix getting more health from upgrade ADDS HP to player (not only to max HP)
 x fix slingshot bouncing
 
+* ref damage int
 * weapon effect: +dmg for a number of the same weapon
+  x shows up correctly in weapon's card
+  * make effect actually apply on weapon's damage
   * ref usage of stat_type
 * creature shadows (shadow offsets, sizes)
 * turrel: show damage in item
@@ -63,6 +66,10 @@ x fix slingshot bouncing
 * weapon tag: explosive: 5 10 15 20 25 explosion size
 * weapon tag: elemental: 1 2 3 4 5 elemental damage
 * weapons categorization. жидкое / твёрдое?
+*
+*
+* when player can be burnt:
+  make sure that burn ticks don't set player to be invincible
 *
 *
 * aseprite show image center
