@@ -401,7 +401,7 @@ if(WIN32 AND CMAKE_GENERATOR STREQUAL Ninja)
         "${CMAKE_SOURCE_DIR}/vendor/basis_universal/transcoder"
         "${CMAKE_SOURCE_DIR}/vendor/bgfx/include"
         "${CMAKE_SOURCE_DIR}/vendor/bx/include"
-        "${CMAKE_SOURCE_DIR}/vendor/bimg/include",
+        "${CMAKE_SOURCE_DIR}/vendor/bimg/include"
         "${CMAKE_SOURCE_DIR}/vendor/box2d/include"
         "${CMAKE_SOURCE_DIR}/vendor/bx/include"
         "${CMAKE_SOURCE_DIR}/vendor/flatbuffers"
