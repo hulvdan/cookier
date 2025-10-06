@@ -22,11 +22,14 @@ x landmine: detonation
 x landmine: damage scalings, explosion size damage etc
 x landmine: structure atk speed affects spawning
 x landmine: draw on floor
+x garden: spawns consumables
+x garden: structure atk speed affects
 
-* garden: spawns consumables
-* garden: structure atk speed affects
 * creature shadows (shadow offsets, sizes)
 * turrel: show damage in item
+* landmine: show damage in item
+* landmine: show spawn rate "Gets spawned every %.1f seconds"
+* garden: show interval of fruit spawning "Spawns fruit every %.1f seconds"
 * ZHEKA
   Cheats?
 * clay hovered modal shadows
