@@ -76,6 +76,7 @@ localization:
   ITEM_PIGGY_BANK: Копилка
   ITEM_TODO_REROLLER: TodoReroller
   ITEM_TURREL: Туррель
+  ITEM_TURREL_ENHANCE_TODO: Улучшалка Туррели
   WEAPON_SWORD: Меч
   WEAPON_GUN: Пистолет
   WEAPON_SMG: ПП
@@ -439,6 +440,15 @@ items:
     effects:
       - stat_type: TURRELS_COUNT
         value: 1
+  - type: TURREL_ENHANCE_TODO
+    texture_id: ui_item_todo
+    price: 15
+    tier: 2
+    effects:
+      - stat_type: STRUCTURE_ATTACK_SPEED
+        value: 50
+      - stat_type: STRUCTURE_RANGE
+        value: 50
   - type: HELMET
     texture_id: ui_item_helmet
     tier: 2
