@@ -44,6 +44,7 @@ constexpr f32 RANGE_TO_METER_SCALE = 0.04f;
 constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.6f;
 constexpr f32 MOB_HURTBOX_RADIUS        = 0.7f;
 constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.5f;
+constexpr f32 LANDMINE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
 constexpr f32 BURNING_SPREAD_DISTANCE   = MOB_HURTBOX_RADIUS * 3.5f;
 
@@ -181,5 +182,10 @@ constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 3.29f * 10.0f;
 // constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 1.2f * 10.0f;
 
 constexpr f32 STRUCTURE_MIN_RANGE_METERS = 2;
+
+constexpr int  SPAWNING_TURRELS_EVERY_N_SECONDS   = 3;
+constexpr int  SPAWNING_GARDENS_EVERY_N_SECONDS   = 5;
+constexpr auto SPAWNING_LANDMINES_INTERVAL_FRAMES = lframe::FromSeconds(8);
+constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);
 
 ///

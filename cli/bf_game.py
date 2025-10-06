@@ -52,6 +52,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     for x in gamelib["items"][1:]:
         x["name_locale"] = "ITEM_" + x["type"].upper()
+        assert 0 <= x["tier"] < 4
 
         mandatory_fields = [
             "price",

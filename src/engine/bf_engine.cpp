@@ -114,6 +114,8 @@ struct Rect {
       return false;
     return true;
   }
+
+  Vector2 GetRandomPosInside() const;
 };
 
 struct Color {
@@ -542,6 +544,27 @@ struct EngineData {
   } draw;
 } ge = {};
 
+#define GRAND (ge.meta.logicRand)
+
+// Points are contained inside. Not on edge.
+Vector2 Rect::GetRandomPosInside() const {  ///
+  Vector2 result{};
+
+  f32 t{};
+
+  do {
+    t = GRAND.FRand();
+  } while (t == 0);
+  result.x = pos.x + t * size.x;
+
+  do {
+    t = GRAND.FRand();
+  } while (t == 0);
+  result.y = pos.y + t * size.y;
+
+  return result;
+}
+
 void BeginMode2D(const Camera* camera) {
   ASSERT(!ge.meta._currentCamera);
   ge.meta._currentCamera = camera;
@@ -551,8 +574,6 @@ void EndMode2D() {
   ASSERT(ge.meta._currentCamera);
   ge.meta._currentCamera = nullptr;
 }
-
-#define GRAND (ge.meta.logicRand)
 
 // clang-format off
 #ifdef BF_PLATFORM_WebYandex

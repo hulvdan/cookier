@@ -295,6 +295,7 @@ table GameLibrary {
 
     decal_pre_spawn_texture_id: int;
     landmine_texture_id: int;
+    garden_texture_id: int;
 
     // NOTE: «Table Gen» works in Python `bf_game.py`.
     // It goes through the field names in the following TABLE_GEN_START/END region.
@@ -316,6 +317,11 @@ table GameLibrary {
     stats: [Stat] (required);
     placeholders: [Placeholder] (required);
     // TABLE_GEN_END
+
+    landmine_damage_scalings: [DamageScaling];
+    landmine_crit_damage_multiplier: float = 1.5;
+    landmine_knockback_meters: float = 0;
+    landmine_explosion_radius: float = 1.5;
     // GAME STUFF END
 }
 
