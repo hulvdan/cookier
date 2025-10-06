@@ -6175,14 +6175,15 @@ void GameDraw() {
   const auto localization         = glib->localizations()->Get(ge.meta.localization);
   const auto localization_strings = localization->strings();
 
-  const auto fb_hostilities = glib->hostilities();
-  const auto fb_preSpawns   = glib->pre_spawns();
-  const auto fb_creatures   = glib->creatures();
-  const auto fb_weapons     = glib->weapons();
-  const auto fb_projectiles = glib->projectiles();
-  const auto fb_pickupables = glib->pickupables();
-  const auto fb_numbers     = glib->numbers();
-  const auto fb_particles   = glib->particles();
+  const auto fb_atlas_textures = glib->atlas_textures();
+  const auto fb_hostilities    = glib->hostilities();
+  const auto fb_preSpawns      = glib->pre_spawns();
+  const auto fb_creatures      = glib->creatures();
+  const auto fb_weapons        = glib->weapons();
+  const auto fb_projectiles    = glib->projectiles();
+  const auto fb_pickupables    = glib->pickupables();
+  const auto fb_numbers        = glib->numbers();
+  const auto fb_particles      = glib->particles();
   // }
 
   BeginMode2D(&g.run.camera);
@@ -6308,19 +6309,48 @@ void GameDraw() {
       color = ColorLerp(color, RED, t);
     }
 
-    DrawGroup_Begin(DrawZ_DEFAULT);
-
-    DrawGroup_CommandTexture(
+    DrawGroup_OneShotTexture(
       {
         .texId = texId,
         .pos   = creature.pos,
         .scale = scale,
         .color = Fade(color, fade),
       },
-      DrawCommandSetSortY_SET_BASELINE
+      DrawZ_DEFAULT
     );
 
-    DrawGroup_End();
+    {
+      f32 scale = 1;
+      int texId = glib->shadow_texture_ids()->Get(0);
+      for (auto t : *glib->shadow_texture_ids()) {
+        auto fb_tex = fb_atlas_textures->Get(t);
+
+        // TODO: ATLAS_D2.
+        const f32 sx
+          = fb_tex->size_x() * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
+
+        if (!texId) {
+          texId = t;
+          scale = CREATURE_COLLIDER_RADIUS * 2 / sx;
+        }
+
+        if (sx >= CREATURE_COLLIDER_RADIUS * 2) {
+          texId = t;
+          scale = CREATURE_COLLIDER_RADIUS * 2 / sx;
+        }
+        else
+          break;
+      }
+      DrawGroup_OneShotTexture(
+        {
+          .texId = texId,
+          .pos   = creature.pos + Vector2(0, fb->shadow_offset_y()),
+          .scale = Vector2One() * scale,
+          .color = Fade(WHITE, fade * 0.33f),
+        },
+        DrawZ_FLOOR_SHADOWS
+      );
+    }
 
     if (creature.type == CreatureType_PLAYER) {
       int weaponsCount = 0;

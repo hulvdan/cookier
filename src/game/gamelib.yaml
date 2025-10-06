@@ -2,6 +2,7 @@ render_z:
   - INVALID
   - SCREEN_BACKGROUND
   - FLOOR
+  - FLOOR_SHADOWS
   - FLOOR_DECALS
   - LANDMINES
   - PICKUPABLES
@@ -222,6 +223,10 @@ ui_button_nine_slice:
   right: 64
   top: 64
   bottom: 64
+shadow_texture_ids:
+  - game_shadow_1
+  - game_shadow_2
+  - game_shadow_3
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 landmine_texture_id: game_landmine
 garden_texture_id: game_garden
