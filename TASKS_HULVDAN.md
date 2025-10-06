@@ -16,12 +16,14 @@ x show numbers of damage that mobs deal to player
 x stats: Structure Range
 x stat structure atk speed: rate of turrets attacking
 
-* landmine: item with damage scalings, explosion size damage etc
 * landmine: spawning object in the world
 * landmine: detonation
-* stat structure atk speed: Landmines spawning
-* garden that spawns consumables
-* stat structure atk speed: Gardens spawning Consumables
+* landmine: damage scalings, explosion size damage etc
+* landmine: structure atk speed affects spawning
+* garden: item
+* garden: spawning in the world
+* garden: spawns consumables
+* garden: structure atk speed affects
 * creature shadows (shadow offsets, sizes)
 * turrel: show damage in item
 * ZHEKA

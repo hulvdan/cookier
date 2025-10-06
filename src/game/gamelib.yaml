@@ -218,6 +218,8 @@ ui_button_nine_slice:
   top: 64
   bottom: 64
 decal_pre_spawn_texture_id: game_decal_pre_spawn
+landmine_texture_id: game_landmine
+garden_texture_id: game_garden
 # «Hostility» is about colors of «spawn crosses» in brotato.
 # Colors differ based on whether a creature that will be spawned
 # would be neutral (like trees), friendly (like flying bots), or hostile (like mobs).
@@ -229,6 +231,13 @@ hostilities:
     color: 0x66a650ff
   - type: FRIENDLY
     color: 0x208cb2ff
+pre_spawns:
+  - type: INVALID
+  - type: MOB
+  - type: LANDMINE
+    hostility_type: FRIENDLY
+  - type: GARDEN
+    hostility_type: FRIENDLY
 creatures:
   - type: INVALID
   - type: PLAYER
@@ -448,6 +457,20 @@ items:
       - stat_type: STRUCTURE_ATTACK_SPEED
         value: 50
       - stat_type: STRUCTURE_RANGE
+        value: 50
+  - type: LANDMINE
+    texture_id: ui_item_todo
+    price: 25
+    tier: 3
+    effects:
+      - stat_type: LANDMINES
+        value: 1
+  - type: GARDEN
+    texture_id: ui_item_todo
+    price: 20
+    tier: 4
+    effects:
+      - stat_type: GARDENS
         value: 50
   - type: HELMET
     texture_id: ui_item_helmet
@@ -1037,6 +1060,12 @@ stats:
     is_percent: true
     is_secondary: true
   - type: TURRELS_COUNT
+    is_secondary: true
+    is_hidden: true
+  - type: LANDMINES
+    is_secondary: true
+    is_hidden: true
+  - type: GARDENS
     is_secondary: true
     is_hidden: true
 placeholders:

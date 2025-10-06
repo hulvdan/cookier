@@ -558,10 +558,11 @@ struct MakeCreatureData {
   Vector2      pos  = {};
 };
 
-struct CreaturePreSpawn {
-  CreatureType type      = {};
-  Vector2      pos       = {};
-  FrameGame    createdAt = {};
+struct PreSpawn {
+  PreSpawnType type         = {};
+  CreatureType typeCreature = {};
+  Vector2      pos          = {};
+  FrameGame    createdAt    = {};
 };
 
 struct Projectile {
@@ -729,6 +730,16 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
   return 0;
 }
 
+struct Landmine {
+  Vector2      pos                 = {};
+  LogicalFrame startedDetonationAt = {};
+};
+
+struct Garden {
+  Vector2      pos       = {};
+  LogicalFrame createdAt = {};
+};
+
 struct GameData {
   struct Meta {
     Arena trashArena = {};
@@ -803,16 +814,18 @@ struct GameData {
     Array<int, StatType_COUNT> playerStats             = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
-#define VECTORS_TABLE                    \
-  X(Creature, creatures)                 \
-  X(CreaturePreSpawn, creaturePreSpawns) \
-  X(Projectile, projectiles)             \
-  X(int, projectilesToRemove)            \
-  X(BodyShape, bodyShapes)               \
-  X(int, justDamagedCreatures)           \
-  X(Number, numbers)                     \
-  X(Pickupable, pickupables)             \
-  X(Item, playerItems)                   \
+#define VECTORS_TABLE          \
+  X(Creature, creatures)       \
+  X(Landmine, landmines)       \
+  X(Garden, gardens)           \
+  X(PreSpawn, preSpawns)       \
+  X(Projectile, projectiles)   \
+  X(int, projectilesToRemove)  \
+  X(BodyShape, bodyShapes)     \
+  X(int, justDamagedCreatures) \
+  X(Number, numbers)           \
+  X(Pickupable, pickupables)   \
+  X(Item, playerItems)         \
   X(Particle, particles)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -854,6 +867,25 @@ struct GameData {
     const Font* overriddenFont             = {};
   } ui;
 } g = {};
+
+struct MakeLandmineData {
+  Vector2 pos = {};
+};
+
+void MakeLandmine(MakeLandmineData data) {  ///
+  Landmine v{.pos = data.pos};
+  *g.run.landmines.Add() = v;
+}
+
+struct MakeGardenData {
+  Vector2 pos = {};
+};
+
+void MakeGarden(MakeGardenData data) {  ///
+  Garden v{.pos = data.pos};
+  v.createdAt.SetNow();
+  *g.run.gardens.Add() = v;
+}
 
 void ApplyAilment(
   Creature*        creature,
@@ -4521,7 +4553,7 @@ void GameFixedUpdate() {
       if (!creature.diedAt.IsSet())
         TryApplyDamage({.creatureIndex = i, .damage = int_max});
     }
-    g.run.creaturePreSpawns.Reset();
+    g.run.preSpawns.Reset();
 
     if (g.run.scheduledWaveCompleted.Elapsed() >= WAVE_COMPLETED_FRAMES) {
       {
@@ -4944,9 +4976,9 @@ void GameFixedUpdate() {
               );
               p = posToSpawn + Vector2Rotate({off, 0}, 2 * PI32 * GRAND.FRand());
             } while (!creaturesWorldSpawnBounds.ContainsInside(p));
-            CreaturePreSpawn spawn{.type = type, .pos = p};
+            PreSpawn spawn{.type = type, .pos = p};
             spawn.createdAt.SetNow();
-            *g.run.creaturePreSpawns.Add() = spawn;
+            *g.run.preSpawns.Add() = spawn;
           }
         };
 
@@ -4996,13 +5028,18 @@ void GameFixedUpdate() {
 
       // Spawning.
       {  ///
-        const int total = g.run.creaturePreSpawns.count;
+        const int total = g.run.preSpawns.count;
         int       off   = 0;
         FOR_RANGE (int, i, total) {
-          auto& v = g.run.creaturePreSpawns[i - off];
+          auto& v = g.run.preSpawns[i - off];
+
+          ASSERT(v.type);
+          if (v.type == PreSpawnType_MOB)
+            ASSERT(v.typeMob);
+
           if (v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES)) {
             MakeCreature({.type = v.type, .pos = v.pos});
-            g.run.creaturePreSpawns.UnstableRemoveAt(i - off);
+            g.run.preSpawns.UnstableRemoveAt(i - off);
             off++;
           }
         }
@@ -5796,12 +5833,12 @@ void GameFixedUpdate() {
                         );
                 } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
-                CreaturePreSpawn spawn{
+                PreSpawn spawn{
                   .type = (CreatureType)fb->on_death_spawns_creature_type(),
                   .pos  = pos,
                 };
                 spawn.createdAt.SetNow();
-                *g.run.creaturePreSpawns.Add() = spawn;
+                *g.run.preSpawns.Add() = spawn;
               }
             }
 
@@ -6015,20 +6052,40 @@ void GameDraw() {
     );
   }
 
-  // Drawing creature spawns.
+  // Drawing prespawns.
   {  ///
     const auto texId = glib->decal_pre_spawn_texture_id();
 
     DrawGroup_Begin(DrawZ_FLOOR_DECALS);
     DrawGroup_SetSortY(0);
 
-    for (auto& spawn : g.run.creaturePreSpawns) {
-      const auto fb_creature  = fb_creatures->Get(spawn.type);
-      const auto fb_hostility = fb_hostilities->Get(fb_creature->hostility_type());
+    for (auto& spawn : g.run.preSpawns) {
+      ASSERT(spawn.type);
+      if (spawn.type == PreSpawnType_MOB)
+        ASSERT(spawn.typeMob);
+
+      u32 color{};
+
+      switch (spawn.type) {
+      case PreSpawnType_MOB: {
+        const auto fb_creature = fb_creatures->Get(spawn.mobType);
+        color = fb_hostilities->Get(fb_creature->hostility_type())->color();
+      } break;
+
+      case PreSpawnType_LANDMINE:
+      case PreSpawnType_GARDEN: {
+        const auto fb = fb_preSpawns->Get(spawn.type);
+        color         = fb_hostilities->Get(fb->hostility_type())->color();
+      } break;
+
+      default:
+        INVALID_PATH;
+      }
+
       DrawGroup_CommandTexture({
         .texId = texId,
         .pos   = spawn.pos,
-        .color = ColorFromRGBA(fb_hostility->color()),
+        .color = ColorFromRGBA(color),
       });
     }
 
@@ -6036,137 +6093,155 @@ void GameDraw() {
   }
 
   // Drawing creatures.
-  int bossCreatureIndex = -1;
-  int creatureIndex     = -1;
-  for (const auto& creature : g.run.creatures) {  ///
-    creatureIndex++;
-    const auto fb = fb_creatures->Get(creature.type);
+  {  ///
+    int bossCreatureIndex = -1;
+    int creatureIndex     = -1;
 
-    if (fb->is_boss())
-      bossCreatureIndex = creatureIndex;
+    for (const auto& creature : g.run.creatures) {
+      creatureIndex++;
+      const auto fb = fb_creatures->Get(creature.type);
 
-    f32 fade = 1;
-    if (creature.diedAt.IsSet())
-      fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
+      if (fb->is_boss())
+        bossCreatureIndex = creatureIndex;
 
-    int texId = 0;
-    if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
-      texId = GetTextureIdByProgress(
-        fb->move_texture_ids(),
-        creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
-      );
-    }
-    else {
-      f32 p = 0.0f;
-      if (creature.idleStartedAt.IsSet()) {
-        const auto idleDuration = lframe::Unscaled(fb->idle_seconds() * FIXED_FPS);
-        p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
-      }
-      texId = GetTextureIdByProgress(fb->idle_texture_ids(), p);
-    }
+      f32 fade = 1;
+      if (creature.diedAt.IsSet())
+        fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
 
-    Vector2 scale{1, 1};
-    if (creature.dir.x < 0)
-      scale.x = -1;
-
-    auto color = ColorFromRGBA(fb->color());
-    if (creature.type == CreatureType_RANGER) {
-      const auto& data = creature.DataRanger();
-      f32         t    = 0;
-      if (data.startedShootingAt.IsSet()) {
-        auto e = data.startedShootingAt.Elapsed();
-        if (e < MOB_RANGER_SHOOTING_FRAME)
-          t = e.Progress(MOB_RANGER_SHOOTING_FRAME);
-        else {
-          t = 1
-              - (e - MOB_RANGER_SHOOTING_FRAME)
-                  .Progress(MOB_RANGER_SHOOTING_FRAMES - MOB_RANGER_SHOOTING_FRAME);
-        }
-      }
-      t     = Clamp01(t);
-      color = ColorLerp(color, RED, t);
-    }
-    else if (creature.type == CreatureType_RUSHER) {
-      const auto& data = creature.DataRusher();
-      f32         t    = 0;
-      if (data.startedRushingAt.IsSet()) {
-        auto e = data.startedRushingAt.Elapsed();
-        if (e < MOB_RUSHER_RUSH_PRE_FRAMES)
-          t = e.Progress(MOB_RUSHER_RUSH_PRE_FRAMES);
-        else {
-          t = 1
-              - (e - MOB_RUSHER_RUSH_TOTAL_FRAMES + MOB_RUSHER_RUSH_PRE_FRAMES)
-                  .Progress(MOB_RUSHER_RUSH_POST_FRAMES);
-        }
-      }
-      t     = Clamp01(t);
-      color = ColorLerp(color, RED, t);
-    }
-
-    DrawGroup_Begin(DrawZ_DEFAULT);
-
-    DrawGroup_CommandTexture(
-      {
-        .texId = texId,
-        .pos   = creature.pos,
-        .scale = scale,
-        .color = Fade(color, fade),
-      },
-      DrawCommandSetSortY_SET_BASELINE
-    );
-
-    DrawGroup_End();
-
-    if (creature.type == CreatureType_PLAYER) {
-      int weaponsCount = 0;
-      for (const auto& weapon : g.run.playerWeapons) {
-        if (weapon.type)
-          weaponsCount++;
-      }
-
-      // Drawing player's weapons.
-      FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
-        const auto& weapon = g.run.playerWeapons[i];
-        if (!weapon.type)
-          continue;
-
-        const auto fb = fb_weapons->Get(weapon.type);
-
-        auto pos = GetWeaponPos(weapon);
-        if (!fb->projectile_type() && weapon.startedShootingAt.IsSet()) {
-          const auto dur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
-          const f32  t   = InOutLerp(
-            0,
-            1,
-            (f32)weapon.startedShootingAt.Elapsed().value,
-            (f32)dur.value,
-            (f32)dur.value / 6
-          );
-          pos = Vector2Lerp(PLAYER_CREATURE.pos + weapon.offset, pos, t);
-        }
-
-        f32     rotation = 0;
-        Vector2 scale{0, 1};
-
-        if (weapon.targetDir == Vector2Zero())
-          scale.x = (creature.dir.x >= 0 ? 1 : -1);
-        else {
-          scale.x  = (weapon.targetDir.x >= 0 ? 1 : -1);
-          rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
-        }
-
-        DrawGroup_OneShotTexture(
-          {
-            .texId    = fb->texture_ids()->Get(0),
-            .rotation = rotation,
-            .pos      = pos,
-            .scale    = scale,
-            .color    = Fade(ColorFromRGBA(fb->color()), fade),
-          },
-          PLAYER_WEAPONS_DRAW_Z[weaponsCount - 1][i]
+      int texId = 0;
+      if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
+        texId = GetTextureIdByProgress(
+          fb->move_texture_ids(),
+          creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
         );
       }
+      else {
+        f32 p = 0.0f;
+        if (creature.idleStartedAt.IsSet()) {
+          const auto idleDuration = lframe::Unscaled(fb->idle_seconds() * FIXED_FPS);
+          p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
+        }
+        texId = GetTextureIdByProgress(fb->idle_texture_ids(), p);
+      }
+
+      Vector2 scale{1, 1};
+      if (creature.dir.x < 0)
+        scale.x = -1;
+
+      auto color = ColorFromRGBA(fb->color());
+      if (creature.type == CreatureType_RANGER) {
+        const auto& data = creature.DataRanger();
+        f32         t    = 0;
+        if (data.startedShootingAt.IsSet()) {
+          auto e = data.startedShootingAt.Elapsed();
+          if (e < MOB_RANGER_SHOOTING_FRAME)
+            t = e.Progress(MOB_RANGER_SHOOTING_FRAME);
+          else {
+            t = 1
+                - (e - MOB_RANGER_SHOOTING_FRAME)
+                    .Progress(MOB_RANGER_SHOOTING_FRAMES - MOB_RANGER_SHOOTING_FRAME);
+          }
+        }
+        t     = Clamp01(t);
+        color = ColorLerp(color, RED, t);
+      }
+      else if (creature.type == CreatureType_RUSHER) {
+        const auto& data = creature.DataRusher();
+        f32         t    = 0;
+        if (data.startedRushingAt.IsSet()) {
+          auto e = data.startedRushingAt.Elapsed();
+          if (e < MOB_RUSHER_RUSH_PRE_FRAMES)
+            t = e.Progress(MOB_RUSHER_RUSH_PRE_FRAMES);
+          else {
+            t = 1
+                - (e - MOB_RUSHER_RUSH_TOTAL_FRAMES + MOB_RUSHER_RUSH_PRE_FRAMES)
+                    .Progress(MOB_RUSHER_RUSH_POST_FRAMES);
+          }
+        }
+        t     = Clamp01(t);
+        color = ColorLerp(color, RED, t);
+      }
+
+      DrawGroup_Begin(DrawZ_DEFAULT);
+
+      DrawGroup_CommandTexture(
+        {
+          .texId = texId,
+          .pos   = creature.pos,
+          .scale = scale,
+          .color = Fade(color, fade),
+        },
+        DrawCommandSetSortY_SET_BASELINE
+      );
+
+      DrawGroup_End();
+
+      if (creature.type == CreatureType_PLAYER) {
+        int weaponsCount = 0;
+        for (const auto& weapon : g.run.playerWeapons) {
+          if (weapon.type)
+            weaponsCount++;
+        }
+
+        // Drawing player's weapons.
+        FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
+          const auto& weapon = g.run.playerWeapons[i];
+          if (!weapon.type)
+            continue;
+
+          const auto fb = fb_weapons->Get(weapon.type);
+
+          auto pos = GetWeaponPos(weapon);
+          if (!fb->projectile_type() && weapon.startedShootingAt.IsSet()) {
+            const auto dur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+            const f32  t   = InOutLerp(
+              0,
+              1,
+              (f32)weapon.startedShootingAt.Elapsed().value,
+              (f32)dur.value,
+              (f32)dur.value / 6
+            );
+            pos = Vector2Lerp(PLAYER_CREATURE.pos + weapon.offset, pos, t);
+          }
+
+          f32     rotation = 0;
+          Vector2 scale{0, 1};
+
+          if (weapon.targetDir == Vector2Zero())
+            scale.x = (creature.dir.x >= 0 ? 1 : -1);
+          else {
+            scale.x = (weapon.targetDir.x >= 0 ? 1 : -1);
+            rotation
+              = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
+          }
+
+          DrawGroup_OneShotTexture(
+            {
+              .texId    = fb->texture_ids()->Get(0),
+              .rotation = rotation,
+              .pos      = pos,
+              .scale    = scale,
+              .color    = Fade(ColorFromRGBA(fb->color()), fade),
+            },
+            PLAYER_WEAPONS_DRAW_Z[weaponsCount - 1][i]
+          );
+        }
+      }
     }
+  }
+
+  // Drawing landmines.
+  {  ///
+    const auto texId = glib->landmine_texture_id();
+    for (const auto& v : g.run.landmines)
+      DrawGroup_OneShotTexture({.texId = texId, .pos = v.pos}, DrawZ_DEFAULT);
+  }
+
+  // Drawing gardens.
+  {  ///
+    const auto texId = glib->garden_texture_id();
+    for (const auto& v : g.run.gardens)
+      DrawGroup_OneShotTexture({.texId = texId, .pos = v.pos}, DrawZ_DEFAULT);
   }
 
   // Drawing boss hp bar.
