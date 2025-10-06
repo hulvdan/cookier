@@ -14,14 +14,14 @@ x weapon effect same weapon more damage: shows up correctly in weapon's card
 x weapon effect same weapon more damage: make effect actually apply on weapon's damage
 x show numbers of damage that mobs deal to player
 x stats: Structure Range
+x stat structure atk speed: rate of turrets attacking
 
-* stat structure atk speed: rate of turrets attacking
-* stat structure atk speed: Landmines spawning
-* stat structure atk speed: Gardens spawning Consumables
 * landmine: item with damage scalings, explosion size damage etc
 * landmine: spawning object in the world
 * landmine: detonation
+* stat structure atk speed: Landmines spawning
 * garden that spawns consumables
+* stat structure atk speed: Gardens spawning Consumables
 * creature shadows (shadow offsets, sizes)
 * turrel: show damage in item
 * ZHEKA

@@ -2273,17 +2273,32 @@ void StableRemoveWeapon(int index) {  ///
   RecalculatePlayerWeaponOffsets();
 }
 
-f32 GetPlayerStatAttackSpeedMultiplier() {  ///
-  auto v = g.run.playerStats[StatType_ATTACK_SPEED];
+f32 _AttackSpeedMultiplier(int v) {  ///
   if (v >= 0)
     return (f32)(100 + v) / 100.0f;
   return -100.0f / (f32)(v - 100);
+}
+
+f32 GetPlayerStatAttackSpeedMultiplier() {  ///
+  return _AttackSpeedMultiplier(g.run.playerStats[StatType_ATTACK_SPEED]);
+}
+
+f32 GetPlayerStatStructureAttackSpeedMultiplier() {  ///
+  return _AttackSpeedMultiplier(g.run.playerStats[StatType_STRUCTURE_ATTACK_SPEED]);
 }
 
 lframe ApplyAttackSpeedToDuration(int duration) {  ///
   return lframe::Unscaled(MAX(
     2,
     (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration) / GetPlayerStatAttackSpeedMultiplier())
+  ));
+}
+
+lframe ApplyStructureAttackSpeedToDuration(int duration) {  ///
+  return lframe::Unscaled(MAX(
+    2,
+    (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration)
+          / GetPlayerStatStructureAttackSpeedMultiplier())
   ));
 }
 
@@ -4796,7 +4811,7 @@ void GameFixedUpdate() {
             auto& data = creature.DataTurrel();
 
             f32 rangeMeters = fb->turrel_range_meters();
-            rangeMeters *= (f32)g.run.playerStats[STRUCTURE_RANGE] / 100.0f + 1;
+            rangeMeters *= (f32)g.run.playerStats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
             rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
 
             // TODO: ATLAS_D2.
@@ -4849,9 +4864,11 @@ void GameFixedUpdate() {
             }
 
             if (data.startedShootingAt.IsSet()) {
-              auto e = data.startedShootingAt.Elapsed();
+              const auto e = data.startedShootingAt.Elapsed();
 
-              if (e == MOB_TURREL_SHOOT_FRAME) {
+              const auto shotFrame
+                = ApplyStructureAttackSpeedToDuration(MOB_TURREL_SHOOT_FRAME.value);
+              if (e == shotFrame) {
                 int damage = fb->projectile_damage();
                 damage     = ApplyDamageScalings(damage, 0, fb->turrel_damage_scalings());
                 damage     = ApplyPlayerStatDamageMultiplier(damage);
@@ -4870,7 +4887,9 @@ void GameFixedUpdate() {
                 });
               }
 
-              if (e >= MOB_TURREL_SHOOTING_FRAMES)
+              const auto dur
+                = ApplyStructureAttackSpeedToDuration(MOB_TURREL_SHOOTING_FRAMES.value);
+              if (e >= dur)
                 data.startedShootingAt = {};
             }
           }
