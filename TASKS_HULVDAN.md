@@ -15,13 +15,14 @@ x weapon effect same weapon more damage: make effect actually apply on weapon's 
 x show numbers of damage that mobs deal to player
 x stats: Structure Range
 x stat structure atk speed: rate of turrets attacking
+x garden: item
+x garden: spawning in the world
+x landmine: spawning object in the world
+x landmine: detonation
+x landmine: damage scalings, explosion size damage etc
+x landmine: structure atk speed affects spawning
+x landmine: draw on floor
 
-* landmine: spawning object in the world
-* landmine: detonation
-* landmine: damage scalings, explosion size damage etc
-* landmine: structure atk speed affects spawning
-* garden: item
-* garden: spawning in the world
 * garden: spawns consumables
 * garden: structure atk speed affects
 * creature shadows (shadow offsets, sizes)

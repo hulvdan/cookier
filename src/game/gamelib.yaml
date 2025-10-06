@@ -3,6 +3,7 @@ render_z:
   - SCREEN_BACKGROUND
   - FLOOR
   - FLOOR_DECALS
+  - LANDMINES
   - PICKUPABLES
   - DEFAULT
   - PROJECTILES
@@ -77,6 +78,8 @@ localization:
   ITEM_TODO_REROLLER: TodoReroller
   ITEM_TURREL: Туррель
   ITEM_TURREL_ENHANCE_TODO: Улучшалка Туррели
+  ITEM_LANDMINE: Мина
+  ITEM_GARDEN: Сад
   WEAPON_SWORD: Меч
   WEAPON_GUN: Пистолет
   WEAPON_SMG: ПП
@@ -125,6 +128,8 @@ localization:
   STAT_ENEMY_SPEED: Скорость Врагов
   STAT_REROLL_PRICE: Цена Перебрасывания
   STAT_TURRELS_COUNT: Туррели
+  STAT_LANDMINES: Частота спавна мин
+  STAT_GARDENS_COUNT: Сад
   UPGRADE_NAME_HP: Сердце
   UPGRADE_NAME_REGEN: Лёгкие
   UPGRADE_NAME_LIFE_STEAL: Челюсть
@@ -233,7 +238,7 @@ hostilities:
     color: 0x208cb2ff
 pre_spawns:
   - type: INVALID
-  - type: MOB
+  - type: CREATURE
   - type: LANDMINE
     hostility_type: FRIENDLY
   - type: GARDEN
@@ -467,11 +472,11 @@ items:
         value: 1
   - type: GARDEN
     texture_id: ui_item_todo
-    price: 20
-    tier: 4
+    price: 50
+    tier: 2
     effects:
-      - stat_type: GARDENS
-        value: 50
+      - stat_type: GARDENS_COUNT
+        value: 1
   - type: HELMET
     texture_id: ui_item_helmet
     tier: 2
@@ -1065,10 +1070,14 @@ stats:
   - type: LANDMINES
     is_secondary: true
     is_hidden: true
-  - type: GARDENS
+  - type: GARDENS_COUNT
     is_secondary: true
     is_hidden: true
 placeholders:
   - type: INVALID
   - type: STRING
   - type: BROKEN_LOCALE
+landmine_damage_scalings:
+  - stat_type: ENGINEERING
+    percents_per_tier:
+      - 100
