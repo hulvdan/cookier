@@ -48,6 +48,10 @@ constexpr f32 LANDMINE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
 constexpr f32 BURNING_SPREAD_DISTANCE   = MOB_HURTBOX_RADIUS * 3.5f;
 
+constexpr auto GARDEN_FRUIT_SPAWNING_INTERVAL     = lframe::FromSeconds(10);
+constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MIN = 1;
+constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX = 2;
+
 // Other.
 // ============================================================
 constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS        = lframe::Scaled(10);

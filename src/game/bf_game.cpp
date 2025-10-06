@@ -5880,6 +5880,32 @@ void GameFixedUpdate() {
       }
     }
 
+    // Gardens spawn fruits.
+    {  ///
+      auto interval = GARDEN_FRUIT_SPAWNING_INTERVAL;
+      interval.value /= GetPlayerStatStructureAttackSpeedMultiplier();
+      interval.value = MAX(2, interval.value);
+
+      for (const auto& garden : g.run.gardens) {
+        if ((garden.createdAt.Elapsed().value + 1) % interval.value == 0) {
+          Vector2 pos{};
+          do {
+            const f32 off = Lerp(
+              GARDEN_PICKUPABLE_SPAWN_RADIUS_MIN,
+              GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX,
+              GRAND.FRand()
+            );
+            pos = garden.pos + Vector2Rotate({off, 0}, 2 * PI32 * GRAND.FRand());
+          } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
+
+          MakePickupable({
+            .type = PickupableType_CONSUMABLE,
+            .pos  = pos,
+          });
+        }
+      }
+    }
+
     // Processing `projectilesToRemove`.
     if (g.run.projectilesToRemove.count > 0) {  ///
       ZoneScopedN("Processing `projectilesToRemove`.");
