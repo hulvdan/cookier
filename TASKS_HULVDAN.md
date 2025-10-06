@@ -25,7 +25,9 @@ x landmine: draw on floor
 x garden: spawns consumables
 x garden: structure atk speed affects
 
-* creature shadows (shadow offsets, sizes)
+* creature shadows (shadow offsets, sizes based on colliders)
+* shop tems locking
+* draw UI? writing code gets tiring
 * turrel: show damage in item
 * landmine: show damage in item
 * landmine: show spawn rate "Gets spawned every %.1f seconds"
