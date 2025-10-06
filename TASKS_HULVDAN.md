@@ -24,8 +24,9 @@ x landmine: structure atk speed affects spawning
 x landmine: draw on floor
 x garden: spawns consumables
 x garden: structure atk speed affects
+x creature shadows (shadow offsets, sizes based on colliders)
 
-* creature shadows (shadow offsets, sizes based on colliders)
+* reset pickupables except crates
 * shop tems locking
 * draw UI? writing code gets tiring
 * turrel: show damage in item
