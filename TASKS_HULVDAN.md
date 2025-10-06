@@ -25,8 +25,8 @@ x landmine: draw on floor
 x garden: spawns consumables
 x garden: structure atk speed affects
 x creature shadows (shadow offsets, sizes based on colliders)
+x on wave end reset all pickupables except crates
 
-* reset pickupables except crates
 * shop tems locking
 * draw UI? writing code gets tiring
 * turrel: show damage in item

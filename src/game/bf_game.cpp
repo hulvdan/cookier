@@ -4713,6 +4713,19 @@ void GameFixedUpdate() {
     g.run.landmines.Reset();
     g.run.gardens.Reset();
 
+    // Resetting all pickupables except crates.
+    {
+      const int total = g.run.pickupables.count;
+      int       off   = 0;
+      FOR_RANGE (int, i, total) {
+        const auto& pickupable = g.run.pickupables[i - off];
+        if (pickupable.type != PickupableType_CRATE) {
+          g.run.pickupables.UnstableRemoveAt(i - off);
+          off++;
+        }
+      }
+    }
+
     g.run.shop.rerolls = {};
     RefillShopToPick();
   }
