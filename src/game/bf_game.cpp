@@ -5672,6 +5672,16 @@ void GameFixedUpdate() {
     {  ///
       ZoneScopedN("Updating projectiles.");
 
+      constexpr f32 projectilesAliveBoundsMargin = 3;
+
+      constexpr Rect projectilesAliveBounds{
+        .pos{-projectilesAliveBoundsMargin, -projectilesAliveBoundsMargin},
+        .size{
+          (f32)WORLD_X + 2 * projectilesAliveBoundsMargin,
+          (f32)WORLD_Y + 2 * projectilesAliveBoundsMargin,
+        },
+      };
+
       int projectileIndex = -1;
       for (auto& projectile : g.run.projectiles) {
         projectileIndex++;
@@ -5683,12 +5693,19 @@ void GameFixedUpdate() {
 
         bool createAoe = false;
 
+        // Removing projectiles that travelled far enough.
         if (projectile.travelledDistance >= projectile.range) {
           if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
             *g.run.projectilesToRemove.Add() = projectileIndex;
             if (fb->aoe_particle_type() && fb->aoe_on_travel_end())
               createAoe = true;
           }
+        }
+
+        // Removing projectiles that are outside the world.
+        if (!projectilesAliveBounds.ContainsInside(projectile.pos)) {
+          if (!g.run.projectilesToRemove.Contains(projectileIndex))
+            *g.run.projectilesToRemove.Add() = projectileIndex;
         }
 
         int start = 0;
