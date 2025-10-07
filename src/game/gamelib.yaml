@@ -849,7 +849,7 @@ stats:
       - 9
       - 12
     upgrade_texture_id: ui_stat_upgrade_hp
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_hp
   - type: REGEN
     upgrade_values:
       - 2
@@ -857,7 +857,7 @@ stats:
       - 4
       - 5
     upgrade_texture_id: ui_stat_upgrade_regen
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_regen
   - type: LIFE_STEAL
     is_percent: true
     upgrade_values:
@@ -866,7 +866,7 @@ stats:
       - 3
       - 4
     upgrade_texture_id: ui_stat_upgrade_life_steal
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_life_steal
   - type: DAMAGE
     is_percent: true
     upgrade_values:
@@ -883,7 +883,7 @@ stats:
       - 6
       - 8
     upgrade_texture_id: ui_stat_upgrade_damage_melee
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_damage_melee
   - type: DAMAGE_RANGED
     upgrade_values:
       - 1
@@ -899,7 +899,7 @@ stats:
       - 3
       - 4
     upgrade_texture_id: ui_stat_upgrade_damage_elemental
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_damage_elemental
   - type: ATTACK_SPEED
     is_percent: true
     upgrade_values:
@@ -917,7 +917,7 @@ stats:
       - 7
       - 9
     upgrade_texture_id: ui_stat_upgrade_crit_chance
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_crit_chance
   - type: ENGINEERING
     upgrade_values:
       - 2
@@ -925,7 +925,7 @@ stats:
       - 4
       - 5
     upgrade_texture_id: ui_stat_upgrade_engineering
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_engineering
   - type: RANGE
     upgrade_values:
       - 15
@@ -959,7 +959,7 @@ stats:
       - 9
       - 12
     upgrade_texture_id: ui_stat_upgrade_speed
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_speed
   - type: LUCK
     upgrade_values:
       - 5
@@ -967,7 +967,7 @@ stats:
       - 15
       - 20
     upgrade_texture_id: ui_stat_upgrade_luck
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_luck
   - type: HARVESTING
     upgrade_values:
       - 5
@@ -978,95 +978,73 @@ stats:
     icon_texture_id: ui_stat_icon_armor
   - type: CONSUMABLE_HEAL
     player_value: 3
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   - type: COINS_HEAL
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   - type: XP_GAIN
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   - type: PICKUP_RANGE
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   - type: ITEMS_PRICE
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   - type: EXPLOSION_DAMAGE
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   - type: EXPLOSION_SIZE
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   # Gives projectiles additional Bounces
   - type: BOUNCES
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   # Gives projectiles additional Piercing
   - type: PIERCING
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   # Increases or decreases the piercing damage falloff for projectile weapons.
   - type: PIERCING_DAMAGE
     player_value: 50
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   # Multiplies the damage you do against Bosses and Elites.
   - type: DAMAGE_AGAINST_BOSSES
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   # Increases or decreases the rate of turrets attacking, Landmines spawning, and Gardens spawning Consumables.
   - type: STRUCTURE_ATTACK_SPEED
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   # Increases or decreases the range of Structures.
   - type: STRUCTURE_RANGE
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   # Increases or decreases the rate of which Burn ticks for damage.
   - type: BURNING_SPEED
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   # Increases the amount of times Burn spreads.
   - type: BURNING_SPREAD
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   - type: KNOCKBACK
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   # Increases the chance of gaining double materials when picking up Materials
   - type: DOUBLE_MATERIAL_CHANCE
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   # Provides an amount of free reroll at the beginning of each Shop
   - type: FREE_REROLLS
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   # Increases the amount of Trees that spawn. See the Wiki page for details.
   - type: TREES
-    icon_texture_id: ui_stat_icon_armor
     is_secondary: true
   - type: ENEMIES
-    icon_texture_id: ui_stat_icon_armor
     negative_is_good: true
     is_percent: true
     is_secondary: true
   - type: ENEMY_SPEED
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   # Increases or decreases the price of rerolling in the Shop and when choosing Upgrades
   - type: REROLL_PRICE
-    icon_texture_id: ui_stat_icon_armor
     is_percent: true
     is_secondary: true
   - type: TURRELS_COUNT
