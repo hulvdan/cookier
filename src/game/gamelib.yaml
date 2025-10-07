@@ -514,19 +514,7 @@ items:
       - effectcondition_type: KILL_N_ENEMIES_GET_STAT
         stat_type: ENEMIES
         value: 1
-        condition_value: 20
-  - type: TODO1
-    texture_id: ui_item_todo
-    tier: 2
-    price: 50
-    effects:
-      - effectcondition_type: KILL_N_ENEMIES_GET_STAT
-        stat_type: ATTACK_SPEED
-        value: 1
-        condition_value: 20
-      - effectcondition_type: END_OF_THE_WAVE_GET_STAT
-        stat_type: DAMAGE
-        value: 20
+        condition_value: 50
   - type: PIGGY_BANK
     texture_id: ui_item_piggy_bank
     tier: 2

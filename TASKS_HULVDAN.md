@@ -1,39 +1,31 @@
-x can specify range + projectile_type + knockback + damage scalings
-x turrel: pierce / bounce
-x ref move FrameGame, FrameVisual, lframe to engine
-x turrel: remove gun texture
-x turrel: proper spawning via item
-x turrel: correct bullet spawn pos
-x fix fonts outline advance
-x fix getting more health from upgrade ADDS HP to player (not only to max HP)
-x fix slingshot bouncing
-x ref damage int
-x fix mob spawning bug
-x worked a bit on making lint work
-x weapon effect same weapon more damage: shows up correctly in weapon's card
-x weapon effect same weapon more damage: make effect actually apply on weapon's damage
-x show numbers of damage that mobs deal to player
-x stats: Structure Range
-x stat structure atk speed: rate of turrets attacking
-x garden: item
-x garden: spawning in the world
-x landmine: spawning object in the world
-x landmine: detonation
-x landmine: damage scalings, explosion size damage etc
-x landmine: structure atk speed affects spawning
-x landmine: draw on floor
-x garden: spawns consumables
-x garden: structure atk speed affects
-x creature shadows (shadow offsets, sizes based on colliders)
-x on wave end reset all pickupables except crates
-x some ui stat icons
-x ui stat icon fixed size in componentStats
-x fix undefined texture
-x removing projectiles that are outside of the world
-x coded item count caps
-x ui of 'item count caps'
+GAMEPLAY:
+x туррель
+  + указание range, типа пули, отброса, скалирования урона, pierce, bounce
+  + спавн работает при наличии соотв. предмета
+x отображение урона, что мобы наносят игроку
+x garden, что спавнит яблоки
+x мины
+x Stat Structure Attack Speed аффектит туррель, спавн мин, garden
+x эффект оружия: +урон, когда у игрока несколько этого оружия «на руках»
+x в конце волны с пола удаляются яблоки
+x можно ограничить макс количество какого-то предмета («limited», как в Brotato)
+x когда игрок стоит на красном кресте, моб из него не спавнится
+x удаление projectile-ов, что вылетели за пределы мира
 
-* don't spawn mob if its under the player
+ART:
+x немного иконок статов
+x тени под существами. прикольно выглядит теперь) 3d ёпта)
+
+FIX:
+x fix увеличения отступов между литерами при отрисовке текста обведёнными шрифтами
+x fix получение апгрейда, увеличивающего макс. хп, помимо увеличения макс хп., увеличивает текущее значение хп игрока.
+x fix рогатка bouncing
+x fix бесконечного цикла при спавне мобов
+x fix отображения «undefined» текстуры
+================================================================================
+TODO:
+
+* rusher starts walking towards player upon getting aggroed
 * multiple level ups icons
 * small adjustments of componentStatsEntry
 * shop items locking
@@ -47,7 +39,7 @@ x ui of 'item count caps'
 * clay hovered modal shadows
 * stat descriptions
 * store texture "original size" disregarding atlas_d2 / atlas_d4
-  + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO
+  + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO (look for TODO ATLAS_D2)
 * save system
 * coin pickup particles
 * keyboard input prompts
@@ -70,11 +62,6 @@ x ui of 'item count caps'
   + what would cookie-boss do?
 * is brotato arena squared?
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
-*
-*
-* stat effect: ENGINEERING
-  Engineering increases the Damage and healing of your Structures, such as Turrets and Landmines.
-  Engineering also increases the attack damage of the Weapons Plank and Screwdriver.
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *
@@ -96,6 +83,31 @@ x ui of 'item count caps'
 *
 *
 * aseprite show image center
+
+ART:
+================================================================================
+* art: crate (as chest)
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
+* art:
 
 QA:
 ================================================================================

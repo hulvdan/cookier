@@ -5243,7 +5243,17 @@ void GameFixedUpdate() {
 
           switch (v.type) {
           case PreSpawnType_CREATURE: {
-            MakeCreature({.type = v.typeCreature, .pos = v.pos});
+            auto fb       = fb_creatures->Get(v.typeCreature);
+            bool canSpawn = true;
+            if (fb->hostility_type() == HostilityType_MOB) {
+              if (Vector2DistanceSqr(v.pos, PLAYER_CREATURE.pos) <= SQR(
+                    CREATURE_COLLIDER_RADIUS
+                    * (fb_creatures->Get(CreatureType_PLAYER)->collider_scale() + fb->collider_scale())
+                  ))
+                canSpawn = false;
+            }
+            if (canSpawn)
+              MakeCreature({.type = v.typeCreature, .pos = v.pos});
           } break;
 
           case PreSpawnType_LANDMINE: {
