@@ -819,7 +819,9 @@ def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dic
             }
             textures.append(texture_data)
 
-        textures.sort(key=lambda x: (x["debug_name"] != "undefined", x["debug_name"]))
+        textures.sort(
+            key=lambda x: (x["debug_name"] != f"d{factor}/undefined", x["debug_name"])
+        )
 
         if not texture_name_2_id:
             assert textures, textures
