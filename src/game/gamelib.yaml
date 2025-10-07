@@ -363,6 +363,7 @@ creatures:
     speed: 5
     speed_variation: 0.8
     coins_dropped: 3
+    aggro_distance: 7
     idle_texture_ids:
       - game_creature_player_idle_1
       - game_creature_player_idle_2
@@ -402,7 +403,7 @@ creatures:
   - type: BOSS
     appearing_wave_number: 20
     spawn_factor: 0
-    health: 900 # TODO: Check Brotato.
+    health: 25000 # TODO: Check Brotato.
     health_increase_per_wave: 100
     contact_damage: 5 # TODO: Check Brotato.
     contact_damage_increase_per_wave: 5
