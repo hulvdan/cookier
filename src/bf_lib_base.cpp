@@ -134,6 +134,10 @@ constexpr f64 f64_inf = std::numeric_limits<f64>::infinity();
 #  endif  // BF_ENABLE_ASSERTS
 #endif    // TESTS
 
+#define ASSERT_IS_NUMBER(v) \
+  ASSERT((v) != f32_inf);   \
+  ASSERT((v) != -f32_inf);
+
 #ifndef TEST_CASE
 #  define h_with_counter_(counter) h_##counter
 #  define h_(counter) h_with_counter_(counter)

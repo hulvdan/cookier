@@ -112,7 +112,7 @@ TECH DEBT
 * internet shouldn't be required for building:
   check web debug yandex build with mocked ysdk
 * font shader that remaps fillColor and outlineColor
-* clang-tidy to show f32 int / int f32 conversions
+* enable linting: clang-tidy to show f32 int / int f32 conversions
 
 IRRELEVANT:
 ================================================================================

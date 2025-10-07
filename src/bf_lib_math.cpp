@@ -14,6 +14,10 @@ bool FloatEquals(f32 v1, f32 v2) {  ///
 }
 
 f32 Unlerp(f32 value, f32 rangeMin, f32 rangeMax) {  ///
+  ASSERT_IS_NUMBER(value);
+  ASSERT_IS_NUMBER(rangeMin);
+  ASSERT_IS_NUMBER(rangeMax);
+
   auto v1 = (value - rangeMin);
   auto v2 = (rangeMax - rangeMin);
   return v1 / v2;
@@ -61,6 +65,7 @@ TEST_CASE ("MoveTowards") {  ///
 
 //  [0; 360)
 f32 NormalizeAngleDeg0360(f32 a) {  ///
+  ASSERT_IS_NUMBER(a);
   a = fmodf(a, 360);
   if (a < 0)
     a += 360;
@@ -69,6 +74,7 @@ f32 NormalizeAngleDeg0360(f32 a) {  ///
 
 // [-180; 180)
 f32 NormalizeAngleDeg180180(f32 a) {  ///
+  ASSERT_IS_NUMBER(a);
   a = fmodf(a + 180, 360);
   if (a < 0)
     a += 360;
@@ -77,14 +83,20 @@ f32 NormalizeAngleDeg180180(f32 a) {  ///
 
 // [-180; 180)
 f32 AngleDiffDeg(f32 a, f32 b) {  ///
+  ASSERT_IS_NUMBER(a);
+  ASSERT_IS_NUMBER(b);
   return NormalizeAngleDeg180180(b - a);
 }
 
 f32 BisectAngleDeg(f32 a, f32 b) {  ///
+  ASSERT_IS_NUMBER(a);
+  ASSERT_IS_NUMBER(b);
   return NormalizeAngleDeg0360(a + AngleDiffDeg(a, b) * 0.5f);
 }
 
 bool FloatAngleDegreesEquals(f32 a1, f32 a2) {  ///
+  ASSERT_IS_NUMBER(a1);
+  ASSERT_IS_NUMBER(a2);
   a1 = NormalizeAngleDeg0360(a1);
   a2 = NormalizeAngleDeg0360(a2);
   return a1 == a2;
@@ -108,6 +120,9 @@ TEST_CASE ("BisectAngleDeg") {  ///
 }
 
 f32 MoveTowardsAngleDeg(f32 a1, f32 a2, f32 maxAngle) {  ///
+  ASSERT_IS_NUMBER(a1);
+  ASSERT_IS_NUMBER(a2);
+  ASSERT_IS_NUMBER(maxAngle);
   ASSERT(maxAngle >= 0);
 
   auto diff = AngleDiffDeg(a1, a2);
@@ -223,6 +238,8 @@ TEST_CASE ("GetLesserAngle") {  ///
 }
 
 f32 Clamp(f32 value, f32 min, f32 max) {  ///
+  ASSERT_IS_NUMBER(min);
+  ASSERT_IS_NUMBER(max);
   ASSERT(min <= max);
   if (value < min)
     return min;
@@ -391,18 +408,22 @@ TEST_CASE ("IsPowerOf2") {  ///
 using Easing_function_t = f32 (*)(f32);
 
 f32 EaseLinear(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return p;
 }
 
 f32 EaseInQuad(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return p * p;
 }
 
 f32 EaseOutQuad(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return -(p * (p - 2));
 }
 
 f32 EaseInOutQuad(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5)
     return 2 * p * p;
   else
@@ -410,15 +431,18 @@ f32 EaseInOutQuad(f32 p) {  ///
 }
 
 f32 EaseInCubic(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return p * p * p;
 }
 
 f32 EaseOutCubic(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   f32 f = (p - 1);
   return f * f * f + 1;
 }
 
 f32 EaseInOutCubic(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5f)
     return 4 * p * p * p;
   else {
@@ -428,15 +452,18 @@ f32 EaseInOutCubic(f32 p) {  ///
 }
 
 f32 EaseInQuart(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return p * p * p * p;
 }
 
 f32 EaseOutQuart(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   f32 f = (p - 1);
   return f * f * f * (1 - p) + 1;
 }
 
 f32 EaseInOutQuart(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5)
     return 8 * p * p * p * p;
   else {
@@ -446,15 +473,18 @@ f32 EaseInOutQuart(f32 p) {  ///
 }
 
 f32 EaseInQuint(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return p * p * p * p * p;
 }
 
 f32 EaseOutQuint(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   f32 f = (p - 1);
   return f * f * f * f * f + 1;
 }
 
 f32 EaseInOutQuint(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5f)
     return 16 * p * p * p * p * p;
   else {
@@ -464,26 +494,32 @@ f32 EaseInOutQuint(f32 p) {  ///
 }
 
 f32 EaseInSin(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return sinf((p - 1) * 2 * PI32) + 1;
 }
 
 f32 EaseOutSin(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return sinf(p * 2 * PI32);
 }
 
 f32 EaseInOutSin(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return 0.5f * (1 - cosf(p * PI32));
 }
 
 f32 EaseInCirc(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return 1 - sqrtf(1 - (p * p));
 }
 
 f32 EaseOutCirc(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return sqrtf((2 - p) * p);
 }
 
 f32 EaseInOutCirc(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5f)
     return 0.5f * (1 - sqrtf(1 - 4 * (p * p)));
   else
@@ -491,14 +527,17 @@ f32 EaseInOutCirc(f32 p) {  ///
 }
 
 f32 EaseInExpo(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return (p == 0.0f) ? p : powf(2, 10 * (p - 1));
 }
 
 f32 EaseOutExpo(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return (p == 1.0f) ? p : 1 - powf(2, -10 * p);
 }
 
 f32 EaseInOutExpo(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p == 0.0f || p == 1.0f)
     return p;
   if (p < 0.5f)
@@ -508,14 +547,17 @@ f32 EaseInOutExpo(f32 p) {  ///
 }
 
 f32 EaseInElastic(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return sinf(13 * 2 * PI32 * p) * powf(2, 10 * (p - 1));
 }
 
 f32 EaseOutElastic(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return sinf(-13 * 2 * PI32 * (p + 1)) * powf(2, -10 * p) + 1;
 }
 
 f32 EaseInOutElastic(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5f)
     return 0.5f * sinf(13 * 2 * PI32 * (2 * p)) * powf(2, 10 * ((2 * p) - 1));
   else
@@ -524,15 +566,18 @@ f32 EaseInOutElastic(f32 p) {  ///
 }
 
 f32 EaseInBack(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return p * p * p - p * sinf(p * PI32);
 }
 
 f32 EaseOutBack(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   f32 f = (1 - p);
   return 1 - (f * f * f - f * sinf(f * PI32));
 }
 
 f32 EaseInOutBack(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5f) {
     f32 f = 2 * p;
     return 0.5f * (f * f * f - f * sinf(f * PI32));
@@ -544,6 +589,7 @@ f32 EaseInOutBack(f32 p) {  ///
 }
 
 f32 EaseOutBounce(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 4 / 11.0f)
     return (121 * p * p) / 16.0f;
   else if (p < 8 / 11.0f)
@@ -555,10 +601,12 @@ f32 EaseOutBounce(f32 p) {  ///
 }
 
 f32 EaseInBounce(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   return 1 - EaseOutBounce(1 - p);
 }
 
 f32 EaseInOutBounce(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   if (p < 0.5f)
     return 0.5f * EaseInBounce(p * 2);
   else
@@ -566,6 +614,7 @@ f32 EaseInOutBounce(f32 p) {  ///
 }
 
 f32 EaseABitUpThenDown(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   /*
   [[[cog
   import numpy as np
@@ -577,6 +626,7 @@ f32 EaseABitUpThenDown(f32 p) {  ///
 }
 
 f32 EaseBounceThenZero(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   /*
   [[[cog
   import numpy as np
@@ -588,6 +638,7 @@ f32 EaseBounceThenZero(f32 p) {  ///
 }
 
 f32 EaseBounceSmall(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
   /*
   [[[cog
   import numpy as np
@@ -604,10 +655,20 @@ f32 EaseBounceSmall(f32 p) {  ///
   OFFSET_IN_DIRECTION_OF_ANGLE_RAD((offset), (angleDeg) * DEG2RAD)
 
 f32 Lerp(f32 start, f32 end, f32 amount) {  ///
+  ASSERT_IS_NUMBER(start);
+  ASSERT_IS_NUMBER(end);
+  ASSERT_IS_NUMBER(amount);
+
   return start + amount * (end - start);
 }
 
 f32 Remap(f32 v, f32 range1min, f32 range1max, f32 range2min, f32 range2max) {  ///
+  ASSERT_IS_NUMBER(v);
+  ASSERT_IS_NUMBER(range1min);
+  ASSERT_IS_NUMBER(range1max);
+  ASSERT_IS_NUMBER(range2min);
+  ASSERT_IS_NUMBER(range2max);
+
   const auto t = Unlerp(v, range1min, range1max);
   return Lerp(range2min, range2max, t);
 }
@@ -617,14 +678,23 @@ TEST_CASE ("Remap") {  ///
 }
 
 Vector2 Vector2ExponentialDecay(Vector2 a, Vector2 b, f32 decay, f32 dt) {  ///
+  ASSERT_IS_NUMBER(decay);
+  ASSERT_IS_NUMBER(dt);
   return b + (a - b) * expf(-decay * dt);
 }
 
 Vector3 Vector3ExponentialDecay(Vector3 a, Vector3 b, f32 decay, f32 dt) {  ///
+  ASSERT_IS_NUMBER(decay);
+  ASSERT_IS_NUMBER(dt);
   return b + (a - b) * expf(-decay * dt);
 }
 
 f32 InOutLerp(f32 from, f32 to, f32 elapsed, f32 totalDuration, f32 easeDuration) {  ///
+  ASSERT_IS_NUMBER(from);
+  ASSERT_IS_NUMBER(to);
+  ASSERT_IS_NUMBER(elapsed);
+  ASSERT_IS_NUMBER(totalDuration);
+  ASSERT_IS_NUMBER(easeDuration);
   ASSERT(easeDuration * 2 <= totalDuration);
 
   if (elapsed < easeDuration) {
