@@ -30,9 +30,11 @@ x some ui stat icons
 x ui stat icon fixed size in componentStats
 x fix undefined texture
 x removing projectiles that are outside of the world
+x coded item count caps
 
-* cap some items (black flag, piggy)
-* shop tems locking
+* ui of 'item count caps'
+* small adjustments of componentStatsEntry
+* shop items locking
 * draw UI? writing code gets tiring
 * turrel: show damage in item
 * landmine: show damage in item

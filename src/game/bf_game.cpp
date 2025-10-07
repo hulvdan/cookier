@@ -815,6 +815,7 @@ struct GameData {
     Array<int, StatType_COUNT> playerStats             = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
+    // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE          \
   X(Creature, creatures)       \
   X(Landmine, landmines)       \
@@ -1624,9 +1625,31 @@ void RecalculatePlayerWeaponOffsets() {  ///
 }
 
 ItemType GenerateRandomItem() {  ///
+  auto fb_items = glib->items();
+
   ItemType type{};
-  while (!type)
-    type = (ItemType)(GRAND.Rand() % (u32)ItemType_COUNT);
+  int      currentItemCount = 0;
+  while (1) {
+    type = (ItemType)((GRAND.Rand() % ((u32)ItemType_COUNT - 1)) + 1);
+    ASSERT(type);
+
+    for (auto& item : g.run.playerItems) {
+      if (item.type == type)
+        currentItemCount += item.count;
+    }
+    if (g.run.pickedUpItem.toPick == type)
+      currentItemCount++;
+    for (auto& v : g.run.shop.toPick) {
+      if (v.item == type)
+        currentItemCount++;
+    }
+
+    auto fb = fb_items->Get(type);
+    if (fb->count_cap() <= 0)
+      break;
+    if (fb->count_cap() > currentItemCount)
+      break;
+  }
   return type;
 }
 
@@ -2262,9 +2285,10 @@ void RefillShopToPick() {  ///
   const auto fb_items   = glib->items();
   const auto fb_weapons = glib->weapons();
 
-  for (auto& v : g.run.shop.toPick) {
+  for (auto& v : g.run.shop.toPick)
     v = {};
 
+  for (auto& v : g.run.shop.toPick) {
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
       v.item = GenerateRandomItem();
@@ -3621,6 +3645,8 @@ void DoUI(bool draw) {
               AddCoins(g.run.pickedUpItem.recyclePrice);
 
             if (took || recycled) {
+              g.run.pickedUpItem = {};
+
               g.run.crates--;
               if (g.run.crates)
                 g.run.scheduledPickedUpItems = true;
@@ -4111,6 +4137,11 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT(TextFormat(" %d)", g.run.waveIndex + 2));
             }
           );
+
+          if (g.run.scheduledNextWave) {
+            for (auto& v : g.run.shop.toPick)
+              v = {};
+          }
         }
       }
     }
