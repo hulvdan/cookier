@@ -86,6 +86,8 @@ table Creature {
     hurtbox_scale: float = 1;
     coins_dropped: int = 1;
     can_move: bool = true;
+    aggroed_by_default: bool = true;
+    aggro_distance: float = inf;
     resists_ailment_types: [int];
 
     on_death_spawns_creature_type: int;

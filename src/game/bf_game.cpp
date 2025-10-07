@@ -496,6 +496,7 @@ struct Creature {
   f32                movementAccumulator            = {};
   FrameGame          idleStartedAt                  = {};
   bool               killedBecauseOfTheEndOfTheWave = false;
+  bool               aggroed                        = false;
 
   // WARN: Note -1! To get burning ailment,
   // index into it using `AilmentType_BURN - 1`.
@@ -1478,6 +1479,11 @@ int MakeCreature(MakeCreatureData data) {  ///
     .speed     = fb->speed() + Lerp(-1.0f, 1.0f, GRAND.FRand()) * fb->speed_variation(),
   };
   creature.idleStartedAt.SetNow();
+
+  if (fb->aggro_distance() != f32_inf) {
+    creature.controller.move = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
+    creature.speedModifier *= NOT_AGGROED_MOB_SPEED_MODIFIER;
+  }
 
   switch (creature.type) {
   case CreatureType_TURREL: {
@@ -4862,6 +4868,8 @@ void GameFixedUpdate() {
       .size{WORLD_X - 2 * CREATURES_SPAWN_MARGIN, WORLD_Y - 2 * CREATURES_SPAWN_MARGIN},
     };
 
+    constexpr f32 CREATURES_MOVE_MARGIN = 2;
+
     if (g.run.screen == ScreenType_GAMEPLAY) {
       // Finishing wave opens upgrades screen.
       if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
@@ -4920,9 +4928,40 @@ void GameFixedUpdate() {
 
           const auto fb = fb_creatures->Get(creature.type);
 
-          if (fb->can_move()) {
-            creature.controller.move
-              = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+          if (!creature.aggroed && fb->can_move()) {
+            if (fb->aggro_distance() == f32_inf)
+              creature.aggroed = true;
+            else if (Vector2DistanceSqr(PLAYER_CREATURE.pos, creature.pos)
+                     <= SQR(fb->aggro_distance()))
+            {
+              creature.aggroed = true;
+              creature.speedModifier /= NOT_AGGROED_MOB_SPEED_MODIFIER;
+            }
+
+            auto& move = creature.controller.move;
+
+            if ((creature.pos.x <= creaturesWorldSpawnBounds.pos.x) && (move.x <= 0))
+              move = Vector2Rotate({1, 0}, Lerp(-PI32 / 2, PI32 / 2, GRAND.FRand()));
+
+            if ((creature.pos.y <= creaturesWorldSpawnBounds.pos.y) && (move.y <= 0))
+              move = Vector2Rotate({1, 0}, Lerp(0, PI32, GRAND.FRand()));
+
+            if ((creature.pos.x
+                 >= creaturesWorldSpawnBounds.pos.x + creaturesWorldSpawnBounds.size.x)
+                && (move.x >= 0))
+              move = Vector2Rotate({1, 0}, Lerp(PI32 / 2, 3 * PI32 / 2, GRAND.FRand()));
+
+            if ((creature.pos.y
+                 >= creaturesWorldSpawnBounds.pos.y + creaturesWorldSpawnBounds.size.y)
+                && (move.y >= 0))
+              move = Vector2Rotate({1, 0}, Lerp(PI32, 2 * PI32, GRAND.FRand()));
+          }
+
+          if (creature.aggroed) {
+            if (fb->can_move()) {
+              creature.controller.move
+                = Vector2DirectionOrZero(creature.pos, PLAYER_CREATURE.pos);
+            }
           }
 
           if (creature.controller.move.x >= 0)
@@ -4930,7 +4969,7 @@ void GameFixedUpdate() {
           else
             creature.dir = {-1, 0};
 
-          if (creature.type == CreatureType_RANGER) {
+          if (creature.aggroed && (creature.type == CreatureType_RANGER)) {
             constexpr f32 thresholdMeters = 0.5f;
             constexpr f32 shootMeters     = 8;
             const auto    distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
@@ -4965,7 +5004,7 @@ void GameFixedUpdate() {
             else if (canShoot)
               data.startedShootingAt.SetNow();
           }
-          else if (creature.type == CreatureType_RUSHER) {
+          else if (creature.aggroed && (creature.type == CreatureType_RUSHER)) {
             auto& data = creature.DataRusher();
 
             if (data.startedRushingAt.IsSet()) {

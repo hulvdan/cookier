@@ -24,9 +24,9 @@ x fix бесконечного цикла при спавне мобов
 x fix отображения «undefined» текстуры
 ================================================================================
 TODO:
+x rusher starts walking towards player upon getting aggroed
 
-* rusher starts walking towards player upon getting aggroed
-* multiple level ups icons
+* multiple level ups icons in the top right corner (like picked up crates)
 * small adjustments of componentStatsEntry
 * shop items locking
 * draw UI? writing code gets tiring
