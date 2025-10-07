@@ -2791,14 +2791,14 @@ void DoUI(bool draw) {
                 BF_CLAY_IMAGE({.texId = iconTexId});
               }
             }
+
+            BF_CLAY_TEXT(" ");
           }
 
           FontBegin(&g.meta.fontStats);
 
           if (fb->is_percent())
-            BF_CLAY_TEXT(" % ");
-          else
-            BF_CLAY_TEXT(" ");
+            BF_CLAY_TEXT("% ");
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
           BF_CLAY_SPACER_HORIZONTAL;
           BF_CLAY_TEXT(TextFormat("%d", value));

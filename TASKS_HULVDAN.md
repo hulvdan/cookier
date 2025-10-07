@@ -25,9 +25,9 @@ x fix отображения «undefined» текстуры
 ================================================================================
 TODO:
 x rusher starts walking towards player upon getting aggroed
+x small adjustments of componentStatsEntry
 
 * multiple level ups icons in the top right corner (like picked up crates)
-* small adjustments of componentStatsEntry
 * shop items locking
 * draw UI? writing code gets tiring
 * turrel: show damage in item
