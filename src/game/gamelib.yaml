@@ -43,6 +43,7 @@ localization:
   UI_LABEL_DID_DAMAGE: Нанесено урона
   UI_LABEL_PAUSE: Пауза. Нажмите «P», чтобы продолжить
   UI_LABEL_PAUSE_DESKTOP: Пауза. Нажмите «ESC» или «P», чтобы продолжить
+  UI_LABEL_LIMITED: Ограничено
   UI_BUTTON_COMBINE: Скомбинировать
   UI_BUTTON_CANCEL: Назад
   UI_BUTTON_TAKE: Взять

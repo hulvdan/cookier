@@ -31,8 +31,10 @@ x ui stat icon fixed size in componentStats
 x fix undefined texture
 x removing projectiles that are outside of the world
 x coded item count caps
+x ui of 'item count caps'
 
-* ui of 'item count caps'
+* don't spawn mob if its under the player
+* multiple level ups icons
 * small adjustments of componentStatsEntry
 * shop items locking
 * draw UI? writing code gets tiring
