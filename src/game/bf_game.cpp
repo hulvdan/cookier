@@ -2856,6 +2856,33 @@ void DoUI(bool draw) {
     });
   };
 
+  LAMBDA (void, componentItemNameAndHeaderProperties, (ItemType item)) {  ///
+    auto fb_item = fb_items->Get(item);
+
+    CLAY({.layout{
+      .childGap        = GAP_SMALL,
+      .layoutDirection = CLAY_TOP_TO_BOTTOM,
+    }}) {
+      BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
+
+      if (fb_item->count_cap() > 0) {
+        int currentCount = 0;
+        for (auto& x : g.run.playerItems) {
+          if (x.type == item) {
+            currentCount = x.count;
+            break;
+          }
+        }
+        CLAY({}) {
+          FontBegin(&g.meta.fontStats);
+          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_limited_locale(), GRAY);
+          BF_CLAY_TEXT(TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()), GRAY);
+          FontEnd();
+        }
+      }
+    }
+  };
+
   LAMBDA (void, componentEffectsExploded, (auto fb_effects, int count, int maxWidth))
   {  ///
     ASSERT(count > 0);
@@ -2991,7 +3018,7 @@ void DoUI(bool draw) {
 
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           componentItem(item);
-          BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
+          componentItemNameAndHeaderProperties(item.type);
         }
 
         componentItemStatsExploded(item.type, item.count, ITEM_FRAME_WIDTH);
@@ -3616,7 +3643,7 @@ void DoUI(bool draw) {
               const auto fb = fb_items->Get(type);
               const Item item{.type = type, .count = 1};
               componentItem(item);
-              BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+              componentItemNameAndHeaderProperties(type);
             }
 
             componentItemStatsExploded(type, 1, ITEM_FRAME_WIDTH);
@@ -3957,13 +3984,12 @@ void DoUI(bool draw) {
                   });
 
                   // Name.
-                  int locale = 0;
                   if (v.item)
-                    locale = fb_item->name_locale();
+                    componentItemNameAndHeaderProperties(v.item);
                   else if (v.weapon)
-                    locale = fb_weapon->name_locale();
-                  if (locale)
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(fb_weapon->name_locale());
+                  else
+                    INVALID_PATH;
                 }
 
                 if (v.item)
