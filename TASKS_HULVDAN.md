@@ -27,8 +27,8 @@ TODO:
 x rusher starts walking towards player upon getting aggroed
 x small adjustments of componentStatsEntry
 x store texture "original size" disregarding atlas_d2 / atlas_d4
+x fix ATLAS_D2
 
-* fix ATLAS_D2
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
 * draw UI? writing code gets tiring
