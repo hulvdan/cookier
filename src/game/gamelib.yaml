@@ -456,6 +456,7 @@ items:
     texture_id: ui_item_todo
     price: 13
     tier: 2
+    count_cap: 5
     effects:
       - stat_type: TURRELS_COUNT
         value: 1
@@ -472,6 +473,7 @@ items:
     texture_id: ui_item_todo
     price: 25
     tier: 3
+    count_cap: 5
     effects:
       - stat_type: LANDMINES
         value: 1
@@ -479,6 +481,7 @@ items:
     texture_id: ui_item_todo
     price: 50
     tier: 2
+    count_cap: 3
     effects:
       - stat_type: GARDENS_COUNT
         value: 1
@@ -486,6 +489,7 @@ items:
     texture_id: ui_item_helmet
     tier: 2
     price: 40
+    count_cap: 5
     effects:
       - stat_type: ARMOR
         value: 1
@@ -502,6 +506,7 @@ items:
     texture_id: ui_item_black_flag
     tier: 0
     price: 35
+    count_cap: 3
     effects:
       - stat_type: ENEMIES
         value: 5
@@ -525,6 +530,7 @@ items:
     texture_id: ui_item_piggy_bank
     tier: 2
     price: 50
+    count_cap: 1
     effects:
       - effectcondition_type: START_OF_THE_WAVE_GET_STAT
         stat_type: COINS
@@ -533,6 +539,7 @@ items:
     texture_id: ui_item_todo
     tier: 2
     price: 40
+    count_cap: 3
     effects:
       - stat_type: FREE_REROLLS
         value: 1
