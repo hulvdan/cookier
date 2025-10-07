@@ -2747,8 +2747,10 @@ void DoUI(bool draw) {
 
           const auto fb = fb_stats->Get(stat);
 
-          // Icon.
-          BF_CLAY_IMAGE({.texId = iconTexId});
+          if (iconTexId) {
+            // Icon.
+            BF_CLAY_IMAGE({.texId = iconTexId});
+          }
 
           FontBegin(&g.meta.fontStats);
 

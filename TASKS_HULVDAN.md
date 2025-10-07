@@ -26,7 +26,9 @@ x garden: spawns consumables
 x garden: structure atk speed affects
 x creature shadows (shadow offsets, sizes based on colliders)
 x on wave end reset all pickupables except crates
+x some ui stat icons
 
+* ui stat icon fixed size in componentStats
 * shop tems locking
 * draw UI? writing code gets tiring
 * turrel: show damage in item
