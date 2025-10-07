@@ -240,7 +240,7 @@ Color ColorLerp(Color v1, Color v2, f32 p) {  ///
 
 constexpr Vector2Int ASSETS_REFERENCE_RESOLUTION = {1920, 1080};
 constexpr Vector2Int LOGICAL_RESOLUTION          = {1280, 720};
-constexpr f32        ASSETS_TO_LOGICAL_RATIO     = 1280.0f / 1920.0f;
+constexpr f32        ASSETS_TO_LOGICAL_RATIO     = 1280.0f / 3840.0f;
 
 struct Texture2D {
   Vector2Int          size   = {};
@@ -705,7 +705,7 @@ BF_FORCE_INLINE void DrawGroup_CommandTexture(
   if (setSortY == DrawCommandSetSortY_SET_BASELINE) {
     auto tex    = glib->atlas_textures()->Get(data.texId);
     auto height = (f32)tex->size_y();
-    auto off    = ASSETS_TO_LOGICAL_RATIO * data.scale.y
+    auto off    = glib->atlas_downscale_factor() * ASSETS_TO_LOGICAL_RATIO * data.scale.y
                * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
     DrawGroup_SetSortY(data.pos.y + off);
   }
@@ -734,7 +734,7 @@ BF_FORCE_INLINE void DrawGroup_CommandTextureNineSlice(
   if (setSortY == DrawCommandSetSortY_SET_BASELINE) {
     auto tex    = glib->atlas_textures()->Get(data.texId);
     auto height = (f32)tex->size_y();
-    auto off    = ASSETS_TO_LOGICAL_RATIO * data.scale.y
+    auto off    = glib->atlas_downscale_factor() * ASSETS_TO_LOGICAL_RATIO * data.scale.y
                * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
     DrawGroup_SetSortY(data.pos.y + off);
   }
@@ -1368,10 +1368,12 @@ void FlushDrawCommands() {
               dy0 -= data.anchor.y * dsy;
               dy3 -= data.anchor.y * dsy;
 
-              auto dx1 = dx0 + data.nineSliceMargins.left * ASSETS_TO_LOGICAL_RATIO;
-              auto dx2 = dx3 - data.nineSliceMargins.right * ASSETS_TO_LOGICAL_RATIO;
-              auto dy1 = dy0 + data.nineSliceMargins.top * ASSETS_TO_LOGICAL_RATIO;
-              auto dy2 = dy3 - data.nineSliceMargins.bottom * ASSETS_TO_LOGICAL_RATIO;
+              const auto df = glib->atlas_downscale_factor();
+              auto dx1 = dx0 + data.nineSliceMargins.left * ASSETS_TO_LOGICAL_RATIO * df;
+              auto dx2 = dx3 - data.nineSliceMargins.right * ASSETS_TO_LOGICAL_RATIO * df;
+              auto dy1 = dy0 + data.nineSliceMargins.top * ASSETS_TO_LOGICAL_RATIO * df;
+              auto dy2
+                = dy3 - data.nineSliceMargins.bottom * ASSETS_TO_LOGICAL_RATIO * df;
 
               f32 dx_[4]{dx0, dx1, dx2, dx3};
               f32 dy_[4]{dy0, dy1, dy2, dy3};

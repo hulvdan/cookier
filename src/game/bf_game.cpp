@@ -1136,18 +1136,18 @@ void* PushClayCustomData(ClayCustomData data) {  ///
   return (void*)result;
 }
 
-// TODO: ATLAS_D2.
 void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
-  const auto texture = glib->atlas_textures()->Get(data.texId);
+  const auto texture      = glib->atlas_textures()->Get(data.texId);
+  const auto originalSize = glib->original_texture_sizes()->Get(data.texId);
 
   if (g.uiFlex.active)
-    FlexAddRowForChildIfNeeded(Ceil((f32)texture->size_x() * ASSETS_TO_LOGICAL_RATIO));
+    FlexAddRowForChildIfNeeded(Ceil((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO));
 
   CLAY({
     .layout{
       .sizing{
-        .width  = CLAY_SIZING_FIXED((f32)texture->size_x() * ASSETS_TO_LOGICAL_RATIO),
-        .height = CLAY_SIZING_FIXED((f32)texture->size_y() * ASSETS_TO_LOGICAL_RATIO),
+        .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
+        .height = CLAY_SIZING_FIXED((f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO),
       },
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
     },
@@ -1155,8 +1155,8 @@ void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
   CLAY({
     .layout{
       .sizing{
-        .width  = CLAY_SIZING_FIXED((f32)texture->size_x() * ASSETS_TO_LOGICAL_RATIO),
-        .height = CLAY_SIZING_FIXED((f32)texture->size_y() * ASSETS_TO_LOGICAL_RATIO),
+        .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
+        .height = CLAY_SIZING_FIXED((f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO),
       },
     },
     .image{.imageData = PushClayImageData(data)},
@@ -2472,13 +2472,12 @@ Vector2 GetWeaponPos(const Weapon& weapon) {  ///
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
     return PLAYER_CREATURE.pos + weapon.offset;
 
-  const auto e           = weapon.startedShootingAt.Elapsed();
-  const auto shootingDur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
-  auto       p           = MIN(1, e.Progress(shootingDur) * 2);
-  const auto texId       = fb->texture_ids()->Get(0);
-  const auto fb_texture  = glib->atlas_textures()->Get(texId);
-  const auto colliderSize
-    = (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+  const auto e            = weapon.startedShootingAt.Elapsed();
+  const auto shootingDur  = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+  auto       p            = MIN(1, e.Progress(shootingDur) * 2);
+  const auto texId        = fb->texture_ids()->Get(0);
+  const auto colliderSize = (f32)glib->original_texture_sizes()->Get(texId)->x()
+                            * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
   p = EaseInOutQuad(p);
 
@@ -3140,7 +3139,7 @@ void DoUI(bool draw) {
       }
       else {
         const f32 weaponRangeMeters
-          = (f32)fb_atlas_textures->Get(fb->texture_ids()->Get(0))->size_x()
+          = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
             * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
         BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
       }
@@ -5057,13 +5056,13 @@ void GameFixedUpdate() {
             rangeMeters *= (f32)g.run.playerStats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
             rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
 
-            // TODO: ATLAS_D2.
-            auto       tex = fb_atlas_textures->Get(fb->idle_texture_ids()->Get(0));
+            auto originalSize
+              = glib->original_texture_sizes()->Get(fb->idle_texture_ids()->Get(0));
             const auto projectileSpawnPos
               = creature.pos
                 + Vector2(
                   0,
-                  (fb->turrel_projectile_shoot_anchor_y() - 0.5f) * (f32)tex->size_y()
+                  (fb->turrel_projectile_shoot_anchor_y() - 0.5f) * (f32)originalSize->y()
                     * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE
                 );
             auto projectileType = (ProjectileType)fb->turrel_projectile_type();
@@ -5648,10 +5647,9 @@ void GameFixedUpdate() {
               range += fb_projectile->collider_radius();
             }
             else {
-              const auto fb_texture
-                = glib->atlas_textures()->Get(fb->texture_ids()->Get(0));
-              // TODO: ATLAS_D2.
-              range += (f32)fb_texture->size_x() * ASSETS_TO_LOGICAL_RATIO
+              const auto originalSize
+                = glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0));
+              range += (f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO
                        / METER_LOGICAL_SIZE / 2.0f;
             }
 
@@ -5733,15 +5731,9 @@ void GameFixedUpdate() {
             {
               weapon.lastCollisionCheckShootingProgress = p;
 
-              const auto texId      = fb->texture_ids()->Get(0);
-              const auto fb_texture = glib->atlas_textures()->Get(texId);
+              const auto texId = fb->texture_ids()->Get(0);
               Vector2    colliderSize{
-                // TODO: ATLAS_D2.
-                (f32)fb_texture->size_x(),
-                // NOTE:
-                // Y is divided by 2 because it's grabbed from a texture that targets
-                // 4K.
-                // X already is divided by 2 when we use atlas_d2 (atlas divided by 2).
+                (f32)glib->original_texture_sizes()->Get(texId)->x(),
                 (f32)fb->melee_collider_height_px(),
               };
               colliderSize *= ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
@@ -6472,11 +6464,8 @@ void GameDraw() {
       f32 scale = 1;
       int texId = glib->shadow_texture_ids()->Get(0);
       for (auto t : *glib->shadow_texture_ids()) {
-        auto fb_tex = fb_atlas_textures->Get(t);
-
-        // TODO: ATLAS_D2.
-        const f32 sx
-          = fb_tex->size_x() * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
+        const f32 sx = glib->original_texture_sizes()->Get(t)->x()
+                       * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
 
         if (!texId) {
           texId = t;
