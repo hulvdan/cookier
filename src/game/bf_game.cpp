@@ -2686,7 +2686,7 @@ void DoUI(bool draw) {
     CLAY({
       .layout{
         BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
-        .childGap        = GAP_SMALL,
+        .childGap        = GAP_BIG,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK),
@@ -2749,7 +2749,18 @@ void DoUI(bool draw) {
 
           if (iconTexId) {
             // Icon.
-            BF_CLAY_IMAGE({.texId = iconTexId});
+            CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(20)}}}) {
+              CLAY({.floating{
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                },
+                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                .attachTo           = CLAY_ATTACH_TO_PARENT,
+              }}) {
+                BF_CLAY_IMAGE({.texId = iconTexId});
+              }
+            }
           }
 
           FontBegin(&g.meta.fontStats);
@@ -2779,7 +2790,7 @@ void DoUI(bool draw) {
       // Stats.
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_XY,
-        .childGap        = GAP_VERY_SMALL,
+        .childGap        = GAP_SMALL,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }})
       FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
