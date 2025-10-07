@@ -26,7 +26,9 @@ x fix отображения «undefined» текстуры
 TODO:
 x rusher starts walking towards player upon getting aggroed
 x small adjustments of componentStatsEntry
+x store texture "original size" disregarding atlas_d2 / atlas_d4
 
+* fix ATLAS_D2
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
 * draw UI? writing code gets tiring
@@ -38,8 +40,6 @@ x small adjustments of componentStatsEntry
   Cheats?
 * clay hovered modal shadows
 * stat descriptions
-* store texture "original size" disregarding atlas_d2 / atlas_d4
-  + refactor use of atlas_d2 / ASSETS_TO_LOGICAL_RATIO (look for TODO ATLAS_D2)
 * save system
 * coin pickup particles
 * keyboard input prompts

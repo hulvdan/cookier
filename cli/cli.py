@@ -274,6 +274,12 @@ def command(f: Callable[P, T]) -> Callable[P, T]:
 
 
 @command
+def codegen(platform: BuildPlatform, build_type: BuildType):
+    do_cmake(platform, build_type)
+    do_generate(platform, build_type)
+
+
+@command
 def build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
     do_cmake(platform, build_type)
     do_generate(platform, build_type)
