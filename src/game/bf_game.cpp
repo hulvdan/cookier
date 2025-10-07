@@ -6539,7 +6539,7 @@ void GameDraw() {
     FOR_RANGE (int, i, 2) {
       f32 rightMargin = 0;
       if (i)
-        rightMargin = Clamp01(1 - creature.health / creature.maxHealth);
+        rightMargin = Clamp01(1 - (f32)creature.health / (f32)creature.maxHealth);
       DrawGroup_CommandTexture({
         .texId = texs->Get(i),
         .pos   = creature.pos - Vector2(0, 1),
