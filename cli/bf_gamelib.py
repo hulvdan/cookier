@@ -6,6 +6,7 @@ import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
+from functools import partial
 from itertools import groupby
 from math import radians
 from pathlib import Path
@@ -555,9 +556,11 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
 
 @timing
 def convert_gamelib_json_to_binary(
-    texture_name_2_id: dict[str, int], genline, atlas_data
+    texture_name_2_id: dict[str, int], genline, atlas_data, original_texture_sizes
 ) -> None:
     gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+
+    gamelib["original_texture_sizes"] = original_texture_sizes
 
     # Enriching gamelib with sounds.
     if 1:
@@ -728,7 +731,7 @@ def convert_gamelib_json_to_binary(
 def downscale_images(downscale_factors: list[int]) -> None:
     assert downscale_factors, downscale_factors
 
-    images_to_downscale = (ART_DIR / "textures").rglob("*.png")
+    images_to_downscale = list((ART_DIR / "textures").rglob("*.png"))
 
     for factor in downscale_factors:
         assert factor >= 1, factor
@@ -753,6 +756,10 @@ def downscale_images(downscale_factors: list[int]) -> None:
             )
             im.save(export_image_path, "PNG")
             os.utime(export_image_path, ns=(s1.st_atime_ns, s1.st_mtime_ns))
+
+
+def texture_cmp_key(x: dict, factor: int) -> tuple[bool, str]:
+    return (x["debug_name"] != f"d{factor}/undefined", x["debug_name"])
 
 
 @timing
@@ -819,9 +826,7 @@ def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dic
             }
             textures.append(texture_data)
 
-        textures.sort(
-            key=lambda x: (x["debug_name"] != f"d{factor}/undefined", x["debug_name"])
-        )
+        textures.sort(key=partial(texture_cmp_key, factor=factor))
 
         if not texture_name_2_id:
             assert textures, textures
@@ -1246,12 +1251,27 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         remove_intermediate_generation_files()
 
         # TODO: downscale_factors = [1, 2, 4]
-        downscale_factors = [2]
+        downscale_factors = [2, 1]
+
         check_no_excessive_images_in_temp_art_dir(downscale_factors)
         downscale_images(downscale_factors)
+        downscale_factors.pop()
+
+        textures = [
+            {
+                "debug_name": f"d1/{filepath.stem}",
+                "size": Image.open(TEMP_ART_DIR / "d1" / filepath).size,
+            }
+            for filepath in Path(TEMP_ART_DIR / "d1").rglob("*.png")
+        ]
+        textures.sort(key=partial(texture_cmp_key, factor=1))
+        original_texture_sizes = [x["size"] for x in textures]
+
         texture_name_2_id, atlases_data = make_atlases(downscale_factors)
         assert len(downscale_factors) == 1
-        convert_gamelib_json_to_binary(texture_name_2_id, genline, atlases_data[0])
+        convert_gamelib_json_to_binary(
+            texture_name_2_id, genline, atlases_data[0], original_texture_sizes
+        )
 
 
 ###

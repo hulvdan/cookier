@@ -235,6 +235,7 @@ table GameLibrary {
     atlas_size_x: uint;
     atlas_size_y: uint;
     atlas_textures: [Texture] (required);
+    original_texture_sizes: [Pos] (required);
 
     vignette_texture_id: int;
 
