@@ -1,33 +1,3 @@
-GAMEPLAY:
-x туррель
-  + указание range, типа пули, отброса, скалирования урона, pierce, bounce
-  + спавн работает при наличии соотв. предмета
-x отображение урона, что мобы наносят игроку
-x garden, что спавнит яблоки
-x мины
-x Stat Structure Attack Speed аффектит туррель, спавн мин, garden
-x эффект оружия: +урон, когда у игрока несколько этого оружия «на руках»
-x в конце волны с пола удаляются яблоки
-x можно ограничить макс количество какого-то предмета («limited», как в Brotato)
-x когда игрок стоит на красном кресте, моб из него не спавнится
-x удаление projectile-ов, что вылетели за пределы мира
-
-ART:
-x немного иконок статов
-x тени под существами. прикольно выглядит теперь) 3d ёпта)
-
-FIX:
-x fix увеличения отступов между литерами при отрисовке текста обведёнными шрифтами
-x fix получение апгрейда, увеличивающего макс. хп, помимо увеличения макс хп., увеличивает текущее значение хп игрока.
-x fix рогатка bouncing
-x fix бесконечного цикла при спавне мобов
-x fix отображения «undefined» текстуры
-================================================================================
-TODO:
-x rusher starts walking towards player upon getting aggroed
-x small adjustments of componentStatsEntry
-x store texture "original size" disregarding atlas_d2 / atlas_d4
-x fix ATLAS_D2
 
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
