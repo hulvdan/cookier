@@ -27,6 +27,7 @@
 
 - Музыка, звуки по рекомендации Романа Сакутина - Envato
   https://elements.envato.com
+- Sonniss bundle. Torrent magnet link: magnet:?xt=urn:btih:694916b432913f35872e806e1ca50c80201c6798&dn=Sonniss.com%20-%20GDC%20-%20Game%20Audio%20Bundle&xl=10272632179&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.sktorrent.net%3A6969%2Fannounce&tr=udp%3A%2F%2Fzer0day.ch%3A1337%2Fannounce&tr=udp%3A%2F%2Fglotorrents.pw%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=http%3A%2F%2Ftracker.kicks-ass.net%2Fannounce&tr=http%3A%2F%2Fthetracker.org%2Fannounce&tr=udp%3A%2F%2F9.rarbg.com%3A2710%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce
 
 ## Steam
 
