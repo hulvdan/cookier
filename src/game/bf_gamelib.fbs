@@ -13,6 +13,14 @@ table Texture {
     baseline: int;
 }
 
+table NineSlice {
+    texture_id: int;
+    left: int;
+    right: int;
+    top: int;
+    bottom: int;
+}
+
 table StringDatum {
     // Ref: BrokenStringDatumType.
     type: int;
@@ -215,14 +223,6 @@ table Stat {
     upgrade_name_locale: int;
     upgrade_texture_id: int;
     upgrade_values: [int];
-}
-
-table NineSlice {
-    texture_id: int;
-    left: int;
-    right: int;
-    top: int;
-    bottom: int;
 }
 
 table PreSpawn {
