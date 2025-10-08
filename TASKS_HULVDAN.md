@@ -1,6 +1,7 @@
 x kenney ui button
 x better ui frame
 x palettized secondary text color
+x generate palette for aseprite
 
 * fix this wave damage
 * multiple level ups icons in the top right corner (like picked up crates)

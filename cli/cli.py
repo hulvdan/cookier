@@ -446,6 +446,19 @@ def make_swatch():
     with open("aboba.aco", "wb") as out_file:
         bf_swatch_aco.save_aco_file([process_color2(c) for c in new_colors], out_file)
 
+    with open("aboba.pal", "w") as out_file:
+        out_file.write(
+            "JASC-PAL\n0100\n{}\n".format(
+                len(new_colors),
+            )
+        )
+        color_lines = []
+        for color in new_colors:
+            r, g, b = hex_to_rgb(color)
+            color_lines.append(f"{r} {g} {b}")
+        color_lines = color_lines[2:] + color_lines[:2]
+        out_file.write("\n".join(color_lines))
+
 
 @command
 def lint():
