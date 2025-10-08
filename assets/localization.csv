@@ -19,6 +19,7 @@ UI_LABEL_THIS_WAVE_DAMAGE;Нанесено урона;This wave damage;
 UI_LABEL_PAUSE;Пауза. Нажмите «P», чтобы продолжить;Paused. Press «P» to continue;
 UI_LABEL_PAUSE_DESKTOP;Пауза. Нажмите «ESC» или «P», чтобы продолжить;Paused. Press «ESC» or «P» to continue;
 UI_LABEL_LIMITED;Ограничено;Limited;
+UI_LABEL_UNIQUE;Уникально;Unique;
 UI_BUTTON_COMBINE;Скомбинировать;Combine;
 UI_BUTTON_CANCEL;Назад;Cancel;
 UI_BUTTON_TAKE;Взять;Take;
