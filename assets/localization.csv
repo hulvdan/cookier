@@ -1,4 +1,4 @@
-id;russian;english;comment
+﻿id;russian;english;comment
 UI_WAVE;Волна;Wave;
 UI_STATS;Характеристики;Stats;
 UI_CURRENT_LEVEL;Текущий Уровень;Current Level;
@@ -9,15 +9,15 @@ UI_LABEL_SHOP;Магазин;Shop;
 UI_LABEL_ITEMS;Предметы;Items;
 UI_LABEL_WEAPONS;Оружие;Weapons;
 UI_LABEL_ITEM_FOUND;Найден Предмет!;Item Found!;
-UI_LABEL_COOLDOWN;Задержка;Cooldown;TODO: Может, не "задержка", а что-то другое?
+UI_LABEL_COOLDOWN;Задержка;Cooldown;"TODO: Может, не ""задержка"", а что-то другое?"
 UI_LABEL_RANGE;Дальность;Range;
 UI_LABEL_KNOCKBACK;Откидывание;Knockback;
 UI_LABEL_PIERCE;Прострел;Pierce;
 UI_LABEL_BOUNCE;Отскок;Bounce;
 UI_LABEL_CRIT;Крит;Critical;
 UI_LABEL_THIS_WAVE_DAMAGE;Нанесено урона: {VALUE};This wave damage: {VALUE};
-UI_LABEL_PAUSE;"Пауза. Нажмите «P», чтобы продолжить";Paused. Press «P» to continue;
-UI_LABEL_PAUSE_DESKTOP;"Пауза. Нажмите «ESC» или «P», чтобы продолжить";Paused. Press «ESC» or «P» to continue;
+UI_LABEL_PAUSE;Пауза. Нажмите «P», чтобы продолжить;Paused. Press «P» to continue;
+UI_LABEL_PAUSE_DESKTOP;Пауза. Нажмите «ESC» или «P», чтобы продолжить;Paused. Press «ESC» or «P» to continue;
 UI_LABEL_LIMITED;Ограничено;Limited;
 UI_BUTTON_COMBINE;Скомбинировать;Combine;
 UI_BUTTON_CANCEL;Назад;Cancel;
