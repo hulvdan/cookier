@@ -741,6 +741,12 @@ struct Garden {
   FrameGame createdAt = {};
 };
 
+struct UIButtonState {
+  Clay_ElementId id               = {};
+  bool           thisFrameUpdated = false;
+  bool           hovered          = false;
+};
+
 struct GameData {
   struct Meta {
     Arena trashArena = {};
@@ -866,8 +872,10 @@ struct GameData {
   } uiFlex;
 
   struct {
-    Vector2     notPickedUpCoinsLogicalPos = {};
-    const Font* overriddenFont             = {};
+    Vector2                   notPickedUpCoinsLogicalPos = {};
+    const Font*               overriddenFont             = {};
+    Array<UIButtonState, 128> buttonStates               = {};
+    int                       buttonStatesCount          = 0;
   } ui;
 } g = {};
 
@@ -2587,6 +2595,38 @@ void FontEnd() {  ///
   g.ui.overriddenFont = nullptr;
 }
 
+void ButtonSFX(Clay_ElementId id, bool hovered, bool clicked, bool enabled) {  ///
+  int index = -1;
+
+  FOR_RANGE (int, i, g.ui.buttonStatesCount) {
+    auto& b = g.ui.buttonStates[i];
+    if (b.id.id == id.id) {
+      ASSERT_FALSE(b.thisFrameUpdated);
+      index = i;
+      break;
+    }
+  }
+
+  if (index == -1)
+    index = g.ui.buttonStatesCount++;
+
+  auto& b = g.ui.buttonStates[index];
+  ASSERT_FALSE(b.thisFrameUpdated);
+
+  if (clicked) {
+    if (enabled)
+      PlaySound(Sound_UI_BUTTON_CLICK);
+    else
+      PlaySound(Sound_UI_BUTTON_ERROR);
+  }
+  else if (enabled && hovered && !b.hovered)
+    PlaySound(Sound_UI_BUTTON_HOVER_SMALL);
+
+  b.id               = id;
+  b.hovered          = hovered;
+  b.thisFrameUpdated = true;
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -2663,18 +2703,20 @@ void DoUI(bool draw) {
   };
 
   struct ComponentButtonData {
-    bool enabled = false;
-    bool growX   = false;
+    Clay_ElementId id      = {};
+    bool           enabled = false;
+    bool           growX   = false;
   };
 
   LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) {  ///
+    ASSERT(data.id.id);
     bool result = false;
 
     Clay_Sizing sizing{};
     if (data.growX)
       sizing.width = CLAY_SIZING_GROW(0);
 
-    CLAY({.layout{.sizing{sizing}}}) {
+    CLAY({.id = data.id, .layout{.sizing{sizing}}}) {
       auto      fb_colors = glib->ui_button_colors();
       const int t         = (data.enabled ? (Clay_Hovered() ? 1 : 0) : 2);
 
@@ -2698,6 +2740,9 @@ void DoUI(bool draw) {
         // Margin at the bottom so that "deep" button looks better.
         CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(6)}}}) {}
       }
+
+      if (!draw)
+        ButtonSFX(data.id, Clay_Hovered(), clicked(), data.enabled);
 
       result = data.enabled && clicked();
     }
@@ -2749,14 +2794,15 @@ void DoUI(bool draw) {
       // Primary / secondary buttons.
       CLAY({.layout{.childGap = GAP_SMALL}}) {
         const bool clickedPrimary = componentButton(
-          {.enabled = g.run.showingSecondaryStats},
+          {.id = CLAY_ID("button_stats_primary"), .enabled = g.run.showingSecondaryStats},
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
           }
         );
 
         const bool clickedSecondary = componentButton(
-          {.enabled = !g.run.showingSecondaryStats},
+          {.id      = CLAY_ID("button_stats_secondary"),
+           .enabled = !g.run.showingSecondaryStats},
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
           }
@@ -3376,24 +3422,29 @@ void DoUI(bool draw) {
 
             // Combine button.
             const bool combined = componentButton(
-              {.enabled = canCombineWithIndex >= 0},
+              {.id = CLAY_ID("button_weapon_combine"), .enabled = canCombineWithIndex >= 0
+              },
               [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
               }
             );
 
             // Recycle button.
-            const bool recycled
-              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
-                  BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
-                });
+            const bool recycled = componentButton(
+              {.id = CLAY_ID("button_weapon_recycle"), .enabled = true},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
+                BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
+              }
+            );
 
             // Cancel button.
-            const bool cancelled
-              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale());
-                });
+            const bool cancelled = componentButton(
+              {.id = CLAY_ID("button_weapon_cancel"), .enabled = true},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale());
+              }
+            );
 
             if (combined) {
               weapon.tier += 1;
@@ -3687,20 +3738,24 @@ void DoUI(bool draw) {
 
           // Take and Recycle buttons.
           CLAY({.layout{.childGap = GAP_SMALL}}) {
-            const bool took
-              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
-                });
+            const bool took = componentButton(
+              {.id = CLAY_ID("button_picked_up_item_take"), .enabled = true},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
+              }
+            );
 
-            const bool recycled
-              = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-                  CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
-                    BF_CLAY_TEXT(TextFormat(" (+%d)", g.run.pickedUpItem.recyclePrice));
-                    // BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                    // BF_CLAY_TEXT(")");
-                  }
-                });
+            const bool recycled = componentButton(
+              {.id = CLAY_ID("button_picked_up_item_recycle"), .enabled = true},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
+                  BF_CLAY_TEXT(TextFormat(" (+%d)", g.run.pickedUpItem.recyclePrice));
+                  // BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                  // BF_CLAY_TEXT(")");
+                }
+              }
+            );
 
             if (took)
               AddItem(g.run.pickedUpItem.toPick);
@@ -3817,10 +3872,12 @@ void DoUI(bool draw) {
               // Choose button.
               CLAY({.layout{BF_CLAY_SIZING_GROW_X, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}
               ) {
-                bool chosen
-                  = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-                      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
-                    });
+                bool chosen = componentButton(
+                  {.id = CLAY_IDI("button_upgrades_choose", i), .enabled = true},
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_choose_locale());
+                  }
+                );
                 if (!draw && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + i)))
                   chosen = true;
                 if (chosen) {
@@ -3843,14 +3900,16 @@ void DoUI(bool draw) {
         const auto calculatedRerollPrice
           = ApplyStatRerollPrice(g.run.upgrades.rerolls.GetPrice());
         const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-        bool       rerolled
-          = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
-              CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
-                BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
-                BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-              }
-            });
+        bool       rerolled  = componentButton(
+          {.id = CLAY_ID("button_upgrades_reroll"), .enabled = canReroll},
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
+              BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
+              BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+            }
+          }
+        );
         if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
           rerolled = true;
         if (rerolled) {
@@ -3920,19 +3979,21 @@ void DoUI(bool draw) {
           const auto calculatedRerollPrice
             = ApplyStatRerollPrice(g.run.shop.rerolls.GetPrice());
           const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-          bool       rerolled
-            = componentButton({.enabled = canReroll}, [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
+          bool       rerolled  = componentButton(
+            {.id = CLAY_ID("button_shop_reroll"), .enabled = canReroll},
+            [&]() BF_FORCE_INLINE_LAMBDA {
+              CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
 
-                  ASSERT(calculatedRerollPrice >= 0);
+                ASSERT(calculatedRerollPrice >= 0);
 
-                  if (calculatedRerollPrice > 0) {
-                    BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
-                    BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                  }
+                if (calculatedRerollPrice > 0) {
+                  BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
+                  BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                 }
-              });
+              }
+            }
+          );
           if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
             rerolled = true;
           if (rerolled) {
@@ -4041,19 +4102,21 @@ void DoUI(bool draw) {
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                 }}) {
                   // Buying item / weapon.
-                  auto bought
-                    = componentButton({.enabled = canBuy}, [&]() BF_FORCE_INLINE_LAMBDA {
-                        CLAY({.layout{
-                          BF_CLAY_SIZING_GROW_X,
-                          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                        }}) {
-                          BF_CLAY_TEXT(
-                            TextFormat("%d ", calculatedPrice),
-                            (calculatedPrice <= PLAYER_COINS ? palWhite : palRed)
-                          );
-                          BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                        }
-                      });
+                  auto bought = componentButton(
+                    {.id = CLAY_IDI("button_shop_buy", toPickIndex), .enabled = canBuy},
+                    [&]() BF_FORCE_INLINE_LAMBDA {
+                      CLAY({.layout{
+                        BF_CLAY_SIZING_GROW_X,
+                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                      }}) {
+                        BF_CLAY_TEXT(
+                          TextFormat("%d ", calculatedPrice),
+                          (calculatedPrice <= PLAYER_COINS ? palWhite : palRed)
+                        );
+                        BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                      }
+                    }
+                  );
                   if (!draw && canBuy
                       && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + toPickIndex)))
                     bought = true;
@@ -4191,7 +4254,7 @@ void DoUI(bool draw) {
 
           // Advance to the next wave button.
           g.run.scheduledNextWave = componentButton(
-            {.enabled = true, .growX = true},
+            {.id = CLAY_ID("button_shop_next_wave"), .enabled = true, .growX = true},
             [&]() BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_next_wave_locale());
               BF_CLAY_TEXT(" (");
@@ -4305,9 +4368,12 @@ void DoUI(bool draw) {
         BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
-        g.run.reload = componentButton({.enabled = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_restart_locale());
-        });
+        g.run.reload = componentButton(
+          {.id = CLAY_ID("button_end_restart"), .enabled = true},
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_restart_locale());
+          }
+        );
       }
     }
   }
@@ -6329,6 +6395,24 @@ void GameFixedUpdate() {
   }
 
   DoUI(false);
+
+  // Removing excessive data from `g.ui.buttonStates`.
+  {  ///
+    const int total = g.ui.buttonStatesCount;
+    int       off   = 0;
+    FOR_RANGE (int, i, total) {
+      if (g.ui.buttonStates[i - off].thisFrameUpdated)
+        g.ui.buttonStates[i - off].thisFrameUpdated = false;
+      else {
+        if (i - off != g.ui.buttonStatesCount - 1)
+          g.ui.buttonStates[i - off] = g.ui.buttonStates[g.ui.buttonStatesCount - 1];
+        g.ui.buttonStatesCount--;
+        g.ui.buttonStates[g.ui.buttonStatesCount] = {};
+        off++;
+      }
+    }
+  }
+
   ge.meta.frameVisual++;
 }
 

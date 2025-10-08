@@ -21,6 +21,67 @@ render_z:
   - SCREEN_FADE
   - UI
   - GIZMOS
+sounds:
+  - type: UI_BUTTON_CLICK
+    pool: 4
+  - type: UI_BUTTON_ERROR
+    pool: 4
+  - type: UI_BUTTON_HOVER_SMALL
+    pool: 8
+    # - type: GAME_ITEM_PICKUP
+    #   pool: 4
+    # - type: GAME_PROJECTILE_TEAR
+    #   pool: 6
+    # - type: GAME_TEAR_PARTICLES
+    #   volume: 0.4
+    #   pool: 16
+    # - type: GAME_HURT
+    #   pool: 4
+    # - type: GAME_PLAYER_HURT
+    # - type: GAME_UNLOCK
+    # - type: GAME_CHEST
+    # - type: GAME_TRANSITION
+    # - type: GAME_COBWEB
+    # - type: GAME_EXPLOSION
+    #   pool: 8
+    # - type: GAME_BOMB_FUSE
+    #   pool: 8
+    # - type: GAME_MONSTRO_LAND
+    #   pool: 2
+    # - type: GAME_MONSTRO_LAND_SMALL
+    #   pool: 2
+    #   volume: 0.5
+    # - type: GAME_MONSTRO_SPIT
+    #   pool: 2
+    # - type: GAME_MONSTRO_JUMP
+    #   pool: 2
+    # - type: GAME_ITEM_PICKUP
+    #   pool: 4
+    # - type: GAME_PROJECTILE_TEAR
+    #   pool: 6
+    # - type: GAME_TEAR_PARTICLES
+    #   volume: 0.4
+    #   pool: 16
+    # - type: GAME_HURT
+    #   pool: 4
+    # - type: GAME_PLAYER_HURT
+    # - type: GAME_UNLOCK
+    # - type: GAME_CHEST
+    # - type: GAME_TRANSITION
+    # - type: GAME_COBWEB
+    # - type: GAME_EXPLOSION
+    #   pool: 8
+    # - type: GAME_BOMB_FUSE
+    #   pool: 8
+    # - type: GAME_MONSTRO_LAND
+    #   pool: 2
+    # - type: GAME_MONSTRO_LAND_SMALL
+    #   pool: 2
+    #   volume: 0.5
+    # - type: GAME_MONSTRO_SPIT
+    #   pool: 2
+    # - type: GAME_MONSTRO_JUMP
+    #   pool: 2
 vignette_texture_id: vignette
 ui_health_player_texture_ids:
   - ui_health_player_back

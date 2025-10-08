@@ -5,7 +5,9 @@ x generate palette for aseprite
 x extracted localization.csv
 x use localization.csv
 x fix this wave damage
+x sfx: ui: button hover small
 
+* weapon slot hover color
 * brighter text colors
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
@@ -86,6 +88,51 @@ ART:
 * art:
 * art:
 * art:
+
+SFX:
+============================================================
+* sfx: ui: button click
+* sfx: ui: button hover big
+* sfx: ui: buy
+* sfx: ui: sell
+* sfx: ui: weapon combine
+* sfx: ui: reroll
+* sfx: ui: go next wave
+* sfx: ui: mob hurt
+* sfx: ui: player hurt
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx: ui:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
+* sfx:
 
 QA:
 ================================================================================
