@@ -445,7 +445,7 @@ struct Weapon {
   int        tier                               = {};
   int        recyclePrice                       = {};
   int        calculatedDamage                   = 0;
-  int        didDamage                          = 0;
+  int        thisWaveDamage                     = 0;
   f32        lastCollisionCheckShootingProgress = 0;
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
@@ -1896,7 +1896,7 @@ void OnWaveStarted() {  ///
   int weaponIndexOrMinus1 = -1;
   for (auto& weapon : g.run.playerWeapons) {
     weaponIndexOrMinus1++;
-    weapon.didDamage = 0;
+    weapon.thisWaveDamage = 0;
     if (weapon.type) {
       weapon.calculatedDamage
         = CalculateWeaponDamage(weaponIndexOrMinus1, weapon.type, weapon.tier);
@@ -2170,7 +2170,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   }
 
   if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-    g.run.playerWeapons[data.indexOfWeaponThatDidDamageOrMinus1].didDamage += data.damage;
+    g.run.playerWeapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
+      += data.damage;
 
   creature.lastDamagedAt = {};
   creature.lastDamagedAt.SetNow();
@@ -3073,25 +3074,31 @@ void DoUI(bool draw) {
     });
   };
 
-  LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {  ///
-    CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
-      Color color{0xef, 0xcb, 0x84, 255};
-      BF_CLAY_TEXT_LOCALIZED_DANGER(labelLocale, color);
-      BF_CLAY_TEXT(": ", color);
-      innerLambda();
-    }
-  };
-
   LAMBDA (
     void,
     componentWeaponStatsExploded,
-    (int weaponIndexOrMinus1, WeaponType type, int tier, int didDamage, int maxWidth)
+    (int weaponIndexOrMinus1, WeaponType type, int tier, int thisWaveDamage, int maxWidth)
   )
   {  ///
+    LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
+      CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
+        FlexBegin(maxWidth, 0);
+        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
+
+        Color color{0xef, 0xcb, 0x84, 255};
+        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(labelLocale, color);
+        BF_CLAY_TEXT(": ", color);
+        innerLambda();
+
+        FlexEnd();
+      }
+    };
+
     const auto fb = fb_weapons->Get(type);
 
     // Damage.
     componentWeaponStatEntry(
+      maxWidth,
       fb_stats->Get(StatType_DAMAGE)->name_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_TEXT(
@@ -3118,16 +3125,21 @@ void DoUI(bool draw) {
     );
 
     // Critical.
-    componentWeaponStatEntry(glib->ui_label_crit_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
-      BF_CLAY_TEXT(TextFormat(
-        "x%.1f (%d%%)",
-        fb->crit_damage_multiplier(),
-        g.run.playerStats[StatType_CRIT_CHANCE]
-      ));
-    });
+    componentWeaponStatEntry(
+      maxWidth,
+      glib->ui_label_crit_locale(),
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_TEXT(TextFormat(
+          "x%.1f (%d%%)",
+          fb->crit_damage_multiplier(),
+          g.run.playerStats[StatType_CRIT_CHANCE]
+        ));
+      }
+    );
 
     // Cooldown.
     componentWeaponStatEntry(
+      maxWidth,
       glib->ui_label_cooldown_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
         const auto cooldownFrames = ApplyAttackSpeedToDuration(
@@ -3140,6 +3152,7 @@ void DoUI(bool draw) {
 
     // Knockback.
     componentWeaponStatEntry(
+      maxWidth,
       glib->ui_label_knockback_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat(
@@ -3151,24 +3164,29 @@ void DoUI(bool draw) {
     );
 
     // Range.
-    componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
-      const f32 rangeMeters = GetWeaponRangeMeters(type);
-      if (fb->projectile_type()) {
-        BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
+    componentWeaponStatEntry(
+      maxWidth,
+      glib->ui_label_range_locale(),
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        const f32 rangeMeters = GetWeaponRangeMeters(type);
+        if (fb->projectile_type()) {
+          BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
+        }
+        else {
+          const f32 weaponRangeMeters
+            = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
+              * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+          BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
+        }
       }
-      else {
-        const f32 weaponRangeMeters
-          = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
-            * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-        BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
-      }
-    });
+    );
 
     // Pierce.
     if (fb->projectile_type()
         && (fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING] > 0))
     {
       componentWeaponStatEntry(
+        maxWidth,
         glib->ui_label_pierce_locale(),
         [&]() BF_FORCE_INLINE_LAMBDA {
           BF_CLAY_TEXT(TextFormat(
@@ -3183,6 +3201,7 @@ void DoUI(bool draw) {
         && (fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES] > 0))
     {
       componentWeaponStatEntry(
+        maxWidth,
         glib->ui_label_bounce_locale(),
         [&]() BF_FORCE_INLINE_LAMBDA {
           BF_CLAY_TEXT(TextFormat(
@@ -3197,6 +3216,7 @@ void DoUI(bool draw) {
       auto chance = GetLifestealChance(type);
       if (chance > 0) {
         componentWeaponStatEntry(
+          maxWidth,
           fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT(
@@ -3230,6 +3250,7 @@ void DoUI(bool draw) {
           FlexEnd();
         }
         componentWeaponStatEntry(
+          maxWidth,
           fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT(
@@ -3245,12 +3266,13 @@ void DoUI(bool draw) {
 
     componentEffectsExploded(fb->effects(), 1, maxWidth);
 
-    // Did damage.
-    ASSERT(didDamage >= 0);
-    if (didDamage > 0) {
+    // This wave damage.
+    ASSERT(thisWaveDamage >= 0);
+    if (thisWaveDamage > 0) {
       componentWeaponStatEntry(
-        glib->ui_label_did_damage_locale(),
-        [&]() BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT(TextFormat("%d", didDamage)); }
+        maxWidth,
+        glib->ui_label_this_wave_damage_locale(),
+        [&]() BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage)); }
       );
     }
   };
@@ -3343,7 +3365,7 @@ void DoUI(bool draw) {
             weaponIndexOrMinus1,
             weapon.type,
             weapon.tier,
-            weapon.didDamage,
+            weapon.thisWaveDamage,
             ITEM_FRAME_WIDTH
           );
 
@@ -3385,9 +3407,9 @@ void DoUI(bool draw) {
 
             if (combined) {
               weapon.tier += 1;
-              weapon.recyclePrice  = GetWeaponRecyclePrice(weapon.type, weapon.tier);
-              weapon.didDamage     = 0;
-              weapon.killedEnemies = MAX(
+              weapon.recyclePrice   = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+              weapon.thisWaveDamage = 0;
+              weapon.killedEnemies  = MAX(
                 weapon.killedEnemies,
                 g.run.playerWeapons[canCombineWithIndex].killedEnemies
               );
@@ -4860,19 +4882,21 @@ void GameFixedUpdate() {
   PLAYER_CREATURE.controller.move = {};
 
   // Handling ESC or P to handle pause.
-  if (g.run.screen == ScreenType_GAMEPLAY) {
-    bool togglePause = IsKeyPressed(SDL_SCANCODE_P);
+  {  ///
+    if (g.run.screen == ScreenType_GAMEPLAY) {
+      bool togglePause = IsKeyPressed(SDL_SCANCODE_P);
 
 #if defined(SDL_PLATFORM_DESKTOP)
-    if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
-      togglePause = true;
+      if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
+        togglePause = true;
 #endif
 
-    if (togglePause)
-      ge.meta.paused = !ge.meta.paused;
+      if (togglePause)
+        ge.meta.paused = !ge.meta.paused;
+    }
+    else
+      ge.meta.paused = false;
   }
-  else
-    ge.meta.paused = false;
 
   const auto gameplayOrWaveEndScreen = (g.run.screen == ScreenType_GAMEPLAY)
                                        || (g.run.screen == ScreenType_WAVE_END_ANIMATION);
