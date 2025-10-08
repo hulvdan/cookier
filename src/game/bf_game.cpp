@@ -992,7 +992,7 @@ bool IsAlreadyPlaceholded(const char* placeholder) {  ///
 void PlaceholdString(
   const char* placeholder,
   const char* value,
-  Color       color = GREEN
+  Color       color = palGreen
 ) {  ///
   ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
   Placeholder p{
@@ -1217,8 +1217,9 @@ void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
 }
 
 void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-  int  locale_,
-  bool resetPlaceholders = true
+  int   locale_,
+  Color color              = WHITE,
+  bool  _resetPlaceholders = true
 ) {  ///
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
   const auto localization_broken_lines = localization->broken_lines();
@@ -1252,7 +1253,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
       for (auto string : *group->strings()) {
         if (string->type() == BrokenStringDatumType_SPACE) {
           Clay_String text{.isStaticallyAllocated = true, .length = 1, .chars = " "};
-          BF_CLAY_TEXT(text);
+          BF_CLAY_TEXT(text, color);
           continue;
         }
 
@@ -1276,13 +1277,13 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
             .length                = (i32)string->string()->size(),
             .chars                 = string->string()->c_str(),
           };
-          BF_CLAY_TEXT(text);
+          BF_CLAY_TEXT(text, color);
         }
       }
     }
   }
 
-  if (resetPlaceholders)
+  if (_resetPlaceholders)
     g.uiFlex.placeholdersCount = 0;
 }
 
@@ -2571,7 +2572,9 @@ void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
 }
 
 void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(placeholder->brokenLocale_value(), false);
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+    placeholder->brokenLocale_value(), palWhite, false
+  );
 }
 
 void FontBegin(Font* font) {  ///
@@ -2637,10 +2640,11 @@ void DoUI(bool draw) {
 
   const Color nineSliceFrameColor = WHITE;
   const Color nineSliceFrameFlash = TRANSPARENT_BLACK;
-  const Color secondaryTextColor  = ColorFromRGBA(0xcec7b1ff);
+  const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
   // }
 
-  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = WHITE)) {  ///
+  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = palWhite))
+  {  ///
     auto        string = localization_strings->Get(locale);
     Clay_String text{
       .isStaticallyAllocated = true,
@@ -2942,7 +2946,7 @@ void DoUI(bool draw) {
           PlaceholdString(
             "MODIFIER",
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
-            (isPositive == fb_stat->negative_is_good() ? RED : GREEN)
+            (isPositive == fb_stat->negative_is_good() ? palRed : palGreen)
           );
         }
         else if (fb_effect->weaponproperty_type()) {
@@ -2968,7 +2972,7 @@ void DoUI(bool draw) {
           PlaceholdString(
             "MODIFIER",
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
-            GREEN
+            palGreen
           );
         }
         else
@@ -3081,15 +3085,14 @@ void DoUI(bool draw) {
   )
   {  ///
     LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
-      CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER}}) {
+      CLAY({.layout{
+        BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
         FlexBegin(maxWidth, 0);
-        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
-
-        Color color{0xef, 0xcb, 0x84, 255};
-        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(labelLocale, color);
-        BF_CLAY_TEXT(": ", color);
+        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(labelLocale, secondaryTextColor);
+        BF_CLAY_TEXT(": ", secondaryTextColor);
         innerLambda();
-
         FlexEnd();
       }
     };
@@ -3098,11 +3101,11 @@ void DoUI(bool draw) {
 
     // Damage.
     componentWeaponStatEntry(
-      maxWidth,
       fb_stats->Get(StatType_DAMAGE)->name_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_TEXT(
-          TextFormat("%d", CalculateWeaponDamage(weaponIndexOrMinus1, type, tier)), GREEN
+          TextFormat("%d", CalculateWeaponDamage(weaponIndexOrMinus1, type, tier)),
+          palGreen
         );
 
         // Scalings.
@@ -3125,34 +3128,28 @@ void DoUI(bool draw) {
     );
 
     // Critical.
-    componentWeaponStatEntry(
-      maxWidth,
-      glib->ui_label_crit_locale(),
-      [&]() BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_TEXT(TextFormat(
-          "x%.1f (%d%%)",
-          fb->crit_damage_multiplier(),
-          g.run.playerStats[StatType_CRIT_CHANCE]
-        ));
-      }
-    );
+    componentWeaponStatEntry(glib->ui_label_crit_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+      BF_CLAY_TEXT(TextFormat(
+        "x%.1f (%d%%)",
+        fb->crit_damage_multiplier(),
+        g.run.playerStats[StatType_CRIT_CHANCE]
+      ));
+    });
 
     // Cooldown.
     componentWeaponStatEntry(
-      maxWidth,
       glib->ui_label_cooldown_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
         const auto cooldownFrames = ApplyAttackSpeedToDuration(
           fb->shooting_duration_frames() + fb->cooldown_frames()
         );
         const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
-        BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), GREEN);
+        BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palGreen);
       }
     );
 
     // Knockback.
     componentWeaponStatEntry(
-      maxWidth,
       glib->ui_label_knockback_locale(),
       [&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat(
@@ -3164,29 +3161,24 @@ void DoUI(bool draw) {
     );
 
     // Range.
-    componentWeaponStatEntry(
-      maxWidth,
-      glib->ui_label_range_locale(),
-      [&]() BF_FORCE_INLINE_LAMBDA {
-        const f32 rangeMeters = GetWeaponRangeMeters(type);
-        if (fb->projectile_type()) {
-          BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
-        }
-        else {
-          const f32 weaponRangeMeters
-            = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
-              * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-          BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
-        }
+    componentWeaponStatEntry(glib->ui_label_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+      const f32 rangeMeters = GetWeaponRangeMeters(type);
+      if (fb->projectile_type()) {
+        BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
       }
-    );
+      else {
+        const f32 weaponRangeMeters
+          = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
+            * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+        BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
+      }
+    });
 
     // Pierce.
     if (fb->projectile_type()
         && (fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING] > 0))
     {
       componentWeaponStatEntry(
-        maxWidth,
         glib->ui_label_pierce_locale(),
         [&]() BF_FORCE_INLINE_LAMBDA {
           BF_CLAY_TEXT(TextFormat(
@@ -3201,7 +3193,6 @@ void DoUI(bool draw) {
         && (fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES] > 0))
     {
       componentWeaponStatEntry(
-        maxWidth,
         glib->ui_label_bounce_locale(),
         [&]() BF_FORCE_INLINE_LAMBDA {
           BF_CLAY_TEXT(TextFormat(
@@ -3216,14 +3207,13 @@ void DoUI(bool draw) {
       auto chance = GetLifestealChance(type);
       if (chance > 0) {
         componentWeaponStatEntry(
-          maxWidth,
           fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT(
               TextFormat(
                 "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
               ),
-              GREEN
+              palGreen
             );
           }
         );
@@ -3250,14 +3240,13 @@ void DoUI(bool draw) {
           FlexEnd();
         }
         componentWeaponStatEntry(
-          maxWidth,
           fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT(
               TextFormat(
                 "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
               ),
-              GREEN
+              palGreen
             );
           }
         );
@@ -3270,9 +3259,10 @@ void DoUI(bool draw) {
     ASSERT(thisWaveDamage >= 0);
     if (thisWaveDamage > 0) {
       componentWeaponStatEntry(
-        maxWidth,
         glib->ui_label_this_wave_damage_locale(),
-        [&]() BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage)); }
+        [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palWhite);
+        }
       );
     }
   };
@@ -3488,7 +3478,7 @@ void DoUI(bool draw) {
               .sourceMargins{
                 .right = Clamp01(1.0f - (f32)health / (f32)PLAYER_CREATURE.maxHealth)
               },
-              .color = RED,
+              .color = palRed,
             });
 
             CLAY({
@@ -3522,7 +3512,7 @@ void DoUI(bool draw) {
             BF_CLAY_IMAGE({
               .texId = texs->Get(1),
               .sourceMargins{.right = 1 - (f32)g.run.xp / (f32)g.run.nextLevelXp},
-              .color = GREEN,
+              .color = palGreen,
             });
 
             CLAY({
@@ -3804,7 +3794,7 @@ void DoUI(bool draw) {
                   .id = id,
                   .layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
                 }) {
-                  BF_CLAY_TEXT(TextFormat("+%d", amount), GREEN);
+                  BF_CLAY_TEXT(TextFormat("+%d", amount), palGreen);
 
                   BF_CLAY_IMAGE({.texId = fb->icon_texture_id()});
 
@@ -4059,7 +4049,7 @@ void DoUI(bool draw) {
                         }}) {
                           BF_CLAY_TEXT(
                             TextFormat("%d ", calculatedPrice),
-                            (calculatedPrice <= PLAYER_COINS ? WHITE : RED)
+                            (calculatedPrice <= PLAYER_COINS ? palWhite : palRed)
                           );
                           BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                         }
@@ -6474,7 +6464,7 @@ void GameDraw() {
         }
       }
       t     = Clamp01(t);
-      color = ColorLerp(color, RED, t);
+      color = ColorLerp(color, palRed, t);
     }
     else if (creature.type == CreatureType_RUSHER) {
       const auto& data = creature.DataRusher();
@@ -6490,7 +6480,7 @@ void GameDraw() {
         }
       }
       t     = Clamp01(t);
-      color = ColorLerp(color, RED, t);
+      color = ColorLerp(color, palRed, t);
     }
 
     DrawGroup_OneShotTexture(
@@ -6615,7 +6605,7 @@ void GameDraw() {
         .texId = texs->Get(i),
         .pos   = creature.pos - Vector2(0, 1),
         .sourceMargins{.right = rightMargin},
-        .color = (i ? RED : WHITE),
+        .color = (i ? palRed : palWhite),
       });
     }
 

@@ -194,4 +194,11 @@ constexpr int  SPAWNING_GARDENS_EVERY_N_SECONDS   = 5;
 constexpr auto SPAWNING_LANDMINES_INTERVAL_FRAMES = lframe::FromSeconds(8);
 constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);
 
+// Colors.
+// ============================================================
+const auto palGreen = ColorFromRGBA(0x66a650ff);
+const auto palLime  = ColorFromRGBA(0xb9d850ff);
+const auto palRed   = ColorFromRGBA(0xc02931ff);
+const auto palWhite = ColorFromRGBA(0xedefe2ff);
+
 ///
