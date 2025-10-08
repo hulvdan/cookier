@@ -8,12 +8,12 @@ x fix this wave damage
 x sfx: ui: button hover small
 x smaller font for weapon and item properties in shop
 
+* brighter text colors
 * fix smg life steal 100%
 * fix ui bugs
 * keyboard actions also trigger button sounds.
   don't make clicked / error sounds from buttons
 * weapon slot hover color
-* brighter text colors
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
 * draw UI? writing code gets tiring

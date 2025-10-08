@@ -238,6 +238,327 @@ Color ColorLerp(Color v1, Color v2, f32 p) {  ///
   return result;
 }
 
+bool ColorIsEqual(Color col1, Color col2) {  ///
+  bool result = false;
+
+  if ((col1.r == col2.r)     //
+      && (col1.g == col2.g)  //
+      && (col1.b == col2.b)  //
+      && (col1.a == col2.a))
+    result = true;
+
+  return result;
+}
+
+int ColorToHex(Color color) {  ///
+  int result = 0;
+
+  result = (int)(((unsigned int)color.r << 24)    //
+                 | ((unsigned int)color.g << 16)  //
+                 | ((unsigned int)color.b << 8)   //
+                 | (unsigned int)color.a);
+
+  return result;
+}
+
+// Get color normalized as f32 [0..1]
+Vector4 ColorNormalize(Color color) {  ///
+  Vector4 result;
+
+  result.x = (f32)color.r / 255.0f;
+  result.y = (f32)color.g / 255.0f;
+  result.z = (f32)color.b / 255.0f;
+  result.w = (f32)color.a / 255.0f;
+
+  return result;
+}
+
+// Get color from normalized values [0..1]
+Color ColorFromNormalized(Vector4 normalized) {  ///
+  Color result;
+
+  result.r = (unsigned char)(normalized.x * 255.0f);
+  result.g = (unsigned char)(normalized.y * 255.0f);
+  result.b = (unsigned char)(normalized.z * 255.0f);
+  result.a = (unsigned char)(normalized.w * 255.0f);
+
+  return result;
+}
+
+// Get HSV values for a Color
+// NOTE: Hue is returned as degrees [0..360]
+Vector3 ColorToHSV(Color color) {  ///
+  Vector3 hsv{};
+  Vector3 rgb = {(f32)color.r / 255.0f, (f32)color.g / 255.0f, (f32)color.b / 255.0f};
+  f32     min, max, delta;
+
+  min = rgb.x < rgb.y ? rgb.x : rgb.y;
+  min = min < rgb.z ? min : rgb.z;
+
+  max = rgb.x > rgb.y ? rgb.x : rgb.y;
+  max = max > rgb.z ? max : rgb.z;
+
+  hsv.z = max;  // Value
+  delta = max - min;
+
+  if (delta < 0.00001f) {
+    hsv.y = 0.0f;
+    hsv.x = 0.0f;  // Undefined, maybe NAN?
+    return hsv;
+  }
+
+  if (max > 0.0f) {
+    // NOTE: If max is 0, this divide would cause a crash
+    hsv.y = (delta / max);  // Saturation
+  }
+  else {
+    // NOTE: If max is 0, then r = g = b = 0, s = 0, h is undefined
+    hsv.y = 0.0f;
+    hsv.x = NAN;  // Undefined
+    return hsv;
+  }
+
+  // NOTE: Comparing f32 values could not work properly
+  if (rgb.x >= max)
+    hsv.x = (rgb.y - rgb.z) / delta;  // Between yellow & magenta
+  else {
+    if (rgb.y >= max)
+      hsv.x = 2.0f + (rgb.z - rgb.x) / delta;  // Between cyan & yellow
+    else
+      hsv.x = 4.0f + (rgb.x - rgb.y) / delta;  // Between magenta & cyan
+  }
+
+  hsv.x *= 60.0f;  // Convert to degrees
+
+  if (hsv.x < 0.0f)
+    hsv.x += 360.0f;
+
+  return hsv;
+}
+
+// Get a Color from HSV values
+// Implementation reference:
+// https://en.wikipedia.org/wiki/HSL_and_HSV#Alternative_HSV_conversion NOTE:
+// Color->HSV->Color conversion will not yield exactly the same color due to rounding
+// errors Hue is provided in degrees: [0..360] Saturation/Value are provided normalized:
+// [0.0f..1.0f]
+Color ColorFromHSV(f32 hue, f32 saturation, f32 value) {  ///
+  Color color{0, 0, 0, 255};
+
+  // Red channel
+  f32 k   = fmodf((5.0f + hue / 60.0f), 6);
+  f32 t   = 4.0f - k;
+  k       = (t < k) ? t : k;
+  k       = (k < 1) ? k : 1;
+  k       = (k > 0) ? k : 0;
+  color.r = (unsigned char)((value - value * saturation * k) * 255.0f);
+
+  // Green channel
+  k       = fmodf((3.0f + hue / 60.0f), 6);
+  t       = 4.0f - k;
+  k       = (t < k) ? t : k;
+  k       = (k < 1) ? k : 1;
+  k       = (k > 0) ? k : 0;
+  color.g = (unsigned char)((value - value * saturation * k) * 255.0f);
+
+  // Blue channel
+  k       = fmodf((1.0f + hue / 60.0f), 6);
+  t       = 4.0f - k;
+  k       = (t < k) ? t : k;
+  k       = (k < 1) ? k : 1;
+  k       = (k > 0) ? k : 0;
+  color.b = (unsigned char)((value - value * saturation * k) * 255.0f);
+
+  return color;
+}
+
+// Get color multiplied with another color
+Color ColorTint(Color color, Color tint) {  ///
+  Color result = color;
+
+  unsigned char r = (unsigned char)(((int)color.r * (int)tint.r) / 255);
+  unsigned char g = (unsigned char)(((int)color.g * (int)tint.g) / 255);
+  unsigned char b = (unsigned char)(((int)color.b * (int)tint.b) / 255);
+  unsigned char a = (unsigned char)(((int)color.a * (int)tint.a) / 255);
+
+  result.r = r;
+  result.g = g;
+  result.b = b;
+  result.a = a;
+
+  return result;
+}
+
+// Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
+Color ColorBrightness(Color color, f32 factor) {  ///
+  Color result = color;
+
+  if (factor > 1.0f)
+    factor = 1.0f;
+  else if (factor < -1.0f)
+    factor = -1.0f;
+
+  f32 red   = (f32)color.r;
+  f32 green = (f32)color.g;
+  f32 blue  = (f32)color.b;
+
+  if (factor < 0.0f) {
+    factor = 1.0f + factor;
+    red *= factor;
+    green *= factor;
+    blue *= factor;
+  }
+  else {
+    red   = (255 - red) * factor + red;
+    green = (255 - green) * factor + green;
+    blue  = (255 - blue) * factor + blue;
+  }
+
+  result.r = (unsigned char)red;
+  result.g = (unsigned char)green;
+  result.b = (unsigned char)blue;
+
+  return result;
+}
+
+// Get color with contrast correction
+// NOTE: Contrast values between -1.0f and 1.0f
+Color ColorContrast(Color color, f32 contrast) {  ///
+  Color result = color;
+
+  if (contrast < -1.0f)
+    contrast = -1.0f;
+  else if (contrast > 1.0f)
+    contrast = 1.0f;
+
+  contrast = (1.0f + contrast);
+  contrast *= contrast;
+
+  f32 pR = (f32)color.r / 255.0f;
+  pR -= 0.5f;
+  pR *= contrast;
+  pR += 0.5f;
+  pR *= 255;
+  if (pR < 0)
+    pR = 0;
+  else if (pR > 255)
+    pR = 255;
+
+  f32 pG = (f32)color.g / 255.0f;
+  pG -= 0.5f;
+  pG *= contrast;
+  pG += 0.5f;
+  pG *= 255;
+  if (pG < 0)
+    pG = 0;
+  else if (pG > 255)
+    pG = 255;
+
+  f32 pB = (f32)color.b / 255.0f;
+  pB -= 0.5f;
+  pB *= contrast;
+  pB += 0.5f;
+  pB *= 255;
+  if (pB < 0)
+    pB = 0;
+  else if (pB > 255)
+    pB = 255;
+
+  result.r = (unsigned char)pR;
+  result.g = (unsigned char)pG;
+  result.b = (unsigned char)pB;
+
+  return result;
+}
+
+// Get color with alpha applied, alpha goes from 0.0f to 1.0f
+Color ColorAlpha(Color color, f32 alpha) {  ///
+  Color result = color;
+
+  if (alpha < 0.0f)
+    alpha = 0.0f;
+  else if (alpha > 1.0f)
+    alpha = 1.0f;
+
+  result.a = (unsigned char)(255.0f * alpha);
+
+  return result;
+}
+
+// Get src alpha-blended into dst color with tint
+Color ColorAlphaBlend(Color dst, Color src, Color tint) {  ///
+  Color out = WHITE;
+
+  // Apply color tint to source color
+  src.r = (unsigned char)(((unsigned int)src.r * ((unsigned int)tint.r + 1)) >> 8);
+  src.g = (unsigned char)(((unsigned int)src.g * ((unsigned int)tint.g + 1)) >> 8);
+  src.b = (unsigned char)(((unsigned int)src.b * ((unsigned int)tint.b + 1)) >> 8);
+  src.a = (unsigned char)(((unsigned int)src.a * ((unsigned int)tint.a + 1)) >> 8);
+
+// #define COLORALPHABLEND_FLOAT
+#define COLORALPHABLEND_INTEGERS
+#if defined(COLORALPHABLEND_INTEGERS)
+  if (src.a == 0)
+    out = dst;
+  else if (src.a == 255)
+    out = src;
+  else {
+    unsigned int alpha
+      = (unsigned int)src.a + 1;  // We are shifting by 8 (dividing by 256), so we need to
+                                  // take that excess into account
+    out.a
+      = (unsigned char)(((unsigned int)alpha * 256 + (unsigned int)dst.a * (256 - alpha))
+                        >> 8);
+
+    if (out.a > 0) {
+      out.r
+        = (unsigned char)((((unsigned int)src.r * alpha * 256
+                            + (unsigned int)dst.r * (unsigned int)dst.a * (256 - alpha))
+                           / out.a)
+                          >> 8);
+      out.g
+        = (unsigned char)((((unsigned int)src.g * alpha * 256
+                            + (unsigned int)dst.g * (unsigned int)dst.a * (256 - alpha))
+                           / out.a)
+                          >> 8);
+      out.b
+        = (unsigned char)((((unsigned int)src.b * alpha * 256
+                            + (unsigned int)dst.b * (unsigned int)dst.a * (256 - alpha))
+                           / out.a)
+                          >> 8);
+    }
+  }
+#endif
+#if defined(COLORALPHABLEND_FLOAT)
+  if (src.a == 0)
+    out = dst;
+  else if (src.a == 255)
+    out = src;
+  else {
+    Vector4 fdst  = ColorNormalize(dst);
+    Vector4 fsrc  = ColorNormalize(src);
+    Vector4 ftint = ColorNormalize(tint);
+    Vector4 fout  = {0};
+
+    fout.w = fsrc.w + fdst.w * (1.0f - fsrc.w);
+
+    if (fout.w > 0.0f) {
+      fout.x = (fsrc.x * fsrc.w + fdst.x * fdst.w * (1 - fsrc.w)) / fout.w;
+      fout.y = (fsrc.y * fsrc.w + fdst.y * fdst.w * (1 - fsrc.w)) / fout.w;
+      fout.z = (fsrc.z * fsrc.w + fdst.z * fdst.w * (1 - fsrc.w)) / fout.w;
+    }
+
+    out = (Color
+    ){(unsigned char)(fout.x * 255.0f),
+      (unsigned char)(fout.y * 255.0f),
+      (unsigned char)(fout.z * 255.0f),
+      (unsigned char)(fout.w * 255.0f)};
+  }
+#endif
+
+  return out;
+}
+
 constexpr Vector2Int ASSETS_REFERENCE_RESOLUTION = {1920, 1080};
 constexpr Vector2Int LOGICAL_RESOLUTION          = {1280, 720};
 constexpr f32        ASSETS_TO_LOGICAL_RATIO     = 1280.0f / 3840.0f;
