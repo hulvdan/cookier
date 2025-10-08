@@ -92,52 +92,20 @@ ui_health_boss_texture_ids:
 ui_coin_texture_id: ui_coin
 ui_coin_x2_texture_id: ui_coin_x2
 ui_modal_fade: 0.75
-ui_item_slot_texture_ids:
-  # Tier 0 (default, hovered, disabled).
-  - ui_item_slot
-  - ui_item_slot
-  - ui_item_slot
-  # Tier 1.
-  - ui_item_slot
-  - ui_item_slot
-  - ui_item_slot
-  # Tier 2.
-  - ui_item_slot
-  - ui_item_slot
-  - ui_item_slot
-  # Tier 3.
-  - ui_item_slot
-  - ui_item_slot
-  - ui_item_slot
+ui_item_slot_texture_id: ui_item_slot
 ui_item_slot_colors:
   # Tier 0 (default, hovered, disabled)
-  - 0x5e3735ff # Colors.
-  - 0x885a44ff
-  - 0x3a3a41ff
+  - 0x3a3a41ff # Colors. Gray.
   - 0 # Flashes.
-  - 0
-  - 0
   # Tier 1.
-  - 0x208cb2ff # Colors.
-  - 0x82dcd7ff
-  - 0x253348ff
+  - 0x01455dff # Colors. Blue.
   - 0 # Flashes.
-  - 0
-  - 0
   # Tier 2.
-  - 0x6d2047ff # Colors.
-  - 0xa13d77ff
-  - 0x3c1c43ff
+  - 0x6d2047ff # Colors. Purple.
   - 0 # Flashes.
-  - 0
-  - 0
   # Tier 3.
-  - 0xdc9824ff
-  - 0xefcb84ff
-  - 0xb8560fff
+  - 0xb8560fff # Colors. Orange.
   - 0 # Flashes.
-  - 0
-  - 0
 ui_button_colors:
   - 0x2c5e3bff # default color
   - 0x609c4fff # hovered color
