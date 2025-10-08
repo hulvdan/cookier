@@ -413,7 +413,6 @@ def test_process_string(string: str, result: list[StringLine]) -> None:
 def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
     loc_ids: list[str] = []
     loc_by_languages: dict[str, list[str]] = defaultdict(list)
-    loc_comments = []
 
     with open(ASSETS_DIR / "localization.csv", encoding="utf-8") as in_file:
         not_language_columns = ("id", "\ufeffid", "comment")
@@ -421,13 +420,18 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
             row_id = row.get("id") or row.get("\ufeffid")
             assert isinstance(row_id, str)
             loc_ids.append(row_id)
-            loc_comments.append(row["comment"])
             for c in row:
                 if c not in not_language_columns:
                     assert c in data_values.languages
-                    loc_by_languages[c].append(row[c])
+                    translation = row[c]
+                    loc_by_languages[c].append(
+                        translation.strip() or "<<NOT_TRANSLATED>>"
+                    )
 
-    assert len(loc_ids) == len(loc_comments)
+    loc_ids.insert(0, "<<INVALID>>")
+    for strings in loc_by_languages.values():
+        strings.insert(0, "<<INVALID>>")
+
     for strings in loc_by_languages.values():
         assert len(loc_ids) == len(strings)
 
