@@ -1,4 +1,6 @@
+x kenney ui button
 
+* fix this wave damaeg
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
 * draw UI? writing code gets tiring

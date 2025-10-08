@@ -2672,8 +2672,9 @@ void DoUI(bool draw) {
       CLAY({
         .layout{
           BF_CLAY_SIZING_GROW_XY,
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+          BF_CLAY_PADDING_ALL(8),
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
@@ -2681,9 +2682,15 @@ void DoUI(bool draw) {
           ColorFromRGBA(fb_colors->Get(t + 3))
         ),
       }) {
-        result = data.enabled && clicked();
-        innerLambda();
+        CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+          innerLambda();
+        }
+
+        // Margin at the bottom so that "deep" button looks better.
+        CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(6)}}}) {}
       }
+
+      result = data.enabled && clicked();
     }
 
     return result;
