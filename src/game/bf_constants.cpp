@@ -206,4 +206,15 @@ constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);
 PAL_COLORS_TABLE;
 #undef X
 
+Color TextifyColor(Color color) {  ///
+  auto v = ColorToHSV(color);
+  return ColorFromHSV(v.x, MIN(1, v.y * 1.2f), MIN(1, v.z * 1.2f));
+}
+
+#define X(name_, value_) const auto palText##name_ = TextifyColor(ColorFromRGBA(value_));
+// #define X(name_, value_) \
+//   constexpr auto palText##name_ = ColorContrast(ColorFromRGBA(value_), 0.5f);
+PAL_COLORS_TABLE;
+#undef X
+
 ///
