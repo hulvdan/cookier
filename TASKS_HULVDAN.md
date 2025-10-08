@@ -1,6 +1,7 @@
 x kenney ui button
+x better ui frame
 
-* fix this wave damaeg
+* fix this wave damage
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
 * draw UI? writing code gets tiring

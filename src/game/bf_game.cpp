@@ -2633,6 +2633,9 @@ void DoUI(bool draw) {
     _wheel = 0;
   const int wheel  = _wheel;
   i16       zIndex = 0;
+
+  const Color nineSliceFrameColor = WHITE;
+  const Color nineSliceFrameFlash = TRANSPARENT_BLACK;
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = WHITE)) {  ///
@@ -2725,7 +2728,9 @@ void DoUI(bool draw) {
         .childGap        = GAP_BIG,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK),
+      BF_CLAY_CUSTOM_NINE_SLICE(
+        glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+      ),
     }) {
       // Stats label.
       CLAY({.layout{
@@ -3024,7 +3029,9 @@ void DoUI(bool draw) {
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
-        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK),
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+        ),
       }) {
         const auto fb_item = fb_items->Get(item.type);
 
@@ -3308,7 +3315,7 @@ void DoUI(bool draw) {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_NINE_SLICE(
-            glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+            glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
           ),
         }) {
           CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -3646,7 +3653,7 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
             BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+              glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
             ),
           }) {
             const auto type = g.run.pickedUpItem.toPick;
@@ -3736,7 +3743,7 @@ void DoUI(bool draw) {
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               },
               BF_CLAY_CUSTOM_NINE_SLICE(
-                glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+                glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
               ),
             }) {
               CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -3969,7 +3976,7 @@ void DoUI(bool draw) {
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
                 BF_CLAY_CUSTOM_NINE_SLICE(
-                  glib->ui_frame_nine_slice(), WHITE, TRANSPARENT_BLACK
+                  glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
                 ),
               }) {
                 const auto fb_item   = (v.item ? fb_items->Get(v.item) : nullptr);
