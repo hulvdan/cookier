@@ -6,7 +6,10 @@ x extracted localization.csv
 x use localization.csv
 x fix this wave damage
 x sfx: ui: button hover small
+x smaller font for weapon and item properties in shop
 
+* fix smg life steal 100%
+* fix ui bugs
 * keyboard actions also trigger button sounds.
   don't make clicked / error sounds from buttons
 * weapon slot hover color
