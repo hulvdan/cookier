@@ -7,6 +7,8 @@ x use localization.csv
 x fix this wave damage
 x sfx: ui: button hover small
 
+* keyboard actions also trigger button sounds.
+  don't make clicked / error sounds from buttons
 * weapon slot hover color
 * brighter text colors
 * multiple level ups icons in the top right corner (like picked up crates)
