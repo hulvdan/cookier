@@ -2636,6 +2636,7 @@ void DoUI(bool draw) {
 
   const Color nineSliceFrameColor = WHITE;
   const Color nineSliceFrameFlash = TRANSPARENT_BLACK;
+  const Color secondaryTextColor  = ColorFromRGBA(0xcec7b1ff);
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = WHITE)) {  ///
@@ -2892,8 +2893,12 @@ void DoUI(bool draw) {
         }
         CLAY({}) {
           FontBegin(&g.meta.fontStats);
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_limited_locale(), GRAY);
-          BF_CLAY_TEXT(TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()), GRAY);
+          BF_CLAY_TEXT_LOCALIZED_DANGER(
+            glib->ui_label_limited_locale(), secondaryTextColor
+          );
+          BF_CLAY_TEXT(
+            TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()), secondaryTextColor
+          );
           FontEnd();
         }
       }
