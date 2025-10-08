@@ -1371,9 +1371,9 @@ void FlushDrawCommands() {
               const auto df = glib->atlas_downscale_factor();
               auto dx1 = dx0 + data.nineSliceMargins.left * ASSETS_TO_LOGICAL_RATIO * df;
               auto dx2 = dx3 - data.nineSliceMargins.right * ASSETS_TO_LOGICAL_RATIO * df;
-              auto dy1 = dy0 + data.nineSliceMargins.top * ASSETS_TO_LOGICAL_RATIO * df;
-              auto dy2
-                = dy3 - data.nineSliceMargins.bottom * ASSETS_TO_LOGICAL_RATIO * df;
+              auto dy1
+                = dy0 + data.nineSliceMargins.bottom * ASSETS_TO_LOGICAL_RATIO * df;
+              auto dy2 = dy3 - data.nineSliceMargins.top * ASSETS_TO_LOGICAL_RATIO * df;
 
               f32 dx_[4]{dx0, dx1, dx2, dx3};
               f32 dy_[4]{dy0, dy1, dy2, dy3};
