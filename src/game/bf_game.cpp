@@ -2663,7 +2663,7 @@ void DoUI(bool draw) {
   Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
   int                              beautifiersCount = 0;
 
-  constexpr u16 GAP_VERY_SMALL           = 2;
+  constexpr u16 GAP_FLEX                 = 2;
   constexpr u16 GAP_SMALL                = 8;
   constexpr u16 GAP_BIG                  = 20;
   constexpr u16 PADDING_NINE_SLICE       = 12;
@@ -2965,7 +2965,7 @@ void DoUI(bool draw) {
 
     for (const auto fb_effect : *fb_effects) {
       CLAY({.layout{
-        .childGap = GAP_VERY_SMALL,
+        .childGap = GAP_FLEX,
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
@@ -3139,7 +3139,7 @@ void DoUI(bool draw) {
 
     LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
       CLAY({.layout{
-        .childGap = GAP_VERY_SMALL,
+        .childGap = GAP_FLEX,
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
@@ -3279,7 +3279,7 @@ void DoUI(bool draw) {
       auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
       if (chance > 0) {
         CLAY({.layout{
-          .childGap        = GAP_VERY_SMALL,
+          .childGap        = GAP_FLEX,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           FlexBegin(maxWidth, 0);
@@ -3873,7 +3873,7 @@ void DoUI(bool draw) {
                 const auto d = Clay_GetElementData(id);
                 if (d.found) {
                   CLAY({.layout{
-                    .childGap        = GAP_VERY_SMALL,
+                    .childGap        = GAP_FLEX,
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                   }}) {
                     FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 0);

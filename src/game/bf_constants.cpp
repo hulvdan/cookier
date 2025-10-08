@@ -208,7 +208,7 @@ PAL_COLORS_TABLE;
 
 Color TextifyColor(Color color) {  ///
   auto v = ColorToHSV(color);
-  return ColorFromHSV(v.x, MIN(1, v.y * 1.2f), MIN(1, v.z * 1.2f));
+  return ColorFromHSV(v.x, MIN(1, v.y * 1.0f), MIN(1, v.z * 1.2f));
 }
 
 #define X(name_, value_) const auto palText##name_ = TextifyColor(ColorFromRGBA(value_));
