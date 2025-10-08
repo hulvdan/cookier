@@ -35,7 +35,6 @@ from bf_lib import (
     data_values,
     gamelib_processing_functions,
     genenum,
-    hash32_file_utf8,
     log,
     recursive_mkdir,
     recursive_replace_transform,
@@ -412,76 +411,37 @@ def test_process_string(string: str, result: list[StringLine]) -> None:
 
 
 def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
-    gamelib["localization"] = {
-        "INVALID": "<< LOCALE NOT SET >>",
-        **gamelib["localization"],
-    }
-    locale_to_index: dict[str, int] = {
-        key: i for i, key in enumerate(gamelib["localization"])
-    }
-    gamelib["localization"] = list(gamelib["localization"].values())
-    gamelib["localizations"] = [{"strings": gamelib.pop("localization")}]
+    loc_ids: list[str] = []
+    loc_by_languages: dict[str, list[str]] = defaultdict(list)
+    loc_comments = []
 
-    csv_columns = ("id", "translated", "original", "comment")
+    with open(ASSETS_DIR / "localization.csv", encoding="utf-8") as in_file:
+        not_language_columns = ("id", "\ufeffid", "comment")
+        for row in csv.DictReader(in_file, delimiter=";"):
+            row_id = row.get("id") or row.get("\ufeffid")
+            assert isinstance(row_id, str)
+            loc_ids.append(row_id)
+            loc_comments.append(row["comment"])
+            for c in row:
+                if c not in not_language_columns:
+                    assert c in data_values.languages
+                    loc_by_languages[c].append(row[c])
 
+    assert len(loc_ids) == len(loc_comments)
+    for strings in loc_by_languages.values():
+        assert len(loc_ids) == len(strings)
+
+    locale_to_index: dict[str, int] = {key: i for i, key in enumerate(loc_ids)}
     index_to_locale = {i: codename for codename, i in locale_to_index.items()}
-
-    not_russian_languages = [l for l in data_values.languages if l != "russian"]
 
     SKIP_CHARACTERS = ("\n", "\t", "\r")
     codepoints: set[int] = set()
 
-    for language in not_russian_languages:
-        csv_path = ASSETS_DIR / f"localization_{language}.csv"
-        csv_temp_path = TEMP_DIR / f"localization_{language}.csv"
+    for strings in loc_by_languages.values():
+        for string in strings:
+            codepoints.update(ord(c) for c in string if c not in SKIP_CHARACTERS)
 
-        translated_values: dict[str, str] = {}
-
-        if csv_path.exists():
-            with open(csv_path, newline="", encoding="utf-8-sig") as in_file:
-                for row in csv.DictReader(in_file):
-                    translated_values[row["id"]] = row["translated"]
-
-        with open(csv_temp_path, "w", newline="", encoding="utf-8-sig") as out_file:
-            writer = csv.writer(out_file)
-            writer.writerow(csv_columns)
-
-            russian_localization: list[str] = gamelib["localizations"][0]["strings"]
-
-            for i in range(len(locale_to_index)):
-                codename = index_to_locale[i]
-                localized = russian_localization[i].strip()
-                codepoints.update(ord(c) for c in localized if c not in SKIP_CHARACTERS)
-                writer.writerow(
-                    (codename, translated_values.get(codename, "").strip(), localized, "")
-                )
-
-        if not csv_path.exists() or hash32_file_utf8(csv_path) != hash32_file_utf8(
-            csv_temp_path
-        ):
-            csv_temp_path.replace(csv_path)
-
-    for language in not_russian_languages:
-        csv_path = ASSETS_DIR / f"localization_{language}.csv"
-
-        translated_values_: dict[str, str] = {}
-        with open(csv_path, newline="", encoding="utf-8-sig") as in_file:
-            for row in csv.DictReader(in_file):
-                translated_values_[row["id"]] = row["translated"]
-
-        strings = []
-
-        for i in range(len(locale_to_index)):
-            codename = index_to_locale[i]
-            translated = translated_values_[codename].strip()
-            if not translated:
-                log.warn(f"Localization: {language}: Translation not found '{codename}'!")
-                translated = "<< NOT TRANSLATED >>"
-
-            strings.append(translated)
-            codepoints.update(ord(c) for c in translated if c not in SKIP_CHARACTERS)
-
-        gamelib["localizations"].append({"strings": strings})
+    gamelib["localizations"] = [{"strings": x} for x in loc_by_languages.values()]
 
     # Making `broken_lines`.
     if 1:
