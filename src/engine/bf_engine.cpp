@@ -238,7 +238,7 @@ Color ColorLerp(Color v1, Color v2, f32 p) {  ///
   return result;
 }
 
-bool ColorIsEqual(Color col1, Color col2) {  ///
+constexpr bool ColorIsEqual(Color col1, Color col2) {  ///
   bool result = false;
 
   if ((col1.r == col2.r)     //
@@ -250,7 +250,7 @@ bool ColorIsEqual(Color col1, Color col2) {  ///
   return result;
 }
 
-int ColorToHex(Color color) {  ///
+constexpr int ColorToHex(Color color) {  ///
   int result = 0;
 
   result = (int)(((unsigned int)color.r << 24)    //
@@ -262,7 +262,7 @@ int ColorToHex(Color color) {  ///
 }
 
 // Get color normalized as f32 [0..1]
-Vector4 ColorNormalize(Color color) {  ///
+constexpr Vector4 ColorNormalize(Color color) {  ///
   Vector4 result;
 
   result.x = (f32)color.r / 255.0f;
@@ -274,7 +274,7 @@ Vector4 ColorNormalize(Color color) {  ///
 }
 
 // Get color from normalized values [0..1]
-Color ColorFromNormalized(Vector4 normalized) {  ///
+constexpr Color ColorFromNormalized(Vector4 normalized) {  ///
   Color result;
 
   result.r = (unsigned char)(normalized.x * 255.0f);
@@ -287,7 +287,7 @@ Color ColorFromNormalized(Vector4 normalized) {  ///
 
 // Get HSV values for a Color
 // NOTE: Hue is returned as degrees [0..360]
-Vector3 ColorToHSV(Color color) {  ///
+constexpr Vector3 ColorToHSV(Color color) {  ///
   Vector3 hsv{};
   Vector3 rgb = {(f32)color.r / 255.0f, (f32)color.g / 255.0f, (f32)color.b / 255.0f};
   f32     min, max, delta;
@@ -373,7 +373,7 @@ Color ColorFromHSV(f32 hue, f32 saturation, f32 value) {  ///
 }
 
 // Get color multiplied with another color
-Color ColorTint(Color color, Color tint) {  ///
+constexpr Color ColorTint(Color color, Color tint) {  ///
   Color result = color;
 
   unsigned char r = (unsigned char)(((int)color.r * (int)tint.r) / 255);
@@ -390,7 +390,7 @@ Color ColorTint(Color color, Color tint) {  ///
 }
 
 // Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
-Color ColorBrightness(Color color, f32 factor) {  ///
+constexpr Color ColorBrightness(Color color, f32 factor) {  ///
   Color result = color;
 
   if (factor > 1.0f)
@@ -423,7 +423,7 @@ Color ColorBrightness(Color color, f32 factor) {  ///
 
 // Get color with contrast correction
 // NOTE: Contrast values between -1.0f and 1.0f
-Color ColorContrast(Color color, f32 contrast) {  ///
+constexpr Color ColorContrast(Color color, f32 contrast) {  ///
   Color result = color;
 
   if (contrast < -1.0f)

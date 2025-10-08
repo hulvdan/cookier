@@ -1000,7 +1000,7 @@ bool IsAlreadyPlaceholded(const char* placeholder) {  ///
 void PlaceholdString(
   const char* placeholder,
   const char* value,
-  Color       color = palGreen
+  Color       color = palTextGreen
 ) {  ///
   ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
   Placeholder p{
@@ -2581,7 +2581,7 @@ void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
 
 void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-    placeholder->brokenLocale_value(), palWhite, false
+    placeholder->brokenLocale_value(), palTextWhite, false
   );
 }
 
@@ -2683,7 +2683,7 @@ void DoUI(bool draw) {
   const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
   // }
 
-  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = palWhite))
+  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = palTextWhite))
   {  ///
     auto        string = localization_strings->Get(locale);
     Clay_String text{
@@ -2864,6 +2864,7 @@ void DoUI(bool draw) {
             BF_CLAY_TEXT("% ");
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
           BF_CLAY_SPACER_HORIZONTAL;
+          BF_CLAY_TEXT(" ");
           BF_CLAY_TEXT(TextFormat("%d", value));
 
           FontEnd();
@@ -2964,6 +2965,7 @@ void DoUI(bool draw) {
 
     for (const auto fb_effect : *fb_effects) {
       CLAY({.layout{
+        .childGap = GAP_VERY_SMALL,
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
@@ -2993,7 +2995,7 @@ void DoUI(bool draw) {
           PlaceholdString(
             "MODIFIER",
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
-            (isPositive == fb_stat->negative_is_good() ? palRed : palGreen)
+            (isPositive == fb_stat->negative_is_good() ? palTextRed : palTextGreen)
           );
         }
         else if (fb_effect->weaponproperty_type()) {
@@ -3019,7 +3021,7 @@ void DoUI(bool draw) {
           PlaceholdString(
             "MODIFIER",
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
-            palGreen
+            palTextGreen
           );
         }
         else
@@ -3137,6 +3139,7 @@ void DoUI(bool draw) {
 
     LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
       CLAY({.layout{
+        .childGap = GAP_VERY_SMALL,
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
@@ -3156,7 +3159,7 @@ void DoUI(bool draw) {
       [&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_TEXT(
           TextFormat("%d", CalculateWeaponDamage(weaponIndexOrMinus1, type, tier)),
-          palGreen
+          palTextGreen
         );
 
         // Scalings.
@@ -3195,7 +3198,7 @@ void DoUI(bool draw) {
           fb->shooting_duration_frames() + fb->cooldown_frames()
         );
         const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
-        BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palGreen);
+        BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palTextGreen);
       }
     );
 
@@ -3264,7 +3267,7 @@ void DoUI(bool draw) {
               TextFormat(
                 "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
               ),
-              palGreen
+              palTextGreen
             );
           }
         );
@@ -3275,7 +3278,10 @@ void DoUI(bool draw) {
     {
       auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
       if (chance > 0) {
-        CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+        CLAY({.layout{
+          .childGap        = GAP_VERY_SMALL,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
           FlexBegin(maxWidth, 0);
 
           PlaceholdString(
@@ -3297,7 +3303,7 @@ void DoUI(bool draw) {
               TextFormat(
                 "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
               ),
-              palGreen
+              palTextGreen
             );
           }
         );
@@ -3312,7 +3318,7 @@ void DoUI(bool draw) {
       componentWeaponStatEntry(
         glib->ui_label_this_wave_damage_locale(),
         [&]() BF_FORCE_INLINE_LAMBDA {
-          BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palWhite);
+          BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palTextWhite);
         }
       );
     }
@@ -3856,7 +3862,7 @@ void DoUI(bool draw) {
                   .id = id,
                   .layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
                 }) {
-                  BF_CLAY_TEXT(TextFormat("+%d", amount), palGreen);
+                  BF_CLAY_TEXT(TextFormat("+%d", amount), palTextGreen);
 
                   BF_CLAY_IMAGE({.texId = fb->icon_texture_id()});
 
@@ -3866,7 +3872,10 @@ void DoUI(bool draw) {
 
                 const auto d = Clay_GetElementData(id);
                 if (d.found) {
-                  CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+                  CLAY({.layout{
+                    .childGap        = GAP_VERY_SMALL,
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                  }}) {
                     FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 0);
                     BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
                     FlexEnd();
@@ -4118,7 +4127,7 @@ void DoUI(bool draw) {
                       }}) {
                         BF_CLAY_TEXT(
                           TextFormat("%d ", calculatedPrice),
-                          (calculatedPrice <= PLAYER_COINS ? palWhite : palRed)
+                          (calculatedPrice <= PLAYER_COINS ? palTextWhite : palTextRed)
                         );
                         BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                       }
