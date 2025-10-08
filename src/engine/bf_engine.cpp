@@ -135,7 +135,7 @@ struct Color {
   }
 };
 
-Color ColorFromRGB(u32 color) {  ///
+constexpr Color ColorFromRGB(u32 color) {  ///
   Color color_{
     .r = (u8)((color & (0xff << 16)) >> 16),
     .g = (u8)((color & (0xff << 8)) >> 8),
@@ -153,7 +153,7 @@ TEST_CASE ("ColorFromRGB") {  ///
   ASSERT(c.a == 255);
 }
 
-Color ColorFromRGBA(u32 color) {  ///
+constexpr Color ColorFromRGBA(u32 color) {  ///
   return {
     .r = (u8)((color >> 24) & 255),
     .g = (u8)((color >> 16) & 255),
