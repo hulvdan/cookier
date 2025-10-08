@@ -7,8 +7,11 @@ x use localization.csv
 x fix this wave damage
 x sfx: ui: button hover small
 x smaller font for weapon and item properties in shop
+x brighter text colors
 
-* brighter text colors
+* fully rework ui to be the same as in brotato
+* luck = подкова
+* fix make work ui_item_slot_colors
 * fix smg life steal 100%
 * fix ui bugs
 * keyboard actions also trigger button sounds.

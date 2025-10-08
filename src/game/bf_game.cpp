@@ -2750,22 +2750,20 @@ void DoUI(bool draw) {
     return result;
   };
 
-  // LAMBDA (void, componentSlot, (bool enabled, int tier, auto innerLambda)) { ///
-  const auto slotTexs   = glib->ui_item_slot_texture_ids();
+  // LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) { ///
   const auto slotColors = glib->ui_item_slot_colors();
 
-  LAMBDA (void, componentSlot, (bool enabled, int tier, auto innerLambda)) {
+  LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) {
     CLAY({}) {
-      const int b      = (enabled ? (Clay_Hovered() ? 1 : 0) : 2);
-      const int t      = b + 3 * tier;
-      const int tColor = b + 6 * tier;
-      const int tFlash = b + 6 * tier + 3;
+      auto color = ColorFromRGBA(slotColors->Get(2 * tier));
+      auto flash = ColorFromRGBA(slotColors->Get(2 * tier + 1));
+      if (canHover && Clay_Hovered()) {
+        color = palWhite;
+        flash = TRANSPARENT_BLACK;
+      }
+
       BF_CLAY_IMAGE(
-        {
-          .texId = slotTexs->Get(t),
-          .color = ColorFromRGBA(slotColors->Get(tColor)),
-          .flash = ColorFromRGBA(slotColors->Get(tFlash)),
-        },
+        {.texId = glib->ui_item_slot_texture_id(), .color = color, .flash = flash},
         innerLambda
       );
     }
@@ -2794,12 +2792,16 @@ void DoUI(bool draw) {
 
       // Primary / secondary buttons.
       CLAY({.layout{.childGap = GAP_SMALL}}) {
+        BF_CLAY_SPACER_HORIZONTAL;
+
         const bool clickedPrimary = componentButton(
           {.id = CLAY_ID("button_stats_primary"), .enabled = g.run.showingSecondaryStats},
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
           }
         );
+
+        BF_CLAY_SPACER_HORIZONTAL;
 
         const bool clickedSecondary = componentButton(
           {.id      = CLAY_ID("button_stats_secondary"),
@@ -2808,6 +2810,8 @@ void DoUI(bool draw) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
           }
         );
+
+        BF_CLAY_SPACER_HORIZONTAL;
 
         if (clickedPrimary)
           g.run.showingSecondaryStats = false;
@@ -2900,9 +2904,9 @@ void DoUI(bool draw) {
     }
   };
 
-  LAMBDA (void, componentItem, (const Item& item)) {  ///
+  LAMBDA (void, componentItem, (bool canHover, const Item& item)) {  ///
     const auto fb = glib->items()->Get(item.type);
-    componentSlot(false, fb->tier(), [&]() BF_FORCE_INLINE_LAMBDA {
+    componentSlot(canHover, fb->tier(), [&]() BF_FORCE_INLINE_LAMBDA {
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -3106,7 +3110,7 @@ void DoUI(bool draw) {
         const auto fb_item = fb_items->Get(item.type);
 
         CLAY({.layout{.childGap = GAP_SMALL}}) {
-          componentItem(item);
+          componentItem(false, item);
           componentItemNameAndHeaderProperties(item.type);
         }
 
@@ -3119,7 +3123,7 @@ void DoUI(bool draw) {
   LAMBDA (void, componentWeapon, (int weaponIndexOrMinus1, bool weAreInShop)) {  ///
     auto& weapon = g.run.playerWeapons[weaponIndexOrMinus1];
 
-    componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+    componentSlot(true, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
       if (weapon.type) {
         const auto fb = fb_weapons->Get(weapon.type);
         CLAY({.layout{
@@ -3382,7 +3386,8 @@ void DoUI(bool draw) {
           .offset{0, offsetY},
           .zIndex = ++zIndex,
           .attachPoints{.element = attachElement, .parent = attachParent},
-          .attachTo = CLAY_ATTACH_TO_PARENT,
+          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE,
+          .attachTo           = CLAY_ATTACH_TO_PARENT,
         },
       }) {
         FLOATING_BEAUTIFY;
@@ -3751,7 +3756,7 @@ void DoUI(bool draw) {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
               const auto fb = fb_items->Get(type);
               const Item item{.type = type, .count = 1};
-              componentItem(item);
+              componentItem(false, item);
               componentItemNameAndHeaderProperties(type);
             }
 
@@ -4202,7 +4207,7 @@ void DoUI(bool draw) {
                     break;
                   CLAY({}) {
                     auto& item = g.run.playerItems[t];
-                    componentItem(item);
+                    componentItem(true, item);
                     if (Clay_Hovered()) {
                       componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
                       if (ge.meta.debugEnabled) {
@@ -4375,7 +4380,7 @@ void DoUI(bool draw) {
               const auto t = y * ITEMS_X + x;
               if (t < items.count) {
                 CLAY({}) {
-                  componentItem(g.run.playerItems[t]);
+                  componentItem(true, g.run.playerItems[t]);
                   if (Clay_Hovered()) {
                     componentItemDetails(
                       g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
