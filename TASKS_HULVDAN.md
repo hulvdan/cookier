@@ -4,6 +4,7 @@ x palettized secondary text color
 x generate palette for aseprite
 x extracted localization.csv
 
+* use localization.csv
 * fix this wave damage
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
