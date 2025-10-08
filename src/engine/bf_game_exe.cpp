@@ -448,7 +448,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   case SDL_EVENT_WINDOW_FOCUS_GAINED: {
     // Required by yandex.
     // TODO: check if it works.
-    ma_engine_set_volume(&ge.meta._soundManager.engine, 1);
+    ma_engine_set_volume(&ge.meta._soundManager.engine, ge.meta._soundManager.volume);
   } break;
 
   default:
