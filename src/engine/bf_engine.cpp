@@ -506,6 +506,7 @@ struct EngineData {
       ma_sound* sounds[ARRAY_COUNT(g_sounds)];
       int*      soundPlayedIndicesPerVariation[ARRAY_COUNT(g_sounds)];
       ma_engine engine = {};
+      f32       volume = 0.75f;
     } _soundManager = {};
 
     bool ysdkLoaded = false;
