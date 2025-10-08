@@ -2961,6 +2961,7 @@ void DoUI(bool draw) {
     ASSERT(count > 0);
     if (!fb_effects)
       return;
+
     for (const auto fb_effect : *fb_effects) {
       CLAY({.layout{
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
@@ -3037,7 +3038,9 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentItemStatsExploded, (ItemType type, int count, int maxWidth))
   {  ///
+    FontBegin(&g.meta.fontStats);
     componentEffectsExploded(fb_items->Get(type)->effects(), count, maxWidth);
+    FontEnd();
   };
 
   struct ComponentItemDetailsData {
@@ -3130,6 +3133,8 @@ void DoUI(bool draw) {
     (int weaponIndexOrMinus1, WeaponType type, int tier, int thisWaveDamage, int maxWidth)
   )
   {  ///
+    FontBegin(&g.meta.fontStats);
+
     LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
       CLAY({.layout{
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
@@ -3311,6 +3316,8 @@ void DoUI(bool draw) {
         }
       );
     }
+
+    FontEnd();
   };
 
   LAMBDA (
