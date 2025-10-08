@@ -2775,6 +2775,7 @@ void DoUI(bool draw) {
   LAMBDA (void, componentStats, ()) {  ///
     CLAY({
       .layout{
+        .sizing{.width = CLAY_SIZING_FIXED(256)},
         BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
         .childGap        = GAP_BIG,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -2945,12 +2946,20 @@ void DoUI(bool draw) {
         }
         CLAY({}) {
           FontBegin(&g.meta.fontStats);
-          BF_CLAY_TEXT_LOCALIZED_DANGER(
-            glib->ui_label_limited_locale(), secondaryTextColor
-          );
-          BF_CLAY_TEXT(
-            TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()), secondaryTextColor
-          );
+          if (fb_item->count_cap() > 1) {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(
+              glib->ui_label_limited_locale(), secondaryTextColor
+            );
+            BF_CLAY_TEXT(
+              TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()),
+              secondaryTextColor
+            );
+          }
+          else {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(
+              glib->ui_label_unique_locale(), secondaryTextColor
+            );
+          }
           FontEnd();
         }
       }
