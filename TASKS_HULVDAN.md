@@ -8,11 +8,13 @@ x fix this wave damage
 x sfx: ui: button hover small
 x smaller font for weapon and item properties in shop
 x brighter text colors
+x fix smg life steal 100%
 
+* fix can't hover / click other buttons
+  except those which are shown in the modal
 * fully rework ui to be the same as in brotato
 * luck = подкова
 * fix make work ui_item_slot_colors
-* fix smg life steal 100%
 * fix ui bugs
 * keyboard actions also trigger button sounds.
   don't make clicked / error sounds from buttons

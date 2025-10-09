@@ -3309,17 +3309,6 @@ void DoUI(bool draw) {
 
           FlexEnd();
         }
-        componentWeaponStatEntry(
-          fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
-          [&]() BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT(
-              TextFormat(
-                "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
-              ),
-              palTextGreen
-            );
-          }
-        );
       }
     }
 
