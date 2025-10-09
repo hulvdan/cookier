@@ -2778,11 +2778,6 @@ void DoUI(bool draw) {
           ),
           (Clay_Hovered() ? TRANSPARENT_BLACK
                           : (data.selected ? TRANSPARENT_BLACK : slotColors[1]))
-          // (data.selected ? TRANSPARENT_BLACK : (Clay_Hovered() ? palWhite :
-          // slotColors[0])
-          // ),
-          // (data.selected ? TRANSPARENT_BLACK
-          //                : (Clay_Hovered() ? TRANSPARENT_BLACK : slotColors[1]))
         ),
       }) {
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
@@ -3958,7 +3953,9 @@ void DoUI(bool draw) {
                 });
 
                 // Name.
-                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->upgrade_name_locale());
+                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+                  fb->upgrade_name_locale(), textColorsPerTier[upgrade.tier]
+                );
               }
 
               BF_CLAY_SPACER_VERTICAL;
@@ -3990,9 +3987,7 @@ void DoUI(bool draw) {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                   }}) {
                     FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 0);
-                    BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-                      fb->name_locale(), textColorsPerTier[upgrade.tier]
-                    );
+                    BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
                     FlexEnd();
                   }
                 }
