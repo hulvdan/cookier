@@ -17,7 +17,12 @@ x bigger font of prices
 x combine button doesn't get displayed if weapon can't be combined
 x fix zIndex of modal (stat icons don't get displayed over overlay)
 
+* fix componentStats primary/secondary button sizes
+* shop reroll button red if no money
+* weapon detail icons? (combine / sell / cancel)
+* should stats (primary / secondary) be making error sounds?
 * shop buy error current gold amount flashing
+* shop buy error weapons flashing
 * fully rework ui to be the same as in brotato
 * luck = подкова
 * fix make work ui_item_slot_colors

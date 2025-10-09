@@ -122,7 +122,7 @@ ui_frame_nine_slice:
   top: 48
   bottom: 48
 ui_button_nine_slice:
-  texture_id: ui_button
+  texture_id: ui_button_2
   left: 32
   right: 32
   top: 32

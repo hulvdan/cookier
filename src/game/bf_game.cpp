@@ -2694,6 +2694,13 @@ void DoUI(bool draw) {
   i16       zIndex = 0;
 
   const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
+
+  const auto fb_slotColors = glib->ui_item_slot_colors();
+  auto slotColors_ = ALLOCATE_ARRAY(&g.meta.trashArena, Color, fb_slotColors->size());
+  FOR_RANGE (int, i, fb_slotColors->size()) {
+    slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
+  }
+  const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = palTextWhite))
@@ -2736,9 +2743,10 @@ void DoUI(bool draw) {
   };
 
   struct ComponentButtonData {
-    Clay_ElementId id      = {};
-    bool           enabled = false;
-    bool           growX   = false;
+    Clay_ElementId id       = {};
+    bool           enabled  = false;
+    bool           selected = false;
+    bool           growX    = false;
   };
 
   LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) {  ///
@@ -2750,9 +2758,40 @@ void DoUI(bool draw) {
       sizing.width = CLAY_SIZING_GROW(0);
 
     CLAY({.id = data.id, .layout{.sizing{sizing}}}) {
+#define BUTTON_FLAT 1
+
+#if BUTTON_FLAT
+      CLAY({
+        .layout{
+          BF_CLAY_SIZING_GROW_XY,
+          .padding{
+            .left   = GAP_BIG,
+            .right  = GAP_BIG,
+            .top    = GAP_SMALL,
+            .bottom = GAP_SMALL,
+          },
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        },
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_button_nine_slice(),
+          (Clay_Hovered() ? palWhite : (data.selected ? TRANSPARENT_BLACK : slotColors[0])
+          ),
+          (Clay_Hovered() ? TRANSPARENT_BLACK
+                          : (data.selected ? TRANSPARENT_BLACK : slotColors[1]))
+          // (data.selected ? TRANSPARENT_BLACK : (Clay_Hovered() ? palWhite :
+          // slotColors[0])
+          // ),
+          // (data.selected ? TRANSPARENT_BLACK
+          //                : (Clay_Hovered() ? TRANSPARENT_BLACK : slotColors[1]))
+        ),
+      }) {
+        CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+          innerLambda();
+        }
+      }
+#else
       auto      fb_colors = glib->ui_button_colors();
       const int t         = (data.enabled ? (Clay_Hovered() ? 1 : 0) : 2);
-
       CLAY({
         .layout{
           BF_CLAY_SIZING_GROW_XY,
@@ -2773,6 +2812,7 @@ void DoUI(bool draw) {
         // Margin at the bottom so that "deep" button looks better.
         CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(6)}}}) {}
       }
+#endif
 
       if (!draw)
         ButtonSFX(data.id, Clay_Hovered(), clicked(), data.enabled);
@@ -2784,13 +2824,6 @@ void DoUI(bool draw) {
   };
 
   // LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) { ///
-  const auto fb_slotColors = glib->ui_item_slot_colors();
-  auto slotColors_ = ALLOCATE_ARRAY(&g.meta.trashArena, Color, fb_slotColors->size());
-  FOR_RANGE (int, i, fb_slotColors->size()) {
-    slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
-  }
-  const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
-
   LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) {
     CLAY({}) {
       auto color = slotColors[2 * tier];
@@ -2836,8 +2869,9 @@ void DoUI(bool draw) {
       }}) {
         const bool clickedPrimary = componentButton(
           {
-            .id      = CLAY_ID("button_stats_primary"),
-            .enabled = g.run.showingSecondaryStats,
+            .id       = CLAY_ID("button_stats_primary"),
+            .enabled  = g.run.showingSecondaryStats,
+            .selected = !g.run.showingSecondaryStats,
           },
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
@@ -2846,8 +2880,9 @@ void DoUI(bool draw) {
 
         const bool clickedSecondary = componentButton(
           {
-            .id      = CLAY_ID("button_stats_secondary"),
-            .enabled = !g.run.showingSecondaryStats,
+            .id       = CLAY_ID("button_stats_secondary"),
+            .enabled  = !g.run.showingSecondaryStats,
+            .selected = g.run.showingSecondaryStats,
           },
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
@@ -3438,7 +3473,7 @@ void DoUI(bool draw) {
               .width = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE)
             },
             BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
-            .childGap        = GAP_SMALL,
+            .childGap        = GAP_BIG,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_NINE_SLICE(
@@ -3450,91 +3485,104 @@ void DoUI(bool draw) {
           if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1))
             componentOverlay();
 
-          CLAY({.layout{.childGap = GAP_SMALL}}) {
-            componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-              CLAY({.layout{
-                BF_CLAY_SIZING_GROW_XY,
-                BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-              }}) {
-                BF_CLAY_IMAGE({
-                  .texId = fb->icon_texture_id(),
-                  .color = ColorFromRGBA(fb->color()),
-                });
-              }
-            });
+          CLAY({
+            .layout{
+              .sizing{.width = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH)},
+              .childGap        = GAP_SMALL,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            },
+          }) {
+            CLAY({.layout{.childGap = GAP_SMALL}}) {
+              componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({.layout{
+                  BF_CLAY_SIZING_GROW_XY,
+                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                }}) {
+                  BF_CLAY_IMAGE({
+                    .texId = fb->icon_texture_id(),
+                    .color = ColorFromRGBA(fb->color()),
+                  });
+                }
+              });
 
-            BF_CLAY_TEXT_LOCALIZED_DANGER(
-              fb->name_locale(), textColorsPerTier[weapon.tier]
+              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                fb->name_locale(), textColorsPerTier[weapon.tier]
+              );
+            }
+
+            componentWeaponStatsExploded(
+              weaponIndexOrMinus1,
+              weapon.type,
+              weapon.tier,
+              weapon.thisWaveDamage,
+              ITEM_FRAME_WIDTH
             );
           }
 
-          componentWeaponStatsExploded(
-            weaponIndexOrMinus1,
-            weapon.type,
-            weapon.tier,
-            weapon.thisWaveDamage,
-            ITEM_FRAME_WIDTH
-          );
-
           if (weAreInShop) {
-            int canCombineWithIndex = -1;
-            for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
-              if (i == weaponIndexOrMinus1)
-                continue;
-              auto& otherWeapon = g.run.playerWeapons[i];
-              if ((weapon.type == otherWeapon.type)     //
-                  && (weapon.tier == otherWeapon.tier)  //
-                  && (weapon.tier < TOTAL_TIERS - 1))
-              {
-                canCombineWithIndex = i;
-                break;
+            CLAY({.layout{
+              .childGap        = GAP_SMALL,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              int canCombineWithIndex = -1;
+              for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
+                if (i == weaponIndexOrMinus1)
+                  continue;
+                auto& otherWeapon = g.run.playerWeapons[i];
+                if ((weapon.type == otherWeapon.type)     //
+                    && (weapon.tier == otherWeapon.tier)  //
+                    && (weapon.tier < TOTAL_TIERS - 1))
+                {
+                  canCombineWithIndex = i;
+                  break;
+                }
               }
-            }
 
-            // Combine button.
-            bool combined = false;
-            if (canCombineWithIndex >= 0) {
-              combined = componentButton(
-                {.id = CLAY_ID("button_weapon_combine"), .enabled = true},
+              // Combine button.
+              bool combined = false;
+              if (canCombineWithIndex >= 0) {
+                combined = componentButton(
+                  {.id = CLAY_ID("button_weapon_combine"), .enabled = true},
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
+                  }
+                );
+              }
+
+              // Recycle button.
+              const bool recycled = componentButton(
+                {.id = CLAY_ID("button_weapon_recycle"), .enabled = true},
                 [&]() BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
+                  BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
                 }
               );
-            }
 
-            // Recycle button.
-            const bool recycled = componentButton(
-              {.id = CLAY_ID("button_weapon_recycle"), .enabled = true},
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_recycle_locale());
-                BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice));
-              }
-            );
-
-            // Cancel button.
-            const bool cancelled = componentButton(
-              {.id = CLAY_ID("button_weapon_cancel"), .enabled = true},
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale());
-              }
-            );
-
-            if (combined) {
-              weapon.tier += 1;
-              weapon.recyclePrice   = GetWeaponRecyclePrice(weapon.type, weapon.tier);
-              weapon.thisWaveDamage = 0;
-              weapon.killedEnemies  = MAX(
-                weapon.killedEnemies,
-                g.run.playerWeapons[canCombineWithIndex].killedEnemies
+              // Cancel button.
+              const bool cancelled = componentButton(
+                {.id = CLAY_ID("button_weapon_cancel"), .enabled = true},
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale());
+                }
               );
-              StableRemoveWeapon(canCombineWithIndex);
+
+              if (combined) {
+                weapon.tier += 1;
+                weapon.recyclePrice   = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+                weapon.thisWaveDamage = 0;
+                weapon.killedEnemies  = MAX(
+                  weapon.killedEnemies,
+                  g.run.playerWeapons[canCombineWithIndex].killedEnemies
+                );
+                StableRemoveWeapon(canCombineWithIndex);
+              }
+              if (recycled) {
+                AddCoins(weapon.recyclePrice);
+                StableRemoveWeapon(weaponIndexOrMinus1);
+              }
+              if (cancelled || recycled || combined)
+                g.run.shop.selectedWeaponIndex = -1;
             }
-            if (recycled) {
-              AddCoins(weapon.recyclePrice);
-              StableRemoveWeapon(weaponIndexOrMinus1);
-            }
-            if (cancelled || recycled || combined)
-              g.run.shop.selectedWeaponIndex = -1;
           }
         }
       }
