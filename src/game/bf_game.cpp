@@ -2753,10 +2753,11 @@ void DoUI(bool draw) {
   };
 
   struct ComponentButtonData {
-    Clay_ElementId id       = {};
-    bool           enabled  = false;
-    bool           selected = false;
-    bool           growX    = false;
+    Clay_ElementId id                = {};
+    bool           enabled           = false;
+    bool           selected          = false;
+    bool           growX             = false;
+    u16            paddingHorizontal = GAP_BIG;
   };
 
   LAMBDA (bool, componentButton, (ComponentButtonData data, auto innerLambda)) {  ///
@@ -2775,8 +2776,8 @@ void DoUI(bool draw) {
         .layout{
           BF_CLAY_SIZING_GROW_XY,
           .padding{
-            .left   = GAP_BIG,
-            .right  = GAP_BIG,
+            .left   = data.paddingHorizontal,
+            .right  = data.paddingHorizontal,
             .top    = GAP_SMALL,
             .bottom = GAP_SMALL,
           },
@@ -2879,11 +2880,14 @@ void DoUI(bool draw) {
         .childGap = GAP_SMALL,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
+        FontBegin(&g.meta.fontStats);
+
         const bool clickedPrimary = componentButton(
           {
-            .id       = CLAY_ID("button_stats_primary"),
-            .enabled  = g.run.showingSecondaryStats,
-            .selected = !g.run.showingSecondaryStats,
+            .id                = CLAY_ID("button_stats_primary"),
+            .enabled           = g.run.showingSecondaryStats,
+            .selected          = !g.run.showingSecondaryStats,
+            .paddingHorizontal = GAP_SMALL,
           },
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
@@ -2892,14 +2896,17 @@ void DoUI(bool draw) {
 
         const bool clickedSecondary = componentButton(
           {
-            .id       = CLAY_ID("button_stats_secondary"),
-            .enabled  = !g.run.showingSecondaryStats,
-            .selected = g.run.showingSecondaryStats,
+            .id                = CLAY_ID("button_stats_secondary"),
+            .enabled           = !g.run.showingSecondaryStats,
+            .selected          = g.run.showingSecondaryStats,
+            .paddingHorizontal = GAP_SMALL,
           },
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
           }
         );
+
+        FontEnd();
 
         if (clickedPrimary)
           g.run.showingSecondaryStats = false;
