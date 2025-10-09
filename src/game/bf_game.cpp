@@ -2097,6 +2097,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (creature.health <= 0)
     return false;
 
+  creature.aggroed = true;
+
   const auto fb = glib->creatures()->Get(creature.type);
 
   if (data.creatureIndex) {
