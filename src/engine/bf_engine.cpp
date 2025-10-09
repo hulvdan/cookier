@@ -2090,7 +2090,8 @@ void FlushDrawCommands() {
                 pos.x = prevPosX + (pos.x - prevPosX) * SSS;
                 y     = prevY + (y - prevY) * SSS;
                 q.x1  = q.x0 + (q.x1 - q.x0) * SSS;
-                q.y1  = q.y0 + (q.y1 - q.y0) * SSS;
+                q.y0  = y + (q.y0 - y) * SSS;
+                q.y1  = y + (q.y1 - y) * SSS;
 
                 q.x0 -= font->outlineWidth * SSS;
                 q.x1 += font->outlineWidth * SSS;
@@ -2106,20 +2107,10 @@ void FlushDrawCommands() {
                   q.y1      = pos1.y;
                 }
 
-                auto sx0 = q.s0;
-                auto sx1 = q.s1;
-                auto sy0 = q.t0;
-                auto sy1 = q.t1;
-                if (data.scale.x < 0) {
-                  auto t = sx0;
-                  sx0    = sx1;
-                  sx1    = t;
-                }
-                if (data.scale.y < 0) {
-                  auto t = sy0;
-                  sy0    = sy1;
-                  sy1    = t;
-                }
+                const f32 sx0 = q.s0;
+                const f32 sx1 = q.s1;
+                const f32 sy0 = q.t0;
+                const f32 sy1 = q.t1;
 
                 Vector2 topLeft{};
                 Vector2 topRight{};
