@@ -1134,16 +1134,20 @@ static BF_FORCE_INLINE Clay_Dimensions MeasureText(
         = ArrayBinaryFind(font->codepoints, font->codepointsCount, (int)codepoint);
       ASSERT(glyphIndex >= 0);
 
+      f32 w{};
+
       stbtt_GetPackedQuad(
         font->chars,
         font->atlasTexture.size.x,
         font->atlasTexture.size.y,
         glyphIndex,
-        &width,
+        &w,
         &_y,
         &_q,
         1  // 1=opengl & d3d10+,0=d3d9
       );
+
+      width += w / font->_scaleToFit;
     }
   );
 
@@ -2005,18 +2009,31 @@ void ReloadFontsIfNeeded() {  ///
   static Vector2Int previousScreenSize = {};
 
   static int debounce = 0;
+
   if (previousScreenSize == ge.meta.screenSize) {
     debounce = 0;
     return;
   }
 
   if (loaded) {
+    Clay_ResetMeasureTextCache();
+
+    static Vector2Int lastFrameScreenSize = {};
+    if (lastFrameScreenSize != ge.meta.screenSize) {
+      lastFrameScreenSize = ge.meta.screenSize;
+      debounce            = 0;
+      return;
+    }
+
     debounce++;
-    if (debounce < 2 * FIXED_FPS)
+    if (debounce < FIXED_FPS)
       return;
   }
 
   previousScreenSize = ge.meta.screenSize;
+
+  auto fontpath = "resources/arialbd.ttf";
+  // auto fontpath = "resources/correction_brush.ttf";
 
   static int priceCodepoints[]{
     ' ', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -2025,7 +2042,7 @@ void ReloadFontsIfNeeded() {  ///
   LoadFontData loadFontData_[]{
     // fontUI.
     {
-      .filepath        = "resources/arialbd.ttf",
+      .filepath        = fontpath,
       .size            = 15,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
@@ -2033,7 +2050,7 @@ void ReloadFontsIfNeeded() {  ///
     },
     // fontUIOutlined.
     {
-      .filepath        = "resources/arialbd.ttf",
+      .filepath        = fontpath,
       .size            = 15,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
@@ -2043,7 +2060,7 @@ void ReloadFontsIfNeeded() {  ///
     },
     // fontStats.
     {
-      .filepath        = "resources/arialbd.ttf",
+      .filepath        = fontpath,
       .size            = 13,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
@@ -2051,7 +2068,7 @@ void ReloadFontsIfNeeded() {  ///
     },
     // fontPrices.
     {
-      .filepath        = "resources/arialbd.ttf",
+      .filepath        = fontpath,
       .size            = 20,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = priceCodepoints,
@@ -2059,7 +2076,7 @@ void ReloadFontsIfNeeded() {  ///
     },
     // fontWaveCompletion.
     {
-      .filepath        = "resources/arialbd.ttf",
+      .filepath        = fontpath,
       .size            = 40,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
@@ -2073,9 +2090,10 @@ void ReloadFontsIfNeeded() {  ///
   if (loaded && g.meta.loadedFonts.loaded)
     UnloadFonts(&g.meta.loadedFonts);
 
-  loaded = true;
-  g.meta.loadedFonts
-    = LoadFonts({.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData);
+  loaded             = true;
+  g.meta.loadedFonts = LoadFonts(
+    {.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData, {2048, 2048}
+  );
 }
 
 void GameInit() {  ///
