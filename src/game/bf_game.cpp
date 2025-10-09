@@ -2610,13 +2610,7 @@ void FontEnd() {  ///
   g.ui.overriddenFont = nullptr;
 }
 
-void ButtonSFX(
-  bool           draw,
-  Clay_ElementId id,
-  bool           hovered,
-  bool           clicked,
-  bool           enabled
-) {  ///
+void ButtonSFX(bool draw, Clay_ElementId id, bool hovered, bool enabled) {  ///
   if (draw)
     return;
 
@@ -2637,13 +2631,7 @@ void ButtonSFX(
   auto& b = g.ui.buttonStates[index];
   ASSERT_FALSE(b.thisFrameUpdated);
 
-  if (clicked) {
-    if (enabled)
-      PlaySound(Sound_UI_BUTTON_CLICK);
-    else
-      PlaySound(Sound_UI_BUTTON_ERROR);
-  }
-  else if (hovered && !b.hovered)
+  if (hovered && !b.hovered)
     PlaySound(Sound_UI_BUTTON_HOVER_SMALL);
 
   b.id               = id;
@@ -2820,9 +2808,9 @@ void DoUI(bool draw) {
       }
 #endif
 
-      ButtonSFX(draw, data.id, Clay_Hovered(), clicked(), data.enabled);
+      ButtonSFX(draw, data.id, Clay_Hovered(), data.enabled);
 
-      result = data.enabled && clicked();
+      result = clicked();
     }
 
     return result;
@@ -2908,10 +2896,14 @@ void DoUI(bool draw) {
 
         FontEnd();
 
-        if (clickedPrimary)
+        if (clickedPrimary && g.run.showingSecondaryStats) {
+          PlaySound(Sound_UI_BUTTON_CLICK);
           g.run.showingSecondaryStats = false;
-        if (clickedSecondary)
+        }
+        if (clickedSecondary && !g.run.showingSecondaryStats) {
+          PlaySound(Sound_UI_BUTTON_CLICK);
           g.run.showingSecondaryStats = true;
+        }
       }
 
       LAMBDA (
@@ -3244,15 +3236,11 @@ void DoUI(bool draw) {
             });
           }
 
-          ButtonSFX(
-            draw,
-            CLAY_IDI("componentWeapon", weaponIndex),
-            Clay_Hovered(),
-            weAreInShop && clicked(),
-            true
-          );
+          ButtonSFX(draw, CLAY_IDI("componentWeapon", weaponIndex), Clay_Hovered(), true);
 
           if (weAreInShop && clicked()) {
+            PlaySound(Sound_UI_BUTTON_CLICK);
+
             ASSERT(g.run.shop.selectedWeaponIndex == -1);
             g.run.shop.selectedWeaponIndex = weaponIndex;
           }
@@ -3605,6 +3593,7 @@ void DoUI(bool draw) {
               );
 
               if (combined) {
+                ASSERT(canCombineWithIndex >= 0);
                 weapon.tier += 1;
                 weapon.recyclePrice   = GetWeaponRecyclePrice(weapon.type, weapon.tier);
                 weapon.thisWaveDamage = 0;
@@ -3618,8 +3607,10 @@ void DoUI(bool draw) {
                 AddCoins(weapon.recyclePrice);
                 StableRemoveWeapon(weaponIndexOrMinus1);
               }
-              if (cancelled || recycled || combined)
+              if (cancelled || recycled || combined) {
+                PlaySound(Sound_UI_BUTTON_CLICK);
                 g.run.shop.selectedWeaponIndex = -1;
+              }
             }
           }
         }
@@ -3927,6 +3918,8 @@ void DoUI(bool draw) {
               AddCoins(g.run.pickedUpItem.recyclePrice);
 
             if (took || recycled) {
+              PlaySound(Sound_UI_BUTTON_CLICK);
+
               g.run.pickedUpItem = {};
 
               g.run.crates--;
@@ -4055,6 +4048,8 @@ void DoUI(bool draw) {
                 if (!draw && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + i)))
                   chosen = true;
                 if (chosen) {
+                  PlaySound(Sound_UI_BUTTON_CLICK);
+
                   if (g.run.previousLevel < g.run.xpLevel) {
                     g.run.previousLevel++;
                     g.run.scheduledUpgrades = true;
@@ -4091,8 +4086,14 @@ void DoUI(bool draw) {
         if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
           rerolled = true;
         if (rerolled) {
-          g.run.upgrades.rerolls.Roll();
-          RefillUpgradesToPick();
+          if (canReroll) {
+            PlaySound(Sound_UI_BUTTON_CLICK);
+
+            g.run.upgrades.rerolls.Roll();
+            RefillUpgradesToPick();
+          }
+          else
+            PlaySound(Sound_UI_BUTTON_ERROR);
         }
       }
 
@@ -4175,8 +4176,14 @@ void DoUI(bool draw) {
           if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
             rerolled = true;
           if (rerolled) {
-            g.run.shop.rerolls.Roll();
-            RefillShopToPick();
+            if (canReroll) {
+              PlaySound(Sound_UI_BUTTON_CLICK);
+
+              g.run.shop.rerolls.Roll();
+              RefillShopToPick();
+            }
+            else
+              PlaySound(Sound_UI_BUTTON_ERROR);
           }
         }
 
@@ -4308,29 +4315,35 @@ void DoUI(bool draw) {
                     bought = true;
 
                   if (bought) {
-                    AddCoins(-calculatedPrice);
-                    if (v.weapon) {
-                      auto& weapon = g.run.playerWeapons[emptyOrSameWeaponSlotIndex];
-                      if (weapon.type) {
-                        // Upgrading an existing weapon if no empty slot found.
-                        ASSERT(weapon.type == v.weapon);
-                        ASSERT(weapon.tier == v.tier);
-                        weapon.tier += 1;
+                    if (canBuy) {
+                      PlaySound(Sound_UI_BUTTON_CLICK);
+
+                      AddCoins(-calculatedPrice);
+                      if (v.weapon) {
+                        auto& weapon = g.run.playerWeapons[emptyOrSameWeaponSlotIndex];
+                        if (weapon.type) {
+                          // Upgrading an existing weapon if no empty slot found.
+                          ASSERT(weapon.type == v.weapon);
+                          ASSERT(weapon.tier == v.tier);
+                          weapon.tier += 1;
+                        }
+                        else {
+                          // Filling empty weapon slot if exists.
+                          weapon.type = v.weapon;
+                          weapon.tier = v.tier;
+                          RecalculatePlayerWeaponOffsets();
+                        }
+                        weapon.recyclePrice
+                          = GetWeaponRecyclePrice(weapon.type, weapon.tier);
                       }
-                      else {
-                        // Filling empty weapon slot if exists.
-                        weapon.type = v.weapon;
-                        weapon.tier = v.tier;
-                        RecalculatePlayerWeaponOffsets();
-                      }
-                      weapon.recyclePrice
-                        = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+                      else if (v.item)
+                        AddItem(v.item);
+                      else
+                        INVALID_PATH;
+                      v = {};
                     }
-                    else if (v.item)
-                      AddItem(v.item);
                     else
-                      INVALID_PATH;
-                    v = {};
+                      PlaySound(Sound_UI_BUTTON_ERROR);
                   }
                 }
               }
@@ -4368,9 +4381,7 @@ void DoUI(bool draw) {
                     auto& item = g.run.playerItems[t];
                     componentItem(true, item);
 
-                    ButtonSFX(
-                      draw, CLAY_IDI("button_item", t), Clay_Hovered(), false, true
-                    );
+                    ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered(), true);
 
                     if (Clay_Hovered()) {
                       componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
@@ -4463,6 +4474,8 @@ void DoUI(bool draw) {
           );
 
           if (g.run.scheduledNextWave) {
+            PlaySound(Sound_UI_BUTTON_CLICK);
+
             for (auto& v : g.run.shop.toPick)
               v = {};
           }
@@ -4559,9 +4572,7 @@ void DoUI(bool draw) {
                 if (t < items.count) {
                   CLAY({}) {
                     componentItem(true, g.run.playerItems[t]);
-                    ButtonSFX(
-                      draw, CLAY_IDI("button_item", t), Clay_Hovered(), false, true
-                    );
+                    ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered(), true);
                     if (Clay_Hovered()) {
                       componentItemDetails(
                         g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
@@ -4586,6 +4597,8 @@ void DoUI(bool draw) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_restart_locale());
           }
         );
+        if (g.run.reload)
+          PlaySound(Sound_UI_BUTTON_CLICK);
       }
     }
   }

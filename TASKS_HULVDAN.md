@@ -20,18 +20,15 @@ x don't show empty weapon slots in shop
 x items + weapons also make click / hover sfx
 x don't show items/weapons labels in shop/end if player doesn't have any
 x fix componentStats primary/secondary button sizes
+x keyboard actions also trigger button sounds.
+  don't make clicked / error sounds from buttons
 
+* shop buy error current gold amount flashing
+* shop buy error weapons flashing
 * shop reroll button red if no money
 * weapon detail icons? (combine / sell / cancel)
 * should stats (primary / secondary) be making error sounds?
-* shop buy error current gold amount flashing
-* shop buy error weapons flashing
-* fully rework ui to be the same as in brotato
 * luck = подкова
-* fix make work ui_item_slot_colors
-* fix ui bugs
-* keyboard actions also trigger button sounds.
-  don't make clicked / error sounds from buttons
 * weapon slot hover color
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
