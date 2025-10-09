@@ -19,8 +19,8 @@ x fix zIndex of modal (stat icons don't get displayed over overlay)
 x don't show empty weapon slots in shop
 x items + weapons also make click / hover sfx
 x don't show items/weapons labels in shop/end if player doesn't have any
+x fix componentStats primary/secondary button sizes
 
-* fix componentStats primary/secondary button sizes
 * shop reroll button red if no money
 * weapon detail icons? (combine / sell / cancel)
 * should stats (primary / secondary) be making error sounds?
