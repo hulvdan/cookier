@@ -2788,6 +2788,7 @@ struct LoadFontData {
   int size            = {};
   f32 FIXME_sizeScale = {};
 
+  // `codepoints` must be in the same memory spot throughout the lifetime of their font.
   int* codepoints      = {};
   int  codepointsCount = {};
 
