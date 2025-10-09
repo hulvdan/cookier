@@ -2026,7 +2026,7 @@ void ReloadFontsIfNeeded() {  ///
     }
 
     debounce++;
-    if (debounce < FIXED_FPS)
+    if (debounce < FIXED_FPS / 5)
       return;
   }
 
@@ -2789,7 +2789,7 @@ void DoUI(bool draw) {
         },
       },
       .floating{
-        .zIndex = zIndex - 1,
+        .zIndex = (i16)(zIndex - 1),
         .attachPoints{
           .element = CLAY_ATTACH_POINT_CENTER_CENTER,
           .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,

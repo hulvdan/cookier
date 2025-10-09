@@ -3103,7 +3103,7 @@ LoadFontsResult LoadFonts(
   );
 
 #if BF_DEBUG & !defined(SDL_PLATFORM_EMSCRIPTEN)
-  {
+  if (0) {
     ZoneScopedN("stbi_write_png");
     stbi_write_png("debugFontAtlas.png", atlasSize.x, atlasSize.y, 4, atlasData, 0);
   }
