@@ -22,10 +22,10 @@ x don't show items/weapons labels in shop/end if player doesn't have any
 x fix componentStats primary/secondary button sizes
 x keyboard actions also trigger button sounds.
   don't make clicked / error sounds from buttons
+x shop reroll button red if no money
 
 * shop buy error current gold amount flashing
 * shop buy error weapons flashing
-* shop reroll button red if no money
 * weapon detail icons? (combine / sell / cancel)
 * should stats (primary / secondary) be making error sounds?
 * luck = подкова
