@@ -2791,9 +2791,11 @@ void DoUI(bool draw) {
       }
 
       // Primary / secondary buttons.
-      CLAY({.layout{.childGap = GAP_SMALL}}) {
-        BF_CLAY_SPACER_HORIZONTAL;
-
+      CLAY({.layout{
+        BF_CLAY_SIZING_GROW_X,
+        .childGap = GAP_SMALL,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }}) {
         const bool clickedPrimary = componentButton(
           {
             .id      = CLAY_ID("button_stats_primary"),
@@ -2804,8 +2806,6 @@ void DoUI(bool draw) {
           }
         );
 
-        BF_CLAY_SPACER_HORIZONTAL;
-
         const bool clickedSecondary = componentButton(
           {
             .id      = CLAY_ID("button_stats_secondary"),
@@ -2815,8 +2815,6 @@ void DoUI(bool draw) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
           }
         );
-
-        BF_CLAY_SPACER_HORIZONTAL;
 
         if (clickedPrimary)
           g.run.showingSecondaryStats = false;
