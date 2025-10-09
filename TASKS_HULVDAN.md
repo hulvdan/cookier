@@ -26,7 +26,7 @@ x shop reroll button red if no money
 x ui sfx has pitch variation
 x lowered pitch of hover sfx
 x upgrades / shop buy gold wiggling + weapons wiggling upon error
-x tried designing waves progress bar
+x tried to design waves progress bar
 
 * design achievements
 * weapon detail icons? (combine / sell / cancel)
