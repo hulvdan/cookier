@@ -211,6 +211,15 @@ struct Beautify {
     .customData = PushClayCustomData({.type = ClayCustomElementType_BEAUTIFIER_END}) \
   }}){}};
 
+#define BEAUTIFY_WIGGLING_DANGER_SCOPED(value_, amplitude_, frames_, times_)         \
+  f32 _wigglingP = 0;                                                                \
+  if ((value_).IsSet())                                                              \
+    _wigglingP = (value_).Elapsed().Progress(frames_);                               \
+  if ((_wigglingP >= 1) && !draw)                                                    \
+    value_ = {};                                                                     \
+  Beautify b{.translate{(amplitude_) * sinf((f32)(times_) * PI32 * _wigglingP), 0}}; \
+  BEAUTIFY(b);
+
 struct ClayImageData {
   int     texId         = {};
   Margins sourceMargins = {0, 0};
@@ -872,11 +881,16 @@ struct GameData {
     int                                               placeholdersCount = {};
   } uiFlex;
 
-  struct {
+  struct UI {
     Vector2                   notPickedUpCoinsLogicalPos = {};
     const Font*               overriddenFont             = {};
     Array<UIButtonState, 128> buttonStates               = {};
     int                       buttonStatesCount          = 0;
+
+    FrameVisual upgradesErrorGold = {};
+
+    FrameVisual shopErrorGold    = {};
+    FrameVisual shopErrorWeapons = {};
   } ui;
 } g = {};
 
@@ -3734,12 +3748,21 @@ void DoUI(bool draw) {
           }
         });
 
-        CLAY({.layout{
-          .childGap = GAP_SMALL,
-          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
-        }}) {
-          BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-          BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
+        {
+          BEAUTIFY_WIGGLING_DANGER_SCOPED(
+            g.ui.upgradesErrorGold,
+            GOLD_WIGGLING_LOGICAL_AMPLITUDE,
+            ERROR_WIGGLING_FRAMES,
+            ERROR_WIGGLING_TIMES
+          );
+
+          CLAY({.layout{
+            .childGap = GAP_SMALL,
+            BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+          }}) {
+            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+            BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
+          }
         }
 
         CLAY({.layout{
@@ -4085,7 +4108,7 @@ void DoUI(bool draw) {
             }
           }
         );
-        if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
+        if (!draw && IsKeyPressed(SDL_SCANCODE_R))
           rerolled = true;
         if (rerolled) {
           if (canReroll) {
@@ -4094,8 +4117,11 @@ void DoUI(bool draw) {
             g.run.upgrades.rerolls.Roll();
             RefillUpgradesToPick();
           }
-          else
+          else {
+            g.ui.upgradesErrorGold = {};
+            g.ui.upgradesErrorGold.SetNow();
             PlaySound(Sound_UI_BUTTON_ERROR);
+          }
         }
       }
 
@@ -4136,22 +4162,31 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_HORIZONTAL;
 
           // Coins.
-          CLAY({
-            .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
-            .floating{
-              .attachPoints{
-                .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-                .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-              },
-              .attachTo = CLAY_ATTACH_TO_PARENT,
-            },
-          }) {
-            FLOATING_BEAUTIFY;
-            BF_CLAY_TEXT(TextFormat("%d ", PLAYER_COINS));
-            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+          {
+            BEAUTIFY_WIGGLING_DANGER_SCOPED(
+              g.ui.shopErrorGold,
+              GOLD_WIGGLING_LOGICAL_AMPLITUDE,
+              ERROR_WIGGLING_FRAMES,
+              ERROR_WIGGLING_TIMES
+            );
 
-            if (ge.meta.debugEnabled && Clay_Hovered() && wheel)
-              AddCoins(wheel);
+            CLAY({
+              .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+              .floating{
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                },
+                .attachTo = CLAY_ATTACH_TO_PARENT,
+              },
+            }) {
+              FLOATING_BEAUTIFY;
+              BF_CLAY_TEXT(TextFormat("%d ", PLAYER_COINS));
+              BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+
+              if (ge.meta.debugEnabled && Clay_Hovered() && wheel)
+                AddCoins(wheel);
+            }
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -4179,7 +4214,7 @@ void DoUI(bool draw) {
               }
             }
           );
-          if (!draw && canReroll && IsKeyPressed(SDL_SCANCODE_R))
+          if (!draw && IsKeyPressed(SDL_SCANCODE_R))
             rerolled = true;
           if (rerolled) {
             if (canReroll) {
@@ -4188,8 +4223,11 @@ void DoUI(bool draw) {
               g.run.shop.rerolls.Roll();
               RefillShopToPick();
             }
-            else
+            else {
+              g.ui.shopErrorGold = {};
+              g.ui.shopErrorGold.SetNow();
               PlaySound(Sound_UI_BUTTON_ERROR);
+            }
           }
         }
 
@@ -4205,6 +4243,7 @@ void DoUI(bool draw) {
             toPickIndex++;
             const auto calculatedPrice = ApplyStatItemsPrice(v.price);
             bool canBuy = ((v.item || v.weapon) && (calculatedPrice <= PLAYER_COINS));
+            bool canBuyErrorWeapon          = false;
             int  emptyOrSameWeaponSlotIndex = -1;
             if (canBuy && v.weapon) {
               // Trying to find empty weapon slot.
@@ -4228,8 +4267,10 @@ void DoUI(bool draw) {
                   }
                 }
               }
-              if (emptyOrSameWeaponSlotIndex == -1)
-                canBuy = false;
+              if (emptyOrSameWeaponSlotIndex == -1) {
+                canBuyErrorWeapon = true;
+                canBuy            = false;
+              }
             }
 
             CLAY({.layout{.sizing{
@@ -4316,7 +4357,7 @@ void DoUI(bool draw) {
                       }
                     }
                   );
-                  if (!draw && canBuy
+                  if (!draw
                       && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + toPickIndex)))
                     bought = true;
 
@@ -4348,8 +4389,17 @@ void DoUI(bool draw) {
                         INVALID_PATH;
                       v = {};
                     }
-                    else
+                    else {
+                      if (canBuyErrorWeapon) {
+                        g.ui.shopErrorWeapons = {};
+                        g.ui.shopErrorWeapons.SetNow();
+                      }
+                      else {
+                        g.ui.shopErrorGold = {};
+                        g.ui.shopErrorGold.SetNow();
+                      }
                       PlaySound(Sound_UI_BUTTON_ERROR);
+                    }
                   }
                 }
               }
@@ -4433,23 +4483,33 @@ void DoUI(bool draw) {
             constexpr int WEAPONS_Y = 2;
             static_assert(WEAPONS_X * WEAPONS_Y == g.run.playerWeapons.count);
 
-            CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
-            FOR_RANGE (int, y, 2) {
-              CLAY({.layout{.childGap = GAP_SMALL}})
-              FOR_RANGE (int, x, 3) {
-                const int weaponIndex = y * WEAPONS_X + x;
-                if (weaponIndex >= g.run.playerWeapons.count)
-                  break;
+            {
+              BEAUTIFY_WIGGLING_DANGER_SCOPED(
+                g.ui.shopErrorWeapons,
+                WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+                ERROR_WIGGLING_FRAMES,
+                ERROR_WIGGLING_TIMES
+              );
 
-                const auto& weapon = g.run.playerWeapons[weaponIndex];
+              CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
+              )
+              FOR_RANGE (int, y, 2) {
+                CLAY({.layout{.childGap = GAP_SMALL}})
+                FOR_RANGE (int, x, 3) {
+                  const int weaponIndex = y * WEAPONS_X + x;
+                  if (weaponIndex >= g.run.playerWeapons.count)
+                    break;
 
-                CLAY({}) {
-                  // Weapon.
-                  componentWeapon(weaponIndex, true && weapon.type);
+                  const auto& weapon = g.run.playerWeapons[weaponIndex];
 
-                  // Hovering modal.
-                  if (weapon.type)
-                    componentWeaponDetails(weaponIndex, true, false);
+                  CLAY({}) {
+                    // Weapon.
+                    componentWeapon(weaponIndex, true && weapon.type);
+
+                    // Hovering modal.
+                    if (weapon.type)
+                      componentWeaponDetails(weaponIndex, true, false);
+                  }
                 }
               }
             }
@@ -7206,4 +7266,4 @@ void GameDraw() {
   }
 }
 
-///
+//
