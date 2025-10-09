@@ -11,6 +11,7 @@ x brighter text colors
 x fix smg life steal 100%
 x fix componentStats button spacing on the right
 x fix can't hover / click other buttons when weapon is selected in shop
+x tier-colored shop item/weapon frames
 
 * fully rework ui to be the same as in brotato
 * luck = подкова

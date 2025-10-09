@@ -116,7 +116,7 @@ ui_button_colors:
 ui_item_big_frame_color: 0x1d1b24
 ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
 ui_frame_nine_slice:
-  texture_id: ui_frame
+  texture_id: ui_frame_2
   left: 48
   right: 48
   top: 48
