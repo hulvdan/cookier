@@ -25,10 +25,9 @@ x keyboard actions also trigger button sounds.
 x shop reroll button red if no money
 x ui sfx has pitch variation
 x lowered pitch of hover sfx
+x upgrades / shop buy gold wiggling + weapons wiggling upon error
 
 * design achievements
-* shop buy error current gold amount flashing
-* shop buy error weapons flashing
 * weapon detail icons? (combine / sell / cancel)
 * should stats (primary / secondary) be making error sounds?
 * luck = подкова

@@ -228,4 +228,9 @@ const Color textColorsPerTier_[]{
 };
 VIEW_FROM_ARRAY_DANGER(textColorsPerTier);
 
+constexpr f32  GOLD_WIGGLING_LOGICAL_AMPLITUDE    = 10.0f;
+constexpr f32  WEAPONS_WIGGLING_LOGICAL_AMPLITUDE = 15.0f;
+constexpr auto ERROR_WIGGLING_FRAMES              = lframe::FromSeconds(0.3f);
+constexpr int  ERROR_WIGGLING_TIMES               = 4;
+
 ///
