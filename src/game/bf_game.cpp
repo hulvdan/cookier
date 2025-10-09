@@ -4076,7 +4076,7 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
               BF_CLAY_TEXT(" - ");
               BF_CLAY_TEXT(
-                TextFormat("%d", calculatedRerollPrice),
+                TextFormat("%d ", calculatedRerollPrice),
                 (canReroll ? palTextWhite : palTextRed)
               );
               BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
@@ -4167,7 +4167,11 @@ void DoUI(bool draw) {
                 ASSERT(calculatedRerollPrice >= 0);
 
                 if (calculatedRerollPrice > 0) {
-                  BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
+                  BF_CLAY_TEXT(" - ");
+                  BF_CLAY_TEXT(
+                    TextFormat("%d ", calculatedRerollPrice),
+                    (canReroll ? palTextWhite : palTextRed)
+                  );
                   BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                 }
               }
