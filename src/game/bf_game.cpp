@@ -2678,8 +2678,6 @@ void DoUI(bool draw) {
   const int wheel  = _wheel;
   i16       zIndex = 0;
 
-  const Color nineSliceFrameColor = WHITE;
-  const Color nineSliceFrameFlash = TRANSPARENT_BLACK;
   const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
   // }
 
@@ -2771,12 +2769,17 @@ void DoUI(bool draw) {
   };
 
   // LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) { ///
-  const auto slotColors = glib->ui_item_slot_colors();
+  const auto fb_slotColors = glib->ui_item_slot_colors();
+  auto slotColors_ = ALLOCATE_ARRAY(&g.meta.trashArena, Color, fb_slotColors->size());
+  FOR_RANGE (int, i, fb_slotColors->size()) {
+    slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
+  }
+  const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
 
   LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) {
     CLAY({}) {
-      auto color = ColorFromRGBA(slotColors->Get(2 * tier));
-      auto flash = ColorFromRGBA(slotColors->Get(2 * tier + 1));
+      auto color = slotColors[2 * tier];
+      auto flash = slotColors[2 * tier + 1];
       if (canHover && Clay_Hovered()) {
         color = palWhite;
         flash = TRANSPARENT_BLACK;
@@ -2799,7 +2802,7 @@ void DoUI(bool draw) {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_NINE_SLICE(
-        glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+        glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
       ),
     }) {
       // Stats label.
@@ -3122,6 +3125,9 @@ void DoUI(bool draw) {
       },
     }) {
       FLOATING_BEAUTIFY;
+
+      const auto fb_item = fb_items->Get(item.type);
+
       CLAY({
         .layout{
           BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
@@ -3129,11 +3135,11 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+          glib->ui_frame_nine_slice(),
+          slotColors[2 * fb_item->tier()],
+          slotColors[2 * fb_item->tier() + 1]
         ),
       }) {
-        const auto fb_item = fb_items->Get(item.type);
-
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           componentItem(false, item);
           componentItemNameAndHeaderProperties(item.type);
@@ -3416,7 +3422,9 @@ void DoUI(bool draw) {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_NINE_SLICE(
-            glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+            glib->ui_frame_nine_slice(),
+            slotColors[2 * weapon.tier],
+            slotColors[2 * weapon.tier + 1]
           ),
         }) {
           if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1))
@@ -3770,8 +3778,8 @@ void DoUI(bool draw) {
             },
             BF_CLAY_CUSTOM_NINE_SLICE(
               glib->ui_frame_nine_slice(),
-              ColorFromRGBA(slotColors->Get(2 * fb->tier())),
-              ColorFromRGBA(slotColors->Get(2 * fb->tier() + 1))
+              slotColors[2 * fb->tier()],
+              slotColors[2 * fb->tier() + 1]
             ),
           }) {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -3863,8 +3871,8 @@ void DoUI(bool draw) {
               },
               BF_CLAY_CUSTOM_NINE_SLICE(
                 glib->ui_frame_nine_slice(),
-                ColorFromRGBA(slotColors->Get(2 * upgrade.tier)),
-                ColorFromRGBA(slotColors->Get(2 * upgrade.tier + 1))
+                slotColors[2 * upgrade.tier],
+                slotColors[2 * upgrade.tier + 1]
               ),
             }) {
               CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -4109,8 +4117,8 @@ void DoUI(bool draw) {
                 },
                 BF_CLAY_CUSTOM_NINE_SLICE(
                   glib->ui_frame_nine_slice(),
-                  ColorFromRGBA(slotColors->Get(2 * v.tier)),
-                  ColorFromRGBA(slotColors->Get(2 * v.tier + 1))
+                  slotColors[2 * v.tier],
+                  slotColors[2 * v.tier + 1]
                 ),
               }) {
                 const auto fb_item   = (v.item ? fb_items->Get(v.item) : nullptr);
