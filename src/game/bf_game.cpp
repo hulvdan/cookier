@@ -2610,7 +2610,16 @@ void FontEnd() {  ///
   g.ui.overriddenFont = nullptr;
 }
 
-void ButtonSFX(Clay_ElementId id, bool hovered, bool clicked, bool enabled) {  ///
+void ButtonSFX(
+  bool           draw,
+  Clay_ElementId id,
+  bool           hovered,
+  bool           clicked,
+  bool           enabled
+) {  ///
+  if (draw)
+    return;
+
   int index = -1;
 
   FOR_RANGE (int, i, g.ui.buttonStatesCount) {
@@ -2634,7 +2643,7 @@ void ButtonSFX(Clay_ElementId id, bool hovered, bool clicked, bool enabled) {  /
     else
       PlaySound(Sound_UI_BUTTON_ERROR);
   }
-  else if (enabled && hovered && !b.hovered)
+  else if (hovered && !b.hovered)
     PlaySound(Sound_UI_BUTTON_HOVER_SMALL);
 
   b.id               = id;
@@ -2651,13 +2660,14 @@ void DoUI(bool draw) {
 
   // Setup.
   // {  ///
-  const auto fb_atlas_textures    = glib->atlas_textures();
-  const auto fb_items             = glib->items();
-  const auto fb_stats             = glib->stats();
-  const auto fb_weapon_properties = glib->weapon_properties();
-  const auto fb_weapons           = glib->weapons();
-  const auto fb_projectiles       = glib->projectiles();
-  const auto fb_pickupables       = glib->pickupables();
+  const auto fb_atlas_textures      = glib->atlas_textures();
+  const auto original_texture_sizes = glib->original_texture_sizes();
+  const auto fb_items               = glib->items();
+  const auto fb_stats               = glib->stats();
+  const auto fb_weapon_properties   = glib->weapon_properties();
+  const auto fb_weapons             = glib->weapons();
+  const auto fb_projectiles         = glib->projectiles();
+  const auto fb_pickupables         = glib->pickupables();
 
   if (!draw) {
     // Updating clay mouse pos.
@@ -2809,8 +2819,7 @@ void DoUI(bool draw) {
       }
 #endif
 
-      if (!draw)
-        ButtonSFX(data.id, Clay_Hovered(), clicked(), data.enabled);
+      ButtonSFX(draw, data.id, Clay_Hovered(), clicked(), data.enabled);
 
       result = data.enabled && clicked();
     }
@@ -2818,23 +2827,31 @@ void DoUI(bool draw) {
     return result;
   };
 
-  // LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) { ///
-  LAMBDA (void, componentSlot, (bool canHover, int tier, auto innerLambda)) {
-    CLAY({}) {
-      auto color = slotColors[2 * tier];
-      auto flash = slotColors[2 * tier + 1];
-      if (canHover && Clay_Hovered()) {
+  struct ComponentSlotData {
+    bool hidden   = {};
+    bool canHover = {};
+    int  tier     = {};
+  };
+
+  LAMBDA (void, componentSlot, (ComponentSlotData data, auto innerLambda)) {
+    const int texId        = glib->ui_item_slot_texture_id();
+    auto      originalSize = original_texture_sizes->Get(texId);
+
+    CLAY({.layout{.sizing{
+      .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
+      .height = CLAY_SIZING_FIXED((f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO),
+    }}})
+    if (!data.hidden) {
+      auto color = slotColors[2 * data.tier];
+      auto flash = slotColors[2 * data.tier + 1];
+      if (data.canHover && Clay_Hovered()) {
         color = palWhite;
         flash = TRANSPARENT_BLACK;
       }
 
-      BF_CLAY_IMAGE(
-        {.texId = glib->ui_item_slot_texture_id(), .color = color, .flash = flash},
-        innerLambda
-      );
+      BF_CLAY_IMAGE({.texId = texId, .color = color, .flash = flash}, innerLambda);
     }
   };
-  // }
 
   LAMBDA (void, componentStats, ()) {  ///
     CLAY({
@@ -2977,29 +2994,32 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentItem, (bool canHover, const Item& item)) {  ///
     const auto fb = glib->items()->Get(item.type);
-    componentSlot(canHover, fb->tier(), [&]() BF_FORCE_INLINE_LAMBDA {
-      CLAY({.layout{
-        BF_CLAY_SIZING_GROW_XY,
-        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-      }}) {
-        BF_CLAY_IMAGE({.texId = fb->texture_id()});
+    componentSlot(
+      {.canHover = canHover, .tier = fb->tier()},
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
+          BF_CLAY_IMAGE({.texId = fb->texture_id()});
 
-        // Showing count if there are multiple of the same item.
-        if (item.count > 1) {
-          CLAY({.floating{
-            .attachPoints{
-              .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-              .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-            },
-            .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-            .attachTo           = CLAY_ATTACH_TO_PARENT,
-          }}) {
-            FLOATING_BEAUTIFY;
-            BF_CLAY_TEXT(TextFormat("x%d", item.count));
+          // Showing count if there are multiple of the same item.
+          if (item.count > 1) {
+            CLAY({.floating{
+              .attachPoints{
+                .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+                .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+              },
+              .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+              .attachTo           = CLAY_ATTACH_TO_PARENT,
+            }}) {
+              FLOATING_BEAUTIFY;
+              BF_CLAY_TEXT(TextFormat("x%d", item.count));
+            }
           }
         }
       }
-    });
+    );
   };
 
   LAMBDA (void, componentItemNameAndHeaderProperties, (ItemType item)) {  ///
@@ -3199,26 +3219,39 @@ void DoUI(bool draw) {
     zIndex -= 2;
   };
 
-  LAMBDA (void, componentWeapon, (int weaponIndexOrMinus1, bool weAreInShop)) {  ///
-    auto& weapon = g.run.playerWeapons[weaponIndexOrMinus1];
+  LAMBDA (void, componentWeapon, (int weaponIndex, bool weAreInShop)) {  ///
+    auto& weapon = g.run.playerWeapons[weaponIndex];
 
-    componentSlot(true, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-      if (weapon.type) {
-        const auto fb = fb_weapons->Get(weapon.type);
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_XY,
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-        }}) {
-          BF_CLAY_IMAGE({
-            .texId = fb->icon_texture_id(),
-            .color = ColorFromRGBA(fb->color()),
-          });
+    componentSlot(
+      {.hidden = !weapon.type, .canHover = true, .tier = weapon.tier},
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        if (weapon.type) {
+          const auto fb = fb_weapons->Get(weapon.type);
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_XY,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            BF_CLAY_IMAGE({
+              .texId = fb->icon_texture_id(),
+              .color = ColorFromRGBA(fb->color()),
+            });
+          }
+
+          ButtonSFX(
+            draw,
+            CLAY_IDI("componentWeapon", weaponIndex),
+            Clay_Hovered(),
+            weAreInShop && clicked(),
+            true
+          );
+
+          if (weAreInShop && clicked()) {
+            ASSERT(g.run.shop.selectedWeaponIndex == -1);
+            g.run.shop.selectedWeaponIndex = weaponIndex;
+          }
         }
-
-        if (weAreInShop && clicked() && (g.run.shop.selectedWeaponIndex == -1))
-          g.run.shop.selectedWeaponIndex = weaponIndexOrMinus1;
       }
-    });
+    );
   };
 
   LAMBDA (
@@ -3488,17 +3521,20 @@ void DoUI(bool draw) {
             },
           }) {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
-              componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({.layout{
-                  BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                }}) {
-                  BF_CLAY_IMAGE({
-                    .texId = fb->icon_texture_id(),
-                    .color = ColorFromRGBA(fb->color()),
-                  });
+              componentSlot(
+                {.canHover = false, .tier = weapon.tier},
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  CLAY({.layout{
+                    BF_CLAY_SIZING_GROW_XY,
+                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                  }}) {
+                    BF_CLAY_IMAGE({
+                      .texId = fb->icon_texture_id(),
+                      .color = ColorFromRGBA(fb->color()),
+                    });
+                  }
                 }
-              });
+              );
 
               BF_CLAY_TEXT_LOCALIZED_DANGER(
                 fb->name_locale(), textColorsPerTier[weapon.tier]
@@ -3941,16 +3977,19 @@ void DoUI(bool draw) {
             }) {
               CLAY({.layout{.childGap = GAP_SMALL}}) {
                 // Slot with upgrade's image.
-                componentSlot(false, upgrade.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                  CLAY({
-                    .layout{
-                      BF_CLAY_SIZING_GROW_XY,
-                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                    },
-                  }) {
-                    BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
+                componentSlot(
+                  {.canHover = false, .tier = upgrade.tier},
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    CLAY({
+                      .layout{
+                        BF_CLAY_SIZING_GROW_XY,
+                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                      },
+                    }) {
+                      BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
+                    }
                   }
-                });
+                );
 
                 // Name.
                 BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
@@ -4191,20 +4230,23 @@ void DoUI(bool draw) {
                 // Item's image + name.
                 CLAY({.layout{.childGap = GAP_SMALL}}) {
                   // Image.
-                  componentSlot(false, v.tier, [&]() BF_FORCE_INLINE_LAMBDA {
-                    CLAY({.layout{
-                      BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER
-                    }}) {
-                      if (v.item || v.weapon) {
-                        int texId = 0;
-                        if (v.item)
-                          texId = fb_item->texture_id();
-                        if (v.weapon)
-                          texId = fb_weapon->icon_texture_id();
-                        BF_CLAY_IMAGE({.texId = texId});
+                  componentSlot(
+                    {.canHover = false, .tier = v.tier},
+                    [&]() BF_FORCE_INLINE_LAMBDA {
+                      CLAY({.layout{
+                        BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER
+                      }}) {
+                        if (v.item || v.weapon) {
+                          int texId = 0;
+                          if (v.item)
+                            texId = fb_item->texture_id();
+                          if (v.weapon)
+                            texId = fb_weapon->icon_texture_id();
+                          BF_CLAY_IMAGE({.texId = texId});
+                        }
                       }
                     }
-                  });
+                  );
 
                   // Name.
                   if (v.item)
@@ -4309,6 +4351,11 @@ void DoUI(bool draw) {
                   CLAY({}) {
                     auto& item = g.run.playerItems[t];
                     componentItem(true, item);
+
+                    ButtonSFX(
+                      draw, CLAY_IDI("button_item", t), Clay_Hovered(), false, true
+                    );
+
                     if (Clay_Hovered()) {
                       componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
                       if (ge.meta.debugEnabled) {
@@ -4352,19 +4399,19 @@ void DoUI(bool draw) {
             FOR_RANGE (int, y, 2) {
               CLAY({.layout{.childGap = GAP_SMALL}})
               FOR_RANGE (int, x, 3) {
-                const int weaponIndexOrMinus1 = y * WEAPONS_X + x;
-                if (weaponIndexOrMinus1 >= g.run.playerWeapons.count)
+                const int weaponIndex = y * WEAPONS_X + x;
+                if (weaponIndex >= g.run.playerWeapons.count)
                   break;
 
-                const auto& weapon = g.run.playerWeapons[weaponIndexOrMinus1];
+                const auto& weapon = g.run.playerWeapons[weaponIndex];
 
                 CLAY({}) {
                   // Weapon.
-                  componentWeapon(weaponIndexOrMinus1, true && weapon.type);
+                  componentWeapon(weaponIndex, true && weapon.type);
 
                   // Hovering modal.
                   if (weapon.type)
-                    componentWeaponDetails(weaponIndexOrMinus1, true, false);
+                    componentWeaponDetails(weaponIndex, true, false);
                 }
               }
             }
@@ -4482,6 +4529,9 @@ void DoUI(bool draw) {
               if (t < items.count) {
                 CLAY({}) {
                   componentItem(true, g.run.playerItems[t]);
+                  ButtonSFX(
+                    draw, CLAY_IDI("button_item", t), Clay_Hovered(), false, true
+                  );
                   if (Clay_Hovered()) {
                     componentItemDetails(
                       g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
