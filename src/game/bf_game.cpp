@@ -767,6 +767,8 @@ struct GameData {
     Font fontPrices         = {};
     Font fontWaveCompletion = {};
 
+    LoadFontsResult loadedFonts = {};
+
     bool godMode = false;
 
     struct Touch {
@@ -1998,6 +2000,84 @@ void RunInit() {
   OnWaveStarted();
 }
 
+void ReloadFontsIfNeeded() {  ///
+  static bool       loaded             = false;
+  static Vector2Int previousScreenSize = {};
+
+  static int debounce = 0;
+  if (previousScreenSize == ge.meta.screenSize) {
+    debounce = 0;
+    return;
+  }
+
+  if (loaded) {
+    debounce++;
+    if (debounce < 2 * FIXED_FPS)
+      return;
+  }
+
+  previousScreenSize = ge.meta.screenSize;
+
+  static int priceCodepoints[]{
+    ' ', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+  };
+
+  LoadFontData loadFontData_[]{
+    // fontUI.
+    {
+      .filepath        = "resources/arialbd.ttf",
+      .size            = 15,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+    },
+    // fontUIOutlined.
+    {
+      .filepath        = "resources/arialbd.ttf",
+      .size            = 15,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 1,
+    },
+    // fontStats.
+    {
+      .filepath        = "resources/arialbd.ttf",
+      .size            = 13,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+    },
+    // fontPrices.
+    {
+      .filepath        = "resources/arialbd.ttf",
+      .size            = 20,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = priceCodepoints,
+      .codepointsCount = ARRAY_COUNT(priceCodepoints),
+    },
+    // fontWaveCompletion.
+    {
+      .filepath        = "resources/arialbd.ttf",
+      .size            = 40,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 0,
+    },
+  };
+  VIEW_FROM_ARRAY_DANGER(loadFontData);
+
+  if (loaded && g.meta.loadedFonts.loaded)
+    UnloadFonts(&g.meta.loadedFonts);
+
+  loaded = true;
+  g.meta.loadedFonts
+    = LoadFonts({.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData);
+}
+
 void GameInit() {  ///
   ZoneScoped;
 
@@ -2018,58 +2098,7 @@ void GameInit() {  ///
     Clay_SetMeasureTextFunction(MeasureText, 0);
   }
 
-  static int priceCodepoints[]{
-    ' ', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-  };
-
-  LoadFontData loadFontData_[]{
-    // fontUI.
-    {
-      .filepath        = "resources/correction_brush.ttf",
-      .size            = 15,
-      .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = g_codepoints,
-      .codepointsCount = ARRAY_COUNT(g_codepoints),
-    },
-    // fontUIOutlined.
-    {
-      .filepath        = "resources/correction_brush.ttf",
-      .size            = 15,
-      .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = g_codepoints,
-      .codepointsCount = ARRAY_COUNT(g_codepoints),
-      .outlineWidth    = 3,
-      .outlineAdvance  = 1,
-    },
-    // fontStats.
-    {
-      .filepath        = "resources/correction_brush.ttf",
-      .size            = 13,
-      .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = g_codepoints,
-      .codepointsCount = ARRAY_COUNT(g_codepoints),
-    },
-    // fontPrices.
-    {
-      .filepath        = "resources/correction_brush.ttf",
-      .size            = 20,
-      .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = priceCodepoints,
-      .codepointsCount = ARRAY_COUNT(priceCodepoints),
-    },
-    // fontWaveCompletion.
-    {
-      .filepath        = "resources/correction_brush.ttf",
-      .size            = 40,
-      .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = g_codepoints,
-      .codepointsCount = ARRAY_COUNT(g_codepoints),
-      .outlineWidth    = 3,
-      .outlineAdvance  = 0,
-    },
-  };
-  VIEW_FROM_ARRAY_DANGER(loadFontData);
-  LoadFonts({.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData);
+  ReloadFontsIfNeeded();
 
   RunInit();
 }
@@ -4984,6 +5013,8 @@ void MakeAOE(
 
 void GameFixedUpdate() {
   ZoneScoped;
+
+  ReloadFontsIfNeeded();
 
   const auto fb_preSpawns      = glib->pre_spawns();
   const auto fb_atlas_textures = glib->atlas_textures();
