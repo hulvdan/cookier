@@ -1313,6 +1313,34 @@ BF_FORCE_INLINE void IterateOverCodepoints(
   ASSERT_FALSE(state);  // The string is not well-formed.
 }
 
+constexpr f32 ScaleToFit(Vector2 inner, Vector2 container) {  ///
+  f32 scaleX = container.x / inner.x;
+  f32 scaleY = container.y / inner.y;
+  f32 scale  = (scaleX < scaleY) ? scaleX : scaleY;
+  return scale;
+}
+
+TEST_CASE ("ScaleToFit") {  ///
+  ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 2}), 2));
+  ASSERT(FloatEquals(ScaleToFit({1, 1}, {3, 2}), 2));
+  ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 3}), 2));
+  ASSERT(FloatEquals(ScaleToFit({3, 3}, {2, 3}), 2.0f / 3.0f));
+}
+
+constexpr f32 ScaleToCover(Vector2 inner, Vector2 container) {  ///
+  f32 scaleX = container.x / inner.x;
+  f32 scaleY = container.y / inner.y;
+  f32 scale  = (scaleX > scaleY) ? scaleX : scaleY;
+  return scale;
+}
+
+TEST_CASE ("ScaleToCover") {  ///
+  ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 2}), 2));
+  ASSERT(FloatEquals(ScaleToCover({1, 1}, {3, 2}), 3));
+  ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 3}), 3));
+  ASSERT(FloatEquals(ScaleToCover({3, 3}, {2, 3}), 1));
+}
+
 #define SORT_NAME draw_group
 #define SORT_TYPE DrawGroup
 #define SORT_CMP(x, y) (_DrawGroupCmp(&x, &y))
@@ -1362,6 +1390,8 @@ void FlushDrawCommands() {
   bgfx::TransientVertexBuffer tvb{};
   bgfx::TransientIndexBuffer  tib{};
   // }
+
+  const auto logicalToScreenScale = ScaleToFit(LOGICAL_RESOLUTION, ge.meta.screenSize);
 
   FOR_RANGE (int, mode, 2) {
     // 0 - calculating size of index / vertex buffers.
@@ -1969,6 +1999,8 @@ void FlushDrawCommands() {
             auto pos = LogicalPosToScreen(data.pos);
             pos.y -= font->size;
 
+            const auto SSS = logicalToScreenScale / font->_scaleToFit;
+
             // Processing `anchor`.
             {
               f32 width    = 0;
@@ -1977,44 +2009,43 @@ void FlushDrawCommands() {
               IterateOverCodepoints(
                 data.text,
                 data.bytesCount,
-                [&maxWidth, &width, &height, &font](u32 codepoint, u32 _codepointSize)
-                  BF_FORCE_INLINE_LAMBDA {
-                    if (!codepoint) {
-                      maxWidth = MAX(maxWidth, width);
-                      return;
-                    }
-                    if (codepoint == (u32)'\n') {
-                      maxWidth = MAX(maxWidth, width);
-                      width    = 0;
-                      height++;
-                      return;
-                    }
-
-                    auto glyphIndex = ArrayBinaryFind(
-                      font->codepoints, font->codepointsCount, (int)codepoint
-                    );
-                    ASSERT(glyphIndex >= 0);
-
-                    f32                y_{};
-                    stbtt_aligned_quad q{};
-                    stbtt_GetPackedQuad(
-                      font->chars,
-                      font->atlasTexture.size.x,
-                      font->atlasTexture.size.y,
-                      glyphIndex,
-                      &width,
-                      // &data.pos.y,
-                      &y_,
-                      &q,
-                      1  // 1=opengl & d3d10+,0=d3d9
-                    );
+                [&](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
+                  if (!codepoint) {
+                    maxWidth = MAX(maxWidth, width);
+                    return;
                   }
+                  if (codepoint == (u32)'\n') {
+                    maxWidth = MAX(maxWidth, width);
+                    width    = 0;
+                    height++;
+                    return;
+                  }
+
+                  auto glyphIndex = ArrayBinaryFind(
+                    font->codepoints, font->codepointsCount, (int)codepoint
+                  );
+                  ASSERT(glyphIndex >= 0);
+
+                  f32                y_{};
+                  stbtt_aligned_quad q{};
+                  stbtt_GetPackedQuad(
+                    font->chars,
+                    font->atlasTexture.size.x,
+                    font->atlasTexture.size.y,
+                    glyphIndex,
+                    &width,
+                    // &data.pos.y,
+                    &y_,
+                    &q,
+                    1  // 1=opengl & d3d10+,0=d3d9
+                  );
+                }
               );
-              pos.x -= maxWidth * data.anchor.x;
+              pos.x -= maxWidth * data.anchor.x * SSS;
               pos.y
                 += (f32)height
                    * ((f32)font->size * font->FIXME_sizeScale + 2 * (f32)font->outlineWidth)
-                   * data.anchor.y;
+                   * SSS * data.anchor.y;
             }
 
             auto y = ge.meta.screenSize.y - pos.y;
@@ -2029,8 +2060,9 @@ void FlushDrawCommands() {
                   return;
                 if (codepoint == (u32)'\n') {
                   pos.x = startPosX;
-                  y += (f32)font->size * font->FIXME_sizeScale
-                       + 2 * (f32)font->outlineWidth;
+                  y += ((f32)font->size * font->FIXME_sizeScale
+                        + 2 * (f32)font->outlineWidth)
+                       * SSS;
                   return;
                 }
 
@@ -2040,6 +2072,9 @@ void FlushDrawCommands() {
                 ASSERT(glyphIndex >= 0);
 
                 stbtt_aligned_quad q{};
+                f32                px       = 0.0f;
+                auto               prevPosX = pos.x;
+                auto               prevY    = y;
                 stbtt_GetPackedQuad(
                   font->chars,
                   font->atlasTexture.size.x,
@@ -2052,10 +2087,15 @@ void FlushDrawCommands() {
                   1  // 1=opengl & d3d10+,0=d3d9
                 );
 
-                q.x0 -= font->outlineWidth;
-                q.x1 += font->outlineWidth;
-                q.y0 -= font->outlineWidth;
-                q.y1 += font->outlineWidth;
+                pos.x = prevPosX + (pos.x - prevPosX) * SSS;
+                y     = prevY + (y - prevY) * SSS;
+                q.x1  = q.x0 + (q.x1 - q.x0) * SSS;
+                q.y1  = q.y0 + (q.y1 - q.y0) * SSS;
+
+                q.x0 -= font->outlineWidth * SSS;
+                q.x1 += font->outlineWidth * SSS;
+                q.y0 -= font->outlineWidth * SSS;
+                q.y1 += font->outlineWidth * SSS;
 
                 {
                   auto pos0 = ScreenPosToLogical({q.x0, q.y0});
@@ -2092,14 +2132,10 @@ void FlushDrawCommands() {
                 bottomLeft  = Vector2{q.x0, q.y0} / lrh - Vector2One();
                 bottomRight = Vector2{q.x1, q.y0} / lrh - Vector2One();
 
-                // auto dy = -(f32)font->size * 1.5f / font->_scaleToFit
-                //           / (f32)LOGICAL_RESOLUTION.y;
-                // // auto dy       = bottomLeft.y - topLeft.y;
-                auto dy       = 0;
-                topLeft.y     = dy - topLeft.y;
-                topRight.y    = dy - topRight.y;
-                bottomLeft.y  = dy - bottomLeft.y;
-                bottomRight.y = dy - bottomRight.y;
+                topLeft.y     = -topLeft.y;
+                topRight.y    = -topRight.y;
+                bottomLeft.y  = -bottomLeft.y;
+                bottomRight.y = -bottomRight.y;
 
                 const auto r = ge.meta.screenToLogicalRatio;
                 if (r >= 1) {  // Window is too wide.
@@ -2611,34 +2647,6 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
 void _UnloadTexture(Texture2D* texture) {  ///
   bgfx::destroy(texture->handle);
   *texture = {};
-}
-
-constexpr f32 ScaleToFit(Vector2 inner, Vector2 container) {  ///
-  f32 scaleX = container.x / inner.x;
-  f32 scaleY = container.y / inner.y;
-  f32 scale  = (scaleX < scaleY) ? scaleX : scaleY;
-  return scale;
-}
-
-TEST_CASE ("ScaleToFit") {  ///
-  ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 2}), 2));
-  ASSERT(FloatEquals(ScaleToFit({1, 1}, {3, 2}), 2));
-  ASSERT(FloatEquals(ScaleToFit({1, 1}, {2, 3}), 2));
-  ASSERT(FloatEquals(ScaleToFit({3, 3}, {2, 3}), 2.0f / 3.0f));
-}
-
-constexpr f32 ScaleToCover(Vector2 inner, Vector2 container) {  ///
-  f32 scaleX = container.x / inner.x;
-  f32 scaleY = container.y / inner.y;
-  f32 scale  = (scaleX > scaleY) ? scaleX : scaleY;
-  return scale;
-}
-
-TEST_CASE ("ScaleToCover") {  ///
-  ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 2}), 2));
-  ASSERT(FloatEquals(ScaleToCover({1, 1}, {3, 2}), 3));
-  ASSERT(FloatEquals(ScaleToCover({1, 1}, {2, 3}), 3));
-  ASSERT(FloatEquals(ScaleToCover({3, 3}, {2, 3}), 1));
 }
 
 void LoadGamelib() {  ///

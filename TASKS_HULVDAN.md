@@ -28,9 +28,11 @@ x lowered pitch of hover sfx
 x upgrades / shop buy gold wiggling + weapons wiggling upon error
 x tried to design waves progress bar
 x everythere but in hud default font is not outlined
+x engine: crisp fonts rendering
+x engine fonts: correct placement on both resolutions
 
+* engine fonts: scale fonts while they haven't been reloaded yet
 * engine: don't load filedata of the same font file multiple times
-* engine: crisp fonts rendering
 * fix shop items/weapons frame height
 * design achievements
 * weapon detail icons? (combine / sell / cancel)
