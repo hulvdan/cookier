@@ -23,6 +23,8 @@ x fix componentStats primary/secondary button sizes
 x keyboard actions also trigger button sounds.
   don't make clicked / error sounds from buttons
 x shop reroll button red if no money
+x ui sfx has pitch variation
+x lowered pitch of hover sfx
 
 * shop buy error current gold amount flashing
 * shop buy error weapons flashing
