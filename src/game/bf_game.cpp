@@ -754,6 +754,7 @@ struct GameData {
     // NOTE: Reorder loading upon reordering fonts.
     Font fontUI             = {};
     Font fontStats          = {};
+    Font fontPrices         = {};
     Font fontWaveCompletion = {};
 
     bool godMode = false;
@@ -2002,6 +2003,10 @@ void GameInit() {  ///
     Clay_SetMeasureTextFunction(MeasureText, 0);
   }
 
+  static int priceCodepoints[]{
+    ' ', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+  };
+
   LoadFontData loadFontData_[]{
     // fontUI.
     {
@@ -2022,6 +2027,16 @@ void GameInit() {  ///
       .codepointsCount = ARRAY_COUNT(g_codepoints),
       .outlineWidth    = 3,
       .outlineAdvance  = 1,
+    },
+    // fontPrices.
+    {
+      .filepath        = "resources/correction_brush.ttf",
+      .size            = 20,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = priceCodepoints,
+      .codepointsCount = ARRAY_COUNT(priceCodepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 0,
     },
     // fontWaveCompletion.
     {
@@ -3111,6 +3126,8 @@ void DoUI(bool draw) {
       attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
     }
 
+    zIndex += 2;
+
     CLAY({
       .layout{
         .sizing{
@@ -3119,7 +3136,7 @@ void DoUI(bool draw) {
       },
       .floating{
         .offset{0, offsetY},
-        .zIndex = ++zIndex,
+        .zIndex = zIndex,
         .attachPoints{.element = attachElement, .parent = attachParent},
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
@@ -3148,7 +3165,8 @@ void DoUI(bool draw) {
         componentItemStatsExploded(item.type, item.count, ITEM_FRAME_WIDTH);
       }
     }
-    zIndex--;
+
+    zIndex -= 2;
   };
 
   LAMBDA (void, componentWeapon, (int weaponIndexOrMinus1, bool weAreInShop)) {  ///
@@ -3395,6 +3413,8 @@ void DoUI(bool draw) {
         attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
       }
 
+      zIndex += 2;
+
       CLAY({
         .layout{
           .sizing{
@@ -3404,7 +3424,7 @@ void DoUI(bool draw) {
         },
         .floating{
           .offset{0, offsetY},
-          .zIndex = ++zIndex,
+          .zIndex = zIndex,
           .attachPoints{.element = attachElement, .parent = attachParent},
           .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE,
           .attachTo           = CLAY_ATTACH_TO_PARENT,
@@ -3472,15 +3492,15 @@ void DoUI(bool draw) {
             }
 
             // Combine button.
-            const bool combined = componentButton(
-              {
-                .id      = CLAY_ID("button_weapon_combine"),
-                .enabled = (canCombineWithIndex >= 0),
-              },
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
-              }
-            );
+            bool combined = false;
+            if (canCombineWithIndex >= 0) {
+              combined = componentButton(
+                {.id = CLAY_ID("button_weapon_combine"), .enabled = true},
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
+                }
+              );
+            }
 
             // Recycle button.
             const bool recycled = componentButton(
@@ -3518,7 +3538,8 @@ void DoUI(bool draw) {
           }
         }
       }
-      zIndex--;
+
+      zIndex -= 2;
     }
   };
 
@@ -4174,10 +4195,12 @@ void DoUI(bool draw) {
                         BF_CLAY_SIZING_GROW_X,
                         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                       }}) {
+                        FontBegin(&g.meta.fontPrices);
                         BF_CLAY_TEXT(
                           TextFormat("%d ", calculatedPrice),
                           (calculatedPrice <= PLAYER_COINS ? palTextWhite : palTextRed)
                         );
+                        FontEnd();
                         BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                       }
                     }
