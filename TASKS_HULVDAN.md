@@ -27,12 +27,13 @@ x ui sfx has pitch variation
 x lowered pitch of hover sfx
 x upgrades / shop buy gold wiggling + weapons wiggling upon error
 x tried to design waves progress bar
+x everythere but in hud default font is not outlined
 
+* fix shop items/weapons frame height
 * design achievements
 * weapon detail icons? (combine / sell / cancel)
 * should stats (primary / secondary) be making error sounds?
 * luck = подкова
-* weapon slot hover color
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
 * draw UI? writing code gets tiring
