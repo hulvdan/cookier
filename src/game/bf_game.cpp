@@ -4334,7 +4334,10 @@ void DoUI(bool draw) {
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
+            BF_CLAY_TEXT_LOCALIZED_DANGER(
+              glib->ui_label_items_locale(),
+              (g.run.playerItems.count > 0 ? WHITE : TRANSPARENT_BLACK)
+            );
 
             // Items.
             CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
@@ -4378,15 +4381,20 @@ void DoUI(bool draw) {
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Weapons label.
             CLAY({}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
-
               int weaponsCount = 0;
               for (const auto& weapon : g.run.playerWeapons) {
                 if (weapon.type)
                   weaponsCount++;
               }
 
-              BF_CLAY_TEXT(TextFormat(" (%d/%d)", weaponsCount, g.run.playerWeapons.count)
+              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                glib->ui_label_weapons_locale(),
+                (weaponsCount > 0 ? WHITE : TRANSPARENT_BLACK)
+              );
+
+              BF_CLAY_TEXT(
+                TextFormat(" (%d/%d)", weaponsCount, g.run.playerWeapons.count),
+                (weaponsCount > 0 ? WHITE : TRANSPARENT_BLACK)
               );
             }
 
@@ -4493,49 +4501,59 @@ void DoUI(bool draw) {
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          // Weapons label.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
+          int weaponsCount = 0;
+          for (auto& weapon : g.run.playerWeapons) {
+            if (weapon.type)
+              weaponsCount++;
+          }
 
-          // Weapons.
-          CLAY({.layout{.childGap = GAP_SMALL}}) {
-            int i = -1;
-            for (auto& weapon : g.run.playerWeapons) {
-              i++;
-              if (weapon.type) {
-                CLAY({}) {
-                  // Weapon.
-                  componentWeapon(i, false);
-                  // Hovering modal.
-                  componentWeaponDetails(i, false, true);
+          if (weaponsCount > 0) {
+            // Weapons label.
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_weapons_locale());
+
+            // Weapons.
+            CLAY({.layout{.childGap = GAP_SMALL}}) {
+              int i = -1;
+              for (auto& weapon : g.run.playerWeapons) {
+                i++;
+                if (weapon.type) {
+                  CLAY({}) {
+                    // Weapon.
+                    componentWeapon(i, false);
+                    // Hovering modal.
+                    componentWeaponDetails(i, false, true);
+                  }
                 }
               }
             }
           }
 
           // Items label.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
+          if (g.run.playerItems.count > 0) {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
 
-          // Items.
-          const auto& items = g.run.playerItems;
+            // Items.
+            const auto& items = g.run.playerItems;
 
-          constexpr int ITEMS_X = 10;
-          const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
+            constexpr int ITEMS_X = 10;
+            const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
 
-          CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
-          FOR_RANGE (int, y, ITEMS_Y) {
-            CLAY({.layout{.childGap = GAP_SMALL}})
-            FOR_RANGE (int, x, ITEMS_X) {
-              const auto t = y * ITEMS_X + x;
-              if (t < items.count) {
-                CLAY({}) {
-                  componentItem(true, g.run.playerItems[t]);
-                  ButtonSFX(
-                    draw, CLAY_IDI("button_item", t), Clay_Hovered(), false, true
-                  );
-                  if (Clay_Hovered()) {
-                    componentItemDetails(
-                      g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
+            CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+            FOR_RANGE (int, y, ITEMS_Y) {
+              CLAY({.layout{.childGap = GAP_SMALL}})
+              FOR_RANGE (int, x, ITEMS_X) {
+                const auto t = y * ITEMS_X + x;
+                if (t < items.count) {
+                  CLAY({}) {
+                    componentItem(true, g.run.playerItems[t]);
+                    ButtonSFX(
+                      draw, CLAY_IDI("button_item", t), Clay_Hovered(), false, true
                     );
+                    if (Clay_Hovered()) {
+                      componentItemDetails(
+                        g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
+                      );
+                    }
                   }
                 }
               }
