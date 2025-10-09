@@ -2694,6 +2694,26 @@ void DoUI(bool draw) {
     BF_CLAY_TEXT(text, color);
   };
 
+  LAMBDA (void, componentOverlay, ()) {  ///
+    CLAY({
+      .layout{
+        .sizing{
+          .width  = CLAY_SIZING_FIXED(LOGICAL_RESOLUTION.x * 2),
+          .height = CLAY_SIZING_FIXED(LOGICAL_RESOLUTION.y * 2),
+        },
+      },
+      .floating{
+        .zIndex = zIndex - 1,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {}
+  }
+
   LAMBDA (bool, clicked, ()) {  ///
     return !draw && Clay_Hovered() && IsMousePressed(L);
   };
@@ -3383,9 +3403,6 @@ void DoUI(bool draw) {
         },
       }) {
         FLOATING_BEAUTIFY;
-        if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1))
-          CLAY({BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)
-          )}) {}
 
         CLAY({
           .layout{
@@ -3400,6 +3417,9 @@ void DoUI(bool draw) {
             glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
           ),
         }) {
+          if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1))
+            componentOverlay();
+
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             componentSlot(false, weapon.tier, [&]() BF_FORCE_INLINE_LAMBDA {
               CLAY({.layout{
