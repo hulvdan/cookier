@@ -589,9 +589,11 @@ def convert_gamelib_json_to_binary(
 
             pitch_min = params.get("pitch_min", 1)
             pitch_max = params.get("pitch_max", 1)
-            if sound_type.startswith("GAME_") and (pitch_min == 1 and pitch_max == 1):
-                pitch_min = 0.85
-                pitch_max = 1.15
+            if sound_type.startswith(("GAME_", "UI_")) and (
+                pitch_min == 1 and pitch_max == 1
+            ):
+                pitch_min = 0.90
+                pitch_max = 1.10
 
             assert pitch_min > 0
             assert pitch_max > 0
