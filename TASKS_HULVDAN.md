@@ -16,9 +16,10 @@ x tiered hovered modal colors
 x bigger font of prices
 x combine button doesn't get displayed if weapon can't be combined
 x fix zIndex of modal (stat icons don't get displayed over overlay)
+x don't show empty weapon slots in shop
+x items + weapons also make click / hover sfx
+x don't show items/weapons labels in shop/end if player doesn't have any
 
-* don't show empty weapon slots in shop
-* don't show items label in shop if player doesn't have any
 * fix componentStats primary/secondary button sizes
 * shop reroll button red if no money
 * weapon detail icons? (combine / sell / cancel)
