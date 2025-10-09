@@ -9,6 +9,7 @@ x sfx: ui: button hover small
 x smaller font for weapon and item properties in shop
 x brighter text colors
 x fix smg life steal 100%
+x fix componentStats button spacing on the right
 
 * fix can't hover / click other buttons
   except those which are shown in the modal
