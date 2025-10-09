@@ -2795,7 +2795,10 @@ void DoUI(bool draw) {
         BF_CLAY_SPACER_HORIZONTAL;
 
         const bool clickedPrimary = componentButton(
-          {.id = CLAY_ID("button_stats_primary"), .enabled = g.run.showingSecondaryStats},
+          {
+            .id      = CLAY_ID("button_stats_primary"),
+            .enabled = g.run.showingSecondaryStats,
+          },
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_primary_locale());
           }
@@ -2804,8 +2807,10 @@ void DoUI(bool draw) {
         BF_CLAY_SPACER_HORIZONTAL;
 
         const bool clickedSecondary = componentButton(
-          {.id      = CLAY_ID("button_stats_secondary"),
-           .enabled = !g.run.showingSecondaryStats},
+          {
+            .id      = CLAY_ID("button_stats_secondary"),
+            .enabled = !g.run.showingSecondaryStats,
+          },
           [&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_stats_secondary_locale());
           }
@@ -3438,7 +3443,9 @@ void DoUI(bool draw) {
 
             // Combine button.
             const bool combined = componentButton(
-              {.id = CLAY_ID("button_weapon_combine"), .enabled = canCombineWithIndex >= 0
+              {
+                .id      = CLAY_ID("button_weapon_combine"),
+                .enabled = (canCombineWithIndex >= 0),
               },
               [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_combine_locale());
@@ -3456,7 +3463,10 @@ void DoUI(bool draw) {
 
             // Cancel button.
             const bool cancelled = componentButton(
-              {.id = CLAY_ID("button_weapon_cancel"), .enabled = true},
+              {
+                .id      = CLAY_ID("button_weapon_cancel"),
+                .enabled = true,
+              },
               [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale());
               }
@@ -3755,7 +3765,10 @@ void DoUI(bool draw) {
           // Take and Recycle buttons.
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             const bool took = componentButton(
-              {.id = CLAY_ID("button_picked_up_item_take"), .enabled = true},
+              {
+                .id      = CLAY_ID("button_picked_up_item_take"),
+                .enabled = true,
+              },
               [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
               }
