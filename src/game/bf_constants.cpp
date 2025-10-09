@@ -219,6 +219,7 @@ Color TextifyColor(Color color) {  ///
 //   constexpr auto palText##name_ = ColorContrast(ColorFromRGBA(value_), 0.5f);
 PAL_COLORS_TABLE;
 #undef X
+constexpr auto palTextBlack = BLACK;
 
 const Color textColorsPerTier_[]{
   WHITE,
