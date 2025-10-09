@@ -1179,7 +1179,7 @@ void BF_CLAY_IMAGE(ClayImageData data) {  ///
 }
 
 // NOTE: This overload DOESN'T SAVE string to trash arena.
-void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
+void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
   u16 fontId = 0;
   if (g.ui.overriddenFont)
     fontId = (UINT_FROM_PTR(g.ui.overriddenFont) - UINT_FROM_PTR(&g.meta.fontUI))
@@ -1215,7 +1215,7 @@ void BF_CLAY_TEXT(Clay_String string, Color color = WHITE) {  ///
 }
 
 // NOTE: This overload SAVES string to trash arena.
-void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
+void BF_CLAY_TEXT(const char* text, Color color = palTextWhite) {  ///
   int         len           = 0;
   const char* allocatedText = PushTextToArena(&g.meta.trashArena, text, &len);
   Clay_String string{
@@ -1227,7 +1227,7 @@ void BF_CLAY_TEXT(const char* text, Color color = WHITE) {  ///
 
 void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
   int   locale_,
-  Color color              = WHITE,
+  Color color              = palTextWhite,
   bool  _resetPlaceholders = true
 ) {  ///
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
@@ -3753,12 +3753,12 @@ void DoUI(bool draw) {
           .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         }}) {
-          const auto color = Fade(WHITE, (g.run.notPickedUpCoins > 0 ? 1 : 0));
-          const auto id    = CLAY_ID("notPickedUpCoins");
+          f32        fade = (g.run.notPickedUpCoins > 0 ? 1 : 0);
+          const auto id   = CLAY_ID("notPickedUpCoins");
           CLAY({.id = id}) {
             BF_CLAY_IMAGE({
               .texId = glib->ui_coin_x2_texture_id(),
-              .color = color,
+              .color = Fade(WHITE, fade),
             });
           }
           const auto d = Clay_GetElementData(id);
@@ -3768,7 +3768,9 @@ void DoUI(bool draw) {
               = {bb.x + bb.width / 2, LOGICAL_RESOLUTION.y - bb.y - bb.height / 2};
           }
 
-          BF_CLAY_TEXT(TextFormat("%d", g.run.notPickedUpCoins), color);
+          BF_CLAY_TEXT(
+            TextFormat("%d", g.run.notPickedUpCoins), Fade(palTextWhite, fade)
+          );
         }
       }
       // }
@@ -4077,7 +4079,11 @@ void DoUI(bool draw) {
           [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_reroll_locale());
-              BF_CLAY_TEXT(TextFormat(" - %d ", calculatedRerollPrice));
+              BF_CLAY_TEXT(" - ");
+              BF_CLAY_TEXT(
+                TextFormat("%d", calculatedRerollPrice),
+                (canReroll ? palTextWhite : palTextRed)
+              );
               BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
             }
           }
@@ -4343,7 +4349,7 @@ void DoUI(bool draw) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED_DANGER(
               glib->ui_label_items_locale(),
-              (g.run.playerItems.count > 0 ? WHITE : TRANSPARENT_BLACK)
+              (g.run.playerItems.count > 0 ? palTextWhite : TRANSPARENT_BLACK)
             );
 
             // Items.
@@ -4396,12 +4402,12 @@ void DoUI(bool draw) {
 
               BF_CLAY_TEXT_LOCALIZED_DANGER(
                 glib->ui_label_weapons_locale(),
-                (weaponsCount > 0 ? WHITE : TRANSPARENT_BLACK)
+                (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
               );
 
               BF_CLAY_TEXT(
                 TextFormat(" (%d/%d)", weaponsCount, g.run.playerWeapons.count),
-                (weaponsCount > 0 ? WHITE : TRANSPARENT_BLACK)
+                (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
               );
             }
 
