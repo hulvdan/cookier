@@ -26,6 +26,7 @@ x shop reroll button red if no money
 x ui sfx has pitch variation
 x lowered pitch of hover sfx
 
+* design achievements
 * shop buy error current gold amount flashing
 * shop buy error weapons flashing
 * weapon detail icons? (combine / sell / cancel)
