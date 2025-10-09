@@ -1151,7 +1151,7 @@ static BF_FORCE_INLINE Clay_Dimensions MeasureText(
     }
   );
 
-  return {(f32)width, (f32)font->size};
+  return {(f32)width, (f32)font->size / font->_scaleToFit};
 }
 
 void* PushClayImageData(ClayImageData data) {  ///
