@@ -3463,10 +3463,7 @@ void DoUI(bool draw) {
 
             // Cancel button.
             const bool cancelled = componentButton(
-              {
-                .id      = CLAY_ID("button_weapon_cancel"),
-                .enabled = true,
-              },
+              {.id = CLAY_ID("button_weapon_cancel"), .enabled = true},
               [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_cancel_locale());
               }
@@ -3765,10 +3762,7 @@ void DoUI(bool draw) {
           // Take and Recycle buttons.
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             const bool took = componentButton(
-              {
-                .id      = CLAY_ID("button_picked_up_item_take"),
-                .enabled = true,
-              },
+              {.id = CLAY_ID("button_picked_up_item_take"), .enabled = true},
               [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_take_locale());
               }
