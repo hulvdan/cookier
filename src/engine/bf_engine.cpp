@@ -696,6 +696,8 @@ struct Font {
   int  codepointsCount = {};
   int  outlineWidth    = {};
   f32  outlineAdvance  = {};
+
+  f32 _scaleToFit = 1;
 };
 
 struct DrawTextData {
@@ -865,6 +867,14 @@ struct EngineData {
     bool                flushedThisFrame  = false;
   } draw;
 } ge = {};
+
+Vector2 ScreenPosToLogical(Vector2 pos) {  ///
+  return pos * ge.meta._screenToLogicalScale + ge.meta._screenToLogicalAdd;
+}
+
+Vector2 LogicalPosToScreen(Vector2 pos) {  ///
+  return (pos - ge.meta._screenToLogicalAdd) / ge.meta._screenToLogicalScale;
+}
 
 #define GRAND (ge.meta.logicRand)
 
@@ -1088,10 +1098,10 @@ BF_FORCE_INLINE void DrawGroup_CommandCircle(  ///
   };
 }
 
-BF_FORCE_INLINE void DrawGroup_CommandRect(  ///
+BF_FORCE_INLINE void DrawGroup_CommandRect(
   DrawRectData        data,
   DrawCommandSetSortY setSortY = DrawCommandSetSortY_DO_NOTHING
-) {
+) {  ///
   ASSERT(data.size.x >= 0);
   ASSERT(data.size.y >= 0);
   if ((data.size.x == 0) || (data.size.y == 0))
@@ -1955,7 +1965,14 @@ void FlushDrawCommands() {
           }
           else {
             auto& font = data.font;
-            auto  pos  = data.pos;
+
+#define ABOBA 0
+
+#if ABOBA
+            auto pos = LogicalPosToScreen(data.pos);
+#else
+            auto pos = data.pos;
+#endif
 
             // Processing `anchor`.
             {
@@ -2044,6 +2061,17 @@ void FlushDrawCommands() {
                 q.x1 += font->outlineWidth;
                 q.y0 -= font->outlineWidth;
                 q.y1 += font->outlineWidth;
+
+#if ABOBA
+                {
+                  auto pos0 = ScreenPosToLogical({q.x0, q.y0});
+                  auto pos1 = ScreenPosToLogical({q.x1, q.y1});
+                  q.x0      = pos0.x;
+                  q.y1      = pos1.y;
+                  q.x0      = pos0.x;
+                  q.y1      = pos1.y;
+                }
+#endif
 
                 auto sx0 = q.s0;
                 auto sx1 = q.s1;
@@ -2766,22 +2794,6 @@ void DeinitEngine() {  ///
   ma_engine_uninit(&ge.meta._soundManager.engine);
 }
 
-void UnloadFont(Font* font) {  ///
-  ZoneScoped;
-
-  ASSERT(font->loaded);
-  font->loaded = false;
-
-  UnloadFileData((void*)font->fileData);
-  font->fileData = nullptr;
-
-  BF_FREE(font->chars);
-  font->chars = nullptr;
-
-  bgfx::destroy(font->atlasTexture.handle);
-  font->atlasTexture.handle = {};
-}
-
 struct LoadFontData {
   const char* filepath = {};
 
@@ -2952,7 +2964,13 @@ void _OutlineFonts(
   BF_FREE(dist_);
 }
 
-void LoadFonts(
+struct LoadFontsResult {
+  bool      loaded         = false;
+  void*     freeMeOnUnload = {};
+  Texture2D atlasTexture   = {};
+};
+
+LoadFontsResult LoadFonts(
   View<Font>         outFonts,
   View<LoadFontData> data_,
   Vector2Int         atlasSize = {1024, 1024}
@@ -2995,9 +3013,12 @@ void LoadFonts(
   {
     LOGE("stbtt_PackBegin failed");
     INVALID_PATH;
-    DeinitArena(&arena);
-    return;
+    BF_FREE(arena.base);
+    return {};
   }
+
+  const f32 scaleToFit
+    = ScaleToFit((Vector2)LOGICAL_RESOLUTION, (Vector2)ge.meta.screenSize);
 
   FOR_RANGE (int, fontIndex, outFonts.count) {
     auto& font = outFonts[fontIndex];
@@ -3008,6 +3029,13 @@ void LoadFonts(
     ASSERT(data.codepoints);
     ASSERT(data.codepointsCount > 0);
     ASSERT(data.outlineWidth >= 0);
+
+    font._scaleToFit = 1;
+
+    if (!FloatEquals(scaleToFit, 1)) {
+      font.size        = Ceil((f32)font.size * scaleToFit);
+      font._scaleToFit = scaleToFit;
+    }
 
 #if BF_ENABLE_ASSERTS
     // Checking no duplicate codepoints.
@@ -3047,12 +3075,12 @@ void LoadFonts(
         LOGE("stbtt_PackFontRanges failed");
         INVALID_PATH;
 
-        DeinitArena(&arena);
+        BF_FREE(arena.base);
         for (auto& font : outFonts) {
           if (font.fileData)
             UnloadFileData((void*)font.fileData);
         }
-        return;
+        return {};
       }
     }
   }
@@ -3072,7 +3100,7 @@ void LoadFonts(
   const auto atlasTextureHandle = bgfx::createTexture2D(
     atlasSize.x,
     atlasSize.y,
-    false /* _hasMips*/,
+    false /* _hasMips */,
     1,
     bgfx::TextureFormat::RGBA8,
     BGFX_SAMPLER_MIN_ANISOTROPIC      //
@@ -3082,8 +3110,6 @@ void LoadFonts(
       | BGFX_SAMPLER_V_CLAMP,
     bgfx::copy(atlasData, atlasSize.x * atlasSize.y * 4)
   );
-  for (auto& font : outFonts)
-    font.atlasTexture.handle = atlasTextureHandle;
 
 #if BF_DEBUG & !defined(SDL_PLATFORM_EMSCRIPTEN)
   {
@@ -3094,6 +3120,28 @@ void LoadFonts(
 
   for (auto& font : outFonts)
     font.loaded = true;
+
+  return {
+    .loaded         = true,
+    .freeMeOnUnload = arena.base,
+    .atlasTexture{
+      .size   = atlasSize,
+      .handle = atlasTextureHandle,
+    },
+  };
+}
+
+void UnloadFonts(LoadFontsResult* loadedFonts) {  ///
+  ASSERT(loadedFonts->loaded);
+  if (!loadedFonts->loaded)
+    return;
+
+  ZoneScoped;
+
+  loadedFonts->loaded = false;
+  BF_FREE(loadedFonts->freeMeOnUnload);
+  loadedFonts->freeMeOnUnload = nullptr;
+  _UnloadTexture(&loadedFonts->atlasTexture);
 }
 
 i64 GetTicks() {  ///
@@ -3241,10 +3289,6 @@ Vector2 GetMouseScreenPos() {  ///
 
 int GetMouseWheel() {  ///
   return ge.meta._mouseWheel;
-}
-
-Vector2 ScreenPosToLogical(Vector2 pos) {  ///
-  return pos * ge.meta._screenToLogicalScale + ge.meta._screenToLogicalAdd;
 }
 
 void EngineApplyVignette() {  ///

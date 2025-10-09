@@ -29,6 +29,8 @@ x upgrades / shop buy gold wiggling + weapons wiggling upon error
 x tried to design waves progress bar
 x everythere but in hud default font is not outlined
 
+* engine: don't load filedata of the same font file multiple times
+* engine: crisp fonts rendering
 * fix shop items/weapons frame height
 * design achievements
 * weapon detail icons? (combine / sell / cancel)
@@ -181,7 +183,6 @@ MOBS:
 TECH DEBT
 ============================================================
 * broken_strings: proper lines support
-* engine: crisp fonts rendering
 * engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas
