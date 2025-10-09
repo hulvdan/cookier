@@ -23,7 +23,7 @@ UI_LABEL_UNIQUE;Уникально;Unique;
 UI_BUTTON_COMBINE;Скомбинировать;Combine;
 UI_BUTTON_CANCEL;Назад;Cancel;
 UI_BUTTON_TAKE;Взять;Take;
-UI_BUTTON_RECYCLE;Переработать;Recycle;
+UI_BUTTON_RECYCLE;Продать;Recycle;
 UI_BUTTON_CHOOSE;Выбрать;Choose;
 UI_BUTTON_REROLL;Перебросить;Reroll;
 UI_BUTTON_NEXT_WAVE;Продолжить;Go;
