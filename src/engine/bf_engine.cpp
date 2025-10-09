@@ -1964,15 +1964,10 @@ void FlushDrawCommands() {
             );
           }
           else {
-            auto& font = data.font;
+            const auto& font = data.font;
 
-#define ABOBA 0
-
-#if ABOBA
             auto pos = LogicalPosToScreen(data.pos);
-#else
-            auto pos = data.pos;
-#endif
+            pos.y -= font->size;
 
             // Processing `anchor`.
             {
@@ -2022,7 +2017,7 @@ void FlushDrawCommands() {
                    * data.anchor.y;
             }
 
-            auto y = LOGICAL_RESOLUTION.y - pos.y;
+            auto y = ge.meta.screenSize.y - pos.y;
 
             const auto startPosX = pos.x;
 
@@ -2062,16 +2057,14 @@ void FlushDrawCommands() {
                 q.y0 -= font->outlineWidth;
                 q.y1 += font->outlineWidth;
 
-#if ABOBA
                 {
                   auto pos0 = ScreenPosToLogical({q.x0, q.y0});
                   auto pos1 = ScreenPosToLogical({q.x1, q.y1});
                   q.x0      = pos0.x;
-                  q.y1      = pos1.y;
-                  q.x0      = pos0.x;
+                  q.y0      = pos0.y;
+                  q.x1      = pos1.x;
                   q.y1      = pos1.y;
                 }
-#endif
 
                 auto sx0 = q.s0;
                 auto sx1 = q.s1;
@@ -2099,7 +2092,10 @@ void FlushDrawCommands() {
                 bottomLeft  = Vector2{q.x0, q.y0} / lrh - Vector2One();
                 bottomRight = Vector2{q.x1, q.y0} / lrh - Vector2One();
 
-                auto dy       = -(f32)font->size * 2.0f / (f32)LOGICAL_RESOLUTION.y;
+                // auto dy = -(f32)font->size * 1.5f / font->_scaleToFit
+                //           / (f32)LOGICAL_RESOLUTION.y;
+                // // auto dy       = bottomLeft.y - topLeft.y;
+                auto dy       = 0;
                 topLeft.y     = dy - topLeft.y;
                 topRight.y    = dy - topRight.y;
                 bottomLeft.y  = dy - bottomLeft.y;
@@ -2965,9 +2961,10 @@ void _OutlineFonts(
 }
 
 struct LoadFontsResult {
-  bool      loaded         = false;
-  void*     freeMeOnUnload = {};
-  Texture2D atlasTexture   = {};
+  bool       loaded          = false;
+  View<Font> _fonts          = {};
+  void*      _freeMeOnUnload = {};
+  Texture2D  _atlasTexture   = {};
 };
 
 LoadFontsResult LoadFonts(
@@ -2997,9 +2994,14 @@ LoadFontsResult LoadFonts(
 
   stbtt_pack_context context{};
 
+  const f32 scaleToFit
+    = ScaleToFit((Vector2)LOGICAL_RESOLUTION, (Vector2)ge.meta.screenSize);
+
   int maxExtraPadding = 0;
-  for (auto& d : data_)
-    maxExtraPadding = MAX(maxExtraPadding, d.outlineWidth * 2);
+  for (const auto& data : data_) {
+    maxExtraPadding
+      = MAX(maxExtraPadding, Round((f32)data.outlineWidth * scaleToFit) * 2);
+  }
 
   if (!stbtt_PackBegin(
         &context,
@@ -3017,9 +3019,6 @@ LoadFontsResult LoadFonts(
     return {};
   }
 
-  const f32 scaleToFit
-    = ScaleToFit((Vector2)LOGICAL_RESOLUTION, (Vector2)ge.meta.screenSize);
-
   FOR_RANGE (int, fontIndex, outFonts.count) {
     auto& font = outFonts[fontIndex];
     auto& data = data_[fontIndex];
@@ -3029,13 +3028,6 @@ LoadFontsResult LoadFonts(
     ASSERT(data.codepoints);
     ASSERT(data.codepointsCount > 0);
     ASSERT(data.outlineWidth >= 0);
-
-    font._scaleToFit = 1;
-
-    if (!FloatEquals(scaleToFit, 1)) {
-      font.size        = Ceil((f32)font.size * scaleToFit);
-      font._scaleToFit = scaleToFit;
-    }
 
 #if BF_ENABLE_ASSERTS
     // Checking no duplicate codepoints.
@@ -3048,21 +3040,21 @@ LoadFontsResult LoadFonts(
 #endif
 
     font = Font{
-      .size            = data.size,
+      .size            = Round((f32)data.size * scaleToFit),
       .FIXME_sizeScale = data.FIXME_sizeScale,
-      .atlasTexture{.size = atlasSize},
       .fileData        = (u8*)LoadFileData(data.filepath),
       .chars           = ALLOCATE_ARRAY(&arena, stbtt_packedchar, data.codepointsCount),
       .codepoints      = data.codepoints,
       .codepointsCount = data.codepointsCount,
-      .outlineWidth    = data.outlineWidth,
-      .outlineAdvance  = data.outlineAdvance,
+      .outlineWidth    = Round((f32)data.outlineWidth * scaleToFit),
+      .outlineAdvance  = (f32)data.outlineAdvance * scaleToFit,
+      ._scaleToFit     = scaleToFit,
     };
 
     stbtt_InitFont(&font.info, font.fileData, 0);
 
     stbtt_pack_range range{
-      .font_size                   = (f32)data.size * data.FIXME_sizeScale,
+      .font_size                   = (f32)font.size * data.FIXME_sizeScale,
       .array_of_unicode_codepoints = data.codepoints,
       .num_chars                   = data.codepointsCount,
       .chardata_for_range          = font.chars,
@@ -3118,13 +3110,19 @@ LoadFontsResult LoadFonts(
   }
 #endif
 
-  for (auto& font : outFonts)
-    font.loaded = true;
+  for (auto& font : outFonts) {
+    font.loaded       = true;
+    font.atlasTexture = {
+      .size   = atlasSize,
+      .handle = atlasTextureHandle,
+    };
+  }
 
   return {
-    .loaded         = true,
-    .freeMeOnUnload = arena.base,
-    .atlasTexture{
+    .loaded          = true,
+    ._fonts          = outFonts,
+    ._freeMeOnUnload = arena.base,
+    ._atlasTexture{
       .size   = atlasSize,
       .handle = atlasTextureHandle,
     },
@@ -3137,11 +3135,16 @@ void UnloadFonts(LoadFontsResult* loadedFonts) {  ///
     return;
 
   ZoneScoped;
+  LOGI("Unloading fonts...");
 
+  BF_FREE(loadedFonts->_freeMeOnUnload);
+  loadedFonts->_freeMeOnUnload = nullptr;
+  _UnloadTexture(&loadedFonts->_atlasTexture);
+  for (auto& font : loadedFonts->_fonts) {
+    UnloadFileData((void*)font.fileData);
+    font = {};
+  }
   loadedFonts->loaded = false;
-  BF_FREE(loadedFonts->freeMeOnUnload);
-  loadedFonts->freeMeOnUnload = nullptr;
-  _UnloadTexture(&loadedFonts->atlasTexture);
 }
 
 i64 GetTicks() {  ///
