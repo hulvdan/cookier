@@ -10,9 +10,8 @@ x smaller font for weapon and item properties in shop
 x brighter text colors
 x fix smg life steal 100%
 x fix componentStats button spacing on the right
+x fix can't hover / click other buttons when weapon is selected in shop
 
-* fix can't hover / click other buttons
-  except those which are shown in the modal
 * fully rework ui to be the same as in brotato
 * luck = подкова
 * fix make work ui_item_slot_colors
