@@ -199,6 +199,9 @@ constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);
 #define PAL_COLORS_TABLE \
   X(Green, 0x66a650ff)   \
   X(Lime, 0xb9d850ff)    \
+  X(Blue, 0xb9d850ff)    \
+  X(Purple, 0xb9d850ff)  \
+  X(Orange, 0xb9d850ff)  \
   X(Red, 0xc02931ff)     \
   X(White, 0xedefe2ff)
 
@@ -208,7 +211,7 @@ PAL_COLORS_TABLE;
 
 Color TextifyColor(Color color) {  ///
   auto v = ColorToHSV(color);
-  return ColorFromHSV(v.x, MIN(1, v.y * 1.0f), MIN(1, v.z * 1.2f));
+  return ColorFromHSV(v.x, MIN(1, v.y * 1.0f), MIN(1, v.z * 1.3f));
 }
 
 #define X(name_, value_) const auto palText##name_ = TextifyColor(ColorFromRGBA(value_));
@@ -216,5 +219,13 @@ Color TextifyColor(Color color) {  ///
 //   constexpr auto palText##name_ = ColorContrast(ColorFromRGBA(value_), 0.5f);
 PAL_COLORS_TABLE;
 #undef X
+
+const Color textColorsPerTier_[]{
+  WHITE,
+  TextifyColor(ColorFromRGBA(0x208cb2ff)),
+  TextifyColor(ColorFromRGBA(0xa13d77ff)),
+  ColorFromRGBA(0xdc9824ff),
+};
+VIEW_FROM_ARRAY_DANGER(textColorsPerTier);
 
 ///

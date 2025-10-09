@@ -2712,7 +2712,7 @@ void DoUI(bool draw) {
       },
       BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
     }) {}
-  }
+  };
 
   LAMBDA (bool, clicked, ()) {  ///
     return !draw && Clay_Hovered() && IsMousePressed(L);
@@ -2961,7 +2961,9 @@ void DoUI(bool draw) {
       .childGap        = GAP_SMALL,
       .layoutDirection = CLAY_TOP_TO_BOTTOM,
     }}) {
-      BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
+      BF_CLAY_TEXT_LOCALIZED_DANGER(
+        fb_item->name_locale(), textColorsPerTier[fb_item->tier()]
+      );
 
       if (fb_item->count_cap() > 0) {
         int currentCount = 0;
@@ -3433,7 +3435,9 @@ void DoUI(bool draw) {
               }
             });
 
-            BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+            BF_CLAY_TEXT_LOCALIZED_DANGER(
+              fb->name_locale(), textColorsPerTier[weapon.tier]
+            );
           }
 
           componentWeaponStatsExploded(
@@ -3747,6 +3751,9 @@ void DoUI(bool draw) {
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
+          const auto type = g.run.pickedUpItem.toPick;
+          const auto fb   = fb_items->Get(type);
+
           // "Item Found" label.
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_item_found_locale());
 
@@ -3762,13 +3769,12 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
             BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+              glib->ui_frame_nine_slice(),
+              ColorFromRGBA(slotColors->Get(2 * fb->tier())),
+              ColorFromRGBA(slotColors->Get(2 * fb->tier() + 1))
             ),
           }) {
-            const auto type = g.run.pickedUpItem.toPick;
-
             CLAY({.layout{.childGap = GAP_SMALL}}) {
-              const auto fb = fb_items->Get(type);
               const Item item{.type = type, .count = 1};
               componentItem(false, item);
               componentItemNameAndHeaderProperties(type);
@@ -3856,7 +3862,9 @@ void DoUI(bool draw) {
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               },
               BF_CLAY_CUSTOM_NINE_SLICE(
-                glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+                glib->ui_frame_nine_slice(),
+                ColorFromRGBA(slotColors->Get(2 * upgrade.tier)),
+                ColorFromRGBA(slotColors->Get(2 * upgrade.tier + 1))
               ),
             }) {
               CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -3905,7 +3913,9 @@ void DoUI(bool draw) {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                   }}) {
                     FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 0);
-                    BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
+                    BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+                      fb->name_locale(), textColorsPerTier[upgrade.tier]
+                    );
                     FlexEnd();
                   }
                 }
@@ -4098,13 +4108,13 @@ void DoUI(bool draw) {
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
                 BF_CLAY_CUSTOM_NINE_SLICE(
-                  glib->ui_frame_nine_slice(), nineSliceFrameColor, nineSliceFrameFlash
+                  glib->ui_frame_nine_slice(),
+                  ColorFromRGBA(slotColors->Get(2 * v.tier)),
+                  ColorFromRGBA(slotColors->Get(2 * v.tier + 1))
                 ),
               }) {
                 const auto fb_item   = (v.item ? fb_items->Get(v.item) : nullptr);
                 const auto fb_weapon = (v.weapon ? fb_weapons->Get(v.weapon) : nullptr);
-
-                // TODO: Highlight price, not item's frame.
 
                 // Item's image + name.
                 CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -4127,8 +4137,11 @@ void DoUI(bool draw) {
                   // Name.
                   if (v.item)
                     componentItemNameAndHeaderProperties(v.item);
-                  else if (v.weapon)
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(fb_weapon->name_locale());
+                  else if (v.weapon) {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(
+                      fb_weapon->name_locale(), textColorsPerTier[v.tier]
+                    );
+                  }
                   else
                     INVALID_PATH;
                 }
