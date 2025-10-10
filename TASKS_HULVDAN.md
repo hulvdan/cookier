@@ -38,6 +38,7 @@ x small damage +1/-1 variation
 x mob with crate: doesn't get aggroed
 x engine: bulletproof `LoadFonts`: atlas scaling
 x engine: `ReloadFonts` implementation. Not unloading -> loading back filedata
+x creatures flashing on getting damaged
 
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
