@@ -1748,6 +1748,10 @@ int GetNumberOfTreesToSpawn() {  ///
   return 0;
 }
 
+f32 GetLuckFactor() {  ///
+  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
+}
+
 void RecalculateThisWaveMobs() {  ///
   const auto fb_creatures = glib->creatures();
 
@@ -1756,9 +1760,10 @@ void RecalculateThisWaveMobs() {  ///
   f32 accumulatedFactor = 0;
 
   FOR_RANGE (int, i, fb_creatures->size()) {
-    const auto fb = fb_creatures->Get(i);
+    const auto fb         = fb_creatures->Get(i);
+    const f32  luckFactor = (fb->luck_affects_spawn_factor() ? GetLuckFactor() : 1.0f);
     const auto factor
-      = fb->spawn_factor()
+      = fb->spawn_factor() * luckFactor
         / ArithmeticSumAverage(fb->spawn_group_count_min(), fb->spawn_group_count_max());
     ASSERT(factor >= 0);
     if ((factor > 0) && (g.run.waveIndex + 1 >= fb->appearing_wave_number())) {
@@ -2620,10 +2625,6 @@ bool CanSpawnMoreCreatures() {  ///
   const auto framesUntilTheEndOfTheWave
     = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
   return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
-}
-
-f32 GetLuckFactor() {  ///
-  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
 }
 
 void HealPlayer(f32 amount = 1) {  ///
