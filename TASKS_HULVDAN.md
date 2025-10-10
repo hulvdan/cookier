@@ -35,14 +35,9 @@ x engine: don't load filedata of the same font file multiple times
 x resetting all pickupables on starting next wave. not leaving even crates
 x small cooldown variation
 x small damage +1/-1 variation
+x mob with crate: doesn't get aggroed
 
-
-* mob with crate: doesn't get aggroed
-* mob with crate:
-* mob with crate:
-* mob with crate:
-* mob with crate:
-* mob with crate:
+* mob with crate: guaranteed cooldown?
 * hp bar black outline
 * fix shop items/weapons frame height
 * design achievements
