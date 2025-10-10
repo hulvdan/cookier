@@ -306,8 +306,8 @@ creatures:
       - game_creature_player_move_4
   - type: CRATER
     appearing_wave_number: 3
-    spawn_factor: 20
-    aggro_distance: 0
+    spawn_factor: 2
+    can_aggro: false
     health: 30
     health_increase_per_wave: 2
     contact_damage: 1

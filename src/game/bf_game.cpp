@@ -1511,9 +1511,9 @@ int MakeCreature(MakeCreatureData data) {  ///
   };
   creature.idleStartedAt.SetNow();
 
-  if (fb->aggro_distance() != f32_inf) {
+  if ((fb->aggro_distance() != f32_inf) || !fb->can_aggro()) {
     creature.controller.move = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
-    creature.speedModifier *= fb->speed() / fb->not_aggroed_speed();
+    creature.speedModifier *= fb->not_aggroed_speed() / fb->speed();
   }
 
   switch (creature.type) {
@@ -2170,9 +2170,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (creature.health <= 0)
     return false;
 
-  creature.aggroed = true;
-
   const auto fb = glib->creatures()->Get(creature.type);
+
+  creature.aggroed = fb->can_aggro();
 
   if (data.creatureIndex) {
     auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
@@ -5384,13 +5384,15 @@ void GameFixedUpdate() {
           const auto fb = fb_creatures->Get(creature.type);
 
           if (!creature.aggroed && fb->can_move()) {
-            if (fb->aggro_distance() == f32_inf)
-              creature.aggroed = true;
-            else if (Vector2DistanceSqr(PLAYER_CREATURE.pos, creature.pos)
-                     <= SQR(fb->aggro_distance()))
-            {
-              creature.aggroed = true;
-              creature.speedModifier /= fb->speed() / fb->not_aggroed_speed();
+            if (fb->can_aggro()) {
+              if (fb->aggro_distance() == f32_inf)
+                creature.aggroed = true;
+              else if (Vector2DistanceSqr(PLAYER_CREATURE.pos, creature.pos)
+                       <= SQR(fb->aggro_distance()))
+              {
+                creature.aggroed = true;
+                creature.speedModifier /= fb->not_aggroed_speed() / fb->speed();
+              }
             }
 
             auto& move = creature.controller.move;
