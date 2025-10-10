@@ -2149,6 +2149,14 @@ struct TryApplyDamageData {
 bool TryApplyDamage(TryApplyDamageData data) {  ///
   ASSERT(data.creatureIndex >= 0);
   ASSERT(data.damage >= 0);
+  if (data.damage != int_max) {
+    auto t = GRAND.Rand() % 7;
+    if ((t == 0) || (t == 1))
+      data.damage += 1;
+    else if (t == 2)
+      data.damage -= 1;
+  }
+
   data.damage = MAX(1, data.damage);
 
   if (data.directionOrZero != Vector2Zero())
@@ -5218,7 +5226,7 @@ void GameFixedUpdate() {
       g.run.scheduledShop = true;
   }
 
-  // Advancing to ScrenType_SHOP.
+  // Advancing to ScreenType_SHOP.
   if (g.run.scheduledShop) {  ///
     g.run.scheduledShop = false;
     g.run.screen        = ScreenType_SHOP;
@@ -5231,7 +5239,7 @@ void GameFixedUpdate() {
 
 #if 1
     // Resetting all pickupables.
-    g.run.pickupables.reset();
+    g.run.pickupables.Reset();
 #else
     // Resetting all pickupables except crates.
     {
@@ -6204,6 +6212,8 @@ void GameFixedUpdate() {
             weapon.startedShootingAt = {};
             weapon.piercedCount      = 0;
             weapon.cooldownStartedAt.SetNow();
+            const auto variation = (int)(cooldownDur.value / 10);
+            weapon.cooldownStartedAt._value += GRAND.RandInt(-variation, variation);
             weapon.lastCollisionCheckShootingProgress = 0;
           }
         }
