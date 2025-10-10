@@ -2094,10 +2094,9 @@ void ReloadFontsIfNeeded() {  ///
   if (loaded && g.meta.loadedFonts.loaded)
     UnloadFonts(&g.meta.loadedFonts);
 
-  loaded             = true;
-  g.meta.loadedFonts = LoadFonts(
-    {.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData, {2048, 2048}
-  );
+  loaded = true;
+  g.meta.loadedFonts
+    = LoadFonts({.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData);
 }
 
 void GameInit() {  ///
