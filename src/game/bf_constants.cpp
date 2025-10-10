@@ -230,4 +230,21 @@ constexpr f32  WEAPONS_WIGGLING_LOGICAL_AMPLITUDE = 15.0f;
 constexpr auto ERROR_WIGGLING_FRAMES              = lframe::FromSeconds(0.3f);
 constexpr int  ERROR_WIGGLING_TIMES               = 4;
 
+//
+// In case of:
+//
+//   | FLASH | NOT FLASH | FLASH | NOT FLASH | FLASH |
+//
+// DAMAGED_FLASHING_TIMES would be 2.
+// Duration of FLASH     is `DAMAGED_FLASH_PRECALC_X * DAMAGED_FLASH_NOT_FLASH_RATIO`.
+// Duration of NOT FLASH is `DAMAGED_FLASH_PRECALC_X * (1-DAMAGED_FLASH_NOT_FLASH_RATIO)`.
+//
+constexpr auto DAMAGED_FLASHING_FRAMES       = lframe::FromSeconds(0.15f);
+constexpr int  DAMAGED_FLASHING_TIMES        = 1;
+constexpr f32  DAMAGED_FLASH_NOT_FLASH_RATIO = 0.5f;
+constexpr f32  DAMAGED_FLASH_PRECALC_X
+  = (f32)DAMAGED_FLASHING_FRAMES.value
+    / (DAMAGED_FLASHING_TIMES * DAMAGED_FLASH_NOT_FLASH_RATIO //
+       + (DAMAGED_FLASHING_TIMES - 1) * (1 - DAMAGED_FLASH_NOT_FLASH_RATIO));
+
 ///

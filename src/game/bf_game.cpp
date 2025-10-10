@@ -499,6 +499,7 @@ struct Creature {
   Body               body                           = {};
   CreatureController controller                     = {};
   FrameGame          lastDamagedAt                  = {};
+  FrameGame          lastDamagedFlashAt             = {};
   FrameGame          diedAt                         = {};
   f32                speed                          = {};
   f32                speedModifier                  = 1;
@@ -2276,8 +2277,13 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     g.run.playerWeapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
       += data.damage;
 
-  creature.lastDamagedAt = {};
-  creature.lastDamagedAt.SetNow();
+  if (data.damage != int_max) {
+    creature.lastDamagedAt = {};
+    creature.lastDamagedAt.SetNow();
+    creature.lastDamagedFlashAt = {};
+    creature.lastDamagedFlashAt.SetNow();
+  }
+
   creature.lastDamagedWeaponIndex = data.indexOfWeaponThatDidDamageOrMinus1;
 
   data.knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
@@ -6929,12 +6935,36 @@ void GameDraw() {
       color = ColorLerp(color, palRed, t);
     }
 
+    auto flash = TRANSPARENT_BLACK;
+    if ((DAMAGED_FLASHING_TIMES > 0) && creature.lastDamagedFlashAt.IsSet()) {
+      const auto e_ = creature.lastDamagedFlashAt.Elapsed();
+
+      if (e_ < DAMAGED_FLASHING_FRAMES) {
+        auto e          = (f32)e_.value;
+        bool isFlashing = true;
+        FOR_RANGE (int, i, DAMAGED_FLASHING_TIMES * 2 - 1) {
+          if (isFlashing)
+            e -= DAMAGED_FLASH_PRECALC_X * DAMAGED_FLASH_NOT_FLASH_RATIO;
+          else
+            e -= DAMAGED_FLASH_PRECALC_X * (1 - DAMAGED_FLASH_NOT_FLASH_RATIO);
+
+          isFlashing = !isFlashing;
+          if (e < 0)
+            break;
+        }
+
+        if (!isFlashing)
+          flash = WHITE;
+      }
+    }
+
     DrawGroup_OneShotTexture(
       {
         .texId = texId,
         .pos   = creature.pos,
         .scale = scale,
         .color = Fade(color, fade),
+        .flash = flash,
       },
       DrawZ_DEFAULT
     );
