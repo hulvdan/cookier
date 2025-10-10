@@ -33,6 +33,8 @@ x engine fonts: correct placement on both resolutions
 x engine fonts: scale fonts while they haven't been reloaded yet
 x engine: don't load filedata of the same font file multiple times
 x resetting all pickupables on starting next wave. not leaving even crates
+x small cooldown variation
+x small damage +1/-1 variation
 
 * mob with crate
 * fix sometimes sdl thinks window is out of focus -> sounds mutes
