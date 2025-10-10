@@ -2981,6 +2981,144 @@ void _UnloadFileDataFromFonts(View<Font> fonts, View<LoadFontData> data) {  ///
   }
 }
 
+std::tuple<bool, LoadFontsResult> _ProcessFonts(
+  View<Font>         outFonts,
+  View<LoadFontData> data_
+) {  ///
+  ASSERT(outFonts.count > 0);
+  ASSERT(outFonts.count == data_.count);
+
+  const f32 scaleToFit
+    = ScaleToFit((Vector2)LOGICAL_RESOLUTION, (Vector2)ge.meta.screenSize);
+
+  int maxExtraPadding = 0;
+  for (const auto& data : data_) {
+    maxExtraPadding
+      = MAX(maxExtraPadding, Round((f32)data.outlineWidth * scaleToFit) * 2);
+  }
+
+  Vector2Int atlasSize = {512, 512};
+
+  while (atlasSize.x <= BF_MAX_FONT_ATLAS_SIZE) {
+    DEFER {
+      atlasSize *= 2;
+    };
+
+    auto tempArena = MakeArena(atlasSize.x * atlasSize.y * 5);
+    DEFER {
+      DeinitArena(&tempArena);
+    };
+
+    auto tempOneChannelAtlasData
+      = ALLOCATE_ARRAY(&tempArena, u8, atlasSize.x * atlasSize.y * 1);
+    auto tempAtlasData = ALLOCATE_ARRAY(&tempArena, u8, atlasSize.x * atlasSize.y * 4);
+
+    stbtt_pack_context context{};
+
+    if (!stbtt_PackBegin(
+          &context,
+          tempOneChannelAtlasData,
+          atlasSize.x,
+          atlasSize.y,
+          0,
+          1 + maxExtraPadding,
+          nullptr
+        ))
+    {
+      LOGE("stbtt_PackBegin failed");
+      INVALID_PATH;
+      break;
+    }
+
+    bool tryEnlargingAtlas = false;
+
+    FOR_RANGE (int, fontIndex, outFonts.count) {
+      auto&       font = outFonts[fontIndex];
+      const auto& data = data_[fontIndex];
+
+      font.size           = data.size * scaleToFit;
+      font.outlineWidth   = Round((f32)data.outlineWidth * scaleToFit);
+      font.outlineAdvance = (f32)data.outlineAdvance * scaleToFit;
+      font._scaleToFit    = scaleToFit;
+
+      stbtt_pack_range range{
+        .font_size                   = (f32)font.size * font.FIXME_sizeScale,
+        .array_of_unicode_codepoints = font.codepoints,
+        .num_chars                   = font.codepointsCount,
+        .chardata_for_range          = font.chars,
+      };
+
+      ZoneScopedN("stbtt_PackFontRanges()");
+
+      if (!stbtt_PackFontRanges(&context, font.fileData, 0, &range, 1)) {
+        LOGE("stbtt_PackFontRanges failed");
+        tryEnlargingAtlas = true;
+        break;
+      }
+    }
+
+    if (tryEnlargingAtlas)
+      continue;
+
+    stbtt_PackEnd(&context);
+
+    FOR_RANGE (int, i, atlasSize.x * atlasSize.y) {
+      tempAtlasData[i * 4 + 0] = 255;
+      tempAtlasData[i * 4 + 1] = 255;
+      tempAtlasData[i * 4 + 2] = 255;
+      tempAtlasData[i * 4 + 3] = tempOneChannelAtlasData[i];
+    }
+
+    _OutlineFonts(tempOneChannelAtlasData, tempAtlasData, atlasSize, outFonts);
+
+    // TODO: Rework as bgfx::TextureFormat::A8 + appropriate fragment shader.
+    const auto atlasTextureHandle = bgfx::createTexture2D(
+      atlasSize.x,
+      atlasSize.y,
+      false /* _hasMips */,
+      1,
+      bgfx::TextureFormat::RGBA8,
+      BGFX_SAMPLER_MIN_ANISOTROPIC      //
+        | BGFX_SAMPLER_MAG_ANISOTROPIC  //
+        | BGFX_SAMPLER_MIP_POINT        //
+        | BGFX_SAMPLER_U_CLAMP          //
+        | BGFX_SAMPLER_V_CLAMP,
+      bgfx::copy(tempAtlasData, atlasSize.x * atlasSize.y * 4)
+    );
+
+#if BF_DEBUG & !defined(SDL_PLATFORM_EMSCRIPTEN)
+    if (0) {
+      ZoneScopedN("stbi_write_png");
+      stbi_write_png("debugFontAtlas.png", atlasSize.x, atlasSize.y, 4, tempAtlasData, 0);
+    }
+#endif
+
+    for (auto& font : outFonts) {
+      font.loaded       = true;
+      font.atlasTexture = {
+        .size   = atlasSize,
+        .handle = atlasTextureHandle,
+      };
+    }
+
+    return {
+      true,
+      {
+        .loaded = true,
+        ._fonts = outFonts,
+        ._atlasTexture{
+          .size   = atlasSize,
+          .handle = atlasTextureHandle,
+        },
+        ._loadFontData = data_,
+      }
+    };
+  }
+
+  INVALID_PATH;
+  return {false, {}};
+}
+
 // `data_.base` must live throughout the lifetime
 // of fonts until `UnloadFonts` is called!
 LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
@@ -2991,9 +3129,6 @@ LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
     totalAllocatedPackedChars += d.codepointsCount;
   // NOTE: `arena` doesn't get freed on success.
   auto arena = MakeArena(sizeof(stbtt_packedchar) * totalAllocatedPackedChars);
-
-  const f32 scaleToFit
-    = ScaleToFit((Vector2)LOGICAL_RESOLUTION, (Vector2)ge.meta.screenSize);
 
   FOR_RANGE (int, fontIndex, outFonts.count) {
     auto& font = outFonts[fontIndex];
@@ -3026,138 +3161,20 @@ LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
       fileData = (u8*)LoadFileData(data.filepath);
 
     font = Font{
-      .size            = Round((f32)data.size * scaleToFit),
       .FIXME_sizeScale = data.FIXME_sizeScale,
       .fileData        = fileData,
       .chars           = ALLOCATE_ARRAY(&arena, stbtt_packedchar, data.codepointsCount),
       .codepoints      = data.codepoints,
       .codepointsCount = data.codepointsCount,
-      .outlineWidth    = Round((f32)data.outlineWidth * scaleToFit),
-      .outlineAdvance  = (f32)data.outlineAdvance * scaleToFit,
-      ._scaleToFit     = scaleToFit,
     };
 
     stbtt_InitFont(&font.info, font.fileData, 0);
   }
 
-  Vector2Int atlasSize = {512, 512};
-
-  FOR_RANGE (int, atlasSizeIteration, 4) {
-    DEFER {
-      atlasSize *= 2;
-    };
-
-    ASSERT(outFonts.count > 0);
-    ASSERT(outFonts.count == data_.count);
-
-    auto tempArena = MakeArena(atlasSize.x * atlasSize.y * 5);
-    DEFER {
-      DeinitArena(&tempArena);
-    };
-
-    auto oneChannelAtlasData
-      = ALLOCATE_ARRAY(&tempArena, u8, atlasSize.x * atlasSize.y * 1);
-    auto atlasData = ALLOCATE_ARRAY(&tempArena, u8, atlasSize.x * atlasSize.y * 4);
-
-    stbtt_pack_context context{};
-
-    int maxExtraPadding = 0;
-    for (const auto& data : data_) {
-      maxExtraPadding
-        = MAX(maxExtraPadding, Round((f32)data.outlineWidth * scaleToFit) * 2);
-    }
-
-    if (!stbtt_PackBegin(
-          &context,
-          oneChannelAtlasData,
-          atlasSize.x,
-          atlasSize.y,
-          0,
-          1 + maxExtraPadding,
-          nullptr
-        ))
-    {
-      LOGE("stbtt_PackBegin failed");
-      INVALID_PATH;
-      break;
-    }
-
-    bool tryEnlargingAtlas = false;
-
-    FOR_RANGE (int, fontIndex, outFonts.count) {
-      auto& font = outFonts[fontIndex];
-
-      stbtt_pack_range range{
-        .font_size                   = (f32)font.size * font.FIXME_sizeScale,
-        .array_of_unicode_codepoints = font.codepoints,
-        .num_chars                   = font.codepointsCount,
-        .chardata_for_range          = font.chars,
-      };
-
-      ZoneScopedN("stbtt_PackFontRanges()");
-
-      if (!stbtt_PackFontRanges(&context, font.fileData, 0, &range, 1)) {
-        LOGE("stbtt_PackFontRanges failed");
-        tryEnlargingAtlas = true;
-        break;
-      }
-    }
-
-    if (tryEnlargingAtlas)
-      continue;
-
-    stbtt_PackEnd(&context);
-
-    FOR_RANGE (int, i, atlasSize.x * atlasSize.y) {
-      atlasData[i * 4 + 0] = 255;
-      atlasData[i * 4 + 1] = 255;
-      atlasData[i * 4 + 2] = 255;
-      atlasData[i * 4 + 3] = oneChannelAtlasData[i];
-    }
-
-    _OutlineFonts(oneChannelAtlasData, atlasData, atlasSize, outFonts);
-
-    // TODO: Rework as bgfx::TextureFormat::A8 + appropriate fragment shader.
-    const auto atlasTextureHandle = bgfx::createTexture2D(
-      atlasSize.x,
-      atlasSize.y,
-      false /* _hasMips */,
-      1,
-      bgfx::TextureFormat::RGBA8,
-      BGFX_SAMPLER_MIN_ANISOTROPIC      //
-        | BGFX_SAMPLER_MAG_ANISOTROPIC  //
-        | BGFX_SAMPLER_MIP_POINT        //
-        | BGFX_SAMPLER_U_CLAMP          //
-        | BGFX_SAMPLER_V_CLAMP,
-      bgfx::copy(atlasData, atlasSize.x * atlasSize.y * 4)
-    );
-
-#if BF_DEBUG & !defined(SDL_PLATFORM_EMSCRIPTEN)
-    if (0) {
-      ZoneScopedN("stbi_write_png");
-      stbi_write_png("debugFontAtlas.png", atlasSize.x, atlasSize.y, 4, atlasData, 0);
-    }
-#endif
-
-    for (auto& font : outFonts) {
-      font.loaded       = true;
-      font.atlasTexture = {
-        .size   = atlasSize,
-        .handle = atlasTextureHandle,
-      };
-    }
-
-    return {
-      .loaded          = true,
-      ._fonts          = outFonts,
-      ._freeMeOnUnload = arena.base,
-      ._atlasTexture{
-        .size   = atlasSize,
-        .handle = atlasTextureHandle,
-      },
-      ._loadFontData = data_,
-    };
-  }
+  auto [success, result] = _ProcessFonts(outFonts, data_);
+  result._freeMeOnUnload = arena.base;
+  if (success)
+    return result;
 
   DeinitArena(&arena);
   _UnloadFileDataFromFonts(outFonts, data_);
@@ -3166,7 +3183,21 @@ LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
 }
 
 void ReloadFonts(LoadFontsResult* loadedFonts) {  ///
-  NOT_IMPLEMENTED;
+  ASSERT(loadedFonts->loaded);
+  _UnloadTexture(&loadedFonts->_atlasTexture);
+  for (auto& font : loadedFonts->_fonts) {
+    font.size           = 0;
+    font.outlineWidth   = 0;
+    font.outlineAdvance = 0;
+    font._scaleToFit    = 0;
+    font.atlasTexture   = {};
+  }
+  auto [success, result] = _ProcessFonts(loadedFonts->_fonts, loadedFonts->_loadFontData);
+  ASSERT(success);
+
+  auto t                       = loadedFonts->_freeMeOnUnload;
+  *loadedFonts                 = result;
+  loadedFonts->_freeMeOnUnload = t;
 }
 
 void UnloadFonts(LoadFontsResult* loadedFonts) {  ///
