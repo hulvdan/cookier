@@ -264,6 +264,7 @@ creatures:
     knockback_resistance: 0.9
     color: 0x7a7576ff
     speed: 5
+    not_aggroed_speed: 3.75
     speed_variation: 0.8
     coins_dropped: 3
     aggro_distance: 7
@@ -293,6 +294,31 @@ creatures:
     on_death_spawns_count_max: 6
     on_death_spawns_distance_min: 3
     on_death_spawns_distance_max: 1
+    idle_texture_ids:
+      - game_creature_player_idle_1
+      - game_creature_player_idle_2
+      - game_creature_player_idle_3
+      - game_creature_player_idle_4
+    move_texture_ids:
+      - game_creature_player_move_1
+      - game_creature_player_move_2
+      - game_creature_player_move_3
+      - game_creature_player_move_4
+  - type: CRATER
+    appearing_wave_number: 3
+    spawn_factor: 20
+    aggro_distance: 0
+    health: 30
+    health_increase_per_wave: 2
+    contact_damage: 1
+    contact_damage_increase_per_wave: 0.5
+    knockback_resistance: 0.7
+    color: 0xdc9824ff
+    speed: 5
+    not_aggroed_speed: 5
+    speed_variation: 0.8
+    consumable_drop_chance: inf
+    crate_instead_of_consumable_factor: inf
     idle_texture_ids:
       - game_creature_player_idle_1
       - game_creature_player_idle_2

@@ -138,8 +138,6 @@ VIEW_FROM_ARRAY_DANGER(PLAYER_WEAPONS_DRAW_Z);
 
 constexpr int TOTAL_TIERS = 4;
 
-constexpr f32 CRATE_INSTEAD_OF_CONSUMABLE_FACTOR = 0.25f;
-
 constexpr Color MODAL_OVERLAY_COLOR      = BLACK;
 constexpr f32   MODAL_OVERLAY_COLOR_FADE = 0.75f;
 
@@ -155,8 +153,6 @@ constexpr auto MOB_RUSHER_RUSH_POST_FRAMES  = lframe::Scaled(20);
 constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
 constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::Unscaled(2.5f * FIXED_FPS);
 constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::Unscaled(3.5f * FIXED_FPS);
-
-constexpr f32 NOT_AGGROED_MOB_SPEED_MODIFIER = 0.75f;
 
 constexpr auto MOB_TURREL_SHOOTING_FRAMES = lframe::Scaled(10);
 constexpr auto MOB_TURREL_SHOOT_FRAME     = lframe::Scaled(3);

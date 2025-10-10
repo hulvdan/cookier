@@ -85,10 +85,12 @@ table Creature {
     crit_damage_multiplier: float = 1.5;
 
     speed: float;
+    not_aggroed_speed: float = 1;
     speed_variation: float;
     hostility_type: int = 1;
     knockback_resistance: float;
     consumable_drop_chance: float = 0.007;
+    crate_instead_of_consumable_factor: float = 0.25;
     is_boss: bool = false;
     collider_scale: float = 1;
     hurtbox_scale: float = 1;
