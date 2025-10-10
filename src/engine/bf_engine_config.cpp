@@ -9,3 +9,5 @@ constexpr f32 FIXED_DT  = 1.0f / (f32)FIXED_FPS;
 // If player's PC gives <= _BF_MIN_TARGET_FPS FPS,
 // then engine would skip simulation frames. Game would run slower.
 constexpr int _BF_MIN_TARGET_FPS = 20;
+
+constexpr int BF_MAX_FONT_ATLAS_SIZE = 4096;

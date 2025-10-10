@@ -2013,29 +2013,32 @@ void ReloadFontsIfNeeded() {  ///
   static bool       loaded             = false;
   static Vector2Int previousScreenSize = {};
 
-  static int debounce = 0;
-
-  if (previousScreenSize == ge.meta.screenSize) {
-    debounce = 0;
-    return;
+  // Debounce.
+  {
+    static int debounce = 0;
+    if (previousScreenSize == ge.meta.screenSize) {
+      debounce = 0;
+      return;
+    }
+    if (loaded) {
+      Clay_ResetMeasureTextCache();
+      static Vector2Int lastFrameScreenSize = {};
+      if (lastFrameScreenSize != ge.meta.screenSize) {
+        lastFrameScreenSize = ge.meta.screenSize;
+        debounce            = 0;
+        return;
+      }
+      debounce++;
+      if (debounce < FIXED_FPS / 5)
+        return;
+    }
+    previousScreenSize = ge.meta.screenSize;
   }
 
   if (loaded) {
-    Clay_ResetMeasureTextCache();
-
-    static Vector2Int lastFrameScreenSize = {};
-    if (lastFrameScreenSize != ge.meta.screenSize) {
-      lastFrameScreenSize = ge.meta.screenSize;
-      debounce            = 0;
-      return;
-    }
-
-    debounce++;
-    if (debounce < FIXED_FPS / 5)
-      return;
+    ReloadFonts(&g.meta.loadedFonts);
+    return;
   }
-
-  previousScreenSize = ge.meta.screenSize;
 
   static auto fontpath = "resources/correction_brush.ttf";
 
@@ -2090,9 +2093,6 @@ void ReloadFontsIfNeeded() {  ///
     },
   };
   VIEW_FROM_ARRAY_DANGER(loadFontData);
-
-  if (loaded && g.meta.loadedFonts.loaded)
-    UnloadFonts(&g.meta.loadedFonts);
 
   loaded = true;
   g.meta.loadedFonts

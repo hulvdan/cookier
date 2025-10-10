@@ -36,7 +36,8 @@ x resetting all pickupables on starting next wave. not leaving even crates
 x small cooldown variation
 x small damage +1/-1 variation
 x mob with crate: doesn't get aggroed
-x bulletproof LoadFonts: atlas scaling
+x engine: bulletproof `LoadFonts`: atlas scaling
+x engine: `ReloadFonts` implementation. Not unloading -> loading back filedata
 
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
@@ -191,7 +192,6 @@ MOBS:
 TECH DEBT
 ============================================================
 * broken_strings: proper lines support
-* engine: automatically scale fonts for current screenSize
 * engine: different atlases for different resolutions
 * engine: handle the case when there's too much textures to pack into 1 atlas
 * engine: nine slice should work even if width/height of image is very small
