@@ -2032,14 +2032,13 @@ void ReloadFontsIfNeeded() {  ///
 
   previousScreenSize = ge.meta.screenSize;
 
-  auto fontpath = "resources/arialbd.ttf";
-  // auto fontpath = "resources/correction_brush.ttf";
+  static auto fontpath = "resources/correction_brush.ttf";
 
   static int priceCodepoints[]{
-    ' ', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    ' ', '+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
   };
 
-  LoadFontData loadFontData_[]{
+  static LoadFontData loadFontData_[]{
     // fontUI.
     {
       .filepath        = fontpath,
