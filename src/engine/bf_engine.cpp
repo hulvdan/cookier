@@ -2960,12 +2960,30 @@ void _OutlineFonts(
 }
 
 struct LoadFontsResult {
-  bool       loaded          = false;
-  View<Font> _fonts          = {};
-  void*      _freeMeOnUnload = {};
-  Texture2D  _atlasTexture   = {};
+  bool               loaded          = false;
+  View<Font>         _fonts          = {};
+  void*              _freeMeOnUnload = {};
+  Texture2D          _atlasTexture   = {};
+  View<LoadFontData> _loadFontData   = {};
 };
 
+void _UnloadFileDataFromFontsThatCanBeTheSame(
+  View<Font>         fonts,
+  View<LoadFontData> data
+) {  ///
+  for (int i = 0; i < fonts.count; i++) {
+    auto& font = fonts[i];
+    if (font.fileData)
+      UnloadFileData((void*)font.fileData);
+    for (int k = i + 1; k < fonts.count; k++) {
+      if (!strcmp(data[k].filepath, data[i].filepath))
+        fonts[k].fileData = nullptr;
+    }
+  }
+}
+
+// `data_.base` must live throughout the lifetime
+// of fonts until `UnloadFonts` is called!
 LoadFontsResult LoadFonts(
   View<Font>         outFonts,
   View<LoadFontData> data_,
@@ -3038,10 +3056,20 @@ LoadFontsResult LoadFonts(
     }
 #endif
 
+    u8* fileData = nullptr;
+    FOR_RANGE (int, previousFontIndex, fontIndex) {
+      if (!strcmp(data_[previousFontIndex].filepath, data.filepath)) {
+        fileData = (u8*)outFonts[previousFontIndex].fileData;
+        break;
+      }
+    }
+    if (!fileData)
+      fileData = (u8*)LoadFileData(data.filepath);
+
     font = Font{
       .size            = Round((f32)data.size * scaleToFit),
       .FIXME_sizeScale = data.FIXME_sizeScale,
-      .fileData        = (u8*)LoadFileData(data.filepath),
+      .fileData        = fileData,
       .chars           = ALLOCATE_ARRAY(&arena, stbtt_packedchar, data.codepointsCount),
       .codepoints      = data.codepoints,
       .codepointsCount = data.codepointsCount,
@@ -3067,10 +3095,7 @@ LoadFontsResult LoadFonts(
         INVALID_PATH;
 
         BF_FREE(arena.base);
-        for (auto& font : outFonts) {
-          if (font.fileData)
-            UnloadFileData((void*)font.fileData);
-        }
+        _UnloadFileDataFromFontsThatCanBeTheSame(outFonts, data_);
         return {};
       }
     }
@@ -3125,6 +3150,7 @@ LoadFontsResult LoadFonts(
       .size   = atlasSize,
       .handle = atlasTextureHandle,
     },
+    ._loadFontData = data_,
   };
 }
 
@@ -3139,10 +3165,11 @@ void UnloadFonts(LoadFontsResult* loadedFonts) {  ///
   BF_FREE(loadedFonts->_freeMeOnUnload);
   loadedFonts->_freeMeOnUnload = nullptr;
   _UnloadTexture(&loadedFonts->_atlasTexture);
-  for (auto& font : loadedFonts->_fonts) {
-    UnloadFileData((void*)font.fileData);
+  _UnloadFileDataFromFontsThatCanBeTheSame(
+    loadedFonts->_fonts, loadedFonts->_loadFontData
+  );
+  for (auto& font : loadedFonts->_fonts)
     font = {};
-  }
   loadedFonts->loaded = false;
 }
 

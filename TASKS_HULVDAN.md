@@ -30,9 +30,9 @@ x tried to design waves progress bar
 x everythere but in hud default font is not outlined
 x engine: crisp fonts rendering
 x engine fonts: correct placement on both resolutions
+x engine fonts: scale fonts while they haven't been reloaded yet
+x engine: don't load filedata of the same font file multiple times
 
-* engine fonts: scale fonts while they haven't been reloaded yet
-* engine: don't load filedata of the same font file multiple times
 * fix shop items/weapons frame height
 * design achievements
 * weapon detail icons? (combine / sell / cancel)
@@ -196,6 +196,7 @@ TECH DEBT
   check web debug yandex build with mocked ysdk
 * font shader that remaps fillColor and outlineColor
 * enable linting: clang-tidy to show f32 int / int f32 conversions
+x engine fonts: fix scaling of not yet reloaded fonts (y position)
 
 IRRELEVANT:
 ================================================================================
