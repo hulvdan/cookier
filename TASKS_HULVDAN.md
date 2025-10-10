@@ -36,6 +36,7 @@ x resetting all pickupables on starting next wave. not leaving even crates
 x small cooldown variation
 x small damage +1/-1 variation
 x mob with crate: doesn't get aggroed
+x bulletproof LoadFonts: atlas scaling
 
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
@@ -182,6 +183,7 @@ MOBS:
 - heavy rusher mob
 - heavy spawner mob - толстая шрек печенька
 - tiny mob
+- моб с сундуком
 - mob boss - галет (он сухой)
 - tree - cow / apple tree
 * mob that rotates when moving?
@@ -202,6 +204,7 @@ TECH DEBT
 * enable linting: clang-tidy to show f32 int / int f32 conversions
 * engine fonts: fix scaling of not yet reloaded fonts (y position)
 * fix sometimes sdl thinks window is out of focus -> sounds mutes
+* engine: LoadFonts per localization
 
 IRRELEVANT:
 ================================================================================
