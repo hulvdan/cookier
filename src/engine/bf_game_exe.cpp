@@ -437,7 +437,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   case SDL_EVENT_MOUSE_WHEEL: {
     const auto& d       = event->wheel;
     ge.meta._mouseWheel = MIN(1, MAX(-1, (d.direction ? -1 : 1) * d.integer_y));
-  };
+  } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {
     // Required by yandex.
