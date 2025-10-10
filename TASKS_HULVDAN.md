@@ -32,11 +32,13 @@ x engine: crisp fonts rendering
 x engine fonts: correct placement on both resolutions
 x engine fonts: scale fonts while they haven't been reloaded yet
 x engine: don't load filedata of the same font file multiple times
+x resetting all pickupables on starting next wave. not leaving even crates
 
+* mob with crate
+* fix sometimes sdl thinks window is out of focus -> sounds mutes
 * fix shop items/weapons frame height
 * design achievements
 * weapon detail icons? (combine / sell / cancel)
-* should stats (primary / secondary) be making error sounds?
 * luck = подкова
 * multiple level ups icons in the top right corner (like picked up crates)
 * shop items locking
@@ -45,8 +47,6 @@ x engine: don't load filedata of the same font file multiple times
 * landmine: show damage in item
 * landmine: show spawn rate "Gets spawned every %.1f seconds"
 * garden: show interval of fruit spawning "Spawns fruit every %.1f seconds"
-* ZHEKA
-  Cheats?
 * clay hovered modal shadows
 * stat descriptions
 * save system
@@ -74,6 +74,7 @@ x engine: don't load filedata of the same font file multiple times
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 *
 *
+* ZHEKA: Cheats?
 * ZHEKA: can web build
 * ZHEKA: total commander for working with sounds?
   instructions of how to work with sounds
