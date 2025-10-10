@@ -2983,11 +2983,7 @@ void _UnloadFileDataFromFonts(View<Font> fonts, View<LoadFontData> data) {  ///
 
 // `data_.base` must live throughout the lifetime
 // of fonts until `UnloadFonts` is called!
-LoadFontsResult LoadFonts(
-  View<Font>         outFonts,
-  View<LoadFontData> data_,
-  Vector2Int         atlasSize = {512, 512}
-) {  ///
+LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
   ZoneScoped;
 
   int totalAllocatedPackedChars = 0;
@@ -3044,6 +3040,8 @@ LoadFontsResult LoadFonts(
     stbtt_InitFont(&font.info, font.fileData, 0);
   }
 
+  Vector2Int atlasSize = {512, 512};
+
   FOR_RANGE (int, atlasSizeIteration, 4) {
     DEFER {
       atlasSize *= 2;
@@ -3054,7 +3052,7 @@ LoadFontsResult LoadFonts(
 
     auto tempArena = MakeArena(atlasSize.x * atlasSize.y * 5);
     DEFER {
-      BF_FREE(tempArena.base);
+      DeinitArena(&tempArena);
     };
 
     auto oneChannelAtlasData
@@ -3161,7 +3159,7 @@ LoadFontsResult LoadFonts(
     };
   }
 
-  BF_FREE(arena.base);
+  DeinitArena(&arena);
   _UnloadFileDataFromFonts(outFonts, data_);
   INVALID_PATH;
   return {};
@@ -3180,12 +3178,11 @@ void UnloadFonts(LoadFontsResult* loadedFonts) {  ///
   LOGI("Unloading fonts...");
 
   BF_FREE(loadedFonts->_freeMeOnUnload);
-  loadedFonts->_freeMeOnUnload = nullptr;
   _UnloadTexture(&loadedFonts->_atlasTexture);
   _UnloadFileDataFromFonts(loadedFonts->_fonts, loadedFonts->_loadFontData);
   for (auto& font : loadedFonts->_fonts)
     font = {};
-  loadedFonts->loaded = false;
+  *loadedFonts = {};
 }
 
 i64 GetTicks() {  ///
