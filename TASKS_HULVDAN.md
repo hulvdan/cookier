@@ -36,8 +36,14 @@ x resetting all pickupables on starting next wave. not leaving even crates
 x small cooldown variation
 x small damage +1/-1 variation
 
-* mob with crate
-* fix sometimes sdl thinks window is out of focus -> sounds mutes
+
+* mob with crate: doesn't get aggroed
+* mob with crate:
+* mob with crate:
+* mob with crate:
+* mob with crate:
+* mob with crate:
+* hp bar black outline
 * fix shop items/weapons frame height
 * design achievements
 * weapon detail icons? (combine / sell / cancel)
@@ -199,7 +205,8 @@ TECH DEBT
   check web debug yandex build with mocked ysdk
 * font shader that remaps fillColor and outlineColor
 * enable linting: clang-tidy to show f32 int / int f32 conversions
-x engine fonts: fix scaling of not yet reloaded fonts (y position)
+* engine fonts: fix scaling of not yet reloaded fonts (y position)
+* fix sometimes sdl thinks window is out of focus -> sounds mutes
 
 IRRELEVANT:
 ================================================================================

@@ -1513,7 +1513,7 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   if (fb->aggro_distance() != f32_inf) {
     creature.controller.move = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
-    creature.speedModifier *= NOT_AGGROED_MOB_SPEED_MODIFIER;
+    creature.speedModifier *= fb->speed() / fb->not_aggroed_speed();
   }
 
   switch (creature.type) {
@@ -5390,7 +5390,7 @@ void GameFixedUpdate() {
                      <= SQR(fb->aggro_distance()))
             {
               creature.aggroed = true;
-              creature.speedModifier /= NOT_AGGROED_MOB_SPEED_MODIFIER;
+              creature.speedModifier /= fb->speed() / fb->not_aggroed_speed();
             }
 
             auto& move = creature.controller.move;
@@ -5827,7 +5827,7 @@ void GameFixedUpdate() {
               pickupable.pickedUpAt.SetNow();
 
               const int consumableOrCrateHeal
-                = MAX(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
+                = MIN(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
 
               switch (pickupable.type) {
               case PickupableType_COIN: {
@@ -6600,7 +6600,8 @@ void GameFixedUpdate() {
               if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
                 data.type = PickupableType_CONSUMABLE;
 
-                const auto crateChance = CRATE_INSTEAD_OF_CONSUMABLE_FACTOR * luckFactor
+                const auto crateChance = fb->crate_instead_of_consumable_factor()
+                                         * luckFactor
                                          / (f32)(1 + g.run.cratesDroppedThisWave);
                 if (GRAND.FRand() <= crateChance) {
                   data.type = PickupableType_CRATE;
