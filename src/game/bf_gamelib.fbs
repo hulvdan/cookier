@@ -70,6 +70,7 @@ table Creature {
     appearing_wave_number: int;
 
     spawn_factor: float;
+    luck_affects_spawn_factor: bool = false;
     spawn_group_count_min: int = 1;
     spawn_group_count_max: int = 1;
     spawn_group_radius_min: float = 0;

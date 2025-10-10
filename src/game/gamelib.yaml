@@ -306,16 +306,17 @@ creatures:
       - game_creature_player_move_4
   - type: CRATER
     appearing_wave_number: 3
-    spawn_factor: 2
+    spawn_factor: 1
+    luck_affects_spawn_factor: true
     can_aggro: false
     health: 30
     health_increase_per_wave: 2
-    contact_damage: 1
-    contact_damage_increase_per_wave: 0.5
+    contact_damage: 0
+    contact_damage_increase_per_wave: 0
     knockback_resistance: 0.7
     color: 0xdc9824ff
-    speed: 5
-    not_aggroed_speed: 5
+    speed: 4
+    not_aggroed_speed: 4
     speed_variation: 0.8
     consumable_drop_chance: inf
     crate_instead_of_consumable_factor: inf
