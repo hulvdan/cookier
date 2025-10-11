@@ -941,6 +941,176 @@ void RecalculatePlayerWeaponOffsets() {  ///
   }
 }
 
+#define PLAYER_CREATURE (g.run.creatures[0])
+#define PLAYER_COINS (g.run.state.statsWithoutItems[StatType_COINS])
+
+void SanitizeCoins() {  ///
+  if (PLAYER_COINS < 0)
+    PLAYER_COINS = int_max;
+}
+
+void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
+  ASSERT(itemCount > 0);
+  if (fb_effect->stat_type()) {
+    g.run.state.statsWithoutItems[fb_effect->stat_type()]
+      += fb_effect->value() * itemCount;
+    if ((StatType)fb_effect->stat_type() == StatType_COINS)
+      SanitizeCoins();
+    if (fb_effect->value_multiplier() != 1)
+      g.run.state.statsWithoutItems[fb_effect->stat_type()]
+        *= 1 + (fb_effect->value_multiplier() - 1) * itemCount;
+    if ((StatType)fb_effect->stat_type() == StatType_COINS)
+      SanitizeCoins();
+  }
+
+  g.run.recalculatePlayerStats = true;
+}
+
+// NOTE: Doesn't apply `StatType_DAMAGE`.
+int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
+  if (fb_damageScalings) {
+    for (auto scaling : *fb_damageScalings) {
+      auto statValue = g.run.playerStats[scaling->stat_type()];
+      auto percent   = scaling->percents_per_tier()->Get(tier);
+      baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
+    }
+  }
+  return baseDamage;
+}
+
+int ApplyPlayerStatDamageMultiplier(int damage) {  ///
+  auto v = (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
+  return Round((f32)damage * v);
+}
+
+void IterateOverSpecificWeaponEffects(
+  EffectConditionType              condition,
+  WeaponType                       type,
+  auto /* void (auto fb_effect) */ innerLambda
+) {  ///
+  const auto fb_effects = glib->weapons()->Get(type)->effects();
+  if (fb_effects) {
+    for (const auto fb_effect : *fb_effects) {
+      if (fb_effect->effectcondition_type() == condition)
+        innerLambda(fb_effect);
+    }
+  }
+}
+
+void IterateOverItemEffects(
+  EffectConditionType                         condition,
+  auto /* void (Item& item, auto fb_effect)*/ innerLambda
+) {  ///
+  const auto fb_items = glib->items();
+  for (auto& item : g.run.state.items) {
+    const auto fb         = fb_items->Get(item.type);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(item, fb_effect);
+      }
+    }
+  }
+}
+
+int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) {  ///
+  ASSERT(tier < 4);
+  const auto fb = glib->weapons()->Get(type);
+  ASSERT(tier >= fb->min_tier_index());
+
+  int damage = fb->base_damage()->Get(tier - fb->min_tier_index());
+  damage
+    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
+  damage = ApplyPlayerStatDamageMultiplier(damage);
+
+  IterateOverSpecificWeaponEffects(
+    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
+    type,
+    [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+      if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+        return;
+
+      int sameWeapons = 0;
+      int wi          = -1;
+      for (const auto& weapon : g.run.state.weapons) {
+        wi++;
+        if ((weaponIndexOrMinus1 != wi) && (weapon.type == type))
+          sameWeapons++;
+      }
+      if (sameWeapons > 0) {
+        auto v = fb_effect->value();
+        if (v == 0)
+          damage = Round(damage * fb_effect->value_multiplier() * (f32)sameWeapons);
+        else
+          damage += v * sameWeapons;
+      }
+    }
+  );
+
+  damage = MAX(1, damage);
+  return damage;
+}
+
+f32 GetLuckFactor() {  ///
+  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
+}
+
+void RecalculateThisWaveMobs() {  ///
+  const auto fb_creatures = glib->creatures();
+
+  g.run.thisWaveMobsCount = 0;
+
+  f32 accumulatedFactor = 0;
+
+  FOR_RANGE (int, i, fb_creatures->size()) {
+    const auto fb         = fb_creatures->Get(i);
+    const f32  luckFactor = (fb->luck_affects_spawn_factor() ? GetLuckFactor() : 1.0f);
+    const auto factor
+      = fb->spawn_factor() * luckFactor
+        / ArithmeticSumAverage(fb->spawn_group_count_min(), fb->spawn_group_count_max());
+    ASSERT(factor >= 0);
+    if ((factor > 0) && (g.run.state.waveIndex + 1 >= fb->appearing_wave_number())) {
+      accumulatedFactor += factor;
+      g.run.thisWaveMobs[g.run.thisWaveMobsCount++] = {
+        .type              = (CreatureType)i,
+        .accumulatedFactor = accumulatedFactor,
+      };
+    }
+  }
+
+  // Normalization of `accumulatedFactor`.
+  FOR_RANGE (int, i, g.run.thisWaveMobsCount)
+    g.run.thisWaveMobs[i].accumulatedFactor /= accumulatedFactor;
+}
+
+void OnWaveStarted() {  ///
+  g.run.state.upgrades.rerolls = {};
+
+  g.run.bossCreatureId = 0;
+
+  g.run.waveStartedAt = {};
+  g.run.waveStartedAt.SetNow();
+  g.run.cratesDroppedThisWave = 0;
+
+  RecalculateThisWaveMobs();
+
+  int weaponIndexOrMinus1 = -1;
+  for (auto& weapon : g.run.state.weapons) {
+    weaponIndexOrMinus1++;
+    weapon.thisWaveDamage = 0;
+    if (weapon.type) {
+      weapon.calculatedDamage
+        = CalculateWeaponDamage(weaponIndexOrMinus1, weapon.type, weapon.tier);
+    }
+  }
+
+  g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
+  g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
+
+  RecalculatePlayerWeaponOffsets();
+}
+
 void Load(void* saveData) {  ///
   const auto save = BFSave::GetSave(saveData);
 
@@ -950,6 +1120,7 @@ void Load(void* saveData) {  ///
   s = {.items = tempItems};
 
   ge.meta.logicRand._state = save->random_state();
+  PLAYER_CREATURE.health   = save->health();
   s.won                    = save->won();
   s.screen                 = (ScreenType)save->screen();
   s.waveIndex              = save->wave_index();
@@ -1025,7 +1196,9 @@ void Load(void* saveData) {  ///
   if (s.screen != ScreenType_GAMEPLAY)
     OnUIStart();
 
-  if (s.screen == ScreenType_PICKED_UP_ITEM)
+  if (s.screen == ScreenType_GAMEPLAY)
+    OnWaveStarted();
+  else if (s.screen == ScreenType_PICKED_UP_ITEM)
     g.run.scheduledPickedUpItems = true;
   else if (s.screen == ScreenType_UPGRADES)
     g.run.scheduledUpgrades = true;
@@ -1042,6 +1215,7 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
     const auto& s = g.run.state;
 
     fb_save.random_state          = ge.meta.logicRand._state;
+    fb_save.health                = PLAYER_CREATURE.health;
     fb_save.won                   = s.won;
     fb_save.screen                = s.screen;
     fb_save.wave_index            = s.waveIndex;
@@ -1162,8 +1336,6 @@ void ApplyAilment(
   }
 }
 
-#define PLAYER_COINS (g.run.state.statsWithoutItems[StatType_COINS])
-
 void AddCoins(int amount) {  ///
   PLAYER_COINS += amount;
   if (PLAYER_COINS < 0) {
@@ -1172,11 +1344,6 @@ void AddCoins(int amount) {  ///
     else
       PLAYER_COINS = MAX(0, PLAYER_COINS);
   }
-}
-
-void SanitizeCoins() {  ///
-  if (PLAYER_COINS < 0)
-    PLAYER_COINS = int_max;
 }
 
 void FlexBegin(int maxWidth, u16 childGap) {  ///
@@ -1835,8 +2002,6 @@ void MakeWalls(MakeWallsData data) {  ///
   }
 }
 
-#define PLAYER_CREATURE (g.run.creatures[0])
-
 Vector2 GetCameraTargetPos() {  ///
   auto tpos = PLAYER_CREATURE.pos;
 
@@ -1940,38 +2105,6 @@ int GetNumberOfTreesToSpawn() {  ///
   return 0;
 }
 
-f32 GetLuckFactor() {  ///
-  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
-}
-
-void RecalculateThisWaveMobs() {  ///
-  const auto fb_creatures = glib->creatures();
-
-  g.run.thisWaveMobsCount = 0;
-
-  f32 accumulatedFactor = 0;
-
-  FOR_RANGE (int, i, fb_creatures->size()) {
-    const auto fb         = fb_creatures->Get(i);
-    const f32  luckFactor = (fb->luck_affects_spawn_factor() ? GetLuckFactor() : 1.0f);
-    const auto factor
-      = fb->spawn_factor() * luckFactor
-        / ArithmeticSumAverage(fb->spawn_group_count_min(), fb->spawn_group_count_max());
-    ASSERT(factor >= 0);
-    if ((factor > 0) && (g.run.state.waveIndex + 1 >= fb->appearing_wave_number())) {
-      accumulatedFactor += factor;
-      g.run.thisWaveMobs[g.run.thisWaveMobsCount++] = {
-        .type              = (CreatureType)i,
-        .accumulatedFactor = accumulatedFactor,
-      };
-    }
-  }
-
-  // Normalization of `accumulatedFactor`.
-  FOR_RANGE (int, i, g.run.thisWaveMobsCount)
-    g.run.thisWaveMobs[i].accumulatedFactor /= accumulatedFactor;
-}
-
 int GetWeaponPrice(WeaponType type, int tier) {  ///
   ASSERT(tier >= 0);
   ASSERT(tier < 4);
@@ -2007,140 +2140,6 @@ void IterateOverWeaponEffects(
       }
     }
   }
-}
-
-void IterateOverSpecificWeaponEffects(
-  EffectConditionType              condition,
-  WeaponType                       type,
-  auto /* void (auto fb_effect) */ innerLambda
-) {  ///
-  const auto fb_effects = glib->weapons()->Get(type)->effects();
-  if (fb_effects) {
-    for (const auto fb_effect : *fb_effects) {
-      if (fb_effect->effectcondition_type() == condition)
-        innerLambda(fb_effect);
-    }
-  }
-}
-
-void IterateOverItemEffects(
-  EffectConditionType                         condition,
-  auto /* void (Item& item, auto fb_effect)*/ innerLambda
-) {  ///
-  const auto fb_items = glib->items();
-  for (auto& item : g.run.state.items) {
-    const auto fb         = fb_items->Get(item.type);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(item, fb_effect);
-      }
-    }
-  }
-}
-
-void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
-  ASSERT(itemCount > 0);
-  if (fb_effect->stat_type()) {
-    g.run.state.statsWithoutItems[fb_effect->stat_type()]
-      += fb_effect->value() * itemCount;
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
-    if (fb_effect->value_multiplier() != 1)
-      g.run.state.statsWithoutItems[fb_effect->stat_type()]
-        *= 1 + (fb_effect->value_multiplier() - 1) * itemCount;
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
-  }
-
-  g.run.recalculatePlayerStats = true;
-}
-
-// NOTE: Doesn't apply `StatType_DAMAGE`.
-int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
-  if (fb_damageScalings) {
-    for (auto scaling : *fb_damageScalings) {
-      auto statValue = g.run.playerStats[scaling->stat_type()];
-      auto percent   = scaling->percents_per_tier()->Get(tier);
-      baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
-    }
-  }
-  return baseDamage;
-}
-
-int ApplyPlayerStatDamageMultiplier(int damage) {  ///
-  auto v = (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
-  return Round((f32)damage * v);
-}
-
-int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) {  ///
-  ASSERT(tier < 4);
-  const auto fb = glib->weapons()->Get(type);
-  ASSERT(tier >= fb->min_tier_index());
-
-  int damage = fb->base_damage()->Get(tier - fb->min_tier_index());
-  damage
-    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
-  damage = ApplyPlayerStatDamageMultiplier(damage);
-
-  IterateOverSpecificWeaponEffects(
-    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
-    type,
-    [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-      if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
-        return;
-
-      int sameWeapons = 0;
-      int wi          = -1;
-      for (const auto& weapon : g.run.state.weapons) {
-        wi++;
-        if ((weaponIndexOrMinus1 != wi) && (weapon.type == type))
-          sameWeapons++;
-      }
-      if (sameWeapons > 0) {
-        auto v = fb_effect->value();
-        if (v == 0)
-          damage = Round(damage * fb_effect->value_multiplier() * (f32)sameWeapons);
-        else
-          damage += v * sameWeapons;
-      }
-    }
-  );
-
-  damage = MAX(1, damage);
-  return damage;
-}
-
-void OnWaveStarted() {  ///
-  g.run.state.upgrades.rerolls = {};
-
-  g.run.bossCreatureId = 0;
-
-  g.run.waveStartedAt = {};
-  g.run.waveStartedAt.SetNow();
-  g.run.cratesDroppedThisWave = 0;
-
-  RecalculateThisWaveMobs();
-
-  const auto health         = (f32)g.run.playerStats[StatType_HP];
-  PLAYER_CREATURE.health    = health;
-  PLAYER_CREATURE.maxHealth = health;
-
-  int weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.state.weapons) {
-    weaponIndexOrMinus1++;
-    weapon.thisWaveDamage = 0;
-    if (weapon.type) {
-      weapon.calculatedDamage
-        = CalculateWeaponDamage(weaponIndexOrMinus1, weapon.type, weapon.tier);
-    }
-  }
-
-  g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
-  g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
-
-  RecalculatePlayerWeaponOffsets();
 }
 
 void RunInit() {
@@ -2498,6 +2497,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   if (!g.run.justDamagedCreatures.Contains(data.creatureIndex))
     *g.run.justDamagedCreatures.Add() = data.creatureIndex;
+
+  if (!data.creatureIndex)
+    Save();
 
   return true;
 }
@@ -4377,6 +4379,9 @@ void DoUI(bool draw) {
                   g.run.state.statsWithoutItems[upgrade.stat] += amount;
                   g.run.recalculatePlayerStats = true;
 
+                  if (upgrade.stat == StatType_HP)
+                    PLAYER_CREATURE.health += amount;
+
                   Save();
                 }
               }
@@ -5572,12 +5577,7 @@ void GameFixedUpdate() {
       }
     }
 
-    f32 addedHealth = (f32)g.run.playerStats[StatType_HP] - PLAYER_CREATURE.maxHealth;
     PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
-    if (addedHealth > 0)
-      PLAYER_CREATURE.health += addedHealth;
-    if (PLAYER_CREATURE.health > PLAYER_CREATURE.maxHealth)
-      PLAYER_CREATURE.health = PLAYER_CREATURE.maxHealth;
   }
 
   // Advancing to UI after wave completion animation finishes.
@@ -5753,6 +5753,10 @@ void GameFixedUpdate() {
     g.run.state.waveIndex++;
     OnWaveStarted();
 
+    const int health          = g.run.playerStats[StatType_HP];
+    PLAYER_CREATURE.health    = health;
+    PLAYER_CREATURE.maxHealth = health;
+
     IterateOverWeaponEffects(
       EffectConditionType_START_OF_THE_WAVE_GET_STAT,
       [&](int _, Weapon& weapon, auto fb_effect)
@@ -5763,6 +5767,8 @@ void GameFixedUpdate() {
       [&](const Item& item, auto fb_effect)
         BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, item.count); }
     );
+
+    Save();
   }
 
   PLAYER_CREATURE.controller.move = {};

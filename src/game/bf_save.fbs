@@ -33,6 +33,7 @@ table ShopItem {
 
 table Save {
     random_state: uint;
+    health: int;
 
     won: bool;
     screen: int;
