@@ -5460,7 +5460,7 @@ void _Save() {  ///
 }
 #elif defined(SDL_PLATFORM_EMSCRIPTEN)
 void _Save() {
-  LOGW("Save is not yet implemented for web")
+  LOGW("Save is not yet implemented for web");
   // auto fbb = DumpState();
 }
 #else

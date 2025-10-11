@@ -1,50 +1,21 @@
-x kenney ui button
-x better ui frame
-x palettized secondary text color
-x generate palette for aseprite
-x extracted localization.csv
-x use localization.csv
-x fix this wave damage
-x sfx: ui: button hover small
-x smaller font for weapon and item properties in shop
-x brighter text colors
-x fix smg life steal 100%
-x fix componentStats button spacing on the right
-x fix can't hover / click other buttons when weapon is selected in shop
-x tier-colored shop item/weapon frames
-x tiered hovered modal colors
-x bigger font of prices
-x combine button doesn't get displayed if weapon can't be combined
-x fix zIndex of modal (stat icons don't get displayed over overlay)
-x don't show empty weapon slots in shop
-x items + weapons also make click / hover sfx
-x don't show items/weapons labels in shop/end if player doesn't have any
-x fix componentStats primary/secondary button sizes
-x keyboard actions also trigger button sounds.
-  don't make clicked / error sounds from buttons
-x shop reroll button red if no money
-x ui sfx has pitch variation
-x lowered pitch of hover sfx
-x upgrades / shop buy gold wiggling + weapons wiggling upon error
-x tried to design waves progress bar
-x everythere but in hud default font is not outlined
-x engine: crisp fonts rendering
-x engine fonts: correct placement on both resolutions
-x engine fonts: scale fonts while they haven't been reloaded yet
-x engine: don't load filedata of the same font file multiple times
-x resetting all pickupables on starting next wave. not leaving even crates
-x small cooldown variation
-x small damage +1/-1 variation
-x mob with crate: doesn't get aggroed
-x engine: bulletproof `LoadFonts`: atlas scaling
-x engine: `ReloadFonts` implementation. Not unloading -> loading back filedata
-x creatures flashing on getting damaged
-x gathered + organized references
-x menu: continue button
-x menu: restart button
-x menu: exit game (PC)
-x save / load
+x стилизовал UI под brotato
+  (размеры шрифтов, обводки, цвета фреймов, цвета текстов, hover кнопок)
+x локализация теперь вся в localization.csv
+x sfx ui hover / click / error
+x когда нет денег и игрок пытается купить - монетки туда-сюдакают
+x когда нет свободного слота и игрок пытается купить оружие - оружия туда-сюдакают
+x чёткие шрифты
+x при старте след волны удаляю все поднимаемые предметы
+x 10% вариация кулдауна оружий
+x вариация урона +/- 1
+x моб, что 100% дропает сундук
+x существа загораются белым на небольшое время, когда получают урон
+x норм меню (пока что кнопка P в браузере)
+x save / load на ПК
 
+* save / load health so that cheating doesn't work
+* check END save / load
+* ref extract reroll button
 * classes
 * achievements
 * menu: change class and start new run
