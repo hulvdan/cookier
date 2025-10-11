@@ -944,13 +944,20 @@ def generate_flatbuffer_files():
 
             run_command(command)
 
-        to_reflect = "bf_boner.fbs"
         gen(
-            (i for i in flatbuffer_files if i.name == to_reflect),
+            (
+                i
+                for i in flatbuffer_files
+                if i.name in data_values.generate_flatbuffers_api_for
+            ),
             "--gen-object-api",
             "--reflect-names",
         )
-        gen(i for i in flatbuffer_files if i.name != to_reflect)
+        gen(
+            i
+            for i in flatbuffer_files
+            if i.name not in data_values.generate_flatbuffers_api_for
+        )
 
         for file, file_hash in listfiles_with_hashes_in_dir(td).items():
             # Костыль, чтобы MSBuild не ребилдился каждый раз.

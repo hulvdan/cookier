@@ -30,6 +30,7 @@
 #pragma once
 
 #include "box2d/box2d.h"
+#include "flatbuffers/bf_save_generated.h"
 
 // Clay.
 // ============================================================ {  ///
@@ -782,7 +783,8 @@ struct GameData {
     bool paused               = false;
     bool scheduledTogglePause = false;
 
-    bool scheduledSave = false;
+    bool        scheduledSave = false;
+    FrameVisual lastSaveAt    = {};
   } meta;
 
   struct Run {
@@ -5201,6 +5203,53 @@ void MakeAOE(
   *g.run.particles.Add() = p;
 }
 
+void Save() {  ///
+#if defined(SDL_PLATFORM_DESKTOP)
+  BFSave::SaveT fb_save{};
+
+  flatbuffers::FlatBufferBuilder fbb{};
+  auto                           packed = BFSave::Save::Pack(fbb, &fb_save);
+  fbb.Finish(packed);
+
+  const auto t          = GetTimestamp();
+  const auto toSwapPath = TextFormat(
+    "save_to_swap.%04d%02d%02d-%02d%02d%02d.bin",
+    t.year,
+    t.month,
+    t.day,
+    t.hour,
+    t.minute,
+    t.second
+  );
+
+  bool saved = false;
+  FOR_RANGE (int, i, 5) {
+    if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
+      saved = true;
+      break;
+    }
+  }
+  if (!saved) {
+    LOGE("Temp save failed");
+    return;
+  }
+
+  bool swapped = false;
+  FOR_RANGE (int, i, 5) {
+    if (SDL_RenamePath(toSwapPath, "save.bin")) {
+      swapped = true;
+      break;
+    }
+  }
+  if (!swapped) {
+    LOGI("Save swap failed");
+    return;
+  }
+  else
+    LOGI("Saved");
+#endif
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -5213,6 +5262,17 @@ void GameFixedUpdate() {
   const auto fb_weapons        = glib->weapons();
   const auto fb_projectiles    = glib->projectiles();
   const auto fb_particles      = glib->particles();
+
+  // Save.
+  if (g.meta.scheduledSave) {  ///
+    if (!g.meta.lastSaveAt.IsSet() || (g.meta.lastSaveAt.Elapsed().value >= FIXED_FPS)) {
+      g.meta.scheduledSave = false;
+      g.meta.lastSaveAt    = {};
+      g.meta.lastSaveAt.SetNow();
+      LOGI("Saving...");
+      Save();
+    }
+  }
 
   // Reloading game.
   if (g.run.reload) {  ///
