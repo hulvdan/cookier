@@ -39,7 +39,19 @@ x mob with crate: doesn't get aggroed
 x engine: bulletproof `LoadFonts`: atlas scaling
 x engine: `ReloadFonts` implementation. Not unloading -> loading back filedata
 x creatures flashing on getting damaged
+x gathered + organized references
+x menu: continue button
+x menu: restart button
+x menu: exit game (PC)
 
+* menu: change class and start new run
+* menu: button that can be touched turing the gameplay to get into menu
+* menu:
+* menu:
+* menu:
+* menu:
+* menu:
+* menu:
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
 * fix shop items/weapons frame height

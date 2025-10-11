@@ -263,8 +263,6 @@ table GameLibrary {
     ui_label_bounce_locale: int;
     ui_label_crit_locale: int;
     ui_label_this_wave_damage_locale: int;
-    ui_label_pause_locale: int;
-    ui_label_pause_desktop_locale: int;
     ui_label_limited_locale: int;
     ui_label_unique_locale: int;
     ui_button_combine_locale: int;
@@ -274,9 +272,11 @@ table GameLibrary {
     ui_button_choose_locale: int;
     ui_button_reroll_locale: int;
     ui_button_next_wave_locale: int;
+    ui_button_resume_locale: int;
+    ui_button_restart_locale: int;
+    ui_button_exit_locale: int;
     ui_won_locale: int;
     ui_lost_locale: int;
-    ui_button_restart_locale: int;
     ui_label_wave_won_locale: int;
     ui_label_wave_lost_locale: int;
     ui_label_stats_primary_locale: int;
