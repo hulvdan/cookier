@@ -799,6 +799,8 @@ struct GameData {
       int level         = 1;
       int previousLevel = 1;
       f32 xp            = 0;
+      f32 previousXp    = 0;
+      int previousCoins = 0;
 
       int playerKilledEnemies    = 0;
       int notPickedUpCoins       = 0;
@@ -1087,6 +1089,7 @@ void RecalculateThisWaveMobs() {  ///
 
 void OnWaveStarted() {  ///
   g.run.state.upgrades.rerolls = {};
+  g.run.state.previousCoins    = g.run.state.statsWithoutItems[StatType_COINS];
 
   g.run.bossCreatureId = 0;
 
@@ -1128,6 +1131,7 @@ void Load(void* saveData) {  ///
   s.level                  = save->level();
   s.previousLevel          = save->previous_level();
   s.xp                     = save->xp();
+  s.previousXp             = s.xp;
   s.playerKilledEnemies    = save->player_killed_enemies();
   s.notPickedUpCoins       = save->not_picked_up_coins();
   s.notPickedUpCoinsVisual = s.notPickedUpCoins;
@@ -1282,6 +1286,15 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
       .rerolled_free_times = s.shop.rerolls.rerolledFreeTimes,
       .rerolled_times      = s.shop.rerolls.rerolledTimes,
     });
+
+    if ((s.screen == ScreenType_GAMEPLAY) || (s.screen == ScreenType_WAVE_END_ANIMATION))
+    {
+      fb_save.stats_without_items[StatType_COINS] = s.previousCoins;
+
+      fb_save.level  = fb_save.previous_level;
+      fb_save.xp     = s.previousXp;
+      fb_save.crates = 0;
+    }
   }
 
   flatbuffers::FlatBufferBuilder fbb{};
@@ -5515,6 +5528,8 @@ void GameFixedUpdate() {
 
     RunReset();
     RunInit();
+
+    Save();
   }
 
   // Show / hide cursor.
@@ -5763,6 +5778,7 @@ void GameFixedUpdate() {
     ge.settings.screenFade = 0;
 
     g.run.state.waveIndex++;
+    g.run.state.previousXp = g.run.state.xp;
     OnWaveStarted();
 
     const int health          = g.run.playerStats[StatType_HP];
