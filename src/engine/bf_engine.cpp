@@ -2429,51 +2429,6 @@ TEST_CASE ("Touch controls") {  ///
   }
 }
 
-void* LoadFileData(const char* filepath, int* out_size = nullptr) {  ///
-  LOGI("Loading file data '%s'...", filepath);
-
-  auto fp = fopen(filepath, "rb");
-  ASSERT(fp);
-  if (!fp) {
-    LOGE("Failed to open file '%s'", filepath);
-    INVALID_PATH;
-    return nullptr;
-  }
-
-  fseek(fp, 0, SEEK_END);
-  auto size = ftell(fp);
-  rewind(fp);
-
-  auto buffer = BF_ALLOC(size + 1);
-  if (!buffer) {
-    LOGE("Failed to allocate buffer while opening file '%s'", filepath);
-    fclose(fp);
-    INVALID_PATH;
-    return nullptr;
-  }
-
-  auto read_size = fread(buffer, 1, size, fp);
-  fclose(fp);
-  if (read_size != size) {
-    LOGE("Failed to read entire file '%s'", filepath);
-    BF_FREE(buffer);
-    return nullptr;
-  }
-
-  ((u8*)buffer)[size] = '\0';
-
-  if (out_size)
-    *out_size = size;
-
-  LOGI("Loaded file data '%s'", filepath);
-
-  return buffer;
-}
-
-void UnloadFileData(void* ptr) {  ///
-  BF_FREE(ptr);
-}
-
 bgfx::ShaderHandle _LoadShader(const u8* data, u32 size) {  ///
   return bgfx::createShader(bgfx::makeRef(data, size));
 }
@@ -2497,13 +2452,13 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
 
   Texture2D result{.size = size};
 
-  int channels = 0;
-  int dataSize = 0;
+  int    channels = 0;
+  size_t dataSize = 0;
 
   void* data = nullptr;
   {
-    ZoneScopedN("LoadFileData()");
-    data = LoadFileData(filepath, &dataSize);
+    ZoneScopedN("SDL_LoadFile()");
+    data = SDL_LoadFile(filepath, &dataSize);
   }
   ASSERT(data);
 
@@ -2629,7 +2584,7 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
 
   ASSERT(success);
 
-  UnloadFileData(data);
+  SDL_free(data);
 
   LOGI("Loaded texture '%s'!", filepath);
 
@@ -2639,10 +2594,6 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
 void _UnloadTexture(Texture2D* texture) {  ///
   bgfx::destroy(texture->handle);
   *texture = {};
-}
-
-void LoadGamelib() {  ///
-  glib = BFGame::GetGameLibrary(LoadFileData("resources/gamelib.bin"));
 }
 
 void InitEngine() {  ///
@@ -2744,7 +2695,8 @@ void InitEngine() {  ///
   ge.meta._keyboardStateReleased
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
 
-  LoadGamelib();
+  glib = BFGame::GetGameLibrary(SDL_LoadFile("resources/gamelib.bin", nullptr));
+
   ge.meta.atlas = _LoadTexture(
     "resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
   );
@@ -2978,7 +2930,7 @@ void _UnloadFileDataFromFonts(View<Font> fonts, View<LoadFontData> data) {  ///
       if (!strcmp(data[k].filepath, data[i].filepath))
         fonts[k].fileData = nullptr;
     }
-    UnloadFileData((void*)font.fileData);
+    SDL_free((void*)font.fileData);
   }
 }
 
@@ -3159,7 +3111,7 @@ LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
       }
     }
     if (!fileData)
-      fileData = (u8*)LoadFileData(data.filepath);
+      fileData = (u8*)SDL_LoadFile(data.filepath, nullptr);
 
     font = Font{
       .FIXME_sizeScale = data.FIXME_sizeScale,
@@ -3629,5 +3581,32 @@ SDL_AppResult EngineUpdate() {  ///
 
   return SDL_APP_CONTINUE;
 }
+
+#ifdef BF_PLATFORM_Win
+struct Timestamp {
+  int year;
+  int month;
+  int day;
+  int hour;
+  int minute;
+  int second;
+  int msecond;
+};
+
+Timestamp GetTimestamp() {  ///
+  SYSTEMTIME t{};
+  GetSystemTime(&t);
+
+  return Timestamp{
+    .year    = t.wYear,
+    .month   = t.wMonth,
+    .day     = t.wDay,
+    .hour    = t.wHour,
+    .minute  = t.wMinute,
+    .second  = t.wSecond,
+    .msecond = t.wMilliseconds,
+  };
+}
+#endif
 
 ///

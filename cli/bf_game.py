@@ -5,6 +5,7 @@ USAGE:
 
     data_values.itch_target = "hulvdan/cult-boy"
     data_values.languages = ["russian", "english"]
+    data_values.generate_flatbuffers_api_for = ["bf_save.fbs"]
 
     @gamelib_processor
     def _process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
@@ -24,6 +25,7 @@ from bf_lib import (
 
 data_values.itch_target = "hulvdan/cookier"
 data_values.languages = ["russian", "english"]
+data_values.generate_flatbuffers_api_for = ["bf_save.fbs"]
 
 
 def _check_duplicates(values: list) -> None:
