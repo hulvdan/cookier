@@ -781,14 +781,34 @@ struct GameData {
 
     bool paused               = false;
     bool scheduledTogglePause = false;
+
+    bool scheduledSave = false;
   } meta;
 
   struct Run {
+    struct State {
+      bool       won    = false;
+      ScreenType screen = ScreenType_GAMEPLAY;
+
+      int waveIndex = 0;
+
+      int level         = 1;
+      int previousLevel = 1;
+      f32 xp            = 0;
+
+      int playerKilledEnemies = 0;
+      int notPickedUpCoins    = 0;
+      int crates              = 0;
+      int toSpawn             = 3;
+
+      Array<Weapon, PLAYER_WEAPONS_COUNT> weapons           = {};
+      Vector<Item>                        items             = {};
+      Array<int, StatType_COUNT>          statsWithoutItems = {};
+    } state = {};
+
     Arena arena = {};
 
-    bool       reload = false;
-    bool       won    = false;
-    ScreenType screen = ScreenType_GAMEPLAY;
+    bool reload = false;
 
     FrameVisual scheduledWaveCompleted = {};
     bool        waveWon                = false;
@@ -809,7 +829,6 @@ struct GameData {
 
     b2WorldId world          = {};
     int       nextCreatureId = 1;
-    int       toSpawn        = 3;
 
     Array<ThisWaveMob, CreatureType_COUNT> thisWaveMobs      = {};
     int                                    thisWaveMobsCount = 0;
@@ -817,26 +836,15 @@ struct GameData {
     FrameGame playerLastLifestealAt = {};
     FrameGame playerLastRegenAt     = {};
 
-    int playerKilledEnemies   = 0;
-    int xpLevel               = 1;
-    f32 xp                    = 0;
-    f32 nextLevelXp           = 0;
-    int notPickedUpCoins      = 0;
-    int crates                = 0;
     int cratesDroppedThisWave = 0;
-    int previousLevel         = 1;
     int turrelsToSpawn        = 0;
     int gardensToSpawn        = 0;
 
-    int       waveIndex     = 0;
     FrameGame waveStartedAt = {};
 
     int bossCreatureId = 0;
 
-    Array<Weapon, PLAYER_WEAPONS_COUNT> playerWeapons = {};
-
-    Array<int, StatType_COUNT> playerStatsWithoutItems = {};
-    Array<int, StatType_COUNT> playerStats             = {};
+    Array<int, StatType_COUNT> playerStats = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -851,7 +859,6 @@ struct GameData {
   X(int, justDamagedCreatures) \
   X(Number, numbers)           \
   X(Pickupable, pickupables)   \
-  X(Item, playerItems)         \
   X(Particle, particles)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -900,6 +907,10 @@ struct GameData {
     FrameVisual shopErrorWeapons = {};
   } ui;
 } g = {};
+
+void ScheduleSave() {  ///
+  g.meta.scheduledSave = true;
+}
 
 struct MakeLandmineData {
   Vector2 pos = {};
@@ -950,7 +961,7 @@ void ApplyAilment(
   }
 }
 
-#define PLAYER_COINS (g.run.playerStatsWithoutItems[StatType_COINS])
+#define PLAYER_COINS (g.run.state.statsWithoutItems[StatType_COINS])
 
 void AddCoins(int amount) {  ///
   PLAYER_COINS += amount;
@@ -1485,11 +1496,11 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   int health = fb->health()
                + Round(
-                 ((g.run.waveIndex - fb->appearing_wave_number() + 1))
+                 ((g.run.state.waveIndex - fb->appearing_wave_number() + 1))
                  * fb->health_increase_per_wave()
                );
   if (data.type == CreatureType_PLAYER)
-    health = g.run.playerStatsWithoutItems[StatType_HP];
+    health = g.run.state.statsWithoutItems[StatType_HP];
 
   ASSERT(health > 0);
 
@@ -1645,21 +1656,21 @@ Vector2 GetCameraTargetPos() {  ///
 
 void RecalculatePlayerWeaponOffsets() {  ///
   int weaponsCount = 0;
-  for (const auto& weapon : g.run.playerWeapons) {
+  for (const auto& weapon : g.run.state.weapons) {
     if (weapon.type)
       weaponsCount++;
   }
 
-  // Checkin that INVALID weapons are on the end of `playerWeapons`.
-  for (int i = weaponsCount; i < g.run.playerWeapons.count; i++)
-    ASSERT(!g.run.playerWeapons[i].type);
+  // Checkin that INVALID weapons are on the end of `state.weapons`.
+  for (int i = weaponsCount; i < g.run.state.weapons.count; i++)
+    ASSERT(!g.run.state.weapons[i].type);
 
   // Recalculating offsets.
   if (weaponsCount > 0) {
     const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
     const auto angleDelta    = 2.0f * (f32)PI32 / (f32)weaponsCount;
     FOR_RANGE (int, i, weaponsCount) {
-      g.run.playerWeapons[i].offset
+      g.run.state.weapons[i].offset
         = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
     }
   }
@@ -1674,7 +1685,7 @@ ItemType GenerateRandomItem() {  ///
     type = (ItemType)((GRAND.Rand() % ((u32)ItemType_COUNT - 1)) + 1);
     ASSERT(type);
 
-    for (auto& item : g.run.playerItems) {
+    for (auto& item : g.run.state.items) {
       if (item.type == type)
         currentItemCount += item.count;
     }
@@ -1770,7 +1781,7 @@ void RecalculateThisWaveMobs() {  ///
       = fb->spawn_factor() * luckFactor
         / ArithmeticSumAverage(fb->spawn_group_count_min(), fb->spawn_group_count_max());
     ASSERT(factor >= 0);
-    if ((factor > 0) && (g.run.waveIndex + 1 >= fb->appearing_wave_number())) {
+    if ((factor > 0) && (g.run.state.waveIndex + 1 >= fb->appearing_wave_number())) {
       accumulatedFactor += factor;
       g.run.thisWaveMobs[g.run.thisWaveMobsCount++] = {
         .type              = (CreatureType)i,
@@ -1806,7 +1817,7 @@ void IterateOverWeaponEffects(
 ) {  ///
   const auto fb_weapons          = glib->weapons();
   int        weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.playerWeapons) {
+  for (auto& weapon : g.run.state.weapons) {
     weaponIndexOrMinus1++;
     if (!weapon.type)
       continue;
@@ -1840,7 +1851,7 @@ void IterateOverItemEffects(
   auto /* void (Item& item, auto fb_effect)*/ innerLambda
 ) {  ///
   const auto fb_items = glib->items();
-  for (auto& item : g.run.playerItems) {
+  for (auto& item : g.run.state.items) {
     const auto fb         = fb_items->Get(item.type);
     const auto fb_effects = fb->effects();
     if (fb_effects) {
@@ -1855,12 +1866,12 @@ void IterateOverItemEffects(
 void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
   ASSERT(itemCount > 0);
   if (fb_effect->stat_type()) {
-    g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+    g.run.state.statsWithoutItems[fb_effect->stat_type()]
       += fb_effect->value() * itemCount;
     if ((StatType)fb_effect->stat_type() == StatType_COINS)
       SanitizeCoins();
     if (fb_effect->value_multiplier() != 1)
-      g.run.playerStatsWithoutItems[fb_effect->stat_type()]
+      g.run.state.statsWithoutItems[fb_effect->stat_type()]
         *= 1 + (fb_effect->value_multiplier() - 1) * itemCount;
     if ((StatType)fb_effect->stat_type() == StatType_COINS)
       SanitizeCoins();
@@ -1905,7 +1916,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
 
       int sameWeapons = 0;
       int wi          = -1;
-      for (const auto& weapon : g.run.playerWeapons) {
+      for (const auto& weapon : g.run.state.weapons) {
         wi++;
         if ((weaponIndexOrMinus1 != wi) && (weapon.type == type))
           sameWeapons++;
@@ -1934,7 +1945,7 @@ void OnWaveStarted() {  ///
   RecalculateThisWaveMobs();
 
   int weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.playerWeapons) {
+  for (auto& weapon : g.run.state.weapons) {
     weaponIndexOrMinus1++;
     weapon.thisWaveDamage = 0;
     if (weapon.type) {
@@ -1960,10 +1971,10 @@ void RunInit() {
     g.run.world         = b2CreateWorld(&worldDef);
   }
 
-  // Initializing `g.run.playerStatsWithoutItems`.
+  // Initializing `g.run.state.statsWithoutItems`.
   FOR_RANGE (int, stat, (int)StatType_COUNT) {  ///
     const auto fb                       = glib->stats()->Get(stat);
-    g.run.playerStatsWithoutItems[stat] = fb->player_value();
+    g.run.state.statsWithoutItems[stat] = fb->player_value();
   }
   g.run.recalculatePlayerStats = true;
 
@@ -1987,7 +1998,7 @@ void RunInit() {
   VIEW_FROM_ARRAY_DANGER(weapons);
 
   FOR_RANGE (int, i, weapons.count) {
-    auto& weapon        = g.run.playerWeapons[i];
+    auto& weapon        = g.run.state.weapons[i];
     weapon.type         = weapons[i].type;
     weapon.tier         = GRAND.Rand() % (TOTAL_TIERS - 1);
     weapon.recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
@@ -2010,8 +2021,6 @@ void RunInit() {
 
     MakeWalls({.lines = lines});
   }
-
-  g.run.nextLevelXp = GetNextLevelXp(g.run.xpLevel);
 
   OnWaveStarted();
 }
@@ -2233,7 +2242,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (data.damagerCreatureType == CreatureType_PLAYER) {
     auto weaponType = WeaponType_INVALID;
     if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-      weaponType = g.run.playerWeapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
+      weaponType = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
 
     if (GRAND.FRand() < GetLifestealChance(weaponType)) {
       bool canLifesteal = true;
@@ -2280,7 +2289,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   }
 
   if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-    g.run.playerWeapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
+    g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
       += data.damage;
 
   if (data.damage != int_max) {
@@ -2316,6 +2325,11 @@ void RunReset() {  ///
   // Resetting `g.run` to a default value,
   // while preserving allocated memory of it's Vectors.
   struct {
+    struct {
+      Vector<Item> items;
+    } state = {
+      .items = g.run.state.items,
+    };
 #define X(type_, name_) Vector<type_> name_ = g.run.name_;
     VECTORS_TABLE;
 #undef X
@@ -2326,6 +2340,7 @@ void RunReset() {  ///
 #undef X
 
   g.run = {
+    .state{.items = temp.state.items},
 #define X(type_, name_) .name_ = temp.name_,
     VECTORS_TABLE
 #undef X
@@ -2360,7 +2375,7 @@ void Rerolls::Roll() {  ///
 int Rerolls::GetPrice() const {  ///
   if (rerolledFreeTimes < g.run.playerStats[StatType_FREE_REROLLS])
     return 0;
-  return GetRerollPrice(g.run.waveIndex, rerolledTimes);
+  return GetRerollPrice(g.run.state.waveIndex, rerolledTimes);
 }
 
 void RefillUpgradesToPick() {  ///
@@ -2434,7 +2449,7 @@ void RefillShopToPick() {  ///
 
 void AddItem(ItemType type) {  ///
   bool increasedExistingItemCount = false;
-  for (auto& item : g.run.playerItems) {
+  for (auto& item : g.run.state.items) {
     if (item.type == type) {
       item.count++;
       increasedExistingItemCount = true;
@@ -2443,16 +2458,16 @@ void AddItem(ItemType type) {  ///
   }
   if (!increasedExistingItemCount) {
     Item item{.type = type, .count = 1};
-    *g.run.playerItems.Add() = item;
+    *g.run.state.items.Add() = item;
   }
 
   g.run.recalculatePlayerStats = true;
 }
 
 void StableRemoveWeapon(int index) {  ///
-  for (int i = index + 1; i < g.run.playerWeapons.count; i++)
-    g.run.playerWeapons[i - 1] = g.run.playerWeapons[i];
-  g.run.playerWeapons[g.run.playerWeapons.count - 1] = {};
+  for (int i = index + 1; i < g.run.state.weapons.count; i++)
+    g.run.state.weapons[i - 1] = g.run.state.weapons[i];
+  g.run.state.weapons[g.run.state.weapons.count - 1] = {};
   RecalculatePlayerWeaponOffsets();
 }
 
@@ -2542,7 +2557,7 @@ int GetCreatureIndexById(int id) {  ///
 }
 
 bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndexOrMinus1) {  ///
-  auto& weapon = g.run.playerWeapons[*weaponIndexOrMinus1];
+  auto& weapon = g.run.state.weapons[*weaponIndexOrMinus1];
 
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
@@ -2607,14 +2622,17 @@ void AddXP(f32 xp) {  ///
   if (xp > 0)
     xp *= (f32)(MAX(1, g.run.playerStats[StatType_XP_GAIN] + 100)) / 100.0f;
 
-  g.run.xp += xp;
-  g.run.xp = MAX(0, g.run.xp);
+  g.run.state.xp += xp;
+  g.run.state.xp = MAX(0, g.run.state.xp);
 
   // Handling level up.
-  while (g.run.xp >= g.run.nextLevelXp) {
-    g.run.xp -= g.run.nextLevelXp;
-    g.run.xpLevel++;
-    g.run.nextLevelXp = GetNextLevelXp(g.run.xpLevel);
+
+  auto nextLevelXp = GetNextLevelXp(g.run.state.level);
+
+  while (g.run.state.xp >= nextLevelXp) {
+    g.run.state.xp -= nextLevelXp;
+    g.run.state.level++;
+    nextLevelXp = GetNextLevelXp(g.run.state.level);
 
     MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
 
@@ -2625,7 +2643,7 @@ void AddXP(f32 xp) {  ///
       const auto vals = fb->upgrade_values();
       if (!vals)
         continue;
-      g.run.playerStatsWithoutItems[stat] += vals->Get(0);
+      g.run.state.statsWithoutItems[stat] += vals->Get(0);
       g.run.recalculatePlayerStats = true;
       break;
     }
@@ -2634,7 +2652,7 @@ void AddXP(f32 xp) {  ///
 
 bool CanSpawnMoreCreatures() {  ///
   const auto framesUntilTheEndOfTheWave
-    = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
+    = GetWaveDuration(g.run.state.waveIndex) - g.run.waveStartedAt.Elapsed();
   return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
 }
 
@@ -2985,15 +3003,15 @@ void DoUI(bool draw) {
           // Increasing stat by clicking on it in debug mode.
           if (stat && ge.meta.debugEnabled) {
             if (clicked()) {
-              g.run.playerStatsWithoutItems[stat]++;
+              g.run.state.statsWithoutItems[stat]++;
               g.run.recalculatePlayerStats = true;
             }
             if (rightClicked()) {
-              g.run.playerStatsWithoutItems[stat] += 10;
+              g.run.state.statsWithoutItems[stat] += 10;
               g.run.recalculatePlayerStats = true;
             }
             if (wheel && Clay_Hovered()) {
-              g.run.playerStatsWithoutItems[stat] += wheel;
+              g.run.state.statsWithoutItems[stat] += wheel;
               g.run.recalculatePlayerStats = true;
             }
           }
@@ -3036,7 +3054,7 @@ void DoUI(bool draw) {
         componentStatsEntry(
           glib->ui_shop_current_level_icon_texture_id(),
           glib->ui_current_level_locale(),
-          g.run.xpLevel,
+          g.run.state.level,
           StatType_INVALID
         );
       }
@@ -3102,7 +3120,7 @@ void DoUI(bool draw) {
 
       if (fb_item->count_cap() > 0) {
         int currentCount = 0;
-        for (auto& x : g.run.playerItems) {
+        for (auto& x : g.run.state.items) {
           if (x.type == item) {
             currentCount = x.count;
             break;
@@ -3287,7 +3305,7 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (void, componentWeapon, (int weaponIndex, bool weAreInShop)) {  ///
-    auto& weapon = g.run.playerWeapons[weaponIndex];
+    auto& weapon = g.run.state.weapons[weaponIndex];
 
     componentSlot(
       {.hidden = !weapon.type, .canHover = true, .tier = weapon.tier},
@@ -3509,14 +3527,14 @@ void DoUI(bool draw) {
     (int weaponIndexOrMinus1, bool weAreInShop, bool detailsBelow)
   )
   {  ///
-    auto& weapon = g.run.playerWeapons[weaponIndexOrMinus1];
+    auto& weapon = g.run.state.weapons[weaponIndexOrMinus1];
     ASSERT(weapon.type);
     auto fb = fb_weapons->Get(weapon.type);
 
     // Floating weapon details modal.
     // Gets shown upon hovering. Gets sticked upon clicking on weapon.
     if ((Clay_Hovered() || (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1))
-        && g.run.playerWeapons[weaponIndexOrMinus1].type)
+        && g.run.state.weapons[weaponIndexOrMinus1].type)
     {
       if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1)) {
         // Pressing ESC closes modal.
@@ -3619,10 +3637,10 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               int canCombineWithIndex = -1;
-              for (int i = g.run.playerWeapons.count - 1; i >= 0; i--) {
+              for (int i = g.run.state.weapons.count - 1; i >= 0; i--) {
                 if (i == weaponIndexOrMinus1)
                   continue;
-                auto& otherWeapon = g.run.playerWeapons[i];
+                auto& otherWeapon = g.run.state.weapons[i];
                 if ((weapon.type == otherWeapon.type)     //
                     && (weapon.tier == otherWeapon.tier)  //
                     && (weapon.tier < TOTAL_TIERS - 1))
@@ -3673,13 +3691,15 @@ void DoUI(bool draw) {
                 weapon.thisWaveDamage = 0;
                 weapon.killedEnemies  = MAX(
                   weapon.killedEnemies,
-                  g.run.playerWeapons[canCombineWithIndex].killedEnemies
+                  g.run.state.weapons[canCombineWithIndex].killedEnemies
                 );
                 StableRemoveWeapon(canCombineWithIndex);
+                ScheduleSave();
               }
               if (recycled) {
                 AddCoins(weapon.recyclePrice);
                 StableRemoveWeapon(weaponIndexOrMinus1);
+                ScheduleSave();
               }
               if (cancelled || recycled || combined) {
                 PlaySound(Sound_UI_BUTTON_CLICK);
@@ -3695,10 +3715,10 @@ void DoUI(bool draw) {
   };
 
   // Gameplay.
-  if ((g.run.screen == ScreenType_GAMEPLAY)               //
-      || (g.run.screen == ScreenType_WAVE_END_ANIMATION)  //
-      || (g.run.screen == ScreenType_PICKED_UP_ITEM)      //
-      || (g.run.screen == ScreenType_UPGRADES))
+  if ((g.run.state.screen == ScreenType_GAMEPLAY)               //
+      || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION)  //
+      || (g.run.state.screen == ScreenType_PICKED_UP_ITEM)      //
+      || (g.run.state.screen == ScreenType_UPGRADES))
   {
     CLAY({
       .layout{
@@ -3789,7 +3809,9 @@ void DoUI(bool draw) {
             FLOATING_BEAUTIFY;
             BF_CLAY_IMAGE({
               .texId = texs->Get(1),
-              .sourceMargins{.right = 1 - (f32)g.run.xp / (f32)g.run.nextLevelXp},
+              .sourceMargins{
+                .right = 1 - (f32)g.run.state.xp / (f32)GetNextLevelXp(g.run.state.level)
+              },
               .color = palGreen,
             });
 
@@ -3803,7 +3825,7 @@ void DoUI(bool draw) {
               },
             }) {
               FLOATING_BEAUTIFY;
-              BF_CLAY_TEXT(TextFormat("%d", g.run.xpLevel));
+              BF_CLAY_TEXT(TextFormat("%d", g.run.state.level));
             }
           }
         });
@@ -3829,7 +3851,7 @@ void DoUI(bool draw) {
           .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         }}) {
-          f32        fade = (g.run.notPickedUpCoins > 0 ? 1 : 0);
+          f32        fade = (g.run.state.notPickedUpCoins > 0 ? 1 : 0);
           const auto id   = CLAY_ID("notPickedUpCoins");
           CLAY({.id = id}) {
             BF_CLAY_IMAGE({
@@ -3845,7 +3867,7 @@ void DoUI(bool draw) {
           }
 
           BF_CLAY_TEXT(
-            TextFormat("%d", g.run.notPickedUpCoins), Fade(palTextWhite, fade)
+            TextFormat("%d", g.run.state.notPickedUpCoins), Fade(palTextWhite, fade)
           );
         }
       }
@@ -3871,13 +3893,13 @@ void DoUI(bool draw) {
 
         CLAY({}) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
-          BF_CLAY_TEXT(TextFormat(" %d", g.run.waveIndex + 1));
+          BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
         }
 
-        if (g.run.screen == ScreenType_GAMEPLAY) {
+        if (g.run.state.screen == ScreenType_GAMEPLAY) {
           CLAY({}) {
             const auto remainingFrames
-              = GetWaveDuration(g.run.waveIndex) - g.run.waveStartedAt.Elapsed();
+              = GetWaveDuration(g.run.state.waveIndex) - g.run.waveStartedAt.Elapsed();
             const int remainingSeconds
               = CeilDivision(MAX(1, remainingFrames.value), FIXED_FPS);
             BF_CLAY_TEXT(TextFormat("%d", remainingSeconds));
@@ -3922,7 +3944,7 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
-        FOR_RANGE (int, i, g.run.crates) {
+        FOR_RANGE (int, i, g.run.state.crates) {
           const auto fb = fb_pickupables->Get(PickupableType_CRATE);
           BF_CLAY_IMAGE({.texId = fb->texture_id()});
         }
@@ -3934,7 +3956,7 @@ void DoUI(bool draw) {
   }
 
   // Picked up item.
-  if (g.run.screen == ScreenType_PICKED_UP_ITEM) {  ///
+  if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -4011,8 +4033,8 @@ void DoUI(bool draw) {
 
               g.run.pickedUpItem = {};
 
-              g.run.crates--;
-              if (g.run.crates)
+              g.run.state.crates--;
+              if (g.run.state.crates)
                 g.run.scheduledPickedUpItems = true;
               else
                 g.run.scheduledUpgrades = true;
@@ -4026,7 +4048,7 @@ void DoUI(bool draw) {
     }
   }
   // Upgrades.
-  else if (g.run.screen == ScreenType_UPGRADES) {  ///
+  else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
     // Vertical columns with upgrades and stats;
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
@@ -4141,14 +4163,14 @@ void DoUI(bool draw) {
                 if (chosen) {
                   PlaySound(Sound_UI_BUTTON_CLICK);
 
-                  if (g.run.previousLevel < g.run.xpLevel) {
-                    g.run.previousLevel++;
+                  if (g.run.state.previousLevel < g.run.state.level) {
+                    g.run.state.previousLevel++;
                     g.run.scheduledUpgrades = true;
                   }
                   else
                     g.run.scheduledShop = true;
 
-                  g.run.playerStatsWithoutItems[upgrade.stat] += amount;
+                  g.run.state.statsWithoutItems[upgrade.stat] += amount;
                   g.run.recalculatePlayerStats = true;
                 }
               }
@@ -4196,7 +4218,7 @@ void DoUI(bool draw) {
     }
   }
   // Shop.
-  else if (g.run.screen == ScreenType_SHOP) {  ///
+  else if (g.run.state.screen == ScreenType_SHOP) {  ///
     // Columns.
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
@@ -4223,7 +4245,7 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_shop_locale());
           BF_CLAY_TEXT(" (");
           BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
-          BF_CLAY_TEXT(TextFormat(" %d)", g.run.waveIndex + 1));
+          BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 1));
 
           BF_CLAY_SPACER_HORIZONTAL;
 
@@ -4313,8 +4335,8 @@ void DoUI(bool draw) {
             int  emptyOrSameWeaponSlotIndex = -1;
             if (canBuy && v.weapon) {
               // Trying to find empty weapon slot.
-              FOR_RANGE (int, i, g.run.playerWeapons.count) {
-                const auto& weapon = g.run.playerWeapons[i];
+              FOR_RANGE (int, i, g.run.state.weapons.count) {
+                const auto& weapon = g.run.state.weapons[i];
                 if (!weapon.type) {
                   emptyOrSameWeaponSlotIndex = i;
                   break;
@@ -4322,8 +4344,8 @@ void DoUI(bool draw) {
               }
               // If not found, trying to find the same player's weapon to upgrade.
               if (emptyOrSameWeaponSlotIndex == -1) {
-                FOR_RANGE (int, i, g.run.playerWeapons.count) {
-                  const auto& weapon        = g.run.playerWeapons[i];
+                FOR_RANGE (int, i, g.run.state.weapons.count) {
+                  const auto& weapon        = g.run.state.weapons[i];
                   const bool  canBeUpgraded = (weapon.type == v.weapon)  //
                                              && (weapon.tier == v.tier)  //
                                              && (v.tier < TOTAL_TIERS - 1);
@@ -4433,7 +4455,7 @@ void DoUI(bool draw) {
 
                       AddCoins(-calculatedPrice);
                       if (v.weapon) {
-                        auto& weapon = g.run.playerWeapons[emptyOrSameWeaponSlotIndex];
+                        auto& weapon = g.run.state.weapons[emptyOrSameWeaponSlotIndex];
                         if (weapon.type) {
                           // Upgrading an existing weapon if no empty slot found.
                           ASSERT(weapon.type == v.weapon);
@@ -4484,23 +4506,23 @@ void DoUI(bool draw) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED_DANGER(
               glib->ui_label_items_locale(),
-              (g.run.playerItems.count > 0 ? palTextWhite : TRANSPARENT_BLACK)
+              (g.run.state.items.count > 0 ? palTextWhite : TRANSPARENT_BLACK)
             );
 
             // Items.
             CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
             ) {
               constexpr int ITEMS_X = 10;
-              const int     ITEMS_Y = CeilDivision(g.run.playerItems.count, ITEMS_X);
+              const int     ITEMS_Y = CeilDivision(g.run.state.items.count, ITEMS_X);
 
               FOR_RANGE (int, y, ITEMS_Y) {
                 CLAY({.layout{.childGap = GAP_SMALL}})
                 FOR_RANGE (int, x, ITEMS_X) {
                   const int t = y * ITEMS_X + x;
-                  if (t >= g.run.playerItems.count)
+                  if (t >= g.run.state.items.count)
                     break;
                   CLAY({}) {
-                    auto& item = g.run.playerItems[t];
+                    auto& item = g.run.state.items[t];
                     componentItem(true, item);
 
                     ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
@@ -4528,7 +4550,7 @@ void DoUI(bool draw) {
             // Weapons label.
             CLAY({}) {
               int weaponsCount = 0;
-              for (const auto& weapon : g.run.playerWeapons) {
+              for (const auto& weapon : g.run.state.weapons) {
                 if (weapon.type)
                   weaponsCount++;
               }
@@ -4539,7 +4561,7 @@ void DoUI(bool draw) {
               );
 
               BF_CLAY_TEXT(
-                TextFormat(" (%d/%d)", weaponsCount, g.run.playerWeapons.count),
+                TextFormat(" (%d/%d)", weaponsCount, g.run.state.weapons.count),
                 (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
               );
             }
@@ -4547,7 +4569,7 @@ void DoUI(bool draw) {
             // Weapons.
             constexpr int WEAPONS_X = 3;
             constexpr int WEAPONS_Y = 2;
-            static_assert(WEAPONS_X * WEAPONS_Y == g.run.playerWeapons.count);
+            static_assert(WEAPONS_X * WEAPONS_Y == g.run.state.weapons.count);
 
             {
               BEAUTIFY_WIGGLING_DANGER_SCOPED(
@@ -4563,10 +4585,10 @@ void DoUI(bool draw) {
                 CLAY({.layout{.childGap = GAP_SMALL}})
                 FOR_RANGE (int, x, 3) {
                   const int weaponIndex = y * WEAPONS_X + x;
-                  if (weaponIndex >= g.run.playerWeapons.count)
+                  if (weaponIndex >= g.run.state.weapons.count)
                     break;
 
-                  const auto& weapon = g.run.playerWeapons[weaponIndex];
+                  const auto& weapon = g.run.state.weapons[weaponIndex];
 
                   CLAY({}) {
                     // Weapon.
@@ -4603,7 +4625,7 @@ void DoUI(bool draw) {
               );
               BF_CLAY_TEXT(" (", textColor);
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale(), textColor);
-              BF_CLAY_TEXT(TextFormat(" %d)", g.run.waveIndex + 2), textColor);
+              BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 2), textColor);
             }
           );
 
@@ -4618,7 +4640,7 @@ void DoUI(bool draw) {
     }
   }
   // End.
-  else if (g.run.screen == ScreenType_END) {  ///
+  else if (g.run.state.screen == ScreenType_END) {  ///
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
@@ -4635,7 +4657,8 @@ void DoUI(bool draw) {
       }}) {
         // Run Won / Lost.
         {
-          const int locale = (g.run.won ? glib->ui_won_locale() : glib->ui_lost_locale());
+          const int locale
+            = (g.run.state.won ? glib->ui_won_locale() : glib->ui_lost_locale());
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
         }
 
@@ -4643,7 +4666,7 @@ void DoUI(bool draw) {
 
         // Wave.
         BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
-        BF_CLAY_TEXT(TextFormat(" %d", g.run.waveIndex + 1));
+        BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
       }
 
       // Main. Player's stats, weapons, items.
@@ -4662,7 +4685,7 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           int weaponsCount = 0;
-          for (auto& weapon : g.run.playerWeapons) {
+          for (auto& weapon : g.run.state.weapons) {
             if (weapon.type)
               weaponsCount++;
           }
@@ -4674,7 +4697,7 @@ void DoUI(bool draw) {
             // Weapons.
             CLAY({.layout{.childGap = GAP_SMALL}}) {
               int weaponIndex = -1;
-              for (auto& weapon : g.run.playerWeapons) {
+              for (auto& weapon : g.run.state.weapons) {
                 weaponIndex++;
                 if (weapon.type) {
                   CLAY({}) {
@@ -4689,11 +4712,11 @@ void DoUI(bool draw) {
           }
 
           // Items label.
-          if (g.run.playerItems.count > 0) {
+          if (g.run.state.items.count > 0) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
 
             // Items.
-            const auto& items = g.run.playerItems;
+            const auto& items = g.run.state.items;
 
             constexpr int ITEMS_X = 10;
             const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
@@ -4705,11 +4728,11 @@ void DoUI(bool draw) {
                 const auto t = y * ITEMS_X + x;
                 if (t < items.count) {
                   CLAY({}) {
-                    componentItem(true, g.run.playerItems[t]);
+                    componentItem(true, g.run.state.items[t]);
                     ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
                     if (Clay_Hovered()) {
                       componentItemDetails(
-                        g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
+                        g.run.state.items[t], {.detailsRight = 1, .detailsBelow = 1}
                       );
                     }
                   }
@@ -4736,10 +4759,10 @@ void DoUI(bool draw) {
       }
     }
   }
-  else if (g.run.screen == ScreenType_WAVE_END_ANIMATION) {
+  else if (g.run.state.screen == ScreenType_WAVE_END_ANIMATION) {
     // NOTE: Intentionally left blank.
   }
-  else if (g.run.screen == ScreenType_GAMEPLAY) {
+  else if (g.run.state.screen == ScreenType_GAMEPLAY) {
     // NOTE: Intentionally left blank.
   }
   else
@@ -4781,7 +4804,7 @@ void DoUI(bool draw) {
         }}) {
           CLAY({}) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
-            BF_CLAY_TEXT(TextFormat(" %d", g.run.waveIndex + 1));
+            BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
           }
 
           CLAY({.layout{
@@ -4829,12 +4852,12 @@ void DoUI(bool draw) {
 
         // 2. Weapons + items.
         int weaponsCount = 0;
-        for (auto& weapon : g.run.playerWeapons) {
+        for (auto& weapon : g.run.state.weapons) {
           if (weapon.type)
             weaponsCount++;
         }
 
-        if ((weaponsCount > 0) || (g.run.playerItems.count > 0)) {
+        if ((weaponsCount > 0) || (g.run.state.items.count > 0)) {
           CLAY({.layout{
             .childGap        = GAP_BIG,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -4846,7 +4869,7 @@ void DoUI(bool draw) {
               // Weapons.
               CLAY({.layout{.childGap = GAP_SMALL}}) {
                 int weaponIndex = -1;
-                for (auto& weapon : g.run.playerWeapons) {
+                for (auto& weapon : g.run.state.weapons) {
                   weaponIndex++;
                   if (weapon.type) {
                     CLAY({}) {
@@ -4860,12 +4883,12 @@ void DoUI(bool draw) {
               }
             }
 
-            if (g.run.playerItems.count > 0) {
+            if (g.run.state.items.count > 0) {
               // Items label.
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_items_locale());
 
               // Items.
-              const auto& items = g.run.playerItems;
+              const auto& items = g.run.state.items;
 
               constexpr int ITEMS_X = 6;
               const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
@@ -4878,11 +4901,11 @@ void DoUI(bool draw) {
                   const auto t = y * ITEMS_X + x;
                   if (t < items.count) {
                     CLAY({}) {
-                      componentItem(true, g.run.playerItems[t]);
+                      componentItem(true, g.run.state.items[t]);
                       ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
                       if (Clay_Hovered()) {
                         componentItemDetails(
-                          g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 0}
+                          g.run.state.items[t], {.detailsRight = 1, .detailsBelow = 0}
                         );
                       }
                     }
@@ -5212,10 +5235,10 @@ void GameFixedUpdate() {
     // F6 - add random item.
     if (IsKeyPressed(SDL_SCANCODE_F6)) {  ///
       Item item{.type = (ItemType)((GRAND.Rand() % (int)(ItemType_COUNT - 1)) + 1)};
-      *g.run.playerItems.Add() = item;
+      *g.run.state.items.Add() = item;
     }
 
-    if (g.run.screen == ScreenType_GAMEPLAY) {
+    if (g.run.state.screen == ScreenType_GAMEPLAY) {
       // F7 - show end screen.
       if (IsKeyPressed(SDL_SCANCODE_F7)) {  ///
         g.run.scheduledUI  = true;
@@ -5224,18 +5247,18 @@ void GameFixedUpdate() {
 
       // F8 - add level.
       if (IsKeyPressed(SDL_SCANCODE_F8)) {  ///
-        AddXP(g.run.nextLevelXp);
+        AddXP(GetNextLevelXp(g.run.state.level));
       }
 
       // F9 - add crate.
       if (IsKeyPressed(SDL_SCANCODE_F9)) {  ///
-        g.run.crates++;
+        g.run.state.crates++;
       }
     }
 
     // N - increase wave.
     if (IsKeyPressed(SDL_SCANCODE_N)) {  ///
-      g.run.waveIndex++;
+      g.run.state.waveIndex++;
       RecalculateThisWaveMobs();
     }
   }
@@ -5247,9 +5270,9 @@ void GameFixedUpdate() {
     g.run.recalculatePlayerStats = false;
 
     FOR_RANGE (int, i, StatType_COUNT)
-      g.run.playerStats[i] = g.run.playerStatsWithoutItems[i];
+      g.run.playerStats[i] = g.run.state.statsWithoutItems[i];
 
-    for (auto& item : g.run.playerItems) {
+    for (auto& item : g.run.state.items) {
       const auto fb         = glib->items()->Get(item.type);
       const auto fb_effects = fb->effects();
       if (fb_effects) {
@@ -5270,7 +5293,7 @@ void GameFixedUpdate() {
 
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
-    if ((g.run.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
+    if ((g.run.state.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
       // Applying item effects: END_OF_THE_WAVE_GET_STAT.
       IterateOverWeaponEffects(
         EffectConditionType_END_OF_THE_WAVE_GET_STAT,
@@ -5299,7 +5322,7 @@ void GameFixedUpdate() {
       }
     }
 
-    g.run.screen = ScreenType_WAVE_END_ANIMATION;
+    g.run.state.screen = ScreenType_WAVE_END_ANIMATION;
 
     for (int i = 1; i < g.run.creatures.count; i++) {
       auto& creature = g.run.creatures[i];
@@ -5319,9 +5342,9 @@ void GameFixedUpdate() {
           harvesting = Ceil((f32)harvesting * 1.05f);
       }
 
-      if ((g.run.waveIndex >= TOTAL_WAVES - 1) || !g.run.waveWon) {
+      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) || !g.run.waveWon) {
         g.run.scheduledEnd = true;
-        g.run.won          = g.run.waveWon;
+        g.run.state.won    = g.run.waveWon;
       }
 
       g.run.scheduledWaveCompleted = {};
@@ -5338,7 +5361,7 @@ void GameFixedUpdate() {
     ge.settings.screenFade = glib->ui_modal_fade();
     SDL_ShowCursor();
 
-    if (g.run.crates)
+    if (g.run.state.crates)
       g.run.scheduledPickedUpItems = true;
     else
       g.run.scheduledUpgrades = true;
@@ -5350,7 +5373,7 @@ void GameFixedUpdate() {
   if (g.run.scheduledPickedUpItems) {  ///
     g.run.scheduledPickedUpItems = false;
 
-    g.run.screen              = ScreenType_PICKED_UP_ITEM;
+    g.run.state.screen        = ScreenType_PICKED_UP_ITEM;
     g.run.pickedUpItem.toPick = GenerateRandomItem();
     g.run.pickedUpItem.recyclePrice
       = fb_items->Get(g.run.pickedUpItem.toPick)->price() / RECYCLE_PRICE_FACTOR;
@@ -5360,18 +5383,18 @@ void GameFixedUpdate() {
   if (g.run.scheduledUpgrades) {  ///
     g.run.scheduledUpgrades = false;
 
-    g.run.screen = ScreenType_UPGRADES;
+    g.run.state.screen = ScreenType_UPGRADES;
 
     RefillUpgradesToPick();
 
-    if (g.run.xpLevel == g.run.previousLevel)
+    if (g.run.state.level == g.run.state.previousLevel)
       g.run.scheduledShop = true;
   }
 
   // Advancing to ScreenType_SHOP.
   if (g.run.scheduledShop) {  ///
     g.run.scheduledShop = false;
-    g.run.screen        = ScreenType_SHOP;
+    g.run.state.screen  = ScreenType_SHOP;
 
     g.run.projectiles.Reset();
     g.run.numbers.Reset();
@@ -5404,7 +5427,7 @@ void GameFixedUpdate() {
   // Advancing to ScreenType_END.
   if (g.run.scheduledEnd) {  ///
     g.run.scheduledEnd = false;
-    g.run.screen       = ScreenType_END;
+    g.run.state.screen = ScreenType_END;
   }
 
   // Advancing to the next wave (ScreenType_GAMEPLAY).
@@ -5415,11 +5438,11 @@ void GameFixedUpdate() {
     PLAYER_CREATURE.health    = health;
     PLAYER_CREATURE.maxHealth = health;
 
-    g.run.screen           = ScreenType_GAMEPLAY;
+    g.run.state.screen     = ScreenType_GAMEPLAY;
     ge.settings.screenFade = 0;
     SDL_HideCursor();
 
-    g.run.waveIndex++;
+    g.run.state.waveIndex++;
     OnWaveStarted();
 
     IterateOverWeaponEffects(
@@ -5438,7 +5461,7 @@ void GameFixedUpdate() {
 
   // Handling ESC or P to toggle pause.
   {  ///
-    if (g.run.screen == ScreenType_GAMEPLAY) {
+    if (g.run.state.screen == ScreenType_GAMEPLAY) {
       if (IsKeyPressed(SDL_SCANCODE_P)) {
         g.meta.scheduledTogglePause = true;
         PlaySound(Sound_UI_BUTTON_CLICK);
@@ -5466,8 +5489,9 @@ void GameFixedUpdate() {
       SDL_HideCursor();
   }
 
-  const auto gameplayOrWaveEndScreen = (g.run.screen == ScreenType_GAMEPLAY)
-                                       || (g.run.screen == ScreenType_WAVE_END_ANIMATION);
+  const auto gameplayOrWaveEndScreen
+    = (g.run.state.screen == ScreenType_GAMEPLAY)
+      || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION);
 
   // Updating gameplay.
   if (!ge.meta.windowIsInactive && !g.meta.paused && gameplayOrWaveEndScreen) {
@@ -5480,9 +5504,9 @@ void GameFixedUpdate() {
 
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
-    if (g.run.screen == ScreenType_GAMEPLAY) {
+    if (g.run.state.screen == ScreenType_GAMEPLAY) {
       // Finishing wave opens upgrades screen.
-      if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.waveIndex)) {  ///
+      if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.state.waveIndex)) {  ///
         if (!g.run.scheduledWaveCompleted.IsSet()) {
           g.run.scheduledWaveCompleted.SetNow();
           g.run.waveWon = true;
@@ -5802,7 +5826,7 @@ void GameFixedUpdate() {
 
         if (CanSpawnMoreCreatures()) {
           if (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0) {
-            FOR_RANGE (int, toSpawnIndex, g.run.toSpawn) {
+            FOR_RANGE (int, toSpawnIndex, g.run.state.toSpawn) {
               const auto   factor = GRAND.FRand();
               CreatureType spawnType{};
 
@@ -5817,8 +5841,8 @@ void GameFixedUpdate() {
               makePreSpawns(spawnType);
             }
 
-            if (g.run.toSpawn < 3)
-              g.run.toSpawn++;
+            if (g.run.state.toSpawn < 3)
+              g.run.state.toSpawn++;
           }
 
           // Spawning turrels every 3 seconds.
@@ -5925,7 +5949,7 @@ void GameFixedUpdate() {
       }
 
       // Spawning boss during the last wave.
-      if ((g.run.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossCreatureId) {  ///
+      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossCreatureId) {  ///
         const auto worldCenter = (Vector2)WORLD_SIZE / 2.0f;
         const auto dir       = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, worldCenter);
         const auto bossPos   = worldCenter + dir * BOSS_SPAWN_OFFSET_METERS;
@@ -5950,11 +5974,12 @@ void GameFixedUpdate() {
                 PLAYER_HURTBOX_RADIUS + CREATURE_COLLIDER_RADIUS * fb->collider_scale()
               ))
           {
-            int damage = fb->contact_damage()
-                         + Round(
-                           fb->contact_damage_increase_per_wave()
-                           * (f32)(g.run.waveIndex + 1 - fb->appearing_wave_number())
-                         );
+            int damage
+              = fb->contact_damage()
+                + Round(
+                  fb->contact_damage_increase_per_wave()
+                  * (f32)(g.run.state.waveIndex + 1 - fb->appearing_wave_number())
+                );
             TryApplyDamage({
               .creatureIndex       = 0,
               .damage              = damage,
@@ -5999,8 +6024,8 @@ void GameFixedUpdate() {
                   xNumber *= 2;
                 }
 
-                if (g.run.notPickedUpCoins > 0) {
-                  g.run.notPickedUpCoins--;
+                if (g.run.state.notPickedUpCoins > 0) {
+                  g.run.state.notPickedUpCoins--;
                   amount *= 2;
                   xNumber *= 2;
                 }
@@ -6030,7 +6055,7 @@ void GameFixedUpdate() {
               case PickupableType_CRATE: {
                 if (consumableOrCrateHeal > 0)
                   HealPlayer(consumableOrCrateHeal);
-                g.run.crates++;
+                g.run.state.crates++;
               } break;
 
               default:
@@ -6212,7 +6237,7 @@ void GameFixedUpdate() {
       ZoneScopedN("Player weapons shooting.");
 
       int weaponIndexOrMinus1 = -1;
-      for (auto& weapon : g.run.playerWeapons) {
+      for (auto& weapon : g.run.state.weapons) {
         weaponIndexOrMinus1++;
         if (!weapon.type)
           continue;
@@ -6771,14 +6796,14 @@ void GameFixedUpdate() {
 
             // Counting mob as player killed.
             if (creature.health != -f32_inf) {
-              g.run.playerKilledEnemies++;
+              g.run.state.playerKilledEnemies++;
               if (creature.lastDamagedWeaponIndex >= 0)
-                g.run.playerWeapons[creature.lastDamagedWeaponIndex].killedEnemies++;
+                g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
 
               IterateOverWeaponEffects(
                 EffectConditionType_KILL_N_ENEMIES_GET_STAT,
                 [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                  if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
+                  if (g.run.state.playerKilledEnemies % fb_effect->condition_value() == 0)
                     ApplyEffect(fb_effect, 1);
                 }
               );
@@ -6792,7 +6817,7 @@ void GameFixedUpdate() {
               IterateOverItemEffects(
                 EffectConditionType_KILL_N_ENEMIES_GET_STAT,
                 [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                  if (g.run.playerKilledEnemies % fb_effect->condition_value() == 0)
+                  if (g.run.state.playerKilledEnemies % fb_effect->condition_value() == 0)
                     ApplyEffect(fb_effect, item.count);
                 }
               );
@@ -6872,7 +6897,7 @@ void GameFixedUpdate() {
         else if (pickupable.startedFlyingAt.IsSet()
                  && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
         {
-          g.run.notPickedUpCoins++;
+          g.run.state.notPickedUpCoins++;
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
         }
@@ -7150,14 +7175,14 @@ void GameDraw() {
 
     if (creature.type == CreatureType_PLAYER) {
       int weaponsCount = 0;
-      for (const auto& weapon : g.run.playerWeapons) {
+      for (const auto& weapon : g.run.state.weapons) {
         if (weapon.type)
           weaponsCount++;
       }
 
       // Drawing player's weapons.
       FOR_RANGE (int, i, PLAYER_WEAPONS_COUNT) {
-        const auto& weapon = g.run.playerWeapons[i];
+        const auto& weapon = g.run.state.weapons[i];
         if (!weapon.type)
           continue;
 
@@ -7420,7 +7445,7 @@ void GameDraw() {
     int locale = glib->ui_label_wave_won_locale();
     if (!g.run.waveWon)
       locale = glib->ui_label_wave_lost_locale();
-    if (g.run.waveWon && (g.run.waveIndex >= TOTAL_WAVES - 1))
+    if (g.run.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
       locale = glib->ui_won_locale();
     auto text = localization_strings->Get(locale);
 
@@ -7484,7 +7509,7 @@ void GameDraw() {
     DebugText("F4 change device");
     DebugText("F5 +10 coins");
     DebugText("F6 add item");
-    if (g.run.screen == ScreenType_GAMEPLAY) {
+    if (g.run.state.screen == ScreenType_GAMEPLAY) {
       DebugText("F7 show end screen");
       DebugText("F8 add level");
       DebugText("F9 add crate");

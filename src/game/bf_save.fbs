@@ -1,0 +1,75 @@
+// Example:gamelib
+// https://raw.githubusercontent.com/google/flatbuffers/master/samples/monster.fbs
+
+namespace BFSave;
+
+table Item {
+    type: int;
+    count: int;
+}
+
+table Weapon {
+    type: int;
+    tier: int;
+    this_wave_damage: int;
+    killed_enemies: int;
+}
+
+table ScreenPickedUpItem {
+    to_pick: int;
+}
+
+table Upgrade {
+    type: int;
+    tier: int;
+}
+
+table Rerolls {
+    rorolled_free_times: int;
+    rorolled_times: int;
+}
+
+table ScreenUpgrades {
+    to_pick: [Upgrade];
+    rerolls: Rerolls;
+}
+
+table ShopItem {
+    weapon: int;
+    item: int;
+    tier: int;
+}
+
+table ScreenShop {
+    to_pick: [ShopItem];
+    rerolls: Rerolls;
+}
+
+table Save {
+    random_state: uint;
+
+    won: bool;
+    screen: int;
+
+    wave_index: int;
+
+    level: int;
+    previous_level: int;
+    xp: float;
+
+    player_killed_enemies: int;
+    not_picked_up_coins: int;
+    crates: int;
+    to_spawn: int;
+
+    weapons: [Weapon];
+    items: [Item];
+    stats_without_items: [int];
+
+    screen_picked_up_item: ScreenPickedUpItem;
+    screen_upgrades: ScreenUpgrades;
+    screen_shop: ScreenShop;
+}
+
+file_identifier "SAVE";
+root_type Save;
