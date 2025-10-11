@@ -44,6 +44,9 @@ x menu: continue button
 x menu: restart button
 x menu: exit game (PC)
 
+* saving
+* classes
+* achievements
 * menu: change class and start new run
 * menu: web when touch enabled: button that can be touched turing the gameplay to get into menu
 * menu:
