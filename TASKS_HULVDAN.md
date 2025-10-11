@@ -43,17 +43,8 @@ x gathered + organized references
 x menu: continue button
 x menu: restart button
 x menu: exit game (PC)
-x saving: flatbuffers schema
-x saving: ref SDL_SaveFile
-x saving: debounced saving
-x saving: robust save&swap saving algorithm
+x save / load
 
-* saving: dumping data to a binary file
-* saving: loading data from a binary file
-* saving:
-* saving:
-* saving:
-* saving:
 * classes
 * achievements
 * menu: change class and start new run

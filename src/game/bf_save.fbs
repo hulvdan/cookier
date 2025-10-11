@@ -15,34 +15,20 @@ table Weapon {
     killed_enemies: int;
 }
 
-table ScreenPickedUpItem {
-    to_pick: int;
-}
-
 table Upgrade {
-    type: int;
+    stat: int;
     tier: int;
 }
 
 table Rerolls {
-    rorolled_free_times: int;
-    rorolled_times: int;
-}
-
-table ScreenUpgrades {
-    to_pick: [Upgrade];
-    rerolls: Rerolls;
+    rerolled_free_times: int;
+    rerolled_times: int;
 }
 
 table ShopItem {
     weapon: int;
     item: int;
     tier: int;
-}
-
-table ScreenShop {
-    to_pick: [ShopItem];
-    rerolls: Rerolls;
 }
 
 table Save {
@@ -66,9 +52,11 @@ table Save {
     items: [Item];
     stats_without_items: [int];
 
-    screen_picked_up_item: ScreenPickedUpItem;
-    screen_upgrades: ScreenUpgrades;
-    screen_shop: ScreenShop;
+    screen_picked_up_item__to_pick: int;
+    screen_upgrades__to_pick: [Upgrade];
+    screen_upgrades__rerolls: Rerolls;
+    screen_shop__to_pick: [ShopItem];
+    screen_shop__rerolls: Rerolls;
 }
 
 file_identifier "SAVE";
