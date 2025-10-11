@@ -800,10 +800,11 @@ struct GameData {
       int previousLevel = 1;
       f32 xp            = 0;
 
-      int playerKilledEnemies = 0;
-      int notPickedUpCoins    = 0;
-      int crates              = 0;
-      int toSpawn             = 3;
+      int playerKilledEnemies    = 0;
+      int notPickedUpCoins       = 0;
+      int notPickedUpCoinsVisual = 0;
+      int crates                 = 0;
+      int toSpawn                = 3;
 
       Array<Weapon, PLAYER_WEAPONS_COUNT> weapons           = {};
       Vector<Item>                        items             = {};
@@ -1129,6 +1130,7 @@ void Load(void* saveData) {  ///
   s.xp                     = save->xp();
   s.playerKilledEnemies    = save->player_killed_enemies();
   s.notPickedUpCoins       = save->not_picked_up_coins();
+  s.notPickedUpCoinsVisual = s.notPickedUpCoins;
   s.crates                 = save->crates();
   s.toSpawn                = save->to_spawn();
 
@@ -1193,6 +1195,9 @@ void Load(void* saveData) {  ///
 
   g.run.recalculatePlayerStats = true;
 
+  if (save->health() <= 0)
+    g.run.scheduledEnd = true;
+
   if (s.screen != ScreenType_GAMEPLAY)
     OnUIStart();
 
@@ -1204,6 +1209,8 @@ void Load(void* saveData) {  ///
     g.run.scheduledUpgrades = true;
   else if (s.screen == ScreenType_SHOP)
     g.run.scheduledShop = true;
+  else if (s.screen == ScreenType_END)
+    g.run.scheduledEnd = true;
 
   RecalculatePlayerWeaponOffsets();
 }
@@ -2168,6 +2175,8 @@ void RunInit() {
     .pos  = (Vector2)WORLD_SIZE / 2.0f,
   });
   g.run.playerLastRegenAt.SetNow();
+  PLAYER_CREATURE.health    = g.run.state.statsWithoutItems[StatType_HP];
+  PLAYER_CREATURE.maxHealth = g.run.state.statsWithoutItems[StatType_HP];
 
   g.run.camera.pos = GetCameraTargetPos();
 
@@ -4048,8 +4057,8 @@ void DoUI(bool draw) {
           .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         }}) {
-          f32        fade = (g.run.state.notPickedUpCoins > 0 ? 1 : 0);
-          const auto id   = CLAY_ID("notPickedUpCoins");
+          f32        fade = (g.run.state.notPickedUpCoinsVisual > 0 ? 1 : 0);
+          const auto id   = CLAY_ID("notPickedUpCoinsVisual");
           CLAY({.id = id}) {
             BF_CLAY_IMAGE({
               .texId = glib->ui_coin_x2_texture_id(),
@@ -4064,7 +4073,7 @@ void DoUI(bool draw) {
           }
 
           BF_CLAY_TEXT(
-            TextFormat("%d", g.run.state.notPickedUpCoins), Fade(palTextWhite, fade)
+            TextFormat("%d", g.run.state.notPickedUpCoinsVisual), Fade(palTextWhite, fade)
           );
         }
       }
@@ -5416,6 +5425,7 @@ void MakeAOE(
 }
 
 #if defined(SDL_PLATFORM_WIN32)
+
 void _Save() {  ///
   ZoneScoped;
 
@@ -5456,18 +5466,17 @@ void _Save() {  ///
       break;
     }
   }
-  if (!swapped) {
+  if (!swapped)
     LOGI("Save swap failed");
-    return;
-  }
-  else
-    LOGI("Saved");
 }
+
 #elif defined(SDL_PLATFORM_EMSCRIPTEN)
+
 void _Save() {
   LOGW("Save is not yet implemented for web");
   // auto fbb = DumpState();
 }
+
 #else
 #  error "_Save() is not implemented for your platform"
 #endif
@@ -5601,6 +5610,9 @@ void GameFixedUpdate() {
           continue;
         if (pickupable.type != PickupableType_COIN)
           continue;
+
+        const auto& data = pickupable.DataCoin();
+        g.run.state.notPickedUpCoins += data.amount;
 
         pickupable.startedFlyingAt.SetNow();
 
@@ -6334,15 +6346,20 @@ void GameFixedUpdate() {
                 int         amount  = data.amount;
                 int         xNumber = 1;
 
-                if (GRAND.FRand()
-                    < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-                {
-                  amount *= 2;
+                if (g.run.state.notPickedUpCoins > 0) {
+                  int toAdd = amount;
+                  if (toAdd > g.run.state.notPickedUpCoins)
+                    toAdd = g.run.state.notPickedUpCoins;
+
+                  g.run.state.notPickedUpCoins -= toAdd;
+                  g.run.state.notPickedUpCoinsVisual -= toAdd;
+                  amount += toAdd;
                   xNumber *= 2;
                 }
 
-                if (g.run.state.notPickedUpCoins > 0) {
-                  g.run.state.notPickedUpCoins--;
+                if (GRAND.FRand()
+                    < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+                {
                   amount *= 2;
                   xNumber *= 2;
                 }
@@ -7197,6 +7214,9 @@ void GameFixedUpdate() {
       g.run.numbers.count -= removed;
     }
 
+    if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
+      ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
+
     // Removing old picked up pickupables.
     {  ///
       ZoneScopedN("Removing old picked up pickupables.");
@@ -7214,7 +7234,8 @@ void GameFixedUpdate() {
         else if (pickupable.startedFlyingAt.IsSet()
                  && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
         {
-          g.run.state.notPickedUpCoins++;
+          const auto& d = pickupable.DataCoin();
+          g.run.state.notPickedUpCoinsVisual += d.amount;
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
         }
@@ -7858,4 +7879,4 @@ void GameDraw() {
   }
 }
 
-//
+///
