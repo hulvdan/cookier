@@ -12,8 +12,9 @@ x моб, что 100% дропает сундук
 x существа загораются белым на небольшое время, когда получают урон
 x норм меню (пока что кнопка P в браузере)
 x save / load на ПК
+x save / load health so that cheating doesn't work
 
-* save / load health so that cheating doesn't work
+* if health is 0 and it's gameplay -> show end screen
 * check END save / load
 * ref extract reroll button
 * classes
