@@ -566,8 +566,9 @@ struct Creature {
 };
 
 struct MakeCreatureData {
-  CreatureType type = {};
-  Vector2      pos  = {};
+  CreatureType type           = {};
+  Vector2      pos            = {};
+  int          overrideHealth = 0;
 };
 
 struct PreSpawn {
@@ -783,8 +784,9 @@ struct GameData {
     bool paused               = false;
     bool scheduledTogglePause = false;
 
-    bool        scheduledSave = false;
-    FrameVisual lastSaveAt    = {};
+    bool        scheduledSave                 = false;
+    bool        previousSaveIsNotCompletedYet = false;
+    FrameVisual lastSaveAt                    = {};
   } meta;
 
   struct Run {
@@ -806,21 +808,42 @@ struct GameData {
       Array<Weapon, PLAYER_WEAPONS_COUNT> weapons           = {};
       Vector<Item>                        items             = {};
       Array<int, StatType_COUNT>          statsWithoutItems = {};
+
+      // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
+      struct {
+        ItemType toPick       = {};
+        int      recyclePrice = {};
+      } pickedUpItem;
+
+      struct {
+        Array<Upgrade, 4> toPick = {};
+        Rerolls           rerolls;
+      } upgrades;
+
+      struct {
+        Array<ShopItem, 4> toPick = {};
+        Rerolls            rerolls;
+      } shop;
     } state = {};
+
+    int shopSelectedWeaponIndex = -1;
 
     Arena arena = {};
 
     bool reload = false;
 
-    FrameVisual scheduledWaveCompleted = {};
-    bool        waveWon                = false;
-    bool        recalculatePlayerStats = false;
-    bool        scheduledUI            = false;
-    bool        scheduledPickedUpItems = false;
-    bool        scheduledUpgrades      = false;
-    bool        scheduledShop          = false;
-    bool        scheduledEnd           = false;
-    bool        scheduledNextWave      = false;
+    FrameVisual scheduledWaveCompleted      = {};
+    bool        waveWon                     = false;
+    bool        recalculatePlayerStats      = false;
+    bool        scheduledUI                 = false;
+    bool        scheduledPickedUpItems      = false;
+    bool        scheduledPickedUpItemsReset = false;
+    bool        scheduledUpgrades           = false;
+    bool        scheduledUpgradesReset      = false;
+    bool        scheduledShop               = false;
+    bool        scheduledShopReset          = false;
+    bool        scheduledEnd                = false;
+    bool        scheduledNextWave           = false;
 
     bool showingSecondaryStats = false;
 
@@ -866,24 +889,6 @@ struct GameData {
 #define X(type_, name_) Vector<type_> name_ = {};
     VECTORS_TABLE;
 #undef X
-
-    // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
-    struct {
-      ItemType toPick       = {};
-      int      recyclePrice = {};
-    } pickedUpItem;
-
-    struct {
-      Array<Upgrade, 4> toPick = {};
-      Rerolls           rerolls;
-    } upgrades;
-
-    struct {
-      Array<ShopItem, 4> toPick = {};
-      Rerolls            rerolls;
-
-      int selectedWeaponIndex = -1;
-    } shop;
   } run;
 
   struct {
@@ -910,7 +915,201 @@ struct GameData {
   } ui;
 } g = {};
 
-void ScheduleSave() {  ///
+void OnUIStart() {  ///
+  ge.settings.screenFade = glib->ui_modal_fade();
+}
+
+void RecalculatePlayerWeaponOffsets() {  ///
+  int weaponsCount = 0;
+  for (const auto& weapon : g.run.state.weapons) {
+    if (weapon.type)
+      weaponsCount++;
+  }
+
+  // Checkin that INVALID weapons are on the end of `state.weapons`.
+  for (int i = weaponsCount; i < g.run.state.weapons.count; i++)
+    ASSERT(!g.run.state.weapons[i].type);
+
+  // Recalculating offsets.
+  if (weaponsCount > 0) {
+    const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
+    const auto angleDelta    = 2.0f * (f32)PI32 / (f32)weaponsCount;
+    FOR_RANGE (int, i, weaponsCount) {
+      g.run.state.weapons[i].offset
+        = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
+    }
+  }
+}
+
+void Load(void* saveData) {  ///
+  const auto save = BFSave::GetSave(saveData);
+
+  auto& s         = g.run.state;
+  auto  tempItems = s.items;
+  tempItems.Reset();
+  s = {.items = tempItems};
+
+  ge.meta.logicRand._state = save->random_state();
+  s.won                    = save->won();
+  s.screen                 = (ScreenType)save->screen();
+  s.waveIndex              = save->wave_index();
+  s.level                  = save->level();
+  s.previousLevel          = save->previous_level();
+  s.xp                     = save->xp();
+  s.playerKilledEnemies    = save->player_killed_enemies();
+  s.notPickedUpCoins       = save->not_picked_up_coins();
+  s.crates                 = save->crates();
+  s.toSpawn                = save->to_spawn();
+
+  int weaponIndex = 0;
+  for (auto x : *save->weapons()) {
+    s.weapons[weaponIndex++] = {
+      .type           = (WeaponType)x->type(),
+      .tier           = x->tier(),
+      .thisWaveDamage = x->this_wave_damage(),
+      .killedEnemies  = x->killed_enemies(),
+    };
+  }
+
+  auto fb_items = save->items();
+  if (fb_items) {
+    for (auto x : *fb_items) {
+      *s.items.Add() = {
+        .type  = (ItemType)x->type(),
+        .count = x->count(),
+      };
+    }
+  }
+
+  for (auto& x : s.statsWithoutItems)
+    x = 0;
+  int  statIndex = 0;
+  auto fb_stats  = save->stats_without_items();
+  if (fb_stats) {
+    for (auto x : *fb_stats)
+      s.statsWithoutItems[statIndex++] = x;
+  }
+
+  s.pickedUpItem.toPick = (ItemType)save->screen_picked_up_item__to_pick();
+
+  int  upgradesIndex     = 0;
+  auto fb_upgradesToPick = save->screen_upgrades__to_pick();
+  if (fb_upgradesToPick) {
+    for (auto x : *fb_upgradesToPick) {
+      s.upgrades.toPick[upgradesIndex++] = {
+        .stat = (StatType)x->stat(),
+        .tier = x->tier(),
+      };
+    }
+  }
+  s.upgrades.rerolls.rerolledFreeTimes
+    = save->screen_upgrades__rerolls()->rerolled_free_times();
+  s.upgrades.rerolls.rerolledTimes = save->screen_upgrades__rerolls()->rerolled_times();
+
+  int  shopIndex     = 0;
+  auto fb_shopToPick = save->screen_shop__to_pick();
+  if (fb_shopToPick) {
+    for (auto x : *fb_shopToPick) {
+      s.shop.toPick[shopIndex++] = {
+        .weapon = (WeaponType)x->weapon(),
+        .item   = (ItemType)x->item(),
+        .tier   = x->tier(),
+      };
+    }
+  }
+  s.shop.rerolls.rerolledFreeTimes = save->screen_shop__rerolls()->rerolled_free_times();
+  s.shop.rerolls.rerolledTimes     = save->screen_shop__rerolls()->rerolled_times();
+
+  g.run.recalculatePlayerStats = true;
+
+  if (s.screen != ScreenType_GAMEPLAY)
+    OnUIStart();
+
+  if (s.screen == ScreenType_PICKED_UP_ITEM)
+    g.run.scheduledPickedUpItems = true;
+  else if (s.screen == ScreenType_UPGRADES)
+    g.run.scheduledUpgrades = true;
+  else if (s.screen == ScreenType_SHOP)
+    g.run.scheduledShop = true;
+
+  RecalculatePlayerWeaponOffsets();
+}
+
+flatbuffers::FlatBufferBuilder DumpState() {  ///
+  BFSave::SaveT fb_save{};
+
+  {
+    const auto& s = g.run.state;
+
+    fb_save.random_state          = ge.meta.logicRand._state;
+    fb_save.won                   = s.won;
+    fb_save.screen                = s.screen;
+    fb_save.wave_index            = s.waveIndex;
+    fb_save.level                 = s.level;
+    fb_save.previous_level        = s.previousLevel;
+    fb_save.xp                    = s.xp;
+    fb_save.player_killed_enemies = s.playerKilledEnemies;
+    fb_save.not_picked_up_coins   = s.notPickedUpCoins;
+    fb_save.crates                = s.crates;
+    fb_save.to_spawn              = s.toSpawn;
+
+    for (const auto& weapon : g.run.state.weapons) {
+      fb_save.weapons.push_back(std::make_unique<BFSave::WeaponT>(BFSave::WeaponT{
+        .type             = weapon.type,
+        .tier             = weapon.tier,
+        .this_wave_damage = weapon.thisWaveDamage,
+        .killed_enemies   = weapon.killedEnemies,
+      }));
+    }
+
+    for (const auto& item : g.run.state.items) {
+      fb_save.items.push_back(std::make_unique<BFSave::ItemT>(BFSave::ItemT{
+        .type  = item.type,
+        .count = item.count,
+      }));
+    }
+
+    for (const auto& x : g.run.state.statsWithoutItems)
+      fb_save.stats_without_items.push_back(x);
+
+    fb_save.screen_picked_up_item__to_pick = s.pickedUpItem.toPick;
+
+    for (const auto& x : g.run.state.upgrades.toPick) {
+      fb_save.screen_upgrades__to_pick.push_back(
+        std::make_unique<BFSave::UpgradeT>(BFSave::UpgradeT{
+          .stat = (i32)x.stat,
+          .tier = x.tier,
+        })
+      );
+    }
+    fb_save.screen_upgrades__rerolls
+      = std::make_unique<BFSave::RerollsT>(BFSave::RerollsT{
+        .rerolled_free_times = s.upgrades.rerolls.rerolledFreeTimes,
+        .rerolled_times      = s.upgrades.rerolls.rerolledTimes,
+      });
+
+    for (const auto& x : g.run.state.shop.toPick) {
+      fb_save.screen_shop__to_pick.push_back(
+        std::make_unique<BFSave::ShopItemT>(BFSave::ShopItemT{
+          .weapon = x.weapon,
+          .item   = x.item,
+          .tier   = x.tier,
+        })
+      );
+    }
+    fb_save.screen_shop__rerolls = std::make_unique<BFSave::RerollsT>(BFSave::RerollsT{
+      .rerolled_free_times = s.shop.rerolls.rerolledFreeTimes,
+      .rerolled_times      = s.shop.rerolls.rerolledTimes,
+    });
+  }
+
+  flatbuffers::FlatBufferBuilder fbb{};
+  auto                           packed = BFSave::Save::Pack(fbb, &fb_save);
+  fbb.Finish(packed);
+  return fbb;
+}
+
+void Save() {  ///
   g.meta.scheduledSave = true;
 }
 
@@ -1501,10 +1700,8 @@ int MakeCreature(MakeCreatureData data) {  ///
                  ((g.run.state.waveIndex - fb->appearing_wave_number() + 1))
                  * fb->health_increase_per_wave()
                );
-  if (data.type == CreatureType_PLAYER)
-    health = g.run.state.statsWithoutItems[StatType_HP];
-
-  ASSERT(health > 0);
+  if (data.overrideHealth)
+    health = data.overrideHealth;
 
   const auto creatureId = g.run.nextCreatureId++;
 
@@ -1656,28 +1853,6 @@ Vector2 GetCameraTargetPos() {  ///
   return tpos;
 }
 
-void RecalculatePlayerWeaponOffsets() {  ///
-  int weaponsCount = 0;
-  for (const auto& weapon : g.run.state.weapons) {
-    if (weapon.type)
-      weaponsCount++;
-  }
-
-  // Checkin that INVALID weapons are on the end of `state.weapons`.
-  for (int i = weaponsCount; i < g.run.state.weapons.count; i++)
-    ASSERT(!g.run.state.weapons[i].type);
-
-  // Recalculating offsets.
-  if (weaponsCount > 0) {
-    const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
-    const auto angleDelta    = 2.0f * (f32)PI32 / (f32)weaponsCount;
-    FOR_RANGE (int, i, weaponsCount) {
-      g.run.state.weapons[i].offset
-        = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
-    }
-  }
-}
-
 ItemType GenerateRandomItem() {  ///
   auto fb_items = glib->items();
 
@@ -1691,9 +1866,9 @@ ItemType GenerateRandomItem() {  ///
       if (item.type == type)
         currentItemCount += item.count;
     }
-    if (g.run.pickedUpItem.toPick == type)
+    if (g.run.state.pickedUpItem.toPick == type)
       currentItemCount++;
-    for (auto& v : g.run.shop.toPick) {
+    for (auto& v : g.run.state.shop.toPick) {
       if (v.item == type)
         currentItemCount++;
     }
@@ -1938,6 +2113,8 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
 }
 
 void OnWaveStarted() {  ///
+  g.run.state.upgrades.rerolls = {};
+
   g.run.bossCreatureId = 0;
 
   g.run.waveStartedAt = {};
@@ -1945,6 +2122,10 @@ void OnWaveStarted() {  ///
   g.run.cratesDroppedThisWave = 0;
 
   RecalculateThisWaveMobs();
+
+  const auto health         = (f32)g.run.playerStats[StatType_HP];
+  PLAYER_CREATURE.health    = health;
+  PLAYER_CREATURE.maxHealth = health;
 
   int weaponIndexOrMinus1 = -1;
   for (auto& weapon : g.run.state.weapons) {
@@ -1958,6 +2139,8 @@ void OnWaveStarted() {  ///
 
   g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
   g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
+
+  RecalculatePlayerWeaponOffsets();
 }
 
 void RunInit() {
@@ -2005,7 +2188,6 @@ void RunInit() {
     weapon.tier         = GRAND.Rand() % (TOTAL_TIERS - 1);
     weapon.recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
   }
-  RecalculatePlayerWeaponOffsets();
 
   // Placing walls.
   {  ///
@@ -2120,8 +2302,6 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {  ///
   ZoneScoped;
 
-  SDL_HideCursor();
-
   g.meta.trashArena = MakeArena(16 * 1024);
   g.run.arena       = MakeArena(4 * 1024);
 
@@ -2140,6 +2320,12 @@ void GameInit() {  ///
   ReloadFontsIfNeeded();
 
   RunInit();
+
+  auto saveData = SDL_LoadFile("save.bin", nullptr);
+  if (saveData) {
+    Load(saveData);
+    SDL_free(saveData);
+  }
 }
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
@@ -2320,9 +2506,10 @@ void RunReset() {  ///
   ZoneScoped;
 
   ge.settings.screenFade = 0;
-  SDL_HideCursor();
 
   b2DestroyWorld(g.run.world);
+
+  g.run.state.items.Reset();
 
   // Resetting `g.run` to a default value,
   // while preserving allocated memory of it's Vectors.
@@ -2383,7 +2570,7 @@ int Rerolls::GetPrice() const {  ///
 void RefillUpgradesToPick() {  ///
   const auto fb_stats = glib->stats();
 
-  FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
+  FOR_RANGE (int, i, g.run.state.upgrades.toPick.count) {
     while (1) {
       const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
       if (!newStat)
@@ -2401,7 +2588,7 @@ void RefillUpgradesToPick() {  ///
 
       // Not showing same upgrade twice.
       bool contains = false;
-      for (const auto& v : g.run.upgrades.toPick) {
+      for (const auto& v : g.run.state.upgrades.toPick) {
         if (v.stat == newStat) {
           contains = true;
           break;
@@ -2411,7 +2598,7 @@ void RefillUpgradesToPick() {  ///
         continue;
 
       // Setting upgrade.
-      g.run.upgrades.toPick[i] = {
+      g.run.state.upgrades.toPick[i] = {
         .stat = newStat,
         .tier = (int)(GRAND.Rand() % TOTAL_TIERS),
       };
@@ -2424,28 +2611,35 @@ void RefillShopToPick() {  ///
   const auto fb_items   = glib->items();
   const auto fb_weapons = glib->weapons();
 
-  for (auto& v : g.run.shop.toPick)
-    v = {};
+  for (auto& x : g.run.state.shop.toPick)
+    x = {};
 
-  for (auto& v : g.run.shop.toPick) {
+  for (auto& x : g.run.state.shop.toPick) {
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
-      v.item = GenerateRandomItem();
+      x.item = GenerateRandomItem();
 
-      const auto fb = fb_items->Get(v.item);
-      v.tier        = fb->tier();
-      v.price       = fb->price();
+      const auto fb = fb_items->Get(x.item);
+      x.tier        = fb->tier();
     }
     else {
-      while (!v.weapon) {
-        v.weapon      = (WeaponType)(GRAND.Rand() % fb_weapons->size());
-        const auto fb = fb_weapons->Get(v.weapon);
+      while (!x.weapon) {
+        x.weapon      = (WeaponType)(GRAND.Rand() % fb_weapons->size());
+        const auto fb = fb_weapons->Get(x.weapon);
         // Legendary weapons can't be bought in shop.
         // TODO: Check if it's possible to buy legendary weapons in Brotato.
-        v.tier  = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
-        v.price = GetWeaponPrice(v.weapon, v.tier);
+        x.tier = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
       }
     }
+  }
+}
+
+void RecalculateShopToPick() {  ///
+  for (auto& x : g.run.state.shop.toPick) {
+    if (x.item)
+      x.price = glib->items()->Get(x.item)->price();
+    else if (x.weapon)
+      x.price = GetWeaponPrice(x.weapon, x.tier);
   }
 }
 
@@ -2470,7 +2664,6 @@ void StableRemoveWeapon(int index) {  ///
   for (int i = index + 1; i < g.run.state.weapons.count; i++)
     g.run.state.weapons[i - 1] = g.run.state.weapons[i];
   g.run.state.weapons[g.run.state.weapons.count - 1] = {};
-  RecalculatePlayerWeaponOffsets();
 }
 
 f32 _AttackSpeedMultiplier(int v) {  ///
@@ -3329,8 +3522,8 @@ void DoUI(bool draw) {
           if (weAreInShop && clicked()) {
             PlaySound(Sound_UI_BUTTON_CLICK);
 
-            ASSERT(g.run.shop.selectedWeaponIndex == -1);
-            g.run.shop.selectedWeaponIndex = weaponIndex;
+            ASSERT(g.run.shopSelectedWeaponIndex == -1);
+            g.run.shopSelectedWeaponIndex = weaponIndex;
           }
         }
       }
@@ -3535,13 +3728,13 @@ void DoUI(bool draw) {
 
     // Floating weapon details modal.
     // Gets shown upon hovering. Gets sticked upon clicking on weapon.
-    if ((Clay_Hovered() || (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1))
+    if ((Clay_Hovered() || (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1))
         && g.run.state.weapons[weaponIndexOrMinus1].type)
     {
-      if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1)) {
+      if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1)) {
         // Pressing ESC closes modal.
         if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
-          g.run.shop.selectedWeaponIndex = -1;
+          g.run.shopSelectedWeaponIndex = -1;
       }
 
       f32                          offsetY{};
@@ -3593,7 +3786,7 @@ void DoUI(bool draw) {
             slotColors[2 * weapon.tier + 1]
           ),
         }) {
-          if (weAreInShop && (g.run.shop.selectedWeaponIndex == weaponIndexOrMinus1))
+          if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1))
             componentOverlay();
 
           CLAY({
@@ -3696,16 +3889,16 @@ void DoUI(bool draw) {
                   g.run.state.weapons[canCombineWithIndex].killedEnemies
                 );
                 StableRemoveWeapon(canCombineWithIndex);
-                ScheduleSave();
+                Save();
               }
               if (recycled) {
                 AddCoins(weapon.recyclePrice);
                 StableRemoveWeapon(weaponIndexOrMinus1);
-                ScheduleSave();
+                Save();
               }
               if (cancelled || recycled || combined) {
                 PlaySound(Sound_UI_BUTTON_CLICK);
-                g.run.shop.selectedWeaponIndex = -1;
+                g.run.shopSelectedWeaponIndex = -1;
               }
             }
           }
@@ -3970,7 +4163,7 @@ void DoUI(bool draw) {
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          const auto type = g.run.pickedUpItem.toPick;
+          const auto type = g.run.state.pickedUpItem.toPick;
           const auto fb   = fb_items->Get(type);
 
           // "Item Found" label.
@@ -4019,27 +4212,33 @@ void DoUI(bool draw) {
                     glib->ui_button_recycle_locale(), textColor
                   );
                   BF_CLAY_TEXT(
-                    TextFormat(" (+%d)", g.run.pickedUpItem.recyclePrice), textColor
+                    TextFormat(" (+%d)", g.run.state.pickedUpItem.recyclePrice), textColor
                   );
                 }
               }
             );
 
             if (took)
-              AddItem(g.run.pickedUpItem.toPick);
+              AddItem(g.run.state.pickedUpItem.toPick);
             else if (recycled)
-              AddCoins(g.run.pickedUpItem.recyclePrice);
+              AddCoins(g.run.state.pickedUpItem.recyclePrice);
 
             if (took || recycled) {
               PlaySound(Sound_UI_BUTTON_CLICK);
 
-              g.run.pickedUpItem = {};
+              g.run.state.pickedUpItem = {};
 
               g.run.state.crates--;
-              if (g.run.state.crates)
-                g.run.scheduledPickedUpItems = true;
-              else
-                g.run.scheduledUpgrades = true;
+              if (g.run.state.crates) {
+                g.run.scheduledPickedUpItems      = true;
+                g.run.scheduledPickedUpItemsReset = true;
+              }
+              else {
+                g.run.scheduledUpgrades      = true;
+                g.run.scheduledUpgradesReset = true;
+              }
+
+              Save();
             }
           }
         }
@@ -4070,8 +4269,8 @@ void DoUI(bool draw) {
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           const auto fb_stats = glib->stats();
 
-          FOR_RANGE (int, i, g.run.upgrades.toPick.count) {
-            const auto upgrade = g.run.upgrades.toPick[i];
+          FOR_RANGE (int, i, g.run.state.upgrades.toPick.count) {
+            const auto upgrade = g.run.state.upgrades.toPick[i];
             const auto fb      = fb_stats->Get(upgrade.stat);
             CLAY({
               .layout{
@@ -4167,13 +4366,18 @@ void DoUI(bool draw) {
 
                   if (g.run.state.previousLevel < g.run.state.level) {
                     g.run.state.previousLevel++;
-                    g.run.scheduledUpgrades = true;
+                    g.run.scheduledUpgrades      = true;
+                    g.run.scheduledUpgradesReset = true;
                   }
-                  else
-                    g.run.scheduledShop = true;
+                  else {
+                    g.run.scheduledShop      = true;
+                    g.run.scheduledShopReset = true;
+                  }
 
                   g.run.state.statsWithoutItems[upgrade.stat] += amount;
                   g.run.recalculatePlayerStats = true;
+
+                  Save();
                 }
               }
             }
@@ -4182,7 +4386,7 @@ void DoUI(bool draw) {
 
         // Reroll button.
         const auto calculatedRerollPrice
-          = ApplyStatRerollPrice(g.run.upgrades.rerolls.GetPrice());
+          = ApplyStatRerollPrice(g.run.state.upgrades.rerolls.GetPrice());
         const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
         bool       rerolled  = componentButton(
           {.id = CLAY_ID("button_upgrades_reroll")},
@@ -4204,8 +4408,9 @@ void DoUI(bool draw) {
           if (canReroll) {
             PlaySound(Sound_UI_BUTTON_CLICK);
 
-            g.run.upgrades.rerolls.Roll();
+            g.run.state.upgrades.rerolls.Roll();
             RefillUpgradesToPick();
+            Save();
           }
           else {
             g.ui.upgradesErrorGold = {};
@@ -4283,7 +4488,7 @@ void DoUI(bool draw) {
 
           // Reroll button.
           const auto calculatedRerollPrice
-            = ApplyStatRerollPrice(g.run.shop.rerolls.GetPrice());
+            = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
           const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
           bool       rerolled  = componentButton(
             {.id = CLAY_ID("button_shop_reroll")},
@@ -4309,9 +4514,10 @@ void DoUI(bool draw) {
           if (rerolled) {
             if (canReroll) {
               PlaySound(Sound_UI_BUTTON_CLICK);
-
-              g.run.shop.rerolls.Roll();
+              g.run.state.shop.rerolls.Roll();
               RefillShopToPick();
+              RecalculateShopToPick();
+              Save();
             }
             else {
               g.ui.shopErrorGold = {};
@@ -4329,7 +4535,7 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           int toPickIndex = -1;
-          for (auto& v : g.run.shop.toPick) {
+          for (auto& v : g.run.state.shop.toPick) {
             toPickIndex++;
             const auto calculatedPrice = ApplyStatItemsPrice(v.price);
             bool canBuy = ((v.item || v.weapon) && (calculatedPrice <= PLAYER_COINS));
@@ -4468,7 +4674,6 @@ void DoUI(bool draw) {
                           // Filling empty weapon slot if exists.
                           weapon.type = v.weapon;
                           weapon.tier = v.tier;
-                          RecalculatePlayerWeaponOffsets();
                         }
                         weapon.recyclePrice
                           = GetWeaponRecyclePrice(weapon.type, weapon.tier);
@@ -4478,6 +4683,8 @@ void DoUI(bool draw) {
                       else
                         INVALID_PATH;
                       v = {};
+
+                      Save();
                     }
                     else {
                       if (canBuyErrorWeapon) {
@@ -4495,7 +4702,7 @@ void DoUI(bool draw) {
               }
             }
 
-            if (toPickIndex < g.run.shop.toPick.count - 1)
+            if (toPickIndex < g.run.state.shop.toPick.count - 1)
               BF_CLAY_SPACER_HORIZONTAL;
           }
         }
@@ -4634,7 +4841,7 @@ void DoUI(bool draw) {
           if (g.run.scheduledNextWave) {
             PlaySound(Sound_UI_BUTTON_CLICK);
 
-            for (auto& v : g.run.shop.toPick)
+            for (auto& v : g.run.state.shop.toPick)
               v = {};
           }
         }
@@ -5203,13 +5410,13 @@ void MakeAOE(
   *g.run.particles.Add() = p;
 }
 
-void Save() {  ///
-#if defined(SDL_PLATFORM_DESKTOP)
-  BFSave::SaveT fb_save{};
+#if defined(SDL_PLATFORM_WIN32)
+void _Save() {  ///
+  ZoneScoped;
 
-  flatbuffers::FlatBufferBuilder fbb{};
-  auto                           packed = BFSave::Save::Pack(fbb, &fb_save);
-  fbb.Finish(packed);
+  DEFER {
+    g.meta.previousSaveIsNotCompletedYet = false;
+  };
 
   const auto t          = GetTimestamp();
   const auto toSwapPath = TextFormat(
@@ -5223,10 +5430,13 @@ void Save() {  ///
   );
 
   bool saved = false;
-  FOR_RANGE (int, i, 5) {
-    if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
-      saved = true;
-      break;
+  {
+    auto fbb = DumpState();
+    FOR_RANGE (int, i, 5) {
+      if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
+        saved = true;
+        break;
+      }
     }
   }
   if (!saved) {
@@ -5247,8 +5457,15 @@ void Save() {  ///
   }
   else
     LOGI("Saved");
-#endif
 }
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
+void _Save() {
+  LOGW("Save is not yet implemented for web")
+  // auto fbb = DumpState();
+}
+#else
+#  error "_Save() is not implemented for your platform"
+#endif
 
 void GameFixedUpdate() {
   ZoneScoped;
@@ -5264,13 +5481,17 @@ void GameFixedUpdate() {
   const auto fb_particles      = glib->particles();
 
   // Save.
-  if (g.meta.scheduledSave) {  ///
-    if (!g.meta.lastSaveAt.IsSet() || (g.meta.lastSaveAt.Elapsed().value >= FIXED_FPS)) {
+  if (g.meta.scheduledSave && !g.meta.previousSaveIsNotCompletedYet) {  ///
+    if (!g.meta.lastSaveAt.IsSet()
+        || (g.meta.lastSaveAt.Elapsed().value >= FIXED_FPS / 2))
+    {
       g.meta.scheduledSave = false;
       g.meta.lastSaveAt    = {};
       g.meta.lastSaveAt.SetNow();
       LOGI("Saving...");
-      Save();
+
+      g.meta.previousSaveIsNotCompletedYet = true;
+      _Save();
     }
   }
 
@@ -5280,6 +5501,14 @@ void GameFixedUpdate() {
 
     RunReset();
     RunInit();
+  }
+
+  // Show / hide cursor.
+  {  ///
+    if ((g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused)
+      SDL_HideCursor();
+    else
+      SDL_ShowCursor();
   }
 
   // Cheats.
@@ -5418,25 +5647,34 @@ void GameFixedUpdate() {
   if (g.run.scheduledUI) {  ///
     g.run.scheduledUI = false;
 
-    ge.settings.screenFade = glib->ui_modal_fade();
-    SDL_ShowCursor();
+    OnUIStart();
 
-    if (g.run.state.crates)
-      g.run.scheduledPickedUpItems = true;
-    else
-      g.run.scheduledUpgrades = true;
-
-    g.run.upgrades.rerolls = {};
+    if (g.run.state.crates) {
+      g.run.scheduledPickedUpItems      = true;
+      g.run.scheduledPickedUpItemsReset = true;
+    }
+    else {
+      g.run.scheduledUpgrades      = true;
+      g.run.scheduledUpgradesReset = true;
+    }
   }
 
   // Advancing to ScreenType_PICKED_UP_ITEM.
   if (g.run.scheduledPickedUpItems) {  ///
     g.run.scheduledPickedUpItems = false;
 
-    g.run.state.screen        = ScreenType_PICKED_UP_ITEM;
-    g.run.pickedUpItem.toPick = GenerateRandomItem();
-    g.run.pickedUpItem.recyclePrice
-      = fb_items->Get(g.run.pickedUpItem.toPick)->price() / RECYCLE_PRICE_FACTOR;
+    g.run.state.screen = ScreenType_PICKED_UP_ITEM;
+
+    if (g.run.scheduledPickedUpItemsReset) {
+      g.run.scheduledPickedUpItemsReset = false;
+      g.run.state.pickedUpItem.toPick   = GenerateRandomItem();
+    }
+
+    g.run.state.pickedUpItem.recyclePrice
+      = glib->items()->Get(g.run.state.pickedUpItem.toPick)->price()
+        / RECYCLE_PRICE_FACTOR;
+
+    Save();
   }
 
   // Advancing to ScreenType_UPGRADES.
@@ -5445,10 +5683,17 @@ void GameFixedUpdate() {
 
     g.run.state.screen = ScreenType_UPGRADES;
 
-    RefillUpgradesToPick();
+    if (g.run.scheduledUpgradesReset) {
+      g.run.scheduledUpgradesReset = false;
+      RefillUpgradesToPick();
+    }
 
-    if (g.run.state.level == g.run.state.previousLevel)
-      g.run.scheduledShop = true;
+    if (g.run.state.level == g.run.state.previousLevel) {
+      g.run.scheduledShop      = true;
+      g.run.scheduledShopReset = true;
+    }
+
+    Save();
   }
 
   // Advancing to ScreenType_SHOP.
@@ -5480,27 +5725,30 @@ void GameFixedUpdate() {
     }
 #endif
 
-    g.run.shop.rerolls = {};
-    RefillShopToPick();
+    if (g.run.scheduledShopReset) {
+      g.run.scheduledShopReset = false;
+      g.run.state.shop.rerolls = {};
+      RefillShopToPick();
+    }
+    RecalculateShopToPick();
+
+    Save();
   }
 
   // Advancing to ScreenType_END.
   if (g.run.scheduledEnd) {  ///
     g.run.scheduledEnd = false;
     g.run.state.screen = ScreenType_END;
+
+    Save();
   }
 
   // Advancing to the next wave (ScreenType_GAMEPLAY).
   if (g.run.scheduledNextWave) {  ///
     g.run.scheduledNextWave = false;
 
-    const auto health         = (f32)g.run.playerStats[StatType_HP];
-    PLAYER_CREATURE.health    = health;
-    PLAYER_CREATURE.maxHealth = health;
-
     g.run.state.screen     = ScreenType_GAMEPLAY;
     ge.settings.screenFade = 0;
-    SDL_HideCursor();
 
     g.run.state.waveIndex++;
     OnWaveStarted();
@@ -5543,10 +5791,6 @@ void GameFixedUpdate() {
     g.meta.scheduledTogglePause = false;
 
     g.meta.paused = !g.meta.paused;
-    if (g.meta.paused)
-      SDL_ShowCursor();
-    else
-      SDL_HideCursor();
   }
 
   const auto gameplayOrWaveEndScreen
@@ -5565,6 +5809,13 @@ void GameFixedUpdate() {
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
+#if BF_ENABLE_ASSERTS
+      for (auto& creature : g.run.creatures) {  ///
+        if ((creature.health <= 0) && !creature.diedAt.IsSet())
+          INVALID_PATH;
+      }
+#endif
+
       // Finishing wave opens upgrades screen.
       if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.state.waveIndex)) {  ///
         if (!g.run.scheduledWaveCompleted.IsSet()) {
