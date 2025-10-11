@@ -45,13 +45,13 @@ x menu: restart button
 x menu: exit game (PC)
 
 * menu: change class and start new run
-* menu: button that can be touched turing the gameplay to get into menu
+* menu: web when touch enabled: button that can be touched turing the gameplay to get into menu
 * menu:
 * menu:
 * menu:
 * menu:
 * menu:
-* menu:
+* localization sorting
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
 * fix shop items/weapons frame height

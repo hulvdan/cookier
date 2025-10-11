@@ -4882,7 +4882,7 @@ void DoUI(bool draw) {
                       ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
                       if (Clay_Hovered()) {
                         componentItemDetails(
-                          g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 1}
+                          g.run.playerItems[t], {.detailsRight = 1, .detailsBelow = 0}
                         );
                       }
                     }
@@ -5439,11 +5439,16 @@ void GameFixedUpdate() {
   // Handling ESC or P to toggle pause.
   {  ///
     if (g.run.screen == ScreenType_GAMEPLAY) {
-      g.meta.scheduledTogglePause |= IsKeyPressed(SDL_SCANCODE_P);
+      if (IsKeyPressed(SDL_SCANCODE_P)) {
+        g.meta.scheduledTogglePause = true;
+        PlaySound(Sound_UI_BUTTON_CLICK);
+      }
 
 #if defined(SDL_PLATFORM_DESKTOP)
-      if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
-        g.meta.scheduledTogglePause |= true;
+      if (IsKeyPressed(SDL_SCANCODE_ESCAPE)) {
+        g.meta.scheduledTogglePause = true;
+        PlaySound(Sound_UI_BUTTON_CLICK);
+      }
 #endif
     }
     else
