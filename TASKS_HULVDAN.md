@@ -16,7 +16,10 @@ x save / load health so that cheating doesn't work
 x if health is 0 and it's gameplay -> show end screen
 x Differentiate notPickedUpCoins/notPickedUpCoinsVisual
   so that saving during ScreenType_WAVE_END_ANIMATION would be fair
+x reopening game during the wave resets coins and xp
+  to the values at the start of the wave
 
+* save: starting wave completed animation saves the game
 * windows save in another thread (+profile dumping / saving to file)
 * check END save / load
 * ref extract reroll button
