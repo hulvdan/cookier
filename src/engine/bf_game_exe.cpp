@@ -81,11 +81,11 @@ EMSCRIPTEN_KEEPALIVE void mark_ysdk_loaded_from_js() {  ///
 }
 
 EMSCRIPTEN_KEEPALIVE void pause_from_js() {  ///
-  ge.meta.paused = true;
+  ge.meta.windowIsInactive = true;
 }
 
 EMSCRIPTEN_KEEPALIVE void resume_from_js() {  ///
-  ge.meta.paused = false;
+  ge.meta.windowIsInactive = false;
 }
 #  endif
 

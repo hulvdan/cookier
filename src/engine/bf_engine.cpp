@@ -832,8 +832,9 @@ struct EngineData {
       f32       volume = 0.75f;
     } _soundManager = {};
 
-    bool ysdkLoaded = false;
-    bool paused     = false;
+    bool ysdkLoaded       = false;
+    bool windowIsInactive = false;
+    bool exitScheduled    = false;
 
     bool debugEnabled = false;
 
@@ -3602,6 +3603,8 @@ SDL_AppResult EngineUpdate() {  ///
     frameTime -= FIXED_DT;
 
     GameFixedUpdate();
+    if (ge.meta.exitScheduled)
+      return SDL_APP_SUCCESS;
 
     ResetInputState();
 
