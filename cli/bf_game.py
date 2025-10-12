@@ -147,9 +147,12 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Builds.
     # ============================================================
     if 1:
+        max_weapons = 0
         for i, x in enumerate(gamelib["builds"]):
             if i > 0:
                 x["name_locale"] = "BUILD_{}".format(x["type"])
+                max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
+        genline("constexpr int MAX_BUILD_WEAPONS = {};\n".format(max_weapons))
 
     # Tables.
     # ============================================================
