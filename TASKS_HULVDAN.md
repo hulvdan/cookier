@@ -19,11 +19,16 @@ x Differentiate notPickedUpCoins/notPickedUpCoinsVisual
 x reopening game during the wave resets coins and xp
   to the values at the start of the wave
 x save/load difficulty, build, achievements
+x difficulty levels
 
-* difficulty levels
-  check brotato
-  check hades
-  check bl2 (2x HP, 3x HP)
+* new run: build icons
+* new run: can select difficulty + build + weapon and start a run
+* new run:
+* new run:
+* new run:
+* new run:
+* new run:
+* new run:
 * yandex save
 * ref extract reroll button
 * classes

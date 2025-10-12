@@ -763,6 +763,10 @@ struct Achievement {
   i64 value = {};
 };
 
+struct Build {
+  DifficultyType maxDifficultyBeaten = {};
+};
+
 struct GameData {
   struct Meta {
     Arena trashArena = {};
@@ -795,6 +799,7 @@ struct GameData {
 
   struct {
     Array<Achievement, AchievementType_COUNT> achievements = {};
+    Array<Build, BuildType_COUNT>             builds       = {};
   } player;
 
   struct Run {
@@ -1146,6 +1151,14 @@ void Load(void* saveData) {  ///
     for (const auto& x : *fb_achievements)
       g.player.achievements[i++] = {.value = x->value()};
   }
+  auto fb_builds = save->builds();
+  if (fb_builds) {
+    int i = 0;
+    for (const auto& x : *fb_builds) {
+      g.player.builds[i++]
+        = {.maxDifficultyBeaten = (DifficultyType)x->max_difficulty_beaten()};
+    }
+  }
   s.difficulty             = (DifficultyType)save->difficulty();
   s.build                  = (BuildType)save->build();
   PLAYER_CREATURE.health   = save->health();
@@ -1255,6 +1268,11 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
       fb_save.achievements.push_back(
         std::make_unique<BFSave::AchievementT>(BFSave::AchievementT{.value = x.value})
       );
+    }
+    for (const auto& x : g.player.builds) {
+      fb_save.builds.push_back(std::make_unique<BFSave::BuildT>(
+        BFSave::BuildT{.max_difficulty_beaten = x.maxDifficultyBeaten}
+      ));
     }
 
     fb_save.difficulty = (int)s.difficulty;
@@ -3024,6 +3042,9 @@ void DoUI(bool draw) {
   const auto fb_weapons             = glib->weapons();
   const auto fb_projectiles         = glib->projectiles();
   const auto fb_pickupables         = glib->pickupables();
+  const auto fb_difficulties        = glib->difficulties();
+  const auto fb_achievements        = glib->achievements();
+  const auto fb_builds              = glib->builds();
 
   if (!draw) {
     // Updating clay mouse pos.
@@ -3047,7 +3068,7 @@ void DoUI(bool draw) {
   constexpr u16 GAP_FLEX                 = 2;
   constexpr u16 GAP_SMALL                = 8;
   constexpr u16 GAP_BIG                  = 20;
-  constexpr u16 PADDING_NINE_SLICE       = 12;
+  constexpr u16 PADDING_NINE_SLICE_FRAME = 12;
   constexpr u16 PADDING_OUTER_VERTICAL   = 10;
   constexpr u16 PADDING_OUTER_HORIZONTAL = 12;
 
@@ -3193,7 +3214,7 @@ void DoUI(bool draw) {
     CLAY({
       .layout{
         .sizing{.width = CLAY_SIZING_FIXED(256)},
-        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
         .childGap        = GAP_BIG,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
@@ -3529,7 +3550,8 @@ void DoUI(bool draw) {
     CLAY({
       .layout{
         .sizing{
-          CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE), CLAY_SIZING_FIT(0)
+          CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+          CLAY_SIZING_FIT(0)
         },
       },
       .floating{
@@ -3545,7 +3567,7 @@ void DoUI(bool draw) {
 
       CLAY({
         .layout{
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
@@ -3825,7 +3847,7 @@ void DoUI(bool draw) {
       CLAY({
         .layout{
           .sizing{
-            CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+            CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
             CLAY_SIZING_FIT(0)
           },
         },
@@ -3842,9 +3864,9 @@ void DoUI(bool draw) {
         CLAY({
           .layout{
             .sizing{
-              .width = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE)
+              .width = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME)
             },
-            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
             .childGap        = GAP_BIG,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
@@ -3975,6 +3997,35 @@ void DoUI(bool draw) {
 
       zIndex -= 2;
     }
+  };
+
+  struct ComponentTooltipData {
+    Vector2                      offset  = {};
+    Clay_FloatingAttachPointType element = {};
+    Clay_FloatingAttachPointType parent  = {};
+    int                          tier    = {};
+  };
+
+  LAMBDA (void, componentTooltip, (ComponentTooltipData data, auto&& innerLambda)) {  ///
+    CLAY({
+      .layout{
+        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+      },
+      .floating{
+        .offset{data.offset.x, data.offset.y},
+        .zIndex = ++zIndex,
+        .attachPoints{.element = data.element, .parent = data.parent},
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_NINE_SLICE(
+        glib->ui_frame_nine_slice(),
+        slotColors[data.tier * 2],
+        slotColors[data.tier * 2 + 1]
+      ),
+    }) {
+      innerLambda();
+    }
+    zIndex--;
   };
 
   // Gameplay.
@@ -4223,29 +4274,122 @@ void DoUI(bool draw) {
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      .layoutDirection = CLAY_TOP_TO_BOTTOM,
     }}) {
       auto& d = g.run.state.newRun;
 
-      CLAY({.layout{
-        .childGap = GAP_SMALL,
-      }}) {
+      // Difficulties.
+      CLAY({
+        .layout{
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+        ),
+      }) {
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_difficulty_locale());
+
+        CLAY({.layout{
+          .childGap = GAP_SMALL,
+        }})
         FOR_RANGE (int, i, (int)DifficultyType_COUNT - 1) {
+          auto isLocked = i > g.player.achievements[AchievementType_DIFFICULTY].value;
+          auto fb       = fb_difficulties->Get(i + 1);
+          auto fb_item  = fb_items->Get(fb->item_type());
+
           CLAY({}) {
-            auto difficultyToSet = (DifficultyType)(i + 1);
-            componentSlot({.canHover = true}, [&]() BF_FORCE_INLINE_LAMBDA {
-              //
-            });
+            componentSlot(
+              {.canHover = !isLocked, .tier = (isLocked ? 0 : 1)},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                CLAY({.layout{
+                  BF_CLAY_SIZING_GROW_XY,
+                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                }}) {
+                  const auto texId
+                    = (isLocked ? glib->ui_item_locked_texture_id() : fb_item->texture_id());
+                  BF_CLAY_IMAGE({.texId = texId});
+                }
+              }
+            );
 
-            ButtonSFX(draw, CLAY_IDI("button_difficulty", i), Clay_Hovered());
+            if (!isLocked) {
+              ButtonSFX(draw, CLAY_IDI("button_difficulty", i), Clay_Hovered());
 
-            if (Clay_Hovered()) {
-              componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
-              if (ge.meta.debugEnabled) {
-                if (clicked())
-                  item.count++;
-                if (wheel && Clay_Hovered()) {
-                  item.count += wheel;
-                  item.count = MAX(1, item.count);
+              if (clicked()) {
+                PlaySound(Sound_UI_BUTTON_CLICK);
+                g.run.state.difficulty = (DifficultyType)(i + 1);
+              }
+
+              if (Clay_Hovered()) {
+                componentTooltip(
+                  {
+                    .offset{0, -GAP_SMALL},
+                    .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                    .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
+                    .tier    = 0,
+                  },
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
+                  }
+                );
+              }
+            }
+          }
+        }
+      }
+
+      // Builds.
+      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_build_locale());
+
+      auto buildsX = 6;
+      auto buildsY = CeilDivision((int)fb_builds->size(), buildsX);
+
+      FOR_RANGE (int, y, buildsY) {
+        CLAY({.layout{
+          .childGap        = GAP_SMALL,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
+          FOR_RANGE (int, x, buildsX) {
+            CLAY({.layout{.childGap = GAP_SMALL}}) {
+              const auto t = y * buildsX + x;
+              if (t >= fb_builds->size())
+                break;
+
+              auto fb       = fb_builds->Get(t);
+              auto isLocked = !fb->unlocked_by_default();
+              componentSlot(
+                {.canHover = !isLocked, .tier = (isLocked ? 0 : 1)},
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  if (isLocked) {
+                    CLAY({.layout{
+                      BF_CLAY_SIZING_GROW_XY,
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    }}) {
+                      BF_CLAY_IMAGE({.texId = glib->ui_item_locked_texture_id()});
+                    }
+                  }
+                }
+              );
+
+              if (!isLocked) {
+                if (clicked()) {
+                  PlaySound(Sound_UI_BUTTON_CLICK);
+                  g.run.state.build = (BuildType)(t + 1);
+                }
+
+                if (Clay_Hovered()) {
+                  componentTooltip(
+                    {
+                      .offset{0, -GAP_SMALL},
+                      .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                      .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
+                      .tier    = 0,
+                    },
+                    [&]() BF_FORCE_INLINE_LAMBDA {
+                      BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+                    }
+                  );
                 }
               }
             }
@@ -4253,10 +4397,8 @@ void DoUI(bool draw) {
         }
       }
 
-      // if (!d.difficulty) {
-      // }
-      // else {
-      // }
+      // Starting weapons.
+      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_starting_weapon_locale());
     }
   }
   // Picked up item.
@@ -4282,10 +4424,10 @@ void DoUI(bool draw) {
           CLAY({
             .layout{
               .sizing{
-                CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+                CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
                 CLAY_SIZING_FIXED(320)
               },
-              BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+              BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
               .childGap        = GAP_SMALL,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
@@ -4384,10 +4526,10 @@ void DoUI(bool draw) {
             CLAY({
               .layout{
                 .sizing{
-                  CLAY_SIZING_FIXED(UPGRADE_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+                  CLAY_SIZING_FIXED(UPGRADE_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
                   CLAY_SIZING_FIT(215),
                 },
-                BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+                BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
                 .childGap = GAP_SMALL,
                 // BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP,
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -4682,14 +4824,14 @@ void DoUI(bool draw) {
             }
 
             CLAY({.layout{.sizing{
-              CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE),
+              CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
               CLAY_SIZING_FIXED(320),
             }}})
             if (v.item || v.weapon) {
               CLAY({
                 .layout{
                   BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE),
+                  BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
                   .childGap        = GAP_SMALL,
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
@@ -5086,7 +5228,7 @@ void DoUI(bool draw) {
         if (restarted)
           g.run.reload = true;
         if (newRun)
-          g.scheduledNewRun = true;
+          g.run.scheduledNewRun = true;
 
         if (restarted || newRun)
           PlaySound(Sound_UI_BUTTON_CLICK);
@@ -5162,6 +5304,15 @@ void DoUI(bool draw) {
               }
             );
 
+            const bool newRun = componentButton(
+              {.id = CLAY_ID("button_pause_new_run"), .growX = true},
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(
+                  glib->ui_button_new_run_locale(), textColor
+                );
+              }
+            );
+
             bool exited = false;
 #if defined(SDL_PLATFORM_DESKTOP)
             exited = componentButton(
@@ -5176,10 +5327,12 @@ void DoUI(bool draw) {
               g.meta.scheduledTogglePause = true;
             if (restarted)
               g.run.reload = true;
+            if (newRun)
+              g.run.scheduledNewRun = true;
             if (exited)
               ge.meta.exitScheduled = true;
 
-            if (resumed || restarted || exited)
+            if (resumed || restarted || newRun || exited)
               PlaySound(Sound_UI_BUTTON_CLICK);
           }
         }
@@ -5604,6 +5757,9 @@ void GameFixedUpdate() {
   const auto fb_weapons        = glib->weapons();
   const auto fb_projectiles    = glib->projectiles();
   const auto fb_particles      = glib->particles();
+  const auto fb_difficulties   = glib->difficulties();
+  const auto fb_achievements   = glib->achievements();
+  const auto fb_builds         = glib->builds();
 
   // Save.
   if (g.meta.scheduledSave && !g.meta.previousSaveIsNotCompletedYet) {  ///
@@ -5760,13 +5916,15 @@ void GameFixedUpdate() {
         g.run.scheduledEnd = true;
         g.run.state.won    = g.run.waveWon;
 
-        // Unlocking a new difficulty.
+        // Updating `Build.maxDifficultyBeaten` + achievement.
         if (g.run.state.won) {
-          auto maxUnlockedDifficulty
-            = g.player.achievements[AchievementType_DIFFICULTY].value;
-          auto newDiff = MAX(maxUnlockedDifficulty, (i64)g.run.state.difficulty);
-          newDiff      = MIN(newDiff, (i64)DifficultyType_COUNT);
-          g.player.achievements[AchievementType_DIFFICULTY].value = newDiff;
+          auto d = g.run.state.difficulty;
+
+          auto& ach = g.player.achievements[AchievementType_DIFFICULTY];
+          ach.value = MAX(ach.value, d);
+
+          auto& build               = g.player.builds[g.run.state.build];
+          build.maxDifficultyBeaten = (DifficultyType)MAX(build.maxDifficultyBeaten, d);
         }
       }
 
@@ -5795,7 +5953,8 @@ void GameFixedUpdate() {
 
   // Advancing to new run.
   if (g.run.scheduledNewRun) {  ///
-    g.run.screen = ScreenType_NEW_RUN;
+    g.run.scheduledNewRun = false;
+    g.run.state.screen    = ScreenType_NEW_RUN;
   }
 
   // Advancing to ScreenType_PICKED_UP_ITEM.

@@ -127,6 +127,7 @@ ui_button_nine_slice:
   right: 32
   top: 32
   bottom: 48
+ui_item_locked_texture_id: ui_item_locked
 shadow_texture_ids:
   - game_shadow_1
   - game_shadow_2
@@ -466,21 +467,33 @@ items:
   - type: DIFFICULTY0
     included_in_random_pool: false
     texture_id: ui_item_d0
+    tier: 0
+    price: 0
   - type: DIFFICULTY1
     included_in_random_pool: false
     texture_id: ui_item_d1
+    tier: 0
+    price: 0
   - type: DIFFICULTY2
     included_in_random_pool: false
     texture_id: ui_item_d2
+    tier: 0
+    price: 0
   - type: DIFFICULTY3
     included_in_random_pool: false
     texture_id: ui_item_d3
+    tier: 0
+    price: 0
   - type: DIFFICULTY4
     included_in_random_pool: false
     texture_id: ui_item_d4
+    tier: 0
+    price: 0
   - type: DIFFICULTY5
     included_in_random_pool: false
     texture_id: ui_item_d5
+    tier: 0
+    price: 0
 weapon_kinds:
   - type: INVALID
   - type: MELEE
@@ -1027,10 +1040,12 @@ builds:
       - SWORD
       - BOW
       - GUN
+    unlocked_by_default: true
   - type: NINJA
     starting_weapon_types:
       - SLINGSHOT
       - SMG
+    unlocked_by_default: true
   - type: WIZARD
     starting_weapon_types:
       - WAND

@@ -241,7 +241,8 @@ table Difficulty {
 
 table Build {
     name_locale: int;
-    starting_weapon_types: [int] (required);
+    starting_weapon_types: [int];
+    unlocked_by_default: bool;
 }
 
 table Achievement {
@@ -296,6 +297,9 @@ table GameLibrary {
     ui_label_wave_lost_locale: int;
     ui_label_stats_primary_locale: int;
     ui_label_stats_secondary_locale: int;
+    ui_label_difficulty_locale: int;
+    ui_label_build_locale: int;
+    ui_label_starting_weapon_locale: int;
     effect_at_the_end_of_the_wave_locale: int;
     effect_at_the_start_of_the_wave_locale: int;
     effect_kill_n_enemies_locale: int;
@@ -318,6 +322,7 @@ table GameLibrary {
     ui_shop_current_level_icon_texture_id: uint;
     ui_frame_nine_slice: NineSlice;
     ui_button_nine_slice: NineSlice;
+    ui_item_locked_texture_id: int;
 
     shadow_texture_ids: [int];
 
