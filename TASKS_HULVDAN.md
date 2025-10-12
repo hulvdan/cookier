@@ -20,15 +20,15 @@ x reopening game during the wave resets coins and xp
   to the values at the start of the wave
 x save/load difficulty, build, achievements
 x difficulty levels
+x new run: can select difficulty + build + weapon and start a run
+x new run: explain button error through wiggling
 
-* new run: can select difficulty + build + weapon and start a run
+* new run: starting a new run works without bugs
+* new run: showing selected difficulty/build/weapon name
+* new run: showing hover weapon details
+* new run:
+* new run:
 * new run: build icons
-* new run:
-* new run:
-* new run:
-* new run:
-* new run:
-* new run:
 * yandex save
 * ref extract reroll button
 * classes
