@@ -774,6 +774,7 @@ struct GameData {
     // NOTE: Reorder loading upon reordering fonts.
     Font fontUI             = {};
     Font fontUIOutlined     = {};
+    Font fontUIBig          = {};
     Font fontStats          = {};
     Font fontPrices         = {};
     Font fontWaveCompletion = {};
@@ -831,6 +832,8 @@ struct GameData {
       // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
       struct {
         DifficultyType difficulty = {};
+        BuildType      build      = {};
+        WeaponType     weapon     = {};
       } newRun;
 
       struct {
@@ -2349,6 +2352,14 @@ void ReloadFontsIfNeeded() {  ///
       .outlineWidth    = 3,
       .outlineAdvance  = 1,
     },
+    // fontUIBig.
+    {
+      .filepath        = fontpath,
+      .size            = 20,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = g_codepoints,
+      .codepointsCount = ARRAY_COUNT(g_codepoints),
+    },
     // fontStats.
     {
       .filepath        = fontpath,
@@ -3135,6 +3146,7 @@ void DoUI(bool draw) {
     bool           selected          = false;
     bool           growX             = false;
     u16            paddingHorizontal = GAP_BIG;
+    bool           enabled           = true;
   };
 
   LAMBDA (
@@ -3165,19 +3177,21 @@ void DoUI(bool draw) {
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
-          (Clay_Hovered() ? palWhite : (data.selected ? TRANSPARENT_BLACK : slotColors[0])
-          ),
-          (Clay_Hovered() ? TRANSPARENT_BLACK
-                          : (data.selected ? TRANSPARENT_BLACK : slotColors[1]))
+          (Clay_Hovered() && data.enabled
+             ? palWhite
+             : (data.selected ? TRANSPARENT_BLACK : slotColors[0])),
+          (Clay_Hovered() && data.enabled
+             ? TRANSPARENT_BLACK
+             : (data.selected ? TRANSPARENT_BLACK : slotColors[1]))
         ),
       }) {
-        bool hovered = Clay_Hovered();
+        bool hovered = Clay_Hovered() && data.enabled;
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
           innerLambda(hovered, (hovered ? palTextBlack : palTextWhite));
         }
       }
 
-      ButtonSFX(draw, data.id, Clay_Hovered());
+      ButtonSFX(draw, data.id, Clay_Hovered() && data.enabled);
 
       result = clicked();
     }
@@ -4276,130 +4290,215 @@ void DoUI(bool draw) {
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
+      .childGap = GAP_BIG * 2,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       .layoutDirection = CLAY_TOP_TO_BOTTOM,
     }}) {
       auto& d = g.run.state.newRun;
 
-      // Difficulties.
-      CLAY({
-        .layout{
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        },
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-        ),
-      }) {
+      // "NEW RUN" label.
+      FontBegin(&g.meta.fontWaveCompletion);
+      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_new_run_locale());
+      FontEnd();
+
+      CLAY({.layout{
+        .childGap        = GAP_BIG,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
+        // Difficulties.
+        FontBegin(&g.meta.fontUIBig);
         BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_difficulty_locale());
+        FontEnd();
 
-        CLAY({.layout{
-          .childGap = GAP_SMALL,
-        }})
-        FOR_RANGE (int, i, (int)DifficultyType_COUNT - 1) {
-          auto isLocked = i > g.player.achievements[AchievementType_DIFFICULTY].value;
-          auto fb       = fb_difficulties->Get(i + 1);
-          auto fb_item  = fb_items->Get(fb->item_type());
+        CLAY({
+          .layout{
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+          ),
+        }) {
+          CLAY({.layout{.childGap = GAP_SMALL}})
+          FOR_RANGE (int, i, (int)DifficultyType_COUNT - 1) {
+            auto isLocked = i > g.player.achievements[AchievementType_DIFFICULTY].value;
+            auto fb       = fb_difficulties->Get(i + 1);
+            auto fb_item  = fb_items->Get(fb->item_type());
 
-          CLAY({}) {
-            componentSlot(
-              {.canHover = !isLocked, .tier = (isLocked ? 0 : 1)},
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({.layout{
-                  BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                }}) {
-                  const auto texId
-                    = (isLocked ? glib->ui_item_locked_texture_id() : fb_item->texture_id());
-                  BF_CLAY_IMAGE({.texId = texId});
-                }
-              }
-            );
+            const bool selected = ((i + 1) == (int)d.difficulty);
 
-            if (!isLocked) {
-              ButtonSFX(draw, CLAY_IDI("button_difficulty", i), Clay_Hovered());
-
-              if (clicked()) {
-                PlaySound(Sound_UI_BUTTON_CLICK);
-                g.run.state.difficulty = (DifficultyType)(i + 1);
-              }
-
-              if (Clay_Hovered()) {
-                componentTooltip(
-                  {
-                    .offset{0, -GAP_SMALL},
-                    .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
-                    .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
-                    .tier    = 0,
-                  },
-                  [&]() BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
+            CLAY({}) {
+              componentSlot(
+                {.canHover = !isLocked, .tier = (isLocked ? 0 : (selected ? 3 : 1))},
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  CLAY({.layout{
+                    BF_CLAY_SIZING_GROW_XY,
+                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                  }}) {
+                    const auto texId
+                      = (isLocked ? glib->ui_item_locked_texture_id() : fb_item->texture_id());
+                    BF_CLAY_IMAGE({.texId = texId});
                   }
-                );
+                }
+              );
+
+              if (!isLocked) {
+                ButtonSFX(draw, CLAY_IDI("button_difficulty", i), Clay_Hovered());
+
+                if (clicked()) {
+                  PlaySound(Sound_UI_BUTTON_CLICK);
+                  d.difficulty = (DifficultyType)(i + 1);
+                }
+
+                if (Clay_Hovered()) {
+                  componentTooltip(
+                    {
+                      .offset{0, -GAP_SMALL},
+                      .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                      .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
+                      .tier    = 0,
+                    },
+                    [&]() BF_FORCE_INLINE_LAMBDA {
+                      BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
+                    }
+                  );
+                }
               }
             }
           }
         }
-      }
 
-      // Builds.
-      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_build_locale());
+        // Builds.
+        FontBegin(&g.meta.fontUIBig);
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_build_locale());
+        FontEnd();
 
-      auto buildsX = 6;
-      auto buildsY = CeilDivision((int)fb_builds->size() - 1, buildsX);
+        auto buildsX = 6;
+        auto buildsY = CeilDivision((int)fb_builds->size() - 1, buildsX);
 
-      CLAY({
-        .layout{
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        },
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-        ),
-      }) {
-        FOR_RANGE (int, y, buildsY) {
-          CLAY({.layout{.childGap = GAP_SMALL}}) {
-            FOR_RANGE (int, x, buildsX) {
-              const int t = y * buildsX + x;
-              if (t >= fb_builds->size() - 1)
-                break;
+        CLAY({
+          .layout{
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+          ),
+        }) {
+          FOR_RANGE (int, y, buildsY) {
+            CLAY({.layout{.childGap = GAP_SMALL}}) {
+              FOR_RANGE (int, x, buildsX) {
+                const int t = y * buildsX + x;
+                if (t >= fb_builds->size() - 1)
+                  break;
+
+                const bool selected = ((int)d.build == (t + 1));
+
+                CLAY({}) {
+                  auto       fb       = fb_builds->Get(t + 1);
+                  const bool isLocked = !fb->unlocked_by_default();
+                  componentSlot(
+                    {.canHover = !isLocked, .tier = (isLocked ? 0 : (selected ? 3 : 1))},
+                    [&]() BF_FORCE_INLINE_LAMBDA {
+                      if (isLocked) {
+                        CLAY({.layout{
+                          BF_CLAY_SIZING_GROW_XY,
+                          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                        }}) {
+                          BF_CLAY_IMAGE({.texId = glib->ui_item_locked_texture_id()});
+                        }
+                      }
+                    }
+                  );
+
+                  if (!isLocked) {
+                    ButtonSFX(draw, CLAY_IDI("button_build", t), Clay_Hovered());
+
+                    if (clicked()) {
+                      PlaySound(Sound_UI_BUTTON_CLICK);
+                      if (d.build != (BuildType)(t + 1)) {
+                        d.build  = (BuildType)(t + 1);
+                        d.weapon = {};
+                      }
+                    }
+
+                    if (Clay_Hovered()) {
+                      componentTooltip(
+                        {
+                          .offset{0, -GAP_SMALL},
+                          .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                          .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
+                          .tier    = 0,
+                        },
+                        [&]() BF_FORCE_INLINE_LAMBDA {
+                          BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+                        }
+                      );
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Starting weapons.
+        FontBegin(&g.meta.fontUIBig);
+        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_starting_weapon_locale());
+        FontEnd();
+
+        CLAY({
+          .layout{
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+          ),
+        }) {
+          const int weaponsX = 6;
+          const int weaponsY = CeilDivision(MAX_BUILD_WEAPONS, weaponsX);
+
+          auto weapons = fb_builds->Get(d.build)->starting_weapon_types();
+
+          FOR_RANGE (int, y, weaponsY) {
+            CLAY({.layout{.childGap = GAP_SMALL}})
+            FOR_RANGE (int, x, weaponsX) {
+              const int t = y * weaponsX + x;
+
+              const bool exists = weapons && (t < weapons->size());
+
+              bool isLocked = false;
+
+              bool selected = false;
+              if (exists)
+                selected = (d.weapon == weapons->Get(t));
 
               CLAY({}) {
-                auto       fb       = fb_builds->Get(t + 1);
-                const bool isLocked = !fb->unlocked_by_default();
                 componentSlot(
-                  {.canHover = !isLocked, .tier = (isLocked ? 0 : 1)},
+                  {
+                    .canHover = exists,
+                    .tier     = (!exists || isLocked ? 0 : (selected ? 3 : 1)),
+                  },
                   [&]() BF_FORCE_INLINE_LAMBDA {
-                    if (isLocked) {
-                      CLAY({.layout{
-                        BF_CLAY_SIZING_GROW_XY,
-                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                      }}) {
-                        BF_CLAY_IMAGE({.texId = glib->ui_item_locked_texture_id()});
-                      }
+                    int texId = glib->ui_item_locked_texture_id();
+                    if (exists) {
+                      auto fb = fb_weapons->Get(weapons->Get(t));
+                      texId   = fb->icon_texture_id();
+                    }
+
+                    CLAY({.layout{
+                      BF_CLAY_SIZING_GROW_XY,
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    }}) {
+                      BF_CLAY_IMAGE({.texId = texId});
                     }
                   }
                 );
 
-                if (!isLocked) {
-                  if (clicked()) {
-                    PlaySound(Sound_UI_BUTTON_CLICK);
-                    g.run.state.build = (BuildType)(t + 1);
-                  }
-
-                  if (Clay_Hovered()) {
-                    componentTooltip(
-                      {
-                        .offset{0, -GAP_SMALL},
-                        .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
-                        .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
-                        .tier    = 0,
-                      },
-                      [&]() BF_FORCE_INLINE_LAMBDA {
-                        BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
-                      }
-                    );
-                  }
+                if (exists && !isLocked && clicked()) {
+                  PlaySound(Sound_UI_BUTTON_CLICK);
+                  d.weapon = (WeaponType)weapons->Get(t);
                 }
               }
             }
@@ -4407,8 +4506,37 @@ void DoUI(bool draw) {
         }
       }
 
-      // Starting weapons.
-      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_starting_weapon_locale());
+      // Go.
+      CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(200)}}}) {
+        const bool canGo = d.difficulty && d.build && d.weapon;
+        const bool go    = componentButton(
+          {
+               .id      = CLAY_ID("button_new_run_go"),
+               .growX   = true,
+               .enabled = canGo,
+          },
+          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_go_locale(), textColor);
+          }
+        );
+
+        if (go) {
+          if (canGo) {
+            PlaySound(Sound_UI_BUTTON_CLICK);
+
+            g.run.state.difficulty      = d.difficulty;
+            g.run.state.build           = d.build;
+            g.run.state.weapons         = {};
+            g.run.state.weapons[0].type = d.weapon;
+
+            d = {};
+
+            g.run.scheduledNextWave = true;
+          }
+          else
+            PlaySound(Sound_UI_BUTTON_ERROR);
+        }
+      }
     }
   }
   // Picked up item.
@@ -5093,9 +5221,7 @@ void DoUI(bool draw) {
           g.run.scheduledNextWave = componentButton(
             {.id = CLAY_ID("button_shop_next_wave"), .growX = true},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
-                glib->ui_button_next_wave_locale(), textColor
-              );
+              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_go_locale(), textColor);
               BF_CLAY_TEXT(" (", textColor);
               BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale(), textColor);
               BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 2), textColor);
@@ -5219,6 +5345,7 @@ void DoUI(bool draw) {
       // Footer. Restart.
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_X,
+        .childGap = GAP_SMALL,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
         const bool restarted = componentButton(

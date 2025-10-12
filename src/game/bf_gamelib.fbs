@@ -286,7 +286,7 @@ table GameLibrary {
     ui_button_recycle_locale: int;
     ui_button_choose_locale: int;
     ui_button_reroll_locale: int;
-    ui_button_next_wave_locale: int;
+    ui_button_go_locale: int;
     ui_button_resume_locale: int;
     ui_button_restart_locale: int;
     ui_button_new_run_locale: int;
@@ -300,6 +300,7 @@ table GameLibrary {
     ui_label_difficulty_locale: int;
     ui_label_build_locale: int;
     ui_label_starting_weapon_locale: int;
+    ui_label_new_run_locale: int;
     effect_at_the_end_of_the_wave_locale: int;
     effect_at_the_start_of_the_wave_locale: int;
     effect_kill_n_enemies_locale: int;
