@@ -982,6 +982,29 @@ placeholders:
   - type: INVALID
   - type: STRING
   - type: BROKEN_LOCALE
+difficulties:
+  - type: INVALID
+  - type: D0
+    mob_hp_scale: 1
+  - type: D1
+    mob_hp_scale: 1.05
+  - type: D2
+    mob_hp_scale: 1.12
+  - type: D3
+    mob_hp_scale: 1.25
+  - type: D4
+    mob_hp_scale: 1.40
+  - type: D5
+    mob_hp_scale: 1.75
+builds:
+  - type: INVALID
+  - type: DEFAULT
+achievements:
+  - type: INVALID
+  - type: KILLER
+  - type: WALKER
+  - type: IDLER
+  - type: DIFFICULTY
 landmine_damage_scalings:
   - stat_type: ENGINEERING
     percents_per_tier:

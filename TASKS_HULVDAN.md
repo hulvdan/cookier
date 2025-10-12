@@ -18,10 +18,12 @@ x Differentiate notPickedUpCoins/notPickedUpCoinsVisual
   so that saving during ScreenType_WAVE_END_ANIMATION would be fair
 x reopening game during the wave resets coins and xp
   to the values at the start of the wave
+x save/load difficulty, build, achievements
 
-* save: starting wave completed animation saves the game
-* windows save in another thread (+profile dumping / saving to file)
-* check END save / load
+* difficulty levels
+  check brotato
+  check hades
+  check bl2 (2x HP, 3x HP)
 * ref extract reroll button
 * classes
 * achievements
@@ -200,8 +202,11 @@ TECH DEBT
 * fix sometimes sdl thinks window is out of focus -> sounds mutes
 * engine: LoadFonts per localization
 
-IRRELEVANT:
+LATER:
 ================================================================================
 * draw melee weapon attack colliders
 * when player can be burnt:
   make sure that burn ticks don't set player to be invincible
+* save: starting wave completed animation saves the game
+* windows save in another thread (+profile dumping / saving to file)
+* brotato gog

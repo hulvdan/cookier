@@ -232,6 +232,16 @@ table Stat {
 table PreSpawn {
     hostility_type: int;
 }
+
+table Difficulty {
+    mob_hp_scale: float;
+}
+
+table Build {
+}
+
+table Achievement {
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -329,6 +339,9 @@ table GameLibrary {
     numbers: [Number] (required);
     stats: [Stat] (required);
     placeholders: [Placeholder] (required);
+    difficulties: [Difficulty] (required);
+    builds: [Build] (required);
+    achievements: [Achievement] (required);
     // TABLE_GEN_END
 
     landmine_damage_scalings: [DamageScaling];
