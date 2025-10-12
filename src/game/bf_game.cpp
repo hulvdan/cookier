@@ -566,9 +566,8 @@ struct Creature {
 };
 
 struct MakeCreatureData {
-  CreatureType type           = {};
-  Vector2      pos            = {};
-  int          overrideHealth = 0;
+  CreatureType type = {};
+  Vector2      pos  = {};
 };
 
 struct PreSpawn {
@@ -1915,8 +1914,12 @@ int MakeCreature(MakeCreatureData data) {  ///
                  ((g.run.state.waveIndex - fb->appearing_wave_number() + 1))
                  * fb->health_increase_per_wave()
                );
-  if (data.overrideHealth)
-    health = data.overrideHealth;
+
+  if (fb->hostility_type() != HostilityType_FRIENDLY) {
+    health = Round(
+      (f32)health * glib->difficulties()->Get(g.run.state.difficulty)->mob_hp_scale()
+    );
+  }
 
   const auto creatureId = g.run.nextCreatureId++;
 
@@ -5696,8 +5699,9 @@ void GameFixedUpdate() {
         if (g.run.state.won) {
           auto maxUnlockedDifficulty
             = g.player.achievements[AchievementType_DIFFICULTY].value;
-          g.player.achievements[AchievementType_DIFFICULTY].value
-            = MAX(maxUnlockedDifficulty, (i64)g.run.state.difficulty);
+          auto newDiff = MAX(maxUnlockedDifficulty, (i64)g.run.state.difficulty);
+          newDiff      = MIN(newDiff, (i64)DifficultyType_COUNT - 1);
+          g.player.achievements[AchievementType_DIFFICULTY].value = newDiff;
         }
       }
 
