@@ -106,6 +106,15 @@ ui_item_slot_colors:
   # Tier 3.
   - 0xb8560fff # Colors. Orange.
   - 0 # Flashes.
+  # Tier 4.
+  - 0xc02931ff # Colors. Red.
+  - 0 # Flashes.
+  # Tier 5.
+  - 0x82dcd7ff # Colors. Pearl.
+  - 0 # Flashes.
+  # Tier 6.
+  - 0xedefe2ff # Colors. White.
+  - 0 # Flashes.
 ui_button_colors:
   - 0x2c5e3bff # default color
   - 0x609c4fff # hovered color
@@ -597,11 +606,10 @@ weapons:
     max_price: 130
     knockback_meters: 1
     cooldown_frames: 15
-    shooting_duration_frames: 30
+    shooting_duration_frames: 15
     projectile_spawn_frames:
       - 2
-      - 16
-      - 30
+      - 14
     range_meters: 7
     icon_texture_id: game_weapon_smg
     texture_ids:

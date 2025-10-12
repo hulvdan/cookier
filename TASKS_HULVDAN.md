@@ -26,11 +26,15 @@ x new run: don't show lock if weapon doesn't exist
 x new run: save/load last run difficulty/build/weapon
 x new run: starting a new run works without bugs
 
+* achievements: achievements screen
+* achievements: remove build lock in gamelib.fbs
+* achievements: lock 3rd build using achievement
+* achievements:
 * new run: showing selected difficulty/build/weapon name
 * new run: showing hover weapon details
-* new run:
-* new run:
-* new run:
+* new run: initial weapon recycle price
+* new run: button selection needs to be rewoked for PC
+* new run: go button big green or rework in steps
 * new run: build icons
 * yandex save
 * ref extract reroll button
