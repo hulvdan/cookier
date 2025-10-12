@@ -463,6 +463,24 @@ items:
     effects:
       - stat_type: FREE_REROLLS
         value: 1
+  - type: DIFFICULTY0
+    included_in_random_pool: false
+    texture_id: ui_item_d0
+  - type: DIFFICULTY1
+    included_in_random_pool: false
+    texture_id: ui_item_d1
+  - type: DIFFICULTY2
+    included_in_random_pool: false
+    texture_id: ui_item_d2
+  - type: DIFFICULTY3
+    included_in_random_pool: false
+    texture_id: ui_item_d3
+  - type: DIFFICULTY4
+    included_in_random_pool: false
+    texture_id: ui_item_d4
+  - type: DIFFICULTY5
+    included_in_random_pool: false
+    texture_id: ui_item_d5
 weapon_kinds:
   - type: INVALID
   - type: MELEE
@@ -986,19 +1004,37 @@ difficulties:
   - type: INVALID
   - type: D0
     mob_hp_scale: 1
+    item_type: DIFFICULTY0
   - type: D1
     mob_hp_scale: 1.05
+    item_type: DIFFICULTY1
   - type: D2
     mob_hp_scale: 1.12
+    item_type: DIFFICULTY2
   - type: D3
     mob_hp_scale: 1.25
+    item_type: DIFFICULTY3
   - type: D4
     mob_hp_scale: 1.40
+    item_type: DIFFICULTY4
   - type: D5
     mob_hp_scale: 1.75
+    item_type: DIFFICULTY5
 builds:
   - type: INVALID
   - type: DEFAULT
+    starting_weapon_types:
+      - SWORD
+      - BOW
+      - GUN
+  - type: NINJA
+    starting_weapon_types:
+      - SLINGSHOT
+      - SMG
+  - type: WIZARD
+    starting_weapon_types:
+      - WAND
+      - WAND2
 achievements:
   - type: INVALID
   - type: KILLER
