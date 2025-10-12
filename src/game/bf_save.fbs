@@ -31,8 +31,18 @@ table ShopItem {
     tier: int;
 }
 
+table Achievement {
+    value: int64;
+}
+
 table Save {
     random_state: uint;
+
+    achievements: [Achievement];
+
+    difficulty: int;
+    build: int;
+
     health: int;
 
     won: bool;

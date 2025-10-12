@@ -759,6 +759,10 @@ struct UIButtonState {
   bool           hovered          = false;
 };
 
+struct Achievement {
+  i64 value = {};
+};
+
 struct GameData {
   struct Meta {
     Arena trashArena = {};
@@ -789,10 +793,17 @@ struct GameData {
     FrameVisual lastSaveAt                    = {};
   } meta;
 
+  struct {
+    Array<Achievement, AchievementType_COUNT> achievements = {};
+  } player;
+
   struct Run {
     struct State {
       bool       won    = false;
       ScreenType screen = ScreenType_GAMEPLAY;
+
+      DifficultyType difficulty = {};
+      BuildType      build      = {};
 
       int waveIndex = 0;
 
@@ -1124,6 +1135,14 @@ void Load(void* saveData) {  ///
   s = {.items = tempItems};
 
   ge.meta.logicRand._state = save->random_state();
+  auto fb_achievements     = save->achievements();
+  if (fb_achievements) {
+    int i = 0;
+    for (const auto& x : *fb_achievements)
+      g.player.achievements[i++] = {.value = x->value()};
+  }
+  s.difficulty             = (DifficultyType)save->difficulty();
+  s.build                  = (BuildType)save->build();
   PLAYER_CREATURE.health   = save->health();
   s.won                    = save->won();
   s.screen                 = (ScreenType)save->screen();
@@ -1224,6 +1243,15 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
 
   {
     const auto& s = g.run.state;
+
+    for (const auto& x : g.player.achievements) {
+      fb_save.achievements.push_back(
+        std::make_unique<BFSave::AchievementT>(BFSave::AchievementT{.value = x.value})
+      );
+    }
+
+    fb_save.difficulty = (int)s.difficulty;
+    fb_save.build      = (int)s.build;
 
     fb_save.random_state          = ge.meta.logicRand._state;
     fb_save.health                = PLAYER_CREATURE.health;
@@ -2226,6 +2254,9 @@ void RunInit() {
 
     MakeWalls({.lines = lines});
   }
+
+  g.run.state.difficulty = DifficultyType_D0;
+  g.run.state.build      = BuildType_DEFAULT;
 
   OnWaveStarted();
 }
@@ -5661,6 +5692,13 @@ void GameFixedUpdate() {
       if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) || !g.run.waveWon) {
         g.run.scheduledEnd = true;
         g.run.state.won    = g.run.waveWon;
+
+        if (g.run.state.won) {
+          auto maxUnlockedDifficulty
+            = g.player.achievements[AchievementType_DIFFICULTY].value;
+          g.player.achievements[AchievementType_DIFFICULTY].value
+            = MAX(maxUnlockedDifficulty, (i64)g.run.state.difficulty);
+        }
       }
 
       g.run.scheduledWaveCompleted = {};
@@ -7147,6 +7185,8 @@ void GameFixedUpdate() {
             // Counting mob as player killed.
             if (creature.health != -f32_inf) {
               g.run.state.playerKilledEnemies++;
+              g.player.achievements[AchievementType_KILLER].value++;
+
               if (creature.lastDamagedWeaponIndex >= 0)
                 g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
 
