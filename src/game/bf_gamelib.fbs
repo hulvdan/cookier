@@ -242,10 +242,17 @@ table Difficulty {
 table Build {
     name_locale: int;
     starting_weapon_types: [int];
-    unlocked_by_default: bool;
+}
+
+table AchievementStep {
+    value: int;
+    unlocks_build_type: int;
+    unlocks_weapon_type: int;
+    unlocks_item_type: int;
 }
 
 table Achievement {
+    steps: [AchievementStep];
 }
 // GAME STUFF END
 
