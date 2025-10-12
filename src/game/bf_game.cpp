@@ -4520,12 +4520,15 @@ void DoUI(bool draw) {
                 CLAY({}) {
                   componentSlot(
                     {
-                      .canHover = exists,
+                      .canHover = exists && !isLocked,
                       .tier     = (!exists || isLocked ? 0 : (selected ? 3 : 1)),
                     },
                     [&]() BF_FORCE_INLINE_LAMBDA {
+                      if (!exists)
+                        return;
+
                       int texId = glib->ui_item_locked_texture_id();
-                      if (exists) {
+                      if (!isLocked) {
                         auto fb = fb_weapons->Get(weapons->Get(t));
                         texId   = fb->icon_texture_id();
                       }
@@ -4558,11 +4561,7 @@ void DoUI(bool draw) {
       CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(200)}}}) {
         const bool canGo = d.difficulty && d.build && d.weapon;
         const bool go    = componentButton(
-          {
-               .id      = CLAY_ID("button_new_run_go"),
-               .growX   = true,
-               .enabled = canGo,
-          },
+          {.id = CLAY_ID("button_new_run_go"), .growX = true},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_go_locale(), textColor);
           }
