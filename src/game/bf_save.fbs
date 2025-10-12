@@ -47,6 +47,7 @@ table Save {
 
     difficulty: int;
     build: int;
+    weapon: int;
 
     health: int;
 

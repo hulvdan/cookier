@@ -801,6 +801,10 @@ struct GameData {
   } meta;
 
   struct {
+    DifficultyType difficulty = DifficultyType_D0;
+    BuildType      build      = BuildType_DEFAULT;
+    WeaponType     weapon     = WeaponType_SWORD;
+
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
   } player;
@@ -809,9 +813,6 @@ struct GameData {
     struct State {
       bool       won    = false;
       ScreenType screen = ScreenType_GAMEPLAY;
-
-      DifficultyType difficulty = {};
-      BuildType      build      = {};
 
       int waveIndex = 0;
 
@@ -832,12 +833,6 @@ struct GameData {
       Array<int, StatType_COUNT>          statsWithoutItems = {};
 
       // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
-      struct {
-        DifficultyType difficulty = {};
-        BuildType      build      = {};
-        WeaponType     weapon     = {};
-      } newRun;
-
       struct {
         ItemType toPick       = {};
         int      recyclePrice = {};
@@ -1166,8 +1161,10 @@ void Load(void* saveData) {  ///
         = {.maxDifficultyBeaten = (DifficultyType)x->max_difficulty_beaten()};
     }
   }
-  s.difficulty             = (DifficultyType)save->difficulty();
-  s.build                  = (BuildType)save->build();
+
+  g.player.difficulty      = (DifficultyType)save->difficulty();
+  g.player.build           = (BuildType)save->build();
+  g.player.weapon          = (WeaponType)save->weapon();
   PLAYER_CREATURE.health   = save->health();
   s.won                    = save->won();
   s.screen                 = (ScreenType)save->screen();
@@ -1282,8 +1279,9 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
       ));
     }
 
-    fb_save.difficulty = (int)s.difficulty;
-    fb_save.build      = (int)s.build;
+    fb_save.difficulty = (int)g.player.difficulty;
+    fb_save.build      = (int)g.player.build;
+    fb_save.weapon     = (int)g.player.weapon;
 
     fb_save.random_state          = ge.meta.logicRand._state;
     fb_save.health                = PLAYER_CREATURE.health;
@@ -1951,7 +1949,7 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   if (fb->hostility_type() != HostilityType_FRIENDLY) {
     health = Round(
-      (f32)health * glib->difficulties()->Get(g.run.state.difficulty)->mob_hp_scale()
+      (f32)health * glib->difficulties()->Get(g.player.difficulty)->mob_hp_scale()
     );
   }
 
@@ -2260,20 +2258,10 @@ void RunInit() {
 
   g.run.camera.pos = GetCameraTargetPos();
 
-  struct {
-    WeaponType type = {};
-  } weapons_[]{
-    {.type = WeaponType_SWORD},
-    // {.type = WeaponType_SLINGSHOT},
-    // {.type = WeaponType_BOW},
-    // {.type = WeaponType_GUN},
-  };
-  VIEW_FROM_ARRAY_DANGER(weapons);
-
-  FOR_RANGE (int, i, weapons.count) {
-    auto& weapon        = g.run.state.weapons[i];
-    weapon.type         = weapons[i].type;
-    weapon.tier         = GRAND.Rand() % (TOTAL_TIERS - 1);
+  {
+    auto& weapon        = g.run.state.weapons[0];
+    weapon.type         = g.player.weapon;
+    weapon.tier         = 0;
     weapon.recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
   }
 
@@ -2293,9 +2281,6 @@ void RunInit() {
 
     MakeWalls({.lines = lines});
   }
-
-  g.run.state.difficulty = DifficultyType_D0;
-  g.run.state.build      = BuildType_DEFAULT;
 
   OnWaveStarted();
 }
@@ -4298,7 +4283,7 @@ void DoUI(bool draw) {
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       .layoutDirection = CLAY_TOP_TO_BOTTOM,
     }}) {
-      auto& d = g.run.state.newRun;
+      auto& p = g.player;
 
       // "NEW RUN" label.
       FontBegin(&g.meta.fontWaveCompletion);
@@ -4316,7 +4301,7 @@ void DoUI(bool draw) {
 
         CLAY({}) {
           FrameVisual errorAt{};
-          if (!d.difficulty)
+          if (!p.difficulty)
             errorAt = g.ui.newRunErrorAt;
 
           BEAUTIFY_WIGGLING_DANGER_SCOPED(
@@ -4341,7 +4326,7 @@ void DoUI(bool draw) {
               auto fb       = fb_difficulties->Get(i + 1);
               auto fb_item  = fb_items->Get(fb->item_type());
 
-              const bool selected = ((i + 1) == (int)d.difficulty);
+              const bool selected = ((i + 1) == (int)p.difficulty);
 
               CLAY({}) {
                 componentSlot(
@@ -4363,7 +4348,7 @@ void DoUI(bool draw) {
 
                   if (clicked()) {
                     PlaySound(Sound_UI_BUTTON_CLICK);
-                    d.difficulty = (DifficultyType)(i + 1);
+                    p.difficulty = (DifficultyType)(i + 1);
                     Save();
                   }
 
@@ -4396,7 +4381,7 @@ void DoUI(bool draw) {
 
         CLAY({}) {
           FrameVisual errorAt{};
-          if (!d.build)
+          if (!p.build)
             errorAt = g.ui.newRunErrorAt;
 
           BEAUTIFY_WIGGLING_DANGER_SCOPED(
@@ -4422,7 +4407,7 @@ void DoUI(bool draw) {
                   if (t >= fb_builds->size() - 1)
                     break;
 
-                  const bool selected = ((int)d.build == (t + 1));
+                  const bool selected = ((int)p.build == (t + 1));
 
                   CLAY({}) {
                     auto       fb       = fb_builds->Get(t + 1);
@@ -4447,9 +4432,9 @@ void DoUI(bool draw) {
 
                       if (clicked()) {
                         PlaySound(Sound_UI_BUTTON_CLICK);
-                        if (d.build != (BuildType)(t + 1)) {
-                          d.build  = (BuildType)(t + 1);
-                          d.weapon = {};
+                        if (p.build != (BuildType)(t + 1)) {
+                          p.build  = (BuildType)(t + 1);
+                          p.weapon = {};
                         }
                         Save();
                       }
@@ -4482,7 +4467,7 @@ void DoUI(bool draw) {
 
         CLAY({}) {
           FrameVisual errorAt{};
-          if (!d.weapon)
+          if (!p.weapon)
             errorAt = g.ui.newRunErrorAt;
 
           BEAUTIFY_WIGGLING_DANGER_SCOPED(
@@ -4504,7 +4489,7 @@ void DoUI(bool draw) {
             const int weaponsX = 6;
             const int weaponsY = CeilDivision(MAX_BUILD_WEAPONS, weaponsX);
 
-            auto weapons = fb_builds->Get(d.build)->starting_weapon_types();
+            auto weapons = fb_builds->Get(p.build)->starting_weapon_types();
 
             FOR_RANGE (int, y, weaponsY) {
               CLAY({.layout{.childGap = GAP_SMALL}})
@@ -4517,7 +4502,7 @@ void DoUI(bool draw) {
 
                 bool selected = false;
                 if (exists)
-                  selected = (d.weapon == weapons->Get(t));
+                  selected = (p.weapon == weapons->Get(t));
 
                 CLAY({}) {
                   componentSlot(
@@ -4549,7 +4534,7 @@ void DoUI(bool draw) {
 
                     if (clicked()) {
                       PlaySound(Sound_UI_BUTTON_CLICK);
-                      d.weapon = (WeaponType)weapons->Get(t);
+                      p.weapon = (WeaponType)weapons->Get(t);
                       Save();
                     }
                   }
@@ -4562,7 +4547,7 @@ void DoUI(bool draw) {
 
       // Go.
       CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(200)}}}) {
-        const bool canGo = d.difficulty && d.build && d.weapon;
+        const bool canGo = p.difficulty && p.build && p.weapon;
         const bool go    = componentButton(
           {.id = CLAY_ID("button_new_run_go"), .growX = true},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
@@ -4573,15 +4558,7 @@ void DoUI(bool draw) {
         if (go) {
           if (canGo) {
             PlaySound(Sound_UI_BUTTON_CLICK);
-
-            g.run.state.difficulty      = d.difficulty;
-            g.run.state.build           = d.build;
-            g.run.state.weapons         = {};
-            g.run.state.weapons[0].type = d.weapon;
-
-            d = {};
-
-            g.run.scheduledNextWave = true;
+            g.run.reload = true;
           }
           else {
             PlaySound(Sound_UI_BUTTON_ERROR);
@@ -6114,12 +6091,12 @@ void GameFixedUpdate() {
 
         // Updating `Build.maxDifficultyBeaten` + achievement.
         if (g.run.state.won) {
-          auto d = g.run.state.difficulty;
+          auto d = g.player.difficulty;
 
           auto& ach = g.player.achievements[AchievementType_DIFFICULTY];
           ach.value = MAX(ach.value, d);
 
-          auto& build               = g.player.builds[g.run.state.build];
+          auto& build               = g.player.builds[g.player.build];
           build.maxDifficultyBeaten = (DifficultyType)MAX(build.maxDifficultyBeaten, d);
         }
       }

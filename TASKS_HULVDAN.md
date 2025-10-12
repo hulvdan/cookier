@@ -23,9 +23,9 @@ x difficulty levels
 x new run: can select difficulty + build + weapon and start a run
 x new run: explain button error through wiggling
 x new run: don't show lock if weapon doesn't exist
+x new run: save/load last run difficulty/build/weapon
+x new run: starting a new run works without bugs
 
-* new run: save/load last run difficulty/build/weapon
-* new run: starting a new run works without bugs
 * new run: showing selected difficulty/build/weapon name
 * new run: showing hover weapon details
 * new run:
