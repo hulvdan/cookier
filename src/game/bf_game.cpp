@@ -1058,10 +1058,10 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
         return;
 
       int sameWeapons = 0;
-      int wi          = -1;
+      int i           = -1;
       for (const auto& weapon : g.run.state.weapons) {
-        wi++;
-        if ((weaponIndexOrMinus1 != wi) && (weapon.type == type))
+        i++;
+        if ((weaponIndexOrMinus1 != i) && (weapon.type == type))
           sameWeapons++;
       }
       if (sameWeapons > 0) {
@@ -3811,21 +3811,19 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (
-    void,
-    componentWeaponDetails,
-    (int weaponIndexOrMinus1, bool weAreInShop, bool detailsBelow)
+    void, componentWeaponDetails, (int weaponIndex, bool weAreInShop, bool detailsBelow)
   )
   {  ///
-    auto& weapon = g.run.state.weapons[weaponIndexOrMinus1];
+    auto& weapon = g.run.state.weapons[weaponIndex];
     ASSERT(weapon.type);
     auto fb = fb_weapons->Get(weapon.type);
 
     // Floating weapon details modal.
     // Gets shown upon hovering. Gets sticked upon clicking on weapon.
-    if ((Clay_Hovered() || (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1))
-        && g.run.state.weapons[weaponIndexOrMinus1].type)
+    if ((Clay_Hovered() || (g.run.shopSelectedWeaponIndex == weaponIndex))
+        && g.run.state.weapons[weaponIndex].type)
     {
-      if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1)) {
+      if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex)) {
         // Pressing ESC closes modal.
         if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
           g.run.shopSelectedWeaponIndex = -1;
@@ -3880,7 +3878,7 @@ void DoUI(bool draw) {
             slotColors[2 * weapon.tier + 1]
           ),
         }) {
-          if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1))
+          if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex))
             componentOverlay();
 
           CLAY({
@@ -3912,7 +3910,7 @@ void DoUI(bool draw) {
             }
 
             componentWeaponStatsExploded(
-              weaponIndexOrMinus1,
+              weaponIndex,
               weapon.type,
               weapon.tier,
               weapon.thisWaveDamage,
@@ -3927,7 +3925,7 @@ void DoUI(bool draw) {
             }}) {
               int canCombineWithIndex = -1;
               for (int i = g.run.state.weapons.count - 1; i >= 0; i--) {
-                if (i == weaponIndexOrMinus1)
+                if (i == weaponIndex)
                   continue;
                 auto& otherWeapon = g.run.state.weapons[i];
                 if ((weapon.type == otherWeapon.type)     //
@@ -3987,7 +3985,7 @@ void DoUI(bool draw) {
               }
               if (recycled) {
                 AddCoins(weapon.recyclePrice);
-                StableRemoveWeapon(weaponIndexOrMinus1);
+                StableRemoveWeapon(weaponIndex);
                 Save();
               }
               if (cancelled || recycled || combined) {
@@ -4330,7 +4328,7 @@ void DoUI(bool draw) {
 
               CLAY({}) {
                 componentSlot(
-                  {.canHover = !isLocked, .tier = (isLocked ? 0 : (selected ? 3 : 1))},
+                  {.canHover = !isLocked, .tier = (isLocked ? 0 : (selected ? 6 : i))},
                   [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({.layout{
                       BF_CLAY_SIZING_GROW_XY,
@@ -4413,7 +4411,10 @@ void DoUI(bool draw) {
                     auto       fb       = fb_builds->Get(t + 1);
                     const bool isLocked = !fb->unlocked_by_default();
                     componentSlot(
-                      {.canHover = !isLocked, .tier = (isLocked ? 0 : (selected ? 3 : 1))
+                      {
+                        .canHover = !isLocked,
+                        .tier
+                        = (isLocked ? 0 : (selected ? 6 : MAX(0, (int)g.player.builds[t].maxDifficultyBeaten - 1))),
                       },
                       [&]() BF_FORCE_INLINE_LAMBDA {
                         if (isLocked) {
@@ -4508,7 +4509,7 @@ void DoUI(bool draw) {
                   componentSlot(
                     {
                       .canHover = exists && !isLocked,
-                      .tier     = (!exists || isLocked ? 0 : (selected ? 3 : 1)),
+                      .tier     = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
                     },
                     [&]() BF_FORCE_INLINE_LAMBDA {
                       if (!exists)
@@ -4528,6 +4529,9 @@ void DoUI(bool draw) {
                       }
                     }
                   );
+
+                  // // Hovering modal.
+                  // componentWeaponDetails(weaponIndex, false, false);
 
                   if (exists && !isLocked) {
                     ButtonSFX(draw, CLAY_IDI("button_new_run_weapon", t), Clay_Hovered());
