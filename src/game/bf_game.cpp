@@ -4364,6 +4364,7 @@ void DoUI(bool draw) {
                   if (clicked()) {
                     PlaySound(Sound_UI_BUTTON_CLICK);
                     d.difficulty = (DifficultyType)(i + 1);
+                    Save();
                   }
 
                   if (Clay_Hovered()) {
@@ -4450,6 +4451,7 @@ void DoUI(bool draw) {
                           d.build  = (BuildType)(t + 1);
                           d.weapon = {};
                         }
+                        Save();
                       }
 
                       if (Clay_Hovered()) {
@@ -4548,6 +4550,7 @@ void DoUI(bool draw) {
                     if (clicked()) {
                       PlaySound(Sound_UI_BUTTON_CLICK);
                       d.weapon = (WeaponType)weapons->Get(t);
+                      Save();
                     }
                   }
                 }
@@ -6148,6 +6151,7 @@ void GameFixedUpdate() {
   if (g.run.scheduledNewRun) {  ///
     g.run.scheduledNewRun = false;
     g.run.state.screen    = ScreenType_NEW_RUN;
+    Save();
   }
 
   // Advancing to ScreenType_PICKED_UP_ITEM.
