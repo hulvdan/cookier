@@ -26,6 +26,7 @@ x new run: don't show lock if weapon doesn't exist
 x new run: save/load last run difficulty/build/weapon
 x new run: starting a new run works without bugs
 
+* achievements: show recently got achievements on screen and what they unlock
 * achievements:
 * achievements:
 * achievements:
@@ -34,7 +35,6 @@ x new run: starting a new run works without bugs
 * achievements: achievements screen
 * achievements: remove build lock in gamelib.fbs
 * achievements: lock 3rd build using achievement
-* achievements: show recently got achievements on screen
 * new run: showing selected difficulty/build/weapon name
 * new run: showing hover weapon details
 * new run: initial weapon recycle price

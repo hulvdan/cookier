@@ -953,36 +953,6 @@ struct GameData {
   } ui;
 } g = {};
 
-void AchievementAdd(AchievementType type, int value) {  ///
-  ASSERT(value >= 0);
-  int oldValue = g.player.achievements[type].value;
-  g.player.achievements[type].value += value;
-
-  auto fb_steps = glib->achievements()->Get(type)->steps();
-  if (fb_steps) {
-    int stepIndex = -1;
-    for (auto fb_step : *fb_steps) {
-      stepIndex++;
-      bool justUnlocked
-        = (oldValue < fb_step->value())
-          && (fb_step->value() <= g.player.achievements[type].value + value);
-      if (!justUnlocked)
-        continue;
-      *g.ui.justUnlockedAchievements.Add() = {
-        .type = type,
-        .step = stepIndex,
-      };
-    }
-  }
-
-  Save();
-}
-
-void AchievementMax(AchievementType type, int value) {  ///
-
-  Save();
-}
-
 void OnUIStart() {  ///
   ge.settings.screenFade = glib->ui_modal_fade();
 }
@@ -1180,6 +1150,48 @@ void OnWaveStarted() {  ///
   RecalculatePlayerWeaponOffsets();
 }
 
+void AchievementStepUnlock(const BFGame::AchievementStep* fb_step) {  ///
+  if (fb_step->unlocks_build_type())
+    g.player.unlockedBuilds[fb_step->unlocks_build_type()] = true;
+  if (fb_step->unlocks_item_type())
+    g.player.unlockedItems[fb_step->unlocks_item_type()] = true;
+  if (fb_step->unlocks_weapon_type())
+    g.player.unlockedWeapons[fb_step->unlocks_weapon_type()] = true;
+}
+
+void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue) {  ///
+  auto fb_steps = glib->achievements()->Get(type)->steps();
+  if (!fb_steps)
+    return;
+
+  int stepIndex = -1;
+  for (auto fb_step : *fb_steps) {
+    stepIndex++;
+    if ((oldValue < fb_step->value()) && (fb_step->value() <= newValue)) {
+      AchievementStepUnlock(fb_step);
+      *g.ui.justUnlockedAchievements.Add() = {.type = type, .step = stepIndex};
+    }
+  }
+}
+
+void AchievementAdd(AchievementType type, int value) {  ///
+  ASSERT(value >= 0);
+  int oldValue = g.player.achievements[type].value;
+  g.player.achievements[type].value += value;
+  OnAchievementValueChanged(type, oldValue, value);
+  Save();
+}
+
+void AchievementMax(AchievementType type, int value) {  ///
+  ASSERT(value >= 0);
+  int oldValue = g.player.achievements[type].value;
+  if (value <= oldValue)
+    return;
+  g.player.achievements[type].value = value;
+  OnAchievementValueChanged(type, oldValue, value);
+  Save();
+}
+
 void Load(void* saveData) {  ///
   const auto save = BFSave::GetSave(saveData);
 
@@ -1317,14 +1329,8 @@ void Load(void* saveData) {  ///
       if (!fb_steps)
         continue;
       for (auto fb_step : *fb_steps) {
-        if (fb_step->value() <= x.value) {
-          if (fb_step->unlocks_build_type())
-            g.player.unlockedBuilds[fb_step->unlocks_build_type()] = true;
-          if (fb_step->unlocks_item_type())
-            g.player.unlockedItems[fb_step->unlocks_item_type()] = true;
-          if (fb_step->unlocks_weapon_type())
-            g.player.unlockedWeapons[fb_step->unlocks_weapon_type()] = true;
-        }
+        if (fb_step->value() <= x.value)
+          AchievementStepUnlock(fb_step);
       }
     }
   }
@@ -7825,6 +7831,15 @@ void GameFixedUpdate() {
         off++;
       }
     }
+  }
+
+  // Removing old unlocked achievements.
+  if (g.ui.justUnlockedAchievements.count) {  ///
+    auto& x = g.ui.justUnlockedAchievements[0];
+    if (!x.shownAt.IsSet())
+      x.shownAt.SetNow();
+    else if (x.shownAt.Elapsed() >= ACHIEVEMENT_SHOW_FRAMES)
+      g.ui.justUnlockedAchievements.UnstableRemoveAt(0);
   }
 
   ge.meta.frameVisual++;
