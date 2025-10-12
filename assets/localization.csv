@@ -127,3 +127,6 @@ UPGRADE_NAME_DODGE;Спина;Back;
 UPGRADE_NAME_SPEED;Ноги;Legs;
 UPGRADE_NAME_LUCK;Нос;Nose;
 UPGRADE_NAME_HARVESTING;Руки;Hands;
+BUILD_DEFAULT;Молочник;Milker;
+BUILD_NINJA;Ниндзя;Ninja;
+BUILD_WIZARD;Чародей;Wizard;

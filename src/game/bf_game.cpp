@@ -1853,6 +1853,7 @@ void HandleClayErrors(Clay_ErrorData errorData) {  ///
   switch (errorData.errorType) {
   default:
     INVALID_PATH;
+    break;
   }
 }
 
@@ -4007,13 +4008,14 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (void, componentTooltip, (ComponentTooltipData data, auto&& innerLambda)) {  ///
+    zIndex++;
     CLAY({
       .layout{
         BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
       },
       .floating{
         .offset{data.offset.x, data.offset.y},
-        .zIndex = ++zIndex,
+        .zIndex = zIndex,
         .attachPoints{.element = data.element, .parent = data.parent},
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
@@ -4023,6 +4025,7 @@ void DoUI(bool draw) {
         slotColors[data.tier * 2 + 1]
       ),
     }) {
+      FLOATING_BEAUTIFY;
       innerLambda();
     }
     zIndex--;
@@ -4343,53 +4346,60 @@ void DoUI(bool draw) {
       BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_label_build_locale());
 
       auto buildsX = 6;
-      auto buildsY = CeilDivision((int)fb_builds->size(), buildsX);
+      auto buildsY = CeilDivision((int)fb_builds->size() - 1, buildsX);
 
-      FOR_RANGE (int, y, buildsY) {
-        CLAY({.layout{
-          .childGap        = GAP_SMALL,
+      CLAY({
+        .layout{
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }}) {
-          FOR_RANGE (int, x, buildsX) {
-            CLAY({.layout{.childGap = GAP_SMALL}}) {
-              const auto t = y * buildsX + x;
-              if (t >= fb_builds->size())
+        },
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+        ),
+      }) {
+        FOR_RANGE (int, y, buildsY) {
+          CLAY({.layout{.childGap = GAP_SMALL}}) {
+            FOR_RANGE (int, x, buildsX) {
+              const int t = y * buildsX + x;
+              if (t >= fb_builds->size() - 1)
                 break;
 
-              auto fb       = fb_builds->Get(t);
-              auto isLocked = !fb->unlocked_by_default();
-              componentSlot(
-                {.canHover = !isLocked, .tier = (isLocked ? 0 : 1)},
-                [&]() BF_FORCE_INLINE_LAMBDA {
-                  if (isLocked) {
-                    CLAY({.layout{
-                      BF_CLAY_SIZING_GROW_XY,
-                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                    }}) {
-                      BF_CLAY_IMAGE({.texId = glib->ui_item_locked_texture_id()});
+              CLAY({}) {
+                auto       fb       = fb_builds->Get(t + 1);
+                const bool isLocked = !fb->unlocked_by_default();
+                componentSlot(
+                  {.canHover = !isLocked, .tier = (isLocked ? 0 : 1)},
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    if (isLocked) {
+                      CLAY({.layout{
+                        BF_CLAY_SIZING_GROW_XY,
+                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                      }}) {
+                        BF_CLAY_IMAGE({.texId = glib->ui_item_locked_texture_id()});
+                      }
                     }
                   }
-                }
-              );
+                );
 
-              if (!isLocked) {
-                if (clicked()) {
-                  PlaySound(Sound_UI_BUTTON_CLICK);
-                  g.run.state.build = (BuildType)(t + 1);
-                }
+                if (!isLocked) {
+                  if (clicked()) {
+                    PlaySound(Sound_UI_BUTTON_CLICK);
+                    g.run.state.build = (BuildType)(t + 1);
+                  }
 
-                if (Clay_Hovered()) {
-                  componentTooltip(
-                    {
-                      .offset{0, -GAP_SMALL},
-                      .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
-                      .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
-                      .tier    = 0,
-                    },
-                    [&]() BF_FORCE_INLINE_LAMBDA {
-                      BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
-                    }
-                  );
+                  if (Clay_Hovered()) {
+                    componentTooltip(
+                      {
+                        .offset{0, -GAP_SMALL},
+                        .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                        .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
+                        .tier    = 0,
+                      },
+                      [&]() BF_FORCE_INLINE_LAMBDA {
+                        BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+                      }
+                    );
+                  }
                 }
               }
             }

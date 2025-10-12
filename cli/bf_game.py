@@ -144,6 +144,13 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         genline("};")
         genline("VIEW_FROM_ARRAY_DANGER(clayPlaceholderFunctions);\n")
 
+    # Builds.
+    # ============================================================
+    if 1:
+        for i, x in enumerate(gamelib["builds"]):
+            if i > 0:
+                x["name_locale"] = "BUILD_{}".format(x["type"])
+
     # Tables.
     # ============================================================
     if 1:

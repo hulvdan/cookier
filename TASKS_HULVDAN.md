@@ -21,8 +21,8 @@ x reopening game during the wave resets coins and xp
 x save/load difficulty, build, achievements
 x difficulty levels
 
-* new run: build icons
 * new run: can select difficulty + build + weapon and start a run
+* new run: build icons
 * new run:
 * new run:
 * new run:
