@@ -769,6 +769,12 @@ struct Build {
   DifficultyType maxDifficultyBeaten = {};
 };
 
+struct JustUnlockedAchievement {
+  AchievementType type      = {};
+  int             stepIndex = {};
+  FrameVisual     shownAt   = {};
+};
+
 struct GameData {
   struct Meta {
     Arena trashArena = {};
@@ -807,6 +813,10 @@ struct GameData {
 
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
+
+    Array<bool, BuildType_COUNT>  unlockedBuilds  = {};
+    Array<bool, ItemType_COUNT>   unlockedItems   = {};
+    Array<bool, WeaponType_COUNT> unlockedWeapons = {};
   } player;
 
   struct Run {
@@ -938,8 +948,40 @@ struct GameData {
 
     FrameVisual shopErrorGold    = {};
     FrameVisual shopErrorWeapons = {};
+
+    Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
   } ui;
 } g = {};
+
+void AchievementAdd(AchievementType type, int value) {  ///
+  ASSERT(value >= 0);
+  int oldValue = g.player.achievements[type].value;
+  g.player.achievements[type].value += value;
+
+  auto fb_steps = glib->achievements()->Get(type)->steps();
+  if (fb_steps) {
+    int stepIndex = -1;
+    for (auto fb_step : *fb_steps) {
+      stepIndex++;
+      bool justUnlocked
+        = (oldValue < fb_step->value())
+          && (fb_step->value() <= g.player.achievements[type].value + value);
+      if (!justUnlocked)
+        continue;
+      *g.ui.justUnlockedAchievements.Add() = {
+        .type = type,
+        .step = stepIndex,
+      };
+    }
+  }
+
+  Save();
+}
+
+void AchievementMax(AchievementType type, int value) {  ///
+
+  Save();
+}
 
 void OnUIStart() {  ///
   ge.settings.screenFade = glib->ui_modal_fade();
@@ -1260,6 +1302,32 @@ void Load(void* saveData) {  ///
     g.run.scheduledEnd = true;
 
   RecalculatePlayerWeaponOffsets();
+
+  g.player.unlockedBuilds  = {};
+  g.player.unlockedWeapons = {};
+  g.player.unlockedItems   = {};
+
+  // Recalculating unlocked builds, items and weapons based off achievements.
+  {
+    int i = -1;
+    for (const auto& x : g.player.achievements) {  ///
+      i++;
+      auto fb       = glib->achievements()->Get(i);
+      auto fb_steps = fb->steps();
+      if (!fb_steps)
+        continue;
+      for (auto fb_step : *fb_steps) {
+        if (fb_step->value() <= x.value) {
+          if (fb_step->unlocks_build_type())
+            g.player.unlockedBuilds[fb_step->unlocks_build_type()] = true;
+          if (fb_step->unlocks_item_type())
+            g.player.unlockedItems[fb_step->unlocks_item_type()] = true;
+          if (fb_step->unlocks_weapon_type())
+            g.player.unlockedWeapons[fb_step->unlocks_weapon_type()] = true;
+        }
+      }
+    }
+  }
 }
 
 flatbuffers::FlatBufferBuilder DumpState() {  ///
@@ -6097,8 +6165,7 @@ void GameFixedUpdate() {
         if (g.run.state.won) {
           auto d = g.player.difficulty;
 
-          auto& ach = g.player.achievements[AchievementType_DIFFICULTY];
-          ach.value = MAX(ach.value, d);
+          AchievementMax(AchievementType_DIFFICULTY, d);
 
           auto& build               = g.player.builds[g.player.build];
           build.maxDifficultyBeaten = (DifficultyType)MAX(build.maxDifficultyBeaten, d);
@@ -7596,7 +7663,7 @@ void GameFixedUpdate() {
             // Counting mob as player killed.
             if (creature.health != -f32_inf) {
               g.run.state.playerKilledEnemies++;
-              g.player.achievements[AchievementType_KILLER].value++;
+              AchievementAdd(AchievementType_KILLER, 1);
 
               if (creature.lastDamagedWeaponIndex >= 0)
                 g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;

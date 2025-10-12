@@ -1048,12 +1048,10 @@ builds:
       - SWORD
       - BOW
       - GUN
-    unlocked_by_default: true
   - type: NINJA
     starting_weapon_types:
       - SLINGSHOT
       - SMG
-    unlocked_by_default: true
   - type: WIZARD
     starting_weapon_types:
       - WAND
@@ -1061,8 +1059,16 @@ builds:
 achievements:
   - type: INVALID
   - type: KILLER
+    steps:
+      - value: 5
+        unlocks_build: NINJA
+      - value: 10
+        unlocks_item: BLACK_FLAG
   - type: WALKER
   - type: IDLER
+    steps:
+      - value: 20
+        unlocks_item: TURREL
   - type: DIFFICULTY
 landmine_damage_scalings:
   - stat_type: ENGINEERING
