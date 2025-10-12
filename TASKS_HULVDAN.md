@@ -24,6 +24,7 @@ x save/load difficulty, build, achievements
   check brotato
   check hades
   check bl2 (2x HP, 3x HP)
+* yandex save
 * ref extract reroll button
 * classes
 * achievements

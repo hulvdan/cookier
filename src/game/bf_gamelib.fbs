@@ -148,6 +148,7 @@ table Item {
     tier: int;
     price: int;
     count_cap: int;
+    included_in_random_pool: bool = true;
     effects: [Effect];
 }
 
@@ -235,9 +236,12 @@ table PreSpawn {
 
 table Difficulty {
     mob_hp_scale: float;
+    item_type: int;
 }
 
 table Build {
+    name_locale: int;
+    starting_weapon_types: [int] (required);
 }
 
 table Achievement {
@@ -284,6 +288,7 @@ table GameLibrary {
     ui_button_next_wave_locale: int;
     ui_button_resume_locale: int;
     ui_button_restart_locale: int;
+    ui_button_new_run_locale: int;
     ui_button_exit_locale: int;
     ui_won_locale: int;
     ui_lost_locale: int;

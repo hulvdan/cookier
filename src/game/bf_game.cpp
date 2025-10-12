@@ -666,6 +666,7 @@ lframe GetWaveDuration(int waveIndex) {  ///
 }
 
 enum ScreenType {
+  ScreenType_NEW_RUN,
   ScreenType_GAMEPLAY,
   ScreenType_WAVE_END_ANIMATION,
   ScreenType_PICKED_UP_ITEM,
@@ -824,6 +825,10 @@ struct GameData {
 
       // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
       struct {
+        DifficultyType difficulty = {};
+      } newRun;
+
+      struct {
         ItemType toPick       = {};
         int      recyclePrice = {};
       } pickedUpItem;
@@ -849,6 +854,7 @@ struct GameData {
     bool        waveWon                     = false;
     bool        recalculatePlayerStats      = false;
     bool        scheduledUI                 = false;
+    bool        scheduledNewRun             = false;
     bool        scheduledPickedUpItems      = false;
     bool        scheduledPickedUpItemsReset = false;
     bool        scheduledUpgrades           = false;
@@ -1222,6 +1228,8 @@ void Load(void* saveData) {  ///
 
   if (s.screen != ScreenType_GAMEPLAY)
     OnUIStart();
+  else
+    g.meta.paused = true;
 
   if (s.screen == ScreenType_GAMEPLAY)
     OnWaveStarted();
@@ -2090,6 +2098,8 @@ ItemType GenerateRandomItem() {  ///
     }
 
     auto fb = fb_items->Get(type);
+    if (!fb->included_in_random_pool())
+      continue;
     if (fb->count_cap() <= 0)
       break;
     if (fb->count_cap() > currentItemCount)
@@ -4208,8 +4218,49 @@ void DoUI(bool draw) {
     }
   }
 
+  // New run.
+  if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
+    CLAY({.layout{
+      BF_CLAY_SIZING_GROW_XY,
+      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+    }}) {
+      auto& d = g.run.state.newRun;
+
+      CLAY({.layout{
+        .childGap = GAP_SMALL,
+      }}) {
+        FOR_RANGE (int, i, (int)DifficultyType_COUNT - 1) {
+          CLAY({}) {
+            auto difficultyToSet = (DifficultyType)(i + 1);
+            componentSlot({.canHover = true}, [&]() BF_FORCE_INLINE_LAMBDA {
+              //
+            });
+
+            ButtonSFX(draw, CLAY_IDI("button_difficulty", i), Clay_Hovered());
+
+            if (Clay_Hovered()) {
+              componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
+              if (ge.meta.debugEnabled) {
+                if (clicked())
+                  item.count++;
+                if (wheel && Clay_Hovered()) {
+                  item.count += wheel;
+                  item.count = MAX(1, item.count);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // if (!d.difficulty) {
+      // }
+      // else {
+      // }
+    }
+  }
   // Picked up item.
-  if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
+  else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
     CLAY({.layout{
       BF_CLAY_SIZING_GROW_XY,
       BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -5018,13 +5069,26 @@ void DoUI(bool draw) {
         BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
-        g.run.reload = componentButton(
+        const bool restarted = componentButton(
           {.id = CLAY_ID("button_end_restart")},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_restart_locale(), textColor);
           }
         );
-        if (g.run.reload)
+
+        const bool newRun = componentButton(
+          {.id = CLAY_ID("button_end_new_run")},
+          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_button_new_run_locale(), textColor);
+          }
+        );
+
+        if (restarted)
+          g.run.reload = true;
+        if (newRun)
+          g.scheduledNewRun = true;
+
+        if (restarted || newRun)
           PlaySound(Sound_UI_BUTTON_CLICK);
       }
     }
@@ -5696,11 +5760,12 @@ void GameFixedUpdate() {
         g.run.scheduledEnd = true;
         g.run.state.won    = g.run.waveWon;
 
+        // Unlocking a new difficulty.
         if (g.run.state.won) {
           auto maxUnlockedDifficulty
             = g.player.achievements[AchievementType_DIFFICULTY].value;
           auto newDiff = MAX(maxUnlockedDifficulty, (i64)g.run.state.difficulty);
-          newDiff      = MIN(newDiff, (i64)DifficultyType_COUNT - 1);
+          newDiff      = MIN(newDiff, (i64)DifficultyType_COUNT);
           g.player.achievements[AchievementType_DIFFICULTY].value = newDiff;
         }
       }
@@ -5726,6 +5791,11 @@ void GameFixedUpdate() {
       g.run.scheduledUpgrades      = true;
       g.run.scheduledUpgradesReset = true;
     }
+  }
+
+  // Advancing to new run.
+  if (g.run.scheduledNewRun) {  ///
+    g.run.screen = ScreenType_NEW_RUN;
   }
 
   // Advancing to ScreenType_PICKED_UP_ITEM.
