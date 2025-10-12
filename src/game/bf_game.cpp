@@ -5951,8 +5951,14 @@ void GameFixedUpdate() {
 
   // Save.
   if (g.meta.scheduledSave && !g.meta.previousSaveIsNotCompletedYet) {  ///
+#ifdef BF_PLATFORM_WebYandex
+    const int SAVE_FRAMES_PERIOD = 3 * FIXED_FPS;
+#else
+    const int SAVE_FRAMES_PERIOD = FIXED_FPS / 2;
+#endif
+
     if (!g.meta.lastSaveAt.IsSet()
-        || (g.meta.lastSaveAt.Elapsed().value >= FIXED_FPS / 2))
+        || (g.meta.lastSaveAt.Elapsed().value >= SAVE_FRAMES_PERIOD))
     {
       g.meta.scheduledSave = false;
       g.meta.lastSaveAt    = {};
