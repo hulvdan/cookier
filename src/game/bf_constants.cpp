@@ -247,6 +247,14 @@ constexpr f32  DAMAGED_FLASH_PRECALC_X
     / (DAMAGED_FLASHING_TIMES * DAMAGED_FLASH_NOT_FLASH_RATIO //
        + (DAMAGED_FLASHING_TIMES - 1) * (1 - DAMAGED_FLASH_NOT_FLASH_RATIO));
 
-constexpr auto ACHIEVEMENT_SHOW_FRAMES = lframe::FromSeconds(3.0f);
+constexpr auto ANIMATION_0_FRAMES = lframe::FromSeconds(0.2f);
+constexpr auto ANIMATION_1_FRAMES = lframe::FromSeconds(0.5f);
+constexpr auto ANIMATION_2_FRAMES = lframe::FromSeconds(1.2f);
+constexpr auto ANIMATION_3_FRAMES = lframe::FromSeconds(3.2f);
+constexpr auto ANIMATION_4_FRAMES = lframe::FromSeconds(5.0f);
+
+constexpr auto ACHIEVEMENT_TOTAL_FRAMES = ANIMATION_3_FRAMES;
+constexpr auto ACHIEVEMENT_IN_FRAMES    = ANIMATION_1_FRAMES;
+constexpr auto ACHIEVEMENT_OUT_FRAMES   = ANIMATION_2_FRAMES;
 
 ///
