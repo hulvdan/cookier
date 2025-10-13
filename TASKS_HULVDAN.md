@@ -32,9 +32,9 @@ x achievements: calculating WALKER / IDLER
 x achievements: descriptions
 x achievements screen: drew cells
 x locale gen caps (New Run / NEW RUN)
+x achievements screen: ACHIEVEMENTS label
 
-* achievements screen: ACHIEVEMENTS label
-* achievements screen: escape return back to paused menu
+* achievements screen: pressing ESCAPE (or P) returns us back to paused menu
 * achievements screen: showing reward description in right column
 * achievements screen:
 * achievements screen:
@@ -42,6 +42,8 @@ x locale gen caps (New Run / NEW RUN)
 * achievements:
 * achievements:
 * completing difficulty can unlock stuff
+* save load: more tests!
+* new run: dim overlay on pressing `new run` in pause menu
 * new run: showing selected difficulty/build/weapon name
 * new run: showing hover weapon details
 * new run: initial weapon recycle price
