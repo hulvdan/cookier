@@ -28,13 +28,20 @@ x new run: starting a new run works without bugs
 x achievements: show recently got achievements on screen and what they unlock
 x achievements: remove build lock in gamelib.fbs
 x achievements: locked items/weapons/classes can't be acquired before unlocking
+x achievements: calculating WALKER / IDLER
+x achievements: descriptions
+x achievements screen: drew cells
 
+* locale gen caps (New Run / NEW RUN)
+* achievements screen: ACHIEVEMENTS label
+* achievements screen: escape return back to paused menu
+* achievements screen: showing reward description in right column
+* achievements screen:
+* achievements screen:
+* achievements screen:
+* achievements:
+* achievements:
 * completing difficulty can unlock stuff
-* achievements: achievements screen
-* achievements:
-* achievements:
-* achievements:
-* achievements:
 * new run: showing selected difficulty/build/weapon name
 * new run: showing hover weapon details
 * new run: initial weapon recycle price
