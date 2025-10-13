@@ -2787,7 +2787,10 @@ void RefillShopToPick() {  ///
     }
     else {
       while (!x.weapon) {
-        x.weapon      = (WeaponType)(GRAND.Rand() % fb_weapons->size());
+        auto w = (WeaponType)(GRAND.Rand() % fb_weapons->size());
+        if (g.player.lockedWeapons[w])
+          continue;
+        x.weapon      = w;
         const auto fb = fb_weapons->Get(x.weapon);
         // Legendary weapons can't be bought in shop.
         // TODO: Check if it's possible to buy legendary weapons in Brotato.
@@ -4578,8 +4581,11 @@ void DoUI(bool draw) {
                 bool isLocked = false;
 
                 bool selected = false;
-                if (exists)
-                  selected = (p.weapon == weapons->Get(t));
+                if (exists) {
+                  const auto weaponType = (WeaponType)weapons->Get(t);
+                  selected              = (p.weapon == weaponType);
+                  isLocked              = g.player.lockedWeapons[weaponType];
+                }
 
                 CLAY({}) {
                   componentSlot(
@@ -5559,7 +5565,57 @@ void DoUI(bool draw) {
               BF_CLAY_SIZING_GROW_XY,
               BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
             }}) {
-              BF_CLAY_IMAGE({.texId = texId});
+              f32 fadeLock       = 1;
+              f32 fadeItem       = 0;
+              f32 flashWhiteLock = 0;
+              f32 flashWhiteItem = 0;
+
+              const auto delayBeforeUnlock = ANIMATION_2_FRAMES;
+              const auto unlockDuration    = ANIMATION_0_FRAMES;
+
+              if (e > delayBeforeUnlock + unlockDuration) {
+                // Item is shown clearly.
+                fadeItem = 1;
+                fadeLock = 0;
+              }
+              else if (e > delayBeforeUnlock) {
+                // Animation.
+                f32 p    = Clamp01((e - delayBeforeUnlock).Progress(unlockDuration));
+                fadeItem = p;
+                fadeLock = 1 - p;
+                flashWhiteLock = sinf(PI32 * p);
+                flashWhiteItem = sinf(PI32 * p);
+              }
+
+              LAMBDA (void, componentCenterFloater, (auto innerLambda)) {
+                CLAY({.floating{
+                  .attachPoints{
+                    .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                    .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  },
+                  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                  .attachTo           = CLAY_ATTACH_TO_PARENT,
+                }}) {
+                  FLOATING_BEAUTIFY;
+                  innerLambda();
+                }
+              };
+
+              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({
+                  .texId = glib->ui_item_locked_texture_id(),
+                  .color = Fade(WHITE, Clamp01(fadeLock)),
+                  .flash = Fade(WHITE, Clamp01(flashWhiteLock)),
+                });
+              });
+
+              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({
+                  .texId = texId,
+                  .color = Fade(WHITE, Clamp01(fadeItem)),
+                  .flash = Fade(WHITE, Clamp01(flashWhiteItem)),
+                });
+              });
             }
           });
         };
