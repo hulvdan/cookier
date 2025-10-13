@@ -20,6 +20,7 @@ from bf_lib import (
     data_values,
     gamelib_processor,
     genenum,
+    log,
     recursive_replace_transform,
 )
 
@@ -153,6 +154,49 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 x["name_locale"] = "BUILD_{}".format(x["type"])
                 max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
         genline("constexpr int MAX_BUILD_WEAPONS = {};\n".format(max_weapons))
+
+    # Achievements.
+    # ============================================================
+    if 1:
+        unlocked_builds: list[str] = []
+        unlocked_items: list[str] = []
+        unlocked_weapons: list[str] = []
+
+        for i, x in enumerate(gamelib["achievements"]):
+            if i > 0:
+                x["name_locale"] = f"ACHIEVEMENT_{x['type']}"
+
+                mandatory_fields = [
+                    "steps",
+                ]
+                for field in mandatory_fields:
+                    assert field in x, "Achievement {} has to have '{}' specified".format(
+                        x["type"], field
+                    )
+                for stepIndex, step in enumerate(x["steps"]):
+                    assert step["value"] > 0
+
+                    unlock_fields = {
+                        "unlocks_build_type": unlocked_builds,
+                        "unlocks_weapon_type": unlocked_items,
+                        "unlocks_item_type": unlocked_weapons,
+                    }
+                    c = sum(f in step for f in unlock_fields)
+                    if c <= 0:
+                        log.warning(
+                            "Achievement {}, stepIndex {} (value {}), should have {} specified".format(
+                                x["type"],
+                                stepIndex,
+                                step["value"],
+                                " / ".join(f"`{f}`" for f in unlock_fields),
+                            )
+                        )
+
+                    for field, container in unlock_fields.items():
+                        if field in step:
+                            v = step[field]
+                            assert v not in container, "{} {} duplicated".format(field, v)
+                            container.append(v)
 
     # Tables.
     # ============================================================

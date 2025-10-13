@@ -27,6 +27,7 @@ x new run: save/load last run difficulty/build/weapon
 x new run: starting a new run works without bugs
 
 * achievements: show recently got achievements on screen and what they unlock
+* completing difficulty can unlock stuff
 * achievements:
 * achievements:
 * achievements:

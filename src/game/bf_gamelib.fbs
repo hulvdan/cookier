@@ -252,6 +252,7 @@ table AchievementStep {
 }
 
 table Achievement {
+    name_locale: int;
     steps: [AchievementStep];
 }
 // GAME STUFF END

@@ -1058,18 +1058,31 @@ builds:
       - WAND2
 achievements:
   - type: INVALID
+  - type: DIFFICULTY
+    steps:
+      - value: 1
+        unlocks_build_type: WIZARD
+      - value: 2
+      - value: 3
+      - value: 4
+      - value: 5
+      - value: 6
   - type: KILLER
     steps:
       - value: 5
-        unlocks_build: NINJA
+        unlocks_build_type: NINJA
       - value: 10
-        unlocks_item: BLACK_FLAG
+        unlocks_item_type: BLACK_FLAG
   - type: WALKER
+    steps:
+      - value: 100
+      - value: 1000
+      - value: 5000
+      - value: 25000
   - type: IDLER
     steps:
       - value: 20
-        unlocks_item: TURREL
-  - type: DIFFICULTY
+        unlocks_item_type: TURREL
 landmine_damage_scalings:
   - stat_type: ENGINEERING
     percents_per_tier:
