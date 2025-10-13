@@ -405,7 +405,7 @@ def genenum(
     string = f"enum {name}"
     if enum_type:
         string += f" : {enum_type}"
-    string += " {"
+    string += " {  ///"
     genline(string)
 
     def genline_with_comment(line: str, i: int) -> None:

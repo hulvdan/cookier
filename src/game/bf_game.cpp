@@ -5657,8 +5657,8 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           // "Achievements" label.
-          FontBegin(&g.meta.fontUIBig);
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS);
+          FontBegin(&g.meta.fontWaveCompletion);
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS__CAPS);
           FontEnd();
 
           int totalSlots = 0;
@@ -7231,8 +7231,10 @@ void GameFixedUpdate() {
 
         g.run.previousPlayerPos = PLAYER_CREATURE.pos;
 
-        if ((deltaMeters > 0) && !FloatEquals(deltaMeters, 0))
+        if ((deltaMeters > 0) && !FloatEquals(deltaMeters, 0)) {
           g.run.playerWalkedMeters += deltaMeters;
+          g.run.playerIdleFrames = 0;
+        }
         else
           g.run.playerIdleFrames++;
 
@@ -7240,7 +7242,7 @@ void GameFixedUpdate() {
           g.run.playerWalkedMeters -= 1;
           AchievementAdd(AchievementType_WALKER, 1);
         }
-        while (g.run.playerIdleFrames >= FIXED_FPS) {
+        while (g.run.playerIdleFrames >= FIXED_FPS * 3 / 2) {
           g.run.playerIdleFrames -= FIXED_FPS;
           AchievementAdd(AchievementType_IDLER, 1);
         }
@@ -7975,7 +7977,7 @@ void GameFixedUpdate() {
             }
 
             // Counting mob as player killed.
-            if (creature.health != -f32_inf) {
+            if (!creature.killedBecauseOfTheEndOfTheWave) {
               g.run.state.playerKilledEnemies++;
               AchievementAdd(AchievementType_KILLER, 1);
 
@@ -8502,12 +8504,12 @@ void GameDraw() {
       int         bytesCount = 0;
 
       if (number.type == NumberType_DODGE) {
-        const auto fb = localization_strings->Get(Loc_UI_DODGE);
+        const auto fb = localization_strings->Get(Loc_UI_DODGE__CAPS);
         buffer        = fb->c_str();
         bytesCount    = fb->size();
       }
       else if (number.type == NumberType_LEVEL_UP) {
-        const auto fb = localization_strings->Get(Loc_UI_LEVEL_UP_NUMBER);
+        const auto fb = localization_strings->Get(Loc_UI_LEVEL_UP_NUMBER__CAPS);
         buffer        = fb->c_str();
         bytesCount    = fb->size();
       }
@@ -8637,11 +8639,11 @@ void GameDraw() {
     auto p
       = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
-    int locale = Loc_UI_WAVE_WON;
+    int locale = Loc_UI_WAVE_WON__CAPS;
     if (!g.run.waveWon)
-      locale = Loc_UI_WAVE_LOST;
+      locale = Loc_UI_WAVE_LOST__CAPS;
     if (g.run.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
-      locale = Loc_UI_WON;
+      locale = Loc_UI_WON__CAPS;
     auto text = localization_strings->Get(locale);
 
     int totalChars = 0;

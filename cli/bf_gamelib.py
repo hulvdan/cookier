@@ -571,6 +571,7 @@ def convert_gamelib_json_to_binary(
                 sound_path
             )
 
+        genline("// Sound variations. {  ///")
         for sound_type, variations in sound_variations_per_type.items():
             params_index = gamelib_sound_types.index(sound_type)
             if params_index < 0:
@@ -581,6 +582,7 @@ def convert_gamelib_json_to_binary(
             for sound_path in variations:
                 genline('  "{}",'.format(sound_path.relative_to(PROJECT_DIR).as_posix()))
             genline("};")
+        genline("// }")
 
         if not_found_sounds:
             assert False, f"Couldn't find {not_found_sounds} in gamelib"
@@ -592,7 +594,7 @@ def convert_gamelib_json_to_binary(
   f32 volume = {};
   f32 pitchMin = {};
   f32 pitchMax = {};
-} g_sounds[] = {""")
+} g_sounds[] = {  ///""")
 
         if not gamelib_sound_types:
             genline("  {},")
@@ -1233,6 +1235,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         convert_gamelib_json_to_binary(
             texture_name_2_id, genline, atlases_data[0], original_texture_sizes
         )
+        genline("///")
 
 
 ###

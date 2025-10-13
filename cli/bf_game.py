@@ -41,15 +41,19 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # Effect conditions.
     # ============================================================
-    params = "const BFGame::Effect* fb_effect"
-    genline("using ClayEffectConditionFunction = void(*)({});".format(params))
-    for x in gamelib["effect_conditions"][1:]:
-        genline("void ClayEffectCondition_{}({});".format(x["type"], params))
-    genline("constexpr ClayEffectConditionFunction clayEffectConditionFunctions_[]{")
-    for x in gamelib["effect_conditions"][1:]:
-        genline("  ClayEffectCondition_{},".format(x["type"]))
-    genline("};")
-    genline("VIEW_FROM_ARRAY_DANGER(clayEffectConditionFunctions);\n")
+    if 1:
+        genline("// Effect conditions. {  ///")
+        params = "const BFGame::Effect* fb_effect"
+        genline("using ClayEffectConditionFunction = void(*)({});".format(params))
+        for x in gamelib["effect_conditions"][1:]:
+            genline("void ClayEffectCondition_{}({});".format(x["type"], params))
+        genline("constexpr ClayEffectConditionFunction clayEffectConditionFunctions_[]{")
+        for x in gamelib["effect_conditions"][1:]:
+            genline("  ClayEffectCondition_{},".format(x["type"]))
+        genline("};")
+        genline("VIEW_FROM_ARRAY_DANGER(clayEffectConditionFunctions);")
+        genline("// }")
+        genline("")
 
     # Items.
     # ============================================================
@@ -132,6 +136,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Placeholders.
     # ============================================================
     if 1:
+        genline("// Placeholders. {  ///")
         genline("struct Placeholder;")
         params = "const Placeholder* placeholder"
         genline("using ClayPlaceholderFunction = void(*)({});".format(params))
@@ -143,7 +148,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             if i > 0:
                 genline("  ClayPlaceholderFunction_{},".format(x["type"]))
         genline("};")
-        genline("VIEW_FROM_ARRAY_DANGER(clayPlaceholderFunctions);\n")
+        genline("VIEW_FROM_ARRAY_DANGER(clayPlaceholderFunctions);")
+        genline("// }")
+        genline("")
 
     # Builds.
     # ============================================================
@@ -258,7 +265,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         for c in sorted(localization_codepoints):
             codepoints_with_groups.append((c // 10, c))
 
-        genline("int g_codepoints[]{")
+        genline("int g_codepoints[] {  ///")
         for _, group in groupby(codepoints_with_groups, lambda x: x[0]):
             g = list(group)
             genline(
