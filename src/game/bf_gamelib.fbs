@@ -254,6 +254,7 @@ table AchievementStep {
 
 table Achievement {
     name_locale: int;
+    description_locale: int;
     steps: [AchievementStep];
 }
 // GAME STUFF END
@@ -276,40 +277,41 @@ table GameLibrary {
     ui_dodge_locale: int;
     ui_level_up_locale: int;
     ui_level_up_number_locale: int;
-    ui_label_shop_locale: int;
-    ui_label_items_locale: int;
-    ui_label_weapons_locale: int;
-    ui_label_item_found_locale: int;
-    ui_label_cooldown_locale: int;
-    ui_label_range_locale: int;
-    ui_label_knockback_locale: int;
-    ui_label_pierce_locale: int;
-    ui_label_bounce_locale: int;
-    ui_label_crit_locale: int;
-    ui_label_this_wave_damage_locale: int;
-    ui_label_limited_locale: int;
-    ui_label_unique_locale: int;
-    ui_button_combine_locale: int;
-    ui_button_cancel_locale: int;
-    ui_button_take_locale: int;
-    ui_button_recycle_locale: int;
-    ui_button_choose_locale: int;
-    ui_button_reroll_locale: int;
-    ui_button_go_locale: int;
-    ui_button_resume_locale: int;
-    ui_button_restart_locale: int;
-    ui_button_new_run_locale: int;
-    ui_button_exit_locale: int;
+    ui_shop_locale: int;
+    ui_items_locale: int;
+    ui_weapons_locale: int;
+    ui_item_found_locale: int;
+    ui_cooldown_locale: int;
+    ui_range_locale: int;
+    ui_knockback_locale: int;
+    ui_pierce_locale: int;
+    ui_bounce_locale: int;
+    ui_crit_locale: int;
+    ui_this_wave_damage_locale: int;
+    ui_limited_locale: int;
+    ui_unique_locale: int;
+    ui_combine_locale: int;
+    ui_cancel_locale: int;
+    ui_take_locale: int;
+    ui_recycle_locale: int;
+    ui_choose_locale: int;
+    ui_reroll_locale: int;
+    ui_go_locale: int;
+    ui_resume_locale: int;
+    ui_restart_locale: int;
+    ui_new_run_locale: int;
+    ui_achievements_locale: int;
+    ui_exit_locale: int;
+    ui_back_locale: int;
     ui_won_locale: int;
     ui_lost_locale: int;
-    ui_label_wave_won_locale: int;
-    ui_label_wave_lost_locale: int;
-    ui_label_stats_primary_locale: int;
-    ui_label_stats_secondary_locale: int;
-    ui_label_difficulty_locale: int;
-    ui_label_build_locale: int;
-    ui_label_starting_weapon_locale: int;
-    ui_label_new_run_locale: int;
+    ui_wave_won_locale: int;
+    ui_wave_lost_locale: int;
+    ui_stats_primary_locale: int;
+    ui_stats_secondary_locale: int;
+    ui_difficulty_locale: int;
+    ui_build_locale: int;
+    ui_starting_weapon_locale: int;
     effect_at_the_end_of_the_wave_locale: int;
     effect_at_the_start_of_the_wave_locale: int;
     effect_kill_n_enemies_locale: int;
@@ -327,12 +329,13 @@ table GameLibrary {
     ui_coin_x2_texture_id: int;
     ui_item_slot_texture_id: int;
     ui_item_slot_colors: [uint] (required);
-    ui_button_colors: [uint] (required);
+    ui_colors: [uint] (required);
     ui_item_big_frame_color: uint;
     ui_shop_current_level_icon_texture_id: uint;
     ui_frame_nine_slice: NineSlice;
-    ui_button_nine_slice: NineSlice;
+    ui_nine_slice: NineSlice;
     ui_item_locked_texture_id: int;
+    ui_item_question_texture_id: int;
 
     shadow_texture_ids: [int];
 

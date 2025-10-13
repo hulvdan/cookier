@@ -22,11 +22,11 @@ render_z:
   - UI
   - GIZMOS
 sounds:
-  - type: UI_BUTTON_CLICK
+  - type: UI_CLICK
     pool: 4
-  - type: UI_BUTTON_ERROR
+  - type: UI_ERROR
     pool: 4
-  - type: UI_BUTTON_HOVER_SMALL
+  - type: UI_HOVER_SMALL
     pool: 8
     # - type: GAME_ITEM_PICKUP
     #   pool: 4
@@ -137,6 +137,7 @@ ui_button_nine_slice:
   top: 32
   bottom: 48
 ui_item_locked_texture_id: ui_item_locked
+ui_item_question_texture_id: ui_item_question
 shadow_texture_ids:
   - game_shadow_1
   - game_shadow_2
@@ -1085,8 +1086,10 @@ achievements:
       - value: 25000
   - type: IDLER
     steps:
-      - value: 20
+      - value: 10
         unlocks_item_type: TURREL
+      - value: 200
+      - value: 1000
 landmine_damage_scalings:
   - stat_type: ENGINEERING
     percents_per_tier:

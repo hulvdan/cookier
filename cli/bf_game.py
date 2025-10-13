@@ -164,7 +164,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
         for i, x in enumerate(gamelib["achievements"]):
             if i > 0:
-                x["name_locale"] = f"ACHIEVEMENT_{x['type']}"
+                x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
+                x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
 
                 mandatory_fields = [
                     "steps",
@@ -182,13 +183,14 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                         "unlocks_item_type": unlocked_weapons,
                     }
                     c = sum(f in step for f in unlock_fields)
-                    if c <= 0:
+                    assert c <= 1
+                    if c != 1:
                         log.warning(
-                            "Achievement {}, stepIndex {} (value {}), should have {} specified".format(
+                            "Achievement {}, stepIndex {} (value {}), should have either {} specified".format(
                                 x["type"],
                                 stepIndex,
                                 step["value"],
-                                " / ".join(f"`{f}`" for f in unlock_fields),
+                                " or ".join(f"`{f}`" for f in unlock_fields),
                             )
                         )
 
