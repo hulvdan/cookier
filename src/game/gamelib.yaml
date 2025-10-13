@@ -1069,10 +1069,14 @@ achievements:
       - value: 6
   - type: KILLER
     steps:
-      - value: 2
-        unlocks_build_type: NINJA
       - value: 10
         unlocks_item_type: BLACK_FLAG
+      - value: 40
+        unlocks_build_type: NINJA
+      - value: 100
+        unlocks_weapon_type: SLINGSHOT
+      - value: 300
+        unlocks_weapon_type: BOW
   - type: WALKER
     steps:
       - value: 100
