@@ -131,3 +131,7 @@ UPGRADE_NAME_HARVESTING;Руки;Hands;
 BUILD_DEFAULT;Молочник;Milker;
 BUILD_NINJA;Ниндзя;Ninja;
 BUILD_WIZARD;Чародей;Wizard;
+ACHIEVEMENT_DIFFICULTY;Сложность;Difficulty;
+ACHIEVEMENT_KILLER;Убийца;Killer;
+ACHIEVEMENT_WALKER;Путешественник;Walker;
+ACHIEVEMENT_IDLER;Стояк (TODO);Idler;
