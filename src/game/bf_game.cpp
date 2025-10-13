@@ -3034,24 +3034,23 @@ void HealPlayer(f32 amount = 1) {  ///
 
 void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
   PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_kill_n_enemies_locale());
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_KILL_N_ENEMIES);
 }
 
 void ClayEffectCondition_END_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_at_the_end_of_the_wave_locale());
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_END_OF_THE_WAVE);
 }
 
 void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect
 ) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_at_the_start_of_the_wave_locale());
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_START_OF_THE_WAVE);
 }
 
 void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
   const BFGame::Effect* fb_effect
 ) {  ///
   PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-    glib->weapon_effect_kill_n_enemies_using_this_weapon_locale()
+  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_KILL_N_ENEMIES_USING_THIS_WEAPON
   );
 }
 
@@ -3059,7 +3058,7 @@ void ClayEffectCondition_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY(
   const BFGame::Effect* fb_effect
 ) {  ///
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-    glib->weapon_effect_more_of_the_same_weapon_more_property_locale()
+    Loc_WEAPON_EFFECT_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
   );
 }
 
@@ -3106,7 +3105,7 @@ void ButtonSFX(bool draw, Clay_ElementId id, bool hovered) {  ///
   ASSERT_FALSE(b.thisFrameUpdated);
 
   if (hovered && !b.hovered)
-    PlaySound(Sound_UI_BUTTON_HOVER_SMALL);
+    PlaySound(Sound_UI_HOVER_SMALL);
 
   b.id               = id;
   b.hovered          = hovered;
@@ -3318,7 +3317,7 @@ void DoUI(bool draw) {
         BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_stats_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STATS);
       }
 
       // Primary / secondary buttons.
@@ -3336,7 +3335,7 @@ void DoUI(bool draw) {
             .paddingHorizontal = GAP_SMALL,
           },
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_stats_primary_locale(), textColor);
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STATS_PRIMARY, textColor);
           }
         );
 
@@ -3347,18 +3346,18 @@ void DoUI(bool draw) {
             .paddingHorizontal = GAP_SMALL,
           },
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_stats_secondary_locale(), textColor);
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STATS_SECONDARY, textColor);
           }
         );
 
         FontEnd();
 
         if (clickedPrimary && g.run.showingSecondaryStats) {
-          PlaySound(Sound_UI_BUTTON_CLICK);
+          PlaySound(Sound_UI_CLICK);
           g.run.showingSecondaryStats = false;
         }
         if (clickedSecondary && !g.run.showingSecondaryStats) {
-          PlaySound(Sound_UI_BUTTON_CLICK);
+          PlaySound(Sound_UI_CLICK);
           g.run.showingSecondaryStats = true;
         }
       }
@@ -3424,7 +3423,7 @@ void DoUI(bool draw) {
       if (!g.run.showingSecondaryStats) {
         componentStatsEntry(
           glib->ui_shop_current_level_icon_texture_id(),
-          glib->ui_current_level_locale(),
+          Loc_UI_CURRENT_LEVEL,
           g.run.state.level,
           StatType_INVALID
         );
@@ -3500,14 +3499,14 @@ void DoUI(bool draw) {
         CLAY({}) {
           FontBegin(&g.meta.fontStats);
           if (fb_item->count_cap() > 1) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_limited_locale(), secondaryTextColor);
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_LIMITED, secondaryTextColor);
             BF_CLAY_TEXT(
               TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()),
               secondaryTextColor
             );
           }
           else {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_unique_locale(), secondaryTextColor);
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_UNIQUE, secondaryTextColor);
           }
           FontEnd();
         }
@@ -3589,7 +3588,7 @@ void DoUI(bool draw) {
         if (cond)
           clayEffectConditionFunctions[cond - 1](fb_effect);
         else
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(glib->effect_default_weapon_stat_locale());
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_DEFAULT_WEAPON_STAT);
 
         FlexEnd();
       }
@@ -3693,7 +3692,7 @@ void DoUI(bool draw) {
           ButtonSFX(draw, CLAY_IDI("componentWeapon", weaponIndex), Clay_Hovered());
 
           if (weAreInShop && clicked()) {
-            PlaySound(Sound_UI_BUTTON_CLICK);
+            PlaySound(Sound_UI_CLICK);
 
             ASSERT(g.run.shopSelectedWeaponIndex == -1);
             g.run.shopSelectedWeaponIndex = weaponIndex;
@@ -3756,7 +3755,7 @@ void DoUI(bool draw) {
     );
 
     // Critical.
-    componentWeaponStatEntry(glib->ui_crit_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+    componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
       BF_CLAY_TEXT(TextFormat(
         "x%.1f (%d%%)",
         fb->crit_damage_multiplier(),
@@ -3765,7 +3764,7 @@ void DoUI(bool draw) {
     });
 
     // Cooldown.
-    componentWeaponStatEntry(glib->ui_cooldown_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+    componentWeaponStatEntry(Loc_UI_COOLDOWN, [&]() BF_FORCE_INLINE_LAMBDA {
       const auto cooldownFrames = ApplyAttackSpeedToDuration(
         fb->shooting_duration_frames() + fb->cooldown_frames()
       );
@@ -3774,7 +3773,7 @@ void DoUI(bool draw) {
     });
 
     // Knockback.
-    componentWeaponStatEntry(glib->ui_knockback_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+    componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
       BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat(
         "%.1f",
         fb->knockback_meters() * (f32)(100 + g.run.playerStats[StatType_KNOCKBACK])
@@ -3783,7 +3782,7 @@ void DoUI(bool draw) {
     });
 
     // Range.
-    componentWeaponStatEntry(glib->ui_range_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+    componentWeaponStatEntry(Loc_UI_RANGE, [&]() BF_FORCE_INLINE_LAMBDA {
       const f32 rangeMeters = GetWeaponRangeMeters(type);
       if (fb->projectile_type()) {
         BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
@@ -3800,7 +3799,7 @@ void DoUI(bool draw) {
     if (fb->projectile_type()
         && (fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING] > 0))
     {
-      componentWeaponStatEntry(glib->ui_pierce_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+      componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_TEXT(
           TextFormat("%d", fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING])
         );
@@ -3811,7 +3810,7 @@ void DoUI(bool draw) {
     if (fb->projectile_type()
         && (fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES] > 0))
     {
-      componentWeaponStatEntry(glib->ui_bounce_locale(), [&]() BF_FORCE_INLINE_LAMBDA {
+      componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_TEXT(
           TextFormat("%d", fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES])
         );
@@ -3852,9 +3851,7 @@ void DoUI(bool draw) {
               "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
             )
           );
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-            glib->weapon_effect_chance_of_explosion_locale()
-          );
+          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_CHANCE_OF_EXPLOSION);
 
           FlexEnd();
         }
@@ -3866,12 +3863,9 @@ void DoUI(bool draw) {
     // This wave damage.
     ASSERT(thisWaveDamage >= 0);
     if (thisWaveDamage > 0) {
-      componentWeaponStatEntry(
-        glib->ui_this_wave_damage_locale(),
-        [&]() BF_FORCE_INLINE_LAMBDA {
-          BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palTextWhite);
-        }
-      );
+      componentWeaponStatEntry(Loc_UI_THIS_WAVE_DAMAGE, [&]() BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palTextWhite);
+      });
     }
 
     FontEnd();
@@ -4010,7 +4004,7 @@ void DoUI(bool draw) {
                 combined = componentButton(
                   {.id = CLAY_ID("button_weapon_combine")},
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_combine_locale(), textColor);
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_COMBINE, textColor);
                   }
                 );
               }
@@ -4019,7 +4013,7 @@ void DoUI(bool draw) {
               const bool recycled = componentButton(
                 {.id = CLAY_ID("button_weapon_recycle")},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_recycle_locale(), textColor);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RECYCLE, textColor);
                   BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice), textColor);
                 }
               );
@@ -4028,7 +4022,7 @@ void DoUI(bool draw) {
               const bool cancelled = componentButton(
                 {.id = CLAY_ID("button_weapon_cancel")},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_cancel_locale(), textColor);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_CANCEL, textColor);
                 }
               );
 
@@ -4271,7 +4265,7 @@ void DoUI(bool draw) {
         FLOATING_BEAUTIFY;
 
         CLAY({}) {
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
           BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
         }
 
@@ -4346,7 +4340,7 @@ void DoUI(bool draw) {
 
       // "NEW RUN" label.
       FontBegin(&g.meta.fontWaveCompletion);
-      BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_new_run_locale());
+      BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_NEW_RUN__CAPS);
       FontEnd();
 
       CLAY({.layout{
@@ -4355,7 +4349,7 @@ void DoUI(bool draw) {
       }}) {
         // Difficulties.
         FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_difficulty_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_DIFFICULTY);
         FontEnd();
 
         CLAY({}) {
@@ -4432,7 +4426,7 @@ void DoUI(bool draw) {
 
         // Builds.
         FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_build_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD);
         FontEnd();
 
         auto buildsX = 6;
@@ -4524,7 +4518,7 @@ void DoUI(bool draw) {
 
         // Starting weapons.
         FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_starting_weapon_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STARTING_WEAPON);
         FontEnd();
 
         CLAY({}) {
@@ -4619,7 +4613,7 @@ void DoUI(bool draw) {
         const bool go    = componentButton(
           {.id = CLAY_ID("button_new_run_go"), .growX = true},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_go_locale(), textColor);
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_GO, textColor);
           }
         );
 
@@ -4654,7 +4648,7 @@ void DoUI(bool draw) {
           const auto fb   = fb_items->Get(type);
 
           // "Item Found" label.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_item_found_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEM_FOUND);
 
           // Item.
           CLAY({
@@ -4687,7 +4681,7 @@ void DoUI(bool draw) {
             const bool took = componentButton(
               {.id = CLAY_ID("button_picked_up_item_take")},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_take_locale(), textColor);
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_TAKE, textColor);
               }
             );
 
@@ -4695,7 +4689,7 @@ void DoUI(bool draw) {
               {.id = CLAY_ID("button_picked_up_item_recycle")},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_recycle_locale(), textColor);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RECYCLE, textColor);
                   BF_CLAY_TEXT(
                     TextFormat(" (+%d)", g.run.state.pickedUpItem.recyclePrice), textColor
                   );
@@ -4748,7 +4742,7 @@ void DoUI(bool draw) {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
         // Level up label.
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_level_up_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_LEVEL_UP);
 
         // Upgrades.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -4839,7 +4833,7 @@ void DoUI(bool draw) {
                 bool chosen = componentButton(
                   {.id = CLAY_IDI("button_upgrades_choose", i)},
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_choose_locale(), textColor);
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_CHOOSE, textColor);
                   }
                 );
                 if (!draw && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + i)))
@@ -4878,7 +4872,7 @@ void DoUI(bool draw) {
           {.id = CLAY_ID("button_upgrades_reroll")},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_reroll_locale(), textColor);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_REROLL, textColor);
               BF_CLAY_TEXT(" - ", textColor);
               BF_CLAY_TEXT(
                 TextFormat("%d ", calculatedRerollPrice),
@@ -4935,9 +4929,9 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           // Wave.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_shop_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_SHOP);
           BF_CLAY_TEXT(" (");
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
           BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 1));
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -4980,7 +4974,7 @@ void DoUI(bool draw) {
             {.id = CLAY_ID("button_shop_reroll")},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_reroll_locale(), textColor);
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_REROLL, textColor);
 
                 ASSERT(calculatedRerollPrice >= 0);
 
@@ -5200,7 +5194,7 @@ void DoUI(bool draw) {
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED_DANGER(
-              glib->ui_items_locale(),
+              Loc_UI_ITEMS,
               (g.run.state.items.count > 0 ? palTextWhite : TRANSPARENT_BLACK)
             );
 
@@ -5251,8 +5245,7 @@ void DoUI(bool draw) {
               }
 
               BF_CLAY_TEXT_LOCALIZED_DANGER(
-                glib->ui_weapons_locale(),
-                (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
+                Loc_UI_WEAPONS, (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
               );
 
               BF_CLAY_TEXT(
@@ -5315,9 +5308,9 @@ void DoUI(bool draw) {
           g.run.scheduledNextWave = componentButton(
             {.id = CLAY_ID("button_shop_next_wave"), .growX = true},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_go_locale(), textColor);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_GO, textColor);
               BF_CLAY_TEXT(" (", textColor);
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale(), textColor);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE, textColor);
               BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 2), textColor);
             }
           );
@@ -5350,15 +5343,14 @@ void DoUI(bool draw) {
       }}) {
         // Run Won / Lost.
         {
-          const int locale
-            = (g.run.state.won ? glib->ui_won_locale() : glib->ui_lost_locale());
+          const int locale = (g.run.state.won ? Loc_UI_WON : Loc_UI_LOST);
           BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
         }
 
         BF_CLAY_TEXT(". ");
 
         // Wave.
-        BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
+        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
         BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
       }
 
@@ -5385,7 +5377,7 @@ void DoUI(bool draw) {
 
           if (weaponsCount > 0) {
             // Weapons label.
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_weapons_locale());
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPONS);
 
             // Weapons.
             CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -5406,7 +5398,7 @@ void DoUI(bool draw) {
 
           // Items label.
           if (g.run.state.items.count > 0) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_items_locale());
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
 
             // Items.
             const auto& items = g.run.state.items;
@@ -5445,14 +5437,14 @@ void DoUI(bool draw) {
         const bool restarted = componentButton(
           {.id = CLAY_ID("button_end_restart")},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_restart_locale(), textColor);
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RESTART, textColor);
           }
         );
 
         const bool newRun = componentButton(
           {.id = CLAY_ID("button_end_new_run")},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_new_run_locale(), textColor);
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_NEW_RUN, textColor);
           }
         );
 
@@ -5666,7 +5658,7 @@ void DoUI(bool draw) {
         }}) {
           // "Achievements" label.
           FontBegin(&g.meta.fontUIBig);
-          BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_achievements_locale());
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS);
           FontEnd();
 
           int totalSlots = 0;
@@ -5793,7 +5785,7 @@ void DoUI(bool draw) {
           const bool back = componentButton(
             {.id = CLAY_ID("button_pause_achievements_back")},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_back_locale(), textColor);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BACK, textColor);
             }
           );
 
@@ -5820,7 +5812,7 @@ void DoUI(bool draw) {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           }}) {
             CLAY({}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_wave_locale());
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
               BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
             }
 
@@ -5832,30 +5824,28 @@ void DoUI(bool draw) {
               const bool resumed = componentButton(
                 {.id = CLAY_ID("button_pause_resume"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_resume_locale(), textColor);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RESUME, textColor);
                 }
               );
 
               const bool restarted = componentButton(
                 {.id = CLAY_ID("button_pause_restart"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_restart_locale(), textColor);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RESTART, textColor);
                 }
               );
 
               const bool newRun = componentButton(
                 {.id = CLAY_ID("button_pause_new_run"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_new_run_locale(), textColor);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_NEW_RUN, textColor);
                 }
               );
 
               const bool achievements = componentButton(
                 {.id = CLAY_ID("button_pause_achievements"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(
-                    glib->ui_achievements_locale(), textColor
-                  );
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS, textColor);
                 }
               );
 
@@ -5864,7 +5854,7 @@ void DoUI(bool draw) {
               exited = componentButton(
                 {.id = CLAY_ID("button_pause_exit"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_exit_locale(), textColor);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_EXIT, textColor);
                 }
               );
 #endif
@@ -5899,7 +5889,7 @@ void DoUI(bool draw) {
             }}) {
               if (weaponsCount > 0) {
                 // Weapons label.
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_weapons_locale());
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPONS);
 
                 // Weapons.
                 CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -5920,7 +5910,7 @@ void DoUI(bool draw) {
 
               if (g.run.state.items.count > 0) {
                 // Items label.
-                BF_CLAY_TEXT_LOCALIZED_DANGER(glib->ui_items_locale());
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
 
                 // Items.
                 const auto& items = g.run.state.items;
@@ -8512,12 +8502,12 @@ void GameDraw() {
       int         bytesCount = 0;
 
       if (number.type == NumberType_DODGE) {
-        const auto fb = localization_strings->Get(glib->ui_dodge_locale());
+        const auto fb = localization_strings->Get(Loc_UI_DODGE);
         buffer        = fb->c_str();
         bytesCount    = fb->size();
       }
       else if (number.type == NumberType_LEVEL_UP) {
-        const auto fb = localization_strings->Get(glib->ui_level_up_number_locale());
+        const auto fb = localization_strings->Get(Loc_UI_LEVEL_UP_NUMBER);
         buffer        = fb->c_str();
         bytesCount    = fb->size();
       }
@@ -8647,11 +8637,11 @@ void GameDraw() {
     auto p
       = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
-    int locale = glib->ui_wave_won_locale();
+    int locale = Loc_UI_WAVE_WON;
     if (!g.run.waveWon)
-      locale = glib->ui_wave_lost_locale();
+      locale = Loc_UI_WAVE_LOST;
     if (g.run.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
-      locale = glib->ui_won_locale();
+      locale = Loc_UI_WON;
     auto text = localization_strings->Get(locale);
 
     int totalChars = 0;

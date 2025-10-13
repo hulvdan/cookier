@@ -428,9 +428,22 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
                         translation.strip() or "<<NOT_TRANSLATED>>"
                     )
 
-    loc_ids.insert(0, "<<INVALID>>")
+    l = len(loc_ids)
+    for i in range(l):
+        loc = loc_ids[i]
+        if loc.startswith("UI_"):
+            loc_ids.append("{}__CAPS".format(loc))
+
+    genenum(genline, "Loc", ["INVALID", *loc_ids])
+
     for strings in loc_by_languages.values():
+        l = len(strings)
+        for i in range(l):
+            if loc_ids[i].startswith("UI_"):
+                strings.append(strings[i].upper())
         strings.insert(0, "<<INVALID>>")
+
+    loc_ids.insert(0, "<<INVALID>>")
 
     for strings in loc_by_languages.values():
         assert len(loc_ids) == len(strings)
@@ -619,31 +632,6 @@ def convert_gamelib_json_to_binary(
 
     gamelib |= atlas_data
     genenum(genline, "DrawZ", gamelib.pop("render_z"), add_count=True)
-
-    # Locale gen.
-    if 1:
-        lines = (
-            Path(SRC_DIR / "game" / "bf_gamelib.fbs")
-            .read_text(encoding="utf-8")
-            .split("\n")
-        )
-
-        start = -1
-        end = -1
-        for i, line in enumerate(lines):
-            if "LOCALE_GEN_START" in line:
-                start = i + 1
-            if "LOCALE_GEN_END" in line:
-                end = i
-                break
-
-        assert start >= 0
-        assert end >= 1
-        assert start < end
-
-        for i in range(start, end):
-            field_name = lines[i].split(":", 1)[0].strip().removesuffix("_locale")
-            gamelib["{}_locale".format(field_name)] = field_name.upper()
 
     localization_codepoints, locale_to_index = _do_localization(genline, gamelib)
 
