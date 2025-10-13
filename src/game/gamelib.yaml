@@ -1069,7 +1069,7 @@ achievements:
       - value: 6
   - type: KILLER
     steps:
-      - value: 5
+      - value: 2
         unlocks_build_type: NINJA
       - value: 10
         unlocks_item_type: BLACK_FLAG

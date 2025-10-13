@@ -761,12 +761,12 @@ struct UIButtonState {
   bool           hovered          = false;
 };
 
-struct Achievement {
-  i64 value = {};
-};
-
 struct Build {
   DifficultyType maxDifficultyBeaten = {};
+};
+
+struct Achievement {
+  i64 value = {};
 };
 
 struct JustUnlockedAchievement {
@@ -814,9 +814,9 @@ struct GameData {
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
 
-    Array<bool, BuildType_COUNT>  unlockedBuilds  = {};
-    Array<bool, ItemType_COUNT>   unlockedItems   = {};
-    Array<bool, WeaponType_COUNT> unlockedWeapons = {};
+    Array<bool, BuildType_COUNT>  lockedBuilds  = {};
+    Array<bool, ItemType_COUNT>   lockedItems   = {};
+    Array<bool, WeaponType_COUNT> lockedWeapons = {};
   } player;
 
   struct Run {
@@ -952,6 +952,10 @@ struct GameData {
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
   } ui;
 } g = {};
+
+void Save() {  ///
+  g.meta.scheduledSave = true;
+}
 
 void OnUIStart() {  ///
   ge.settings.screenFade = glib->ui_modal_fade();
@@ -1150,13 +1154,13 @@ void OnWaveStarted() {  ///
   RecalculatePlayerWeaponOffsets();
 }
 
-void AchievementStepUnlock(const BFGame::AchievementStep* fb_step) {  ///
+void AchievementStepSetLock(const BFGame::AchievementStep* fb_step, bool locked) {  ///
   if (fb_step->unlocks_build_type())
-    g.player.unlockedBuilds[fb_step->unlocks_build_type()] = true;
+    g.player.lockedBuilds[fb_step->unlocks_build_type()] = locked;
   if (fb_step->unlocks_item_type())
-    g.player.unlockedItems[fb_step->unlocks_item_type()] = true;
+    g.player.lockedItems[fb_step->unlocks_item_type()] = locked;
   if (fb_step->unlocks_weapon_type())
-    g.player.unlockedWeapons[fb_step->unlocks_weapon_type()] = true;
+    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = locked;
 }
 
 void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue) {  ///
@@ -1168,8 +1172,8 @@ void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue)
   for (auto fb_step : *fb_steps) {
     stepIndex++;
     if ((oldValue < fb_step->value()) && (fb_step->value() <= newValue)) {
-      AchievementStepUnlock(fb_step);
-      *g.ui.justUnlockedAchievements.Add() = {.type = type, .step = stepIndex};
+      AchievementStepSetLock(fb_step, false);
+      *g.ui.justUnlockedAchievements.Add() = {.type = type, .stepIndex = stepIndex};
     }
   }
 }
@@ -1178,7 +1182,7 @@ void AchievementAdd(AchievementType type, int value) {  ///
   ASSERT(value >= 0);
   int oldValue = g.player.achievements[type].value;
   g.player.achievements[type].value += value;
-  OnAchievementValueChanged(type, oldValue, value);
+  OnAchievementValueChanged(type, oldValue, g.player.achievements[type].value);
   Save();
 }
 
@@ -1315,9 +1319,9 @@ void Load(void* saveData) {  ///
 
   RecalculatePlayerWeaponOffsets();
 
-  g.player.unlockedBuilds  = {};
-  g.player.unlockedWeapons = {};
-  g.player.unlockedItems   = {};
+  g.player.lockedBuilds  = {};
+  g.player.lockedWeapons = {};
+  g.player.lockedItems   = {};
 
   // Recalculating unlocked builds, items and weapons based off achievements.
   {
@@ -1329,8 +1333,8 @@ void Load(void* saveData) {  ///
       if (!fb_steps)
         continue;
       for (auto fb_step : *fb_steps) {
-        if (fb_step->value() <= x.value)
-          AchievementStepUnlock(fb_step);
+        if (fb_step->value() > x.value)
+          AchievementStepSetLock(fb_step, true);
       }
     }
   }
@@ -1433,10 +1437,6 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
   auto                           packed = BFSave::Save::Pack(fbb, &fb_save);
   fbb.Finish(packed);
   return fbb;
-}
-
-void Save() {  ///
-  g.meta.scheduledSave = true;
 }
 
 struct MakeLandmineData {
@@ -2195,6 +2195,8 @@ ItemType GenerateRandomItem() {  ///
         currentItemCount++;
     }
 
+    if (g.player.lockedItems[type])
+      continue;
     auto fb = fb_items->Get(type);
     if (!fb->included_in_random_pool())
       continue;
@@ -4483,7 +4485,7 @@ void DoUI(bool draw) {
 
                   CLAY({}) {
                     auto       fb       = fb_builds->Get(t + 1);
-                    const bool isLocked = !fb->unlocked_by_default();
+                    const bool isLocked = g.player.lockedBuilds[t + 1];
                     componentSlot(
                       {
                         .canHover = !isLocked,
@@ -5488,6 +5490,100 @@ void DoUI(bool draw) {
   }
   else
     INVALID_PATH;
+
+  // Achievements.
+  if (g.ui.justUnlockedAchievements.count > 0) {  ///
+    const auto& x = g.ui.justUnlockedAchievements[0];
+    lframe      e{};
+    if (x.shownAt.IsSet())
+      e = x.shownAt.Elapsed();
+
+    f32 alpha     = 1;
+    f32 translate = 0;
+
+    if (e < ACHIEVEMENT_IN_FRAMES) {
+      f32 p     = Clamp01(e.Progress(ACHIEVEMENT_IN_FRAMES));
+      translate = 100 * (1 - EaseOutQuad(p));
+      alpha     = EaseOutQuad(p);
+    }
+    if (e >= ACHIEVEMENT_TOTAL_FRAMES - ACHIEVEMENT_OUT_FRAMES) {
+      f32 p = (e + ACHIEVEMENT_OUT_FRAMES - ACHIEVEMENT_TOTAL_FRAMES)
+                .Progress(ACHIEVEMENT_OUT_FRAMES);
+      alpha = Clamp01(1 - p);
+    }
+
+    CLAY({
+      // .layout{},
+      .floating{
+        .offset{-GAP_SMALL, GAP_SMALL},
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_RIGHT_TOP,
+          .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
+        },
+        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+        .attachTo           = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+
+      Beautify b{.alpha = (u16)(alpha * (f32)u16_max), .translate{translate, 0}};
+      BEAUTIFY(b);
+
+      auto fb = fb_achievements->Get(x.type);
+
+      CLAY({
+        .layout{
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+          .childGap = GAP_BIG,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(), slotColors[6], slotColors[7]
+        ),
+      }) {
+        CLAY({}) {
+          BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+          static const char* romanNumbers_[]{
+            "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
+            "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
+          };
+          VIEW_FROM_ARRAY_DANGER(romanNumbers);
+          BF_CLAY_TEXT(" ");
+          BF_CLAY_TEXT(romanNumbers[x.stepIndex + 1]);
+        }
+
+        LAMBDA (void, componentAchievementReward, (int texId, int tier)) {
+          componentSlot({.tier = tier}, [&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({.layout{
+              BF_CLAY_SIZING_GROW_XY,
+              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            }}) {
+              BF_CLAY_IMAGE({.texId = texId});
+            }
+          });
+        };
+
+        CLAY({.layout{.childGap = GAP_SMALL}}) {
+          auto fb_step = fb->steps()->Get(x.stepIndex);
+          if (fb_step->unlocks_build_type()) {
+            auto fb_build = fb_builds->Get(fb_step->unlocks_build_type());
+            componentAchievementReward(fb_build->texture_id(), 3);
+          }
+          if (fb_step->unlocks_weapon_type()) {
+            auto fb_weapon = fb_weapons->Get(fb_step->unlocks_weapon_type());
+            componentAchievementReward(
+              fb_weapon->icon_texture_id(), fb_weapon->min_tier_index()
+            );
+          }
+          if (fb_step->unlocks_item_type()) {
+            auto fb_item = fb_items->Get(fb_step->unlocks_item_type());
+            componentAchievementReward(fb_item->texture_id(), fb_item->tier());
+          }
+        }
+      }
+    }
+  }
 
   // Window is inactive.
   if (ge.meta.windowIsInactive) {  ///
@@ -7834,11 +7930,11 @@ void GameFixedUpdate() {
   }
 
   // Removing old unlocked achievements.
-  if (g.ui.justUnlockedAchievements.count) {  ///
+  if (g.ui.justUnlockedAchievements.count > 0) {  ///
     auto& x = g.ui.justUnlockedAchievements[0];
     if (!x.shownAt.IsSet())
       x.shownAt.SetNow();
-    else if (x.shownAt.Elapsed() >= ACHIEVEMENT_SHOW_FRAMES)
+    else if (x.shownAt.Elapsed() >= ACHIEVEMENT_TOTAL_FRAMES)
       g.ui.justUnlockedAchievements.UnstableRemoveAt(0);
   }
 

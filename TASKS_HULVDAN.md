@@ -25,8 +25,8 @@ x new run: explain button error through wiggling
 x new run: don't show lock if weapon doesn't exist
 x new run: save/load last run difficulty/build/weapon
 x new run: starting a new run works without bugs
+x achievements: show recently got achievements on screen and what they unlock
 
-* achievements: show recently got achievements on screen and what they unlock
 * completing difficulty can unlock stuff
 * achievements:
 * achievements:
