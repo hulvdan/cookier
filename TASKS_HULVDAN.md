@@ -31,8 +31,8 @@ x achievements: locked items/weapons/classes can't be acquired before unlocking
 x achievements: calculating WALKER / IDLER
 x achievements: descriptions
 x achievements screen: drew cells
+x locale gen caps (New Run / NEW RUN)
 
-* locale gen caps (New Run / NEW RUN)
 * achievements screen: ACHIEVEMENTS label
 * achievements screen: escape return back to paused menu
 * achievements screen: showing reward description in right column
