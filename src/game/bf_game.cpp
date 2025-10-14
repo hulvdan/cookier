@@ -3608,7 +3608,16 @@ void DoUI(bool draw) {
   };
 
   constexpr int ITEM_FRAME_WIDTH    = 219;
+  constexpr int ITEM_FRAME_HEIGHT   = 320;
   constexpr int UPGRADE_FRAME_WIDTH = 190;
+  constexpr int ACHIEVEMENT_WIDTH   = ITEM_FRAME_WIDTH;
+
+  const f32 ACHIEVEMENT_HEIGHT =                      //
+    0                                                 //
+    + g.meta.fontUI.size / g.meta.fontUI._scaleToFit  // Name.
+    + GAP_SMALL                                       // Gap between name and description.
+    + 2 * g.meta.fontStats.size / g.meta.fontUI._scaleToFit  // 2 lines of description.
+    + GAP_FLEX;                                              // Gap between them.
 
   LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
   {  ///
@@ -4085,6 +4094,80 @@ void DoUI(bool draw) {
       innerLambda();
     }
     zIndex--;
+  };
+
+  LAMBDA (void, componentAchievementName, (AchievementType type, int stepIndex)) {  ///
+    ASSERT(type);
+    CLAY({}) {
+      auto fb      = fb_achievements->Get(type);
+      auto fb_step = fb->steps()->Get(stepIndex);
+
+      if (g.player.achievements[type].value >= fb_step->value()) {
+        BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
+        static const char* romanNumbers_[]{
+          "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
+          "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
+        };
+        VIEW_FROM_ARRAY_DANGER(romanNumbers);
+        BF_CLAY_TEXT(" ");
+        BF_CLAY_TEXT(romanNumbers[stepIndex + 1]);
+      }
+      else
+        BF_CLAY_TEXT("???");
+    }
+  };
+
+  LAMBDA (void, componentAchievementDescription, (AchievementType type, int stepIndex))
+  {  ///
+    auto fb              = fb_achievements->Get(type);
+    auto fb_step         = fb->steps()->Get(stepIndex);
+    auto fb_previousStep = (stepIndex > 0 ? fb->steps()->Get(stepIndex - 1) : nullptr);
+
+    CLAY({.layout{
+      .sizing{.height = CLAY_SIZING_GROW(0)},
+      .childGap = GAP_FLEX,
+      BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+      .layoutDirection = CLAY_TOP_TO_BOTTOM,
+    }}) {
+      FontBegin(&g.meta.fontStats);
+      if (!fb_previousStep
+          || (g.player.achievements[type].value >= fb_previousStep->value()))
+      {
+        FlexBegin(ACHIEVEMENT_WIDTH, 0);
+        PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
+        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->description_locale());
+        FlexEnd();
+      }
+      else
+        BF_CLAY_TEXT("???");
+      FontEnd();
+    }
+  };
+
+  LAMBDA (void, componentAchievement, (AchievementType type, int stepIndex)) {  ///
+    CLAY({
+      .layout{
+        .sizing{
+          .width  = CLAY_SIZING_FIXED(ACHIEVEMENT_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+          .height = CLAY_SIZING_FIXED(ACHIEVEMENT_HEIGHT + 2 * PADDING_NINE_SLICE_FRAME),
+        },
+        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+        .childGap = GAP_BIG,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      },
+      BF_CLAY_CUSTOM_NINE_SLICE(
+        glib->ui_frame_nine_slice(), slotColors[6], slotColors[7]
+      ),
+    }) {
+      CLAY({.layout{
+        .sizing{.height = CLAY_SIZING_GROW(0)},
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
+        componentAchievementName(type, stepIndex);
+        componentAchievementDescription(type, stepIndex);
+      }
+    }
   };
 
   // Gameplay.
@@ -5051,7 +5134,7 @@ void DoUI(bool draw) {
 
             CLAY({.layout{.sizing{
               CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-              CLAY_SIZING_FIXED(320),
+              CLAY_SIZING_FIXED(ITEM_FRAME_HEIGHT),
             }}})
             if (v.item || v.weapon) {
               CLAY({
@@ -5485,21 +5568,18 @@ void DoUI(bool draw) {
     if (e >= ACHIEVEMENT_TOTAL_FRAMES - ACHIEVEMENT_OUT_FRAMES) {
       f32 p = (e + ACHIEVEMENT_OUT_FRAMES - ACHIEVEMENT_TOTAL_FRAMES)
                 .Progress(ACHIEVEMENT_OUT_FRAMES);
-      alpha = Clamp01(1 - p);
+      alpha = Clamp01(1 - EaseOutQuad(p));
     }
 
-    CLAY({
-      // .layout{},
-      .floating{
-        .offset{-GAP_SMALL, GAP_SMALL},
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_RIGHT_TOP,
-          .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
-        },
-        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-        .attachTo           = CLAY_ATTACH_TO_PARENT,
+    CLAY({.floating{
+      .offset{-GAP_SMALL, GAP_SMALL},
+      .attachPoints{
+        .element = CLAY_ATTACH_POINT_RIGHT_TOP,
+        .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
       },
-    }) {
+      .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+      .attachTo           = CLAY_ATTACH_TO_PARENT,
+    }}) {
       FLOATING_BEAUTIFY;
 
       Beautify b{.alpha = (u16)(alpha * (f32)u16_max), .translate{translate, 0}};
@@ -5508,121 +5588,93 @@ void DoUI(bool draw) {
       auto fb      = fb_achievements->Get(x.type);
       auto fb_step = fb->steps()->Get(x.stepIndex);
 
-      CLAY({
-        .layout{BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME), .childGap = GAP_BIG},
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), slotColors[6], slotColors[7]
-        ),
-      }) {
-        LAMBDA (void, componentAchievementReward, (int texId, int tier)) {
-          componentSlot({.tier = tier}, [&]() BF_FORCE_INLINE_LAMBDA {
-            CLAY({.layout{
-              BF_CLAY_SIZING_GROW_XY,
-              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-            }}) {
-              f32 fadeLock       = 1;
-              f32 fadeItem       = 0;
-              f32 flashWhiteLock = 0;
-              f32 flashWhiteItem = 0;
+      LAMBDA (void, componentAchievementReward, (int texId, int tier)) {
+        componentSlot({.tier = tier}, [&]() BF_FORCE_INLINE_LAMBDA {
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_XY,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            f32 fadeLock       = 1;
+            f32 fadeItem       = 0;
+            f32 flashWhiteLock = 0;
+            f32 flashWhiteItem = 0;
 
-              const auto delayBeforeUnlock = ANIMATION_2_FRAMES;
-              const auto unlockDuration    = ANIMATION_0_FRAMES;
+            const auto delayBeforeUnlock = ANIMATION_2_FRAMES;
+            const auto unlockDuration    = ANIMATION_0_FRAMES;
 
-              if (e > delayBeforeUnlock + unlockDuration) {
-                // Item is shown clearly.
-                fadeItem = 1;
-                fadeLock = 0;
-              }
-              else if (e > delayBeforeUnlock) {
-                // Animation.
-                f32 p    = Clamp01((e - delayBeforeUnlock).Progress(unlockDuration));
-                fadeItem = p;
-                fadeLock = 1 - p;
-                flashWhiteLock = sinf(PI32 * p);
-                flashWhiteItem = sinf(PI32 * p);
-              }
-
-              LAMBDA (void, componentCenterFloater, (auto innerLambda)) {
-                CLAY({.floating{
-                  .attachPoints{
-                    .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-                    .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-                  },
-                  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-                  .attachTo           = CLAY_ATTACH_TO_PARENT,
-                }}) {
-                  FLOATING_BEAUTIFY;
-                  innerLambda();
-                }
-              };
-
-              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({
-                  .texId = glib->ui_item_locked_texture_id(),
-                  .color = Fade(WHITE, Clamp01(fadeLock)),
-                  .flash = Fade(WHITE, Clamp01(flashWhiteLock)),
-                });
-              });
-
-              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({
-                  .texId = texId,
-                  .color = Fade(WHITE, Clamp01(fadeItem)),
-                  .flash = Fade(WHITE, Clamp01(flashWhiteItem)),
-                });
-              });
+            if (e > delayBeforeUnlock + unlockDuration) {
+              // Item is shown clearly.
+              fadeItem = 1;
+              fadeLock = 0;
             }
-          });
-        };
+            else if (e > delayBeforeUnlock) {
+              // Animation.
+              f32 p          = Clamp01((e - delayBeforeUnlock).Progress(unlockDuration));
+              fadeItem       = p;
+              fadeLock       = 1 - p;
+              flashWhiteLock = sinf(PI32 * p);
+              flashWhiteItem = sinf(PI32 * p);
+            }
 
-        CLAY({.layout{.childGap = GAP_SMALL}}) {
+            LAMBDA (void, componentCenterFloater, (auto innerLambda)) {
+              CLAY({.floating{
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                },
+                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                .attachTo           = CLAY_ATTACH_TO_PARENT,
+              }}) {
+                FLOATING_BEAUTIFY;
+                innerLambda();
+              }
+            };
+
+            componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({
+                .texId = glib->ui_item_locked_texture_id(),
+                .color = Fade(WHITE, Clamp01(fadeLock)),
+                .flash = Fade(WHITE, Clamp01(flashWhiteLock)),
+              });
+            });
+
+            componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({
+                .texId = texId,
+                .color = Fade(WHITE, Clamp01(fadeItem)),
+                .flash = Fade(WHITE, Clamp01(flashWhiteItem)),
+              });
+            });
+          }
+        });
+      };
+
+      CLAY({.layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+        CLAY({
+          .layout{
+            // BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            .childGap = GAP_SMALL,
+            // BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          },
+          // BF_CLAY_CUSTOM_NINE_SLICE(
+          //   glib->ui_frame_nine_slice(), slotColors[6], slotColors[7]
+          // ),
+        }) {
           if (fb_step->unlocks_build_type()) {
             auto fb_build = fb_builds->Get(fb_step->unlocks_build_type());
             componentAchievementReward(fb_build->texture_id(), 3);
           }
           if (fb_step->unlocks_weapon_type()) {
             auto fb_weapon = fb_weapons->Get(fb_step->unlocks_weapon_type());
-            componentAchievementReward(
-              fb_weapon->icon_texture_id(), fb_weapon->min_tier_index()
-            );
+            componentAchievementReward(fb_weapon->icon_texture_id(), 3);
           }
           if (fb_step->unlocks_item_type()) {
             auto fb_item = fb_items->Get(fb_step->unlocks_item_type());
-            componentAchievementReward(fb_item->texture_id(), fb_item->tier());
+            componentAchievementReward(fb_item->texture_id(), 3);
           }
         }
 
-        CLAY({.layout{
-          .sizing{.height = CLAY_SIZING_GROW(0)},
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }}) {
-          CLAY({}) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
-            static const char* romanNumbers_[]{
-              "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
-              "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
-            };
-            VIEW_FROM_ARRAY_DANGER(romanNumbers);
-            BF_CLAY_TEXT(" ");
-            BF_CLAY_TEXT(romanNumbers[x.stepIndex + 1]);
-          }
-
-          constexpr auto MAX_ACHIEVEMENT_DESCRIPTION_WIDTH = 240;
-
-          CLAY({.layout{
-            .sizing{.height = CLAY_SIZING_GROW(0)},
-            .childGap = GAP_FLEX,
-            BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-          }}) {
-            FlexBegin(MAX_ACHIEVEMENT_DESCRIPTION_WIDTH, 0);
-            FontBegin(&g.meta.fontStats);
-            PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
-            BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->description_locale());
-            FontEnd();
-            FlexEnd();
-          }
-        }
+        componentAchievement(x.type, x.stepIndex);
       }
     }
   }
@@ -5635,7 +5687,7 @@ void DoUI(bool draw) {
     }) {}
   }
 
-  // Pause / progress.
+  // Pause / Achievements.
   if (g.meta.paused) {
     CLAY({
       .floating{
@@ -5708,8 +5760,10 @@ void DoUI(bool draw) {
                     if (shownSlots >= totalSlots)
                       break;
 
-                    auto fb      = fb_achievements->Get(currentAchievement);
-                    auto fb_step = fb->steps()->Get(currentStep);
+                    auto       fb      = fb_achievements->Get(currentAchievement);
+                    auto       fb_step = fb->steps()->Get(currentStep);
+                    const bool isLocked
+                      = (g.player.achievements[currentAchievement].value < fb_step->value());
 
                     bool canHover = true;
 
@@ -5717,24 +5771,29 @@ void DoUI(bool draw) {
                       int texId = 0;
                       int tier  = 0;
 
-                      if (fb_step->unlocks_build_type()) {
-                        auto fb_build = fb_builds->Get(fb_step->unlocks_build_type());
-                        texId         = fb_build->texture_id();
-                        tier          = 3;
-                      }
-                      if (fb_step->unlocks_weapon_type()) {
-                        auto fb_weapon = fb_weapons->Get(fb_step->unlocks_weapon_type());
-                        texId          = fb_weapon->icon_texture_id();
-                        tier           = fb_weapon->min_tier_index();
-                      }
-                      if (fb_step->unlocks_item_type()) {
-                        auto fb_item = fb_items->Get(fb_step->unlocks_item_type());
-                        texId        = fb_item->texture_id();
-                        tier         = fb_item->tier();
+                      if (isLocked)
+                        texId = glib->ui_item_locked_texture_id();
+                      else {
+                        if (fb_step->unlocks_build_type()) {
+                          auto fb_build = fb_builds->Get(fb_step->unlocks_build_type());
+                          texId         = fb_build->texture_id();
+                          tier          = 3;
+                        }
+                        if (fb_step->unlocks_weapon_type()) {
+                          auto fb_weapon
+                            = fb_weapons->Get(fb_step->unlocks_weapon_type());
+                          texId = fb_weapon->icon_texture_id();
+                          tier  = fb_weapon->min_tier_index();
+                        }
+                        if (fb_step->unlocks_item_type()) {
+                          auto fb_item = fb_items->Get(fb_step->unlocks_item_type());
+                          texId        = fb_item->texture_id();
+                          tier         = fb_item->tier();
+                        }
                       }
 
                       componentSlot(
-                        {.canHover = canHover, .tier = tier},
+                        {.canHover = canHover, .tier = (isLocked ? 0 : 3)},
                         [&]() BF_FORCE_INLINE_LAMBDA {
                           CLAY({.layout{
                             BF_CLAY_SIZING_GROW_XY,
@@ -5771,12 +5830,45 @@ void DoUI(bool draw) {
             }
 
             // Right column. Hover data.
-            if (g.meta.pausedAchievementsHoveredAchievement) {
-              CLAY({}) {
-                auto fb
-                  = fb_achievements->Get(g.meta.pausedAchievementsHoveredAchievement);
-                auto fb_step
+            CLAY({.layout{
+              .childGap        = GAP_BIG,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              const BFGame::Achievement*     fb      = nullptr;
+              const BFGame::AchievementStep* fb_step = nullptr;
+
+              if (g.meta.pausedAchievementsHoveredAchievement) {
+                fb = fb_achievements->Get(g.meta.pausedAchievementsHoveredAchievement);
+                fb_step
                   = fb->steps()->Get(g.meta.pausedAchievementsHoveredAchievementStep);
+              }
+
+              // Achievement's name and description.
+              if (g.meta.pausedAchievementsHoveredAchievement) {
+                componentAchievement(
+                  (AchievementType)g.meta.pausedAchievementsHoveredAchievement,
+                  g.meta.pausedAchievementsHoveredAchievementStep
+                );
+              }
+
+              // Achievement's reward.
+              CLAY({.layout{.sizing{
+                CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+                CLAY_SIZING_FIXED(ITEM_FRAME_HEIGHT),
+              }}}) {
+                if (g.meta.pausedAchievementsHoveredAchievement) {
+                  CLAY({
+                    .layout{
+                      BF_CLAY_SIZING_GROW_XY,
+                      BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+                      .childGap        = GAP_SMALL,
+                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                    },
+                    BF_CLAY_CUSTOM_NINE_SLICE(
+                      glib->ui_frame_nine_slice(), slotColors[6], slotColors[7]
+                    ),
+                  }) {}
+                }
               }
             }
           }
