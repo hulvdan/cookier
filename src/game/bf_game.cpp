@@ -820,6 +820,9 @@ struct GameData {
     Array<bool, BuildType_COUNT>  lockedBuilds  = {};
     Array<bool, ItemType_COUNT>   lockedItems   = {};
     Array<bool, WeaponType_COUNT> lockedWeapons = {};
+
+    int achievementStepsTotal     = 0;
+    int achievementStepsCompleted = 0;
   } player;
 
   struct Run {
@@ -958,6 +961,20 @@ struct GameData {
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
   } ui;
 } g = {};
+
+int GetAchievementsCompletedPercent() {  ///
+  ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
+  ASSERT(g.player.achievementStepsCompleted >= 0);
+  ASSERT(g.player.achievementStepsTotal > 0);
+
+  int percent = g.player.achievementStepsCompleted * 100 / g.player.achievementStepsTotal;
+  if (g.player.achievementStepsCompleted < g.player.achievementStepsTotal)
+    percent = MIN(99, percent);
+  if (g.player.achievementStepsCompleted > 0)
+    percent = MAX(1, percent);
+
+  return percent;
+}
 
 void Save() {  ///
   g.meta.scheduledSave = true;
@@ -1167,6 +1184,14 @@ void AchievementStepSetLock(const BFGame::AchievementStep* fb_step, bool locked)
     g.player.lockedItems[fb_step->unlocks_item_type()] = locked;
   if (fb_step->unlocks_weapon_type())
     g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = locked;
+
+  if (locked)
+    g.player.achievementStepsCompleted--;
+  else
+    g.player.achievementStepsCompleted++;
+
+  ASSERT(g.player.achievementStepsCompleted >= 0);
+  ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
 }
 
 void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue) {  ///
@@ -1331,6 +1356,9 @@ void Load(void* saveData) {  ///
 
   // Recalculating unlocked builds, items and weapons based off achievements.
   {
+    g.player.achievementStepsTotal     = 0;
+    g.player.achievementStepsCompleted = 0;
+
     int i = -1;
     for (const auto& x : g.player.achievements) {  ///
       i++;
@@ -1338,11 +1366,18 @@ void Load(void* saveData) {  ///
       auto fb_steps = fb->steps();
       if (!fb_steps)
         continue;
+
+      g.player.achievementStepsTotal += fb_steps->size();
+      g.player.achievementStepsCompleted += fb_steps->size();
+
       for (auto fb_step : *fb_steps) {
         if (fb_step->value() > x.value)
           AchievementStepSetLock(fb_step, true);
       }
     }
+
+    ASSERT(g.player.achievementStepsCompleted >= 0);
+    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
   }
 }
 
@@ -4141,7 +4176,6 @@ void DoUI(bool draw) {
           = MIN(100, g.player.achievements[type].value * 100 / fb_step->value());
         if ((percent < 100) && (fb_step->value() > 1)) {
           BF_CLAY_TEXT(" ");
-          // BF_CLAY_TEXT(TextFormat("(%d%%)", percent), palTextBezhevy);
           BF_CLAY_TEXT(
             TextFormat("(%d / %d)", g.player.achievements[type].value, fb_step->value()),
             palTextBezhevy
@@ -5708,8 +5742,7 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          int totalSlots     = 0;
-          int totalCompleted = 0;
+          int totalSlots = 0;
 
           int currentAchievement = 1;
           int currentStep        = 0;
@@ -5724,11 +5757,6 @@ void DoUI(bool draw) {
               if (fb_steps) {
                 auto stepsCount = (int)fb_steps->size();
                 totalSlots += stepsCount;
-
-                for (auto fb_step : *fb_steps) {
-                  if (fb_step->value() <= g.player.achievements[achievementIndex].value)
-                    totalCompleted++;
-                }
               }
             }
           }
@@ -5738,9 +5766,8 @@ void DoUI(bool draw) {
           CLAY({}) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS__CAPS);
 
-            int percent = totalCompleted * 100 / totalSlots;
-            ASSERT(percent >= 0);
-            ASSERT(percent <= 100);
+            int percent = GetAchievementsCompletedPercent();
+
             if (percent > 0) {
               auto color = palTextBezhevy;
               if (percent >= 100)
@@ -5968,6 +5995,9 @@ void DoUI(bool draw) {
                 {.id = CLAY_ID("button_pause_achievements"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS, textColor);
+                  int percent = GetAchievementsCompletedPercent();
+                  if (percent > 0)
+                    BF_CLAY_TEXT(TextFormat(" %d%%", percent), textColor);
                 }
               );
 

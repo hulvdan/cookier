@@ -40,17 +40,17 @@ x sliding achievement slot flashing
 x achievements screen: show progress %
 x achievements screen: not completed yet achievement show progress percent
   (walker 10 000 meters (52%))
+x achievements show progress in menu
+  (PRECALCULATE TOTAL STEPS / COMPLETED STEPS AND PERCENT)
 
-* achievements show progress in menu
-* fix multiple one-by-one sliding achievements translation
 * achievements screen: showing reward description in right column
-* better pause menu
-* achievements screen: completed achievement pearlescent?
+* fix multiple one-by-one sliding achievements translation
 * achievements: COINS
 * achievements:
 * achievements:
 * achievements:
 * achievements:
+* better pause menu
 * completing difficulty can unlock stuff
 * save load: more tests!
 * new run: dim overlay on pressing `new run` in pause menu
