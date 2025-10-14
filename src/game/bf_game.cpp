@@ -3477,6 +3477,7 @@ void DoUI(bool draw) {
             // Icon.
             CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(20)}}}) {
               CLAY({.floating{
+                .zIndex = zIndex,
                 .attachPoints{
                   .element = CLAY_ATTACH_POINT_CENTER_CENTER,
                   .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -3546,6 +3547,7 @@ void DoUI(bool draw) {
           // Showing count if there are multiple of the same item.
           if (item.count > 1) {
             CLAY({.floating{
+              .zIndex = zIndex,
               .attachPoints{
                 .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
                 .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
@@ -3781,6 +3783,7 @@ void DoUI(bool draw) {
 
               if (data.itemCount > 1) {
                 CLAY({.floating{
+                  .zIndex = zIndex,
                   .attachPoints{
                     .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
                     .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
@@ -4385,6 +4388,7 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentCenterFloater, (auto innerLambda)) {  ///
     CLAY({.floating{
+      .zIndex = zIndex,
       .attachPoints{
         .element = CLAY_ATTACH_POINT_CENTER_CENTER,
         .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -4478,6 +4482,7 @@ void DoUI(bool draw) {
         )
       },
       .floating{
+        .zIndex             = zIndex,
         .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
         .attachTo           = CLAY_ATTACH_TO_PARENT,
       },
@@ -4498,6 +4503,7 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         .floating{
+          .zIndex = zIndex,
           .attachPoints{
             .element = CLAY_ATTACH_POINT_LEFT_TOP,
             .parent  = CLAY_ATTACH_POINT_LEFT_TOP,
@@ -4510,6 +4516,7 @@ void DoUI(bool draw) {
         BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({
             .floating{
+              .zIndex = zIndex,
               .attachPoints{
                 .element = CLAY_ATTACH_POINT_CENTER_CENTER,
                 .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -4531,6 +4538,7 @@ void DoUI(bool draw) {
 
             CLAY({
               .floating{
+                .zIndex = zIndex,
                 .attachPoints{
                   .element = CLAY_ATTACH_POINT_CENTER_CENTER,
                   .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -4549,6 +4557,7 @@ void DoUI(bool draw) {
         BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({
             .floating{
+              .zIndex = zIndex,
               .attachPoints{
                 .element = CLAY_ATTACH_POINT_CENTER_CENTER,
                 .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -4567,6 +4576,7 @@ void DoUI(bool draw) {
 
             CLAY({
               .floating{
+                .zIndex = zIndex,
                 .attachPoints{
                   .element = CLAY_ATTACH_POINT_CENTER_CENTER,
                   .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -4632,6 +4642,7 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         .floating{
+          .zIndex = zIndex,
           .attachPoints{
             .element = CLAY_ATTACH_POINT_CENTER_TOP,
             .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
@@ -4662,6 +4673,7 @@ void DoUI(bool draw) {
       // {  ///
       CLAY({
         .floating{
+          .zIndex = zIndex,
           .attachPoints{
             .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
             .parent  = CLAY_ATTACH_POINT_LEFT_BOTTOM,
@@ -4685,6 +4697,7 @@ void DoUI(bool draw) {
       CLAY({
         .layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM},
         .floating{
+          .zIndex = zIndex,
           .attachPoints{
             .element = CLAY_ATTACH_POINT_RIGHT_TOP,
             .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
@@ -5306,6 +5319,7 @@ void DoUI(bool draw) {
             CLAY({
               .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
               .floating{
+                .zIndex = zIndex,
                 .attachPoints{
                   .element = CLAY_ATTACH_POINT_CENTER_CENTER,
                   .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -5673,7 +5687,10 @@ void DoUI(bool draw) {
   // Window is inactive.
   if (ge.meta.windowIsInactive) {  ///
     CLAY({
-      .floating{.attachTo = CLAY_ATTACH_TO_PARENT},
+      .floating{
+        .zIndex   = zIndex,
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
       BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
     }) {}
   }
@@ -5682,6 +5699,7 @@ void DoUI(bool draw) {
   if (g.meta.paused) {
     CLAY({
       .floating{
+        .zIndex = zIndex,
         .attachPoints{
           .element = CLAY_ATTACH_POINT_CENTER_CENTER,
           .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
@@ -6074,6 +6092,7 @@ void DoUI(bool draw) {
 
     CLAY({.floating{
       .offset{-GAP_SMALL, GAP_SMALL},
+      .zIndex = zIndex,
       .attachPoints{
         .element = CLAY_ATTACH_POINT_RIGHT_TOP,
         .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
