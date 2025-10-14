@@ -37,6 +37,7 @@ x achievements screen: pressing ESCAPE returns us back to paused menu
 x achievements screen: showing achievement description in right column
 x achievements: same style for screen / in-game achievements
 
+* fix multiple one-by-one sliding achievements translation
 * achievements screen: show progress %
 * achievements screen: showing reward description in right column
 * better pause menu

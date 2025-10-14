@@ -3275,9 +3275,10 @@ void DoUI(bool draw) {
   };
 
   struct ComponentSlotData {
-    bool hidden   = {};
-    bool canHover = {};
-    int  tier     = {};
+    bool hidden     = {};
+    bool canHover   = {};
+    int  tier       = {};
+    f32  flashWhite = 0;
   };
 
   LAMBDA (void, componentSlot, (ComponentSlotData data, auto innerLambda)) {  ///
@@ -3290,7 +3291,7 @@ void DoUI(bool draw) {
     }}})
     if (!data.hidden) {
       auto color = slotColors[2 * data.tier];
-      auto flash = slotColors[2 * data.tier + 1];
+      auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
       if (data.canHover && Clay_Hovered()) {
         color = palWhite;
         flash = TRANSPARENT_BLACK;
@@ -4152,21 +4153,16 @@ void DoUI(bool draw) {
           .height = CLAY_SIZING_FIXED(ACHIEVEMENT_HEIGHT + 2 * PADDING_NINE_SLICE_FRAME),
         },
         BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-        .childGap = GAP_BIG,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_NINE_SLICE(
         glib->ui_frame_nine_slice(), slotColors[6], slotColors[7]
       ),
     }) {
-      CLAY({.layout{
-        .sizing{.height = CLAY_SIZING_GROW(0)},
-        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-      }}) {
-        componentAchievementName(type, stepIndex);
-        componentAchievementDescription(type, stepIndex);
-      }
+      componentAchievementName(type, stepIndex);
+      BF_CLAY_SPACER_VERTICAL;
+      componentAchievementDescription(type, stepIndex);
     }
   };
 
@@ -5589,77 +5585,71 @@ void DoUI(bool draw) {
       auto fb_step = fb->steps()->Get(x.stepIndex);
 
       LAMBDA (void, componentAchievementReward, (int texId, int tier)) {
-        componentSlot({.tier = tier}, [&]() BF_FORCE_INLINE_LAMBDA {
-          CLAY({.layout{
-            BF_CLAY_SIZING_GROW_XY,
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          }}) {
-            f32 fadeLock       = 1;
-            f32 fadeItem       = 0;
-            f32 flashWhiteLock = 0;
-            f32 flashWhiteItem = 0;
+        f32 fadeLock       = 1;
+        f32 fadeItem       = 0;
+        f32 flashWhiteLock = 0;
+        f32 flashWhiteItem = 0;
 
-            const auto delayBeforeUnlock = ANIMATION_2_FRAMES;
-            const auto unlockDuration    = ANIMATION_0_FRAMES;
+        const auto delayBeforeUnlock = ANIMATION_2_FRAMES;
+        const auto unlockDuration    = ANIMATION_0_FRAMES;
 
-            if (e > delayBeforeUnlock + unlockDuration) {
-              // Item is shown clearly.
-              fadeItem = 1;
-              fadeLock = 0;
-            }
-            else if (e > delayBeforeUnlock) {
-              // Animation.
-              f32 p          = Clamp01((e - delayBeforeUnlock).Progress(unlockDuration));
-              fadeItem       = p;
-              fadeLock       = 1 - p;
-              flashWhiteLock = sinf(PI32 * p);
-              flashWhiteItem = sinf(PI32 * p);
-            }
+        if (e > delayBeforeUnlock + unlockDuration) {
+          // Item is shown clearly.
+          fadeItem = 1;
+          fadeLock = 0;
+        }
+        else if (e > delayBeforeUnlock) {
+          // Animation.
+          f32 p          = Clamp01((e - delayBeforeUnlock).Progress(unlockDuration));
+          fadeItem       = p;
+          fadeLock       = 1 - p;
+          flashWhiteLock = 1 - SQR(SQR(cosf(PI32 * p)));
+          flashWhiteItem = 1 - SQR(SQR(cosf(PI32 * p)));
+        }
 
-            LAMBDA (void, componentCenterFloater, (auto innerLambda)) {
-              CLAY({.floating{
-                .attachPoints{
-                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-                  .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-                },
-                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-                .attachTo           = CLAY_ATTACH_TO_PARENT,
-              }}) {
-                FLOATING_BEAUTIFY;
-                innerLambda();
-              }
-            };
+        componentSlot(
+          {.tier = tier, .flashWhite = Clamp01(flashWhiteItem)},
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({.layout{
+              BF_CLAY_SIZING_GROW_XY,
+              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            }}) {
+              LAMBDA (void, componentCenterFloater, (auto innerLambda)) {
+                CLAY({.floating{
+                  .attachPoints{
+                    .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                    .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  },
+                  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                  .attachTo           = CLAY_ATTACH_TO_PARENT,
+                }}) {
+                  FLOATING_BEAUTIFY;
+                  innerLambda();
+                }
+              };
 
-            componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_IMAGE({
-                .texId = glib->ui_item_locked_texture_id(),
-                .color = Fade(WHITE, Clamp01(fadeLock)),
-                .flash = Fade(WHITE, Clamp01(flashWhiteLock)),
+              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({
+                  .texId = glib->ui_item_locked_texture_id(),
+                  .color = Fade(WHITE, Clamp01(fadeLock)),
+                  .flash = Fade(WHITE, Clamp01(flashWhiteLock)),
+                });
               });
-            });
 
-            componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_IMAGE({
-                .texId = texId,
-                .color = Fade(WHITE, Clamp01(fadeItem)),
-                .flash = Fade(WHITE, Clamp01(flashWhiteItem)),
+              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({
+                  .texId = texId,
+                  .color = Fade(WHITE, Clamp01(fadeItem)),
+                  .flash = Fade(WHITE, Clamp01(flashWhiteItem)),
+                });
               });
-            });
+            }
           }
-        });
+        );
       };
 
       CLAY({.layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-        CLAY({
-          .layout{
-            // BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-            .childGap = GAP_SMALL,
-            // BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          },
-          // BF_CLAY_CUSTOM_NINE_SLICE(
-          //   glib->ui_frame_nine_slice(), slotColors[6], slotColors[7]
-          // ),
-        }) {
+        CLAY({.layout{.childGap = GAP_SMALL}}) {
           if (fb_step->unlocks_build_type()) {
             auto fb_build = fb_builds->Get(fb_step->unlocks_build_type());
             componentAchievementReward(fb_build->texture_id(), 3);
