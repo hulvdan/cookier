@@ -49,11 +49,12 @@ x game recalc weapon damage on Load
 x ref BIG_UNIVERSAL_CARD (none, item, weapon, build, difficulty, build, overrideTier etc)
 x ach screen: item's data isn't affected by game state
 x shop: item counts font
+x showing item count in componentUniversalCard
+x achievements screen: weapon's data doesn't get affected by game state
 
-* achievements screen: weapon's data doesn't get affected by game state
 * build traits
-* achievements screen: item's data doesn't get affected by game state (LIMITED)
 * achievements: build traits
+* ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
 * achievements:

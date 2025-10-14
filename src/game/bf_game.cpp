@@ -2575,8 +2575,10 @@ constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
   return lframe::Unscaled((i64)((f32)FIXED_FPS / regenPerSecond));
 }
 
-f32 GetLifestealChance(WeaponType typeOrInvalid) {  ///
-  f32 lifesteal = (f32)g.run.playerStats[StatType_LIFE_STEAL] / 100.0f;
+f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  ///
+  f32 lifesteal = 0;
+  if (affectedByGame)
+    lifesteal += (f32)g.run.playerStats[StatType_LIFE_STEAL] / 100.0f;
   if (typeOrInvalid)
     lifesteal += glib->weapons()->Get(typeOrInvalid)->life_steal_percent() / 100.0f;
   return lifesteal;
@@ -2954,10 +2956,12 @@ f32 GetExplosionSizeMultiplier() {  ///
 }
 
 // NOTE: Doesn't include melee weapon's size.
-f32 GetWeaponRangeMeters(WeaponType type) {  ///
+f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
   const auto fb = glib->weapons()->Get(type);
 
-  auto range = (f32)g.run.playerStats[StatType_RANGE];
+  f32 range = 0;
+  if (affectedByGame)
+    range = (f32)g.run.playerStats[StatType_RANGE];
 
   f32 bonusRange = 0;
 
@@ -3894,12 +3898,12 @@ void DoUI(bool draw) {
           componentWeaponStatEntry(
             fb_stats->Get(StatType_DAMAGE)->name_locale(),
             [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT(
-                TextFormat(
-                  "%d", CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier)
-                ),
-                palTextGreen
-              );
+              int damage = fb->base_damage()->Get(fb->min_tier_index());
+              if (data.affectedByGame)
+                damage
+                  = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
+
+              BF_CLAY_TEXT(TextFormat("%d", damage), palTextGreen);
 
               // Scalings.
               const auto fb_scalings = fb->damage_scalings();
@@ -3922,38 +3926,50 @@ void DoUI(bool draw) {
           );
 
           // Critical.
-          componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT(TextFormat(
-              "x%.1f (%d%%)",
-              fb->crit_damage_multiplier(),
-              g.run.playerStats[StatType_CRIT_CHANCE]
-            ));
-          });
+          if (data.affectedByGame) {
+            componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT(TextFormat(
+                "x%.1f (%d%%)",
+                fb->crit_damage_multiplier(),
+                g.run.playerStats[StatType_CRIT_CHANCE]
+              ));
+            });
+          }
+          else {
+            componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT(TextFormat("x%.1f", fb->crit_damage_multiplier()));
+            });
+          }
 
           // Cooldown.
           componentWeaponStatEntry(Loc_UI_COOLDOWN, [&]() BF_FORCE_INLINE_LAMBDA {
-            const auto cooldownFrames = ApplyAttackSpeedToDuration(
-              fb->shooting_duration_frames() + fb->cooldown_frames()
-            );
+            auto cooldownFrames_
+              = (fb->shooting_duration_frames() + fb->cooldown_frames());
+            lframe cooldownFrames{};
+            if (data.affectedByGame)
+              cooldownFrames = ApplyAttackSpeedToDuration(cooldownFrames_);
+            else
+              cooldownFrames = lframe::Unscaled(cooldownFrames_);
             const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
             BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palTextGreen);
           });
 
           // Knockback.
-          componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat(
-              "%.1f",
-              fb->knockback_meters() * (f32)(100 + g.run.playerStats[StatType_KNOCKBACK])
-                / 100.0f
-            )));
-          });
+          {
+            f32 value = fb->knockback_meters();
+            if (data.affectedByGame)
+              value *= (f32)(100 + g.run.playerStats[StatType_KNOCKBACK]) / 100.0f;
+            componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat("%.1f", value)));
+            });
+          }
 
           // Range.
           componentWeaponStatEntry(Loc_UI_RANGE, [&]() BF_FORCE_INLINE_LAMBDA {
-            const f32 rangeMeters = GetWeaponRangeMeters(data.weapon);
-            if (fb->projectile_type()) {
+            const f32 rangeMeters
+              = GetWeaponRangeMeters(data.weapon, data.affectedByGame);
+            if (fb->projectile_type())
               BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
-            }
             else {
               const f32 weaponRangeMeters
                 = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
@@ -3963,30 +3979,32 @@ void DoUI(bool draw) {
           });
 
           // Pierce.
-          if (fb->projectile_type()
-              && (fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING] > 0))
-          {
-            componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT(TextFormat(
-                "%d", fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING]
-              ));
-            });
+          if (fb->projectile_type()) {
+            int value = fb->projectile_pierce();
+            if (data.affectedByGame)
+              value += g.run.playerStats[StatType_PIERCING];
+            if (value > 0) {
+              componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT(TextFormat("%d", value));
+              });
+            }
           }
 
           // Bounce.
-          if (fb->projectile_type()
-              && (fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES] > 0))
-          {
-            componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT(TextFormat(
-                "%d", fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES]
-              ));
-            });
+          if (fb->projectile_type()) {
+            int value = fb->projectile_bounce();
+            if (data.affectedByGame)
+              value += g.run.playerStats[StatType_BOUNCES];
+            if (value > 0) {
+              componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT(TextFormat("%d", value));
+              });
+            }
           }
 
           // Life Steal.
           {
-            auto chance = GetLifestealChance(data.weapon);
+            auto chance = GetLifestealChance(data.weapon, data.affectedByGame);
             if (chance > 0) {
               componentWeaponStatEntry(
                 fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
