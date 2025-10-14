@@ -6612,14 +6612,17 @@ void GameFixedUpdate() {
   // Handling ESC or P to toggle pause.
   {  ///
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
-      if (IsKeyPressed(SDL_SCANCODE_P)) {
+      if (IsKeyPressed(SDL_SCANCODE_P) && !g.meta.pausedShowingAchievements) {
         g.meta.scheduledTogglePause = true;
         PlaySound(Sound_UI_CLICK);
       }
 
 #if defined(SDL_PLATFORM_DESKTOP)
       if (IsKeyPressed(SDL_SCANCODE_ESCAPE)) {
-        g.meta.scheduledTogglePause = true;
+        if (g.meta.pausedShowingAchievements)
+          g.meta.pausedShowingAchievements = false;
+        else
+          g.meta.scheduledTogglePause = true;
         PlaySound(Sound_UI_CLICK);
       }
 #endif
