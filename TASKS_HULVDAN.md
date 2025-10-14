@@ -43,6 +43,7 @@ x achievements screen: not completed yet achievement show progress percent
 x achievements show progress in menu
   (PRECALCULATE TOTAL STEPS / COMPLETED STEPS AND PERCENT)
 x achievements: COINS
+x sliding achievement doesn't get dimmed by pause menu
 
 * achievements screen: showing reward description in right column
 * fix multiple one-by-one sliding achievements translation
