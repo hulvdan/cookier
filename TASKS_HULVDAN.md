@@ -44,10 +44,14 @@ x achievements show progress in menu
   (PRECALCULATE TOTAL STEPS / COMPLETED STEPS AND PERCENT)
 x achievements: COINS
 x sliding achievement doesn't get dimmed by pause menu
+x achievements screen: showing reward description in right column
 
-* achievements screen: showing reward description in right column
+* achievements screen: weapon's data doesn't get affected by game state
+* achievements screen: item's data doesn't get affected by game state (LIMITED)
+* build traits
+* achievements: build traits
+* fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
-* achievements:
 * achievements:
 * achievements:
 * achievements:
