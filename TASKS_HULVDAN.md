@@ -36,13 +36,16 @@ x achievements screen: ACHIEVEMENTS label
 x achievements screen: pressing ESCAPE returns us back to paused menu
 x achievements screen: showing achievement description in right column
 x achievements: same style for screen / in-game achievements
+x sliding achievement slot flashing
+x achievements screen: show progress %
+x achievements screen: not completed yet achievement show progress percent
+  (walker 10 000 meters (52%))
 
+* achievements show progress in menu
 * fix multiple one-by-one sliding achievements translation
-* achievements screen: show progress %
 * achievements screen: showing reward description in right column
 * better pause menu
 * achievements screen: completed achievement pearlescent?
-* achievements screen: not completed yet achievement show progress percent (walker 10 000 meters (52%))
 * achievements: COINS
 * achievements:
 * achievements:

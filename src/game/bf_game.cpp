@@ -4137,6 +4137,16 @@ void DoUI(bool draw) {
         FlexBegin(ACHIEVEMENT_WIDTH, 0);
         PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
         BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->description_locale());
+        int percent
+          = MIN(100, g.player.achievements[type].value * 100 / fb_step->value());
+        if ((percent < 100) && (fb_step->value() > 1)) {
+          BF_CLAY_TEXT(" ");
+          // BF_CLAY_TEXT(TextFormat("(%d%%)", percent), palTextBezhevy);
+          BF_CLAY_TEXT(
+            TextFormat("(%d / %d)", g.player.achievements[type].value, fb_step->value()),
+            palTextBezhevy
+          );
+        }
         FlexEnd();
       }
       else
@@ -5698,24 +5708,47 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          // "Achievements" label.
-          FontBegin(&g.meta.fontWaveCompletion);
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS__CAPS);
-          FontEnd();
-
-          int totalSlots = 0;
+          int totalSlots     = 0;
+          int totalCompleted = 0;
 
           int currentAchievement = 1;
           int currentStep        = 0;
           int shownSlots         = 0;
 
-          for (auto fb : *fb_achievements) {
-            auto fb_steps = fb->steps();
-            if (fb_steps) {
-              auto stepsCount = (int)fb_steps->size();
-              totalSlots += stepsCount;
+          {
+            int achievementIndex = -1;
+            for (auto fb : *fb_achievements) {
+              achievementIndex++;
+
+              auto fb_steps = fb->steps();
+              if (fb_steps) {
+                auto stepsCount = (int)fb_steps->size();
+                totalSlots += stepsCount;
+
+                for (auto fb_step : *fb_steps) {
+                  if (fb_step->value() <= g.player.achievements[achievementIndex].value)
+                    totalCompleted++;
+                }
+              }
             }
           }
+
+          // "Achievements" label.
+          FontBegin(&g.meta.fontWaveCompletion);
+          CLAY({}) {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS__CAPS);
+
+            int percent = totalCompleted * 100 / totalSlots;
+            ASSERT(percent >= 0);
+            ASSERT(percent <= 100);
+            if (percent > 0) {
+              auto color = palTextBezhevy;
+              if (percent >= 100)
+                color = palTextGreen;
+              BF_CLAY_TEXT(TextFormat(" %d%%", percent), color);
+            }
+          }
+          FontEnd();
 
           const int achievementsX = 8;
           const int achievementsY = CeilDivision((int)totalSlots, achievementsX);
@@ -5755,35 +5788,42 @@ void DoUI(bool draw) {
                     const bool isLocked
                       = (g.player.achievements[currentAchievement].value < fb_step->value());
 
+                    bool workingOnIt = true;
+                    if (currentStep > 0) {
+                      workingOnIt = g.player.achievements[currentAchievement].value
+                                    >= fb->steps()->Get(currentStep - 1)->value();
+                    }
+
                     bool canHover = true;
 
                     CLAY({}) {
                       int texId = 0;
                       int tier  = 0;
 
-                      if (isLocked)
+                      if (isLocked) {
                         texId = glib->ui_item_locked_texture_id();
+                        if (workingOnIt)
+                          tier = 1;
+                      }
                       else {
+                        tier = 3;
                         if (fb_step->unlocks_build_type()) {
                           auto fb_build = fb_builds->Get(fb_step->unlocks_build_type());
                           texId         = fb_build->texture_id();
-                          tier          = 3;
                         }
                         if (fb_step->unlocks_weapon_type()) {
                           auto fb_weapon
                             = fb_weapons->Get(fb_step->unlocks_weapon_type());
                           texId = fb_weapon->icon_texture_id();
-                          tier  = fb_weapon->min_tier_index();
                         }
                         if (fb_step->unlocks_item_type()) {
                           auto fb_item = fb_items->Get(fb_step->unlocks_item_type());
                           texId        = fb_item->texture_id();
-                          tier         = fb_item->tier();
                         }
                       }
 
                       componentSlot(
-                        {.canHover = canHover, .tier = (isLocked ? 0 : 3)},
+                        {.canHover = canHover, .tier = tier},
                         [&]() BF_FORCE_INLINE_LAMBDA {
                           CLAY({.layout{
                             BF_CLAY_SIZING_GROW_XY,
