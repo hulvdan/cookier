@@ -3549,42 +3549,7 @@ void DoUI(bool draw) {
     );
   };
 
-  LAMBDA (void, componentItemNameAndHeaderProperties, (ItemType item)) {  ///
-    auto fb_item = fb_items->Get(item);
-
-    CLAY({.layout{
-      .childGap        = GAP_SMALL,
-      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-    }}) {
-      BF_CLAY_TEXT_LOCALIZED_DANGER(
-        fb_item->name_locale(), textColorsPerTier[fb_item->tier()]
-      );
-
-      FontBegin(&g.meta.fontStats);
-      if (fb_item->count_cap() > 0) {
-        int currentCount = 0;
-        for (auto& x : g.run.state.items) {
-          if (x.type == item) {
-            currentCount = x.count;
-            break;
-          }
-        }
-        if (fb_item->count_cap() > 1) {
-          CLAY({}) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_LIMITED, secondaryTextColor);
-            BF_CLAY_TEXT(
-              TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()),
-              secondaryTextColor
-            );
-          }
-        }
-        else
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_UNIQUE, secondaryTextColor);
-      }
-      else
-        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEM, secondaryTextColor);
-      FontEnd();
-    }
+  LAMBDA (void, componentItemNameAndHeaderProperties, (ItemType item)) {
   };
 
   LAMBDA (void, componentEffectsExploded, (auto fb_effects, int count, int maxWidth))
@@ -3615,6 +3580,7 @@ void DoUI(bool draw) {
             v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
             isPercent = true;
           }
+          v *= count;
 
           const bool  isPositive = v >= 0;
           const char* format     = nullptr;
@@ -3639,6 +3605,7 @@ void DoUI(bool draw) {
             v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
             isPercent = true;
           }
+          v *= count;
 
           // TODO: correct colors.
           const char* format     = nullptr;
@@ -3668,185 +3635,9 @@ void DoUI(bool draw) {
     }
   };
 
-  LAMBDA (void, componentItemStatsExploded, (ItemType type, int count, int maxWidth))
-  {  ///
-    FontBegin(&g.meta.fontStats);
-    componentEffectsExploded(fb_items->Get(type)->effects(), count, maxWidth);
-    FontEnd();
-  };
-
   struct ComponentItemDetailsData {  ///
     int detailsRight = {};
     int detailsBelow = {};
-  };
-
-  LAMBDA (
-    void,
-    componentWeaponStatsExploded,
-    (int weaponIndexOrMinus1, WeaponType type, int tier, int thisWaveDamage, int maxWidth)
-  )
-  {  ///
-    FontBegin(&g.meta.fontStats);
-
-    LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
-      CLAY({.layout{
-        .childGap = GAP_FLEX,
-        BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
-        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-      }}) {
-        FlexBegin(maxWidth, 0);
-        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(labelLocale, secondaryTextColor);
-        BF_CLAY_TEXT(": ", secondaryTextColor);
-        innerLambda();
-        FlexEnd();
-      }
-    };
-
-    const auto fb = fb_weapons->Get(type);
-
-    // Damage.
-    componentWeaponStatEntry(
-      fb_stats->Get(StatType_DAMAGE)->name_locale(),
-      [&]() BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_TEXT(
-          TextFormat("%d", CalculateWeaponDamage(weaponIndexOrMinus1, type, tier)),
-          palTextGreen
-        );
-
-        // Scalings.
-        const auto fb_scalings = fb->damage_scalings();
-        if (fb_scalings && fb_scalings->size()) {
-          BF_CLAY_TEXT(" (");
-          FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
-            const auto fb_scaling = fb_scalings->Get(scalingIndex);
-            const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
-            BF_CLAY_TEXT(TextFormat(
-              "+%d%%", fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
-            ));
-            BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
-            if (scalingIndex < fb_scalings->size() - 1)
-              BF_CLAY_TEXT(", ");
-          }
-          BF_CLAY_TEXT(")");
-        }
-      }
-    );
-
-    // Critical.
-    componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
-      BF_CLAY_TEXT(TextFormat(
-        "x%.1f (%d%%)",
-        fb->crit_damage_multiplier(),
-        g.run.playerStats[StatType_CRIT_CHANCE]
-      ));
-    });
-
-    // Cooldown.
-    componentWeaponStatEntry(Loc_UI_COOLDOWN, [&]() BF_FORCE_INLINE_LAMBDA {
-      const auto cooldownFrames = ApplyAttackSpeedToDuration(
-        fb->shooting_duration_frames() + fb->cooldown_frames()
-      );
-      const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
-      BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palTextGreen);
-    });
-
-    // Knockback.
-    componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
-      BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat(
-        "%.1f",
-        fb->knockback_meters() * (f32)(100 + g.run.playerStats[StatType_KNOCKBACK])
-          / 100.0f
-      )));
-    });
-
-    // Range.
-    componentWeaponStatEntry(Loc_UI_RANGE, [&]() BF_FORCE_INLINE_LAMBDA {
-      const f32 rangeMeters = GetWeaponRangeMeters(type);
-      if (fb->projectile_type()) {
-        BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
-      }
-      else {
-        const f32 weaponRangeMeters
-          = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
-            * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-        BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
-      }
-    });
-
-    // Pierce.
-    if (fb->projectile_type()
-        && (fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING] > 0))
-    {
-      componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_TEXT(
-          TextFormat("%d", fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING])
-        );
-      });
-    }
-
-    // Bounce.
-    if (fb->projectile_type()
-        && (fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES] > 0))
-    {
-      componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_TEXT(
-          TextFormat("%d", fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES])
-        );
-      });
-    }
-
-    // Life Steal.
-    {
-      auto chance = GetLifestealChance(type);
-      if (chance > 0) {
-        componentWeaponStatEntry(
-          fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
-          [&]() BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT(
-              TextFormat(
-                "%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
-              ),
-              palTextGreen
-            );
-          }
-        );
-      }
-    }
-
-    // Explosion.
-    {
-      auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
-      if (chance > 0) {
-        CLAY({.layout{
-          .childGap        = GAP_FLEX,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }}) {
-          FlexBegin(maxWidth, 0);
-
-          PlaceholdString(
-            "CHANCE",
-            TextFormat(
-              "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
-            )
-          );
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_CHANCE_OF_EXPLOSION);
-
-          FlexEnd();
-        }
-      }
-    }
-
-    componentEffectsExploded(fb->effects(), 1, maxWidth);
-
-    // This wave damage.
-    ASSERT(thisWaveDamage >= 0);
-    if (thisWaveDamage > 0) {
-      componentWeaponStatEntry(Loc_UI_THIS_WAVE_DAMAGE, [&]() BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palTextWhite);
-      });
-    }
-
-    FontEnd();
   };
 
   struct ComponentUniversalCardData {  ///
@@ -3854,7 +3645,8 @@ void DoUI(bool draw) {
     ItemType   item   = {};
     WeaponType weapon = {};
 
-    int weaponIndex = -1;
+    int itemCount           = 1;
+    int weaponIndexOrMinus1 = -1;
 
     bool hideIfEmpty    = false;
     bool affectedByGame = false;
@@ -3975,14 +3767,47 @@ void DoUI(bool draw) {
           });
           // }
 
-          // Name, secondary stuff. {  ///
-          if (data.item)
-            componentItemNameAndHeaderProperties(data.item);
-          if (data.weapon) {
-            CLAY({.layout{
-              .childGap        = GAP_SMALL,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            }}) {
+          // Name, secondary stuff.
+          CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+            if (data.item) {  ///
+              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                fb_item->name_locale(), textColorsPerTier[fb_item->tier()]
+              );
+
+              FontBegin(&g.meta.fontStats);
+              if (fb_item->count_cap() > 0) {
+                if (fb_item->count_cap() > 1) {
+                  CLAY({}) {
+                    BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_LIMITED, secondaryTextColor);
+
+                    if (data.affectedByGame) {
+                      int currentCount = 0;
+                      for (auto& x : g.run.state.items) {
+                        if (x.type == data.item) {
+                          currentCount = x.count;
+                          break;
+                        }
+                      }
+                      BF_CLAY_TEXT(
+                        TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()),
+                        secondaryTextColor
+                      );
+                    }
+                    else {
+                      BF_CLAY_TEXT(
+                        TextFormat(" (%d)", fb_item->count_cap()), secondaryTextColor
+                      );
+                    }
+                  }
+                }
+                else
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_UNIQUE, secondaryTextColor);
+              }
+              else
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEM, secondaryTextColor);
+              FontEnd();
+            }
+            if (data.weapon) {  ///
               BF_CLAY_TEXT_LOCALIZED_DANGER(
                 fb_weapon->name_locale(), textColorsPerTier[tier]
               );
@@ -3990,12 +3815,7 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPON, secondaryTextColor);
               FontEnd();
             }
-          }
-          if (data.build) {
-            CLAY({.layout{
-              .childGap        = GAP_SMALL,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            }}) {
+            if (data.build) {  ///
               BF_CLAY_TEXT_LOCALIZED_DANGER(
                 fb_build->name_locale(), textColorsPerTier[tier]
               );
@@ -4004,14 +3824,190 @@ void DoUI(bool draw) {
               FontEnd();
             }
           }
-          // }
         }
 
-        // Stats.
-        if (data.item)
-          componentItemStatsExploded(data.item, 1, CARD_WIDTH);
-        else if (data.weapon)
-          componentWeaponStatsExploded(-1, data.weapon, tier, 0, CARD_WIDTH);
+        FontBegin(&g.meta.fontStats);
+
+        // Item stats.
+        if (data.item) {  ///
+          componentEffectsExploded(
+            fb_items->Get(data.item)->effects(), data.itemCount, CARD_WIDTH
+          );
+        }
+        // Weapon stats.
+        else if (data.weapon) {  ///
+          int thisWaveDamage = 0;
+          if (data.weaponIndexOrMinus1 >= 0)
+            thisWaveDamage = g.run.state.weapons[data.weaponIndexOrMinus1].thisWaveDamage;
+
+          LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
+            CLAY({.layout{
+              .childGap = GAP_FLEX,
+              BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              FlexBegin(CARD_WIDTH, 0);
+              BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(labelLocale, secondaryTextColor);
+              BF_CLAY_TEXT(": ", secondaryTextColor);
+              innerLambda();
+              FlexEnd();
+            }
+          };
+
+          const auto fb = fb_weapons->Get(data.weapon);
+
+          // Damage.
+          componentWeaponStatEntry(
+            fb_stats->Get(StatType_DAMAGE)->name_locale(),
+            [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT(
+                TextFormat(
+                  "%d", CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier)
+                ),
+                palTextGreen
+              );
+
+              // Scalings.
+              const auto fb_scalings = fb->damage_scalings();
+              if (fb_scalings && fb_scalings->size()) {
+                BF_CLAY_TEXT(" (");
+                FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
+                  const auto fb_scaling = fb_scalings->Get(scalingIndex);
+                  const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
+                  BF_CLAY_TEXT(TextFormat(
+                    "+%d%%",
+                    fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
+                  ));
+                  BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+                  if (scalingIndex < fb_scalings->size() - 1)
+                    BF_CLAY_TEXT(", ");
+                }
+                BF_CLAY_TEXT(")");
+              }
+            }
+          );
+
+          // Critical.
+          componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT(TextFormat(
+              "x%.1f (%d%%)",
+              fb->crit_damage_multiplier(),
+              g.run.playerStats[StatType_CRIT_CHANCE]
+            ));
+          });
+
+          // Cooldown.
+          componentWeaponStatEntry(Loc_UI_COOLDOWN, [&]() BF_FORCE_INLINE_LAMBDA {
+            const auto cooldownFrames = ApplyAttackSpeedToDuration(
+              fb->shooting_duration_frames() + fb->cooldown_frames()
+            );
+            const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
+            BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palTextGreen);
+          });
+
+          // Knockback.
+          componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat(
+              "%.1f",
+              fb->knockback_meters() * (f32)(100 + g.run.playerStats[StatType_KNOCKBACK])
+                / 100.0f
+            )));
+          });
+
+          // Range.
+          componentWeaponStatEntry(Loc_UI_RANGE, [&]() BF_FORCE_INLINE_LAMBDA {
+            const f32 rangeMeters = GetWeaponRangeMeters(data.weapon);
+            if (fb->projectile_type()) {
+              BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
+            }
+            else {
+              const f32 weaponRangeMeters
+                = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
+                  * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+              BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
+            }
+          });
+
+          // Pierce.
+          if (fb->projectile_type()
+              && (fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING] > 0))
+          {
+            componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT(TextFormat(
+                "%d", fb->projectile_pierce() + g.run.playerStats[StatType_PIERCING]
+              ));
+            });
+          }
+
+          // Bounce.
+          if (fb->projectile_type()
+              && (fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES] > 0))
+          {
+            componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT(TextFormat(
+                "%d", fb->projectile_bounce() + g.run.playerStats[StatType_BOUNCES]
+              ));
+            });
+          }
+
+          // Life Steal.
+          {
+            auto chance = GetLifestealChance(data.weapon);
+            if (chance > 0) {
+              componentWeaponStatEntry(
+                fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_TEXT(
+                    TextFormat(
+                      "%s%%",
+                      StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
+                    ),
+                    palTextGreen
+                  );
+                }
+              );
+            }
+          }
+
+          // Explosion.
+          {
+            auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
+            if (chance > 0) {
+              CLAY({.layout{
+                .childGap        = GAP_FLEX,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+              }}) {
+                FlexBegin(CARD_WIDTH, 0);
+
+                PlaceholdString(
+                  "CHANCE",
+                  TextFormat(
+                    "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
+                  )
+                );
+                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
+                );
+
+                FlexEnd();
+              }
+            }
+          }
+
+          componentEffectsExploded(fb->effects(), 1, CARD_WIDTH);
+
+          // This wave damage.
+          ASSERT(thisWaveDamage >= 0);
+          if (thisWaveDamage > 0) {
+            componentWeaponStatEntry(
+              Loc_UI_THIS_WAVE_DAMAGE,
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palTextWhite);
+              }
+            );
+          };
+        }
+
+        FontEnd();
 
         BF_CLAY_SPACER_VERTICAL;
 
@@ -4091,9 +4087,9 @@ void DoUI(bool draw) {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           }}) {
             int   canCombineWithIndex = -1;
-            auto& weapon              = g.run.state.weapons[data.weaponIndex];
+            auto& weapon              = g.run.state.weapons[data.weaponIndexOrMinus1];
             for (int i = g.run.state.weapons.count - 1; i >= 0; i--) {
-              if (i == data.weaponIndex)
+              if (i == data.weaponIndexOrMinus1)
                 continue;
               auto& otherWeapon = g.run.state.weapons[i];
               if ((weapon.type == otherWeapon.type)     //
@@ -4148,7 +4144,7 @@ void DoUI(bool draw) {
             }
             if (recycled) {
               ChangeCoins(recyclePrice);
-              StableRemoveWeapon(data.weaponIndex);
+              StableRemoveWeapon(data.weaponIndexOrMinus1);
               Save();
             }
             if (cancelled || recycled || combined) {
@@ -4195,7 +4191,11 @@ void DoUI(bool draw) {
     }) {
       FLOATING_BEAUTIFY;
 
-      componentUniversalCard({.item = item.type, .affectedByGame = true});
+      componentUniversalCard({
+        .item           = item.type,
+        .itemCount      = item.count,
+        .affectedByGame = true,
+      });
     }
 
     zIndex -= 2;
@@ -4421,11 +4421,11 @@ void DoUI(bool draw) {
           componentOverlay();
 
         componentUniversalCard({
-          .weapon         = weapon.type,
-          .weaponIndex    = weaponIndex,
-          .affectedByGame = true,
-          .overrideTier   = weapon.tier,
-          .shopSelling    = weAreInShop,
+          .weapon              = weapon.type,
+          .weaponIndexOrMinus1 = weaponIndex,
+          .affectedByGame      = true,
+          .overrideTier        = weapon.tier,
+          .shopSelling         = weAreInShop,
         });
       }
 

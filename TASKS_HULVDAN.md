@@ -46,10 +46,11 @@ x achievements: COINS
 x sliding achievement doesn't get dimmed by pause menu
 x achievements screen: showing reward description in right column
 x game recalc weapon damage on Load
+x ref BIG_UNIVERSAL_CARD (none, item, weapon, build, difficulty, build, overrideTier etc)
+x ach screen: item's data isn't affected by game state
 
-* ref BIG_UNIVERSAL_CARD (none, item, weapon, build, difficulty, build, overrideTier etc)
-* build traits
 * achievements screen: weapon's data doesn't get affected by game state
+* build traits
 * achievements screen: item's data doesn't get affected by game state (LIMITED)
 * achievements: build traits
 * fix: shop: disable keyboard R1234 while weapon modal is opened
