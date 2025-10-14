@@ -984,6 +984,18 @@ void OnUIStart() {  ///
   ge.settings.screenFade = glib->ui_modal_fade();
 }
 
+void RecalculatePlayerWeaponDamage() {  ///
+  int weaponIndexOrMinus1 = -1;
+  for (auto& weapon : g.run.state.weapons) {
+    weaponIndexOrMinus1++;
+    weapon.thisWaveDamage = 0;
+    if (weapon.type) {
+      weapon.calculatedDamage
+        = CalculateWeaponDamage(weaponIndexOrMinus1, weapon.type, weapon.tier);
+    }
+  }
+}
+
 void RecalculatePlayerWeaponOffsets() {  ///
   int weaponsCount = 0;
   for (const auto& weapon : g.run.state.weapons) {
@@ -1161,19 +1173,10 @@ void OnWaveStarted() {  ///
 
   RecalculateThisWaveMobs();
 
-  int weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.state.weapons) {
-    weaponIndexOrMinus1++;
-    weapon.thisWaveDamage = 0;
-    if (weapon.type) {
-      weapon.calculatedDamage
-        = CalculateWeaponDamage(weaponIndexOrMinus1, weapon.type, weapon.tier);
-    }
-  }
-
   g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
   g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
 
+  RecalculatePlayerWeaponDamage();
   RecalculatePlayerWeaponOffsets();
 }
 
@@ -1351,6 +1354,7 @@ void Load(void* saveData) {  ///
   else if (s.screen == ScreenType_END)
     g.run.scheduledEnd = true;
 
+  RecalculatePlayerWeaponDamage();
   RecalculatePlayerWeaponOffsets();
 
   g.player.lockedBuilds  = {};
