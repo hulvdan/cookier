@@ -47,8 +47,8 @@ x sliding achievement doesn't get dimmed by pause menu
 x achievements screen: showing reward description in right column
 x game recalc weapon damage on Load
 
-* build traits
 * ref BIG_UNIVERSAL_CARD (none, item, weapon, build, difficulty, build, overrideTier etc)
+* build traits
 * achievements screen: weapon's data doesn't get affected by game state
 * achievements screen: item's data doesn't get affected by game state (LIMITED)
 * achievements: build traits
