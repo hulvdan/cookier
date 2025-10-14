@@ -455,7 +455,6 @@ struct Weapon {
   FrameGame  startedShootingAt                  = {};
   FrameGame  cooldownStartedAt                  = {};
   int        tier                               = {};
-  int        recyclePrice                       = {};
   int        calculatedDamage                   = 0;
   int        thisWaveDamage                     = 0;
   f32        lastCollisionCheckShootingProgress = 0;
@@ -850,8 +849,7 @@ struct GameData {
 
       // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
       struct {
-        ItemType toPick       = {};
-        int      recyclePrice = {};
+        ItemType toPick = {};
       } pickedUpItem;
 
       struct {
@@ -2405,10 +2403,9 @@ void RunInit() {
   g.run.camera.pos = GetCameraTargetPos();
 
   {
-    auto& weapon        = g.run.state.weapons[0];
-    weapon.type         = g.player.weapon;
-    weapon.tier         = 0;
-    weapon.recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+    auto& weapon = g.run.state.weapons[0];
+    weapon.type  = g.player.weapon;
+    weapon.tier  = 0;
   }
 
   // Placing walls.
@@ -3237,6 +3234,18 @@ void DoUI(bool draw) {
     slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
   }
   const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
+
+  constexpr int CARD_WIDTH          = 219;
+  constexpr int CARD_HEIGHT         = 320;
+  constexpr int UPGRADE_FRAME_WIDTH = 190;
+  constexpr int ACHIEVEMENT_WIDTH   = CARD_WIDTH;
+
+  const f32 ACHIEVEMENT_HEIGHT =                      //
+    0                                                 //
+    + g.meta.fontUI.size / g.meta.fontUI._scaleToFit  // Name.
+    + GAP_SMALL                                       // Gap between name and description.
+    + 2 * g.meta.fontStats.size / g.meta.fontUI._scaleToFit  // 2 lines of description.
+    + GAP_FLEX;                                              // Gap between them.
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = palTextWhite))
@@ -3278,7 +3287,7 @@ void DoUI(bool draw) {
     return !draw && Clay_Hovered() && IsMousePressed(R);
   };
 
-  struct ComponentButtonData {
+  struct ComponentButtonData {  ///
     Clay_ElementId id                = {};
     bool           selected          = false;
     bool           growX             = false;
@@ -3336,7 +3345,7 @@ void DoUI(bool draw) {
     return result;
   };
 
-  struct ComponentSlotData {
+  struct ComponentSlotData {  ///
     bool hidden     = {};
     bool canHover   = {};
     int  tier       = {};
@@ -3510,7 +3519,7 @@ void DoUI(bool draw) {
     }
   };
 
-  LAMBDA (void, componentItem, (bool canHover, const Item& item)) {  ///
+  LAMBDA (void, componentSlotItem, (bool canHover, const Item& item)) {  ///
     const auto fb = glib->items()->Get(item.type);
     componentSlot(
       {.canHover = canHover, .tier = fb->tier()},
@@ -3551,6 +3560,7 @@ void DoUI(bool draw) {
         fb_item->name_locale(), textColorsPerTier[fb_item->tier()]
       );
 
+      FontBegin(&g.meta.fontStats);
       if (fb_item->count_cap() > 0) {
         int currentCount = 0;
         for (auto& x : g.run.state.items) {
@@ -3559,21 +3569,21 @@ void DoUI(bool draw) {
             break;
           }
         }
-        CLAY({}) {
-          FontBegin(&g.meta.fontStats);
-          if (fb_item->count_cap() > 1) {
+        if (fb_item->count_cap() > 1) {
+          CLAY({}) {
             BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_LIMITED, secondaryTextColor);
             BF_CLAY_TEXT(
               TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()),
               secondaryTextColor
             );
           }
-          else {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_UNIQUE, secondaryTextColor);
-          }
-          FontEnd();
         }
+        else
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_UNIQUE, secondaryTextColor);
       }
+      else
+        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEM, secondaryTextColor);
+      FontEnd();
     }
   };
 
@@ -3665,113 +3675,9 @@ void DoUI(bool draw) {
     FontEnd();
   };
 
-  struct ComponentItemDetailsData {
+  struct ComponentItemDetailsData {  ///
     int detailsRight = {};
     int detailsBelow = {};
-  };
-
-  constexpr int ITEM_FRAME_WIDTH    = 219;
-  constexpr int ITEM_FRAME_HEIGHT   = 320;
-  constexpr int UPGRADE_FRAME_WIDTH = 190;
-  constexpr int ACHIEVEMENT_WIDTH   = ITEM_FRAME_WIDTH;
-
-  const f32 ACHIEVEMENT_HEIGHT =                      //
-    0                                                 //
-    + g.meta.fontUI.size / g.meta.fontUI._scaleToFit  // Name.
-    + GAP_SMALL                                       // Gap between name and description.
-    + 2 * g.meta.fontStats.size / g.meta.fontUI._scaleToFit  // 2 lines of description.
-    + GAP_FLEX;                                              // Gap between them.
-
-  LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
-  {  ///
-    f32                          offsetY{};
-    Clay_FloatingAttachPointType attachElement{};
-    Clay_FloatingAttachPointType attachParent{};
-
-    if (data.detailsBelow) {
-      offsetY       = GAP_SMALL;
-      attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
-      attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-    }
-    else {
-      offsetY       = -GAP_SMALL;
-      attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-      attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
-    }
-
-    zIndex += 2;
-
-    CLAY({
-      .layout{
-        .sizing{
-          CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-          CLAY_SIZING_FIT(0)
-        },
-      },
-      .floating{
-        .offset{0, offsetY},
-        .zIndex = zIndex,
-        .attachPoints{.element = attachElement, .parent = attachParent},
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-    }) {
-      FLOATING_BEAUTIFY;
-
-      const auto fb_item = fb_items->Get(item.type);
-
-      CLAY({
-        .layout{
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-          .childGap        = GAP_SMALL,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        },
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(),
-          slotColors[2 * fb_item->tier()],
-          slotColors[2 * fb_item->tier() + 1]
-        ),
-      }) {
-        CLAY({.layout{.childGap = GAP_SMALL}}) {
-          componentItem(false, item);
-          componentItemNameAndHeaderProperties(item.type);
-        }
-
-        componentItemStatsExploded(item.type, item.count, ITEM_FRAME_WIDTH);
-      }
-    }
-
-    zIndex -= 2;
-  };
-
-  LAMBDA (void, componentWeapon, (int weaponIndex, bool weAreInShop)) {  ///
-    auto& weapon = g.run.state.weapons[weaponIndex];
-
-    componentSlot(
-      {.hidden = !weapon.type, .canHover = true, .tier = weapon.tier},
-      [&]() BF_FORCE_INLINE_LAMBDA {
-        if (weapon.type) {
-          const auto fb = fb_weapons->Get(weapon.type);
-          CLAY({.layout{
-            BF_CLAY_SIZING_GROW_XY,
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          }}) {
-            BF_CLAY_IMAGE({
-              .texId = fb->icon_texture_id(),
-              .color = ColorFromRGBA(fb->color()),
-            });
-          }
-
-          ButtonSFX(draw, CLAY_IDI("componentWeapon", weaponIndex), Clay_Hovered());
-
-          if (weAreInShop && clicked()) {
-            PlaySound(Sound_UI_CLICK);
-
-            ASSERT(g.run.shopSelectedWeaponIndex == -1);
-            g.run.shopSelectedWeaponIndex = weaponIndex;
-          }
-        }
-      }
-    );
   };
 
   LAMBDA (
@@ -3943,192 +3849,390 @@ void DoUI(bool draw) {
     FontEnd();
   };
 
-  LAMBDA (
-    void, componentWeaponDetails, (int weaponIndex, bool weAreInShop, bool detailsBelow)
-  )
-  {  ///
-    auto& weapon = g.run.state.weapons[weaponIndex];
-    ASSERT(weapon.type);
-    auto fb = fb_weapons->Get(weapon.type);
+  struct ComponentUniversalCardData {  ///
+    BuildType  build  = {};
+    ItemType   item   = {};
+    WeaponType weapon = {};
 
-    // Floating weapon details modal.
-    // Gets shown upon hovering. Gets sticked upon clicking on weapon.
-    if ((Clay_Hovered() || (g.run.shopSelectedWeaponIndex == weaponIndex))
-        && g.run.state.weapons[weaponIndex].type)
-    {
-      if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex)) {
-        // Pressing ESC closes modal.
-        if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
-          g.run.shopSelectedWeaponIndex = -1;
+    int weaponIndex = -1;
+
+    bool hideIfEmpty    = false;
+    bool affectedByGame = false;
+    int  overrideTier   = -1;
+
+    bool setFixedHeight = false;
+
+    int  shopBuyingIndex = -1;
+    bool shopSelling     = false;
+  };
+
+  LAMBDA (void, componentUniversalCard, (ComponentUniversalCardData data)) {
+    // Setup. {  ///
+    const int atLeastOneIsSpecified
+      = (int)(data.weapon != 0) + (int)(data.item != 0) + (int)(data.build != 0);
+    ASSERT(atLeastOneIsSpecified <= 1);
+
+    const auto fb_build  = (data.build ? fb_builds->Get(data.build) : nullptr);
+    const auto fb_item   = (data.item ? fb_items->Get(data.item) : nullptr);
+    const auto fb_weapon = (data.weapon ? fb_weapons->Get(data.weapon) : nullptr);
+
+    int tier = data.overrideTier;
+    if (tier == -1) {
+      if (fb_build)
+        tier = 3;
+      else if (fb_item)
+        tier = fb_item->tier();
+      else if (fb_weapon)
+        tier = fb_weapon->min_tier_index();
+      else
+        tier = 0;
+    }
+
+    int price        = 0;
+    int recyclePrice = 0;
+    if (fb_weapon) {
+      price        = GetWeaponPrice(data.weapon, tier);
+      recyclePrice = GetWeaponRecyclePrice(data.weapon, tier);
+    }
+    if (fb_item) {
+      price        = fb_item->price();
+      recyclePrice = price / RECYCLE_PRICE_FACTOR;
+    }
+    price = ApplyStatItemsPrice(price);
+
+    bool canBuy                     = (price <= PLAYER_COINS);
+    bool canBuyErrorWeapon          = false;
+    int  emptyOrSameWeaponSlotIndex = -1;
+
+    if (canBuy && data.weapon) {
+      // Trying to find empty weapon slot.
+      FOR_RANGE (int, i, g.run.state.weapons.count) {
+        const auto& weapon = g.run.state.weapons[i];
+        if (!weapon.type) {
+          emptyOrSameWeaponSlotIndex = i;
+          break;
+        }
       }
-
-      f32                          offsetY{};
-      Clay_FloatingAttachPointType attachElement{};
-      Clay_FloatingAttachPointType attachParent{};
-
-      if (detailsBelow) {
-        offsetY       = GAP_SMALL;
-        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      // If not found, trying to find the same player's weapon to upgrade.
+      if (emptyOrSameWeaponSlotIndex == -1) {
+        FOR_RANGE (int, i, g.run.state.weapons.count) {
+          const auto& weapon        = g.run.state.weapons[i];
+          const bool  canBeUpgraded = (weapon.type == data.weapon)  //
+                                     && (weapon.tier == tier)       //
+                                     && (tier < TOTAL_TIERS - 1);
+          if (canBeUpgraded) {
+            emptyOrSameWeaponSlotIndex = i;
+            break;
+          }
+        }
       }
-      else {
-        offsetY       = -GAP_SMALL;
-        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+      if (emptyOrSameWeaponSlotIndex == -1) {
+        canBuyErrorWeapon = true;
+        canBuy            = false;
       }
+    }
+    // }  ///
 
-      zIndex += 2;
-
+    CLAY({.layout{.sizing{
+      .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+      .height
+      = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
+    }}})
+    if (!data.hideIfEmpty || atLeastOneIsSpecified) {
+      // CLAY(...) {  ///
       CLAY({
         .layout{
-          .sizing{
-            CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-            CLAY_SIZING_FIT(0)
-          },
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+          .childGap        = GAP_SMALL,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
-        .floating{
-          .offset{0, offsetY},
-          .zIndex = zIndex,
-          .attachPoints{.element = attachElement, .parent = attachParent},
-          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE,
-          .attachTo           = CLAY_ATTACH_TO_PARENT,
-        },
-      }) {
-        FLOATING_BEAUTIFY;
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(), slotColors[2 * tier], slotColors[2 * tier + 1]
+        ),
+      })
+      // }
+      {
+        // Icon, name.
+        CLAY({.layout{.childGap = GAP_SMALL}}) {
+          // Icon. {  ///
+          componentSlot({.canHover = false, .tier = tier}, [&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({.layout{
+              BF_CLAY_SIZING_GROW_XY,
+              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            }}) {
+              int texId = 0;
+              if (fb_build)
+                texId = fb_build->texture_id();
+              if (fb_item)
+                texId = fb_item->texture_id();
+              if (fb_weapon)
+                texId = fb_weapon->icon_texture_id();
 
-        CLAY({
-          .layout{
-            .sizing{
-              .width = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME)
-            },
-            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-            .childGap        = GAP_BIG,
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-          },
-          BF_CLAY_CUSTOM_NINE_SLICE(
-            glib->ui_frame_nine_slice(),
-            slotColors[2 * weapon.tier],
-            slotColors[2 * weapon.tier + 1]
-          ),
-        }) {
-          if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex))
-            componentOverlay();
-
-          CLAY({
-            .layout{
-              .sizing{.width = CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH)},
-              .childGap        = GAP_SMALL,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            },
-          }) {
-            CLAY({.layout{.childGap = GAP_SMALL}}) {
-              componentSlot(
-                {.canHover = false, .tier = weapon.tier},
-                [&]() BF_FORCE_INLINE_LAMBDA {
-                  CLAY({.layout{
-                    BF_CLAY_SIZING_GROW_XY,
-                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                  }}) {
-                    BF_CLAY_IMAGE({
-                      .texId = fb->icon_texture_id(),
-                      .color = ColorFromRGBA(fb->color()),
-                    });
-                  }
-                }
-              );
-
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
-                fb->name_locale(), textColorsPerTier[weapon.tier]
-              );
+              if (texId)
+                BF_CLAY_IMAGE({.texId = texId});
             }
+          });
+          // }
 
-            componentWeaponStatsExploded(
-              weaponIndex,
-              weapon.type,
-              weapon.tier,
-              weapon.thisWaveDamage,
-              ITEM_FRAME_WIDTH
-            );
-          }
-
-          if (weAreInShop) {
+          // Name, secondary stuff. {  ///
+          if (data.item)
+            componentItemNameAndHeaderProperties(data.item);
+          if (data.weapon) {
             CLAY({.layout{
               .childGap        = GAP_SMALL,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
-              int canCombineWithIndex = -1;
-              for (int i = g.run.state.weapons.count - 1; i >= 0; i--) {
-                if (i == weaponIndex)
-                  continue;
-                auto& otherWeapon = g.run.state.weapons[i];
-                if ((weapon.type == otherWeapon.type)     //
-                    && (weapon.tier == otherWeapon.tier)  //
-                    && (weapon.tier < TOTAL_TIERS - 1))
-                {
-                  canCombineWithIndex = i;
-                  break;
-                }
-              }
-
-              // Combine button.
-              bool combined = false;
-              if (canCombineWithIndex >= 0) {
-                combined = componentButton(
-                  {.id = CLAY_ID("button_weapon_combine")},
-                  [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_COMBINE, textColor);
-                  }
-                );
-              }
-
-              // Recycle button.
-              const bool recycled = componentButton(
-                {.id = CLAY_ID("button_weapon_recycle")},
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RECYCLE, textColor);
-                  BF_CLAY_TEXT(TextFormat(" (+%d)", weapon.recyclePrice), textColor);
-                }
+              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                fb_weapon->name_locale(), textColorsPerTier[tier]
               );
-
-              // Cancel button.
-              const bool cancelled = componentButton(
-                {.id = CLAY_ID("button_weapon_cancel")},
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_CANCEL, textColor);
-                }
+              FontBegin(&g.meta.fontStats);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPON, secondaryTextColor);
+              FontEnd();
+            }
+          }
+          if (data.build) {
+            CLAY({.layout{
+              .childGap        = GAP_SMALL,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                fb_build->name_locale(), textColorsPerTier[tier]
               );
+              FontBegin(&g.meta.fontStats);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD, secondaryTextColor);
+              FontEnd();
+            }
+          }
+          // }
+        }
 
-              if (combined) {
-                ASSERT(canCombineWithIndex >= 0);
-                weapon.tier += 1;
-                weapon.recyclePrice   = GetWeaponRecyclePrice(weapon.type, weapon.tier);
-                weapon.thisWaveDamage = 0;
-                weapon.killedEnemies  = MAX(
-                  weapon.killedEnemies,
-                  g.run.state.weapons[canCombineWithIndex].killedEnemies
-                );
-                StableRemoveWeapon(canCombineWithIndex);
-                Save();
+        // Stats.
+        if (data.item)
+          componentItemStatsExploded(data.item, 1, CARD_WIDTH);
+        else if (data.weapon)
+          componentWeaponStatsExploded(-1, data.weapon, tier, 0, CARD_WIDTH);
+
+        BF_CLAY_SPACER_VERTICAL;
+
+        if (data.shopBuyingIndex >= 0) {  ///
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_X,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            // Buying item / weapon.
+            auto bought = componentButton(
+              {.id = CLAY_IDI("button_shop_buy", data.shopBuyingIndex)},
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                CLAY({.layout{
+                  BF_CLAY_SIZING_GROW_X,
+                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                }}) {
+                  FontBegin(&g.meta.fontPrices);
+                  BF_CLAY_TEXT(
+                    TextFormat("%d ", price),
+                    (price <= PLAYER_COINS ? textColor : palTextRed)
+                  );
+                  FontEnd();
+                  BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                }
               }
-              if (recycled) {
-                ChangeCoins(weapon.recyclePrice);
-                StableRemoveWeapon(weaponIndex);
-                Save();
-              }
-              if (cancelled || recycled || combined) {
+            );
+            if (!draw
+                && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + data.shopBuyingIndex)
+                ))
+              bought = true;
+
+            if (bought) {
+              if (canBuy) {
                 PlaySound(Sound_UI_CLICK);
-                g.run.shopSelectedWeaponIndex = -1;
+
+                ChangeCoins(-price);
+                if (data.weapon) {
+                  auto& weapon = g.run.state.weapons[emptyOrSameWeaponSlotIndex];
+                  if (weapon.type) {
+                    // Upgrading an existing weapon if no empty slot found.
+                    ASSERT(weapon.type == data.weapon);
+                    ASSERT(weapon.tier == tier);
+                    weapon.tier += 1;
+                  }
+                  else {
+                    // Filling empty weapon slot if exists.
+                    weapon.type = data.weapon;
+                    weapon.tier = tier;
+                  }
+                }
+                else if (data.item)
+                  AddItem(data.item);
+                else
+                  INVALID_PATH;
+
+                g.run.state.shop.toPick[data.shopBuyingIndex] = {};
+                Save();
+              }
+              else {
+                if (canBuyErrorWeapon) {
+                  g.ui.shopErrorWeapons = {};
+                  g.ui.shopErrorWeapons.SetNow();
+                }
+                else {
+                  g.ui.shopErrorGold = {};
+                  g.ui.shopErrorGold.SetNow();
+                }
+                PlaySound(Sound_UI_ERROR);
               }
             }
           }
         }
-      }
 
-      zIndex -= 2;
+        if (data.shopSelling) {  ///
+          CLAY({.layout{
+            .childGap        = GAP_SMALL,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
+            int   canCombineWithIndex = -1;
+            auto& weapon              = g.run.state.weapons[data.weaponIndex];
+            for (int i = g.run.state.weapons.count - 1; i >= 0; i--) {
+              if (i == data.weaponIndex)
+                continue;
+              auto& otherWeapon = g.run.state.weapons[i];
+              if ((weapon.type == otherWeapon.type)     //
+                  && (weapon.tier == otherWeapon.tier)  //
+                  && (weapon.tier < TOTAL_TIERS - 1))
+              {
+                canCombineWithIndex = i;
+                break;
+              }
+            }
+
+            // Combine button.
+            bool combined = false;
+            if (canCombineWithIndex >= 0) {
+              combined = componentButton(
+                {.id = CLAY_ID("button_weapon_combine")},
+                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_COMBINE, textColor);
+                }
+              );
+            }
+
+            const int recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+
+            // Recycle button.
+            const bool recycled = componentButton(
+              {.id = CLAY_ID("button_weapon_recycle")},
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RECYCLE, textColor);
+                BF_CLAY_TEXT(TextFormat(" (+%d)", recyclePrice), textColor);
+              }
+            );
+
+            // Cancel button.
+            const bool cancelled = componentButton(
+              {.id = CLAY_ID("button_weapon_cancel")},
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_CANCEL, textColor);
+              }
+            );
+
+            if (combined) {
+              ASSERT(canCombineWithIndex >= 0);
+              weapon.tier += 1;
+              weapon.thisWaveDamage = 0;
+              weapon.killedEnemies  = MAX(
+                weapon.killedEnemies,
+                g.run.state.weapons[canCombineWithIndex].killedEnemies
+              );
+              StableRemoveWeapon(canCombineWithIndex);
+              Save();
+            }
+            if (recycled) {
+              ChangeCoins(recyclePrice);
+              StableRemoveWeapon(data.weaponIndex);
+              Save();
+            }
+            if (cancelled || recycled || combined) {
+              PlaySound(Sound_UI_CLICK);
+              g.run.shopSelectedWeaponIndex = -1;
+            }
+          }
+        }
+      }
     }
   };
 
-  struct ComponentTooltipData {
+  LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
+  {  ///
+    f32                          offsetY{};
+    Clay_FloatingAttachPointType attachElement{};
+    Clay_FloatingAttachPointType attachParent{};
+
+    if (data.detailsBelow) {
+      offsetY       = GAP_SMALL;
+      attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+      attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+    }
+    else {
+      offsetY       = -GAP_SMALL;
+      attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+    }
+
+    zIndex += 2;
+
+    CLAY({
+      .layout{
+        .sizing{
+          CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME), CLAY_SIZING_FIT(0)
+        },
+      },
+      .floating{
+        .offset{0, offsetY},
+        .zIndex = zIndex,
+        .attachPoints{.element = attachElement, .parent = attachParent},
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+
+      componentUniversalCard({.item = item.type, .affectedByGame = true});
+    }
+
+    zIndex -= 2;
+  };
+
+  LAMBDA (void, componentSlotWeapon, (int weaponIndex, bool weAreInShop)) {  ///
+    auto& weapon = g.run.state.weapons[weaponIndex];
+
+    componentSlot(
+      {.hidden = !weapon.type, .canHover = true, .tier = weapon.tier},
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        if (weapon.type) {
+          const auto fb = fb_weapons->Get(weapon.type);
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_XY,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            BF_CLAY_IMAGE({
+              .texId = fb->icon_texture_id(),
+              .color = ColorFromRGBA(fb->color()),
+            });
+          }
+
+          ButtonSFX(draw, CLAY_IDI("componentSlotWeapon", weaponIndex), Clay_Hovered());
+
+          if (weAreInShop && clicked()) {
+            PlaySound(Sound_UI_CLICK);
+
+            ASSERT(g.run.shopSelectedWeaponIndex == -1);
+            g.run.shopSelectedWeaponIndex = weaponIndex;
+          }
+        }
+      }
+    );
+  };
+
+  struct ComponentTooltipData {  ///
     Vector2                      offset  = {};
     Clay_FloatingAttachPointType element = {};
     Clay_FloatingAttachPointType parent  = {};
@@ -4160,10 +4264,19 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (void, componentAchievement, (AchievementType type, int stepIndex)) {  ///
-    auto       fb       = fb_achievements->Get(type);
-    auto       fb_step  = fb->steps()->Get(stepIndex);
-    const bool isLocked = (g.player.achievements[type].value < fb_step->value());
-    const int  tier     = (isLocked ? 0 : 3);
+    auto fb      = fb_achievements->Get(type);
+    auto fb_step = (type ? fb->steps()->Get(stepIndex) : nullptr);
+
+    const bool isLocked = !type || (g.player.achievements[type].value < fb_step->value());
+    bool       workingOnIt = type && true;
+    if (stepIndex > 0) {
+      workingOnIt
+        = g.player.achievements[type].value >= fb->steps()->Get(stepIndex - 1)->value();
+    }
+
+    int tier = (isLocked ? 0 : 3);
+    if (isLocked && workingOnIt)
+      tier = 1;
 
     CLAY({
       .layout{
@@ -4179,60 +4292,62 @@ void DoUI(bool draw) {
         glib->ui_frame_nine_slice(), slotColors[tier * 2], slotColors[tier * 2 + 1]
       ),
     }) {
-      auto fb              = fb_achievements->Get(type);
-      auto fb_step         = fb->steps()->Get(stepIndex);
-      auto fb_previousStep = (stepIndex > 0 ? fb->steps()->Get(stepIndex - 1) : nullptr);
+      auto fb_previousStep
+        = (type && (stepIndex > 0) ? fb->steps()->Get(stepIndex - 1) : nullptr);
 
       // Name.
       CLAY({}) {
         const auto nameColor = textColorsPerTier[tier];
 
-        if (g.player.achievements[type].value >= fb_step->value()) {
-          BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale(), nameColor);
-          static const char* romanNumbers_[]{
-            "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
-            "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
-          };
-          VIEW_FROM_ARRAY_DANGER(romanNumbers);
-          BF_CLAY_TEXT(" ", nameColor);
-          BF_CLAY_TEXT(romanNumbers[stepIndex + 1], nameColor);
+        if (type) {
+          if (g.player.achievements[type].value >= fb_step->value()) {
+            BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale(), nameColor);
+            static const char* romanNumbers_[]{
+              "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
+              "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
+            };
+            VIEW_FROM_ARRAY_DANGER(romanNumbers);
+            BF_CLAY_TEXT(" ", nameColor);
+            BF_CLAY_TEXT(romanNumbers[stepIndex + 1], nameColor);
+          }
+          else
+            BF_CLAY_TEXT("???", nameColor);
         }
-        else
-          BF_CLAY_TEXT("???", nameColor);
       }
 
       BF_CLAY_SPACER_VERTICAL;
-
-      // Description.
-      CLAY({.layout{
-        .sizing{.height = CLAY_SIZING_GROW(0)},
-        .childGap = GAP_FLEX,
-        BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
-        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-      }}) {
-        FontBegin(&g.meta.fontStats);
-        if (!fb_previousStep
-            || (g.player.achievements[type].value >= fb_previousStep->value()))
-        {
-          FlexBegin(ACHIEVEMENT_WIDTH, 0);
-          PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->description_locale());
-          int percent
-            = MIN(100, g.player.achievements[type].value * 100 / fb_step->value());
-          if ((percent < 100) && (fb_step->value() > 1)) {
-            BF_CLAY_TEXT(" ");
-            BF_CLAY_TEXT(
-              TextFormat(
-                "(%d / %d)", g.player.achievements[type].value, fb_step->value()
-              ),
-              palTextBezhevy
-            );
+      if (type) {
+        // Description.
+        CLAY({.layout{
+          .sizing{.height = CLAY_SIZING_GROW(0)},
+          .childGap = GAP_FLEX,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
+          FontBegin(&g.meta.fontStats);
+          if (!fb_previousStep
+              || (g.player.achievements[type].value >= fb_previousStep->value()))
+          {
+            FlexBegin(ACHIEVEMENT_WIDTH, 0);
+            PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
+            BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->description_locale());
+            int percent
+              = MIN(100, g.player.achievements[type].value * 100 / fb_step->value());
+            if ((percent < 100) && (fb_step->value() > 1)) {
+              BF_CLAY_TEXT(" ");
+              BF_CLAY_TEXT(
+                TextFormat(
+                  "(%d / %d)", g.player.achievements[type].value, fb_step->value()
+                ),
+                palTextBezhevy
+              );
+            }
+            FlexEnd();
           }
-          FlexEnd();
+          else
+            BF_CLAY_TEXT("???");
+          FontEnd();
         }
-        else
-          BF_CLAY_TEXT("???");
-        FontEnd();
       }
     }
   };
@@ -4248,6 +4363,73 @@ void DoUI(bool draw) {
     }}) {
       FLOATING_BEAUTIFY;
       innerLambda();
+    }
+  };
+
+  LAMBDA (
+    void, componentWeaponDetails, (int weaponIndex, bool weAreInShop, bool detailsBelow)
+  )
+  {  ///
+    auto& weapon = g.run.state.weapons[weaponIndex];
+    ASSERT(weapon.type);
+    auto fb = fb_weapons->Get(weapon.type);
+
+    // Floating weapon details modal.
+    // Gets shown upon hovering. Gets sticked upon clicking on weapon.
+    if (Clay_Hovered() || (g.run.shopSelectedWeaponIndex == weaponIndex)) {
+      if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex)) {
+        // Pressing ESC closes modal.
+        if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
+          g.run.shopSelectedWeaponIndex = -1;
+      }
+
+      f32                          offsetY{};
+      Clay_FloatingAttachPointType attachElement{};
+      Clay_FloatingAttachPointType attachParent{};
+
+      if (detailsBelow) {
+        offsetY       = GAP_SMALL;
+        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      }
+      else {
+        offsetY       = -GAP_SMALL;
+        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+      }
+
+      zIndex += 2;
+
+      CLAY({
+        .layout{
+          .sizing{
+            CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+            CLAY_SIZING_FIT(0)
+          },
+        },
+        .floating{
+          .offset{0, offsetY},
+          .zIndex = zIndex,
+          .attachPoints{.element = attachElement, .parent = attachParent},
+          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE,
+          .attachTo           = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex))
+          componentOverlay();
+
+        componentUniversalCard({
+          .weapon         = weapon.type,
+          .weaponIndex    = weaponIndex,
+          .affectedByGame = true,
+          .overrideTier   = weapon.tier,
+          .shopSelling    = weAreInShop,
+        });
+      }
+
+      zIndex -= 2;
     }
   };
 
@@ -4815,30 +4997,11 @@ void DoUI(bool draw) {
           BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEM_FOUND);
 
           // Item.
-          CLAY({
-            .layout{
-              .sizing{
-                CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-                CLAY_SIZING_FIXED(320)
-              },
-              BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-              .childGap        = GAP_SMALL,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            },
-            BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(),
-              slotColors[2 * fb->tier()],
-              slotColors[2 * fb->tier() + 1]
-            ),
-          }) {
-            CLAY({.layout{.childGap = GAP_SMALL}}) {
-              const Item item{.type = type, .count = 1};
-              componentItem(false, item);
-              componentItemNameAndHeaderProperties(type);
-            }
-
-            componentItemStatsExploded(type, 1, ITEM_FRAME_WIDTH);
-          }
+          componentUniversalCard({
+            .item           = type,
+            .affectedByGame = true,
+            .setFixedHeight = true,
+          });
 
           // Take and Recycle buttons.
           CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -4849,14 +5012,14 @@ void DoUI(bool draw) {
               }
             );
 
+            int recyclePrice = fb->price() / RECYCLE_PRICE_FACTOR;
+
             const bool recycled = componentButton(
               {.id = CLAY_ID("button_picked_up_item_recycle")},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
                   BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RECYCLE, textColor);
-                  BF_CLAY_TEXT(
-                    TextFormat(" (+%d)", g.run.state.pickedUpItem.recyclePrice), textColor
-                  );
+                  BF_CLAY_TEXT(TextFormat(" (+%d)", recyclePrice), textColor);
                 }
               }
             );
@@ -4864,7 +5027,7 @@ void DoUI(bool draw) {
             if (took)
               AddItem(g.run.state.pickedUpItem.toPick);
             else if (recycled)
-              ChangeCoins(g.run.state.pickedUpItem.recyclePrice);
+              ChangeCoins(recyclePrice);
 
             if (took || recycled) {
               PlaySound(Sound_UI_CLICK);
@@ -5181,170 +5344,16 @@ void DoUI(bool draw) {
           int toPickIndex = -1;
           for (auto& v : g.run.state.shop.toPick) {
             toPickIndex++;
-            const auto calculatedPrice = ApplyStatItemsPrice(v.price);
-            bool canBuy = ((v.item || v.weapon) && (calculatedPrice <= PLAYER_COINS));
-            bool canBuyErrorWeapon          = false;
-            int  emptyOrSameWeaponSlotIndex = -1;
-            if (canBuy && v.weapon) {
-              // Trying to find empty weapon slot.
-              FOR_RANGE (int, i, g.run.state.weapons.count) {
-                const auto& weapon = g.run.state.weapons[i];
-                if (!weapon.type) {
-                  emptyOrSameWeaponSlotIndex = i;
-                  break;
-                }
-              }
-              // If not found, trying to find the same player's weapon to upgrade.
-              if (emptyOrSameWeaponSlotIndex == -1) {
-                FOR_RANGE (int, i, g.run.state.weapons.count) {
-                  const auto& weapon        = g.run.state.weapons[i];
-                  const bool  canBeUpgraded = (weapon.type == v.weapon)  //
-                                             && (weapon.tier == v.tier)  //
-                                             && (v.tier < TOTAL_TIERS - 1);
-                  if (canBeUpgraded) {
-                    emptyOrSameWeaponSlotIndex = i;
-                    break;
-                  }
-                }
-              }
-              if (emptyOrSameWeaponSlotIndex == -1) {
-                canBuyErrorWeapon = true;
-                canBuy            = false;
-              }
-            }
 
-            CLAY({.layout{.sizing{
-              CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-              CLAY_SIZING_FIXED(ITEM_FRAME_HEIGHT),
-            }}})
-            if (v.item || v.weapon) {
-              CLAY({
-                .layout{
-                  BF_CLAY_SIZING_GROW_XY,
-                  BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-                  .childGap        = GAP_SMALL,
-                  .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                },
-                BF_CLAY_CUSTOM_NINE_SLICE(
-                  glib->ui_frame_nine_slice(),
-                  slotColors[2 * v.tier],
-                  slotColors[2 * v.tier + 1]
-                ),
-              }) {
-                const auto fb_item   = (v.item ? fb_items->Get(v.item) : nullptr);
-                const auto fb_weapon = (v.weapon ? fb_weapons->Get(v.weapon) : nullptr);
-
-                // Item's image + name.
-                CLAY({.layout{.childGap = GAP_SMALL}}) {
-                  // Image.
-                  componentSlot(
-                    {.canHover = false, .tier = v.tier},
-                    [&]() BF_FORCE_INLINE_LAMBDA {
-                      CLAY({.layout{
-                        BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER
-                      }}) {
-                        if (v.item || v.weapon) {
-                          int texId = 0;
-                          if (v.item)
-                            texId = fb_item->texture_id();
-                          if (v.weapon)
-                            texId = fb_weapon->icon_texture_id();
-                          BF_CLAY_IMAGE({.texId = texId});
-                        }
-                      }
-                    }
-                  );
-
-                  // Name.
-                  if (v.item)
-                    componentItemNameAndHeaderProperties(v.item);
-                  else if (v.weapon) {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(
-                      fb_weapon->name_locale(), textColorsPerTier[v.tier]
-                    );
-                  }
-                  else
-                    INVALID_PATH;
-                }
-
-                if (v.item)
-                  componentItemStatsExploded(v.item, 1, ITEM_FRAME_WIDTH);
-                else if (v.weapon)
-                  componentWeaponStatsExploded(-1, v.weapon, v.tier, 0, ITEM_FRAME_WIDTH);
-
-                BF_CLAY_SPACER_VERTICAL;
-
-                // Item's price.
-                CLAY({.layout{
-                  BF_CLAY_SIZING_GROW_X,
-                  BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                }}) {
-                  // Buying item / weapon.
-                  auto bought = componentButton(
-                    {.id = CLAY_IDI("button_shop_buy", toPickIndex)},
-                    [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                      CLAY({.layout{
-                        BF_CLAY_SIZING_GROW_X,
-                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                      }}) {
-                        FontBegin(&g.meta.fontPrices);
-                        BF_CLAY_TEXT(
-                          TextFormat("%d ", calculatedPrice),
-                          (calculatedPrice <= PLAYER_COINS ? textColor : palTextRed)
-                        );
-                        FontEnd();
-                        BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                      }
-                    }
-                  );
-                  if (!draw
-                      && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + toPickIndex)))
-                    bought = true;
-
-                  if (bought) {
-                    if (canBuy) {
-                      PlaySound(Sound_UI_CLICK);
-
-                      ChangeCoins(-calculatedPrice);
-                      if (v.weapon) {
-                        auto& weapon = g.run.state.weapons[emptyOrSameWeaponSlotIndex];
-                        if (weapon.type) {
-                          // Upgrading an existing weapon if no empty slot found.
-                          ASSERT(weapon.type == v.weapon);
-                          ASSERT(weapon.tier == v.tier);
-                          weapon.tier += 1;
-                        }
-                        else {
-                          // Filling empty weapon slot if exists.
-                          weapon.type = v.weapon;
-                          weapon.tier = v.tier;
-                        }
-                        weapon.recyclePrice
-                          = GetWeaponRecyclePrice(weapon.type, weapon.tier);
-                      }
-                      else if (v.item)
-                        AddItem(v.item);
-                      else
-                        INVALID_PATH;
-                      v = {};
-
-                      Save();
-                    }
-                    else {
-                      if (canBuyErrorWeapon) {
-                        g.ui.shopErrorWeapons = {};
-                        g.ui.shopErrorWeapons.SetNow();
-                      }
-                      else {
-                        g.ui.shopErrorGold = {};
-                        g.ui.shopErrorGold.SetNow();
-                      }
-                      PlaySound(Sound_UI_ERROR);
-                    }
-                  }
-                }
-              }
-            }
+            componentUniversalCard({
+              .item            = v.item,
+              .weapon          = v.weapon,
+              .hideIfEmpty     = true,
+              .affectedByGame  = true,
+              .overrideTier    = v.tier,
+              .setFixedHeight  = true,
+              .shopBuyingIndex = toPickIndex,
+            });
 
             if (toPickIndex < g.run.state.shop.toPick.count - 1)
               BF_CLAY_SPACER_HORIZONTAL;
@@ -5376,7 +5385,7 @@ void DoUI(bool draw) {
                     break;
                   CLAY({}) {
                     auto& item = g.run.state.items[t];
-                    componentItem(true, item);
+                    componentSlotItem(true, item);
 
                     ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
 
@@ -5444,8 +5453,7 @@ void DoUI(bool draw) {
 
                   CLAY({}) {
                     // Weapon.
-                    componentWeapon(weaponIndex, true && weapon.type);
-
+                    componentSlotWeapon(weaponIndex, true && weapon.type);
                     // Hovering modal.
                     if (weapon.type)
                       componentWeaponDetails(weaponIndex, true, false);
@@ -5551,7 +5559,7 @@ void DoUI(bool draw) {
                 if (weapon.type) {
                   CLAY({}) {
                     // Weapon.
-                    componentWeapon(weaponIndex, false);
+                    componentSlotWeapon(weaponIndex, false);
                     // Hovering modal.
                     componentWeaponDetails(weaponIndex, false, true);
                   }
@@ -5577,7 +5585,7 @@ void DoUI(bool draw) {
                 const auto t = y * ITEMS_X + x;
                 if (t < items.count) {
                   CLAY({}) {
-                    componentItem(true, g.run.state.items[t]);
+                    componentSlotItem(true, g.run.state.items[t]);
                     ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
                     if (Clay_Hovered()) {
                       componentItemDetails(
@@ -5809,108 +5817,35 @@ void DoUI(bool draw) {
               .childGap        = GAP_BIG,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
-              const BFGame::Achievement*     fb      = nullptr;
-              const BFGame::AchievementStep* fb_step = nullptr;
+              const BFGame::Achievement*     fb       = nullptr;
+              const BFGame::AchievementStep* fb_step  = nullptr;
+              bool                           isLocked = false;
 
               if (g.meta.pausedAchievementsHoveredAchievement) {
                 fb = fb_achievements->Get(g.meta.pausedAchievementsHoveredAchievement);
                 fb_step
                   = fb->steps()->Get(g.meta.pausedAchievementsHoveredAchievementStep);
+                const auto achievementValue
+                  = g.player.achievements[g.meta.pausedAchievementsHoveredAchievement];
+                isLocked = fb_step && (achievementValue.value < fb_step->value());
               }
 
               // Achievement's name and description.
-              if (g.meta.pausedAchievementsHoveredAchievement) {
-                componentAchievement(
-                  (AchievementType)g.meta.pausedAchievementsHoveredAchievement,
-                  g.meta.pausedAchievementsHoveredAchievementStep
-                );
-              }
+              componentAchievement(
+                (AchievementType)g.meta.pausedAchievementsHoveredAchievement,
+                g.meta.pausedAchievementsHoveredAchievementStep
+              );
 
               // Achievement's reward.
-              CLAY({.layout{.sizing{
-                CLAY_SIZING_FIXED(ITEM_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-                CLAY_SIZING_FIXED(ITEM_FRAME_HEIGHT),
-              }}}) {
-                if (g.meta.pausedAchievementsHoveredAchievement) {
-                  const auto achievementValue
-                    = g.player.achievements[g.meta.pausedAchievementsHoveredAchievement];
-                  const bool isLocked = (achievementValue.value < fb_step->value());
-
-                  int iconTexId  = 0;
-                  int tier       = 0;
-                  int nameLocale = 0;
-
-                  if (!isLocked && fb_step) {
-                    if (fb_step->unlocks_build_type()) {
-                      auto fbx   = fb_builds->Get(fb_step->unlocks_build_type());
-                      iconTexId  = fbx->texture_id();
-                      tier       = 3;
-                      nameLocale = fbx->name_locale();
-                    }
-                    else if (fb_step->unlocks_item_type()) {
-                      auto fbx  = fb_items->Get(fb_step->unlocks_item_type());
-                      iconTexId = fbx->texture_id();
-                      tier      = fbx->tier();
-                    }
-                    else if (fb_step->unlocks_weapon_type()) {
-                      auto fbx   = fb_weapons->Get(fb_step->unlocks_weapon_type());
-                      iconTexId  = fbx->icon_texture_id();
-                      tier       = fbx->min_tier_index();
-                      nameLocale = fbx->name_locale();
-                    }
-                  }
-
-                  CLAY({
-                    .layout{
-                      BF_CLAY_SIZING_GROW_XY,
-                      BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-                      .childGap        = GAP_SMALL,
-                      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    },
-                    BF_CLAY_CUSTOM_NINE_SLICE(
-                      glib->ui_frame_nine_slice(),
-                      slotColors[tier * 2],
-                      slotColors[tier * 2 + 1]
-                    ),
-                  }) {
-                    CLAY({.layout{.childGap = GAP_SMALL}}) {
-                      componentSlot({.tier = tier}, [&]() BF_FORCE_INLINE_LAMBDA {
-                        if (iconTexId) {
-                          componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_IMAGE({.texId = iconTexId});
-                          });
-                        }
-                      });
-
-                      if (fb_step->unlocks_item_type()) {
-                        const auto t = (ItemType)fb_step->unlocks_item_type();
-                        componentItemNameAndHeaderProperties(t);
-                      }
-                      else if (nameLocale) {
-                        BF_CLAY_TEXT_LOCALIZED_DANGER(
-                          nameLocale, textColorsPerTier[tier]
-                        );
-                      }
-                    }
-
-                    if (fb_step->unlocks_item_type()) {
-                      componentItemStatsExploded(
-                        (ItemType)fb_step->unlocks_item_type(), 1, ITEM_FRAME_WIDTH
-                      );
-                    }
-                    if (fb_step->unlocks_weapon_type()) {
-                      auto fbx = fb_weapons->Get(fb_step->unlocks_weapon_type());
-                      componentWeaponStatsExploded(
-                        -1,
-                        (WeaponType)fb_step->unlocks_weapon_type(),
-                        fbx->min_tier_index(),
-                        0,
-                        ITEM_FRAME_WIDTH
-                      );
-                    }
-                  }
-                }
-              }
+              componentUniversalCard({
+                .build
+                = (BuildType)(fb_step && !isLocked ? fb_step->unlocks_build_type() : 0),
+                .item
+                = (ItemType)(fb_step && !isLocked ? fb_step->unlocks_item_type() : 0),
+                .weapon
+                = (WeaponType)(fb_step && !isLocked ? fb_step->unlocks_weapon_type() : 0),
+                .setFixedHeight = true,
+              });
             }
           }
 
@@ -6035,7 +5970,7 @@ void DoUI(bool draw) {
                     if (weapon.type) {
                       CLAY({}) {
                         // Weapon.
-                        componentWeapon(weaponIndex, false);
+                        componentSlotWeapon(weaponIndex, false);
                         // Hovering modal.
                         componentWeaponDetails(weaponIndex, false, true);
                       }
@@ -6063,7 +5998,7 @@ void DoUI(bool draw) {
                     const auto t = y * ITEMS_X + x;
                     if (t < items.count) {
                       CLAY({}) {
-                        componentItem(true, g.run.state.items[t]);
+                        componentSlotItem(true, g.run.state.items[t]);
                         ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
                         if (Clay_Hovered()) {
                           componentItemDetails(
@@ -6732,10 +6667,6 @@ void GameFixedUpdate() {
       g.run.scheduledPickedUpItemsReset = false;
       g.run.state.pickedUpItem.toPick   = GenerateRandomItem();
     }
-
-    g.run.state.pickedUpItem.recyclePrice
-      = glib->items()->Get(g.run.state.pickedUpItem.toPick)->price()
-        / RECYCLE_PRICE_FACTOR;
 
     Save();
   }
