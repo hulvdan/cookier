@@ -33,8 +33,9 @@ x achievements: descriptions
 x achievements screen: drew cells
 x locale gen caps (New Run / NEW RUN)
 x achievements screen: ACHIEVEMENTS label
+x achievements screen: pressing ESCAPE returns us back to paused menu
 
-* achievements screen: pressing ESCAPE (or P) returns us back to paused menu
+* better pause menu
 * achievements screen: showing reward description in right column
 * achievements screen:
 * achievements screen:
