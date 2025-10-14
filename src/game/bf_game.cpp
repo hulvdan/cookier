@@ -984,7 +984,76 @@ void OnUIStart() {  ///
   ge.settings.screenFade = glib->ui_modal_fade();
 }
 
-void RecalculatePlayerWeaponDamage() {  ///
+// NOTE: Doesn't apply `StatType_DAMAGE`.
+int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
+  if (fb_damageScalings) {
+    for (auto scaling : *fb_damageScalings) {
+      auto statValue = g.run.playerStats[scaling->stat_type()];
+      auto percent   = scaling->percents_per_tier()->Get(tier);
+      baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
+    }
+  }
+  return baseDamage;
+}
+
+int ApplyPlayerStatDamageMultiplier(int damage) {  ///
+  auto v = (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
+  return Round((f32)damage * v);
+}
+
+void IterateOverSpecificWeaponEffects(
+  EffectConditionType              condition,
+  WeaponType                       type,
+  auto /* void (auto fb_effect) */ innerLambda
+) {  ///
+  const auto fb_effects = glib->weapons()->Get(type)->effects();
+  if (fb_effects) {
+    for (const auto fb_effect : *fb_effects) {
+      if (fb_effect->effectcondition_type() == condition)
+        innerLambda(fb_effect);
+    }
+  }
+}
+
+int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) {  ///
+  ASSERT(tier < 4);
+  const auto fb = glib->weapons()->Get(type);
+  ASSERT(tier >= fb->min_tier_index());
+
+  int damage = fb->base_damage()->Get(tier - fb->min_tier_index());
+  damage
+    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
+  damage = ApplyPlayerStatDamageMultiplier(damage);
+
+  IterateOverSpecificWeaponEffects(
+    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
+    type,
+    [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+      if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+        return;
+
+      int sameWeapons = 0;
+      int i           = -1;
+      for (const auto& weapon : g.run.state.weapons) {
+        i++;
+        if ((weaponIndexOrMinus1 != i) && (weapon.type == type))
+          sameWeapons++;
+      }
+      if (sameWeapons > 0) {
+        auto v = fb_effect->value();
+        if (v == 0)
+          damage = Round(damage * fb_effect->value_multiplier() * (f32)sameWeapons);
+        else
+          damage += v * sameWeapons;
+      }
+    }
+  );
+
+  damage = MAX(1, damage);
+  return damage;
+}
+
+void RecalculatePlayerWeaponDamages() {  ///
   int weaponIndexOrMinus1 = -1;
   for (auto& weapon : g.run.state.weapons) {
     weaponIndexOrMinus1++;
@@ -1043,37 +1112,6 @@ void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
   g.run.recalculatePlayerStats = true;
 }
 
-// NOTE: Doesn't apply `StatType_DAMAGE`.
-int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
-  if (fb_damageScalings) {
-    for (auto scaling : *fb_damageScalings) {
-      auto statValue = g.run.playerStats[scaling->stat_type()];
-      auto percent   = scaling->percents_per_tier()->Get(tier);
-      baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
-    }
-  }
-  return baseDamage;
-}
-
-int ApplyPlayerStatDamageMultiplier(int damage) {  ///
-  auto v = (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
-  return Round((f32)damage * v);
-}
-
-void IterateOverSpecificWeaponEffects(
-  EffectConditionType              condition,
-  WeaponType                       type,
-  auto /* void (auto fb_effect) */ innerLambda
-) {  ///
-  const auto fb_effects = glib->weapons()->Get(type)->effects();
-  if (fb_effects) {
-    for (const auto fb_effect : *fb_effects) {
-      if (fb_effect->effectcondition_type() == condition)
-        innerLambda(fb_effect);
-    }
-  }
-}
-
 void IterateOverItemEffects(
   EffectConditionType                         condition,
   auto /* void (Item& item, auto fb_effect)*/ innerLambda
@@ -1089,44 +1127,6 @@ void IterateOverItemEffects(
       }
     }
   }
-}
-
-int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) {  ///
-  ASSERT(tier < 4);
-  const auto fb = glib->weapons()->Get(type);
-  ASSERT(tier >= fb->min_tier_index());
-
-  int damage = fb->base_damage()->Get(tier - fb->min_tier_index());
-  damage
-    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
-  damage = ApplyPlayerStatDamageMultiplier(damage);
-
-  IterateOverSpecificWeaponEffects(
-    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
-    type,
-    [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-      if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
-        return;
-
-      int sameWeapons = 0;
-      int i           = -1;
-      for (const auto& weapon : g.run.state.weapons) {
-        i++;
-        if ((weaponIndexOrMinus1 != i) && (weapon.type == type))
-          sameWeapons++;
-      }
-      if (sameWeapons > 0) {
-        auto v = fb_effect->value();
-        if (v == 0)
-          damage = Round(damage * fb_effect->value_multiplier() * (f32)sameWeapons);
-        else
-          damage += v * sameWeapons;
-      }
-    }
-  );
-
-  damage = MAX(1, damage);
-  return damage;
 }
 
 f32 GetLuckFactor() {  ///
@@ -1176,7 +1176,7 @@ void OnWaveStarted() {  ///
   g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
   g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
 
-  RecalculatePlayerWeaponDamage();
+  RecalculatePlayerWeaponDamages();
   RecalculatePlayerWeaponOffsets();
 }
 
@@ -1233,6 +1233,26 @@ void AchievementMax(AchievementType type, int value) {  ///
   Save();
 }
 
+void RecalculatePlayerStats() {  ///
+  ZoneScoped;
+
+  FOR_RANGE (int, i, StatType_COUNT)
+    g.run.playerStats[i] = g.run.state.statsWithoutItems[i];
+
+  for (auto& item : g.run.state.items) {
+    const auto fb         = glib->items()->Get(item.type);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (!fb_effect->effectcondition_type())
+          g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
+      }
+    }
+  }
+
+  PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
+}
+
 void Load(void* saveData) {  ///
   const auto save = BFSave::GetSave(saveData);
 
@@ -1277,10 +1297,9 @@ void Load(void* saveData) {  ///
   int weaponIndex = 0;
   for (auto x : *save->weapons()) {
     s.weapons[weaponIndex++] = {
-      .type           = (WeaponType)x->type(),
-      .tier           = x->tier(),
-      .thisWaveDamage = x->this_wave_damage(),
-      .killedEnemies  = x->killed_enemies(),
+      .type          = (WeaponType)x->type(),
+      .tier          = x->tier(),
+      .killedEnemies = x->killed_enemies(),
     };
   }
 
@@ -1333,8 +1352,6 @@ void Load(void* saveData) {  ///
   s.shop.rerolls.rerolledFreeTimes = save->screen_shop__rerolls()->rerolled_free_times();
   s.shop.rerolls.rerolledTimes     = save->screen_shop__rerolls()->rerolled_times();
 
-  g.run.recalculatePlayerStats = true;
-
   if (save->health() <= 0)
     g.run.scheduledEnd = true;
 
@@ -1354,7 +1371,8 @@ void Load(void* saveData) {  ///
   else if (s.screen == ScreenType_END)
     g.run.scheduledEnd = true;
 
-  RecalculatePlayerWeaponDamage();
+  RecalculatePlayerStats();
+  RecalculatePlayerWeaponDamages();
   RecalculatePlayerWeaponOffsets();
 
   g.player.lockedBuilds  = {};
@@ -1424,10 +1442,9 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
 
     for (const auto& weapon : g.run.state.weapons) {
       fb_save.weapons.push_back(std::make_unique<BFSave::WeaponT>(BFSave::WeaponT{
-        .type             = weapon.type,
-        .tier             = weapon.tier,
-        .this_wave_damage = weapon.thisWaveDamage,
-        .killed_enemies   = weapon.killedEnemies,
+        .type           = weapon.type,
+        .tier           = weapon.tier,
+        .killed_enemies = weapon.killedEnemies,
       }));
     }
 
@@ -6602,25 +6619,8 @@ void GameFixedUpdate() {
 
   // Recalculating player stats.
   if (g.run.recalculatePlayerStats) {  ///
-    ZoneScopedN("Recalculating player stats.");
-
     g.run.recalculatePlayerStats = false;
-
-    FOR_RANGE (int, i, StatType_COUNT)
-      g.run.playerStats[i] = g.run.state.statsWithoutItems[i];
-
-    for (auto& item : g.run.state.items) {
-      const auto fb         = glib->items()->Get(item.type);
-      const auto fb_effects = fb->effects();
-      if (fb_effects) {
-        for (const auto fb_effect : *fb_effects) {
-          if (!fb_effect->effectcondition_type())
-            g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
-        }
-      }
-    }
-
-    PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
+    RecalculatePlayerStats();
   }
 
   // Advancing to UI after wave completion animation finishes.
