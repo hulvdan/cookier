@@ -199,6 +199,7 @@ constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);
   X(Purple, 0xb9d850ff)  \
   X(Orange, 0xb9d850ff)  \
   X(Red, 0xc02931ff)     \
+  X(Bezhevy, 0xb59a66ff) \
   X(White, 0xedefe2ff)
 
 #define X(name_, value_) constexpr auto pal##name_ = ColorFromRGBA(value_);
