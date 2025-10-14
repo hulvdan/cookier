@@ -1090,6 +1090,12 @@ achievements:
         unlocks_item_type: TURREL
       - value: 200
       - value: 1000
+  - type: COINS
+    steps:
+      - value: 1000
+      - value: 5000
+      - value: 25000
+      - value: 100000
   - type: TODO
     steps:
       #
@@ -1119,8 +1125,6 @@ achievements:
       - value: 1
       - value: 1
       #
-      - value: 1
-      - value: 1
       - value: 1
       - value: 1
       - value: 1

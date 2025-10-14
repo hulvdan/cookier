@@ -1211,6 +1211,9 @@ void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue)
 
 void AchievementAdd(AchievementType type, int value) {  ///
   ASSERT(value >= 0);
+  if (value < 0)
+    return;
+
   int oldValue = g.player.achievements[type].value;
   g.player.achievements[type].value += value;
   OnAchievementValueChanged(type, oldValue, g.player.achievements[type].value);
@@ -1529,7 +1532,10 @@ void ApplyAilment(
   }
 }
 
-void AddCoins(int amount) {  ///
+void ChangeCoins(int amount) {  ///
+  if (amount > 0)
+    AchievementAdd(AchievementType_COINS, amount);
+
   PLAYER_COINS += amount;
   if (PLAYER_COINS < 0) {
     if (amount >= 0)
@@ -4084,7 +4090,7 @@ void DoUI(bool draw) {
                 Save();
               }
               if (recycled) {
-                AddCoins(weapon.recyclePrice);
+                ChangeCoins(weapon.recyclePrice);
                 StableRemoveWeapon(weaponIndex);
                 Save();
               }
@@ -4823,7 +4829,7 @@ void DoUI(bool draw) {
             if (took)
               AddItem(g.run.state.pickedUpItem.toPick);
             else if (recycled)
-              AddCoins(g.run.state.pickedUpItem.recyclePrice);
+              ChangeCoins(g.run.state.pickedUpItem.recyclePrice);
 
             if (took || recycled) {
               PlaySound(Sound_UI_CLICK);
@@ -5083,7 +5089,7 @@ void DoUI(bool draw) {
               BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
 
               if (ge.meta.debugEnabled && Clay_Hovered() && wheel)
-                AddCoins(wheel);
+                ChangeCoins(wheel);
             }
           }
 
@@ -5264,7 +5270,7 @@ void DoUI(bool draw) {
                     if (canBuy) {
                       PlaySound(Sound_UI_CLICK);
 
-                      AddCoins(-calculatedPrice);
+                      ChangeCoins(-calculatedPrice);
                       if (v.weapon) {
                         auto& weapon = g.run.state.weapons[emptyOrSameWeaponSlotIndex];
                         if (weapon.type) {
@@ -6488,9 +6494,9 @@ void GameFixedUpdate() {
     // F5 - add 10 coins.
     if (IsKeyPressed(SDL_SCANCODE_F5)) {  ///
       if (IsKeyDown(SDL_SCANCODE_LSHIFT))
-        AddCoins(int_max);
+        ChangeCoins(int_max);
       else
-        AddCoins(10);
+        ChangeCoins(10);
     }
 
     // F6 - add random item.
@@ -6594,7 +6600,7 @@ void GameFixedUpdate() {
       {
         // Applying StatType_HARVESTING.
         auto& harvesting = g.run.playerStats[StatType_HARVESTING];
-        AddCoins(harvesting);
+        ChangeCoins(harvesting);
         AddXP(harvesting);
         // Harvesting stat (if positive) grows by 5% upon finishing each wave.
         if (harvesting > 0)
@@ -7352,7 +7358,7 @@ void GameFixedUpdate() {
                   });
                 }
 
-                AddCoins(amount);
+                ChangeCoins(amount);
                 AddXP((f32)amount);
 
                 auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;

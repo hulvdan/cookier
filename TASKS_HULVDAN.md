@@ -42,10 +42,10 @@ x achievements screen: not completed yet achievement show progress percent
   (walker 10 000 meters (52%))
 x achievements show progress in menu
   (PRECALCULATE TOTAL STEPS / COMPLETED STEPS AND PERCENT)
+x achievements: COINS
 
 * achievements screen: showing reward description in right column
 * fix multiple one-by-one sliding achievements translation
-* achievements: COINS
 * achievements:
 * achievements:
 * achievements:
