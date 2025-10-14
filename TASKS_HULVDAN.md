@@ -46,6 +46,7 @@ x achievements: COINS
 x sliding achievement doesn't get dimmed by pause menu
 x achievements screen: showing reward description in right column
 
+* game recalc weapon damage on Load
 * achievements screen: weapon's data doesn't get affected by game state
 * achievements screen: item's data doesn't get affected by game state (LIMITED)
 * build traits
