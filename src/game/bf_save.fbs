@@ -11,7 +11,6 @@ table Item {
 table Weapon {
     type: int;
     tier: int;
-    this_wave_damage: int;
     killed_enemies: int;
 }
 
