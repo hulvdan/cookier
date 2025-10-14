@@ -1090,6 +1090,41 @@ achievements:
         unlocks_item_type: TURREL
       - value: 200
       - value: 1000
+  - type: TODO
+    steps:
+      #
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      #
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      #
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      #
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
+      - value: 1
 landmine_damage_scalings:
   - stat_type: ENGINEERING
     percents_per_tier:
