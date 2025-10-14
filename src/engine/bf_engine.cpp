@@ -3087,6 +3087,13 @@ LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
     auto& font = outFonts[fontIndex];
     auto& data = data_[fontIndex];
 
+#if BF_ENABLE_ASSERTS
+    FOR_RANGE (int, i, data.codepointsCount - 1) {
+      // Checking that `codepoints` are sorted.
+      ASSERT(data.codepoints[i] < data.codepoints[i + 1]);
+    }
+#endif
+
     ASSERT(data.filepath);
     ASSERT(data.size >= 0);
     ASSERT(data.codepoints);

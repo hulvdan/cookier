@@ -39,16 +39,22 @@ int ArrayFind(const T* base, int count, const T& value) {  ///
 
 template <typename T>
 int ArrayBinaryFind(const T* base, int count, const T& value) {  ///
+#if BF_ENABLE_ASSERTS
+  FOR_RANGE (int, i, count - 1) {
+    // Checking that array is sorted.
+    ASSERT(base[i] <= base[i + 1]);
+  }
+#endif
+
   int low  = 0;
   int high = count - 1;
   while (low <= high) {
     int mid = low + (high - low) / 2;
 
-    if (base[mid] == value)
-      return mid;
-
     if (base[mid] < value)
       low = mid + 1;
+    else if (base[mid] == value)
+      return mid;
     else
       high = mid - 1;
   }

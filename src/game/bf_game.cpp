@@ -779,12 +779,13 @@ struct GameData {
     Arena trashArena = {};
 
     // NOTE: Reorder loading upon reordering fonts.
-    Font fontUI             = {};
-    Font fontUIOutlined     = {};
-    Font fontUIBig          = {};
-    Font fontStats          = {};
-    Font fontPrices         = {};
-    Font fontWaveCompletion = {};
+    Font fontUI                 = {};
+    Font fontUIOutlined         = {};
+    Font fontUIBig              = {};
+    Font fontStats              = {};
+    Font fontPrices             = {};
+    Font fontItemCountsOutlined = {};
+    Font fontWaveCompletion     = {};
 
     LoadFontsResult loadedFonts = {};
 
@@ -2460,9 +2461,11 @@ void ReloadFontsIfNeeded() {  ///
   }
 
   static auto fontpath = "resources/arialnb.ttf";
-
-  static int priceCodepoints[]{
+  static int  priceCodepoints[]{
     ' ', '+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+  };
+  static int itemCountCodepoints[]{
+    ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x'
   };
 
   static LoadFontData loadFontData_[]{
@@ -2507,6 +2510,16 @@ void ReloadFontsIfNeeded() {  ///
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = priceCodepoints,
       .codepointsCount = ARRAY_COUNT(priceCodepoints),
+    },
+    // fontItemCountsOutlined.
+    {
+      .filepath        = fontpath,
+      .size            = 20,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = itemCountCodepoints,
+      .codepointsCount = ARRAY_COUNT(itemCountCodepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 1,
     },
     // fontWaveCompletion.
     {
@@ -3541,7 +3554,9 @@ void DoUI(bool draw) {
               .attachTo           = CLAY_ATTACH_TO_PARENT,
             }}) {
               FLOATING_BEAUTIFY;
+              FontBegin(&g.meta.fontItemCountsOutlined);
               BF_CLAY_TEXT(TextFormat("x%d", item.count));
+              FontEnd();
             }
           }
         }
@@ -3763,6 +3778,22 @@ void DoUI(bool draw) {
 
               if (texId)
                 BF_CLAY_IMAGE({.texId = texId});
+
+              if (data.itemCount > 1) {
+                CLAY({.floating{
+                  .attachPoints{
+                    .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+                    .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+                  },
+                  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                  .attachTo           = CLAY_ATTACH_TO_PARENT,
+                }}) {
+                  FLOATING_BEAUTIFY;
+                  FontBegin(&g.meta.fontItemCountsOutlined);
+                  BF_CLAY_TEXT(TextFormat("x%d", data.itemCount));
+                  FontEnd();
+                }
+              }
             }
           });
           // }

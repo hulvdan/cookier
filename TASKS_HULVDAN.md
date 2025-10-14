@@ -48,6 +48,7 @@ x achievements screen: showing reward description in right column
 x game recalc weapon damage on Load
 x ref BIG_UNIVERSAL_CARD (none, item, weapon, build, difficulty, build, overrideTier etc)
 x ach screen: item's data isn't affected by game state
+x shop: item counts font
 
 * achievements screen: weapon's data doesn't get affected by game state
 * build traits
