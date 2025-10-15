@@ -1258,16 +1258,12 @@ void Load(void* saveData) {  ///
     }
   }
 
-  g.player.difficulty    = (DifficultyType)save->difficulty();
-  g.player.build         = (BuildType)save->build();
-  g.player.weapon        = (WeaponType)save->weapon();
-  PLAYER_CREATURE.health = save->health();
-  s.won                  = save->won();
-  s.screen               = (ScreenType)save->screen();
-  if (s.screen == ScreenType_WAVE_END_ANIMATION) {
-    g.run.scheduledWaveCompleted = {};
-    g.run.scheduledWaveCompleted.SetNow();
-  }
+  g.player.difficulty      = (DifficultyType)save->difficulty();
+  g.player.build           = (BuildType)save->build();
+  g.player.weapon          = (WeaponType)save->weapon();
+  PLAYER_CREATURE.health   = save->health();
+  s.won                    = save->won();
+  s.screen                 = (ScreenType)save->screen();
   s.waveIndex              = save->wave_index();
   s.waveWon                = save->wave_won();
   s.level                  = save->level();
@@ -1341,13 +1337,17 @@ void Load(void* saveData) {  ///
   if (save->health() <= 0)
     g.run.scheduledEnd = true;
 
-  if (s.screen != ScreenType_GAMEPLAY)
-    OnUIStart();
-  else
+  if (s.screen == ScreenType_GAMEPLAY)
     g.meta.paused = true;
+  else if (s.screen != ScreenType_WAVE_END_ANIMATION)
+    OnUIStart();
 
   if (s.screen == ScreenType_GAMEPLAY)
     OnWaveStarted();
+  else if (s.screen == ScreenType_WAVE_END_ANIMATION) {
+    g.run.scheduledWaveCompleted.SetNow();
+    g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
+  }
   else if (s.screen == ScreenType_PICKED_UP_ITEM)
     g.run.scheduledPickedUpItems = true;
   else if (s.screen == ScreenType_UPGRADES)
@@ -1551,6 +1551,7 @@ void ChangeCoins(int amount) {  ///
     else
       PLAYER_COINS = MAX(0, PLAYER_COINS);
   }
+  Save();
 }
 
 void FlexBegin(int maxWidth, u16 childGap) {  ///
@@ -3134,6 +3135,8 @@ void AddXP(f32 xp) {  ///
       break;
     }
   }
+
+  Save();
 }
 
 bool CanSpawnMoreCreatures() {  ///
@@ -3147,6 +3150,7 @@ void HealPlayer(f32 amount = 1) {  ///
     PLAYER_CREATURE.health
       = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
   }
+  Save();
 }
 
 void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
