@@ -54,6 +54,7 @@ table Save {
     screen: int;
 
     wave_index: int;
+    wave_won: bool;
 
     level: int;
     previous_level: int;
