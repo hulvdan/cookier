@@ -3160,6 +3160,7 @@ void FontEnd() {  ///
 }
 
 void ButtonSFX(bool draw, Clay_ElementId id, bool hovered) {  ///
+  ASSERT(id.id);
   if (draw)
     return;
 
@@ -3537,19 +3538,78 @@ void DoUI(bool draw) {
     }
   };
 
-  LAMBDA (void, componentSlotItem, (bool canHover, const Item& item)) {  ///
-    const auto fb = glib->items()->Get(item.type);
+  enum ComponentSlotAnythingHiddenType {  ///
+    ComponentSlotAnythingHiddenType_HIDE,
+    ComponentSlotAnythingHiddenType_SHOW_EMPTY_SLOT,
+    ComponentSlotAnythingHiddenType_SHOW_LOCK,
+  };
+
+  struct ComponentSlotAnythingData {  ///
+    Clay_ElementId id = {};
+
+    BuildType  build  = {};
+    ItemType   item   = {};
+    WeaponType weapon = {};
+
+    ComponentSlotAnythingHiddenType hidden = ComponentSlotAnythingHiddenType_HIDE;
+
+    int  count    = 1;
+    int  tier     = -1;
+    bool canHover = true;
+  };
+
+  LAMBDA (void, componentSlotAnything, (ComponentSlotAnythingData data)) {  ///
+    ASSERT(data.count > 0);
+    if (data.canHover)
+      ASSERT(data.id.id);
+
+    // Checking that none or only one of build/item/weapon is specified.
+    const int onlyOneOrNone
+      = (int)(data.build != 0) + (int)(data.item != 0) + (int)(data.weapon != 0);
+    ASSERT(onlyOneOrNone <= 1);
+
+    int texId = 0;
+    int tier  = 0;
+    if (data.build) {
+      texId = fb_builds->Get(data.build)->texture_id();
+      tier  = 3;
+    }
+    if (data.item) {
+      auto fbx = fb_items->Get(data.item);
+      texId    = fbx->texture_id();
+      tier     = fbx->tier();
+    }
+    if (data.weapon) {
+      auto fbx = fb_weapons->Get(data.weapon);
+      texId    = fbx->icon_texture_id();
+      tier     = fbx->min_tier_index();
+    }
+    if (data.tier >= 0)
+      tier = data.tier;
+
     componentSlot(
-      {.canHover = canHover, .tier = fb->tier()},
+      {
+        .hidden
+        = (!onlyOneOrNone && (data.hidden == ComponentSlotAnythingHiddenType_HIDE)),
+        .canHover = data.canHover,
+        .tier     = tier,
+      },
       [&]() BF_FORCE_INLINE_LAMBDA {
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_XY,
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-        }}) {
-          BF_CLAY_IMAGE({.texId = fb->texture_id()});
+        if (data.canHover)
+          ButtonSFX(draw, data.id, Clay_Hovered());
+
+        if (!onlyOneOrNone) {
+          if (data.hidden == ComponentSlotAnythingHiddenType_SHOW_LOCK)
+            texId = glib->ui_item_locked_texture_id();
+          else
+            return;
+        }
+
+        CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+          BF_CLAY_IMAGE({.texId = texId});
 
           // Showing count if there are multiple of the same item.
-          if (item.count > 1) {
+          if (data.count > 1) {
             CLAY({.floating{
               .zIndex = zIndex,
               .attachPoints{
@@ -3561,16 +3621,13 @@ void DoUI(bool draw) {
             }}) {
               FLOATING_BEAUTIFY;
               FontBegin(&g.meta.fontItemCountsOutlined);
-              BF_CLAY_TEXT(TextFormat("x%d", item.count));
+              BF_CLAY_TEXT(TextFormat("x%d", data.count));
               FontEnd();
             }
           }
         }
       }
     );
-  };
-
-  LAMBDA (void, componentItemNameAndHeaderProperties, (ItemType item)) {
   };
 
   LAMBDA (void, componentEffectsExploded, (auto fb_effects, int count, int maxWidth))
@@ -3769,39 +3826,13 @@ void DoUI(bool draw) {
         // Icon, name.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           // Icon. {  ///
-          componentSlot({.canHover = false, .tier = tier}, [&]() BF_FORCE_INLINE_LAMBDA {
-            CLAY({.layout{
-              BF_CLAY_SIZING_GROW_XY,
-              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-            }}) {
-              int texId = 0;
-              if (fb_build)
-                texId = fb_build->texture_id();
-              if (fb_item)
-                texId = fb_item->texture_id();
-              if (fb_weapon)
-                texId = fb_weapon->icon_texture_id();
-
-              if (texId)
-                BF_CLAY_IMAGE({.texId = texId});
-
-              if (data.itemCount > 1) {
-                CLAY({.floating{
-                  .zIndex = zIndex,
-                  .attachPoints{
-                    .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-                    .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-                  },
-                  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-                  .attachTo           = CLAY_ATTACH_TO_PARENT,
-                }}) {
-                  FLOATING_BEAUTIFY;
-                  FontBegin(&g.meta.fontItemCountsOutlined);
-                  BF_CLAY_TEXT(TextFormat("x%d", data.itemCount));
-                  FontEnd();
-                }
-              }
-            }
+          componentSlotAnything({
+            .build    = data.build,
+            .item     = data.item,
+            .weapon   = data.weapon,
+            .count    = data.itemCount,
+            .tier     = tier,
+            .canHover = false,
           });
           // }
 
@@ -4251,37 +4282,6 @@ void DoUI(bool draw) {
     }
 
     zIndex -= 2;
-  };
-
-  LAMBDA (void, componentSlotWeapon, (int weaponIndex, bool weAreInShop)) {  ///
-    auto& weapon = g.run.state.weapons[weaponIndex];
-
-    componentSlot(
-      {.hidden = !weapon.type, .canHover = true, .tier = weapon.tier},
-      [&]() BF_FORCE_INLINE_LAMBDA {
-        if (weapon.type) {
-          const auto fb = fb_weapons->Get(weapon.type);
-          CLAY({.layout{
-            BF_CLAY_SIZING_GROW_XY,
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          }}) {
-            BF_CLAY_IMAGE({
-              .texId = fb->icon_texture_id(),
-              .color = ColorFromRGBA(fb->color()),
-            });
-          }
-
-          ButtonSFX(draw, CLAY_IDI("componentSlotWeapon", weaponIndex), Clay_Hovered());
-
-          if (weAreInShop && clicked()) {
-            PlaySound(Sound_UI_CLICK);
-
-            ASSERT(g.run.shopSelectedWeaponIndex == -1);
-            g.run.shopSelectedWeaponIndex = weaponIndex;
-          }
-        }
-      }
-    );
   };
 
   struct ComponentTooltipData {  ///
@@ -4790,23 +4790,15 @@ void DoUI(bool draw) {
               const bool selected = ((i + 1) == (int)p.difficulty);
 
               CLAY({}) {
-                componentSlot(
-                  {.canHover = !isLocked, .tier = (isLocked ? 0 : (selected ? 6 : i))},
-                  [&]() BF_FORCE_INLINE_LAMBDA {
-                    CLAY({.layout{
-                      BF_CLAY_SIZING_GROW_XY,
-                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                    }}) {
-                      const auto texId
-                        = (isLocked ? glib->ui_item_locked_texture_id() : fb_item->texture_id());
-                      BF_CLAY_IMAGE({.texId = texId});
-                    }
-                  }
-                );
+                componentSlotAnything({
+                  .id       = CLAY_IDI("new_run_difficulty", i),
+                  .item     = (ItemType)(isLocked ? 0 : fb->item_type()),
+                  .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                  .tier     = (isLocked ? 0 : (selected ? 6 : i)),
+                  .canHover = !isLocked,
+                });
 
                 if (!isLocked) {
-                  ButtonSFX(draw, CLAY_IDI("button_difficulty", i), Clay_Hovered());
-
                   if (clicked()) {
                     PlaySound(Sound_UI_CLICK);
                     p.difficulty = (DifficultyType)(i + 1);
@@ -4873,27 +4865,16 @@ void DoUI(bool draw) {
                   CLAY({}) {
                     auto       fb       = fb_builds->Get(t + 1);
                     const bool isLocked = g.player.lockedBuilds[t + 1];
-                    componentSlot(
-                      {
-                        .canHover = !isLocked,
-                        .tier
-                        = (isLocked ? 0 : (selected ? 6 : MAX(0, (int)g.player.builds[t].maxDifficultyBeaten - 1))),
-                      },
-                      [&]() BF_FORCE_INLINE_LAMBDA {
-                        if (isLocked) {
-                          CLAY({.layout{
-                            BF_CLAY_SIZING_GROW_XY,
-                            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                          }}) {
-                            BF_CLAY_IMAGE({.texId = glib->ui_item_locked_texture_id()});
-                          }
-                        }
-                      }
-                    );
+                    componentSlotAnything({
+                      .id     = CLAY_IDI("new_run_build", t),
+                      .build  = (BuildType)(isLocked ? 0 : t + 1),
+                      .hidden = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                      .tier
+                      = (isLocked ? 0 : (selected ? 6 : MAX(0, (int)g.player.builds[t].maxDifficultyBeaten - 1))),
+                      .canHover = !isLocked,
+                    });
 
                     if (!isLocked) {
-                      ButtonSFX(draw, CLAY_IDI("button_build", t), Clay_Hovered());
-
                       if (clicked()) {
                         PlaySound(Sound_UI_CLICK);
                         if (p.build != (BuildType)(t + 1)) {
@@ -4953,58 +4934,40 @@ void DoUI(bool draw) {
             const int weaponsX = 6;
             const int weaponsY = CeilDivision(MAX_BUILD_WEAPONS, weaponsX);
 
-            auto weapons = fb_builds->Get(p.build)->starting_weapon_types();
+            auto fb_buildWeapons = fb_builds->Get(p.build)->starting_weapon_types();
 
             FOR_RANGE (int, y, weaponsY) {
               CLAY({.layout{.childGap = GAP_SMALL}})
               FOR_RANGE (int, x, weaponsX) {
                 const int t = y * weaponsX + x;
 
-                const bool exists = weapons && (t < weapons->size());
+                const bool exists = fb_buildWeapons && (t < fb_buildWeapons->size());
 
                 bool isLocked = false;
 
                 bool selected = false;
                 if (exists) {
-                  const auto weaponType = (WeaponType)weapons->Get(t);
+                  const auto weaponType = (WeaponType)fb_buildWeapons->Get(t);
                   selected              = (p.weapon == weaponType);
                   isLocked              = g.player.lockedWeapons[weaponType];
                 }
 
                 CLAY({}) {
-                  componentSlot(
-                    {
-                      .canHover = exists && !isLocked,
-                      .tier     = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
-                    },
-                    [&]() BF_FORCE_INLINE_LAMBDA {
-                      if (!exists)
-                        return;
-
-                      int texId = glib->ui_item_locked_texture_id();
-                      if (!isLocked) {
-                        auto fb = fb_weapons->Get(weapons->Get(t));
-                        texId   = fb->icon_texture_id();
-                      }
-
-                      CLAY({.layout{
-                        BF_CLAY_SIZING_GROW_XY,
-                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                      }}) {
-                        BF_CLAY_IMAGE({.texId = texId});
-                      }
-                    }
-                  );
+                  componentSlotAnything({
+                    .id       = CLAY_IDI("new_run_weapon", t),
+                    .weapon   = (WeaponType)(exists ? fb_buildWeapons->Get(t) : 0),
+                    .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                    .tier     = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
+                    .canHover = exists && !isLocked,
+                  });
 
                   // // Hovering modal.
                   // componentWeaponDetails(weaponIndex, false, false);
 
                   if (exists && !isLocked) {
-                    ButtonSFX(draw, CLAY_IDI("button_new_run_weapon", t), Clay_Hovered());
-
                     if (clicked()) {
                       PlaySound(Sound_UI_CLICK);
-                      p.weapon = (WeaponType)weapons->Get(t);
+                      p.weapon = (WeaponType)fb_buildWeapons->Get(t);
                       Save();
                     }
                   }
@@ -5429,16 +5392,13 @@ void DoUI(bool draw) {
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
-            BF_CLAY_TEXT_LOCALIZED_DANGER(
-              Loc_UI_ITEMS,
-              (g.run.state.items.count > 0 ? palTextWhite : TRANSPARENT_BLACK)
-            );
+            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
 
             // Items.
             CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
             ) {
               constexpr int ITEMS_X = 10;
-              const int     ITEMS_Y = CeilDivision(g.run.state.items.count, ITEMS_X);
+              const int     ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
 
               FOR_RANGE (int, y, ITEMS_Y) {
                 CLAY({.layout{.childGap = GAP_SMALL}})
@@ -5448,9 +5408,11 @@ void DoUI(bool draw) {
                     break;
                   CLAY({}) {
                     auto& item = g.run.state.items[t];
-                    componentSlotItem(true, item);
-
-                    ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
+                    componentSlotAnything({
+                      .id    = CLAY_IDI("shop_player_item", t),
+                      .item  = item.type,
+                      .count = item.count,
+                    });
 
                     if (Clay_Hovered()) {
                       componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
@@ -5516,7 +5478,11 @@ void DoUI(bool draw) {
 
                   CLAY({}) {
                     // Weapon.
-                    componentSlotWeapon(weaponIndex, true && weapon.type);
+                    componentSlotAnything({
+                      .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
+                      .weapon = weapon.type,
+                      .tier   = weapon.tier,
+                    });
                     // Hovering modal.
                     if (weapon.type)
                       componentWeaponDetails(weaponIndex, true, false);
@@ -5622,7 +5588,11 @@ void DoUI(bool draw) {
                 if (weapon.type) {
                   CLAY({}) {
                     // Weapon.
-                    componentSlotWeapon(weaponIndex, false);
+                    componentSlotAnything({
+                      .id     = CLAY_IDI("end_player_weapon", weaponIndex),
+                      .weapon = weapon.type,
+                      .tier   = weapon.tier,
+                    });
                     // Hovering modal.
                     componentWeaponDetails(weaponIndex, false, true);
                   }
@@ -5648,8 +5618,12 @@ void DoUI(bool draw) {
                 const auto t = y * ITEMS_X + x;
                 if (t < items.count) {
                   CLAY({}) {
-                    componentSlotItem(true, g.run.state.items[t]);
-                    ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
+                    const auto& item = g.run.state.items[t];
+                    componentSlotAnything({
+                      .id    = CLAY_IDI("end_player_item", t),
+                      .item  = item.type,
+                      .count = item.count,
+                    });
                     if (Clay_Hovered()) {
                       componentItemDetails(
                         g.run.state.items[t], {.detailsRight = 1, .detailsBelow = 1}
@@ -5825,46 +5799,24 @@ void DoUI(bool draw) {
                         if (workingOnIt)
                           tier = 1;
                       }
-                      else {
+                      else
                         tier = 3;
-                        if (fb_step->unlocks_build_type()) {
-                          auto fb_build = fb_builds->Get(fb_step->unlocks_build_type());
-                          texId         = fb_build->texture_id();
-                        }
-                        if (fb_step->unlocks_weapon_type()) {
-                          auto fb_weapon
-                            = fb_weapons->Get(fb_step->unlocks_weapon_type());
-                          texId = fb_weapon->icon_texture_id();
-                        }
-                        if (fb_step->unlocks_item_type()) {
-                          auto fb_item = fb_items->Get(fb_step->unlocks_item_type());
-                          texId        = fb_item->texture_id();
-                        }
-                      }
 
-                      componentSlot(
-                        {.canHover = canHover, .tier = tier},
-                        [&]() BF_FORCE_INLINE_LAMBDA {
-                          CLAY({.layout{
-                            BF_CLAY_SIZING_GROW_XY,
-                            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                          }}) {
-                            BF_CLAY_IMAGE({.texId = texId});
-                          }
-                        }
-                      );
+                      componentSlotAnything({
+                        .id = CLAY_IDI(
+                          "paused_achievement", 100 * currentAchievement + currentStep
+                        ),
+                        .build    = (BuildType)fb_step->unlocks_build_type(),
+                        .item     = (ItemType)fb_step->unlocks_item_type(),
+                        .weapon   = (WeaponType)fb_step->unlocks_weapon_type(),
+                        .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                        .tier     = tier,
+                        .canHover = canHover,
+                      });
 
                       if (canHover && Clay_Hovered()) {
                         g.meta.pausedAchievementsHoveredAchievement = currentAchievement;
                         g.meta.pausedAchievementsHoveredAchievementStep = currentStep;
-
-                        ButtonSFX(
-                          draw,
-                          CLAY_IDI(
-                            "paused_achievement", 100 * currentAchievement + currentStep
-                          ),
-                          true
-                        );
                       }
                     }
 
@@ -6037,7 +5989,11 @@ void DoUI(bool draw) {
                     if (weapon.type) {
                       CLAY({}) {
                         // Weapon.
-                        componentSlotWeapon(weaponIndex, false);
+                        componentSlotAnything({
+                          .id     = CLAY_IDI("pause_player_weapon", weaponIndex),
+                          .weapon = weapon.type,
+                          .tier   = weapon.tier,
+                        });
                         // Hovering modal.
                         componentWeaponDetails(weaponIndex, false, true);
                       }
@@ -6065,8 +6021,12 @@ void DoUI(bool draw) {
                     const auto t = y * ITEMS_X + x;
                     if (t < items.count) {
                       CLAY({}) {
-                        componentSlotItem(true, g.run.state.items[t]);
-                        ButtonSFX(draw, CLAY_IDI("button_item", t), Clay_Hovered());
+                        const auto& item = g.run.state.items[t];
+                        componentSlotAnything({
+                          .id    = CLAY_IDI("pause_player_item", t),
+                          .item  = item.type,
+                          .count = item.count,
+                        });
                         if (Clay_Hovered()) {
                           componentItemDetails(
                             g.run.state.items[t], {.detailsRight = 1, .detailsBelow = 0}

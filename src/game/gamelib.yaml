@@ -1049,14 +1049,33 @@ builds:
       - SWORD
       - BOW
       - GUN
+    effects:
+      - stat_type: HP
+        value: 5
+      - stat_type: CRIT_CHANCE
+        value: 3
+      - stat_type: LUCK
+        value: 5
   - type: NINJA
     starting_weapon_types:
       - SLINGSHOT
       - SMG
+    effects:
+      - stat_type: DAMAGE
+        value: 15
+      - stat_type: DODGE
+        value: 7
   - type: WIZARD
     starting_weapon_types:
       - WAND
       - WAND2
+    effects:
+      - stat_type: HP
+        value: -3
+      - stat_type: SPEED
+        value: 10
+      - stat_type: ARMOR
+        value: 6
 achievements:
   - type: INVALID
   - type: DIFFICULTY

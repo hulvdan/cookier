@@ -243,6 +243,7 @@ table Build {
     texture_id: int;
     name_locale: int;
     starting_weapon_types: [int];
+    effects: [Effect];
 }
 
 table AchievementStep {
