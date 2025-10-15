@@ -1475,8 +1475,7 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
       .rerolled_times      = s.shop.rerolls.rerolledTimes,
     });
 
-    if ((s.screen == ScreenType_GAMEPLAY) || (s.screen == ScreenType_WAVE_END_ANIMATION))
-    {
+    if (s.screen == ScreenType_GAMEPLAY) {
       fb_save.stats_without_items[StatType_COINS] = s.previousCoins;
 
       fb_save.level  = fb_save.previous_level;
