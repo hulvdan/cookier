@@ -830,7 +830,8 @@ struct GameData {
       bool       won    = false;
       ScreenType screen = ScreenType_GAMEPLAY;
 
-      int waveIndex = 0;
+      int  waveIndex = 0;
+      bool waveWon   = false;
 
       int level         = 1;
       int previousLevel = 1;
@@ -871,7 +872,6 @@ struct GameData {
     bool reload = false;
 
     FrameVisual scheduledWaveCompleted      = {};
-    bool        waveWon                     = false;
     bool        recalculatePlayerStats      = false;
     bool        scheduledUI                 = false;
     bool        scheduledNewRun             = false;
@@ -1258,13 +1258,18 @@ void Load(void* saveData) {  ///
     }
   }
 
-  g.player.difficulty      = (DifficultyType)save->difficulty();
-  g.player.build           = (BuildType)save->build();
-  g.player.weapon          = (WeaponType)save->weapon();
-  PLAYER_CREATURE.health   = save->health();
-  s.won                    = save->won();
-  s.screen                 = (ScreenType)save->screen();
+  g.player.difficulty    = (DifficultyType)save->difficulty();
+  g.player.build         = (BuildType)save->build();
+  g.player.weapon        = (WeaponType)save->weapon();
+  PLAYER_CREATURE.health = save->health();
+  s.won                  = save->won();
+  s.screen               = (ScreenType)save->screen();
+  if (s.screen == ScreenType_WAVE_END_ANIMATION) {
+    g.run.scheduledWaveCompleted = {};
+    g.run.scheduledWaveCompleted.SetNow();
+  }
   s.waveIndex              = save->wave_index();
+  s.waveWon                = save->wave_won();
   s.level                  = save->level();
   s.previousLevel          = save->previous_level();
   s.xp                     = save->xp();
@@ -1413,6 +1418,7 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
     fb_save.won                   = s.won;
     fb_save.screen                = s.screen;
     fb_save.wave_index            = s.waveIndex;
+    fb_save.wave_won              = s.waveWon;
     fb_save.level                 = s.level;
     fb_save.previous_level        = s.previousLevel;
     fb_save.xp                    = s.xp;
@@ -3594,7 +3600,7 @@ void DoUI(bool draw) {
     bool canHover = true;
   };
 
-  LAMBDA (void, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
+  LAMBDA (bool, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
     ASSERT(data.count > 0);
     if (data.canHover)
       ASSERT(data.id.id);
@@ -3627,6 +3633,8 @@ void DoUI(bool draw) {
     if (data.tier >= 0)
       tier = data.tier;
 
+    bool result = false;
+
     componentSlot(
       {
         .hidden
@@ -3635,8 +3643,11 @@ void DoUI(bool draw) {
         .tier     = tier,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
-        if (data.canHover)
+        if (data.canHover) {
           ButtonSFX(draw, data.id, Clay_Hovered());
+          if (clicked())
+            result = true;
+        }
 
         if (!onlyOneOrNone) {
           if (data.hidden == ComponentUniversalSlotHiddenType_SHOW_LOCK)
@@ -3668,6 +3679,8 @@ void DoUI(bool draw) {
         }
       }
     );
+
+    return result;
   };
 
   LAMBDA (void, componentEffectsExploded, (auto fb_effects, int count, int maxWidth))
@@ -5578,11 +5591,17 @@ void DoUI(bool draw) {
 
                   CLAY({}) {
                     // Weapon.
-                    componentUniversalSlot({
+                    const bool selectedWeapon = componentUniversalSlot({
                       .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
                       .weapon = weapon.type,
                       .tier   = weapon.tier,
                     });
+
+                    if (selectedWeapon) {
+                      PlaySound(Sound_UI_CLICK);
+                      g.run.shopSelectedWeaponIndex = weaponIndex;
+                    }
+
                     // Hovering modal.
                     if (weapon.type)
                       componentWeaponDetails(weapon.type, weaponIndex, true, false);
@@ -6622,7 +6641,7 @@ void GameFixedUpdate() {
 
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
-    if ((g.run.state.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
+    if ((g.run.state.screen != ScreenType_WAVE_END_ANIMATION) && g.run.state.waveWon) {
       // Applying effects: END_OF_THE_WAVE_GET_STAT.
       IterateOverEffects(
         EffectConditionType_END_OF_THE_WAVE_GET_STAT,
@@ -6669,9 +6688,9 @@ void GameFixedUpdate() {
           harvesting = Ceil((f32)harvesting * 1.05f);
       }
 
-      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) || !g.run.waveWon) {
+      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) || !g.run.state.waveWon) {
         g.run.scheduledEnd = true;
-        g.run.state.won    = g.run.waveWon;
+        g.run.state.won    = g.run.state.waveWon;
 
         // Updating `Build.maxDifficultyBeaten` + achievement.
         if (g.run.state.won) {
@@ -6685,7 +6704,7 @@ void GameFixedUpdate() {
       }
 
       g.run.scheduledWaveCompleted = {};
-      g.run.waveWon                = false;
+      g.run.state.waveWon          = false;
 
       g.run.scheduledUI = true;
     }
@@ -6876,7 +6895,8 @@ void GameFixedUpdate() {
       if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.state.waveIndex)) {  ///
         if (!g.run.scheduledWaveCompleted.IsSet()) {
           g.run.scheduledWaveCompleted.SetNow();
-          g.run.waveWon = true;
+          g.run.state.waveWon = true;
+          Save();
         }
       }
 
@@ -8126,7 +8146,8 @@ void GameFixedUpdate() {
             // Player died.
             if (!g.run.scheduledWaveCompleted.IsSet()) {
               g.run.scheduledWaveCompleted.SetNow();
-              g.run.waveWon = false;
+              g.run.state.waveWon = false;
+              Save();
             }
           }
           else {
@@ -8218,7 +8239,8 @@ void GameFixedUpdate() {
             if (fb->is_boss()) {
               if (!g.run.scheduledWaveCompleted.IsSet()) {
                 g.run.scheduledWaveCompleted.SetNow();
-                g.run.waveWon = true;
+                g.run.state.waveWon = true;
+                Save();
               }
             }
           }
@@ -8847,9 +8869,9 @@ void GameDraw() {
       = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
     int locale = Loc_UI_WAVE_WON__CAPS;
-    if (!g.run.waveWon)
+    if (!g.run.state.waveWon)
       locale = Loc_UI_WAVE_LOST__CAPS;
-    if (g.run.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
+    if (g.run.state.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
       locale = Loc_UI_WON__CAPS;
     auto text = localization_strings->Get(locale);
 
