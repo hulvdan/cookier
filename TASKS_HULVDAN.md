@@ -55,12 +55,9 @@ x ref componentSlotAnything
 x ref: remove componentTooltip
 x ref: componentUniversalDetails
 x show build/difficulty in shop/pause/end
+x RunInit: apply difficulty/build traits
 
-* RunInit: apply difficulty/build traits
-* build traits work
-* new run: show difficulty effects
-* new run: show build effects
-* builds + difficulties shown in items?
+* fix save load (saved during wave completed animation)
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
