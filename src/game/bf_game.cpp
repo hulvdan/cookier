@@ -3537,13 +3537,13 @@ void DoUI(bool draw) {
     }
   };
 
-  enum ComponentSlotAnythingHiddenType {  ///
-    ComponentSlotAnythingHiddenType_HIDE,
-    ComponentSlotAnythingHiddenType_SHOW_EMPTY_SLOT,
-    ComponentSlotAnythingHiddenType_SHOW_LOCK,
+  enum ComponentUniversalSlotHiddenType {  ///
+    ComponentUniversalSlotHiddenType_HIDE,
+    ComponentUniversalSlotHiddenType_SHOW_EMPTY_SLOT,
+    ComponentUniversalSlotHiddenType_SHOW_LOCK,
   };
 
-  struct ComponentSlotAnythingData {  ///
+  struct ComponentUniversalSlotData {  ///
     Clay_ElementId id = {};
 
     DifficultyType difficulty = {};
@@ -3551,14 +3551,14 @@ void DoUI(bool draw) {
     ItemType       item       = {};
     WeaponType     weapon     = {};
 
-    ComponentSlotAnythingHiddenType hidden = ComponentSlotAnythingHiddenType_HIDE;
+    ComponentUniversalSlotHiddenType hidden = ComponentUniversalSlotHiddenType_HIDE;
 
     int  count    = 1;
     int  tier     = -1;
     bool canHover = true;
   };
 
-  LAMBDA (void, componentSlotAnything, (ComponentSlotAnythingData data)) {  ///
+  LAMBDA (void, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
     ASSERT(data.count > 0);
     if (data.canHover)
       ASSERT(data.id.id);
@@ -3594,7 +3594,7 @@ void DoUI(bool draw) {
     componentSlot(
       {
         .hidden
-        = (!onlyOneOrNone && (data.hidden == ComponentSlotAnythingHiddenType_HIDE)),
+        = (!onlyOneOrNone && (data.hidden == ComponentUniversalSlotHiddenType_HIDE)),
         .canHover = data.canHover,
         .tier     = tier,
       },
@@ -3603,7 +3603,7 @@ void DoUI(bool draw) {
           ButtonSFX(draw, data.id, Clay_Hovered());
 
         if (!onlyOneOrNone) {
-          if (data.hidden == ComponentSlotAnythingHiddenType_SHOW_LOCK)
+          if (data.hidden == ComponentUniversalSlotHiddenType_SHOW_LOCK)
             texId = glib->ui_item_locked_texture_id();
           else
             return;
@@ -3809,11 +3809,13 @@ void DoUI(bool draw) {
     }
     // }  ///
 
+    // CLAY(...) {  ///
     CLAY({.layout{.sizing{
       .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
       .height
       = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
     }}})
+    // }
     if (!data.hideIfEmpty || atLeastOneIsSpecified) {
       // CLAY(...) {  ///
       CLAY({
@@ -3832,7 +3834,7 @@ void DoUI(bool draw) {
         // Icon, name.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           // Icon. {  ///
-          componentSlotAnything({
+          componentUniversalSlot({
             .difficulty = data.difficulty,
             .build      = data.build,
             .item       = data.item,
@@ -4264,7 +4266,7 @@ void DoUI(bool draw) {
     }
   };
 
-  struct ComponentUniversalDetailsData {
+  struct ComponentUniversalDetailsData {  ///
     DifficultyType difficulty = {};
     BuildType      build      = {};
     ItemType       item       = {};
@@ -4508,6 +4510,80 @@ void DoUI(bool draw) {
       }
 
       zIndex -= 2;
+    }
+  };
+
+  struct ComponentItemsGridData {  ///
+    int  itemsX       = {};
+    bool detailsBelow = false;
+  };
+
+  LAMBDA (void, componentItemsGrid, (ComponentItemsGridData data)) {  ///
+    ASSERT(data.itemsX > 0);
+
+    CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+      const int ITEMS_X = data.itemsX;
+      const int ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
+
+      FOR_RANGE (int, y, ITEMS_Y) {
+        CLAY({.layout{.childGap = GAP_SMALL}})
+        FOR_RANGE (int, x, ITEMS_X) {
+          const int t = y * ITEMS_X + x;
+          if (t >= g.run.state.items.count + 2)
+            break;
+          CLAY({}) {
+            int            itemCount      = 1;
+            DifficultyType difficultyType = {};
+            BuildType      buildType      = {};
+            ItemType       itemType       = {};
+
+            if (t == 0) {
+              componentUniversalSlot({
+                .id    = CLAY_IDI("shop_player_item", t),
+                .build = g.player.build,
+              });
+              buildType = g.player.build;
+            }
+            else if (t == 1) {
+              componentUniversalSlot({
+                .id         = CLAY_IDI("shop_player_item", t),
+                .difficulty = g.player.difficulty,
+              });
+              difficultyType = g.player.difficulty;
+            }
+            else {
+              auto& item = g.run.state.items[t - 2];
+              componentUniversalSlot({
+                .id    = CLAY_IDI("shop_player_item", t),
+                .item  = item.type,
+                .count = item.count,
+              });
+              itemType  = item.type;
+              itemCount = item.count;
+            }
+
+            if (Clay_Hovered()) {
+              componentUniversalDetails({
+                .difficulty   = difficultyType,
+                .build        = buildType,
+                .item         = itemType,
+                .count        = itemCount,
+                .detailsRight = 1,
+                .detailsBelow = data.detailsBelow,
+              });
+              if (ge.meta.debugEnabled && itemType) {
+                auto& item = g.run.state.items[t - 2];
+                if (clicked())
+                  item.count++;
+                if (wheel && Clay_Hovered()) {
+                  item.count += wheel;
+                  item.count = MAX(1, item.count);
+                }
+              }
+            }
+          }
+        }
+      }
     }
   };
 
@@ -4814,10 +4890,10 @@ void DoUI(bool draw) {
               const bool selected = ((i + 1) == (int)p.difficulty);
 
               CLAY({}) {
-                componentSlotAnything({
+                componentUniversalSlot({
                   .id         = CLAY_IDI("new_run_difficulty", i),
                   .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
-                  .hidden     = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                  .hidden     = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                   .tier       = (isLocked ? 0 : (selected ? 6 : i)),
                   .canHover   = !isLocked,
                 });
@@ -4888,10 +4964,10 @@ void DoUI(bool draw) {
                     const int buildTier
                       = MAX(0, (int)g.player.builds[t].maxDifficultyBeaten - 1);
 
-                    componentSlotAnything({
+                    componentUniversalSlot({
                       .id       = CLAY_IDI("new_run_build", t),
                       .build    = (BuildType)(isLocked ? 0 : t + 1),
-                      .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                      .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                       .tier     = (isLocked ? 0 : (selected ? 6 : buildTier)),
                       .canHover = !isLocked,
                     });
@@ -4971,10 +5047,10 @@ void DoUI(bool draw) {
                 }
 
                 CLAY({}) {
-                  componentSlotAnything({
+                  componentUniversalSlot({
                     .id       = CLAY_IDI("new_run_weapon", t),
                     .weapon   = (WeaponType)(exists ? fb_buildWeapons->Get(t) : 0),
-                    .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                    .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                     .tier     = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
                     .canHover = exists && !isLocked,
                   });
@@ -5415,73 +5491,8 @@ void DoUI(bool draw) {
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
-
             // Items.
-            CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
-            ) {
-              constexpr int ITEMS_X = 10;
-              const int     ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
-
-              FOR_RANGE (int, y, ITEMS_Y) {
-                CLAY({.layout{.childGap = GAP_SMALL}})
-                FOR_RANGE (int, x, ITEMS_X) {
-                  const int t = y * ITEMS_X + x;
-                  if (t >= g.run.state.items.count + 2)
-                    break;
-                  CLAY({}) {
-                    int            itemCount      = 1;
-                    DifficultyType difficultyType = {};
-                    BuildType      buildType      = {};
-                    ItemType       itemType       = {};
-
-                    if (t == 0) {
-                      componentSlotAnything({
-                        .id    = CLAY_IDI("shop_player_item", t),
-                        .build = g.player.build,
-                      });
-                      buildType = g.player.build;
-                    }
-                    else if (t == 1) {
-                      componentSlotAnything({
-                        .id         = CLAY_IDI("shop_player_item", t),
-                        .difficulty = g.player.difficulty,
-                      });
-                      difficultyType = g.player.difficulty;
-                    }
-                    else {
-                      auto& item = g.run.state.items[t - 2];
-                      componentSlotAnything({
-                        .id    = CLAY_IDI("shop_player_item", t),
-                        .item  = item.type,
-                        .count = item.count,
-                      });
-                      itemType  = item.type;
-                      itemCount = item.count;
-                    }
-
-                    if (Clay_Hovered()) {
-                      componentUniversalDetails({
-                        .difficulty   = difficultyType,
-                        .build        = buildType,
-                        .item         = itemType,
-                        .count        = itemCount,
-                        .detailsRight = 1,
-                        .detailsBelow = 0,
-                      });
-                      if (ge.meta.debugEnabled && itemType) {
-                        auto& item = g.run.state.items[t - 2];
-                        if (clicked())
-                          item.count++;
-                        if (wheel && Clay_Hovered()) {
-                          item.count += wheel;
-                          item.count = MAX(1, item.count);
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            componentItemsGrid({.itemsX = 6});
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -5531,7 +5542,7 @@ void DoUI(bool draw) {
 
                   CLAY({}) {
                     // Weapon.
-                    componentSlotAnything({
+                    componentUniversalSlot({
                       .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
                       .weapon = weapon.type,
                       .tier   = weapon.tier,
@@ -5641,7 +5652,7 @@ void DoUI(bool draw) {
                 if (weapon.type) {
                   CLAY({}) {
                     // Weapon.
-                    componentSlotAnything({
+                    componentUniversalSlot({
                       .id     = CLAY_IDI("end_player_weapon", weaponIndex),
                       .weapon = weapon.type,
                       .tier   = weapon.tier,
@@ -5655,41 +5666,9 @@ void DoUI(bool draw) {
           }
 
           // Items label.
-          if (g.run.state.items.count > 0) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
-
-            // Items.
-            const auto& items = g.run.state.items;
-
-            constexpr int ITEMS_X = 10;
-            const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
-
-            CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
-            FOR_RANGE (int, y, ITEMS_Y) {
-              CLAY({.layout{.childGap = GAP_SMALL}})
-              FOR_RANGE (int, x, ITEMS_X) {
-                const auto t = y * ITEMS_X + x;
-                if (t < items.count) {
-                  CLAY({}) {
-                    const auto& item = g.run.state.items[t];
-                    componentSlotAnything({
-                      .id    = CLAY_IDI("end_player_item", t),
-                      .item  = item.type,
-                      .count = item.count,
-                    });
-                    if (Clay_Hovered()) {
-                      componentUniversalDetails({
-                        .item         = item.type,
-                        .count        = item.count,
-                        .detailsRight = 1,
-                        .detailsBelow = 1,
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          }
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
+          // Items.
+          componentItemsGrid({.itemsX = 10, .detailsBelow = 1});
         }
       }
 
@@ -5858,14 +5837,14 @@ void DoUI(bool draw) {
                       else
                         tier = 3;
 
-                      componentSlotAnything({
+                      componentUniversalSlot({
                         .id = CLAY_IDI(
                           "paused_achievement", 100 * currentAchievement + currentStep
                         ),
                         .build    = (BuildType)fb_step->unlocks_build_type(),
                         .item     = (ItemType)fb_step->unlocks_item_type(),
                         .weapon   = (WeaponType)fb_step->unlocks_weapon_type(),
-                        .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                        .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                         .tier     = tier,
                         .canHover = canHover,
                       });
@@ -6045,7 +6024,7 @@ void DoUI(bool draw) {
                     if (weapon.type) {
                       CLAY({}) {
                         // Weapon.
-                        componentSlotAnything({
+                        componentUniversalSlot({
                           .id     = CLAY_IDI("pause_player_weapon", weaponIndex),
                           .weapon = weapon.type,
                           .tier   = weapon.tier,
@@ -6058,44 +6037,10 @@ void DoUI(bool draw) {
                 }
               }
 
-              if (g.run.state.items.count > 0) {
-                // Items label.
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
-
-                // Items.
-                const auto& items = g.run.state.items;
-
-                constexpr int ITEMS_X = 6;
-                const int     ITEMS_Y = CeilDivision(items.count, ITEMS_X);
-
-                CLAY(
-                  {.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
-                )
-                FOR_RANGE (int, y, ITEMS_Y) {
-                  CLAY({.layout{.childGap = GAP_SMALL}})
-                  FOR_RANGE (int, x, ITEMS_X) {
-                    const auto t = y * ITEMS_X + x;
-                    if (t < items.count) {
-                      CLAY({}) {
-                        const auto& item = g.run.state.items[t];
-                        componentSlotAnything({
-                          .id    = CLAY_IDI("pause_player_item", t),
-                          .item  = item.type,
-                          .count = item.count,
-                        });
-                        if (Clay_Hovered()) {
-                          componentUniversalDetails({
-                            .item         = item.type,
-                            .count        = item.count,
-                            .detailsRight = 1,
-                            .detailsBelow = 0,
-                          });
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              // Items label.
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
+              // Items.
+              componentItemsGrid({.itemsX = 6});
             }
           }
 
