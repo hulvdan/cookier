@@ -115,7 +115,7 @@ STAT_REROLL_PRICE;Цена Перебрасывания;Reroll Price;
 STAT_TURRELS_COUNT;Туррели;Turrels;
 STAT_LANDMINES;Частота спавна мин;Landmines;
 STAT_GARDENS_COUNT;Сад;Gardens;
-STAT_MOB_HP_SCALE;Здоровье Врагов;Enemy Health;
+STAT_ENEMY_HP_SCALE;Здоровье Врагов;Enemy Health;
 UPGRADE_NAME_HP;Сердце;Heart;
 UPGRADE_NAME_REGEN;Лёгкие;Lungs;
 UPGRADE_NAME_LIFE_STEAL;Челюсть;Teeth;
