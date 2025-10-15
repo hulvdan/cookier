@@ -2077,8 +2077,9 @@ int MakeCreature(MakeCreatureData data) {  ///
                );
 
   if (fb->hostility_type() != HostilityType_FRIENDLY) {
-    const f32 mobHpScale = (f32)(100 + g.run.playerStats[StatType_MOB_HP_SCALE]) / 100.0f;
-    health               = Round((f32)health * mobHpScale);
+    const f32 mobHpScale
+      = (f32)(100 + g.run.playerStats[StatType_ENEMY_HP_SCALE]) / 100.0f;
+    health = Round((f32)health * mobHpScale);
   }
 
   const auto creatureId = g.run.nextCreatureId++;
@@ -5552,16 +5553,19 @@ void DoUI(bool draw) {
 
         // 3. Player's items and weapons.
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
-          CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
+
+            CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
+
             // Items.
-            componentItemsGrid({.itemsX = 6});
+            componentItemsGrid({.itemsX = 10});
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
 
-          CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Weapons label.
             CLAY({}) {
               int weaponsCount = 0;
@@ -5579,6 +5583,8 @@ void DoUI(bool draw) {
                 (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
               );
             }
+
+            CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
 
             // Weapons.
             constexpr int WEAPONS_X = 3;

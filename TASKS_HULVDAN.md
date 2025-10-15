@@ -61,6 +61,7 @@ x fix save load (saved during wave completed animation)
 x showing max build beaten difficulty
 x fix: new run: bow make it locked when it's actually locked
 
+* fix: achievements: "complete difficulty level 3 (2/3)" remove this "(2/3)"
 * weapon show base damage
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened

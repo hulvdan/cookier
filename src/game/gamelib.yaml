@@ -988,7 +988,7 @@ stats:
   - type: GARDENS_COUNT
     is_secondary: true
     is_hidden: true
-  - type: MOB_HP_SCALE
+  - type: ENEMY_HP_SCALE
     is_percent: true
     is_secondary: true
     is_hidden: true
@@ -1001,33 +1001,41 @@ difficulties:
   - type: D0
     texture_id: ui_difficulty_0
     effects:
-      - stat_type: MOB_HP_SCALE
+      - stat_type: ENEMY_HP_SCALE
         value: 0
   - type: D1
     texture_id: ui_difficulty_1
     effects:
-      - stat_type: MOB_HP_SCALE
+      - stat_type: ENEMY_HP_SCALE
         value: 5
   - type: D2
     texture_id: ui_difficulty_2
     effects:
-      - stat_type: MOB_HP_SCALE
+      - stat_type: ENEMY_HP_SCALE
         value: 12
+      - stat_type: ENEMY_SPEED
+        value: 20
   - type: D3
     texture_id: ui_difficulty_3
     effects:
-      - stat_type: MOB_HP_SCALE
+      - stat_type: ENEMY_HP_SCALE
         value: 25
+      - stat_type: ENEMY_SPEED
+        value: 20
   - type: D4
     texture_id: ui_difficulty_4
     effects:
-      - stat_type: MOB_HP_SCALE
+      - stat_type: ENEMY_HP_SCALE
         value: 40
+      - stat_type: ENEMY_SPEED
+        value: 20
   - type: D5
     texture_id: ui_difficulty_5
     effects:
-      - stat_type: MOB_HP_SCALE
+      - stat_type: ENEMY_HP_SCALE
         value: 75
+      - stat_type: ENEMY_SPEED
+        value: 20
 builds:
   - type: INVALID
   - type: DEFAULT

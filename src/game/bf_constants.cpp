@@ -223,6 +223,9 @@ const Color textColorsPerTier_[]{
   TextifyColor(ColorFromRGBA(0x208cb2ff)),
   TextifyColor(ColorFromRGBA(0xa13d77ff)),
   ColorFromRGBA(0xdc9824ff),
+  TextifyColor(ColorFromRGBA(0xc02931ff)),
+  TextifyColor(ColorFromRGBA(0x82dcd7ff)),
+  WHITE,
 };
 VIEW_FROM_ARRAY_DANGER(textColorsPerTier);
 
