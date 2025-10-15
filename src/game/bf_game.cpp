@@ -4420,17 +4420,30 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (
-    void, componentWeaponDetails, (int weaponIndex, bool weAreInShop, bool detailsBelow)
+    void,
+    componentWeaponDetails,
+    (WeaponType type,
+     int        weaponIndexOrMinus1,
+     bool       weAreInShop,
+     bool       detailsBelow,
+     bool       affectedByGame = true)
   )
   {  ///
-    auto& weapon = g.run.state.weapons[weaponIndex];
-    ASSERT(weapon.type);
-    auto fb = fb_weapons->Get(weapon.type);
+    ASSERT(type);
+
+    int tier = 0;
+    if (weaponIndexOrMinus1 >= 0) {
+      auto& weapon = g.run.state.weapons[weaponIndexOrMinus1];
+      ASSERT(type == weapon.type);
+      tier = weapon.tier;
+    }
+    else
+      tier = fb_weapons->Get(type)->min_tier_index();
 
     // Floating weapon details modal.
     // Gets shown upon hovering. Gets sticked upon clicking on weapon.
-    if (Clay_Hovered() || (g.run.shopSelectedWeaponIndex == weaponIndex)) {
-      if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex)) {
+    if (Clay_Hovered() || (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1)) {
+      if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1)) {
         // Pressing ESC closes modal.
         if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
           g.run.shopSelectedWeaponIndex = -1;
@@ -4470,14 +4483,14 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
-        if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndex))
+        if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1))
           componentOverlay();
 
         componentUniversalCard({
-          .weapon              = weapon.type,
-          .weaponIndexOrMinus1 = weaponIndex,
-          .affectedByGame      = true,
-          .overrideTier        = weapon.tier,
+          .weapon              = type,
+          .weaponIndexOrMinus1 = weaponIndexOrMinus1,
+          .affectedByGame      = affectedByGame,
+          .overrideTier        = tier,
           .shopSelling         = weAreInShop,
         });
       }
@@ -4961,8 +4974,12 @@ void DoUI(bool draw) {
                     .canHover = exists && !isLocked,
                   });
 
-                  // // Hovering modal.
-                  // componentWeaponDetails(weaponIndex, false, false);
+                  // Hovering modal.
+                  if (exists && Clay_Hovered()) {
+                    componentWeaponDetails(
+                      (WeaponType)fb_buildWeapons->Get(t), -1, false, false, false
+                    );
+                  }
 
                   if (exists && !isLocked) {
                     if (clicked()) {
@@ -5485,7 +5502,7 @@ void DoUI(bool draw) {
                     });
                     // Hovering modal.
                     if (weapon.type)
-                      componentWeaponDetails(weaponIndex, true, false);
+                      componentWeaponDetails(weapon.type, weaponIndex, true, false);
                   }
                 }
               }
@@ -5594,7 +5611,7 @@ void DoUI(bool draw) {
                       .tier   = weapon.tier,
                     });
                     // Hovering modal.
-                    componentWeaponDetails(weaponIndex, false, true);
+                    componentWeaponDetails(weapon.type, weaponIndex, false, true);
                   }
                 }
               }
@@ -5995,7 +6012,7 @@ void DoUI(bool draw) {
                           .tier   = weapon.tier,
                         });
                         // Hovering modal.
-                        componentWeaponDetails(weaponIndex, false, true);
+                        componentWeaponDetails(weapon.type, weaponIndex, false, true);
                       }
                     }
                   }
