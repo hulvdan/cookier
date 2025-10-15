@@ -5111,15 +5111,16 @@ void DoUI(bool draw) {
 
                 CLAY({}) {
                   componentUniversalSlot({
-                    .id       = CLAY_IDI("new_run_weapon", t),
-                    .weapon   = (WeaponType)(exists ? fb_buildWeapons->Get(t) : 0),
+                    .id = CLAY_IDI("new_run_weapon", t),
+                    .weapon
+                    = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) : 0),
                     .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                     .tier     = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
                     .canHover = exists && !isLocked,
                   });
 
                   // Hovering modal.
-                  if (exists && Clay_Hovered()) {
+                  if (exists && !isLocked && Clay_Hovered()) {
                     componentWeaponDetails(
                       (WeaponType)fb_buildWeapons->Get(t), -1, false, false, false
                     );

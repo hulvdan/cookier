@@ -59,6 +59,7 @@ x RunInit: apply difficulty/build traits
 x fix save load money
 x fix save load (saved during wave completed animation)
 x showing max build beaten difficulty
+x fix: new run: bow make it locked when it's actually locked
 
 * weapon show base damage
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
