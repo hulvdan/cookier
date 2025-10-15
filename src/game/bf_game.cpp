@@ -1094,38 +1094,20 @@ void SanitizeCoins() {  ///
     PLAYER_COINS = int_max;
 }
 
-void ApplyEffect(const BFGame::Effect* fb_effect, int itemCount) {  ///
-  ASSERT(itemCount > 0);
+void ApplyEffect(const BFGame::Effect* fb_effect, int times = 1) {  ///
+  ASSERT(times > 0);
   if (fb_effect->stat_type()) {
-    g.run.state.statsWithoutItems[fb_effect->stat_type()]
-      += fb_effect->value() * itemCount;
+    g.run.state.statsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * times;
     if ((StatType)fb_effect->stat_type() == StatType_COINS)
       SanitizeCoins();
     if (fb_effect->value_multiplier() != 1)
       g.run.state.statsWithoutItems[fb_effect->stat_type()]
-        *= 1 + (fb_effect->value_multiplier() - 1) * itemCount;
+        *= 1 + (fb_effect->value_multiplier() - 1) * times;
     if ((StatType)fb_effect->stat_type() == StatType_COINS)
       SanitizeCoins();
   }
 
   g.run.recalculatePlayerStats = true;
-}
-
-void IterateOverItemEffects(
-  EffectConditionType                         condition,
-  auto /* void (Item& item, auto fb_effect)*/ innerLambda
-) {  ///
-  const auto fb_items = glib->items();
-  for (auto& item : g.run.state.items) {
-    const auto fb         = fb_items->Get(item.type);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(item, fb_effect);
-      }
-    }
-  }
 }
 
 f32 GetLuckFactor() {  ///
@@ -2369,6 +2351,56 @@ void IterateOverWeaponEffects(
   }
 }
 
+void IterateOverEffects(
+  EffectConditionType                         condition,
+  auto /* void (auto fb_effect, int times) */ innerLambda
+) {  ///
+  IterateOverWeaponEffects(
+    condition,
+    [&](int _, Weapon& weapon, auto fb_effect)
+      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, 1); }
+  );
+
+  // Iterating over items.
+  {
+    const auto fb_items = glib->items();
+    for (auto& item : g.run.state.items) {
+      const auto fb         = fb_items->Get(item.type);
+      const auto fb_effects = fb->effects();
+      if (fb_effects) {
+        for (const auto fb_effect : *fb_effects) {
+          if (fb_effect->effectcondition_type() == condition)
+            innerLambda(fb_effect, item.count);
+        }
+      }
+    }
+  }
+
+  // Iterating over difficulty effects.
+  {
+    const auto fb         = glib->difficulties()->Get(g.player.difficulty);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(fb_effect, 1);
+      }
+    }
+  }
+
+  // Iterating over build effects.
+  {
+    const auto fb         = glib->builds()->Get(g.player.build);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(fb_effect, 1);
+      }
+    }
+  }
+}
+
 void RunInit() {
   ZoneScoped;
 
@@ -2424,6 +2456,10 @@ void RunInit() {
 
     MakeWalls({.lines = lines});
   }
+
+  IterateOverEffects({}, [&](auto fb_effect, int times) BF_FORCE_INLINE_LAMBDA {
+    ApplyEffect(fb_effect, times);
+  });
 
   OnWaveStarted();
 }
@@ -6587,16 +6623,11 @@ void GameFixedUpdate() {
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
     if ((g.run.state.screen != ScreenType_WAVE_END_ANIMATION) && g.run.waveWon) {
-      // Applying item effects: END_OF_THE_WAVE_GET_STAT.
-      IterateOverWeaponEffects(
+      // Applying effects: END_OF_THE_WAVE_GET_STAT.
+      IterateOverEffects(
         EffectConditionType_END_OF_THE_WAVE_GET_STAT,
-        [&](int _, Weapon& weapon, auto fb_effect)
-          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, 1); }
-      );
-      IterateOverItemEffects(
-        EffectConditionType_END_OF_THE_WAVE_GET_STAT,
-        [&](const Item& item, auto fb_effect)
-          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, item.count); }
+        [&](auto fb_effect, int times)
+          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, times); }
       );
 
       // Making coins fly.
@@ -6778,15 +6809,10 @@ void GameFixedUpdate() {
     PLAYER_CREATURE.health    = health;
     PLAYER_CREATURE.maxHealth = health;
 
-    IterateOverWeaponEffects(
+    IterateOverEffects(
       EffectConditionType_START_OF_THE_WAVE_GET_STAT,
-      [&](int _, Weapon& weapon, auto fb_effect)
-        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, 1); }
-    );
-    IterateOverItemEffects(
-      EffectConditionType_START_OF_THE_WAVE_GET_STAT,
-      [&](const Item& item, auto fb_effect)
-        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, item.count); }
+      [&](auto fb_effect, int times)
+        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, times); }
     );
 
     Save();
@@ -8172,11 +8198,11 @@ void GameFixedUpdate() {
               if (creature.lastDamagedWeaponIndex >= 0)
                 g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
 
-              IterateOverWeaponEffects(
+              IterateOverEffects(
                 EffectConditionType_KILL_N_ENEMIES_GET_STAT,
-                [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                [&](auto fb_effect, int times) BF_FORCE_INLINE_LAMBDA {
                   if (g.run.state.playerKilledEnemies % fb_effect->condition_value() == 0)
-                    ApplyEffect(fb_effect, 1);
+                    ApplyEffect(fb_effect, times);
                 }
               );
               IterateOverWeaponEffects(
@@ -8184,13 +8210,6 @@ void GameFixedUpdate() {
                 [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
                   if (weapon.killedEnemies % fb_effect->condition_value() == 0)
                     ApplyEffect(fb_effect, 1);
-                }
-              );
-              IterateOverItemEffects(
-                EffectConditionType_KILL_N_ENEMIES_GET_STAT,
-                [&](const Item& item, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                  if (g.run.state.playerKilledEnemies % fb_effect->condition_value() == 0)
-                    ApplyEffect(fb_effect, item.count);
                 }
               );
             }
