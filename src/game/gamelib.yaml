@@ -474,36 +474,6 @@ items:
     effects:
       - stat_type: FREE_REROLLS
         value: 1
-  - type: DIFFICULTY0
-    included_in_random_pool: false
-    texture_id: ui_item_d0
-    tier: 0
-    price: 0
-  - type: DIFFICULTY1
-    included_in_random_pool: false
-    texture_id: ui_item_d1
-    tier: 0
-    price: 0
-  - type: DIFFICULTY2
-    included_in_random_pool: false
-    texture_id: ui_item_d2
-    tier: 0
-    price: 0
-  - type: DIFFICULTY3
-    included_in_random_pool: false
-    texture_id: ui_item_d3
-    tier: 0
-    price: 0
-  - type: DIFFICULTY4
-    included_in_random_pool: false
-    texture_id: ui_item_d4
-    tier: 0
-    price: 0
-  - type: DIFFICULTY5
-    included_in_random_pool: false
-    texture_id: ui_item_d5
-    tier: 0
-    price: 0
 weapon_kinds:
   - type: INVALID
   - type: MELEE
@@ -1018,6 +988,10 @@ stats:
   - type: GARDENS_COUNT
     is_secondary: true
     is_hidden: true
+  - type: MOB_HP_SCALE
+    is_percent: true
+    is_secondary: true
+    is_hidden: true
 placeholders:
   - type: INVALID
   - type: STRING
@@ -1025,23 +999,35 @@ placeholders:
 difficulties:
   - type: INVALID
   - type: D0
-    mob_hp_scale: 1
-    item_type: DIFFICULTY0
+    texture_id: ui_difficulty_0
+    effects:
+      - stat_type: MOB_HP_SCALE
+        value: 0
   - type: D1
-    mob_hp_scale: 1.05
-    item_type: DIFFICULTY1
+    texture_id: ui_difficulty_1
+    effects:
+      - stat_type: MOB_HP_SCALE
+        value: 5
   - type: D2
-    mob_hp_scale: 1.12
-    item_type: DIFFICULTY2
+    texture_id: ui_difficulty_2
+    effects:
+      - stat_type: MOB_HP_SCALE
+        value: 12
   - type: D3
-    mob_hp_scale: 1.25
-    item_type: DIFFICULTY3
+    texture_id: ui_difficulty_3
+    effects:
+      - stat_type: MOB_HP_SCALE
+        value: 25
   - type: D4
-    mob_hp_scale: 1.40
-    item_type: DIFFICULTY4
+    texture_id: ui_difficulty_4
+    effects:
+      - stat_type: MOB_HP_SCALE
+        value: 40
   - type: D5
-    mob_hp_scale: 1.75
-    item_type: DIFFICULTY5
+    texture_id: ui_difficulty_5
+    effects:
+      - stat_type: MOB_HP_SCALE
+        value: 75
 builds:
   - type: INVALID
   - type: DEFAULT
