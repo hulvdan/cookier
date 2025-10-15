@@ -58,7 +58,9 @@ x show build/difficulty in shop/pause/end
 x RunInit: apply difficulty/build traits
 x fix save load money
 x fix save load (saved during wave completed animation)
+x showing max build beaten difficulty
 
+* weapon show base damage
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
@@ -66,7 +68,6 @@ x fix save load (saved during wave completed animation)
 * achievements:
 * achievements:
 * better pause menu
-* completing difficulty can unlock stuff
 * save load: more tests!
 * new run: dim overlay on pressing `new run` in pause menu
 * new run: showing selected difficulty/build/weapon name

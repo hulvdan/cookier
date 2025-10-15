@@ -3233,6 +3233,10 @@ void ButtonSFX(bool draw, Clay_ElementId id, bool hovered) {  ///
   b.thisFrameUpdated = true;
 }
 
+int GetBuildTier(BuildType build) {  ///
+  return MAX(0, (int)g.player.builds[build].maxDifficultyBeaten - 1);
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -3621,7 +3625,7 @@ void DoUI(bool draw) {
     }
     if (data.build) {
       texId = fb_builds->Get(data.build)->texture_id();
-      tier  = 3;
+      tier  = GetBuildTier(data.build);
     }
     if (data.item) {
       auto fbx = fb_items->Get(data.item);
@@ -3807,7 +3811,7 @@ void DoUI(bool draw) {
       if (fb_difficulty)
         tier = (int)data.difficulty - 1;
       else if (fb_build)
-        tier = 3;
+        tier = GetBuildTier(data.build);
       else if (fb_item)
         tier = fb_item->tier();
       else if (fb_weapon)
@@ -3913,7 +3917,15 @@ void DoUI(bool draw) {
                 fb_build->name_locale(), textColorsPerTier[tier]
               );
               FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD, secondaryTextColor);
+              const auto d = g.player.builds[data.build].maxDifficultyBeaten;
+              if (d > 0) {
+                CLAY({}) {
+                  auto dd = fb_difficulties->Get(d);
+                  BF_CLAY_TEXT_LOCALIZED_DANGER(dd->name_locale(), secondaryTextColor);
+                }
+              }
+              else
+                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD, secondaryTextColor);
               FontEnd();
             }
             if (data.item) {  ///
@@ -5013,14 +5025,13 @@ void DoUI(bool draw) {
                     auto       fb       = fb_builds->Get(t + 1);
                     const bool isLocked = g.player.lockedBuilds[t + 1];
 
-                    const int buildTier
-                      = MAX(0, (int)g.player.builds[t].maxDifficultyBeaten - 1);
+                    const int tier = GetBuildTier((BuildType)(t + 1));
 
                     componentUniversalSlot({
                       .id       = CLAY_IDI("new_run_build", t),
                       .build    = (BuildType)(isLocked ? 0 : t + 1),
                       .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
-                      .tier     = (isLocked ? 0 : (selected ? 6 : buildTier)),
+                      .tier     = (isLocked ? 0 : (selected ? 6 : tier)),
                       .canHover = !isLocked,
                     });
 
@@ -5038,7 +5049,7 @@ void DoUI(bool draw) {
                         componentUniversalDetails({
                           .build          = (BuildType)(t + 1),
                           .affectedByGame = false,
-                          .overrideTier   = buildTier,
+                          .overrideTier   = tier,
                           .detailsRight   = 1,
                           .detailsBelow   = 1,
                         });
