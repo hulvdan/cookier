@@ -52,7 +52,7 @@ x shop: item counts font
 x showing item count in componentUniversalCard
 x achievements screen: weapon's data doesn't get affected by game state
 
-* build traits
+* builds + difficulties shown in items?
 * achievements: build traits
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
