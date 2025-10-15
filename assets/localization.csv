@@ -59,12 +59,12 @@ ITEM_TURREL;Туррель;Turrel;
 ITEM_TURREL_ENHANCE_TODO;Улучшалка Туррели;Make Turrel Better;
 ITEM_LANDMINE;Мина;Landmine;
 ITEM_GARDEN;Сад;Garden;
-ITEM_DIFFICULTY0;Ученик;Apprentice;
-ITEM_DIFFICULTY1;Средний;Medium;TODO Mushoku Tensei
-ITEM_DIFFICULTY2;Продвинутый;Advanced;
-ITEM_DIFFICULTY3;Король;King;
-ITEM_DIFFICULTY4;Император;Emperor;
-ITEM_DIFFICULTY5;Бог;God;
+DIFFICULTY_1;Ученик;Apprentice;
+DIFFICULTY_2;Средний;Medium;TODO Mushoku Tensei
+DIFFICULTY_3;Продвинутый;Advanced;
+DIFFICULTY_4;Король;King;
+DIFFICULTY_5;Император;Emperor;
+DIFFICULTY_6;Бог;God;
 WEAPON_SWORD;Меч;Sword;
 WEAPON_GUN;Пистолет;Gun;
 WEAPON_SMG;ПП;SMG;
@@ -115,6 +115,7 @@ STAT_REROLL_PRICE;Цена Перебрасывания;Reroll Price;
 STAT_TURRELS_COUNT;Туррели;Turrels;
 STAT_LANDMINES;Частота спавна мин;Landmines;
 STAT_GARDENS_COUNT;Сад;Gardens;
+STAT_MOB_HP_SCALE;Здоровье Врагов;Enemy Health;
 UPGRADE_NAME_HP;Сердце;Heart;
 UPGRADE_NAME_REGEN;Лёгкие;Lungs;
 UPGRADE_NAME_LIFE_STEAL;Челюсть;Teeth;

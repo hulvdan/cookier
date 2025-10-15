@@ -69,6 +69,12 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 x["type"], field
             )
 
+    # Difficulties.
+    # ============================================================
+    for i, x in enumerate(gamelib["difficulties"]):
+        if i > 0:
+            x["name_locale"] = f"DIFFICULTY_{i}"
+
     # Weapons.
     # ============================================================
     for x in gamelib["weapons"][1:]:

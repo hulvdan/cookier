@@ -2089,9 +2089,8 @@ int MakeCreature(MakeCreatureData data) {  ///
                );
 
   if (fb->hostility_type() != HostilityType_FRIENDLY) {
-    health = Round(
-      (f32)health * glib->difficulties()->Get(g.player.difficulty)->mob_hp_scale()
-    );
+    const f32 mobHpScale = (f32)(100 + g.run.playerStats[StatType_MOB_HP_SCALE]) / 100.0f;
+    health               = Round((f32)health * mobHpScale);
   }
 
   const auto creatureId = g.run.nextCreatureId++;
@@ -3547,9 +3546,10 @@ void DoUI(bool draw) {
   struct ComponentSlotAnythingData {  ///
     Clay_ElementId id = {};
 
-    BuildType  build  = {};
-    ItemType   item   = {};
-    WeaponType weapon = {};
+    DifficultyType difficulty = {};
+    BuildType      build      = {};
+    ItemType       item       = {};
+    WeaponType     weapon     = {};
 
     ComponentSlotAnythingHiddenType hidden = ComponentSlotAnythingHiddenType_HIDE;
 
@@ -3564,12 +3564,16 @@ void DoUI(bool draw) {
       ASSERT(data.id.id);
 
     // Checking that none or only one of build/item/weapon is specified.
-    const int onlyOneOrNone
-      = (int)(data.build != 0) + (int)(data.item != 0) + (int)(data.weapon != 0);
+    const int onlyOneOrNone = (int)(data.difficulty != 0) + (int)(data.build != 0)
+                              + (int)(data.item != 0) + (int)(data.weapon != 0);
     ASSERT(onlyOneOrNone <= 1);
 
     int texId = 0;
     int tier  = 0;
+    if (data.difficulty) {
+      texId = fb_difficulties->Get(data.difficulty)->texture_id();
+      tier  = (int)data.difficulty - 1;
+    }
     if (data.build) {
       texId = fb_builds->Get(data.build)->texture_id();
       tier  = 3;
@@ -3644,6 +3648,8 @@ void DoUI(bool draw) {
       }}) {
         FlexBegin(maxWidth, 0);
 
+        f32 v = 0;
+
         if (fb_effect->stat_type()) {
           const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
 
@@ -3653,7 +3659,7 @@ void DoUI(bool draw) {
           PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
 
           bool isPercent = fb_stat->is_percent();
-          auto v         = (f32)fb_effect->value();
+          v              = (f32)fb_effect->value();
           if (v == 0) {
             v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
             isPercent = true;
@@ -3677,7 +3683,7 @@ void DoUI(bool draw) {
             = fb_weapon_properties->Get(fb_effect->weaponproperty_type());
           PlaceholdBrokenLocale("PROPERTY", fb_prop->name_locale());
 
-          f32  v         = (f32)fb_effect->value();
+          v              = (f32)fb_effect->value();
           bool isPercent = false;
           if (v == 0) {
             v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
@@ -3705,7 +3711,7 @@ void DoUI(bool draw) {
         const auto cond = fb_effect->effectcondition_type();
         if (cond)
           clayEffectConditionFunctions[cond - 1](fb_effect);
-        else
+        else if (!FloatEquals(v, 0))
           BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_DEFAULT_WEAPON_STAT);
 
         FlexEnd();
@@ -3713,17 +3719,13 @@ void DoUI(bool draw) {
     }
   };
 
-  struct ComponentItemDetailsData {  ///
-    int detailsRight = {};
-    int detailsBelow = {};
-  };
-
   struct ComponentUniversalCardData {  ///
-    BuildType  build  = {};
-    ItemType   item   = {};
-    WeaponType weapon = {};
+    DifficultyType difficulty = {};
+    BuildType      build      = {};
+    ItemType       item       = {};
+    WeaponType     weapon     = {};
 
-    int itemCount           = 1;
+    int count               = 1;
     int weaponIndexOrMinus1 = -1;
 
     bool hideIfEmpty    = false;
@@ -3742,13 +3744,17 @@ void DoUI(bool draw) {
       = (int)(data.weapon != 0) + (int)(data.item != 0) + (int)(data.build != 0);
     ASSERT(atLeastOneIsSpecified <= 1);
 
+    const auto fb_difficulty
+      = (data.difficulty ? fb_difficulties->Get(data.difficulty) : nullptr);
     const auto fb_build  = (data.build ? fb_builds->Get(data.build) : nullptr);
     const auto fb_item   = (data.item ? fb_items->Get(data.item) : nullptr);
     const auto fb_weapon = (data.weapon ? fb_weapons->Get(data.weapon) : nullptr);
 
     int tier = data.overrideTier;
     if (tier == -1) {
-      if (fb_build)
+      if (fb_difficulty)
+        tier = (int)data.difficulty - 1;
+      else if (fb_build)
         tier = 3;
       else if (fb_item)
         tier = fb_item->tier();
@@ -3827,20 +3833,38 @@ void DoUI(bool draw) {
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           // Icon. {  ///
           componentSlotAnything({
-            .build    = data.build,
-            .item     = data.item,
-            .weapon   = data.weapon,
-            .count    = data.itemCount,
-            .tier     = tier,
-            .canHover = false,
+            .difficulty = data.difficulty,
+            .build      = data.build,
+            .item       = data.item,
+            .weapon     = data.weapon,
+            .count      = data.count,
+            .tier       = tier,
+            .canHover   = false,
           });
           // }
 
           // Name, secondary stuff.
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+            if (data.difficulty) {  ///
+              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                fb_difficulty->name_locale(), textColorsPerTier[tier]
+              );
+
+              FontBegin(&g.meta.fontStats);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_DIFFICULTY, secondaryTextColor);
+              FontEnd();
+            }
+            if (data.build) {  ///
+              BF_CLAY_TEXT_LOCALIZED_DANGER(
+                fb_build->name_locale(), textColorsPerTier[tier]
+              );
+              FontBegin(&g.meta.fontStats);
+              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD, secondaryTextColor);
+              FontEnd();
+            }
             if (data.item) {  ///
               BF_CLAY_TEXT_LOCALIZED_DANGER(
-                fb_item->name_locale(), textColorsPerTier[fb_item->tier()]
+                fb_item->name_locale(), textColorsPerTier[tier]
               );
 
               FontBegin(&g.meta.fontStats);
@@ -3884,27 +3908,27 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPON, secondaryTextColor);
               FontEnd();
             }
-            if (data.build) {  ///
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
-                fb_build->name_locale(), textColorsPerTier[tier]
-              );
-              FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD, secondaryTextColor);
-              FontEnd();
-            }
           }
         }
 
         FontBegin(&g.meta.fontStats);
 
+        // Difficulty stats.
+        if (data.difficulty) {  ///
+          componentEffectsExploded(fb_difficulty->effects(), data.count, CARD_WIDTH);
+        }
+        // Build stats.
+        if (data.build) {  ///
+          componentEffectsExploded(fb_build->effects(), data.count, CARD_WIDTH);
+        }
         // Item stats.
         if (data.item) {  ///
           componentEffectsExploded(
-            fb_items->Get(data.item)->effects(), data.itemCount, CARD_WIDTH
+            fb_items->Get(data.item)->effects(), data.count, CARD_WIDTH
           );
         }
         // Weapon stats.
-        else if (data.weapon) {  ///
+        if (data.weapon) {  ///
           int thisWaveDamage = 0;
           if (data.weaponIndexOrMinus1 >= 0)
             thisWaveDamage = g.run.state.weapons[data.weaponIndexOrMinus1].thisWaveDamage;
@@ -4240,8 +4264,24 @@ void DoUI(bool draw) {
     }
   };
 
-  LAMBDA (void, componentItemDetails, (const Item& item, ComponentItemDetailsData data))
-  {  ///
+  struct ComponentUniversalDetailsData {
+    DifficultyType difficulty = {};
+    BuildType      build      = {};
+    ItemType       item       = {};
+
+    int  count          = 1;
+    bool affectedByGame = true;
+    int  overrideTier   = -1;
+
+    bool detailsRight = {};
+    bool detailsBelow = {};
+  };
+
+  LAMBDA (void, componentUniversalDetails, (ComponentUniversalDetailsData data)) {  ///
+    ASSERT(data.count > 0);
+    int s = (int)(data.difficulty > 0) + (int)(data.build > 0) + (int)(data.item > 0);
+    ASSERT(s > 0);
+
     f32                          offsetY{};
     Clay_FloatingAttachPointType attachElement{};
     Clay_FloatingAttachPointType attachParent{};
@@ -4275,44 +4315,16 @@ void DoUI(bool draw) {
       FLOATING_BEAUTIFY;
 
       componentUniversalCard({
-        .item           = item.type,
-        .itemCount      = item.count,
-        .affectedByGame = true,
+        .difficulty     = data.difficulty,
+        .build          = data.build,
+        .item           = data.item,
+        .count          = data.count,
+        .affectedByGame = data.affectedByGame,
+        .overrideTier   = data.overrideTier,
       });
     }
 
     zIndex -= 2;
-  };
-
-  struct ComponentTooltipData {  ///
-    Vector2                      offset  = {};
-    Clay_FloatingAttachPointType element = {};
-    Clay_FloatingAttachPointType parent  = {};
-    int                          tier    = {};
-  };
-
-  LAMBDA (void, componentTooltip, (ComponentTooltipData data, auto&& innerLambda)) {  ///
-    zIndex++;
-    CLAY({
-      .layout{
-        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-      },
-      .floating{
-        .offset{data.offset.x, data.offset.y},
-        .zIndex = zIndex,
-        .attachPoints{.element = data.element, .parent = data.parent},
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-      BF_CLAY_CUSTOM_NINE_SLICE(
-        glib->ui_frame_nine_slice(),
-        slotColors[data.tier * 2],
-        slotColors[data.tier * 2 + 1]
-      ),
-    }) {
-      FLOATING_BEAUTIFY;
-      innerLambda();
-    }
-    zIndex--;
   };
 
   LAMBDA (void, componentAchievement, (AchievementType type, int stepIndex)) {  ///
@@ -4798,17 +4810,16 @@ void DoUI(bool draw) {
             FOR_RANGE (int, i, (int)DifficultyType_COUNT - 1) {
               auto isLocked = i > g.player.achievements[AchievementType_DIFFICULTY].value;
               auto fb       = fb_difficulties->Get(i + 1);
-              auto fb_item  = fb_items->Get(fb->item_type());
 
               const bool selected = ((i + 1) == (int)p.difficulty);
 
               CLAY({}) {
                 componentSlotAnything({
-                  .id       = CLAY_IDI("new_run_difficulty", i),
-                  .item     = (ItemType)(isLocked ? 0 : fb->item_type()),
-                  .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
-                  .tier     = (isLocked ? 0 : (selected ? 6 : i)),
-                  .canHover = !isLocked,
+                  .id         = CLAY_IDI("new_run_difficulty", i),
+                  .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
+                  .hidden     = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                  .tier       = (isLocked ? 0 : (selected ? 6 : i)),
+                  .canHover   = !isLocked,
                 });
 
                 if (!isLocked) {
@@ -4819,17 +4830,12 @@ void DoUI(bool draw) {
                   }
 
                   if (Clay_Hovered()) {
-                    componentTooltip(
-                      {
-                        .offset{0, -GAP_SMALL},
-                        .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
-                        .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
-                        .tier    = 0,
-                      },
-                      [&]() BF_FORCE_INLINE_LAMBDA {
-                        BF_CLAY_TEXT_LOCALIZED_DANGER(fb_item->name_locale());
-                      }
-                    );
+                    componentUniversalDetails({
+                      .difficulty     = (DifficultyType)(i + 1),
+                      .affectedByGame = false,
+                      .detailsRight   = 1,
+                      .detailsBelow   = 1,
+                    });
                   }
                 }
               }
@@ -4878,12 +4884,15 @@ void DoUI(bool draw) {
                   CLAY({}) {
                     auto       fb       = fb_builds->Get(t + 1);
                     const bool isLocked = g.player.lockedBuilds[t + 1];
+
+                    const int buildTier
+                      = MAX(0, (int)g.player.builds[t].maxDifficultyBeaten - 1);
+
                     componentSlotAnything({
-                      .id     = CLAY_IDI("new_run_build", t),
-                      .build  = (BuildType)(isLocked ? 0 : t + 1),
-                      .hidden = ComponentSlotAnythingHiddenType_SHOW_LOCK,
-                      .tier
-                      = (isLocked ? 0 : (selected ? 6 : MAX(0, (int)g.player.builds[t].maxDifficultyBeaten - 1))),
+                      .id       = CLAY_IDI("new_run_build", t),
+                      .build    = (BuildType)(isLocked ? 0 : t + 1),
+                      .hidden   = ComponentSlotAnythingHiddenType_SHOW_LOCK,
+                      .tier     = (isLocked ? 0 : (selected ? 6 : buildTier)),
                       .canHover = !isLocked,
                     });
 
@@ -4898,17 +4907,13 @@ void DoUI(bool draw) {
                       }
 
                       if (Clay_Hovered()) {
-                        componentTooltip(
-                          {
-                            .offset{0, -GAP_SMALL},
-                            .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
-                            .parent  = CLAY_ATTACH_POINT_CENTER_TOP,
-                            .tier    = 0,
-                          },
-                          [&]() BF_FORCE_INLINE_LAMBDA {
-                            BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale());
-                          }
-                        );
+                        componentUniversalDetails({
+                          .build          = (BuildType)(t + 1),
+                          .affectedByGame = false,
+                          .overrideTier   = buildTier,
+                          .detailsRight   = 1,
+                          .detailsBelow   = 1,
+                        });
                       }
                     }
                   }
@@ -5421,19 +5426,50 @@ void DoUI(bool draw) {
                 CLAY({.layout{.childGap = GAP_SMALL}})
                 FOR_RANGE (int, x, ITEMS_X) {
                   const int t = y * ITEMS_X + x;
-                  if (t >= g.run.state.items.count)
+                  if (t >= g.run.state.items.count + 2)
                     break;
                   CLAY({}) {
-                    auto& item = g.run.state.items[t];
-                    componentSlotAnything({
-                      .id    = CLAY_IDI("shop_player_item", t),
-                      .item  = item.type,
-                      .count = item.count,
-                    });
+                    int            itemCount      = 1;
+                    DifficultyType difficultyType = {};
+                    BuildType      buildType      = {};
+                    ItemType       itemType       = {};
+
+                    if (t == 0) {
+                      componentSlotAnything({
+                        .id    = CLAY_IDI("shop_player_item", t),
+                        .build = g.player.build,
+                      });
+                      buildType = g.player.build;
+                    }
+                    else if (t == 1) {
+                      componentSlotAnything({
+                        .id         = CLAY_IDI("shop_player_item", t),
+                        .difficulty = g.player.difficulty,
+                      });
+                      difficultyType = g.player.difficulty;
+                    }
+                    else {
+                      auto& item = g.run.state.items[t - 2];
+                      componentSlotAnything({
+                        .id    = CLAY_IDI("shop_player_item", t),
+                        .item  = item.type,
+                        .count = item.count,
+                      });
+                      itemType  = item.type;
+                      itemCount = item.count;
+                    }
 
                     if (Clay_Hovered()) {
-                      componentItemDetails(item, {.detailsRight = 1, .detailsBelow = 0});
-                      if (ge.meta.debugEnabled) {
+                      componentUniversalDetails({
+                        .difficulty   = difficultyType,
+                        .build        = buildType,
+                        .item         = itemType,
+                        .count        = itemCount,
+                        .detailsRight = 1,
+                        .detailsBelow = 0,
+                      });
+                      if (ge.meta.debugEnabled && itemType) {
+                        auto& item = g.run.state.items[t - 2];
                         if (clicked())
                           item.count++;
                         if (wheel && Clay_Hovered()) {
@@ -5642,9 +5678,12 @@ void DoUI(bool draw) {
                       .count = item.count,
                     });
                     if (Clay_Hovered()) {
-                      componentItemDetails(
-                        g.run.state.items[t], {.detailsRight = 1, .detailsBelow = 1}
-                      );
+                      componentUniversalDetails({
+                        .item         = item.type,
+                        .count        = item.count,
+                        .detailsRight = 1,
+                        .detailsBelow = 1,
+                      });
                     }
                   }
                 }
@@ -6045,9 +6084,12 @@ void DoUI(bool draw) {
                           .count = item.count,
                         });
                         if (Clay_Hovered()) {
-                          componentItemDetails(
-                            g.run.state.items[t], {.detailsRight = 1, .detailsBelow = 0}
-                          );
+                          componentUniversalDetails({
+                            .item         = item.type,
+                            .count        = item.count,
+                            .detailsRight = 1,
+                            .detailsBelow = 0,
+                          });
                         }
                       }
                     }
@@ -6564,12 +6606,6 @@ void GameFixedUpdate() {
         ChangeCoins(int_max);
       else
         ChangeCoins(10);
-    }
-
-    // F6 - add random item.
-    if (IsKeyPressed(SDL_SCANCODE_F6)) {  ///
-      Item item{.type = (ItemType)((GRAND.Rand() % (int)(ItemType_COUNT - 1)) + 1)};
-      *g.run.state.items.Add() = item;
     }
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
@@ -8912,7 +8948,6 @@ void GameDraw() {
     DebugText("F3 change localization");
     DebugText("F4 change device");
     DebugText("F5 +10 coins");
-    DebugText("F6 add item");
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
       DebugText("F7 show end screen");
       DebugText("F8 add level");

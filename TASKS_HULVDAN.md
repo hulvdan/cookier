@@ -52,7 +52,11 @@ x shop: item counts font
 x showing item count in componentUniversalCard
 x achievements screen: weapon's data doesn't get affected by game state
 x ref componentSlotAnything
+x ref: remove componentTooltip
+x ref: componentUniversalDetails
 
+* show build/difficulty in shop/pause/end
+* RunInit: apply difficulty/build traits
 * build traits work
 * new run: show difficulty effects
 * new run: show build effects

@@ -235,8 +235,10 @@ table PreSpawn {
 }
 
 table Difficulty {
+    name_locale: int;
+    texture_id: int;
     mob_hp_scale: float;
-    item_type: int;
+    effects: [Effect];
 }
 
 table Build {
