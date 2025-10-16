@@ -450,7 +450,6 @@ struct MakeBodyData {
 
 struct Weapon {
   WeaponType type                               = {};
-  Vector2    offset                             = {};
   Vector2    targetDir                          = {};
   FrameGame  startedShootingAt                  = {};
   FrameGame  cooldownStartedAt                  = {};
@@ -979,10 +978,6 @@ void Save() {  ///
   g.meta.scheduledSave = true;
 }
 
-void OnUIStart() {  ///
-  ge.settings.screenFade = glib->ui_modal_fade();
-}
-
 // NOTE: Doesn't apply `StatType_DAMAGE`.
 int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
   if (fb_damageScalings) {
@@ -1064,26 +1059,23 @@ void RecalculatePlayerWeaponDamages() {  ///
   }
 }
 
-void RecalculatePlayerWeaponOffsets() {  ///
+Vector2 GetPlayerWeaponOffset(int weaponIndex) {  ///
   int weaponsCount = 0;
   for (const auto& weapon : g.run.state.weapons) {
     if (weapon.type)
       weaponsCount++;
   }
 
-  // Checkin that INVALID weapons are on the end of `state.weapons`.
+  ASSERT(weaponIndex >= 0);
+  ASSERT(weaponIndex < weaponsCount);
+
+  // Checking that INVALID weapons are on the end of `state.weapons`.
   for (int i = weaponsCount; i < g.run.state.weapons.count; i++)
     ASSERT(!g.run.state.weapons[i].type);
 
-  // Recalculating offsets.
-  if (weaponsCount > 0) {
-    const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
-    const auto angleDelta    = 2.0f * (f32)PI32 / (f32)weaponsCount;
-    FOR_RANGE (int, i, weaponsCount) {
-      g.run.state.weapons[i].offset
-        = Vector2Rotate(Vector2(1, 0), i * angleDelta + startingAngle);
-    }
-  }
+  const auto startingAngle = PLAYER_WEAPONS_STARTING_ANGLES[weaponsCount - 1];
+  const auto angleDelta    = 2.0f * (f32)PI32 / (f32)weaponsCount;
+  return Vector2Rotate(Vector2(1, 0), weaponIndex * angleDelta + startingAngle);
 }
 
 #define PLAYER_CREATURE (g.run.creatures[0])
@@ -1158,7 +1150,6 @@ void OnWaveStarted() {  ///
   g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
 
   RecalculatePlayerWeaponDamages();
-  RecalculatePlayerWeaponOffsets();
 }
 
 void AchievementStepSetLock(const BFGame::AchievementStep* fb_step, bool locked) {  ///
@@ -1337,13 +1328,10 @@ void Load(void* saveData) {  ///
   if (save->health() <= 0)
     g.run.scheduledEnd = true;
 
-  if (s.screen == ScreenType_GAMEPLAY)
+  if (s.screen == ScreenType_GAMEPLAY) {
     g.meta.paused = true;
-  else if (s.screen != ScreenType_WAVE_END_ANIMATION)
-    OnUIStart();
-
-  if (s.screen == ScreenType_GAMEPLAY)
     OnWaveStarted();
+  }
   else if (s.screen == ScreenType_WAVE_END_ANIMATION) {
     g.run.scheduledWaveCompleted.SetNow();
     g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
@@ -1359,7 +1347,6 @@ void Load(void* saveData) {  ///
 
   RecalculatePlayerStats();
   RecalculatePlayerWeaponDamages();
-  RecalculatePlayerWeaponOffsets();
 
   g.player.lockedBuilds  = {};
   g.player.lockedWeapons = {};
@@ -2793,8 +2780,6 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 void RunReset() {  ///
   ZoneScoped;
 
-  ge.settings.screenFade = 0;
-
   b2DestroyWorld(g.run.world);
 
   g.run.state.items.Reset();
@@ -3085,11 +3070,13 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndexOrMinus1) {  ///
   return continueCollisions;
 }
 
-Vector2 GetWeaponPos(const Weapon& weapon) {  ///
+Vector2 GetWeaponPos(int weaponIndex) {  ///
+  auto& weapon = g.run.state.weapons[weaponIndex];
+  ASSERT(weapon.type);
   const auto fb = glib->weapons()->Get(weapon.type);
 
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
-    return PLAYER_CREATURE.pos + weapon.offset;
+    return PLAYER_CREATURE.pos + GetPlayerWeaponOffset(weaponIndex);
 
   const auto e            = weapon.startedShootingAt.Elapsed();
   const auto shootingDur  = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
@@ -4909,12 +4896,15 @@ void DoUI(bool draw) {
 
   // New run.
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
-    CLAY({.layout{
-      BF_CLAY_SIZING_GROW_XY,
-      .childGap = GAP_BIG * 2,
-      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-    }}) {
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        .childGap = GAP_BIG * 2,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {
       auto& p = g.player;
 
       // "NEW RUN" label.
@@ -5172,10 +5162,13 @@ void DoUI(bool draw) {
   }
   // Picked up item.
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
-    CLAY({.layout{
-      BF_CLAY_SIZING_GROW_XY,
-      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-    }}) {
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {
       // Columns (1) picked up item, (2) stats
       CLAY({.layout{.childGap = GAP_BIG, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
         // Column 1. Picked up item.
@@ -5250,11 +5243,14 @@ void DoUI(bool draw) {
   // Upgrades.
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
     // Vertical columns with upgrades and stats;
-    CLAY({.layout{
-      BF_CLAY_SIZING_GROW_XY,
-      .childGap = GAP_BIG,
-      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-    }}) {
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        .childGap = GAP_BIG,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {
       // Upgrades.
       CLAY({.layout{
         .childGap = GAP_BIG,
@@ -5427,13 +5423,16 @@ void DoUI(bool draw) {
   // Shop.
   else if (g.run.state.screen == ScreenType_SHOP) {  ///
     // Columns.
-    CLAY({.layout{
-      BF_CLAY_SIZING_GROW_XY,
-      BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-        PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
-      ),
-      .childGap = GAP_BIG,
-    }}) {
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
+        .childGap = GAP_BIG,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {
       // Left column that contains:
       // 1. wave, coins, reroll.
       // 2. items to buy.
@@ -5673,15 +5672,18 @@ void DoUI(bool draw) {
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
-    CLAY({.layout{
-      BF_CLAY_SIZING_GROW_XY,
-      BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-        PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
-      ),
-      .childGap = GAP_SMALL,
-      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-      .layoutDirection = CLAY_TOP_TO_BOTTOM,
-    }}) {
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
+        .childGap = GAP_SMALL,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {
       // Header. Run Won / Lost, Wave.
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_X,
@@ -6740,8 +6742,6 @@ void GameFixedUpdate() {
   if (g.run.scheduledUI) {  ///
     g.run.scheduledUI = false;
 
-    OnUIStart();
-
     if (g.run.state.crates) {
       g.run.scheduledPickedUpItems      = true;
       g.run.scheduledPickedUpItemsReset = true;
@@ -6843,8 +6843,7 @@ void GameFixedUpdate() {
   if (g.run.scheduledNextWave) {  ///
     g.run.scheduledNextWave = false;
 
-    g.run.state.screen     = ScreenType_GAMEPLAY;
-    ge.settings.screenFade = 0;
+    g.run.state.screen = ScreenType_GAMEPLAY;
 
     g.run.state.waveIndex++;
     g.run.state.previousXp = g.run.state.xp;
@@ -6892,6 +6891,7 @@ void GameFixedUpdate() {
     g.meta.scheduledTogglePause = false;
 
     g.meta.paused = !g.meta.paused;
+    Save();
   }
 
   const auto gameplayOrWaveEndScreen
@@ -7678,14 +7678,14 @@ void GameFixedUpdate() {
     if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
       ZoneScopedN("Player weapons shooting.");
 
-      int weaponIndexOrMinus1 = -1;
+      int weaponIndex = -1;
       for (auto& weapon : g.run.state.weapons) {
-        weaponIndexOrMinus1++;
+        weaponIndex++;
         if (!weapon.type)
           continue;
 
         const auto fb  = fb_weapons->Get(weapon.type);
-        const auto pos = PLAYER_CREATURE.pos + weapon.offset;
+        const auto pos = PLAYER_CREATURE.pos + GetPlayerWeaponOffset(weaponIndex);
 
         f32 minDistSqr           = f32_inf;
         int closestCreatureIndex = -1;
@@ -7738,7 +7738,7 @@ void GameFixedUpdate() {
               // Ranged - from their offset positions.
               Vector2 targetFromPos = PLAYER_CREATURE.pos;
               if (fb->projectile_type())
-                targetFromPos += weapon.offset;
+                targetFromPos += GetPlayerWeaponOffset(weaponIndex);
               const auto dir
                 = Vector2DirectionOrRandom(targetFromPos, closestCreature.pos);
 
@@ -7784,7 +7784,7 @@ void GameFixedUpdate() {
               MakeProjectile({
                 .type                 = projectileType,
                 .ownerCreatureType    = PLAYER_CREATURE.type,
-                .weaponIndexOrMinus1  = weaponIndexOrMinus1,
+                .weaponIndexOrMinus1  = weaponIndex,
                 .pos                  = pos,
                 .dir                  = weapon.targetDir,
                 .range                = GetWeaponRangeMeters(weapon.type),
@@ -7827,7 +7827,7 @@ void GameFixedUpdate() {
                 colliderSize,
                 weapon.targetDir,
                 OnWeaponCollided,
-                &weaponIndexOrMinus1
+                &weaponIndex
               );
             }
           }
@@ -8640,7 +8640,7 @@ void GameDraw() {
 
         const auto fb = fb_weapons->Get(weapon.type);
 
-        auto pos = GetWeaponPos(weapon);
+        auto pos = GetWeaponPos(i);
         if (!fb->projectile_type() && weapon.startedShootingAt.IsSet()) {
           const auto dur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
           const f32  t   = InOutLerp(
@@ -8650,7 +8650,7 @@ void GameDraw() {
             (f32)dur.value,
             (f32)dur.value / 6
           );
-          pos = Vector2Lerp(PLAYER_CREATURE.pos + weapon.offset, pos, t);
+          pos = Vector2Lerp(PLAYER_CREATURE.pos + GetPlayerWeaponOffset(i), pos, t);
         }
 
         f32     rotation = 0;

@@ -61,6 +61,7 @@ x fix save load (saved during wave completed animation)
 x showing max build beaten difficulty
 x fix: new run: bow make it locked when it's actually locked
 x fix: achievements: "complete difficulty level 3 (2/3)" remove this "(2/3)"
+x fix: nuked caching player weapon offsets
 
 * weapon show base damage
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
