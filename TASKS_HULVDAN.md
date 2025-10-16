@@ -62,6 +62,7 @@ x showing max build beaten difficulty
 x fix: new run: bow make it locked when it's actually locked
 x fix: achievements: "complete difficulty level 3 (2/3)" remove this "(2/3)"
 x fix: nuked caching player weapon offsets
+x ref extract reroll button
 
 * weapon show base damage
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
@@ -80,7 +81,6 @@ x fix: nuked caching player weapon offsets
 * new run: go button big green or rework in steps
 * new run: build icons
 * yandex save
-* ref extract reroll button
 * classes
 * achievements
 * menu: change class and start new run
