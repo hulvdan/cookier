@@ -3400,6 +3400,27 @@ void DoUI(bool draw) {
     return result;
   };
 
+  LAMBDA (bool, componentButtonReroll, (int price)) {  ///
+    return componentButton(
+      {.id = CLAY_ID("button_shop_reroll")},
+      [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+        CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_REROLL, textColor);
+
+          ASSERT(price >= 0);
+
+          if (price > 0) {
+            BF_CLAY_TEXT(" - ", textColor);
+            BF_CLAY_TEXT(
+              TextFormat("%d ", price), ((price <= PLAYER_COINS) ? textColor : palTextRed)
+            );
+            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+          }
+        }
+      }
+    );
+  };
+
   struct ComponentSlotData {  ///
     bool hidden     = {};
     bool canHover   = {};
@@ -5384,20 +5405,7 @@ void DoUI(bool draw) {
         const auto calculatedRerollPrice
           = ApplyStatRerollPrice(g.run.state.upgrades.rerolls.GetPrice());
         const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-        bool       rerolled  = componentButton(
-          {.id = CLAY_ID("button_upgrades_reroll")},
-          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_REROLL, textColor);
-              BF_CLAY_TEXT(" - ", textColor);
-              BF_CLAY_TEXT(
-                TextFormat("%d ", calculatedRerollPrice),
-                (canReroll ? textColor : palTextRed)
-              );
-              BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-            }
-          }
-        );
+        bool       rerolled  = componentButtonReroll(calculatedRerollPrice);
         if (!draw && IsKeyPressed(SDL_SCANCODE_R))
           rerolled = true;
         if (rerolled) {
@@ -5490,25 +5498,8 @@ void DoUI(bool draw) {
           const auto calculatedRerollPrice
             = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
           const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-          bool       rerolled  = componentButton(
-            {.id = CLAY_ID("button_shop_reroll")},
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_REROLL, textColor);
 
-                ASSERT(calculatedRerollPrice >= 0);
-
-                if (calculatedRerollPrice > 0) {
-                  BF_CLAY_TEXT(" - ", textColor);
-                  BF_CLAY_TEXT(
-                    TextFormat("%d ", calculatedRerollPrice),
-                    (canReroll ? textColor : palTextRed)
-                  );
-                  BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-                }
-              }
-            }
-          );
+          bool rerolled = componentButtonReroll(calculatedRerollPrice);
           if (!draw && IsKeyPressed(SDL_SCANCODE_R))
             rerolled = true;
           if (rerolled) {
