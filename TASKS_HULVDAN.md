@@ -65,40 +65,29 @@ x fix: nuked caching player weapon offsets
 x ref extract reroll button
 x show weapon base damage
 
+* boss gameplay
+* UI keyboard button focusing
+* touch: pause button during gameplay
+* touch: can play using finger
+* yandex save: emscripten pass string from C++
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
 * achievements:
 * achievements:
 * achievements:
-* better pause menu
 * save load: more tests!
-* new run: dim overlay on pressing `new run` in pause menu
 * new run: showing selected difficulty/build/weapon name
-* new run: showing hover weapon details
-* new run: initial weapon recycle price
 * new run: button selection needs to be rewoked for PC
 * new run: go button big green or rework in steps
 * new run: build icons
-* yandex save
-* classes
-* achievements
-* menu: change class and start new run
-* menu: web when touch enabled: button that can be touched turing the gameplay to get into menu
-* menu:
-* menu:
-* menu:
-* menu:
-* menu:
 * localization sorting
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
 * fix shop items/weapons frame height
-* design achievements
 * weapon detail icons? (combine / sell / cancel)
 * luck = подкова
 * multiple level ups icons in the top right corner (like picked up crates)
-* shop items locking
 * draw UI? writing code gets tiring
 * turrel: show damage in item
 * landmine: show damage in item
@@ -106,7 +95,6 @@ x show weapon base damage
 * garden: show interval of fruit spawning "Spawns fruit every %.1f seconds"
 * clay hovered modal shadows
 * stat descriptions
-* save system
 * coin pickup particles
 * keyboard input prompts
 * navigating in pickedup item / upgrades / shop / end with keyboard
@@ -129,26 +117,12 @@ x show weapon base damage
 * is brotato arena squared?
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
-*
-*
-* ZHEKA: Cheats?
-* ZHEKA: can web build
-* ZHEKA: total commander for working with sounds?
-  instructions of how to work with sounds
-  - finding them using total commander (alt+F7)
-  - sending them for listening to foobar2000
-    (total commander: «Feed to listbox» then drag'n drop)
-  - fast editing with audacity (fade in, fade out, compression, export macroses)
 * gather all weapon classes (e.g. primitive)
 * weapon tag: primitive 3 6 9 12 15 hp
 * weapon tag: ethereal 3 6 9 12 15 armor
 * weapon tag: explosive: 5 10 15 20 25 explosion size
 * weapon tag: elemental: 1 2 3 4 5 elemental damage
 * weapons categorization. жидкое / твёрдое?
-*
-*
-*
-*
 * aseprite show image center
 
 ART:
@@ -266,3 +240,4 @@ LATER:
 * save: starting wave completed animation saves the game
 * windows save in another thread (+profile dumping / saving to file)
 * brotato gog
+* shop item locks
