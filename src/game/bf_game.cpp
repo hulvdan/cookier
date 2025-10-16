@@ -5696,7 +5696,7 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_VERTICAL;
 
           // Advance to the next wave button.
-          g.run.scheduledNextWave = componentButton(
+          const bool nextWavePressed = componentButton(
             {.id = CLAY_ID("button_shop_next_wave"), .growX = true},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_GO, textColor);
@@ -5706,9 +5706,9 @@ void DoUI(bool draw) {
             }
           );
 
-          if (g.run.scheduledNextWave) {
+          if (nextWavePressed) {
+            g.run.scheduledNextWave = true;
             PlaySound(Sound_UI_CLICK);
-
             for (auto& v : g.run.state.shop.toPick)
               v = {};
           }
