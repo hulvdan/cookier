@@ -1605,6 +1605,7 @@ bool IsAlreadyPlaceholded(const char* placeholder) {  ///
   return false;
 }
 
+// value must be statically allocated or live in trashArena.
 void PlaceholdString(
   const char* placeholder,
   const char* value,
@@ -4456,22 +4457,26 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           FontBegin(&g.meta.fontStats);
-          if (!fb_previousStep
-              || (g.player.achievements[type].value >= fb_previousStep->value()))
-          {
+
+          const auto v = g.player.achievements[type].value;
+
+          if (!fb_previousStep || (v >= fb_previousStep->value())) {
             FlexBegin(ACHIEVEMENT_WIDTH, 0);
-            PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
+            if (type == AchievementType_DIFFICULTY) {
+              PlaceholdString(
+                "VALUE",
+                localization_strings
+                  ->Get(fb_difficulties->Get(stepIndex + 1)->name_locale())
+                  ->c_str()
+              );
+            }
+            else
+              PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
             BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->description_locale());
-            int percent
-              = MIN(100, g.player.achievements[type].value * 100 / fb_step->value());
+            int percent = MIN(100, v * 100 / fb_step->value());
             if ((percent < 100) && (fb_step->value() > 1)) {
               BF_CLAY_TEXT(" ");
-              BF_CLAY_TEXT(
-                TextFormat(
-                  "(%d / %d)", g.player.achievements[type].value, fb_step->value()
-                ),
-                palTextBezhevy
-              );
+              BF_CLAY_TEXT(TextFormat("(%d / %d)", v, fb_step->value()), palTextBezhevy);
             }
             FlexEnd();
           }
