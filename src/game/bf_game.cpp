@@ -4029,12 +4029,15 @@ void DoUI(bool draw) {
           componentWeaponStatEntry(
             fb_stats->Get(StatType_DAMAGE)->name_locale(),
             [&]() BF_FORCE_INLINE_LAMBDA {
-              int damage = fb->base_damage()->Get(fb->min_tier_index());
-              if (data.affectedByGame)
-                damage
+              const int baseDamage = fb->base_damage()->Get(tier - fb->min_tier_index());
+              if (data.affectedByGame) {
+                const int actualDamage
                   = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
-
-              BF_CLAY_TEXT(TextFormat("%d", damage), palTextGreen);
+                BF_CLAY_TEXT(TextFormat("%d", actualDamage), palTextGreen);
+                BF_CLAY_TEXT(TextFormat(" (%d)", baseDamage), secondaryTextColor);
+              }
+              else
+                BF_CLAY_TEXT(TextFormat("%d", baseDamage), palTextGreen);
 
               // Scalings.
               const auto fb_scalings = fb->damage_scalings();
@@ -4062,7 +4065,7 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT(TextFormat(
                 "x%.1f (%d%%)",
                 fb->crit_damage_multiplier(),
-                g.run.playerStats[StatType_CRIT_CHANCE]
+                MIN(100, MAX(0, g.run.playerStats[StatType_CRIT_CHANCE]))
               ));
             });
           }

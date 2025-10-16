@@ -63,8 +63,8 @@ x fix: new run: bow make it locked when it's actually locked
 x fix: achievements: "complete difficulty level 3 (2/3)" remove this "(2/3)"
 x fix: nuked caching player weapon offsets
 x ref extract reroll button
+x show weapon base damage
 
-* weapon show base damage
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
