@@ -532,6 +532,12 @@ struct Creature {
       lframe    cooldown;
       Vector2   rushingDir;
     } rusher;
+
+    struct {
+      FrameGame startedShootingAt;
+      int       shotTimes;
+      lframe    cooldown;
+    } boss;
   } _mob;
 
   auto& DataTurrel() {  ///
@@ -562,6 +568,16 @@ struct Creature {
   const auto& DataRusher() const {  ///
     ASSERT(type == CreatureType_RUSHER);
     return _mob.rusher;
+  };
+
+  auto& DataBoss() {  ///
+    ASSERT(type == CreatureType_BOSS);
+    return _mob.boss;
+  };
+
+  const auto& DataBoss() const {  ///
+    ASSERT(type == CreatureType_BOSS);
+    return _mob.boss;
   };
 };
 
@@ -595,6 +611,7 @@ struct Projectile {
   f32                               knockbackMeters      = {};
   f32                               range                = {};
   f32                               travelledDistance    = 0;
+  int                               anchorCreatureId     = {};
 };
 
 struct MakeProjectileData {
@@ -609,6 +626,7 @@ struct MakeProjectileData {
   f32            knockbackMeters      = {};
   int            pierce               = {};
   int            bounce               = {};
+  int            anchorCreatureId     = {};
 };
 
 struct Number {
@@ -2111,6 +2129,13 @@ int MakeCreature(MakeCreatureData data) {  ///
     creature.DataRusher() = {};
   } break;
 
+  case CreatureType_BOSS: {
+    auto& d = creature.DataBoss();
+    d       = {};
+    d.startedShootingAt.SetNow();
+    d.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
+  } break;
+
   default:
     break;
   }
@@ -2121,7 +2146,10 @@ int MakeCreature(MakeCreatureData data) {  ///
 
 void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
-  ASSERT(data.dir != Vector2Zero());
+  if (data.anchorCreatureId)
+    ASSERT(data.dir == Vector2Zero());
+  else
+    ASSERT(data.dir != Vector2Zero());
   if (data.ownerCreatureType == CreatureType_PLAYER)
     ASSERT(data.weaponIndexOrMinus1 >= 0);
 
@@ -2137,6 +2165,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .bounce               = data.bounce,
     .knockbackMeters      = data.knockbackMeters,
     .range                = data.range,
+    .anchorCreatureId     = data.anchorCreatureId,
   };
   projectile.createdAt.SetNow();
 
@@ -2454,6 +2483,30 @@ void RunInit() {
   IterateOverEffects({}, [&](auto fb_effect, int times) BF_FORCE_INLINE_LAMBDA {
     ApplyEffect(fb_effect, times);
   });
+
+  // Filling MOB_BOSS_SHOOTING_FRAMES.
+  {  ///
+    const int totalSpots
+      = MOB_BOSS_SHOOTING_LINES * MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE
+        + (MOB_BOSS_SHOOTING_LINES - 1) * MOB_BOSS_SHOOTING_EMPTY_SPOTS_BETWEEN_LINES;
+
+    FOR_RANGE (
+      int,
+      projectileIndex,
+      MOB_BOSS_SHOOTING_LINES * MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE
+    )
+    {
+      int off = (projectileIndex / 4) * MOB_BOSS_SHOOTING_EMPTY_SPOTS_BETWEEN_LINES;
+      int v = (projectileIndex + off) * MOB_BOSS_TOTAL_SHOOTING_FRAMES.value / totalSpots;
+      ASSERT(v >= 0);
+      ASSERT(v < MOB_BOSS_TOTAL_SHOOTING_FRAMES.value);
+      MOB_BOSS_SHOOTING_FRAMES[projectileIndex] = v;
+    }
+
+    FOR_RANGE (int, i, MOB_BOSS_SHOOTING_FRAMES.count - 1) {
+      ASSERT(MOB_BOSS_SHOOTING_FRAMES[i] < MOB_BOSS_SHOOTING_FRAMES[i + 1]);
+    }
+  }
 
   OnWaveStarted();
 }
@@ -6586,6 +6639,16 @@ void _Save() {  ///
 #  error "_Save() is not implemented for your platform"
 #endif
 
+int GetMobDamage(CreatureType type) {  ///
+  auto fb = glib->creatures()->Get(type);
+  ASSERT(fb->hostility_type() == HostilityType_MOB);
+  return fb->contact_damage()
+         + Round(
+           fb->contact_damage_increase_per_wave()
+           * (f32)(g.run.state.waveIndex + 1 - fb->appearing_wave_number())
+         );
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -7059,7 +7122,7 @@ void GameFixedUpdate() {
                   .pos               = creature.pos,
                   .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
                   .range  = 12,
-                  .damage = fb->projectile_damage(),
+                  .damage = GetMobDamage(creature.type),
                 });
               }
               if (e >= MOB_RANGER_SHOOTING_FRAMES)
@@ -7112,6 +7175,28 @@ void GameFixedUpdate() {
                   creature.speedModifier *= MOB_RUSHER_RUSH_SPEED_SCALE;
                 }
               }
+            }
+          }
+          else if (creature.aggroed && (creature.type == CreatureType_BOSS)) {
+            auto&      data = creature.DataBoss();
+            const auto e    = data.startedShootingAt.Elapsed() - data.cooldown;
+
+            if (MOB_BOSS_SHOOTING_FRAMES.Contains(e.value)) {
+              MakeProjectile({
+                .type                 = ProjectileType_BOSS,
+                .ownerCreatureType    = creature.type,
+                .pos                  = creature.pos,
+                .range                = MOB_BOSS_PROJECTILE_RANGE_METERS,
+                .damage               = GetMobDamage(creature.type),
+                .critDamageMultiplier = fb->crit_damage_multiplier(),
+                .anchorCreatureId     = creature.id,
+              });
+            }
+
+            if (e >= MOB_BOSS_TOTAL_SHOOTING_FRAMES) {
+              data.startedShootingAt = {};
+              data.startedShootingAt.SetNow();
+              data.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
             }
           }
           else if (creature.type == CreatureType_TURREL) {
@@ -7402,15 +7487,9 @@ void GameFixedUpdate() {
                 PLAYER_HURTBOX_RADIUS + CREATURE_COLLIDER_RADIUS * fb->collider_scale()
               ))
           {
-            int damage
-              = fb->contact_damage()
-                + Round(
-                  fb->contact_damage_increase_per_wave()
-                  * (f32)(g.run.state.waveIndex + 1 - fb->appearing_wave_number())
-                );
             TryApplyDamage({
               .creatureIndex       = 0,
-              .damage              = damage,
+              .damage              = GetMobDamage(creature.type),
               .damagerCreatureType = creature.type,
             });
           }
@@ -7884,7 +7963,26 @@ void GameFixedUpdate() {
         const auto fb       = fb_projectiles->Get(projectile.type);
         const auto distance = FIXED_DT * fb->speed();
         projectile.travelledDistance += distance;
-        projectile.pos += projectile.dir * distance;
+        if (projectile.anchorCreatureId) {
+          for (auto& creature : g.run.creatures) {
+            if (creature.id == projectile.anchorCreatureId) {
+              const auto e = ge.meta.frameGame % MOB_BOSS_PROJECTILES_CIRCLE_FRAMES.value;
+              const auto dir = Vector2Rotate(
+                {1, 0}, -2 * PI32 * e / MOB_BOSS_PROJECTILES_CIRCLE_FRAMES.value
+              );
+
+              f32 t          = projectile.travelledDistance / projectile.range;
+              t              = Lerp(t, EaseInQuad(t), 0.5f);
+              projectile.pos = creature.pos + dir * (projectile.range * t);
+
+              projectile.dir = Vector2Rotate(dir, -PI32 / 2);
+
+              break;
+            }
+          }
+        }
+        else
+          projectile.pos += projectile.dir * distance;
 
         bool createAoe = false;
 

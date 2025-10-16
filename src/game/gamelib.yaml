@@ -737,6 +737,12 @@ projectiles:
     speed: 10
     texture_ids:
       - game_projectile_mob
+  - type: BOSS
+    color: 0xff0000ff
+    speed: 3
+    texture_ids:
+      - game_projectile_arrow
+      # - game_projectile_mob
 particles:
   - type: INVALID
   - type: EXPLOSION

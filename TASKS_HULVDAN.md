@@ -64,18 +64,26 @@ x fix: achievements: "complete difficulty level 3 (2/3)" remove this "(2/3)"
 x fix: nuked caching player weapon offsets
 x ref extract reroll button
 x show weapon base damage
+x boss projectiles impl
 
-* boss gameplay
-* UI keyboard button focusing
+* keyboard UI nav: pecked up item
+* keyboard UI nav: upgrades
+* keyboard UI nav: shop
+* keyboard UI nav: end
+* keyboard UI nav: pause
+* keyboard UI nav: new run
+* keyboard UI nav:
+* keyboard UI nav:
+* keyboard UI nav:
+* keyboard UI nav:
+* keyboard UI nav:
+* keyboard UI nav:
 * touch: pause button during gameplay
 * touch: can play using finger
 * yandex save: emscripten pass string from C++
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
-* achievements:
-* achievements:
-* achievements:
 * save load: more tests!
 * new run: showing selected difficulty/build/weapon name
 * new run: button selection needs to be rewoked for PC
@@ -84,8 +92,6 @@ x show weapon base damage
 * localization sorting
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
-* fix shop items/weapons frame height
-* weapon detail icons? (combine / sell / cancel)
 * luck = подкова
 * multiple level ups icons in the top right corner (like picked up crates)
 * draw UI? writing code gets tiring
@@ -93,11 +99,8 @@ x show weapon base damage
 * landmine: show damage in item
 * landmine: show spawn rate "Gets spawned every %.1f seconds"
 * garden: show interval of fruit spawning "Spawns fruit every %.1f seconds"
-* clay hovered modal shadows
 * stat descriptions
 * coin pickup particles
-* keyboard input prompts
-* navigating in pickedup item / upgrades / shop / end with keyboard
 * stats coloring
 * weapon tags (primitive etc.) + set bonuses
 * on-player-equipped item layers (hats, decals, etc.) (isaac-like)
@@ -114,7 +117,6 @@ x show weapon base damage
 * think about boss
   + shoots oooo oooo oooo rows of projectiles like in brotato?
   + what would cookie-boss do?
-* is brotato arena squared?
 * StatType_RANGE brotato's min range is 25 (how much is it in meters?)
 * «upgraded stat» number (show stat's icon instead of text) upon levelup
 * gather all weapon classes (e.g. primitive)
@@ -123,7 +125,6 @@ x show weapon base damage
 * weapon tag: explosive: 5 10 15 20 25 explosion size
 * weapon tag: elemental: 1 2 3 4 5 elemental damage
 * weapons categorization. жидкое / твёрдое?
-* aseprite show image center
 
 ART:
 ================================================================================
@@ -241,3 +242,8 @@ LATER:
 * windows save in another thread (+profile dumping / saving to file)
 * brotato gog
 * shop item locks
+* weapon detail icons? (combine / sell / cancel)
+* clay hovered modal shadows
+* keyboard input prompts
+* is brotato arena squared?
+* aseprite show image center

@@ -157,6 +157,19 @@ constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::Unscaled(3.5f * FIXED_FPS)
 constexpr auto MOB_TURREL_SHOOTING_FRAMES = lframe::Scaled(10);
 constexpr auto MOB_TURREL_SHOOT_FRAME     = lframe::Scaled(3);
 
+constexpr auto MOB_BOSS_TOTAL_SHOOTING_FRAMES              = lframe::FromSeconds(1.8f);
+constexpr auto MOB_BOSS_SHOOTING_LINES                     = 3;
+constexpr auto MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE      = 4;
+constexpr auto MOB_BOSS_SHOOTING_EMPTY_SPOTS_BETWEEN_LINES = 3;
+int            MOB_BOSS_SHOOTING_FRAMES_
+  [MOB_BOSS_SHOOTING_LINES * MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE]{};
+VIEW_FROM_ARRAY_DANGER(MOB_BOSS_SHOOTING_FRAMES);
+constexpr auto MOB_BOSS_PROJECTILES_CIRCLE_FRAMES = lframe::FromSeconds(2.0f);
+constexpr auto MOB_BOSS_COOLDOWN_MIN              = lframe::FromSeconds(2.0f);
+constexpr auto MOB_BOSS_COOLDOWN_MAX              = lframe::FromSeconds(4.0f);
+
+constexpr f32 MOB_BOSS_PROJECTILE_RANGE_METERS = 11;
+
 constexpr f32 PRICE_SCALINGS_PER_TIER_[]{
   20.0f / 149.0f,
   39.0f / 149.0f,
