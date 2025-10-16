@@ -60,11 +60,12 @@ ITEM_TURREL_ENHANCE_TODO;Улучшалка Туррели;Make Turrel Better;
 ITEM_LANDMINE;Мина;Landmine;
 ITEM_GARDEN;Сад;Garden;
 DIFFICULTY_1;Ученик;Apprentice;
-DIFFICULTY_2;Средний;Medium;TODO Mushoku Tensei
+DIFFICULTY_2;Средний;Medium (TODO);TODO Mushoku Tensei English
 DIFFICULTY_3;Продвинутый;Advanced;
-DIFFICULTY_4;Король;King;
-DIFFICULTY_5;Император;Emperor;
-DIFFICULTY_6;Бог;God;
+DIFFICULTY_4;Святой;Holy (TODO);TODO Mushoku Tensei English
+DIFFICULTY_5;Король;King;
+DIFFICULTY_6;Император;Emperor;
+DIFFICULTY_7;Бог;God;
 WEAPON_SWORD;Меч;Sword;
 WEAPON_GUN;Пистолет;Gun;
 WEAPON_SMG;ПП;SMG;
