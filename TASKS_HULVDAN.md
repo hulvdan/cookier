@@ -66,6 +66,8 @@ x ref extract reroll button
 x show weapon base damage
 x boss projectiles impl
 
+* can take damage if dodged
+* fix: web release: why pressing P doesn't show pause UI?
 * keyboard UI nav: pecked up item
 * keyboard UI nav: upgrades
 * keyboard UI nav: shop
