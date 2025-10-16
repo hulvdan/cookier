@@ -81,7 +81,7 @@ table Creature {
 
     contact_damage: int;
     contact_damage_increase_per_wave: float;
-    // For ranged mobs or turrel.
+    // For turrel. Mobs do contact_damage that scales.
     projectile_damage: int;
     crit_damage_multiplier: float = 1.5;
 
