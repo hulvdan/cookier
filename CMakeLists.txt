@@ -33,6 +33,14 @@ target_include_directories(vendor_and_codegen
         "${CMAKE_SOURCE_DIR}/vendor"
 )
 
+# base64
+#-----------------------------------------------------------------------------------
+add_library(base64 STATIC
+    "${CMAKE_SOURCE_DIR}/vendor/base64/base64.c"
+)
+target_include_directories( base64 PUBLIC "${CMAKE_SOURCE_DIR}/vendor/base64/include")
+set_target_properties(base64 PROPERTIES LINKER_LANGUAGE C)
+
 # GameAnalytics.
 #-----------------------------------------------------------------------------------
 if (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
@@ -205,6 +213,7 @@ target_link_libraries(game
         basisu_transcoder
         GameAnalytics
         miniaudio
+        base64
 )
 if ("${PLATFORM}" STREQUAL "Win")
     target_link_libraries(game
@@ -318,6 +327,7 @@ target_link_libraries(tests
         basisu_transcoder
         GameAnalytics
         miniaudio
+        base64
 )
 target_link_libraries(tests
     PRIVATE
