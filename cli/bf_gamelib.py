@@ -1084,8 +1084,8 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
                     (async () => {
                         window.ysdk = await YaGames.init();
-
                         await moduleReady;
+                        window.player = await window.ysdk.getPlayer();
                         Module.ccall('mark_ysdk_loaded_from_js', null, [], []);
 
                         window.ysdk.on('game_api_pause', () => {
@@ -1103,7 +1103,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                             uk: 0,
                             uz: 0,
                             en: 1,
-                        }
+                        };
                         const l = window.ysdk.environment.i18n.lang;
                         if (l in languages_map)
                             lang = languages_map[l];

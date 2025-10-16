@@ -803,9 +803,8 @@ struct GameData {
     int  pausedAchievementsHoveredAchievement     = 0;
     int  pausedAchievementsHoveredAchievementStep = 0;
 
-    bool        scheduledSave                 = false;
-    bool        previousSaveIsNotCompletedYet = false;
-    FrameVisual lastSaveAt                    = {};
+    bool        scheduledSave = false;
+    FrameVisual lastSaveAt    = {};
   } meta;
 
   struct {
@@ -6523,7 +6522,7 @@ void _Save() {  ///
   ZoneScoped;
 
   DEFER {
-    g.meta.previousSaveIsNotCompletedYet = false;
+    ge.meta.previousSaveIsNotCompletedYet = false;
   };
 
   const auto toSwapPath = "save_to_swap.bin";
@@ -6554,11 +6553,33 @@ void _Save() {  ///
     LOGI("Save swap failed");
 }
 
+#elif defined(BF_PLATFORM_WebYandex)
+
+// clang-format off
+EM_JS(void, js_Save, (), {
+  // TODO YANDEX SAVE pass string
+  window.player
+    .setData(/* TODO data */ "", /* flush */ true)
+    .then(() => {
+      Module.ccall('saved_from_js', null, [], []);
+    });
+});
+// clang-format on
+
+void _Save() {  ///
+  ZoneScoped;
+
+  TEMP_USAGE(&g.meta.trashArena);
+
+  auto fbb     = DumpState();
+  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), &g.meta.trashArena);
+  js_Save();
+}
+
 #elif defined(SDL_PLATFORM_EMSCRIPTEN)
 
-void _Save() {
+void _Save() {  ///
   LOGW("Save is not yet implemented for web");
-  // auto fbb = DumpState();
 }
 
 #else
@@ -6582,7 +6603,7 @@ void GameFixedUpdate() {
   const auto fb_builds         = glib->builds();
 
   // Save.
-  if (g.meta.scheduledSave && !g.meta.previousSaveIsNotCompletedYet) {  ///
+  if (g.meta.scheduledSave && !ge.meta.previousSaveIsNotCompletedYet) {  ///
 #ifdef BF_PLATFORM_WebYandex
     const int SAVE_FRAMES_PERIOD = 3 * FIXED_FPS;
 #else
@@ -6597,7 +6618,7 @@ void GameFixedUpdate() {
       g.meta.lastSaveAt.SetNow();
       LOGI("Saving...");
 
-      g.meta.previousSaveIsNotCompletedYet = true;
+      ge.meta.previousSaveIsNotCompletedYet = true;
       _Save();
     }
   }
