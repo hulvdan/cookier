@@ -1031,10 +1031,11 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
   const auto fb = glib->weapons()->Get(type);
   ASSERT(tier >= fb->min_tier_index());
 
-  int damage = fb->base_damage()->Get(tier - fb->min_tier_index());
-  damage
-    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
-  damage = ApplyPlayerStatDamageMultiplier(damage);
+  int tierOffset = tier - fb->min_tier_index();
+
+  int damage = fb->base_damage()->Get(tierOffset);
+  damage     = ApplyDamageScalings(damage, tierOffset, fb->damage_scalings());
+  damage     = ApplyPlayerStatDamageMultiplier(damage);
 
   IterateOverSpecificWeaponEffects(
     EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
@@ -1050,12 +1051,17 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
         if ((weaponIndexOrMinus1 != i) && (weapon.type == type))
           sameWeapons++;
       }
+
       if (sameWeapons > 0) {
-        auto v = fb_effect->value();
-        if (v == 0)
-          damage = Round(damage * fb_effect->value_multiplier() * (f32)sameWeapons);
-        else
-          damage += v * sameWeapons;
+        auto value = fb_effect->value();
+        if (value)
+          damage += value->Get(tierOffset) * sameWeapons;
+
+        auto value_multiplier = fb_effect->value_multiplier();
+        if (value_multiplier) {
+          damage
+            = Round((f32)damage * value_multiplier->Get(tierOffset) * (f32)sameWeapons);
+        }
       }
     }
   );
@@ -1103,31 +1109,29 @@ void SanitizeCoins() {  ///
     PLAYER_COINS = int_max;
 }
 
-void ApplyEffect(const BFGame::Effect* fb_effect, int times = 1) {  ///
+void ApplyEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  ///
   ASSERT(times > 0);
-  if (fb_effect->stat_type()) {
-    g.run.state.statsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * times;
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
-    if (fb_effect->value_multiplier() != 1)
-      g.run.state.statsWithoutItems[fb_effect->stat_type()]
-        *= 1 + (fb_effect->value_multiplier() - 1) * times;
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
-  }
+  ASSERT(fb_effect->stat_type());
 
-  g.run.recalculatePlayerStats = true;
-}
-
-void ApplyWeaponEffect(const BFGame::WeaponEffect* fb_effect, const Weapon& weapon) {  ///
-  ASSERT(times > 0);
   if (fb_effect->stat_type()) {
-    g.run.state.statsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * times;
+    auto value = fb_effect->value();
+    if (value) {
+      g.run.state.statsWithoutItems[fb_effect->stat_type()]
+        += value->Get(tierOffset) * times;
+    }
+
     if ((StatType)fb_effect->stat_type() == StatType_COINS)
       SanitizeCoins();
-    if (fb_effect->value_multiplier() != 1)
-      g.run.state.statsWithoutItems[fb_effect->stat_type()]
-        *= 1 + (fb_effect->value_multiplier() - 1) * times;
+
+    auto value_multiplier = fb_effect->value_multiplier();
+    if (value_multiplier) {
+      auto vm = value_multiplier->Get(tierOffset);
+      if (vm != 1) {
+        auto& v = g.run.state.statsWithoutItems[fb_effect->stat_type()];
+        v       = Round(v * (1 + (vm - 1) * times));
+      }
+    }
+
     if ((StatType)fb_effect->stat_type() == StatType_COINS)
       SanitizeCoins();
   }
@@ -1249,8 +1253,10 @@ void RecalculatePlayerStats() {  ///
     const auto fb_effects = fb->effects();
     if (fb_effects) {
       for (const auto fb_effect : *fb_effects) {
-        if (!fb_effect->effectcondition_type())
-          g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
+        if (!fb_effect->effectcondition_type()) {
+          g.run.playerStats[fb_effect->stat_type()]
+            += fb_effect->value()->Get(0) * item.count;
+        }
       }
     }
   }
@@ -2370,8 +2376,13 @@ int GetNextLevelXp(int currentLevel) {  ///
 }
 
 void IterateOverWeaponEffects(
-  EffectConditionType                                                       condition,
-  auto /* void (int weaponIndexOrMinus1, Weapon& weapon, auto fb_effect) */ innerLambda
+  EffectConditionType condition,
+  /* void (
+       int weaponIndexOrMinus1,
+       Weapon& weapon,
+       int tierOffset,
+       auto fb_effect) */
+  auto innerLambda
 ) {  ///
   const auto fb_weapons          = glib->weapons();
   int        weaponIndexOrMinus1 = -1;
@@ -2383,16 +2394,19 @@ void IterateOverWeaponEffects(
     const auto fb_effects = fb->effects();
     if (fb_effects) {
       for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(weaponIndexOrMinus1, weapon, fb_effect);
+        if (fb_effect->effectcondition_type() == condition) {
+          innerLambda(
+            weaponIndexOrMinus1, weapon, weapon.tier - fb->min_tier_index(), fb_effect
+          );
+        }
       }
     }
   }
 }
 
 void IterateOverEffects(
-  EffectConditionType                         condition,
-  auto /* void (auto fb_effect, int times) */ innerLambda
+  EffectConditionType                                         condition,
+  auto /* void (auto fb_effect, int tierOffset, int times) */ innerLambda
 ) {  ///
 #if BF_ENABLE_ASSERTS
   auto fb_conditions = glib->effect_conditions();
@@ -2402,8 +2416,8 @@ void IterateOverEffects(
 
   IterateOverWeaponEffects(
     condition,
-    [&](int _, Weapon& weapon, auto fb_effect)
-      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, weapon); }
+    [&](int weaponIndexOrMinus1, Weapon& weapon, int tierOffset, auto fb_effect)
+      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, tierOffset, tierOffset); }
   );
 
   // Iterating over items.
@@ -2415,7 +2429,7 @@ void IterateOverEffects(
       if (fb_effects) {
         for (const auto fb_effect : *fb_effects) {
           if (fb_effect->effectcondition_type() == condition)
-            innerLambda(fb_effect, item.count);
+            innerLambda(fb_effect, 0, item.count);
         }
       }
     }
@@ -2428,7 +2442,7 @@ void IterateOverEffects(
     if (fb_effects) {
       for (const auto fb_effect : *fb_effects) {
         if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 1);
+          innerLambda(fb_effect, 0, 1);
       }
     }
   }
@@ -2440,7 +2454,7 @@ void IterateOverEffects(
     if (fb_effects) {
       for (const auto fb_effect : *fb_effects) {
         if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 1);
+          innerLambda(fb_effect, 0, 1);
       }
     }
   }
@@ -2503,9 +2517,11 @@ void RunInit() {
     MakeWalls({.lines = lines});
   }
 
-  IterateOverEffects({}, [&](auto fb_effect, int times) BF_FORCE_INLINE_LAMBDA {
-    ApplyEffect(fb_effect, times);
-  });
+  IterateOverEffects(
+    {},
+    [&](auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
+  );
 
   // Filling MOB_BOSS_SHOOTING_FRAMES.
   {  ///
@@ -3793,9 +3809,14 @@ void DoUI(bool draw) {
     return result;
   };
 
-  LAMBDA (void, componentEffectsExploded, (auto fb_effects, int count, int maxWidth))
+  LAMBDA (
+    void,
+    componentEffectsExploded,
+    (auto fb_effects, int tierOffset, int count, int maxWidth)
+  )
   {  ///
     ASSERT(count > 0);
+    ASSERT(tierOffset >= 0);
     if (!fb_effects)
       return;
 
@@ -3818,9 +3839,11 @@ void DoUI(bool draw) {
           PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
 
           bool isPercent = fb_stat->is_percent();
-          v              = (f32)fb_effect->value();
-          if (v == 0) {
-            v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
+          auto value     = fb_effect->value();
+          if (value)
+            v = (f32)value->Get(tierOffset);
+          else {
+            v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
           v *= count;
@@ -3842,10 +3865,12 @@ void DoUI(bool draw) {
             = fb_weapon_properties->Get(fb_effect->weaponproperty_type());
           PlaceholdBrokenLocale("PROPERTY", fb_prop->name_locale());
 
-          v              = (f32)fb_effect->value();
           bool isPercent = false;
-          if (v == 0) {
-            v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
+          auto value     = fb_effect->value();
+          if (value)
+            v = (f32)value->Get(tierOffset);
+          else {
+            v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
           v *= count;
@@ -4084,23 +4109,30 @@ void DoUI(bool draw) {
 
         // Difficulty stats.
         if (data.difficulty) {  ///
-          componentEffectsExploded(fb_difficulty->effects(), data.count, CARD_WIDTH);
+          componentEffectsExploded(fb_difficulty->effects(), 0, data.count, CARD_WIDTH);
         }
         // Build stats.
         if (data.build) {  ///
-          componentEffectsExploded(fb_build->effects(), data.count, CARD_WIDTH);
+          componentEffectsExploded(fb_build->effects(), 0, data.count, CARD_WIDTH);
         }
         // Item stats.
         if (data.item) {  ///
           componentEffectsExploded(
-            fb_items->Get(data.item)->effects(), data.count, CARD_WIDTH
+            fb_items->Get(data.item)->effects(), 0, data.count, CARD_WIDTH
           );
         }
         // Weapon stats.
         if (data.weapon) {  ///
+          const auto fb = fb_weapons->Get(data.weapon);
+
+          int tierOffset = 0;
+
           int thisWaveDamage = 0;
-          if (data.weaponIndexOrMinus1 >= 0)
-            thisWaveDamage = g.run.state.weapons[data.weaponIndexOrMinus1].thisWaveDamage;
+          if (data.weaponIndexOrMinus1 >= 0) {
+            const auto& weapon = g.run.state.weapons[data.weaponIndexOrMinus1];
+            tierOffset         = weapon.tier - fb->min_tier_index();
+            thisWaveDamage     = weapon.thisWaveDamage;
+          }
 
           LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
             CLAY({.layout{
@@ -4115,8 +4147,6 @@ void DoUI(bool draw) {
               FlexEnd();
             }
           };
-
-          const auto fb = fb_weapons->Get(data.weapon);
 
           // Damage.
           componentWeaponStatEntry(
@@ -4272,7 +4302,7 @@ void DoUI(bool draw) {
             }
           }
 
-          componentEffectsExploded(fb->effects(), 1, CARD_WIDTH);
+          componentEffectsExploded(fb->effects(), tierOffset, 1, CARD_WIDTH);
 
           // This wave damage.
           ASSERT(thisWaveDamage >= 0);
@@ -6799,8 +6829,8 @@ void GameFixedUpdate() {
       // Applying effects: END_OF_THE_WAVE_GET_STAT.
       IterateOverEffects(
         EffectConditionType_END_OF_THE_WAVE_GET_STAT,
-        [&](auto fb_effect, int times)
-          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, times); }
+        [&](auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
       );
 
       // Making coins fly.
@@ -6981,8 +7011,8 @@ void GameFixedUpdate() {
 
     IterateOverEffects(
       EffectConditionType_START_OF_THE_WAVE_GET_STAT,
-      [&](auto fb_effect, int times)
-        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, times); }
+      [&](auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
     );
 
     Save();
@@ -8408,20 +8438,20 @@ void GameFixedUpdate() {
 
               IterateOverEffects(
                 EffectConditionType_KILL_N_ENEMIES_GET_STAT,
-                [&](auto fb_effect, int times) BF_FORCE_INLINE_LAMBDA {
-                  if (g.run.state.playerKilledEnemies % fb_effect->condition_value() == 0)
-                    ApplyEffect(fb_effect, times);
+                [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+                  const auto cond = fb_effect->condition_value()->Get(tierOffset);
+                  if (g.run.state.playerKilledEnemies % cond == 0)
+                    ApplyEffect(fb_effect, tierOffset, times);
                 }
               );
               IterateOverWeaponEffects(
                 EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
-                [&](int weaponIndex, Weapon& weapon, auto fb_effect)
+                [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
                   BF_FORCE_INLINE_LAMBDA {
+                    auto cond = fb_effect->condition_value()->Get(tierOffset);
                     if ((weaponIndex == creature.lastDamagedWeaponIndex)
-                        && ((weapon.killedEnemies % fb_effect->condition_value()) == 0))
-                    {
-                      ApplyWeaponEffect(fb_effect, weapon);
-                    }
+                        && ((weapon.killedEnemies % cond) == 0))
+                      ApplyEffect(fb_effect, tierOffset, 1);
                   }
               );
             }

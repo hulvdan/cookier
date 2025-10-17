@@ -40,7 +40,7 @@ def field_to_list(container, field: str) -> None:
         return
     if isinstance(container[field], str):
         container[field] = [int(v) for v in container[field].split(" ")]
-    elif isinstance(container[field], int):
+    elif isinstance(container[field], (int, float)):
         container[field] = [container[field]]
     else:
         assert False
@@ -72,6 +72,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Items.
     # ============================================================
     for x in gamelib["items"][1:]:
+        for e in x.get("effects", []):
+            field_to_list(e, "value")
+            field_to_list(e, "value_multiplier")
+            field_to_list(e, "condition_value")
+
         x["name_locale"] = "ITEM_" + x["type"].upper()
         assert 0 <= x["tier"] < 4
 
@@ -87,6 +92,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     for i, x in enumerate(gamelib["difficulties"]):
         if i > 0:
+            for e in x.get("effects", []):
+                field_to_list(e, "value")
+                field_to_list(e, "value_multiplier")
+                field_to_list(e, "condition_value")
+
             x["name_locale"] = f"DIFFICULTY_{i}"
 
     # Weapons.
@@ -208,6 +218,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     if 1:
         max_weapons = 0
         for i, x in enumerate(gamelib["builds"]):
+            for e in x.get("effects", []):
+                field_to_list(e, "value")
+                field_to_list(e, "value_multiplier")
+                field_to_list(e, "condition_value")
+
             if i > 0:
                 x["name_locale"] = "BUILD_{}".format(x["type"])
                 max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
