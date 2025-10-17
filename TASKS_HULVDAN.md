@@ -32,10 +32,11 @@ melee weapon effects:
 ranged weapon effects:
 - cooldown is reset upon picking up coins
 - cooldown is X every Y shots
--
--
--
--
+- pierces X enemies dealing -Y damage with each pierce
+- pierces up to X enemies on critical hit
+- projectiles explode on hit
+- hitting an enemy that has than 50/65/70/75% hp
+  has 10/15/20/25% chance to CHARM it for 8 seconds
 -
 -
 -
@@ -67,6 +68,7 @@ item effects:
 -
 
 * implement all weapon/item/build/difficulty effects
+* weapon tags (primitive etc.) + set bonuses
 * can take damage if dodged
 * fix: web release: why pressing P doesn't show pause UI?
 * keyboard UI nav: pecked up item
@@ -105,7 +107,6 @@ item effects:
 * stat descriptions
 * coin pickup particles
 * stats coloring
-* weapon tags (primitive etc.) + set bonuses
 * on-player-equipped item layers (hats, decals, etc.) (isaac-like)
 *
 *

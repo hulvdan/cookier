@@ -91,8 +91,14 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # Weapons.
     # ============================================================
+    MAX_WEAPON_TIER = 4
+
     for x in gamelib["weapons"][1:]:
         x["name_locale"] = "WEAPON_" + x["type"].upper()
+
+        requiredTierValues = MAX_WEAPON_TIER - x["min_tier_index"]
+        assert requiredTierValues > 0
+        assert requiredTierValues <= MAX_WEAPON_TIER
 
         mandatory_fields = [
             "max_price",
@@ -112,19 +118,38 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         for vv in x["damage_scalings"]:
             field_to_list(vv, "percents_per_tier")
 
-        assert len(x["base_damage"]) == 4 - x["min_tier_index"], (
+        assert len(x["base_damage"]) == requiredTierValues, (
             "Weapon {} must have {} `base_damage` because it's `min_tier_index` is {}".format(
-                x["type"], 4 - x["min_tier_index"], x["min_tier_index"]
+                x["type"], requiredTierValues, x["min_tier_index"]
             )
         )
 
         for scalings in x["damage_scalings"]:
             percents_count = len(scalings["percents_per_tier"])
-            assert percents_count == 4 - x["min_tier_index"], (
+            assert percents_count == requiredTierValues, (
                 "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
-                    x["type"], 4 - x["min_tier_index"], x["min_tier_index"]
+                    x["type"], requiredTierValues, x["min_tier_index"]
                 )
             )
+
+        for e in x.get("effects", []):
+            field_to_list(e, "value")
+            field_to_list(e, "value_multiplier")
+            field_to_list(e, "condition_value")
+
+            if "value" in e:
+                assert "value_multiplier" not in e, x["type"]
+            if "value_multiplier" in e:
+                assert "value" not in e, x["type"]
+            if "effectcondition_type" not in e:
+                assert "condition_value" not in e, x["type"]
+
+            if "value" in e:
+                assert len(e["value"]) == requiredTierValues, x["type"]
+            if "value_multiplier" in e:
+                assert len(e["value_multiplier"]) == requiredTierValues, x["type"]
+            if "condition_value" in e:
+                assert len(e["condition_value"]) == requiredTierValues, x["type"]
 
     # Stats.
     # ============================================================

@@ -1119,6 +1119,22 @@ void ApplyEffect(const BFGame::Effect* fb_effect, int times = 1) {  ///
   g.run.recalculatePlayerStats = true;
 }
 
+void ApplyWeaponEffect(const BFGame::WeaponEffect* fb_effect, const Weapon& weapon) {  ///
+  ASSERT(times > 0);
+  if (fb_effect->stat_type()) {
+    g.run.state.statsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * times;
+    if ((StatType)fb_effect->stat_type() == StatType_COINS)
+      SanitizeCoins();
+    if (fb_effect->value_multiplier() != 1)
+      g.run.state.statsWithoutItems[fb_effect->stat_type()]
+        *= 1 + (fb_effect->value_multiplier() - 1) * times;
+    if ((StatType)fb_effect->stat_type() == StatType_COINS)
+      SanitizeCoins();
+  }
+
+  g.run.recalculatePlayerStats = true;
+}
+
 f32 GetLuckFactor() {  ///
   return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
 }
@@ -2387,7 +2403,7 @@ void IterateOverEffects(
   IterateOverWeaponEffects(
     condition,
     [&](int _, Weapon& weapon, auto fb_effect)
-      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, 1); }
+      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, weapon); }
   );
 
   // Iterating over items.
@@ -8404,7 +8420,7 @@ void GameFixedUpdate() {
                     if ((weaponIndex == creature.lastDamagedWeaponIndex)
                         && ((weapon.killedEnemies % fb_effect->condition_value()) == 0))
                     {
-                      ApplyEffect(fb_effect, 1);
+                      ApplyWeaponEffect(fb_effect, weapon);
                     }
                   }
               );
