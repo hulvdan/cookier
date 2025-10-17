@@ -1,6 +1,6 @@
 x yandex save: pass data
 
-weapon effects:
+melee weapon effects:
 - drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
 - deal +25/+50 damage for every free weapon slot
@@ -28,6 +28,35 @@ weapon effects:
 - deals 3x3/5x5/8x6/12x9 (+elemental) burning damage. burning spreads to additional -/-/1/1 nearby enemies
 - resets cooldown of offensive turrets upon attacking
 - spawns turret / incendiary turret / laser turret / explosive turrent
+
+ranged weapon effects:
+- cooldown is reset upon picking up coins
+- cooldown is X every Y shots
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
 -
 -
 -
