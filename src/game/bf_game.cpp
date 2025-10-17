@@ -3952,28 +3952,28 @@ void DoUI(bool draw) {
     }
     // }  ///
 
-    // CLAY(...) {  ///
-    CLAY({.layout{.sizing{
-      .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-      .height
-      = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
-    }}})
-    // }
+    CLAY(  ///
+      {.layout{.sizing{
+        .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+        .height
+        = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
+      }}}
+    )
     if (!data.hideIfEmpty || atLeastOneIsSpecified) {
-      // CLAY(...) {  ///
-      CLAY({
-        .layout{
-          BF_CLAY_SIZING_GROW_XY,
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-          .childGap        = GAP_SMALL,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        },
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), slotColors[2 * tier], slotColors[2 * tier + 1]
-        ),
-      })
-      // }
-      {
+      CLAY(
+        ///
+        {
+          .layout{
+            BF_CLAY_SIZING_GROW_XY,
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            .childGap        = GAP_SMALL,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), slotColors[2 * tier], slotColors[2 * tier + 1]
+          ),
+        }
+      ) {
         // Icon, name.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           // Icon. {  ///
@@ -4751,19 +4751,21 @@ void DoUI(bool draw) {
       || (g.run.state.screen == ScreenType_PICKED_UP_ITEM)      //
       || (g.run.state.screen == ScreenType_UPGRADES))
   {
-    CLAY({
-      .layout{
-        BF_CLAY_SIZING_GROW_XY,
-        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
-        )
-      },
-      .floating{
-        .zIndex             = zIndex,
-        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-        .attachTo           = CLAY_ATTACH_TO_PARENT,
-      },
-    })
+    CLAY(  ///
+      {
+        .layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+            PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          )
+        },
+        .floating{
+          .zIndex             = zIndex,
+          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+          .attachTo           = CLAY_ATTACH_TO_PARENT,
+        },
+      }
+    )
     CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
       FLOATING_BEAUTIFY;
 
@@ -5878,17 +5880,19 @@ void DoUI(bool draw) {
 
   // Pause / Achievements.
   if (g.meta.paused) {
-    CLAY({
-      .floating{
-        .zIndex = zIndex,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+    CLAY(  ///
+      {
+        .floating{
+          .zIndex = zIndex,
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
         },
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
-    }) {
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      }
+    ) {
       FLOATING_BEAUTIFY;
 
       // Achievements.
@@ -6594,9 +6598,10 @@ void MakeAOE(
   *g.run.particles.Add() = p;
 }
 
+// void _Save() {  ///
 #if defined(SDL_PLATFORM_WIN32)
 
-void _Save() {  ///
+void _Save() {
   ZoneScoped;
 
   DEFER {
@@ -6643,7 +6648,7 @@ EM_JS(void, js_Save, (const char* data), {
 });
 // clang-format on
 
-void _Save() {  ///
+void _Save() {
   ZoneScoped;
 
   TEMP_USAGE(&g.meta.trashArena);
@@ -6655,13 +6660,14 @@ void _Save() {  ///
 
 #elif defined(SDL_PLATFORM_EMSCRIPTEN)
 
-void _Save() {  ///
+void _Save() {
   LOGW("Save is not yet implemented for web");
 }
 
 #else
 #  error "_Save() is not implemented for your platform"
 #endif
+// }
 
 int GetMobDamage(CreatureType type) {  ///
   auto fb = glib->creatures()->Get(type);
@@ -6676,6 +6682,7 @@ int GetMobDamage(CreatureType type) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
+  // Setup. {  ///
   ReloadFontsIfNeeded();
 
   const auto fb_preSpawns      = glib->pre_spawns();
@@ -6688,6 +6695,7 @@ void GameFixedUpdate() {
   const auto fb_difficulties   = glib->difficulties();
   const auto fb_achievements   = glib->achievements();
   const auto fb_builds         = glib->builds();
+  // }
 
   // Save.
   if (g.meta.scheduledSave && !ge.meta.previousSaveIsNotCompletedYet) {  ///
