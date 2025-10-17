@@ -65,7 +65,9 @@ x fix: nuked caching player weapon offsets
 x ref extract reroll button
 x show weapon base damage
 x boss projectiles impl
+x yandex save: pass data
 
+* implement all weapon/item/build/difficulty effects
 * can take damage if dodged
 * fix: web release: why pressing P doesn't show pause UI?
 * keyboard UI nav: pecked up item
@@ -249,3 +251,4 @@ LATER:
 * keyboard input prompts
 * is brotato arena squared?
 * aseprite show image center
+* yandex save: check it works

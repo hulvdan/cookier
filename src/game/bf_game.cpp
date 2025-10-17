@@ -6609,10 +6609,9 @@ void _Save() {  ///
 #elif defined(BF_PLATFORM_WebYandex)
 
 // clang-format off
-EM_JS(void, js_Save, (), {
-  // TODO YANDEX SAVE pass string
+EM_JS(void, js_Save, (const char* data), {
   window.player
-    .setData(/* TODO data */ "", /* flush */ true)
+    .setData(UTF8ToString(data), /* flush */ true)
     .then(() => {
       Module.ccall('saved_from_js', null, [], []);
     });
@@ -6626,7 +6625,7 @@ void _Save() {  ///
 
   auto fbb     = DumpState();
   auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), &g.meta.trashArena);
-  js_Save();
+  js_Save(encoded);
 }
 
 #elif defined(SDL_PLATFORM_EMSCRIPTEN)
