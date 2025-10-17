@@ -507,18 +507,10 @@ weapons:
   - type: SWORD
     min_tier_index: 0
     weaponkind_type: MELEE
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     damage_scalings:
       - stat_type: DAMAGE_MELEE
-        percents_per_tier:
-          - 80
-          - 80
-          - 80
-          - 80
+        percents_per_tier: 80 80 80 80
     crit_damage_multiplier: 1.5
     max_price: 122
     cooldown_frames: 20
@@ -532,53 +524,34 @@ weapons:
       - game_weapon_sword
   - type: GUN
     min_tier_index: 0
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     weaponkind_type: RANGED
     projectile_type: BULLET
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 85
-          - 90
-          - 95
-          - 100
+        percents_per_tier: 85 90 95 100
     max_price: 130
     knockback_meters: 1
     cooldown_frames: 10
     shooting_duration_frames: 20
-    projectile_spawn_frames:
-      - 6
+    projectile_spawn_frames: 6
     range_meters: 5
     icon_texture_id: game_weapon_gun
     texture_ids:
       - game_weapon_gun
   - type: SMG
     min_tier_index: 0
-    base_damage:
-      - 3
-      - 6
-      - 9
-      - 12
+    base_damage: 3 6 9 12
     weaponkind_type: RANGED
     projectile_type: BULLET_EXPLOSIVE
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 85
-          - 90
-          - 95
-          - 100
+        percents_per_tier: 85 90 95 100
     max_price: 130
     knockback_meters: 1
     cooldown_frames: 15
     shooting_duration_frames: 15
-    projectile_spawn_frames:
-      - 2
-      - 14
+    projectile_spawn_frames: 2 14
     range_meters: 7
     icon_texture_id: game_weapon_smg
     texture_ids:
@@ -586,23 +559,14 @@ weapons:
   - type: BOW
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 2
     cooldown_frames: 16
     projectile_type: ARROW
-    projectile_spawn_frames:
-      - 4
+    projectile_spawn_frames: 4
     projectile_pierce: 1
     range_meters: 8
     max_price: 140
@@ -613,23 +577,14 @@ weapons:
   - type: SLINGSHOT
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 0.5
     cooldown_frames: 20
     projectile_type: STONE
-    projectile_spawn_frames:
-      - 7
+    projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 12
     max_price: 120
@@ -644,23 +599,14 @@ weapons:
   - type: WAND
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 1
-      - 2
-      - 3
-      - 3
+    base_damage: 1 2 3 3
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 1
     cooldown_frames: 20
     projectile_type: FIRE
-    projectile_spawn_frames:
-      - 7
+    projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 12
     max_price: 130
@@ -671,23 +617,14 @@ weapons:
   - type: WAND2
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 1
-      - 1
-      - 1
-      - 1
+    base_damage: 1 1 1 1
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 1
     cooldown_frames: 20
     projectile_type: LIGHTNING
-    projectile_spawn_frames:
-      - 7
+    projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 4
     max_price: 120

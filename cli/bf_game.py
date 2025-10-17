@@ -35,6 +35,17 @@ def _check_duplicates(values: list) -> None:
             assert values[i] != values[k], f"Found duplicate value: {values[i]}"
 
 
+def field_to_list(container, field: str) -> None:
+    if field not in container:
+        return
+    if isinstance(container[field], str):
+        container[field] = [int(v) for v in container[field].split(" ")]
+    elif isinstance(container[field], int):
+        container[field] = [container[field]]
+    else:
+        assert False
+
+
 @gamelib_processor
 def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     transforms: list[tuple[str, str, dict[str, int]]] = []
@@ -96,6 +107,17 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 x["type"], field
             )
 
+        field_to_list(x, "base_damage")
+        field_to_list(x, "projectile_spawn_frames")
+        for vv in x["damage_scalings"]:
+            field_to_list(vv, "percents_per_tier")
+
+        assert len(x["base_damage"]) == 4 - x["min_tier_index"], (
+            "Weapon {} must have {} `base_damage` because it's `min_tier_index` is {}".format(
+                x["type"], 4 - x["min_tier_index"], x["min_tier_index"]
+            )
+        )
+
         for scalings in x["damage_scalings"]:
             percents_count = len(scalings["percents_per_tier"])
             assert percents_count == 4 - x["min_tier_index"], (
@@ -103,11 +125,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     x["type"], 4 - x["min_tier_index"], x["min_tier_index"]
                 )
             )
-        assert len(x["base_damage"]) == 4 - x["min_tier_index"], (
-            "Weapon {} must have {} `base_damage` because it's `min_tier_index` is {}".format(
-                x["type"], 4 - x["min_tier_index"], x["min_tier_index"]
-            )
-        )
 
     # Stats.
     # ============================================================
