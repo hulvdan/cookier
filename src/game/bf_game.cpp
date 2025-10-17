@@ -8399,10 +8399,14 @@ void GameFixedUpdate() {
               );
               IterateOverWeaponEffects(
                 EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
-                [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                  if (weapon.killedEnemies % fb_effect->condition_value() == 0)
-                    ApplyEffect(fb_effect, 1);
-                }
+                [&](int weaponIndex, Weapon& weapon, auto fb_effect)
+                  BF_FORCE_INLINE_LAMBDA {
+                    if ((weaponIndex == creature.lastDamagedWeaponIndex)
+                        && ((weapon.killedEnemies % fb_effect->condition_value()) == 0))
+                    {
+                      ApplyEffect(fb_effect, 1);
+                    }
+                  }
               );
             }
 
