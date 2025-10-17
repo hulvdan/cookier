@@ -42,6 +42,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Effect conditions.
     # ============================================================
     if 1:
+        for x in gamelib.pop("weapon_effect_conditions", []):
+            gamelib["effect_conditions"].append({**x, "restrict": 1})
+
         genline("// Effect conditions. {  ///")
         params = "const BFGame::Effect* fb_effect"
         genline("using ClayEffectConditionFunction = void(*)({});".format(params))

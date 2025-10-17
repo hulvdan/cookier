@@ -127,6 +127,7 @@ table Creature {
 }
 
 table EffectCondition {
+    restrict: int; // 0 general, 1 weapon only.
 }
 
 table WeaponProperty {
