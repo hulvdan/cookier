@@ -67,6 +67,43 @@ x show weapon base damage
 x boss projectiles impl
 x yandex save: pass data
 
+weapon effects:
+- drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
+- hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
+- deal +25/+50 damage for every free weapon slot
+- cooldown is 1.83s/1.52s every 30/40 shots
+- deal 10%/20% of enemy current health as bonus damage (1%/2% bosses + elites)
+- +1/+1/+1/+2 healing from consumables
+- melee weapon also can explode with some chance
+- X chance to gain 1 coin upon killing an enemy with a crit
+- +X stat every Y seconds until the end of the wave (+10% attack speed, every 5 seconds)
+- -3 armor for every weapon you have
+- deals 8x5/12x6/15x7 (+100% elemental damage) burning damage
+- +X stat (tiered)
+- +X stat for every Y steps during this wave
+- +X stat for every Y killed enemies using this weapon TODO DURING THIS WAVE
+- -X% damage while standing still
+- hitting enemy spawns lightning projectile that bounces -/1/2/3 times
+  and inflicts 5/6/8/11 + (80% elemental damage)
+- damaged enemies take 10% more damage for 3 seconds. stacks 3/5/7/10 times
+- spawns garden every 15/14/12/10 seconds
+- landmine spawns every 12/9/6/3 seconds dealing 10 + 100% engineering damage
+- +X% tiered damage against targets above/below Y% health
+- always crits when hitting burning enemies
+- stick: tiered bonus damage for each of the same weapon
+- 50/56/62/80% to gain coin unpon killing with crit using this weapon
+- deals 3x3/5x5/8x6/12x9 (+elemental) burning damage. burning spreads to additional -/-/1/1 nearby enemies
+- resets cooldown of offensive turrets upon attacking
+- spawns turret / incendiary turret / laser turret / explosive turrent
+-
+-
+-
+-
+
+item effects:
+-
+-
+
 * implement all weapon/item/build/difficulty effects
 * can take damage if dodged
 * fix: web release: why pressing P doesn't show pause UI?

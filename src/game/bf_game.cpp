@@ -319,34 +319,34 @@ static const char* const g_gameVersion = BF_VERSION
   ;
 // }
 
-enum ShapeCategory : u32 {
+enum ShapeCategory : u32 {  ///
   ShapeCategory_STATIC     = 1 << 0,
   ShapeCategory_PLAYER     = 1 << 1,
   ShapeCategory_CREATURE   = 1 << 2,
   ShapeCategory_PROJECTILE = 1 << 3,
 };
 
-enum BodyType : u32 {
+enum BodyType : u32 {  ///
   BodyType_INVALID,
   BodyType_STATIC,
   BodyType_CREATURE,
 };
 
-enum ShapeUserDataType : u32 {
+enum ShapeUserDataType : u32 {  ///
   ShapeUserDataType_INVALID,
   ShapeUserDataType_STATIC,
   ShapeUserDataType_CREATURE,
 };
 
-struct ShapeUserData {
+struct ShapeUserData {  ///
   ShapeUserDataType type   = {};
   int               _value = {};
 
-  static ShapeUserData Static() {  ///
+  static ShapeUserData Static() {
     return {.type = ShapeUserDataType_STATIC};
   }
 
-  static ShapeUserData Creature(int value) {  ///
+  static ShapeUserData Creature(int value) {
     ASSERT(value >= 0);
     return {
       .type   = ShapeUserDataType_CREATURE,
@@ -354,12 +354,12 @@ struct ShapeUserData {
     };
   }
 
-  int GetCreatureId() const {  ///
+  int GetCreatureId() const {
     ASSERT(type == ShapeUserDataType_CREATURE);
     return _value;
   }
 
-  static ShapeUserData FromPointer(void* ptr) {  ///
+  static ShapeUserData FromPointer(void* ptr) {
     static_assert((sizeof(ShapeUserData) == 4) || (sizeof(ShapeUserData) == 8));
 
     if (sizeof(void*) == 8) {
@@ -384,7 +384,7 @@ struct ShapeUserData {
     }
   }
 
-  void* ToPointer() {  ///
+  void* ToPointer() {
     if (sizeof(void*) == 8) {
       // 64-bit.
       return *(void**)this;
@@ -402,18 +402,18 @@ struct ShapeUserData {
   }
 };
 
-struct Body {
+struct Body {  ///
   int      createdId = {};
   b2BodyId id        = {};
 };
 
-enum BodyShapeType {
+enum BodyShapeType {  ///
   BodyShapeType_INVALID,
   BodyShapeType_CIRCLE,
   BodyShapeType_RECT,
 };
 
-struct BodyShape {
+struct BodyShape {  ///
   bool          active = true;
   Body          body   = {};
   BodyShapeType type   = {};
@@ -429,18 +429,18 @@ struct BodyShape {
     } _rect;
   } _u;
 
-  auto& DataCircle() {  ///
+  auto& DataCircle() {
     ASSERT(type == BodyShapeType_CIRCLE);
     return _u._circle;
   }
 
-  auto& DataRect() {  ///
+  auto& DataRect() {
     ASSERT(type == BodyShapeType_RECT);
     return _u._rect;
   }
 };
 
-struct MakeBodyData {
+struct MakeBodyData {  ///
   BodyType      type     = {};
   bool          isSensor = false;
   f32           density  = 1.0f;
@@ -448,7 +448,7 @@ struct MakeBodyData {
   bool          isPlayer = {};
 };
 
-struct Weapon {
+struct Weapon {  ///
   WeaponType type                               = {};
   Vector2    targetDir                          = {};
   FrameGame  startedShootingAt                  = {};
@@ -464,16 +464,16 @@ struct Weapon {
   int killedEnemies = 0;
 };
 
-struct Item {
+struct Item {  ///
   ItemType type  = {};
   int      count = {};
 };
 
-struct CreatureController {
+struct CreatureController {  ///
   Vector2 move = {};
 };
 
-struct Ailment {
+struct Ailment {  ///
   CreatureType ownerCreatureType   = {};
   int          weaponIndexOrMinus1 = {};
 
@@ -484,13 +484,13 @@ struct Ailment {
   int value = {};
 };
 
-struct ApplyAilmentData {
+struct ApplyAilmentData {  ///
   AilmentType type   = AilmentType_INVALID;
   int         value  = 0;
   int         spread = {};
 };
 
-struct Creature {
+struct Creature {  ///
   int                id                             = {};
   CreatureType       type                           = {};
   int                health                         = {};
@@ -540,60 +540,60 @@ struct Creature {
     } boss;
   } _mob;
 
-  auto& DataTurrel() {  ///
+  auto& DataTurrel() {
     ASSERT(type == CreatureType_TURREL);
     return _mob.turrel;
   };
 
-  const auto& DataTurrel() const {  ///
+  const auto& DataTurrel() const {
     ASSERT(type == CreatureType_TURREL);
     return _mob.turrel;
   };
 
-  auto& DataRanger() {  ///
+  auto& DataRanger() {
     ASSERT(type == CreatureType_RANGER);
     return _mob.ranger;
   };
 
-  const auto& DataRanger() const {  ///
+  const auto& DataRanger() const {
     ASSERT(type == CreatureType_RANGER);
     return _mob.ranger;
   };
 
-  auto& DataRusher() {  ///
+  auto& DataRusher() {
     ASSERT(type == CreatureType_RUSHER);
     return _mob.rusher;
   };
 
-  const auto& DataRusher() const {  ///
+  const auto& DataRusher() const {
     ASSERT(type == CreatureType_RUSHER);
     return _mob.rusher;
   };
 
-  auto& DataBoss() {  ///
+  auto& DataBoss() {
     ASSERT(type == CreatureType_BOSS);
     return _mob.boss;
   };
 
-  const auto& DataBoss() const {  ///
+  const auto& DataBoss() const {
     ASSERT(type == CreatureType_BOSS);
     return _mob.boss;
   };
 };
 
-struct MakeCreatureData {
+struct MakeCreatureData {  ///
   CreatureType type = {};
   Vector2      pos  = {};
 };
 
-struct PreSpawn {
+struct PreSpawn {  ///
   PreSpawnType type         = {};
   CreatureType typeCreature = {};
   Vector2      pos          = {};
   FrameGame    createdAt    = {};
 };
 
-struct Projectile {
+struct Projectile {  ///
   ProjectileType                    type                 = {};
   CreatureType                      ownerCreatureType    = {};
   int                               weaponIndexOrMinus1  = -1;
@@ -614,7 +614,7 @@ struct Projectile {
   int                               anchorCreatureId     = {};
 };
 
-struct MakeProjectileData {
+struct MakeProjectileData {  ///
   ProjectileType type                 = {};
   CreatureType   ownerCreatureType    = {};
   int            weaponIndexOrMinus1  = -1;
@@ -629,20 +629,20 @@ struct MakeProjectileData {
   int            anchorCreatureId     = {};
 };
 
-struct Number {
+struct Number {  ///
   NumberType type      = {};
   int        value     = {};
   Vector2    pos       = {};
   FrameGame  createdAt = {};
 };
 
-struct MakePickupableData {
+struct MakePickupableData {  ///
   PickupableType type        = {};
   Vector2        pos         = {};
   int            coin_amount = {};
 };
 
-struct Pickupable {
+struct Pickupable {  ///
   PickupableType type            = {};
   Vector2        pos             = {};
   FrameGame      createdAt       = {};
@@ -655,18 +655,18 @@ struct Pickupable {
     } coin;
   } _u;
 
-  auto& DataCoin() {  ///
+  auto& DataCoin() {
     ASSERT(type == PickupableType_COIN);
     return _u.coin;
   }
 
-  const auto& DataCoin() const {  ///
+  const auto& DataCoin() const {
     ASSERT(type == PickupableType_COIN);
     return _u.coin;
   }
 };
 
-struct MakeNumberData {
+struct MakeNumberData {  ///
   NumberType type  = {};
   int        value = {};
   Vector2    pos   = {};
@@ -683,7 +683,7 @@ lframe GetWaveDuration(int waveIndex) {  ///
   return lframe::Unscaled(seconds * FIXED_FPS);
 }
 
-enum ScreenType {
+enum ScreenType {  ///
   ScreenType_NEW_RUN,
   ScreenType_GAMEPLAY,
   ScreenType_WAVE_END_ANIMATION,
@@ -693,19 +693,19 @@ enum ScreenType {
   ScreenType_END,
 };
 
-struct ShopItem {
+struct ShopItem {  ///
   WeaponType weapon = {};
   ItemType   item   = {};
   int        price  = {};
   int        tier   = {};
 };
 
-struct Upgrade {
+struct Upgrade {  ///
   StatType stat = {};
   int      tier = {};
 };
 
-struct Rerolls {
+struct Rerolls {  ///
   int rerolledFreeTimes = 0;
   int rerolledTimes     = 0;
 
@@ -713,12 +713,12 @@ struct Rerolls {
   int  GetPrice() const;
 };
 
-struct ThisWaveMob {
+struct ThisWaveMob {  ///
   CreatureType type              = {};
   f32          accumulatedFactor = {};
 };
 
-struct Placeholder {
+struct Placeholder {  ///
   PlaceholderType type        = {};
   const char*     placeholder = {};
 
@@ -731,18 +731,18 @@ struct Placeholder {
     int brokenLocale_value;
   } _u;
 
-  const auto& string() const {  ///
+  const auto& string() const {
     ASSERT(type == PlaceholderType_STRING);
     return _u.string;
   }
 
-  int brokenLocale_value() const {  ///
+  int brokenLocale_value() const {
     ASSERT(type == PlaceholderType_BROKEN_LOCALE);
     return _u.brokenLocale_value;
   }
 };
 
-struct Particle {
+struct Particle {  ///
   ParticleType type      = {};
   Vector2      pos       = {};
   f32          scale     = 1;
@@ -761,38 +761,38 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
   return 0;
 }
 
-struct Landmine {
+struct Landmine {  ///
   Vector2   pos                 = {};
   FrameGame startedDetonationAt = {};
 };
 
-struct Garden {
+struct Garden {  ///
   Vector2   pos       = {};
   FrameGame createdAt = {};
 };
 
-struct UIButtonState {
+struct UIButtonState {  ///
   Clay_ElementId id               = {};
   bool           thisFrameUpdated = false;
   bool           hovered          = false;
 };
 
-struct Build {
+struct Build {  ///
   DifficultyType maxDifficultyBeaten = {};
 };
 
-struct Achievement {
+struct Achievement {  ///
   i64 value = {};
 };
 
-struct JustUnlockedAchievement {
+struct JustUnlockedAchievement {  ///
   AchievementType type      = {};
   int             stepIndex = {};
   FrameVisual     shownAt   = {};
 };
 
 struct GameData {
-  struct Meta {
+  struct Meta {  ///
     Arena trashArena = {};
 
     // NOTE: Reorder loading upon reordering fonts.
@@ -825,7 +825,7 @@ struct GameData {
     FrameVisual lastSaveAt    = {};
   } meta;
 
-  struct {
+  struct {  ///
     DifficultyType difficulty = DifficultyType_D0;
     BuildType      build      = BuildType_DEFAULT;
     WeaponType     weapon     = WeaponType_SWORD;
@@ -841,7 +841,7 @@ struct GameData {
     int achievementStepsCompleted = 0;
   } player;
 
-  struct Run {
+  struct Run {  ///
     struct State {
       bool       won    = false;
       ScreenType screen = ScreenType_GAMEPLAY;
@@ -949,7 +949,7 @@ struct GameData {
 #undef X
   } run;
 
-  struct {
+  struct {  ///
     bool active        = false;
     bool addedChildren = false;
     u16  childGap      = {};
@@ -960,7 +960,7 @@ struct GameData {
     int                                               placeholdersCount = {};
   } uiFlex;
 
-  struct UI {
+  struct UI {  ///
     Vector2                   notPickedUpCoinsLogicalPos = {};
     const Font*               overriddenFont             = {};
     Array<UIButtonState, 128> buttonStates               = {};
@@ -1494,7 +1494,7 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
   return fbb;
 }
 
-struct MakeLandmineData {
+struct MakeLandmineData {  ///
   Vector2 pos = {};
 };
 
@@ -1503,7 +1503,7 @@ void MakeLandmine(MakeLandmineData data) {  ///
   *g.run.landmines.Add() = v;
 }
 
-struct MakeGardenData {
+struct MakeGardenData {  ///
   Vector2 pos = {};
 };
 
@@ -1996,7 +1996,7 @@ void HandleClayErrors(Clay_ErrorData errorData) {  ///
   }
 }
 
-struct MakeRectBodyData {
+struct MakeRectBodyData {  ///
   Vector2      pos      = {};
   Vector2      size     = {};
   Vector2      anchor   = Vector2Half();
@@ -2023,7 +2023,7 @@ Body MakeRectBody(MakeRectBodyData data) {  ///
   return makeBodyResult.body;
 }
 
-struct MakeCircleBodyData {
+struct MakeCircleBodyData {  ///
   Vector2      pos           = {};
   f32          radius        = {};
   f32          hurtboxRadius = {};
@@ -2177,12 +2177,12 @@ void GamePreInit() {  ///
   ge.settings.backgroundColor = ColorFromRGBA(0x241207ff);
 }
 
-struct Line {
+struct Line {  ///
   Vector2 v1 = {};
   Vector2 v2 = {};
 };
 
-struct MakeWallsData {
+struct MakeWallsData {  ///
   const View<Line> lines     = {};
   View<Body>       outBodies = {};
 };
@@ -2378,6 +2378,12 @@ void IterateOverEffects(
   EffectConditionType                         condition,
   auto /* void (auto fb_effect, int times) */ innerLambda
 ) {  ///
+#if BF_ENABLE_ASSERTS
+  auto fb_conditions = glib->effect_conditions();
+  auto fb            = fb_conditions->Get(condition);
+  ASSERT(fb->restrict() == 0);
+#endif
+
   IterateOverWeaponEffects(
     condition,
     [&](int _, Weapon& weapon, auto fb_effect)
@@ -2444,7 +2450,7 @@ void RunInit() {
   }
   g.run.recalculatePlayerStats = true;
 
-  // Making player.
+  // Making player. {  ///
   auto playerPos = (Vector2)WORLD_SIZE / 2.0f;
   MakeCreature({
     .type = CreatureType_PLAYER,
@@ -2454,6 +2460,7 @@ void RunInit() {
   g.run.playerLastRegenAt.SetNow();
   PLAYER_CREATURE.health    = g.run.state.statsWithoutItems[StatType_HP];
   PLAYER_CREATURE.maxHealth = g.run.state.statsWithoutItems[StatType_HP];
+  // }
 
   g.run.camera.pos = GetCameraTargetPos();
 
@@ -2648,6 +2655,24 @@ void GameInit() {  ///
     Load(saveData);
     SDL_free(saveData);
   }
+
+  // Checking that weapon effects weren't applied to difficulties, builds, and items.
+#if BF_ENABLE_ASSERTS
+  LAMBDA (void, checkEffects, (auto fb_effects)) {
+    if (!fb_effects)
+      return;
+    for (auto fb_effect : *fb_effects) {
+      auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
+      ASSERT(fb_cond->restrict() == 0);
+    }
+  };
+  for (auto fb : *glib->difficulties())
+    checkEffects(fb->effects());
+  for (auto fb : *glib->builds())
+    checkEffects(fb->effects());
+  for (auto fb : *glib->items())
+    checkEffects(fb->effects());
+#endif
 }
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
@@ -2666,7 +2691,7 @@ f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  
   return lifesteal;
 }
 
-struct TryApplyDamageData {
+struct TryApplyDamageData {  ///
   int              creatureIndex                      = {};
   int              damage                             = {};
   Vector2          directionOrZero                    = {0, 0};

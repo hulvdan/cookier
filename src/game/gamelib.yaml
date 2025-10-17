@@ -385,14 +385,12 @@ weapon_properties:
     name_locale: STAT_DAMAGE
 effect_conditions:
   - type: INVALID
-  # Universal (both weapons and items can have these).
   - type: KILL_N_ENEMIES_GET_STAT
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
-  # Weapons only.
+weapon_effect_conditions:
   - type: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT
   - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
-    # Items only.
 items:
   - type: INVALID
   - type: TURREL
