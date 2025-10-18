@@ -1858,7 +1858,9 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
   int   locale_,
   Color color              = palTextWhite,
   bool  _resetPlaceholders = true
-) {  ///
+) {                                  ///
+  const auto locale = (Loc)locale_;  // NOTE: Leaving this line for debug purposes.
+
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
   const auto localization_broken_lines = localization->broken_lines();
 
@@ -1869,12 +1871,12 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
         for (auto string : *group->strings()) {
           if (!string->placeholder())
             continue;
+
+          const auto requiredPlaceholder = string->placeholder()->c_str();
+
           bool found = false;
           FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-            if (!strcmp(
-                  g.uiFlex.placeholders[i].placeholder, string->placeholder()->c_str()
-                ))
-            {
+            if (!strcmp(g.uiFlex.placeholders[i].placeholder, requiredPlaceholder)) {
               found = true;
               break;
             }
@@ -3887,14 +3889,14 @@ void DoUI(bool draw) {
         auto       fb_cond = fb_effectConditions->Get(cond);
         if (fb_cond->requires_x()) {
           if (fb_cond->x_is_float()) {
-            auto cv     = fb_effect->condition_x()->Get(tierOffset);
+            auto cv     = fb_effect->condition_x_floats()->Get(tierOffset);
             auto format = "%.1f";
             if (fb_cond->x_signed() && (cv > 0))
               format = "+%.1f";
             PlaceholdString("X", StripLeadingZerosInFloat(TextFormat(format, cv)));
           }
           else {
-            auto cv     = fb_effect->condition_x_floats()->Get(tierOffset);
+            auto cv     = fb_effect->condition_x()->Get(tierOffset);
             auto format = "%d";
             if (fb_cond->x_signed() && (cv > 0))
               format = "+%d";
@@ -3903,14 +3905,14 @@ void DoUI(bool draw) {
         }
         if (fb_cond->requires_y()) {
           if (fb_cond->y_is_float()) {
-            auto cv     = fb_effect->condition_y()->Get(tierOffset);
+            auto cv     = fb_effect->condition_y_floats()->Get(tierOffset);
             auto format = "%.1f";
             if (fb_cond->x_signed() && (cv > 0))
               format = "+%.1f";
             PlaceholdString("Y", StripLeadingZerosInFloat(TextFormat(format, cv)));
           }
           else {
-            auto cv     = fb_effect->condition_y_floats()->Get(tierOffset);
+            auto cv     = fb_effect->condition_y()->Get(tierOffset);
             auto format = "%d";
             if (fb_cond->x_signed() && (cv > 0))
               format = "+%d";
@@ -4315,7 +4317,8 @@ void DoUI(bool draw) {
                     "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
                   )
                 );
-                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
+                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+                  Loc_REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
                 );
 
                 FlexEnd();

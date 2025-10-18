@@ -6,6 +6,8 @@ x fix black flag trash memory effect in shop
 x fix player max HP
 x fix starting wave with a lot of money + piggyBank sets coins to 0
 
+* REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
+
 melee weapon effects:
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
 - deal +25/+50 damage for every free weapon slot

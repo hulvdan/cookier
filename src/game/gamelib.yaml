@@ -389,7 +389,7 @@ effect_conditions:
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
 weapon_effect_conditions:
-  - type: CHANCE_OF_EXPLOSION_ON_HIT
+  - type: X_CHANCE_OF_EXPLOSION_ON_HIT
   - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
   - type: HIT_MAKES_X_PROJECTILES
   - type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
