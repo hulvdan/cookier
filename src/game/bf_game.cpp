@@ -1241,28 +1241,6 @@ void AchievementMax(AchievementType type, int value) {  ///
   Save();
 }
 
-// void RecalculatePlayerStats() {  ///
-//   ZoneScoped;
-//
-//   FOR_RANGE (int, i, StatType_COUNT)
-//     g.run.state.stats[i] = g.run.state.stats[i];
-//
-//   for (auto& item : g.run.state.items) {
-//     const auto fb         = glib->items()->Get(item.type);
-//     const auto fb_effects = fb->effects();
-//     if (fb_effects) {
-//       for (const auto fb_effect : *fb_effects) {
-//         if (!fb_effect->effectcondition_type()) {
-//           g.run.state.stats[fb_effect->stat_type()]
-//             += fb_effect->value()->Get(0) * item.count;
-//         }
-//       }
-//     }
-//   }
-//
-//   PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
-// }
-
 void Load(void* saveData) {  ///
   const auto save = BFSave::GetSave(saveData);
 
@@ -6910,6 +6888,12 @@ void GameFixedUpdate() {
       g.run.state.waveIndex++;
       RecalculateThisWaveMobs();
     }
+  }
+
+  // Updating player's maxHealth.
+  {  ///
+    PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
+    PLAYER_CREATURE.health    = MIN(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth);
   }
 
   // Advancing to UI after wave completion animation finishes.
