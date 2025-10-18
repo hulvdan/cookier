@@ -67,7 +67,7 @@ table Save {
 
     weapons: [Weapon];
     items: [Item];
-    stats_without_items: [int];
+    stats: [int];
 
     screen_picked_up_item__to_pick: int;
     screen_upgrades__to_pick: [Upgrade];

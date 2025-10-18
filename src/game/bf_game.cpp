@@ -861,9 +861,9 @@ struct GameData {
       int crates                 = 0;
       int toSpawn                = 3;
 
-      Array<Weapon, PLAYER_WEAPONS_COUNT> weapons           = {};
-      Vector<Item>                        items             = {};
-      Array<int, StatType_COUNT>          statsWithoutItems = {};
+      Array<int, StatType_COUNT>          stats   = {};
+      Array<Weapon, PLAYER_WEAPONS_COUNT> weapons = {};
+      Vector<Item>                        items   = {};
 
       // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
       struct {
@@ -888,7 +888,6 @@ struct GameData {
     bool reload = false;
 
     FrameVisual scheduledWaveCompleted      = {};
-    bool        recalculatePlayerStats      = false;
     bool        scheduledUI                 = false;
     bool        scheduledNewRun             = false;
     bool        scheduledPickedUpItems      = false;
@@ -926,8 +925,6 @@ struct GameData {
     FrameGame waveStartedAt = {};
 
     int bossCreatureId = 0;
-
-    Array<int, StatType_COUNT> playerStats = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -999,7 +996,7 @@ void Save() {  ///
 int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
   if (fb_damageScalings) {
     for (auto scaling : *fb_damageScalings) {
-      auto statValue = g.run.playerStats[scaling->stat_type()];
+      auto statValue = g.run.state.stats[scaling->stat_type()];
       auto percent   = scaling->percents_per_tier()->Get(tier);
       baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
     }
@@ -1008,7 +1005,7 @@ int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
 }
 
 int ApplyPlayerStatDamageMultiplier(int damage) {  ///
-  auto v = (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
+  auto v = (f32)(100 + g.run.state.stats[StatType_DAMAGE]) / 100.0f;
   return Round((f32)damage * v);
 }
 
@@ -1102,7 +1099,7 @@ Vector2 GetPlayerWeaponOffset(int weaponIndex) {  ///
 }
 
 #define PLAYER_CREATURE (g.run.creatures[0])
-#define PLAYER_COINS (g.run.state.statsWithoutItems[StatType_COINS])
+#define PLAYER_COINS (g.run.state.stats[StatType_COINS])
 
 void SanitizeCoins() {  ///
   if (PLAYER_COINS < 0)
@@ -1110,37 +1107,39 @@ void SanitizeCoins() {  ///
 }
 
 void ApplyEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  ///
-  ASSERT(times > 0);
-  ASSERT(fb_effect->stat_type());
+  ASSERT(times != 0);
 
-  if (fb_effect->stat_type()) {
-    auto value = fb_effect->value();
-    if (value) {
-      g.run.state.statsWithoutItems[fb_effect->stat_type()]
-        += value->Get(tierOffset) * times;
+  const auto statType = (StatType)fb_effect->stat_type();
+  ASSERT(statType);
+  if (!statType)
+    return;
+
+  auto value = fb_effect->value();
+  if (value)
+    g.run.state.stats[statType] += value->Get(tierOffset) * times;
+
+  if (statType == StatType_COINS)
+    SanitizeCoins();
+
+  auto value_multiplier = fb_effect->value_multiplier();
+  if (value_multiplier) {
+    const f32 vm = value_multiplier->Get(tierOffset);
+    if (!FloatEquals(vm, 1)) {
+      f32 multiplier = (1 + (vm - 1) * fabs((f32)times));
+      if (times < 0)
+        multiplier = 1 / multiplier;
+
+      int& statValue = g.run.state.stats[statType];
+      statValue      = Round((f32)statValue * multiplier);
     }
-
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
-
-    auto value_multiplier = fb_effect->value_multiplier();
-    if (value_multiplier) {
-      auto vm = value_multiplier->Get(tierOffset);
-      if (vm != 1) {
-        auto& v = g.run.state.statsWithoutItems[fb_effect->stat_type()];
-        v       = Round(v * (1 + (vm - 1) * times));
-      }
-    }
-
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
   }
 
-  g.run.recalculatePlayerStats = true;
+  if (statType == StatType_COINS)
+    SanitizeCoins();
 }
 
 f32 GetLuckFactor() {  ///
-  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
+  return MAX(0, 1.0f + (f32)g.run.state.stats[StatType_LUCK] / 100.0f);
 }
 
 void RecalculateThisWaveMobs() {  ///
@@ -1173,7 +1172,7 @@ void RecalculateThisWaveMobs() {  ///
 
 void OnWaveStarted() {  ///
   g.run.state.upgrades.rerolls = {};
-  g.run.state.previousCoins    = g.run.state.statsWithoutItems[StatType_COINS];
+  g.run.state.previousCoins    = g.run.state.stats[StatType_COINS];
 
   g.run.bossCreatureId = 0;
 
@@ -1183,8 +1182,8 @@ void OnWaveStarted() {  ///
 
   RecalculateThisWaveMobs();
 
-  g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
-  g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
+  g.run.turrelsToSpawn = g.run.state.stats[StatType_TURRELS_COUNT];
+  g.run.gardensToSpawn = g.run.state.stats[StatType_GARDENS_COUNT];
 
   RecalculatePlayerWeaponDamages();
 }
@@ -1242,27 +1241,27 @@ void AchievementMax(AchievementType type, int value) {  ///
   Save();
 }
 
-void RecalculatePlayerStats() {  ///
-  ZoneScoped;
-
-  FOR_RANGE (int, i, StatType_COUNT)
-    g.run.playerStats[i] = g.run.state.statsWithoutItems[i];
-
-  for (auto& item : g.run.state.items) {
-    const auto fb         = glib->items()->Get(item.type);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (!fb_effect->effectcondition_type()) {
-          g.run.playerStats[fb_effect->stat_type()]
-            += fb_effect->value()->Get(0) * item.count;
-        }
-      }
-    }
-  }
-
-  PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
-}
+// void RecalculatePlayerStats() {  ///
+//   ZoneScoped;
+//
+//   FOR_RANGE (int, i, StatType_COUNT)
+//     g.run.state.stats[i] = g.run.state.stats[i];
+//
+//   for (auto& item : g.run.state.items) {
+//     const auto fb         = glib->items()->Get(item.type);
+//     const auto fb_effects = fb->effects();
+//     if (fb_effects) {
+//       for (const auto fb_effect : *fb_effects) {
+//         if (!fb_effect->effectcondition_type()) {
+//           g.run.state.stats[fb_effect->stat_type()]
+//             += fb_effect->value()->Get(0) * item.count;
+//         }
+//       }
+//     }
+//   }
+//
+//   PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
+// }
 
 void Load(void* saveData) {  ///
   const auto save = BFSave::GetSave(saveData);
@@ -1306,6 +1305,7 @@ void Load(void* saveData) {  ///
   s.crates                 = save->crates();
   s.toSpawn                = save->to_spawn();
 
+  // Loading saved weapons.
   int weaponIndex = 0;
   for (auto x : *save->weapons()) {
     s.weapons[weaponIndex++] = {
@@ -1315,6 +1315,7 @@ void Load(void* saveData) {  ///
     };
   }
 
+  // Loading saved items.
   auto fb_items = save->items();
   if (fb_items) {
     for (auto x : *fb_items) {
@@ -1325,13 +1326,20 @@ void Load(void* saveData) {  ///
     }
   }
 
-  for (auto& x : s.statsWithoutItems)
-    x = 0;
+  // Resetting stats to default values.
+  {
+    auto fb_stats = glib->stats();
+    int  i        = 0;
+    for (auto& x : s.stats)
+      x = fb_stats->Get(i++)->player_value();
+  }
+
+  // Loading values of previosly saved stats.
   int  statIndex = 0;
-  auto fb_stats  = save->stats_without_items();
+  auto fb_stats  = save->stats();
   if (fb_stats) {
     for (auto x : *fb_stats)
-      s.statsWithoutItems[statIndex++] = x;
+      s.stats[statIndex++] = x;
   }
 
   s.pickedUpItem.toPick = (ItemType)save->screen_picked_up_item__to_pick();
@@ -1384,7 +1392,6 @@ void Load(void* saveData) {  ///
   else if (s.screen == ScreenType_END)
     g.run.scheduledEnd = true;
 
-  RecalculatePlayerStats();
   RecalculatePlayerWeaponDamages();
 
   g.player.lockedBuilds  = {};
@@ -1468,8 +1475,8 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
       }));
     }
 
-    for (const auto& x : g.run.state.statsWithoutItems)
-      fb_save.stats_without_items.push_back(x);
+    for (const auto& x : g.run.state.stats)
+      fb_save.stats.push_back(x);
 
     fb_save.screen_picked_up_item__to_pick = s.pickedUpItem.toPick;
 
@@ -1502,7 +1509,7 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
     });
 
     if (s.screen == ScreenType_GAMEPLAY) {
-      fb_save.stats_without_items[StatType_COINS] = s.previousCoins;
+      fb_save.stats[StatType_COINS] = s.previousCoins;
 
       fb_save.level  = fb_save.previous_level;
       fb_save.xp     = s.previousXp;
@@ -2105,7 +2112,7 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   if (fb->hostility_type() != HostilityType_FRIENDLY) {
     const f32 mobHpScale
-      = (f32)(100 + g.run.playerStats[StatType_ENEMY_HP_SCALE]) / 100.0f;
+      = (f32)(100 + g.run.state.stats[StatType_ENEMY_HP_SCALE]) / 100.0f;
     health = Round((f32)health * mobHpScale);
   }
 
@@ -2306,7 +2313,7 @@ int _ApplyStatPrice(StatType s, int price) {  ///
   VIEW_FROM_ARRAY_DANGER(allowed);
   ASSERT(allowed.Contains(s));
 
-  int stat = g.run.playerStats[s];
+  int stat = g.run.state.stats[s];
   if (stat == 0)
     return price;
   stat        = MAX(-100, stat);
@@ -2325,7 +2332,7 @@ int ApplyStatRerollPrice(int price) {  ///
 
 int GetNumberOfTreesToSpawn() {  ///
   // ref: https://brotato.wiki.spellsandguns.com/Trees#Spawn
-  const int stat = g.run.playerStats[StatType_TREES];
+  const int stat = g.run.state.stats[StatType_TREES];
 
   int min = stat / 3;
 
@@ -2377,6 +2384,22 @@ int GetNextLevelXp(int currentLevel) {  ///
 
 void IterateOverWeaponEffects(
   EffectConditionType condition,
+  WeaponType          type,
+  /* void (auto fb_effect) */
+  auto innerLambda
+) {
+  auto       fb         = glib->weapons()->Get(type);
+  const auto fb_effects = fb->effects();
+  if (!fb_effects)
+    return;
+  for (const auto fb_effect : *fb_effects) {
+    if (fb_effect->effectcondition_type() == condition)
+      innerLambda(fb_effect);
+  }
+}
+
+void IterateOverWeaponsEffects(
+  EffectConditionType condition,
   /* void (
        int weaponIndexOrMinus1,
        Weapon& weapon,
@@ -2404,6 +2427,23 @@ void IterateOverWeaponEffects(
   }
 }
 
+void IterateOverItemEffects(
+  EffectConditionType condition,
+  ItemType            type,
+  int                 count,
+  /* void (auto fb_effect, int tierOffset, int times)*/
+  auto innerLambda
+) {  ///
+  const auto fb         = glib->items()->Get(type);
+  const auto fb_effects = fb->effects();
+  if (fb_effects) {
+    for (const auto fb_effect : *fb_effects) {
+      if (fb_effect->effectcondition_type() == condition)
+        innerLambda(fb_effect, 0, count);
+    }
+  }
+}
+
 void IterateOverEffects(
   EffectConditionType                                         condition,
   auto /* void (auto fb_effect, int tierOffset, int times) */ innerLambda
@@ -2414,26 +2454,15 @@ void IterateOverEffects(
   ASSERT(fb->restrict() == 0);
 #endif
 
-  IterateOverWeaponEffects(
+  IterateOverWeaponsEffects(
     condition,
     [&](int weaponIndexOrMinus1, Weapon& weapon, int tierOffset, auto fb_effect)
-      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, tierOffset, tierOffset); }
+      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, tierOffset, 1); }
   );
 
   // Iterating over items.
-  {
-    const auto fb_items = glib->items();
-    for (auto& item : g.run.state.items) {
-      const auto fb         = fb_items->Get(item.type);
-      const auto fb_effects = fb->effects();
-      if (fb_effects) {
-        for (const auto fb_effect : *fb_effects) {
-          if (fb_effect->effectcondition_type() == condition)
-            innerLambda(fb_effect, 0, item.count);
-        }
-      }
-    }
-  }
+  for (auto& item : g.run.state.items)
+    IterateOverItemEffects(condition, item.type, item.count, innerLambda);
 
   // Iterating over difficulty effects.
   {
@@ -2473,12 +2502,11 @@ void RunInit() {
     g.run.world         = b2CreateWorld(&worldDef);
   }
 
-  // Initializing `g.run.state.statsWithoutItems`.
+  // Initializing `g.run.state.stats`.
   FOR_RANGE (int, stat, (int)StatType_COUNT) {  ///
-    const auto fb                       = glib->stats()->Get(stat);
-    g.run.state.statsWithoutItems[stat] = fb->player_value();
+    const auto fb           = glib->stats()->Get(stat);
+    g.run.state.stats[stat] = fb->player_value();
   }
-  g.run.recalculatePlayerStats = true;
 
   // Making player. {  ///
   auto playerPos = (Vector2)WORLD_SIZE / 2.0f;
@@ -2488,8 +2516,8 @@ void RunInit() {
   });
   g.run.previousPlayerPos = playerPos;
   g.run.playerLastRegenAt.SetNow();
-  PLAYER_CREATURE.health    = g.run.state.statsWithoutItems[StatType_HP];
-  PLAYER_CREATURE.maxHealth = g.run.state.statsWithoutItems[StatType_HP];
+  PLAYER_CREATURE.health    = g.run.state.stats[StatType_HP];
+  PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
   // }
 
   g.run.camera.pos = GetCameraTargetPos();
@@ -2717,7 +2745,7 @@ constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
 f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  ///
   f32 lifesteal = 0;
   if (affectedByGame)
-    lifesteal += (f32)g.run.playerStats[StatType_LIFE_STEAL] / 100.0f;
+    lifesteal += (f32)g.run.state.stats[StatType_LIFE_STEAL] / 100.0f;
   if (typeOrInvalid)
     lifesteal += glib->weapons()->Get(typeOrInvalid)->life_steal_percent() / 100.0f;
   return lifesteal;
@@ -2781,7 +2809,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
     // Dodge.
     if (GRAND.FRand() < MIN(
-          (f32)MAX_DODGE_PERCENT / 100.0f, (f32)g.run.playerStats[StatType_DODGE] / 100.0f
+          (f32)MAX_DODGE_PERCENT / 100.0f, (f32)g.run.state.stats[StatType_DODGE] / 100.0f
         ))
     {
       MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
@@ -2793,7 +2821,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     }
 
     // Applying player's armor.
-    auto armor = (f32)g.run.playerStats[StatType_ARMOR];
+    auto armor = (f32)g.run.state.stats[StatType_ARMOR];
     if (armor > 0)
       data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
     else if (armor < 0)
@@ -2849,7 +2877,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance)) {
     auto damage = data.ailment.value;
     if (data.damagerCreatureType == CreatureType_PLAYER)
-      damage += g.run.playerStats[StatType_DAMAGE_ELEMENTAL];
+      damage += g.run.state.stats[StatType_DAMAGE_ELEMENTAL];
 
     if ((data.ailment.value == 0) || (damage > 0)) {
       data.ailment.value = damage;
@@ -2937,14 +2965,14 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
 void Rerolls::Roll() {  ///
   PLAYER_COINS -= ApplyStatRerollPrice(GetPrice());
   ASSERT(PLAYER_COINS >= 0);
-  if (rerolledFreeTimes < g.run.playerStats[StatType_FREE_REROLLS])
+  if (rerolledFreeTimes < g.run.state.stats[StatType_FREE_REROLLS])
     rerolledFreeTimes++;
   else
     rerolledTimes++;
 }
 
 int Rerolls::GetPrice() const {  ///
-  if (rerolledFreeTimes < g.run.playerStats[StatType_FREE_REROLLS])
+  if (rerolledFreeTimes < g.run.state.stats[StatType_FREE_REROLLS])
     return 0;
   return GetRerollPrice(g.run.state.waveIndex, rerolledTimes);
 }
@@ -3042,10 +3070,25 @@ void AddItem(ItemType type) {  ///
     *g.run.state.items.Add() = item;
   }
 
-  g.run.recalculatePlayerStats = true;
+  IterateOverItemEffects(
+    {},
+    type,
+    1,
+    [&](auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
+  );
 }
 
-void StableRemoveWeapon(int index) {  ///
+void StableRemoveWeaponAndRemoveEffects(int index) {  ///
+  auto& weapon = g.run.state.weapons[index];
+
+  // Removing applied weapon stats.
+  const int tierOffset
+    = weapon.tier - glib->weapons()->Get(weapon.type)->min_tier_index();
+  IterateOverWeaponEffects({}, weapon.type, [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+    ApplyEffect(fb_effect, tierOffset, -1);
+  });
+
   for (int i = index + 1; i < g.run.state.weapons.count; i++)
     g.run.state.weapons[i - 1] = g.run.state.weapons[i];
   g.run.state.weapons[g.run.state.weapons.count - 1] = {};
@@ -3058,11 +3101,11 @@ f32 _AttackSpeedMultiplier(int v) {  ///
 }
 
 f32 GetPlayerStatAttackSpeedMultiplier() {  ///
-  return _AttackSpeedMultiplier(g.run.playerStats[StatType_ATTACK_SPEED]);
+  return _AttackSpeedMultiplier(g.run.state.stats[StatType_ATTACK_SPEED]);
 }
 
 f32 GetPlayerStatStructureAttackSpeedMultiplier() {  ///
-  return _AttackSpeedMultiplier(g.run.playerStats[StatType_STRUCTURE_ATTACK_SPEED]);
+  return _AttackSpeedMultiplier(g.run.state.stats[StatType_STRUCTURE_ATTACK_SPEED]);
 }
 
 lframe ApplyAttackSpeedToDuration(int duration) {  ///
@@ -3081,12 +3124,12 @@ lframe ApplyStructureAttackSpeedToDuration(int duration) {  ///
 }
 
 f32 GetExplosionDamageMultiplier() {  ///
-  auto v = (f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE];
+  auto v = (f32)g.run.state.stats[StatType_EXPLOSION_DAMAGE];
   return MAX(0, 1.0f + v / 100.0f);
 }
 
 f32 GetExplosionSizeMultiplier() {  ///
-  auto v = (f32)g.run.playerStats[StatType_EXPLOSION_SIZE];
+  auto v = (f32)g.run.state.stats[StatType_EXPLOSION_SIZE];
   if (v >= 0)
     return 1 + v / 100.0f;
   return powf(2, v / 50);
@@ -3098,7 +3141,7 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
 
   f32 range = 0;
   if (affectedByGame)
-    range = (f32)g.run.playerStats[StatType_RANGE];
+    range = (f32)g.run.state.stats[StatType_RANGE];
 
   f32 bonusRange = 0;
 
@@ -3118,7 +3161,7 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
 }
 
 bool IsCrit() {  ///
-  const f32 chance = (f32)g.run.playerStats[StatType_CRIT_CHANCE] / 100.0f;
+  const f32 chance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
   return GRAND.FRand() < chance;
 }
 
@@ -3204,7 +3247,7 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
 
 void AddXP(f32 xp) {  ///
   if (xp > 0)
-    xp *= (f32)(MAX(1, g.run.playerStats[StatType_XP_GAIN] + 100)) / 100.0f;
+    xp *= (f32)(MAX(1, g.run.state.stats[StatType_XP_GAIN] + 100)) / 100.0f;
 
   g.run.state.xp += xp;
   g.run.state.xp = MAX(0, g.run.state.xp);
@@ -3227,8 +3270,7 @@ void AddXP(f32 xp) {  ///
       const auto vals = fb->upgrade_values();
       if (!vals)
         continue;
-      g.run.state.statsWithoutItems[stat] += vals->Get(0);
-      g.run.recalculatePlayerStats = true;
+      g.run.state.stats[stat] += vals->Get(0);
       break;
     }
   }
@@ -3250,30 +3292,42 @@ void HealPlayer(f32 amount = 1) {  ///
   Save();
 }
 
-void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
-  PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
+void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(
+  const BFGame::Effect* fb_effect,
+  int                   tierOffset
+) {  ///
+  const int cv = fb_effect->condition_value()->Get(tierOffset);
+  PlaceholdString("ENEMIES", TextFormat("%d", cv));
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_KILL_N_ENEMIES);
 }
 
-void ClayEffectCondition_END_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect) {  ///
+void ClayEffectCondition_END_OF_THE_WAVE_GET_STAT(
+  const BFGame::Effect* fb_effect,
+  int                   tierOffset
+) {  ///
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_END_OF_THE_WAVE);
 }
 
-void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect
+void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(
+  const BFGame::Effect* fb_effect,
+  int                   tierOffset
 ) {  ///
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_START_OF_THE_WAVE);
 }
 
 void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
-  const BFGame::Effect* fb_effect
+  const BFGame::Effect* fb_effect,
+  int                   tierOffset
 ) {  ///
-  PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
+  const int cv = fb_effect->condition_value()->Get(tierOffset);
+  PlaceholdString("ENEMIES", TextFormat("%d", cv));
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_KILL_N_ENEMIES_USING_THIS_WEAPON
   );
 }
 
 void ClayEffectCondition_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY(
-  const BFGame::Effect* fb_effect
+  const BFGame::Effect* fb_effect,
+  int                   tierOffset
 ) {  ///
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
     Loc_WEAPON_EFFECT_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
@@ -3629,18 +3683,12 @@ void DoUI(bool draw) {
         }}) {
           // Increasing stat by clicking on it in debug mode.
           if (stat && ge.meta.debugEnabled) {
-            if (clicked()) {
-              g.run.state.statsWithoutItems[stat]++;
-              g.run.recalculatePlayerStats = true;
-            }
-            if (rightClicked()) {
-              g.run.state.statsWithoutItems[stat] += 10;
-              g.run.recalculatePlayerStats = true;
-            }
-            if (wheel && Clay_Hovered()) {
-              g.run.state.statsWithoutItems[stat] += wheel;
-              g.run.recalculatePlayerStats = true;
-            }
+            if (clicked())
+              g.run.state.stats[stat]++;
+            if (rightClicked())
+              g.run.state.stats[stat] += 10;
+            if (wheel && Clay_Hovered())
+              g.run.state.stats[stat] += wheel;
           }
 
           const auto fb = fb_stats->Get(stat);
@@ -3698,7 +3746,7 @@ void DoUI(bool draw) {
         const auto fb   = glib->stats()->Get(type);
         if (!fb->is_hidden() && (fb->is_secondary() == g.run.showingSecondaryStats)) {
           componentStatsEntry(
-            fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type], type
+            fb->icon_texture_id(), fb->name_locale(), g.run.state.stats[type], type
           );
         }
       }
@@ -3894,7 +3942,7 @@ void DoUI(bool draw) {
 
         const auto cond = fb_effect->effectcondition_type();
         if (cond)
-          clayEffectConditionFunctions[cond - 1](fb_effect);
+          clayEffectConditionFunctions[cond - 1](fb_effect, tierOffset);
         else if (!FloatEquals(v, 0))
           BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_DEFAULT_WEAPON_STAT);
 
@@ -4125,7 +4173,7 @@ void DoUI(bool draw) {
         if (data.weapon) {  ///
           const auto fb = fb_weapons->Get(data.weapon);
 
-          int tierOffset = 0;
+          int tierOffset = data.overrideTier - fb->min_tier_index();
 
           int thisWaveDamage = 0;
           if (data.weaponIndexOrMinus1 >= 0) {
@@ -4188,7 +4236,7 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT(TextFormat(
                 "x%.1f (%d%%)",
                 fb->crit_damage_multiplier(),
-                MIN(100, MAX(0, g.run.playerStats[StatType_CRIT_CHANCE]))
+                MIN(100, MAX(0, g.run.state.stats[StatType_CRIT_CHANCE]))
               ));
             });
           }
@@ -4215,7 +4263,7 @@ void DoUI(bool draw) {
           {
             f32 value = fb->knockback_meters();
             if (data.affectedByGame)
-              value *= (f32)(100 + g.run.playerStats[StatType_KNOCKBACK]) / 100.0f;
+              value *= (f32)(100 + g.run.state.stats[StatType_KNOCKBACK]) / 100.0f;
             componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat("%.1f", value)));
             });
@@ -4239,7 +4287,7 @@ void DoUI(bool draw) {
           if (fb->projectile_type()) {
             int value = fb->projectile_pierce();
             if (data.affectedByGame)
-              value += g.run.playerStats[StatType_PIERCING];
+              value += g.run.state.stats[StatType_PIERCING];
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(TextFormat("%d", value));
@@ -4251,7 +4299,7 @@ void DoUI(bool draw) {
           if (fb->projectile_type()) {
             int value = fb->projectile_bounce();
             if (data.affectedByGame)
-              value += g.run.playerStats[StatType_BOUNCES];
+              value += g.run.state.stats[StatType_BOUNCES];
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(TextFormat("%d", value));
@@ -4359,12 +4407,41 @@ void DoUI(bool draw) {
                     // Upgrading an existing weapon if no empty slot found.
                     ASSERT(weapon.type == data.weapon);
                     ASSERT(weapon.tier == tier);
+
+                    const int tierOffset
+                      = tier - fb_weapons->Get(weapon.type)->min_tier_index();
+
+                    IterateOverWeaponEffects(
+                      {},
+                      weapon.type,
+                      [&](auto fb_effect)
+                        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, -1); }
+                    );
+
                     weapon.tier += 1;
+
+                    IterateOverWeaponEffects(
+                      {},
+                      weapon.type,
+                      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                        ApplyEffect(fb_effect, tierOffset + 1, 1);
+                      }
+                    );
                   }
                   else {
                     // Filling empty weapon slot if exists.
                     weapon.type = data.weapon;
                     weapon.tier = tier;
+
+                    // Applying weapon effects.
+                    const int tierOffset
+                      = tier - fb_weapons->Get(weapon.type)->min_tier_index();
+                    IterateOverWeaponEffects(
+                      {},
+                      weapon.type,
+                      [&](auto fb_effect)
+                        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, 1); }
+                    );
                   }
                 }
                 else if (data.item)
@@ -4442,18 +4519,37 @@ void DoUI(bool draw) {
 
             if (combined) {
               ASSERT(canCombineWithIndex >= 0);
+
+              const int tierOffset
+                = tier - fb_weapons->Get(weapon.type)->min_tier_index();
+
+              IterateOverWeaponEffects(
+                {},
+                weapon.type,
+                [&](auto fb_effect)
+                  BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, -1); }
+              );
+
               weapon.tier += 1;
+
+              IterateOverWeaponEffects(
+                {},
+                weapon.type,
+                [&](auto fb_effect)
+                  BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset + 1, 1); }
+              );
+
               weapon.thisWaveDamage = 0;
               weapon.killedEnemies  = MAX(
                 weapon.killedEnemies,
                 g.run.state.weapons[canCombineWithIndex].killedEnemies
               );
-              StableRemoveWeapon(canCombineWithIndex);
+              StableRemoveWeaponAndRemoveEffects(canCombineWithIndex);
               Save();
             }
             if (recycled) {
               ChangeCoins(recyclePrice);
-              StableRemoveWeapon(data.weaponIndexOrMinus1);
+              StableRemoveWeaponAndRemoveEffects(data.weaponIndexOrMinus1);
               Save();
             }
             if (cancelled || recycled || combined) {
@@ -5516,8 +5612,7 @@ void DoUI(bool draw) {
                     g.run.scheduledShopReset = true;
                   }
 
-                  g.run.state.statsWithoutItems[upgrade.stat] += amount;
-                  g.run.recalculatePlayerStats = true;
+                  g.run.state.stats[upgrade.stat] += amount;
 
                   if (upgrade.stat == StatType_HP)
                     PLAYER_CREATURE.health += amount;
@@ -6563,7 +6658,7 @@ Vector2 ForecastWhereProjectileWillHitCreature(
 f32 GetCreatureSpeed(const Creature& creature) {  ///
   f32 speed = creature.speed * creature.speedModifier;
   if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
-    speed *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
+    speed *= (f32)(g.run.state.stats[StatType_ENEMY_SPEED] + 100) / 100.0f;
     speed = MAX(0, speed);
   }
   return speed;
@@ -6612,7 +6707,7 @@ void MakeAOE(
       // Player damages mob.
       damage = ApplyPlayerStatDamageMultiplier(damage);
       damage = Round(
-        damage * ((f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
+        damage * ((f32)g.run.state.stats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
       );
 
       if (damage > 0) {
@@ -6624,7 +6719,7 @@ void MakeAOE(
           damage = Round(
             (f32)damage
             * MAX(
-              0, (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
+              0, (f32)(g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
             )
           );
         }
@@ -6817,12 +6912,6 @@ void GameFixedUpdate() {
     }
   }
 
-  // Recalculating player stats.
-  if (g.run.recalculatePlayerStats) {  ///
-    g.run.recalculatePlayerStats = false;
-    RecalculatePlayerStats();
-  }
-
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
     if ((g.run.state.screen != ScreenType_WAVE_END_ANIMATION) && g.run.state.waveWon) {
@@ -6864,7 +6953,7 @@ void GameFixedUpdate() {
     if (g.run.scheduledWaveCompleted.Elapsed() >= WAVE_COMPLETED_FRAMES) {
       {
         // Applying StatType_HARVESTING.
-        auto& harvesting = g.run.playerStats[StatType_HARVESTING];
+        auto& harvesting = g.run.state.stats[StatType_HARVESTING];
         ChangeCoins(harvesting);
         AddXP(harvesting);
         // Harvesting stat (if positive) grows by 5% upon finishing each wave.
@@ -7005,10 +7094,11 @@ void GameFixedUpdate() {
     g.run.state.previousXp = g.run.state.xp;
     OnWaveStarted();
 
-    const int health          = g.run.playerStats[StatType_HP];
+    const int health          = g.run.state.stats[StatType_HP];
     PLAYER_CREATURE.health    = health;
     PLAYER_CREATURE.maxHealth = health;
 
+    // Applying effects: START_OF_THE_WAVE_GET_STAT.
     IterateOverEffects(
       EffectConditionType_START_OF_THE_WAVE_GET_STAT,
       [&](auto fb_effect, int tierOffset, int times)
@@ -7110,7 +7200,7 @@ void GameFixedUpdate() {
         // Player HP regen.
         if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {  ///
           const bool canRegen = g.run.playerLastRegenAt.Elapsed()
-                                >= GetFramesPerRegen(g.run.playerStats[StatType_REGEN]);
+                                >= GetFramesPerRegen(g.run.state.stats[StatType_REGEN]);
           if (canRegen) {
             PLAYER_CREATURE.health
               = MIN(PLAYER_CREATURE.health + 1, PLAYER_CREATURE.maxHealth);
@@ -7281,7 +7371,7 @@ void GameFixedUpdate() {
             auto& data = creature.DataTurrel();
 
             f32 rangeMeters = fb->turrel_range_meters();
-            rangeMeters *= (f32)g.run.playerStats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
+            rangeMeters *= (f32)g.run.state.stats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
             rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
 
             auto originalSize
@@ -7410,7 +7500,7 @@ void GameFixedUpdate() {
         };
 
         int  spawnEnemiesEvery = FIXED_FPS;
-        auto multiplier        = 1 + (f32)g.run.playerStats[StatType_ENEMIES] / 100.0f;
+        auto multiplier        = 1 + (f32)g.run.state.stats[StatType_ENEMIES] / 100.0f;
         multiplier             = MAX(0.001f, multiplier);
         spawnEnemiesEvery      = Round((f32)spawnEnemiesEvery / multiplier);
         spawnEnemiesEvery      = MAX(1, spawnEnemiesEvery);
@@ -7448,9 +7538,9 @@ void GameFixedUpdate() {
           }
 
           // Spawning landmines.
-          if (g.run.playerStats[StatType_LANDMINES] > 0) {
+          if (g.run.state.stats[StatType_LANDMINES] > 0) {
             auto landminesSpawnInterval = SPAWNING_LANDMINES_INTERVAL_FRAMES;
-            landminesSpawnInterval.value /= g.run.playerStats[StatType_LANDMINES];
+            landminesSpawnInterval.value /= g.run.state.stats[StatType_LANDMINES];
             landminesSpawnInterval.value /= GetPlayerStatStructureAttackSpeedMultiplier();
             landminesSpawnInterval.value = MAX(2, landminesSpawnInterval.value);
 
@@ -7584,7 +7674,7 @@ void GameFixedUpdate() {
               = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
           }
           else {
-            auto pickupRangeScale = (f32)(100 + g.run.playerStats[StatType_PICKUP_RANGE]);
+            auto pickupRangeScale = (f32)(100 + g.run.state.stats[StatType_PICKUP_RANGE]);
             pickupRangeScale      = MAX(30, pickupRangeScale);
             pickupRangeScale /= 100.0f;
 
@@ -7594,7 +7684,7 @@ void GameFixedUpdate() {
               pickupable.pickedUpAt.SetNow();
 
               const int consumableOrCrateHeal
-                = MIN(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
+                = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
 
               switch (pickupable.type) {
               case PickupableType_COIN: {
@@ -7614,7 +7704,7 @@ void GameFixedUpdate() {
                 }
 
                 if (GRAND.FRand()
-                    < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+                    < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
                 {
                   amount *= 2;
                   xNumber *= 2;
@@ -7632,7 +7722,7 @@ void GameFixedUpdate() {
                 ChangeCoins(amount);
                 AddXP((f32)amount);
 
-                auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;
+                auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
                 if (GRAND.FRand() < healChance)
                   HealPlayer();
               } break;
@@ -7789,7 +7879,7 @@ void GameFixedUpdate() {
 
         f32 speed = GetCreatureSpeed(creature);
         if (creature.type == CreatureType_PLAYER) {
-          speed *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
+          speed *= MAX(0, (f32)(100 + g.run.state.stats[StatType_SPEED]) / 100.0f);
           if (g.meta.godMode)
             speed *= 1.5f;
         }
@@ -8119,7 +8209,7 @@ void GameFixedUpdate() {
               if (fb_creature->is_boss()) {
                 damage *= MAX(
                   0,
-                  (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
+                  (f32)(g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
                 );
               }
 
@@ -8128,7 +8218,7 @@ void GameFixedUpdate() {
             }
 
             const f32 piercingDamageMultiplier
-              = (f32)g.run.playerStats[StatType_PIERCING_DAMAGE] / 100.0f;
+              = (f32)g.run.state.stats[StatType_PIERCING_DAMAGE] / 100.0f;
 
             f32 knockback = projectile.knockbackMeters;
 
@@ -8139,7 +8229,7 @@ void GameFixedUpdate() {
 
             int ailmentSpread = 0;
             if (fb->ailment_type() == AilmentType_BURN)
-              ailmentSpread = MAX(0, g.run.playerStats[StatType_BURNING_SPREAD]);
+              ailmentSpread = MAX(0, g.run.state.stats[StatType_BURNING_SPREAD]);
 
             if (TryApplyDamage({
                   .creatureIndex                      = creatureIndex,
@@ -8160,8 +8250,8 @@ void GameFixedUpdate() {
               auto maxBounce = projectile.bounce;
               auto maxPierce = projectile.pierce;
               if (projectile.ownerCreatureType == CreatureType_PLAYER) {
-                maxBounce += g.run.playerStats[StatType_BOUNCES];
-                maxPierce += g.run.playerStats[StatType_PIERCING];
+                maxBounce += g.run.state.stats[StatType_BOUNCES];
+                maxPierce += g.run.state.stats[StatType_PIERCING];
               }
 
               bool canBounce = projectile.bouncedCount < maxBounce;
@@ -8436,6 +8526,7 @@ void GameFixedUpdate() {
               if (creature.lastDamagedWeaponIndex >= 0)
                 g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
 
+              // Applying effects: KILL_N_ENEMIES_GET_STAT.
               IterateOverEffects(
                 EffectConditionType_KILL_N_ENEMIES_GET_STAT,
                 [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
@@ -8444,7 +8535,8 @@ void GameFixedUpdate() {
                     ApplyEffect(fb_effect, tierOffset, times);
                 }
               );
-              IterateOverWeaponEffects(
+              // Applying effects: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT.
+              IterateOverWeaponsEffects(
                 EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
                 [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
                   BF_FORCE_INLINE_LAMBDA {
