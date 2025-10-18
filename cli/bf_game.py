@@ -49,6 +49,17 @@ def field_to_list(container, field: str) -> None:
         assert False
 
 
+def does_require(effect_condition_name: str, v: str) -> bool:
+    requires = False
+    if effect_condition_name.startswith(f"{v}_"):
+        requires = True
+    if effect_condition_name.endswith(f"_{v}"):
+        requires = True
+    if f"_{v}_" in effect_condition_name:
+        requires = True
+    return requires
+
+
 @gamelib_processor
 def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     transforms: list[tuple[str, str, dict[str, int]]] = []
@@ -56,21 +67,31 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Effect conditions.
     # ============================================================
     if 1:
+        for x in gamelib["effect_conditions"]:
+            x["name_locale"] = "EFFECT_{}".format(x["type"])
+
         for x in gamelib.pop("weapon_effect_conditions", []):
+            x["name_locale"] = "WEAPON_EFFECT_{}".format(x["type"])
             gamelib["effect_conditions"].append({**x, "restrict": 1})
 
-        genline("// Effect conditions. {  ///")
-        params = "const BFGame::Effect* fb_effect, int tierOffset"
-        genline("using ClayEffectConditionFunction = void(*)({});".format(params))
-        for x in gamelib["effect_conditions"][1:]:
-            genline("void ClayEffectCondition_{}({});".format(x["type"], params))
-        genline("constexpr ClayEffectConditionFunction clayEffectConditionFunctions_[]{")
-        for x in gamelib["effect_conditions"][1:]:
-            genline("  ClayEffectCondition_{},".format(x["type"]))
-        genline("};")
-        genline("VIEW_FROM_ARRAY_DANGER(clayEffectConditionFunctions);")
-        genline("// }")
-        genline("")
+        for x in gamelib["effect_conditions"]:
+            conds = ("X", "Y")
+            for cond in conds:
+                if does_require(x["type"], cond):
+                    x["requires_{}".format(cond.lower())] = True
+
+        # genline("// Effect conditions. {  ///")
+        # params = "const BFGame::Effect* fb_effect, int tierOffset"
+        # genline("using ClayEffectConditionFunction = void(*)({});".format(params))
+        # for x in gamelib["effect_conditions"][1:]:
+        #     genline("void ClayEffectCondition_{}({});".format(x["type"], params))
+        # genline("constexpr ClayEffectConditionFunction clayEffectConditionFunctions_[]{")
+        # for x in gamelib["effect_conditions"][1:]:
+        #     genline("  ClayEffectCondition_{},".format(x["type"]))
+        # genline("};")
+        # genline("VIEW_FROM_ARRAY_DANGER(clayEffectConditionFunctions);")
+        # genline("// }")
+        # genline("")
 
     # Items.
     # ============================================================
@@ -78,7 +99,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         for e in x.get("effects", []):
             field_to_list(e, "value")
             field_to_list(e, "value_multiplier")
-            field_to_list(e, "condition_value")
+            field_to_list(e, "condition_x")
+            field_to_list(e, "condition_y")
 
         x["name_locale"] = "ITEM_" + x["type"].upper()
         assert 0 <= x["tier"] < 4
@@ -98,7 +120,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             for e in x.get("effects", []):
                 field_to_list(e, "value")
                 field_to_list(e, "value_multiplier")
-                field_to_list(e, "condition_value")
+                field_to_list(e, "condition_x")
+                field_to_list(e, "condition_y")
 
             x["name_locale"] = f"DIFFICULTY_{i}"
 
@@ -148,21 +171,26 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         for e in x.get("effects", []):
             field_to_list(e, "value")
             field_to_list(e, "value_multiplier")
-            field_to_list(e, "condition_value")
+            field_to_list(e, "condition_x")
+            field_to_list(e, "condition_y")
 
             if "value" in e:
                 assert "value_multiplier" not in e, x["type"]
             if "value_multiplier" in e:
                 assert "value" not in e, x["type"]
             if "effectcondition_type" not in e:
-                assert "condition_value" not in e, x["type"]
+                assert "condition_x" not in e, x["type"]
+                assert "condition_y" not in e, x["type"]
 
             if "value" in e:
                 assert len(e["value"]) == requiredTierValues, x["type"]
             if "value_multiplier" in e:
                 assert len(e["value_multiplier"]) == requiredTierValues, x["type"]
-            if "condition_value" in e:
-                assert len(e["condition_value"]) == requiredTierValues, x["type"]
+            if "condition_x" in e:
+                assert len(e["condition_x"]) == requiredTierValues, x["type"]
+            if "condition_y" in e:
+                assert "condition_x" in e
+                assert len(e["condition_y"]) == requiredTierValues, x["type"]
 
     # Stats.
     # ============================================================
@@ -224,7 +252,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             for e in x.get("effects", []):
                 field_to_list(e, "value")
                 field_to_list(e, "value_multiplier")
-                field_to_list(e, "condition_value")
+                field_to_list(e, "condition_x")
+                field_to_list(e, "condition_y")
 
             if i > 0:
                 x["name_locale"] = "BUILD_{}".format(x["type"])

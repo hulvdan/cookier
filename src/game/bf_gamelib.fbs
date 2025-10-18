@@ -128,6 +128,14 @@ table Creature {
 
 table EffectCondition {
     restrict: int; // 0 general, 1 weapon only.
+    name_locale: int;
+    requires_x: bool;
+    requires_y: bool;
+    x_is_float: bool;
+    y_is_float: bool;
+    // nocheckin
+    x_signed: bool;
+    y_signed: bool;
 }
 
 table WeaponProperty {
@@ -140,7 +148,11 @@ table Effect {
     effectcondition_type: int;
     value: [int];
     value_multiplier: [float];
-    condition_value: [int];
+    condition_x: [int];
+    condition_x_floats: [float];
+    condition_y: [int];
+    condition_y_floats: [float];
+    projectile_type: int;
 }
 
 table Item {

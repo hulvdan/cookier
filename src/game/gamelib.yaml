@@ -384,13 +384,20 @@ weapon_properties:
   - type: DAMAGE
     name_locale: STAT_DAMAGE
 effect_conditions:
-  - type: INVALID
-  - type: KILL_N_ENEMIES_GET_STAT
+  - type: DEFAULT
+  - type: KILL_X_ENEMIES_GET_STAT
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
 weapon_effect_conditions:
-  - type: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT
+  - type: CHANCE_OF_EXPLOSION_ON_HIT
+  - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
+  - type: HIT_MAKES_X_PROJECTILES
+  - type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+    x_is_float: true
+  - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+    x_signed: true
   - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
+  - type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 items:
   - type: INVALID
   - type: TURREL
@@ -451,10 +458,10 @@ items:
     effects:
       - stat_type: ENEMIES
         value: 5
-      - effectcondition_type: KILL_N_ENEMIES_GET_STAT
+      - effectcondition_type: KILL_X_ENEMIES_GET_STAT
         stat_type: ENEMIES
         value: 1
-        condition_value: 50
+        condition_x: 50
   - type: PIGGY_BANK
     texture_id: ui_item_piggy_bank
     tier: 2
