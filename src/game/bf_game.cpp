@@ -2704,12 +2704,22 @@ void GameInit() {  ///
 
   // Checking that weapon effects weren't applied to difficulties, builds, and items.
 #if BF_ENABLE_ASSERTS
-  LAMBDA (void, checkEffects, (auto fb_effects)) {
+  LAMBDA (void, checkEffects, (auto fb_effects, bool cantBeRestrictedToWeapons = true)) {
     if (!fb_effects)
       return;
     for (auto fb_effect : *fb_effects) {
       auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
-      ASSERT(fb_cond->restrict() == 0);
+      if (cantBeRestrictedToWeapons)
+        ASSERT(fb_cond->restrict() == 0);
+
+      if (fb_cond->requires_stat())
+        ASSERT(fb_effect->stat_type());
+      else
+        ASSERT_FALSE(fb_effect->stat_type());
+      if (fb_cond->requires_property())
+        ASSERT(fb_effect->weaponproperty_type());
+      else
+        ASSERT_FALSE(fb_effect->weaponproperty_type());
     }
   };
   for (auto fb : *glib->difficulties())
@@ -2718,6 +2728,8 @@ void GameInit() {  ///
     checkEffects(fb->effects());
   for (auto fb : *glib->items())
     checkEffects(fb->effects());
+  for (auto fb : *glib->weapons())
+    checkEffects(fb->effects(), false);
 #endif
 }
 

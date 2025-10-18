@@ -75,7 +75,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             gamelib["effect_conditions"].append({**x, "restrict": 1})
 
         for x in gamelib["effect_conditions"]:
-            conds = ("X", "Y")
+            conds = ("X", "Y", "STAT", "PROPERTY")
             for cond in conds:
                 if does_require(x["type"], cond):
                     x["requires_{}".format(cond.lower())] = True

@@ -42,7 +42,7 @@ UI_STATS_SECONDARY;Побочные;Secondary;
 UI_DIFFICULTY;Сложность;Difficulty;
 UI_BUILD;Класс;Class;
 UI_STARTING_WEAPON;Начальное Оружие;Starting Weapon;
-EFFECT_DEFAULT;{STAT} {MODIFIER} ;{MODIFIER} {STAT};
+EFFECT_DEFAULT_GET_STAT;{STAT} {MODIFIER} ;{MODIFIER} {STAT};
 EFFECT_KILL_X_ENEMIES_GET_STAT;{STAT} {MODIFIER} за каждые {X} убитых врагов ;{MODIFIER} {STAT} for every {X} killed enemies;
 EFFECT_START_OF_THE_WAVE_GET_STAT;{STAT} {MODIFIER} в начале волны ;{MODIFIER} {STAT} at the start of the wave;
 EFFECT_END_OF_THE_WAVE_GET_STAT;{STAT} {MODIFIER} за каждые {X} убитых врагов ;{MODIFIER} {STAT} for every {X} killed enemies;
