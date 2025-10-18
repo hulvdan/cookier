@@ -2707,6 +2707,7 @@ void GameInit() {  ///
   LAMBDA (void, checkEffects, (auto fb_effects, bool cantBeRestrictedToWeapons = true)) {
     if (!fb_effects)
       return;
+
     for (auto fb_effect : *fb_effects) {
       auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
       if (cantBeRestrictedToWeapons)
@@ -2716,12 +2717,14 @@ void GameInit() {  ///
         ASSERT(fb_effect->stat_type());
       else
         ASSERT_FALSE(fb_effect->stat_type());
+
       if (fb_cond->requires_property())
         ASSERT(fb_effect->weaponproperty_type());
       else
         ASSERT_FALSE(fb_effect->weaponproperty_type());
     }
   };
+
   for (auto fb : *glib->difficulties())
     checkEffects(fb->effects());
   for (auto fb : *glib->builds())
@@ -2730,6 +2733,43 @@ void GameInit() {  ///
     checkEffects(fb->effects());
   for (auto fb : *glib->weapons())
     checkEffects(fb->effects(), false);
+
+  LAMBDA (void, checkPlaceholder, (int locale_, const char* placeholder)) {
+    const auto locale = (Loc)locale_;  // NOTE: Leaving this line for debug purposes.
+
+    int localizationIndex = -1;
+    for (auto loc : *glib->localizations()) {
+      localizationIndex++;
+
+      bool found = false;
+      for (auto line : *loc->broken_lines()->Get(locale)->lines()) {
+        for (auto group : *line->groups()) {
+          for (auto datum : *group->strings()) {
+            if (datum->type() == BrokenStringDatumType_PLACEHOLDER) {
+              if (!strcmp(placeholder, datum->placeholder()->c_str()))
+                found = true;
+            }
+          }
+        }
+      }
+
+      ASSERT(found);
+    }
+  };
+
+  for (auto fb_cond : *glib->effect_conditions()) {
+    if (fb_cond->requires_stat()) {
+      checkPlaceholder(fb_cond->name_locale(), "STAT");
+      checkPlaceholder(fb_cond->name_locale(), "MODIFIER");
+      ASSERT_FALSE(fb_cond->requires_property());
+    }
+
+    if (fb_cond->requires_property()) {
+      checkPlaceholder(fb_cond->name_locale(), "PROPERTY");
+      checkPlaceholder(fb_cond->name_locale(), "MODIFIER");
+      ASSERT_FALSE(fb_cond->requires_stat());
+    }
+  }
 #endif
 }
 
