@@ -1129,8 +1129,14 @@ void ApplyEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  
       if (times < 0)
         multiplier = 1 / multiplier;
 
-      int& statValue = g.run.state.stats[statType];
-      statValue      = Round((f32)statValue * multiplier);
+      int&      statValue = g.run.state.stats[statType];
+      const f32 newVal    = (f32)statValue * multiplier;
+      if (newVal > (f32)int_max)
+        statValue = int_max;
+      else if (newVal < (f32)int_min)
+        statValue = int_min;
+      else
+        statValue = Round(newVal);
     }
   }
 

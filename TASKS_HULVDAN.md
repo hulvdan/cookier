@@ -4,8 +4,7 @@ x fix black flag trash memory effect in shop
   ("for every TRASH killed enemies")
   to index `condition_value` pass `tierOffset`
 x fix player max HP
-
-* fix starting wave with a lot of money + piggyBank sets coins to 0
+x fix starting wave with a lot of money + piggyBank sets coins to 0
 
 melee weapon effects:
 - drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
