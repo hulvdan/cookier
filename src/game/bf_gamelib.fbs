@@ -129,11 +129,12 @@ table Creature {
 table EffectCondition {
     restrict: int; // 0 general, 1 weapon only.
     name_locale: int;
+    requires_stat: bool;
+    requires_property: bool;
     requires_x: bool;
     requires_y: bool;
     x_is_float: bool;
     y_is_float: bool;
-    // nocheckin
     x_signed: bool;
     y_signed: bool;
 }

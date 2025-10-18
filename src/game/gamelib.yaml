@@ -384,7 +384,7 @@ weapon_properties:
   - type: DAMAGE
     name_locale: STAT_DAMAGE
 effect_conditions:
-  - type: DEFAULT
+  - type: DEFAULT_GET_STAT
   - type: KILL_X_ENEMIES_GET_STAT
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
