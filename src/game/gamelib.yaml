@@ -522,6 +522,11 @@ weapons:
     icon_texture_id: game_weapon_sword
     texture_ids:
       - game_weapon_sword
+    effects:
+      - stat_type: HP
+        value: 1 2 3 4
+        # value_multiplier: 1 1 1 1
+        # value_multiplier: 0.5 0.5 0.5 0.5
   - type: GUN
     min_tier_index: 0
     base_damage: 6 9 12 20

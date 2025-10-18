@@ -1,4 +1,10 @@
 x yandex save: pass data
+x ref remove g.run.state.statsWithoutItems
+x fix black flag trash memory effect in shop
+  ("for every TRASH killed enemies")
+  to index `condition_value` pass `tierOffset`
+
+* fix starting wave with a lot of money + piggyBank sets coins to 0
 
 melee weapon effects:
 - drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
@@ -66,6 +72,7 @@ ranged weapon effects:
 item effects:
 -
 -
+
 
 * implement all weapon/item/build/difficulty effects
 * weapon tags (primitive etc.) + set bonuses

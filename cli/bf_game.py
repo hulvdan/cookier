@@ -39,7 +39,10 @@ def field_to_list(container, field: str) -> None:
     if field not in container:
         return
     if isinstance(container[field], str):
-        container[field] = [int(v) for v in container[field].split(" ")]
+        try:
+            container[field] = [int(v) for v in container[field].split(" ")]
+        except ValueError:
+            container[field] = [float(v) for v in container[field].split(" ")]
     elif isinstance(container[field], (int, float)):
         container[field] = [container[field]]
     else:
@@ -57,7 +60,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             gamelib["effect_conditions"].append({**x, "restrict": 1})
 
         genline("// Effect conditions. {  ///")
-        params = "const BFGame::Effect* fb_effect"
+        params = "const BFGame::Effect* fb_effect, int tierOffset"
         genline("using ClayEffectConditionFunction = void(*)({});".format(params))
         for x in gamelib["effect_conditions"][1:]:
             genline("void ClayEffectCondition_{}({});".format(x["type"], params))
