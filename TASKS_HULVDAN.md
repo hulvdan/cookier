@@ -3,6 +3,7 @@ x ref remove g.run.state.statsWithoutItems
 x fix black flag trash memory effect in shop
   ("for every TRASH killed enemies")
   to index `condition_value` pass `tierOffset`
+x fix player max HP
 
 * fix starting wave with a lot of money + piggyBank sets coins to 0
 
