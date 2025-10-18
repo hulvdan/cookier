@@ -3276,48 +3276,6 @@ void HealPlayer(f32 amount = 1) {  ///
   Save();
 }
 
-void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(
-  const BFGame::Effect* fb_effect,
-  int                   tierOffset
-) {  ///
-  const int cv = fb_effect->condition_value()->Get(tierOffset);
-  PlaceholdString("ENEMIES", TextFormat("%d", cv));
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_KILL_N_ENEMIES);
-}
-
-void ClayEffectCondition_END_OF_THE_WAVE_GET_STAT(
-  const BFGame::Effect* fb_effect,
-  int                   tierOffset
-) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_END_OF_THE_WAVE);
-}
-
-void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(
-  const BFGame::Effect* fb_effect,
-  int                   tierOffset
-) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_START_OF_THE_WAVE);
-}
-
-void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
-  const BFGame::Effect* fb_effect,
-  int                   tierOffset
-) {  ///
-  const int cv = fb_effect->condition_value()->Get(tierOffset);
-  PlaceholdString("ENEMIES", TextFormat("%d", cv));
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_KILL_N_ENEMIES_USING_THIS_WEAPON
-  );
-}
-
-void ClayEffectCondition_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY(
-  const BFGame::Effect* fb_effect,
-  int                   tierOffset
-) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-    Loc_WEAPON_EFFECT_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
-  );
-}
-
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
   const auto& string = placeholder->string();
   BF_CLAY_TEXT(string.value, string.color);
@@ -3393,6 +3351,7 @@ void DoUI(bool draw) {
   const auto fb_difficulties        = glib->difficulties();
   const auto fb_achievements        = glib->achievements();
   const auto fb_builds              = glib->builds();
+  const auto fb_effectConditions    = glib->effect_conditions();
 
   if (!draw) {
     // Updating clay mouse pos.
@@ -3924,11 +3883,41 @@ void DoUI(bool draw) {
         else
           INVALID_PATH;
 
-        const auto cond = fb_effect->effectcondition_type();
-        if (cond)
-          clayEffectConditionFunctions[cond - 1](fb_effect, tierOffset);
-        else if (!FloatEquals(v, 0))
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_DEFAULT_WEAPON_STAT);
+        const auto cond    = fb_effect->effectcondition_type();
+        auto       fb_cond = fb_effectConditions->Get(cond);
+        if (fb_cond->requires_x()) {
+          if (fb_cond->x_is_float()) {
+            auto cv     = fb_effect->condition_x()->Get(tierOffset);
+            auto format = "%.1f";
+            if (fb_cond->x_signed() && (cv > 0))
+              format = "+%.1f";
+            PlaceholdString("X", StripLeadingZerosInFloat(TextFormat(format, cv)));
+          }
+          else {
+            auto cv     = fb_effect->condition_x_floats()->Get(tierOffset);
+            auto format = "%d";
+            if (fb_cond->x_signed() && (cv > 0))
+              format = "+%d";
+            PlaceholdString("X", TextFormat(format, cv));
+          }
+        }
+        if (fb_cond->requires_y()) {
+          if (fb_cond->y_is_float()) {
+            auto cv     = fb_effect->condition_y()->Get(tierOffset);
+            auto format = "%.1f";
+            if (fb_cond->x_signed() && (cv > 0))
+              format = "+%.1f";
+            PlaceholdString("Y", StripLeadingZerosInFloat(TextFormat(format, cv)));
+          }
+          else {
+            auto cv     = fb_effect->condition_y_floats()->Get(tierOffset);
+            auto format = "%d";
+            if (fb_cond->x_signed() && (cv > 0))
+              format = "+%d";
+            PlaceholdString("Y", TextFormat(format, cv));
+          }
+        }
+        BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_cond->name_locale());
 
         FlexEnd();
       }
@@ -8516,21 +8505,21 @@ void GameFixedUpdate() {
               if (creature.lastDamagedWeaponIndex >= 0)
                 g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
 
-              // Applying effects: KILL_N_ENEMIES_GET_STAT.
+              // Applying effects: KILL_X_ENEMIES_GET_STAT.
               IterateOverEffects(
-                EffectConditionType_KILL_N_ENEMIES_GET_STAT,
+                EffectConditionType_KILL_X_ENEMIES_GET_STAT,
                 [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-                  const auto cond = fb_effect->condition_value()->Get(tierOffset);
+                  const auto cond = fb_effect->condition_x()->Get(tierOffset);
                   if (g.run.state.playerKilledEnemies % cond == 0)
                     ApplyEffect(fb_effect, tierOffset, times);
                 }
               );
-              // Applying effects: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT.
+              // Applying effects: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT.
               IterateOverWeaponsEffects(
-                EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
+                EffectConditionType_KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT,
                 [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
                   BF_FORCE_INLINE_LAMBDA {
-                    auto cond = fb_effect->condition_value()->Get(tierOffset);
+                    auto cond = fb_effect->condition_x()->Get(tierOffset);
                     if ((weaponIndex == creature.lastDamagedWeaponIndex)
                         && ((weapon.killedEnemies % cond) == 0))
                       ApplyEffect(fb_effect, tierOffset, 1);

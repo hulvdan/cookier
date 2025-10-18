@@ -7,9 +7,9 @@ x fix player max HP
 x fix starting wave with a lot of money + piggyBank sets coins to 0
 
 melee weapon effects:
-- drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
 - deal +25/+50 damage for every free weapon slot
+- drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
 - cooldown is 1.83s/1.52s every 30/40 shots
 - deal 10%/20% of enemy current health as bonus damage (1%/2% bosses + elites)
 - +1/+1/+1/+2 healing from consumables
@@ -72,7 +72,6 @@ ranged weapon effects:
 item effects:
 -
 -
-
 
 * implement all weapon/item/build/difficulty effects
 * weapon tags (primitive etc.) + set bonuses
