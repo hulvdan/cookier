@@ -3932,7 +3932,7 @@ void DoUI(bool draw) {
         const auto cond    = fb_effect->effectcondition_type();
         auto       fb_cond = fb_effectConditions->Get(cond);
         if (fb_cond->requires_x()) {
-          if (fb_cond->x_is_float()) {
+          if (fb_cond->x_condvar_type()) {
             auto cv     = fb_effect->condition_x_floats()->Get(tierOffset);
             auto format = "%.1f";
             if (fb_cond->x_signed() && (cv > 0))
