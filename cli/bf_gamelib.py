@@ -99,12 +99,6 @@ def degrees_to_radians_recursive_transform(gamelib_recursed) -> None:
                     degrees_to_radians_recursive_transform(v)
 
 
-def _get_placeholder_from_string(string: str) -> str | None:
-    if string.startswith("{") and string.endswith("}"):
-        return string[1:-1]
-    return None
-
-
 @unique
 class BrokenStringDatumType(Enum):
     INVALID = 0
@@ -143,7 +137,8 @@ def process_group(string: str) -> StringGroup:
             )
         result.append(
             BrokenStringDatum(
-                type=BrokenStringDatumType.PLACEHOLDER, string=string[l + 1 : r]
+                type=BrokenStringDatumType.PLACEHOLDER,
+                string=string[l + 1 : r].split("__", 1)[0],
             )
         )
         string = string[r + 1 :]
@@ -326,7 +321,7 @@ def test_process_group():
             ],
         ),
         (
-            " +{CHANCE}%, to explode ",
+            " +{CHANCE__ALIAS}%, to explode ",
             [
                 [
                     [

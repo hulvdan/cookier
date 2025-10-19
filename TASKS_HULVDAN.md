@@ -5,8 +5,19 @@ x fix black flag trash memory effect in shop
   to index `condition_value` pass `tierOffset`
 x fix player max HP
 x fix starting wave with a lot of money + piggyBank sets coins to 0
+x weapon effects: gamelib.py placeholder aliases
 
-* REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
+* weapon effects: image placeholder
+* weapon effects:
+* weapon effects:
+* weapon effects:
+* weapon effects:
+* weapon effects:
+* weapon effects:
+* weapon effects:
+* weapon effects:
+* weapon effects:
+* hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
 
 melee weapon effects:
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
@@ -260,3 +271,4 @@ LATER:
 * is brotato arena squared?
 * aseprite show image center
 * yandex save: check it works
+* REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
