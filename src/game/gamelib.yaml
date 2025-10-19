@@ -168,17 +168,17 @@ creatures:
   - type: PLAYER
     speed: 7.5
     hostility_type: FRIENDLY
-    color: 0x208cb2ff
+    color: 0xffffffff
     idle_texture_ids:
-      - game_creature_player_idle_1
-      - game_creature_player_idle_2
-      - game_creature_player_idle_3
-      - game_creature_player_idle_4
+      - game_creature_main_character_move_1
+      - game_creature_main_character_move_1
+      - game_creature_main_character_move_1
+      - game_creature_main_character_move_1
     move_texture_ids:
-      - game_creature_player_move_1
-      - game_creature_player_move_2
-      - game_creature_player_move_3
-      - game_creature_player_move_4
+      - game_creature_main_character_move_1
+      - game_creature_main_character_move_2
+      - game_creature_main_character_move_3
+      - game_creature_main_character_move_4
   - type: TURREL
     health: 1
     hostility_type: FRIENDLY
@@ -207,17 +207,17 @@ creatures:
     knockback_resistance: 0
     speed: 4.5
     speed_variation: 0.8
-    color: 0xa13d77ff
+    color: 0xffffffff
     idle_texture_ids:
-      - game_creature_player_idle_1
-      - game_creature_player_idle_2
-      - game_creature_player_idle_3
-      - game_creature_player_idle_4
+      - game_creature_mob_small_move_1
+      - game_creature_mob_small_move_1
+      - game_creature_mob_small_move_1
+      - game_creature_mob_small_move_1
     move_texture_ids:
-      - game_creature_player_move_1
-      - game_creature_player_move_2
-      - game_creature_player_move_3
-      - game_creature_player_move_4
+      - game_creature_mob_small_move_1
+      - game_creature_mob_small_move_2
+      - game_creature_mob_small_move_3
+      - game_creature_mob_small_move_4
   - type: MOB_CHASER
     appearing_wave_number: 2
     spawn_factor: 80
