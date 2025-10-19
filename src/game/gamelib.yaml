@@ -1015,6 +1015,7 @@ placeholders:
   - type: INVALID
   - type: STRING
   - type: BROKEN_LOCALE
+  - type: IMAGE
 # }
 
 # difficulties: {  ###
