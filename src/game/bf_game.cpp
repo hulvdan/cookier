@@ -2713,15 +2713,9 @@ void GameInit() {  ///
       if (cantBeRestrictedToWeapons)
         ASSERT(fb_cond->restrict() == 0);
 
-      if (fb_cond->requires_stat())
-        ASSERT(fb_effect->stat_type());
-      else
-        ASSERT_FALSE(fb_effect->stat_type());
-
-      if (fb_cond->requires_property())
-        ASSERT(fb_effect->weaponproperty_type());
-      else
-        ASSERT_FALSE(fb_effect->weaponproperty_type());
+      ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
+      ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
+      ASSERT(fb_cond->requires_damage_scalings() == (bool)fb_effect->damage_scalings());
     }
   };
 
@@ -3934,8 +3928,6 @@ void DoUI(bool draw) {
             palTextGreen
           );
         }
-        else
-          INVALID_PATH;
 
         const auto cond    = fb_effect->effectcondition_type();
         auto       fb_cond = fb_effectConditions->Get(cond);

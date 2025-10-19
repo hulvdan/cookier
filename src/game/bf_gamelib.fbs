@@ -126,6 +126,9 @@ table Creature {
     shadow_offset_y: float = -0.5;
 }
 
+table CondVar {
+}
+
 table EffectCondition {
     restrict: int; // 0 general, 1 weapon only.
     name_locale: int;
@@ -133,10 +136,14 @@ table EffectCondition {
     requires_property: bool;
     requires_x: bool;
     requires_y: bool;
-    x_is_float: bool;
-    y_is_float: bool;
+    requires_z: bool;
+    requires_damage_scalings: bool;
+    x_condvar_type: int;
+    y_condvar_type: int;
+    z_condvar_type: int;
     x_signed: bool;
     y_signed: bool;
+    z_signed: bool;
 }
 
 table WeaponProperty {
@@ -154,6 +161,7 @@ table Effect {
     condition_y: [int];
     condition_y_floats: [float];
     projectile_type: int;
+    damage_scalings: [DamageScaling];
 }
 
 table Item {
@@ -318,6 +326,7 @@ table GameLibrary {
     creatures: [Creature] (required);
     weapon_properties: [WeaponProperty] (required);
     ailments: [Ailment] (required);
+    effect_condition_variables: [CondVar] (required);
     effect_conditions: [EffectCondition] (required);
     items: [Item] (required);
     weapon_kinds: [WeaponKind] (required);
