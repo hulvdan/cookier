@@ -1,5 +1,4 @@
-# render_z: {  ###
-render_z:
+render_z: # {  ###
   - INVALID
   - SCREEN_BACKGROUND
   - FLOOR
@@ -24,8 +23,7 @@ render_z:
   - GIZMOS
 # }
 
-# sounds: {  ###
-sounds:
+sounds: # {  ###
   - type: UI_CLICK
     pool: 4
   - type: UI_ERROR
@@ -154,8 +152,7 @@ garden_texture_id: game_garden
 # "Hostility" is about colors of "spawn crosses" in brotato.
 # Colors differ based on whether a creature that will be spawned
 # would be neutral (like trees), friendly (like flying bots), or hostile (like mobs).
-# hostilities: {  ###
-hostilities:
+hostilities: # {  ###
   - type: INVALID
   - type: MOB
     color: 0xc02931ff
@@ -165,8 +162,7 @@ hostilities:
     color: 0x208cb2ff
 # }
 
-# pre_spawns: {  ###
-pre_spawns:
+pre_spawns: # {  ###
   - type: INVALID
   - type: CREATURE
   - type: LANDMINE
@@ -175,8 +171,7 @@ pre_spawns:
     hostility_type: FRIENDLY
 # }
 
-# creatures: {  ###
-creatures:
+creatures: # {  ###
   - type: INVALID
   - type: PLAYER
     speed: 7.5
@@ -388,8 +383,7 @@ creatures:
       - game_creature_tree
 # }
 
-# ailments: {  ###
-ailments:
+ailments: # {  ###
   - type: INVALID
   - type: BURN
     duration_seconds: 2
@@ -397,30 +391,26 @@ ailments:
     duration_seconds: 3
 # }
 
-# weapon_properties: {  ###
-weapon_properties:
+weapon_properties: # {  ###
   - type: INVALID
   - type: DAMAGE
     name_locale: STAT_DAMAGE
 # }
 
-# effect_condition_variables: {  ###
-effect_condition_variables:
+effect_condition_variables: # {  ###
   - type: INTEGER
   - type: FLOAT
   - type: IMAGE
 # }
 
-# effect_conditions: {  ###
-effect_conditions:
+effect_conditions: # {  ###
   - type: DEFAULT_GET_STAT
   - type: KILL_X_ENEMIES_GET_STAT
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
 # }
 
-# weapon_effect_conditions: {  ###
-weapon_effect_conditions:
+weapon_effect_conditions: # {  ###
   - type: X_CHANCE_OF_EXPLOSION_ON_HIT
   - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
   - type: HIT_MAKES_X_PROJECTILES
@@ -434,8 +424,7 @@ weapon_effect_conditions:
   - type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 # }
 
-# items: {  ###
-items:
+items: # {  ###
   - type: INVALID
   - type: TURREL
     texture_id: ui_item_todo
@@ -518,16 +507,14 @@ items:
         value: 1
 # }
 
-# weapon_kinds: {  ###
-weapon_kinds:
+weapon_kinds: # {  ###
   - type: INVALID
   - type: MELEE
   - type: RANGED
   - type: ELEMENTAL
 # }
 
-# weapons: {  ###
-weapons:
+weapons: # {  ###
   #
   # If a weapon doesn't have `projectile_type` specified,
   # then it's a STRIKING weapon that gets "shot" itself.
@@ -694,8 +681,7 @@ weapons:
       - game_weapon_wand2
 # }
 
-# projectiles: {  ###
-projectiles:
+projectiles: # {  ###
   - type: INVALID
   - type: ARROW
     speed: 12
@@ -743,8 +729,7 @@ projectiles:
       # - game_projectile_mob
 # }
 
-# particles: {  ###
-particles:
+particles: # {  ###
   - type: INVALID
   - type: EXPLOSION
     duration_seconds: 0.4
@@ -752,8 +737,7 @@ particles:
       - game_particle_explosion_1
 # }
 
-# pickupables: {  ###
-pickupables:
+pickupables: # {  ###
   - type: INVALID
   - type: COIN
     texture_id: game_pickupable_coin
@@ -763,8 +747,7 @@ pickupables:
     texture_id: game_pickupable_crate
 # }
 
-# numbers: {  ###
-numbers:
+numbers: # {  ###
   - type: INVALID
   - type: DAMAGE
     color: 0xefcb84ff
@@ -780,8 +763,7 @@ numbers:
     color: 0x66a650ff
 # }
 
-# stats: {  ###
-stats:
+stats: # {  ###
   - type: INVALID
   - type: COINS
     icon_texture_id: ui_coin
@@ -1010,16 +992,14 @@ stats:
     is_hidden: true
 # }
 
-# placeholders: {  ###
-placeholders:
+placeholders: # {  ###
   - type: INVALID
   - type: STRING
   - type: BROKEN_LOCALE
   - type: IMAGE
 # }
 
-# difficulties: {  ###
-difficulties:
+difficulties: # {  ###
   - type: INVALID
   - type: D0
     texture_id: ui_difficulty_0
@@ -1061,8 +1041,7 @@ difficulties:
         value: 20
 # }
 
-# builds: {  ###
-builds:
+builds: # {  ###
   - type: INVALID
   - type: DEFAULT
     starting_weapon_types:
@@ -1098,8 +1077,7 @@ builds:
         value: 6
 # }
 
-# achievements: {  ###
-achievements:
+achievements: # {  ###
   - type: INVALID
   - type: DIFFICULTY
     steps:
@@ -1173,8 +1151,7 @@ achievements:
       - value: 1
 # }
 
-# landmine_damage_scalings: {  ###
-landmine_damage_scalings:
+landmine_damage_scalings: # {  ###
   - stat_type: ENGINEERING
     percents_per_tier:
       - 100
