@@ -3414,6 +3414,36 @@ TEST_CASE ("StripLeadingZerosInFloat") {  ///
   ASSERT(strlen(buffer) == 1);
 }
 
+char* FormatInt(int v) {  ///
+  return TextFormat("%d", v);
+}
+
+char* FormatSignedInt(int v) {  ///
+  auto format = "%d";
+  if (v >= 0)
+    format = "+%d";
+  return TextFormat(format, v);
+}
+
+char* FormatFloatDot1(f32 v) {  ///
+  return TextFormat("%.1f", v);
+}
+
+char* FormatSignedFloatDot1(f32 v) {  ///
+  auto format = "%.1f";
+  if (v >= 0)
+    format = "+%.1f";
+  return TextFormat(format, v);
+}
+
+char* FormatFloatDot1WithoutLeadingZeros(f32 v) {  ///
+  return StripLeadingZerosInFloat(FormatFloatDot1(v));
+}
+
+char* FormatSignedFloatDot1WithoutLeadingZeros(f32 v) {  ///
+  return StripLeadingZerosInFloat(FormatSignedFloatDot1(v));
+}
+
 const char* PushTextToArena(Arena* arena, const char* text, int* outLen) {  ///
   size_t len = strlen(text);
   auto   s   = ALLOCATE_ARRAY(arena, u8, len + 1);

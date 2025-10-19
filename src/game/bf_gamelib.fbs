@@ -132,7 +132,9 @@ table CondVar {
 table EffectConditionPlaceholder {
     required: bool;
     condvar_type: int;
-    signed: bool;
+
+    // Used when condvar_type is INTEGER or FLOAT to place '+' if number is positive.
+    signed_: bool;
 }
 
 table EffectCondition {
@@ -140,11 +142,16 @@ table EffectCondition {
     name_locale: int;
     requires_stat: bool;
     requires_property: bool;
-    requirements: [EffectConditionPlaceholder];
+    placeholders: [EffectConditionPlaceholder];
 }
 
 table WeaponProperty {
     name_locale: int;
+}
+
+table EffectPlaceholderValue {
+    ints: [int];
+    floats: [float];
 }
 
 table Effect {
@@ -153,10 +160,7 @@ table Effect {
     effectcondition_type: int;
     value: [int];
     value_multiplier: [float];
-    condition_x: [int];
-    condition_x_floats: [float];
-    condition_y: [int];
-    condition_y_floats: [float];
+    placeholders: [EffectPlaceholderValue];
     projectile_type: int;
     damage_scalings: [DamageScaling];
 }
@@ -290,6 +294,7 @@ table GameLibrary {
 
     vignette_texture_id: int;
 
+    localization_debug_strings: [string] (required);
     localizations: [Localization] (required);
 
     // GAME STUFF

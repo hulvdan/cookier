@@ -6,9 +6,9 @@ x fix black flag trash memory effect in shop
 x fix player max HP
 x fix starting wave with a lot of money + piggyBank sets coins to 0
 x weapon effects: gamelib.py placeholder aliases
+x weapon effects: effect `condition_x` `condition_y` etc to `condition_values` array
 
 * weapon effects: image placeholder
-* weapon effects:
 * weapon effects:
 * weapon effects:
 * weapon effects:
