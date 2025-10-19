@@ -38,6 +38,8 @@ def _check_duplicates(values: list) -> None:
 def field_to_list(container, field: str) -> None:
     if field not in container:
         return
+    if isinstance(container[field], list):
+        return
     if isinstance(container[field], str):
         try:
             container[field] = [int(v) for v in container[field].split(" ")]
@@ -60,106 +62,55 @@ def does_require(effect_condition_name: str, v: str) -> bool:
     return requires
 
 
+scoped_processing_args = ["None", "None"]
+
+
 @gamelib_processor
 def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+    try:
+        __process_gamelib(genline, gamelib, localization_codepoints)
+    except Exception:
+        print("ERROR HAPPENED DURING PROCESSING:", ", ".join(scoped_processing_args))
+        raise
+
+
+def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+    def enumerate_table(field: str):
+        scoped_processing_args[0] = field
+
+        for i, x in enumerate(gamelib[field]):
+            scoped_processing_args[1] = x["type"]
+            yield i, x
+
+        scoped_processing_args[0] = "None"
+        scoped_processing_args[1] = "None"
+
     transforms: list[tuple[str, str, dict[str, int]]] = []
 
     # Effect conditions.
     # ============================================================
     if 1:
-        for x in gamelib["effect_conditions"]:
+        for _, x in enumerate_table("effect_conditions"):
             x["name_locale"] = "EFFECT_{}".format(x["type"])
 
         for x in gamelib.pop("weapon_effect_conditions", []):
             x["name_locale"] = "WEAPON_EFFECT_{}".format(x["type"])
             gamelib["effect_conditions"].append({**x, "restrict": 1})
 
-        for x in gamelib["effect_conditions"]:
+        for _, x in enumerate_table("effect_conditions"):
             conds = ("X", "Y", "STAT", "PROPERTY")
             for cond in conds:
                 if does_require(x["type"], cond):
                     x["requires_{}".format(cond.lower())] = True
 
-    # Items.
-    # ============================================================
-    for x in gamelib["items"][1:]:
+    def process_effects_of(x, required_tier_values: int) -> None:
         for e in x.get("effects", []):
             field_to_list(e, "value")
             field_to_list(e, "value_multiplier")
             field_to_list(e, "condition_x")
             field_to_list(e, "condition_y")
-
-        x["name_locale"] = "ITEM_" + x["type"].upper()
-        assert 0 <= x["tier"] < 4
-
-        mandatory_fields = [
-            "price",
-        ]
-        for field in mandatory_fields:
-            assert field in x, "Item {} has to have '{}' specified".format(
-                x["type"], field
-            )
-
-    # Difficulties.
-    # ============================================================
-    for i, x in enumerate(gamelib["difficulties"]):
-        if i > 0:
-            for e in x.get("effects", []):
-                field_to_list(e, "value")
-                field_to_list(e, "value_multiplier")
-                field_to_list(e, "condition_x")
-                field_to_list(e, "condition_y")
-
-            x["name_locale"] = f"DIFFICULTY_{i}"
-
-    # Weapons.
-    # ============================================================
-    MAX_WEAPON_TIER = 4
-
-    for x in gamelib["weapons"][1:]:
-        x["name_locale"] = "WEAPON_" + x["type"].upper()
-
-        requiredTierValues = MAX_WEAPON_TIER - x["min_tier_index"]
-        assert requiredTierValues > 0
-        assert requiredTierValues <= MAX_WEAPON_TIER
-
-        mandatory_fields = [
-            "max_price",
-            "min_tier_index",
-            "base_damage",
-            "damage_scalings",
-            "icon_texture_id",
-            "texture_ids",
-        ]
-        for field in mandatory_fields:
-            assert field in x, "Weapon {} has to have '{}' specified".format(
-                x["type"], field
-            )
-
-        field_to_list(x, "base_damage")
-        field_to_list(x, "projectile_spawn_frames")
-        for vv in x["damage_scalings"]:
-            field_to_list(vv, "percents_per_tier")
-
-        assert len(x["base_damage"]) == requiredTierValues, (
-            "Weapon {} must have {} `base_damage` because it's `min_tier_index` is {}".format(
-                x["type"], requiredTierValues, x["min_tier_index"]
-            )
-        )
-
-        for scalings in x["damage_scalings"]:
-            percents_count = len(scalings["percents_per_tier"])
-            assert percents_count == requiredTierValues, (
-                "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
-                    x["type"], requiredTierValues, x["min_tier_index"]
-                )
-            )
-
-        for e in x.get("effects", []):
-            field_to_list(e, "value")
-            field_to_list(e, "value_multiplier")
-            field_to_list(e, "condition_x")
-            field_to_list(e, "condition_y")
+            for vv in e.get("damage_scalings", []):
+                field_to_list(vv, "percents_per_tier")
 
             if "value" in e:
                 assert "value_multiplier" not in e, x["type"]
@@ -170,18 +121,88 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 assert "condition_y" not in e, x["type"]
 
             if "value" in e:
-                assert len(e["value"]) == requiredTierValues, x["type"]
+                assert len(e["value"]) == required_tier_values, x["type"]
             if "value_multiplier" in e:
-                assert len(e["value_multiplier"]) == requiredTierValues, x["type"]
+                assert len(e["value_multiplier"]) == required_tier_values, x["type"]
             if "condition_x" in e:
-                assert len(e["condition_x"]) == requiredTierValues, x["type"]
+                assert len(e["condition_x"]) == required_tier_values, x["type"]
             if "condition_y" in e:
                 assert "condition_x" in e
-                assert len(e["condition_y"]) == requiredTierValues, x["type"]
+                assert len(e["condition_y"]) == required_tier_values, x["type"]
+
+    # Items.
+    # ============================================================
+    for i, x in enumerate_table("items"):
+        if i > 0:
+            process_effects_of(x, 1)
+
+            x["name_locale"] = "ITEM_" + x["type"].upper()
+            assert 0 <= x["tier"] < 4
+
+            mandatory_fields = [
+                "price",
+            ]
+            for field in mandatory_fields:
+                assert field in x, "Item {} has to have '{}' specified".format(
+                    x["type"], field
+                )
+
+    # Difficulties.
+    # ============================================================
+    for i, x in enumerate_table("difficulties"):
+        if i > 0:
+            process_effects_of(x, 1)
+            x["name_locale"] = f"DIFFICULTY_{i}"
+
+    # Weapons.
+    # ============================================================
+    MAX_WEAPON_TIER = 4
+
+    for i, x in enumerate_table("weapons"):
+        if i > 0:
+            x["name_locale"] = "WEAPON_" + x["type"].upper()
+
+            required_tier_values = MAX_WEAPON_TIER - x["min_tier_index"]
+            assert required_tier_values > 0
+            assert required_tier_values <= MAX_WEAPON_TIER
+
+            mandatory_fields = [
+                "max_price",
+                "min_tier_index",
+                "base_damage",
+                "damage_scalings",
+                "icon_texture_id",
+                "texture_ids",
+            ]
+            for field in mandatory_fields:
+                assert field in x, "Weapon {} has to have '{}' specified".format(
+                    x["type"], field
+                )
+
+            field_to_list(x, "base_damage")
+            field_to_list(x, "projectile_spawn_frames")
+            for vv in x["damage_scalings"]:
+                field_to_list(vv, "percents_per_tier")
+
+            assert len(x["base_damage"]) == required_tier_values, (
+                "Weapon {} must have {} `base_damage` because it's `min_tier_index` is {}".format(
+                    x["type"], required_tier_values, x["min_tier_index"]
+                )
+            )
+
+            for scalings in x["damage_scalings"]:
+                percents_count = len(scalings["percents_per_tier"])
+                assert percents_count == required_tier_values, (
+                    "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
+                        x["type"], required_tier_values, x["min_tier_index"]
+                    )
+                )
+
+            process_effects_of(x, required_tier_values)
 
     # Stats.
     # ============================================================
-    for i, x in enumerate(gamelib["stats"]):
+    for i, x in enumerate_table("stats"):
         if i >= 1:
             x["name_locale"] = "STAT_" + x["type"].upper()
         if i >= 3 and not x.get("is_secondary"):
@@ -189,7 +210,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # Creatures.
     # ============================================================
-    for i, x in enumerate(gamelib["creatures"]):
+    for i, x in enumerate_table("creatures"):
         if i >= 2:
             mob_mandatory_fields = [
                 "spawn_factor",
@@ -235,13 +256,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     if 1:
         max_weapons = 0
-        for i, x in enumerate(gamelib["builds"]):
-            for e in x.get("effects", []):
-                field_to_list(e, "value")
-                field_to_list(e, "value_multiplier")
-                field_to_list(e, "condition_x")
-                field_to_list(e, "condition_y")
-
+        for i, x in enumerate_table("builds"):
+            process_effects_of(x, 1)
             if i > 0:
                 x["name_locale"] = "BUILD_{}".format(x["type"])
                 max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
@@ -254,7 +270,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         unlocked_items: list[str] = []
         unlocked_weapons: list[str] = []
 
-        for i, x in enumerate(gamelib["achievements"]):
+        for i, x in enumerate_table("achievements"):
             if i > 0:
                 x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
                 x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"

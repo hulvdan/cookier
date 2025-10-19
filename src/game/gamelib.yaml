@@ -1,3 +1,4 @@
+# render_z: {  ###
 render_z:
   - INVALID
   - SCREEN_BACKGROUND
@@ -21,6 +22,9 @@ render_z:
   - SCREEN_FADE
   - UI
   - GIZMOS
+# }
+
+# sounds: {  ###
 sounds:
   - type: UI_CLICK
     pool: 4
@@ -145,9 +149,12 @@ shadow_texture_ids:
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 landmine_texture_id: game_landmine
 garden_texture_id: game_garden
-# «Hostility» is about colors of «spawn crosses» in brotato.
+# }
+
+# "Hostility" is about colors of "spawn crosses" in brotato.
 # Colors differ based on whether a creature that will be spawned
 # would be neutral (like trees), friendly (like flying bots), or hostile (like mobs).
+# hostilities: {  ###
 hostilities:
   - type: INVALID
   - type: MOB
@@ -156,6 +163,9 @@ hostilities:
     color: 0x66a650ff
   - type: FRIENDLY
     color: 0x208cb2ff
+# }
+
+# pre_spawns: {  ###
 pre_spawns:
   - type: INVALID
   - type: CREATURE
@@ -163,6 +173,9 @@ pre_spawns:
     hostility_type: FRIENDLY
   - type: GARDEN
     hostility_type: FRIENDLY
+# }
+
+# creatures: {  ###
 creatures:
   - type: INVALID
   - type: PLAYER
@@ -373,31 +386,55 @@ creatures:
     can_move: false
     idle_texture_ids:
       - game_creature_tree
+# }
+
+# ailments: {  ###
 ailments:
   - type: INVALID
   - type: BURN
     duration_seconds: 2
   - type: ZAP
     duration_seconds: 3
+# }
+
+# weapon_properties: {  ###
 weapon_properties:
   - type: INVALID
   - type: DAMAGE
     name_locale: STAT_DAMAGE
+# }
+
+# effect_condition_variables: {  ###
+effect_condition_variables:
+  - type: INTEGER
+  - type: FLOAT
+  - type: IMAGE
+# }
+
+# effect_conditions: {  ###
 effect_conditions:
   - type: DEFAULT_GET_STAT
   - type: KILL_X_ENEMIES_GET_STAT
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
+# }
+
+# weapon_effect_conditions: {  ###
 weapon_effect_conditions:
   - type: X_CHANCE_OF_EXPLOSION_ON_HIT
   - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
   - type: HIT_MAKES_X_PROJECTILES
+    z_condvar_type: IMAGE
+    requires_damage_scalings: true
   - type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-    x_is_float: true
+    x_condvar_type: FLOAT
   - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
     x_signed: true
   - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
   - type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+# }
+
+# items: {  ###
 items:
   - type: INVALID
   - type: TURREL
@@ -479,11 +516,17 @@ items:
     effects:
       - stat_type: FREE_REROLLS
         value: 1
+# }
+
+# weapon_kinds: {  ###
 weapon_kinds:
   - type: INVALID
   - type: MELEE
   - type: RANGED
   - type: ELEMENTAL
+# }
+
+# weapons: {  ###
 weapons:
   #
   # If a weapon doesn't have `projectile_type` specified,
@@ -534,6 +577,11 @@ weapons:
         value: 1 2 3 4
         # value_multiplier: 1 1 1 1
         # value_multiplier: 0.5 0.5 0.5 0.5
+      - effectcondition_type: HIT_MAKES_X_PROJECTILES
+        condition_x: 3 4 5 6
+        damage_scalings:
+          - stat_type: DAMAGE_RANGED
+            percents_per_tier: 50 60 70 80
   - type: GUN
     min_tier_index: 0
     base_damage: 6 9 12 20
@@ -644,6 +692,9 @@ weapons:
     icon_texture_id: game_weapon_wand2
     texture_ids:
       - game_weapon_wand2
+# }
+
+# projectiles: {  ###
 projectiles:
   - type: INVALID
   - type: ARROW
@@ -690,12 +741,18 @@ projectiles:
     texture_ids:
       - game_projectile_arrow
       # - game_projectile_mob
+# }
+
+# particles: {  ###
 particles:
   - type: INVALID
   - type: EXPLOSION
     duration_seconds: 0.4
     texture_ids:
       - game_particle_explosion_1
+# }
+
+# pickupables: {  ###
 pickupables:
   - type: INVALID
   - type: COIN
@@ -704,6 +761,9 @@ pickupables:
     texture_id: game_pickupable_consumable
   - type: CRATE
     texture_id: game_pickupable_crate
+# }
+
+# numbers: {  ###
 numbers:
   - type: INVALID
   - type: DAMAGE
@@ -718,6 +778,9 @@ numbers:
     color: 0x66a650ff
   - type: LEVEL_UP
     color: 0x66a650ff
+# }
+
+# stats: {  ###
 stats:
   - type: INVALID
   - type: COINS
@@ -945,10 +1008,16 @@ stats:
     is_percent: true
     is_secondary: true
     is_hidden: true
+# }
+
+# placeholders: {  ###
 placeholders:
   - type: INVALID
   - type: STRING
   - type: BROKEN_LOCALE
+# }
+
+# difficulties: {  ###
 difficulties:
   - type: INVALID
   - type: D0
@@ -989,6 +1058,9 @@ difficulties:
         value: 75
       - stat_type: ENEMY_SPEED
         value: 20
+# }
+
+# builds: {  ###
 builds:
   - type: INVALID
   - type: DEFAULT
@@ -1023,6 +1095,9 @@ builds:
         value: 10
       - stat_type: ARMOR
         value: 6
+# }
+
+# achievements: {  ###
 achievements:
   - type: INVALID
   - type: DIFFICULTY
@@ -1095,7 +1170,13 @@ achievements:
       - value: 1
       - value: 1
       - value: 1
+# }
+
+# landmine_damage_scalings: {  ###
 landmine_damage_scalings:
   - stat_type: ENGINEERING
     percents_per_tier:
       - 100
+# }
+
+###
