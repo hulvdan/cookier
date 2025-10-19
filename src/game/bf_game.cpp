@@ -3929,40 +3929,47 @@ void DoUI(bool draw) {
           );
         }
 
-        const auto cond    = fb_effect->effectcondition_type();
-        auto       fb_cond = fb_effectConditions->Get(cond);
-        if (fb_cond->requires_x()) {
-          if (fb_cond->x_condvar_type()) {
-            auto cv     = fb_effect->condition_x_floats()->Get(tierOffset);
-            auto format = "%.1f";
-            if (fb_cond->x_signed() && (cv > 0))
-              format = "+%.1f";
-            PlaceholdString("X", StripLeadingZerosInFloat(TextFormat(format, cv)));
-          }
-          else {
-            auto cv     = fb_effect->condition_x()->Get(tierOffset);
-            auto format = "%d";
-            if (fb_cond->x_signed() && (cv > 0))
-              format = "+%d";
-            PlaceholdString("X", TextFormat(format, cv));
+        const auto cond                = fb_effect->effectcondition_type();
+        auto       fb_cond             = fb_effectConditions->Get(cond);
+        auto       fb_condRequirements = fb_cond->requirements();
+        if (fb_condRequirements) {
+          char index = -1;
+          for (auto fb_req : *fb_condRequirements) {
+            index++;
+
+            char placeholderName[2]{'X', '\0'};
+            placeholderName[0] += index;
+            char* placeholderValue = nullptr;
+
+            switch ((CondVarType)fb_req->condvar_type()) {
+            case CondVarType_INTEGER: {
+              auto cv     = fb_effect->condition_x()->Get(tierOffset);
+              auto format = "%d";
+              if (fb_req->signed() && (cv > 0))
+                format = "+%d";
+              placeholderValue = TextFormat(format, cv);
+            } break;
+
+            case CondVarType_FLOAT: {
+              auto cv     = fb_effect->condition_floats()->Get(tierOffset);
+              auto format = "%.1f";
+              if (fb_req->signed() && (cv > 0))
+                format = "+%.1f";
+              placeholderValue = StripLeadingZerosInFloat(TextFormat(format, cv));
+            } break;
+
+            case CondVarType_DAMAGE_SCALINGS: {
+            } break;
+
+            default:
+              INVALID_PATH;
+              break;
+            }
+
+            PlaceholdString(placeholderName, placeholderValue);
           }
         }
-        if (fb_cond->requires_y()) {
-          if (fb_cond->y_is_float()) {
-            auto cv     = fb_effect->condition_y_floats()->Get(tierOffset);
-            auto format = "%.1f";
-            if (fb_cond->x_signed() && (cv > 0))
-              format = "+%.1f";
-            PlaceholdString("Y", StripLeadingZerosInFloat(TextFormat(format, cv)));
-          }
-          else {
-            auto cv     = fb_effect->condition_y()->Get(tierOffset);
-            auto format = "%d";
-            if (fb_cond->x_signed() && (cv > 0))
-              format = "+%d";
-            PlaceholdString("Y", TextFormat(format, cv));
-          }
-        }
+
         BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb_cond->name_locale());
 
         FlexEnd();

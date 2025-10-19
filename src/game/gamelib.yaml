@@ -400,7 +400,7 @@ weapon_properties: # {  ###
 effect_condition_variables: # {  ###
   - type: INTEGER
   - type: FLOAT
-  - type: IMAGE
+  - type: DAMAGE_SCALINGS
 # }
 
 effect_conditions: # {  ###
@@ -413,11 +413,10 @@ effect_conditions: # {  ###
 weapon_effect_conditions: # {  ###
   - type: X_CHANCE_OF_EXPLOSION_ON_HIT
   - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
-  - type: HIT_MAKES_X_PROJECTILES
-    z_condvar_type: IMAGE
-    requires_damage_scalings: true
+  - type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
+    y_condvar_type: DAMAGE_SCALINGS
   - type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-    x_condvar_type: FLOAT
+    y_condvar_type: FLOAT
   - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
     x_signed: true
   - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
@@ -564,7 +563,7 @@ weapons: # {  ###
         value: 1 2 3 4
         # value_multiplier: 1 1 1 1
         # value_multiplier: 0.5 0.5 0.5 0.5
-      - effectcondition_type: HIT_MAKES_X_PROJECTILES
+      - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
         condition_x: 3 4 5 6
         damage_scalings:
           - stat_type: DAMAGE_RANGED

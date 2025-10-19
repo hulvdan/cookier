@@ -129,21 +129,18 @@ table Creature {
 table CondVar {
 }
 
+table EffectConditionPlaceholder {
+    required: bool;
+    condvar_type: int;
+    signed: bool;
+}
+
 table EffectCondition {
     restrict: int; // 0 general, 1 weapon only.
     name_locale: int;
     requires_stat: bool;
     requires_property: bool;
-    requires_x: bool;
-    requires_y: bool;
-    requires_z: bool;
-    requires_damage_scalings: bool;
-    x_condvar_type: int;
-    y_condvar_type: int;
-    z_condvar_type: int;
-    x_signed: bool;
-    y_signed: bool;
-    z_signed: bool;
+    requirements: [EffectConditionPlaceholder];
 }
 
 table WeaponProperty {
