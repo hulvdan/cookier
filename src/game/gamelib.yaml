@@ -400,7 +400,7 @@ weapon_properties: # {  ###
 effect_condition_variables: # {  ###
   - type: INTEGER
   - type: FLOAT
-  - type: DAMAGE_SCALINGS
+  - type: DAMAGE
 # }
 
 effect_conditions: # {  ###
@@ -414,7 +414,7 @@ weapon_effect_conditions: # {  ###
   - type: X_CHANCE_OF_EXPLOSION_ON_HIT
   - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
   - type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
-    y_condvar_type: DAMAGE_SCALINGS
+    y_condvar_type: DAMAGE
   - type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
     y_condvar_type: FLOAT
   - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
@@ -486,7 +486,8 @@ items: # {  ###
       - effectcondition_type: KILL_X_ENEMIES_GET_STAT
         stat_type: ENEMIES
         value: 1
-        condition_x: 50
+        placeholders:
+          - ints: 50
   - type: PIGGY_BANK
     texture_id: ui_item_piggy_bank
     tier: 2
@@ -564,7 +565,9 @@ weapons: # {  ###
         # value_multiplier: 1 1 1 1
         # value_multiplier: 0.5 0.5 0.5 0.5
       - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
-        condition_x: 3 4 5 6
+        placeholders:
+          - ints: 3 4 5 6
+          - ints: 0 0 0 0
         damage_scalings:
           - stat_type: DAMAGE_RANGED
             percents_per_tier: 50 60 70 80

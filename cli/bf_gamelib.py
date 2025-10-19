@@ -443,6 +443,8 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
     for strings in loc_by_languages.values():
         assert len(loc_ids) == len(strings)
 
+    gamelib["localization_debug_strings"] = loc_ids
+
     locale_to_index: dict[str, int] = {key: i for i, key in enumerate(loc_ids)}
     index_to_locale = {i: codename for codename, i in locale_to_index.items()}
 

@@ -14,6 +14,7 @@ USAGE:
 """
 
 from itertools import groupby
+from typing import Any
 
 from bf_lib import (
     SRC_DIR,
@@ -108,12 +109,30 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 if does_require(x["type"], cond):
                     x["requires_{}".format(cond.lower())] = True
 
+            placeholders: list[Any] = []
+            x["placeholders"] = placeholders
+            previous_is_required = True
+            for letter in EFFECT_CONDITION_LETTERS:
+                required = x.pop(f"requires_{letter}", False)
+                if required:
+                    assert previous_is_required
+                else:
+                    previous_is_required = False
+
+                placeholders.append(
+                    {
+                        "required": required,
+                        "condvar_type": x.pop(f"{letter}_condvar_type", "INTEGER"),
+                        "signed_": x.pop(f"{letter}_signed", False),
+                    }
+                )
+
     def process_effects_of(x, required_tier_values: int) -> None:
         for e in x.get("effects", []):
             field_to_list(e, "value")
             field_to_list(e, "value_multiplier")
-            field_to_list(e, "condition_x")
-            field_to_list(e, "condition_y")
+            for letter in EFFECT_CONDITION_LETTERS:
+                field_to_list(e, f"condition_{letter}")
             for vv in e.get("damage_scalings", []):
                 field_to_list(vv, "percents_per_tier")
 
@@ -121,25 +140,15 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 assert "value_multiplier" not in e, x["type"]
             if "value_multiplier" in e:
                 assert "value" not in e, x["type"]
-            if "effectcondition_type" not in e:
-                assert "condition_x" not in e, x["type"]
-                assert "condition_y" not in e, x["type"]
 
             if "value" in e:
                 assert len(e["value"]) == required_tier_values, x["type"]
             if "value_multiplier" in e:
                 assert len(e["value_multiplier"]) == required_tier_values, x["type"]
 
-            for letter in EFFECT_CONDITION_LETTERS:
-                value = {
-                    "": 1,
-                }
-
-            if "condition_x" in e:
-                assert len(e["condition_x"]) == required_tier_values, x["type"]
-            if "condition_y" in e:
-                assert "condition_x" in e
-                assert len(e["condition_y"]) == required_tier_values, x["type"]
+            for v in e.get("placeholders", []):
+                field_to_list(v, "ints")
+                field_to_list(v, "floats")
 
     # Items.
     # ============================================================

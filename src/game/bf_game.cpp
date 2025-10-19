@@ -1622,6 +1622,21 @@ bool IsAlreadyPlaceholded(const char* placeholder) {  ///
   return false;
 }
 
+void PlaceholdCompoundBegin() {  ///
+}
+
+void PlaceholdCompoundString() {  ///
+}
+
+void PlaceholdCompoundBrokenLocale() {  ///
+}
+
+void PlaceholdCompoundImage() {  ///
+}
+
+void PlaceholdCompoundEnd() {  ///
+}
+
 // value must be statically allocated or live in trashArena.
 void PlaceholdString(
   const char* placeholder,
@@ -2704,7 +2719,12 @@ void GameInit() {  ///
 
   // Checking that weapon effects weren't applied to difficulties, builds, and items.
 #if BF_ENABLE_ASSERTS
-  LAMBDA (void, checkEffects, (auto fb_effects, bool cantBeRestrictedToWeapons = true)) {
+  LAMBDA (
+    void,
+    checkEffects,
+    (auto fb_effects, bool cantBeRestrictedToWeapons = true, int tierValues = 1)
+  )
+  {
     if (!fb_effects)
       return;
 
@@ -2715,53 +2735,107 @@ void GameInit() {  ///
 
       ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
       ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
-      ASSERT(fb_cond->requires_damage_scalings() == (bool)fb_effect->damage_scalings());
+
+      {
+        int required = 0;
+        for (auto v : *fb_cond->placeholders()) {
+          if (v->required())
+            required++;
+        }
+
+        int  found = 0;
+        auto fep   = fb_effect->placeholders();
+        if (fep)
+          found = fep->size();
+
+        ASSERT(required == found);
+      }
+
+      int reqIndex = -1;
+      for (auto fb_req : *fb_cond->placeholders()) {
+        reqIndex++;
+        if (!fb_req->required())
+          continue;
+
+        auto reqValues = fb_effect->placeholders()->Get(reqIndex);
+
+        switch ((CondVarType)fb_req->condvar_type()) {
+        case CondVarType_INTEGER: {
+          ASSERT(reqValues->ints()->size() == tierValues);
+        } break;
+
+        case CondVarType_FLOAT: {
+          ASSERT(reqValues->floats()->size() == tierValues);
+        } break;
+
+        case CondVarType_DAMAGE: {
+          ASSERT(reqValues->ints()->size() == tierValues);
+          ASSERT(fb_effect->damage_scalings());
+        } break;
+
+        default:
+          break;
+        }
+      }
     }
   };
 
-  for (auto fb : *glib->difficulties())
+  for (auto fb : *glib->difficulties()) {
+    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
     checkEffects(fb->effects());
-  for (auto fb : *glib->builds())
+  }
+  for (auto fb : *glib->builds()) {
+    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
     checkEffects(fb->effects());
-  for (auto fb : *glib->items())
+  }
+  for (auto fb : *glib->items()) {
+    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
     checkEffects(fb->effects());
-  for (auto fb : *glib->weapons())
-    checkEffects(fb->effects(), false);
+  }
+  for (auto fb : *glib->weapons()) {
+    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+    checkEffects(fb->effects(), false, TOTAL_TIERS - fb->min_tier_index());
+  }
 
-  LAMBDA (void, checkPlaceholder, (int locale_, const char* placeholder)) {
+  LAMBDA (bool, checkPlaceholder, (int locale_, const char* placeholder)) {
     const auto locale = (Loc)locale_;  // NOTE: Leaving this line for debug purposes.
 
     int localizationIndex = -1;
     for (auto loc : *glib->localizations()) {
       localizationIndex++;
 
-      bool found = false;
       for (auto line : *loc->broken_lines()->Get(locale)->lines()) {
         for (auto group : *line->groups()) {
           for (auto datum : *group->strings()) {
             if (datum->type() == BrokenStringDatumType_PLACEHOLDER) {
               if (!strcmp(placeholder, datum->placeholder()->c_str()))
-                found = true;
+                return true;
             }
           }
         }
       }
-
-      ASSERT(found);
     }
+    return false;
   };
 
   for (auto fb_cond : *glib->effect_conditions()) {
     if (fb_cond->requires_stat()) {
-      checkPlaceholder(fb_cond->name_locale(), "STAT");
-      checkPlaceholder(fb_cond->name_locale(), "MODIFIER");
+      ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT"));
+      ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
       ASSERT_FALSE(fb_cond->requires_property());
     }
 
     if (fb_cond->requires_property()) {
-      checkPlaceholder(fb_cond->name_locale(), "PROPERTY");
-      checkPlaceholder(fb_cond->name_locale(), "MODIFIER");
+      ASSERT(checkPlaceholder(fb_cond->name_locale(), "PROPERTY"));
+      ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
       ASSERT_FALSE(fb_cond->requires_stat());
+    }
+
+    const char* const letters_[]{"X", "Y", "Z"};
+    VIEW_FROM_ARRAY_DANGER(letters);
+    FOR_RANGE (int, i, fb_cond->placeholders()->size()) {
+      auto expectedLetter = letters[i];
+      ASSERT(checkPlaceholder(fb_cond->name_locale(), expectedLetter));
     }
   }
 #endif
@@ -3931,42 +4005,44 @@ void DoUI(bool draw) {
 
         const auto cond                = fb_effect->effectcondition_type();
         auto       fb_cond             = fb_effectConditions->Get(cond);
-        auto       fb_condRequirements = fb_cond->requirements();
-        if (fb_condRequirements) {
+        auto       fb_condPlaceholders = fb_cond->placeholders();
+        if (fb_condPlaceholders) {
           char index = -1;
-          for (auto fb_req : *fb_condRequirements) {
+          for (auto fb_placeholder : *fb_condPlaceholders) {
             index++;
+
+            if (!fb_placeholder->required())
+              continue;
+
+            auto fb_vals = fb_effect->placeholders()->Get(index);
 
             char placeholderName[2]{'X', '\0'};
             placeholderName[0] += index;
-            char* placeholderValue = nullptr;
 
-            switch ((CondVarType)fb_req->condvar_type()) {
+            switch ((CondVarType)fb_placeholder->condvar_type()) {
             case CondVarType_INTEGER: {
-              auto cv     = fb_effect->condition_x()->Get(tierOffset);
-              auto format = "%d";
-              if (fb_req->signed() && (cv > 0))
-                format = "+%d";
-              placeholderValue = TextFormat(format, cv);
+              auto cv         = fb_vals->ints()->Get(tierOffset);
+              auto formatFunc = FormatInt;
+              if (fb_placeholder->signed_())
+                formatFunc = FormatSignedInt;
+              PlaceholdString(placeholderName, (*formatFunc)(cv));
             } break;
 
             case CondVarType_FLOAT: {
-              auto cv     = fb_effect->condition_floats()->Get(tierOffset);
-              auto format = "%.1f";
-              if (fb_req->signed() && (cv > 0))
-                format = "+%.1f";
-              placeholderValue = StripLeadingZerosInFloat(TextFormat(format, cv));
+              auto cv         = fb_vals->floats()->Get(tierOffset);
+              auto formatFunc = FormatFloatDot1WithoutLeadingZeros;
+              if (fb_placeholder->signed_())
+                formatFunc = FormatSignedFloatDot1WithoutLeadingZeros;
+              PlaceholdString(placeholderName, (*formatFunc)(cv));
             } break;
 
-            case CondVarType_DAMAGE_SCALINGS: {
+            case CondVarType_DAMAGE: {
             } break;
 
             default:
               INVALID_PATH;
               break;
             }
-
-            PlaceholdString(placeholderName, placeholderValue);
           }
         }
 
@@ -8563,7 +8639,8 @@ void GameFixedUpdate() {
               IterateOverEffects(
                 EffectConditionType_KILL_X_ENEMIES_GET_STAT,
                 [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-                  const auto cond = fb_effect->condition_x()->Get(tierOffset);
+                  const auto cond
+                    = fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset);
                   if (g.run.state.playerKilledEnemies % cond == 0)
                     ApplyEffect(fb_effect, tierOffset, times);
                 }
@@ -8573,7 +8650,8 @@ void GameFixedUpdate() {
                 EffectConditionType_KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT,
                 [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
                   BF_FORCE_INLINE_LAMBDA {
-                    auto cond = fb_effect->condition_x()->Get(tierOffset);
+                    auto cond
+                      = fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset);
                     if ((weaponIndex == creature.lastDamagedWeaponIndex)
                         && ((weapon.killedEnemies % cond) == 0))
                       ApplyEffect(fb_effect, tierOffset, 1);
