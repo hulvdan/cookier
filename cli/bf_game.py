@@ -89,6 +89,8 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 
     # Effect conditions.
     # ============================================================
+    EFFECT_CONDITION_LETTERS = ("x", "y", "z")
+
     if 1:
         for _, x in enumerate_table("effect_conditions"):
             x["name_locale"] = "EFFECT_{}".format(x["type"])
@@ -98,8 +100,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
             gamelib["effect_conditions"].append({**x, "restrict": 1})
 
         for _, x in enumerate_table("effect_conditions"):
-            conds = ("X", "Y", "STAT", "PROPERTY")
-            for cond in conds:
+            for cond in (
+                *(l.upper() for l in EFFECT_CONDITION_LETTERS),
+                "STAT",
+                "PROPERTY",
+            ):
                 if does_require(x["type"], cond):
                     x["requires_{}".format(cond.lower())] = True
 
@@ -124,6 +129,12 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 assert len(e["value"]) == required_tier_values, x["type"]
             if "value_multiplier" in e:
                 assert len(e["value_multiplier"]) == required_tier_values, x["type"]
+
+            for letter in EFFECT_CONDITION_LETTERS:
+                value = {
+                    "": 1,
+                }
+
             if "condition_x" in e:
                 assert len(e["condition_x"]) == required_tier_values, x["type"]
             if "condition_y" in e:
