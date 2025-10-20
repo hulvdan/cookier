@@ -3444,7 +3444,7 @@ char* FormatSignedFloatDot1WithoutLeadingZeros(f32 v) {  ///
   return StripLeadingZerosInFloat(FormatSignedFloatDot1(v));
 }
 
-const char* PushTextToArena(Arena* arena, const char* text, int* outLen) {  ///
+const char* PushTextToArena(Arena* arena, const char* text, int* outLen = nullptr) {  ///
   size_t len = strlen(text);
   auto   s   = ALLOCATE_ARRAY(arena, u8, len + 1);
   memcpy(s, text, len);
