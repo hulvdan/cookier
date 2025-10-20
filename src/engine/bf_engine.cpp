@@ -1,5 +1,15 @@
 #pragma once
 
+#include "flatbuffers/bf_save_generated.h"
+
+// Functions that MUST be implemented by the user of the engine in `bf_game.cpp`:
+void                           GameInit();
+void                           GameReady();
+void                           GameFixedUpdate();
+void                           GameDraw();
+flatbuffers::FlatBufferBuilder GameDumpStateForSaving();
+void                           GameLoad(const BFSave::Save* save);
+
 #if BF_DEBUG
 #  define STB_IMAGE_WRITE_IMPLEMENTATION
 #  include "stb_image_write.h"
@@ -3559,11 +3569,6 @@ struct FrameVisual {
   }
 };
 
-void GameInit();
-void GameReady();
-void GameFixedUpdate();
-void GameDraw();
-
 SDL_AppResult EngineUpdate() {  ///
   ZoneScoped;
 
@@ -3693,5 +3698,91 @@ TEST_CASE ("EncodeToHex / DecodeFromHex") {  ///
   auto result = DecodeFromHex(t, &arena);
   ASSERT(!memcmp(result, bytes, 256));
 }
+
+void LoadSaveData() {  ///
+#if defined(SDL_PLATFORM_DESKTOP)
+  auto saveData = SDL_LoadFile("save.bin", nullptr);
+#elif defined(BF_PLATFORM_WebYandex)
+#  error "Not implemented yet"
+#else
+#  error "Not implemented yet"
+#endif
+
+  if (saveData) {
+    GameLoad(BFSave::GetSave(saveData));
+    SDL_free(saveData);
+  }
+}
+
+// void _Save() {  ///
+#if defined(SDL_PLATFORM_WIN32)
+
+void _Save() {
+  ZoneScoped;
+
+  DEFER {
+    ge.meta.previousSaveIsNotCompletedYet = false;
+  };
+
+  const auto toSwapPath = "save_to_swap.bin";
+
+  bool saved = false;
+  {
+    auto fbb = GameDumpStateForSaving();
+    FOR_RANGE (int, i, 5) {
+      if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
+        saved = true;
+        break;
+      }
+    }
+  }
+  if (!saved) {
+    LOGE("Temp save failed");
+    return;
+  }
+
+  bool swapped = false;
+  FOR_RANGE (int, i, 5) {
+    if (SDL_RenamePath(toSwapPath, "save.bin")) {
+      swapped = true;
+      break;
+    }
+  }
+  if (!swapped)
+    LOGI("Save swap failed");
+}
+
+#elif defined(BF_PLATFORM_WebYandex)
+
+// clang-format off
+EM_JS(void, js_Save, (const char* data), {
+  window.player
+    .setData(UTF8ToString(data), /* flush */ true)
+    .then(() => {
+      Module.ccall('saved_from_js', null, [], []);
+    });
+});
+// clang-format on
+
+void _Save() {
+  ZoneScoped;
+
+  TEMP_USAGE(&g.meta.trashArena);
+
+  auto fbb     = GameDumpStateForSaving();
+  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), &g.meta.trashArena);
+  js_Save(encoded);
+}
+
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
+
+void _Save() {
+  LOGW("Save is not yet implemented for web");
+}
+
+#else
+#  error "_Save() is not implemented for your platform"
+#endif
+// }
 
 ///
