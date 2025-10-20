@@ -598,10 +598,14 @@ weapons: # {  ###
     texture_ids:
       - game_weapon_sword
     effects:
-      - stat_type: HP
-        value: 1 2 3 4
-        # value_multiplier: 1 1 1 1
-        # value_multiplier: 0.5 0.5 0.5 0.5
+      # - stat_type: HP
+      #   value: 1 2 3 4
+      - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+        placeholders:
+          - ints: 20 20 20 20
+          - ints: 70 65 60 55
+            # value_multiplier: 1 1 1 1
+            # value_multiplier: 0.5 0.5 0.5 0.5
     # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
     #   placeholders:
     #     - ints: 3 4 5 6
@@ -629,22 +633,22 @@ weapons: # {  ###
     icon_texture_id: game_weapon_gun
     texture_ids:
       - game_weapon_gun
-    effects:
-      - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
-        weaponproperty_type: DAMAGE
-        value: 4 6 8 10
-      - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-        placeholders:
-          - ints: 20 20 20 20
-          - ints: 70 65 60 55
-      - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-        placeholders:
-          - ints: 20 20 20 20
-          - ints: 75 80 85 90
-      - effectcondition_type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-        placeholders:
-          - floats: 2.0 1.6 1.2 0.8
-          - ints: 20 20 20 20
+      # effects:
+      #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+      #     weaponproperty_type: DAMAGE
+      #     value: 4 6 8 10
+      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+      #     placeholders:
+      #       - ints: 20 20 20 20
+      #       - ints: 70 65 60 55
+      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+      #     placeholders:
+      #       - ints: 20 20 20 20
+      #       - ints: 75 80 85 90
+      #   - effectcondition_type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+      #     placeholders:
+      #       - floats: 2.0 1.6 1.2 0.8
+      #       - ints: 20 20 20 20
   - type: SMG
     min_tier_index: 0
     base_damage: 3 6 9 12
@@ -662,31 +666,31 @@ weapons: # {  ###
     icon_texture_id: game_weapon_smg
     texture_ids:
       - game_weapon_smg
-    effects:
-      - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-        stat_type: DAMAGE
-        value: 1 1 1 1
-      - effectcondition_type: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
-        stat_type: DAMAGE
-        value: 1 1 1 1
-      - effectcondition_type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
-        stat_type: DAMAGE
-        value: 1 1 1 1
-        placeholders:
-          - floats: 29 19 14 11
-      - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
-        stat_type: DAMAGE
-        value: 1 1 1 1
-        placeholders:
-          - ints: 50 45 38 30
-      - effectcondition_type: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
-        stat_type: DAMAGE
-        value: 1 1 1 1
-        placeholders:
-          - floats: 7 6 5 4
-      - effectcondition_type: PROPERTY_WHEN_IDLE
-        weaponproperty_type: DAMAGE
-        value: 4 6 8 10
+      # effects:
+      #   - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+      #     stat_type: DAMAGE
+      #     value: 1 1 1 1
+      #   - effectcondition_type: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+      #     stat_type: DAMAGE
+      #     value: 1 1 1 1
+      #   - effectcondition_type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+      #     stat_type: DAMAGE
+      #     value: 1 1 1 1
+      #     placeholders:
+      #       - floats: 29 19 14 11
+      #   - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+      #     stat_type: DAMAGE
+      #     value: 1 1 1 1
+      #     placeholders:
+      #       - ints: 50 45 38 30
+      #   - effectcondition_type: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
+      #     stat_type: DAMAGE
+      #     value: 1 1 1 1
+      #     placeholders:
+      #       - floats: 7 6 5 4
+      #   - effectcondition_type: PROPERTY_WHEN_IDLE
+      #     weaponproperty_type: DAMAGE
+      #     value: 4 6 8 10
   - type: BOW
     min_tier_index: 0
     weaponkind_type: RANGED
@@ -705,24 +709,24 @@ weapons: # {  ###
     icon_texture_id: ui_weapon_bow
     texture_ids:
       - game_weapon_bow
-    effects:
-      - effectcondition_type: PROPERTY_WHEN_WALKING
-        weaponproperty_type: DAMAGE
-        value: 4 6 8 10
-      - effectcondition_type: SPAWNS_GARDEN_EVERY_X_SECONDS
-        placeholders:
-          - floats: 15 14 12 10
-      - effectcondition_type: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
-        placeholders:
-          - floats: 12 9 6 3
-          - ints: 3 4 5 6
-        damage_scalings:
-          - stat_type: ENGINEERING
-            percents_per_tier: 100 125 150 200
-      - effectcondition_type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-      - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
-        placeholders:
-          - ints: 1 2 3 4
+      # effects:
+      #   - effectcondition_type: PROPERTY_WHEN_WALKING
+      #     weaponproperty_type: DAMAGE
+      #     value: 4 6 8 10
+      #   - effectcondition_type: SPAWNS_GARDEN_EVERY_X_SECONDS
+      #     placeholders:
+      #       - floats: 15 14 12 10
+      #   - effectcondition_type: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+      #     placeholders:
+      #       - floats: 12 9 6 3
+      #       - ints: 3 4 5 6
+      #     damage_scalings:
+      #       - stat_type: ENGINEERING
+      #         percents_per_tier: 100 125 150 200
+      #   - effectcondition_type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+      #   - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
+      #     placeholders:
+      #       - ints: 1 2 3 4
   - type: SLINGSHOT
     min_tier_index: 0
     weaponkind_type: RANGED

@@ -31,10 +31,9 @@ x weapon effects: show: SPAWNS_GARDEN_EVERY_X_SECONDS
 x weapon effects: show: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
 x weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
+x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 
-* weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-* weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-*
 * прописать читы в реадме
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
 *
