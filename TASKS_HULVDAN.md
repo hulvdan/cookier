@@ -33,15 +33,16 @@ x weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+x weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 
+* weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+*
 * прописать читы в реадме
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
 *
 * weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
 * weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 * weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-* weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
-* weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 * weapon effects: impl: X_CHANCE_TO_EXPLODE
 * weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT

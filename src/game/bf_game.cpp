@@ -3024,6 +3024,21 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           }
         }
       );
+
+      IterateOverWeaponEffects(
+        EffectConditionType_DROP_X_COINS_ON_HIT_WITH_Y_CHANCE,
+        weapon.type,
+        [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+          auto chance = (f32)WEAPON_EFFECT_PLACEHOLDER_Y_INT / 100.0f;
+          if (GRAND.FRand() < chance) {
+            MakePickupable({
+              .type        = PickupableType_COIN,
+              .pos         = creature.pos,
+              .coin_amount = WEAPON_EFFECT_PLACEHOLDER_X_INT,
+            });
+          }
+        }
+      );
     }
 
     auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
