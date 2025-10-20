@@ -4501,13 +4501,17 @@ void DoUI(bool draw) {
         if (data.weapon) {  ///
           const auto fb = fb_weapons->Get(data.weapon);
 
-          int tierOffset = data.overrideTier - fb->min_tier_index();
+          int tierOffset = 0;
+          if (data.overrideTier >= 0)
+            tierOffset = data.overrideTier - fb->min_tier_index();
+          ASSERT(tierOffset >= 0);
 
           int thisWaveDamage = 0;
           if (data.weaponIndexOrMinus1 >= 0) {
             const auto& weapon = g.run.state.weapons[data.weaponIndexOrMinus1];
             tierOffset         = weapon.tier - fb->min_tier_index();
-            thisWaveDamage     = weapon.thisWaveDamage;
+            ASSERT(tierOffset >= 0);
+            thisWaveDamage = weapon.thisWaveDamage;
           }
 
           LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {

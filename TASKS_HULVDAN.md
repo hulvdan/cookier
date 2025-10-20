@@ -37,6 +37,8 @@ x weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 x weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 x weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 
+* yandex load save data
+* на русском апгрейд рукопашный урон хреново смотрится
 * weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS
 * weapon effects: impl: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
