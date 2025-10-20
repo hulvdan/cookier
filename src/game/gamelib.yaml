@@ -395,6 +395,8 @@ weapon_properties: # {  ###
   - type: INVALID
   - type: DAMAGE
     name_locale: STAT_DAMAGE
+  - type: BURNING_SPREAD
+    name_locale: STAT_BURNING_SPREAD
 # }
 
 effect_condition_variables: # {  ###
@@ -439,6 +441,25 @@ weapon_effect_conditions: # {  ###
     x_is_percent: true
   - type: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
     x_is_percent: true
+  - type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+  - type: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+  - type: GET_STAT_EVERY_X_SECONDS
+    x_condvar_type: FLOAT
+  - type: GET_STAT_EVERY_X_WALKED_METERS
+    x_condvar_type: FLOAT
+  - type: GET_STAT_EVERY_X_IDLE_SECONDS
+    x_condvar_type: FLOAT
+  - type: PROPERTY_WHEN_IDLE
+  - type: PROPERTY_WHEN_WALKING
+  - type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+    w_condvar_type: DAMAGE
+  - type: SPAWNS_GARDEN_EVERY_X_SECONDS
+    x_condvar_type: FLOAT
+  - type: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+    x_condvar_type: FLOAT
+    y_condvar_type: DAMAGE
+  - type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+  - type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 # }
 
 items: # {  ###
@@ -582,26 +603,16 @@ weapons: # {  ###
         value: 1 2 3 4
         # value_multiplier: 1 1 1 1
         # value_multiplier: 0.5 0.5 0.5 0.5
-      - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
+      - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
         placeholders:
           - ints: 3 4 5 6
           - ints: 1 2 3 4
+          - ints: 0 0 1 2
         damage_scalings:
           - stat_type: DAMAGE_MELEE
             percents_per_tier: 25 50 75 100
           - stat_type: DAMAGE_RANGED
             percents_per_tier: 50 60 70 80
-      - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
-        placeholders:
-          - ints: 3 4 5 6
-          - ints: 0 0 0 0
-        damage_scalings:
-          - stat_type: DAMAGE_RANGED
-            percents_per_tier: 50 60 70 80
-      - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
-        placeholders:
-          - ints: 3 4 5 6
-          - ints: 1 1 1 1
   - type: GUN
     min_tier_index: 0
     base_damage: 6 9 12 20
@@ -652,6 +663,26 @@ weapons: # {  ###
     icon_texture_id: game_weapon_smg
     texture_ids:
       - game_weapon_smg
+    effects:
+      - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+        stat_type: DAMAGE
+      - effectcondition_type: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+        stat_type: DAMAGE
+      - effectcondition_type: GET_STAT_EVERY_X_SECONDS
+        stat_type: DAMAGE
+        placeholders:
+          - floats: 29 19 14 11
+      - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS
+        stat_type: DAMAGE
+        placeholders:
+          - int: 50 45 38 30
+      - effectcondition_type: GET_STAT_EVERY_X_IDLE_SECONDS
+        stat_type: DAMAGE
+        placeholders:
+          - floats: 7 6 5 4
+      - effectcondition_type: PROPERTY_WHEN_IDLE
+        weaponproperty_type: DAMAGE
+        value: 4 6 8 10
   - type: BOW
     min_tier_index: 0
     weaponkind_type: RANGED
@@ -670,6 +701,20 @@ weapons: # {  ###
     icon_texture_id: ui_weapon_bow
     texture_ids:
       - game_weapon_bow
+    effects:
+      - effectcondition_type: PROPERTY_WHEN_WALKING
+        weaponproperty_type: DAMAGE
+        value: 4 6 8 10
+      - effectcondition_type: SPAWNS_GARDEN_EVERY_X_SECONDS
+        placeholders:
+          - floats: 15 14 12 10
+      - effectcondition_type: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+        placeholders:
+          - floats: 12 9 6 3
+      - effectcondition_type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+      - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
+        placeholders:
+          - ints: 1 2 3 4
   - type: SLINGSHOT
     min_tier_index: 0
     weaponkind_type: RANGED

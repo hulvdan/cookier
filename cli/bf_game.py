@@ -90,7 +90,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 
     # Effect conditions.
     # ============================================================
-    EFFECT_CONDITION_LETTERS = ("x", "y", "z")
+    EFFECT_CONDITION_LETTERS = ("x", "y", "z", "w")
 
     if 1:
         for _, x in enumerate_table("effect_conditions"):
