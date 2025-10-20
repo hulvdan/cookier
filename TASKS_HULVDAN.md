@@ -11,15 +11,39 @@ x placeholders groups
   can specify "hitting an enemy spawns 3/4/5/6 projectiles dealing 50/60/70/80% {ranged damage icon} damage"
 x ref: placeholders on trashArena
   remove BF_MAX_PLACEHOLDERS_IN_STRING
+x weapon effects: show: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+x weapon effects: show: X_COOLDOWN_SECONDS_EVERY_Y_HITS
 
-* cheat: wheel on weapon changes tier
-* weapon effects:
-* weapon effects:
-* weapon effects:
-* weapon effects:
-* weapon effects:
-* weapon effects:
-* weapon effects:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
+* weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+* weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+* weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+* weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
 
 melee weapon effects:
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)

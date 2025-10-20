@@ -53,6 +53,7 @@ WEAPON_EFFECT_HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE;Попадание по �
 WEAPON_EFFECT_MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY;{PROPERTY} {MODIFIER} за каждый пустой оружейный слот;{MODIFIER} {PROPERTY} for each empty weapon slot;
 WEAPON_EFFECT_X_COOLDOWN_SECONDS_EVERY_Y_HITS;Задержка {X}с после {Y} использований;{X}s cooldown after {Y} uses;
 WEAPON_EFFECT_X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP;{X} урона по врагам с здоровьем больше {Y}%;{X} damage against enemies above {Y}% health;
+WEAPON_EFFECT_X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP;{X} урона по врагам с здоровьем меньше {Y}%;{X} damage against enemies below {Y}% health;
 REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION;{CHANCE} шанс взрыва при попадании ;{CHANCE} chance to explode on hit;
 ITEM_HELMET;Шлем;Helmet;
 ITEM_WHITE_FLAG;Белый Флаг;White Flag;
