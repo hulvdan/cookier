@@ -1640,6 +1640,20 @@ bool IsAlreadyPlaceholded(const char* placeholder) {  ///
   return false;
 }
 
+void _AddPlaceholder(Placeholder p) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+
+  auto pp = ALLOCATE_FOR(&g.meta.trashArena, Placeholder);
+  *pp     = p;
+
+  auto& group = *g.uiFlex.pgroupsLast;
+  if (!group.first)
+    group.first = pp;
+  if (group.last)
+    group.last->next = pp;
+  group.last = pp;
+}
+
 // `placeholder` must be statically allocated or live in trashArena.
 void PlaceholdGroupBegin(const char* placeholder) {  ///
   ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
@@ -1656,20 +1670,6 @@ void PlaceholdGroupBegin(const char* placeholder) {  ///
   if (g.uiFlex.pgroupsLast)
     g.uiFlex.pgroupsLast->next = pp;
   g.uiFlex.pgroupsLast = pp;
-}
-
-void _AddPlaceholder(Placeholder p) {  ///
-  ASSERT(g.uiFlex.pgroupsLastIsActive);
-
-  auto pp = ALLOCATE_FOR(&g.meta.trashArena, Placeholder);
-  *pp     = p;
-
-  auto& group = *g.uiFlex.pgroupsLast;
-  if (!group.first)
-    group.first = pp;
-  if (group.last)
-    group.last->next = pp;
-  group.last = pp;
 }
 
 void PlaceholdGroupEnd() {  ///
