@@ -2782,6 +2782,8 @@ void GameInit() {  ///
   g.meta.trashArena = MakeArena(16 * 1024);
   g.run.arena       = MakeArena(4 * 1024);
 
+  TEMP_USAGE(&g.meta.trashArena);
+
   // Initializing Clay.
   {
     auto size = Clay_MinMemorySize();
@@ -2797,7 +2799,7 @@ void GameInit() {  ///
   ReloadFontsIfNeeded();
 
   RunInit();
-  LoadSaveData();
+  LoadSaveData(&g.meta.trashArena);
 
   // Checking that weapon effects weren't applied to difficulties, builds, and items.
 #if BF_ENABLE_ASSERTS
@@ -7093,7 +7095,7 @@ void GameFixedUpdate() {
       LOGI("Saving...");
 
       ge.meta.previousSaveIsNotCompletedYet = true;
-      _Save();
+      _Save(&g.meta.trashArena);
     }
   }
 
