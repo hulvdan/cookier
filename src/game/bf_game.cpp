@@ -806,6 +806,23 @@ struct JustUnlockedAchievement {  ///
   FrameVisual     shownAt   = {};
 };
 
+#define WEAPON_EFFECT_PLACEHOLDER_X_INT \
+  (fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Y_INT \
+  (fb_effect->placeholders()->Get(1)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Z_INT \
+  (fb_effect->placeholders()->Get(2)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_W_INT \
+  (fb_effect->placeholders()->Get(3)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_X_FLOAT \
+  (fb_effect->placeholders()->Get(0)->floats()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Y_FLOAT \
+  (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Z_FLOAT \
+  (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_W_FLOAT \
+  (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena = {};
@@ -2947,23 +2964,6 @@ struct TryApplyDamageData {  ///
   ApplyAilmentData ailment                            = {};
   f32              ailmentChance                      = 0;
 };
-
-#define WEAPON_EFFECT_PLACEHOLDER_X_INT \
-  (fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Y_INT \
-  (fb_effect->placeholders()->Get(1)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Z_INT \
-  (fb_effect->placeholders()->Get(2)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_W_INT \
-  (fb_effect->placeholders()->Get(3)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_X_FLOAT \
-  (fb_effect->placeholders()->Get(0)->floats()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Y_FLOAT \
-  (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Z_FLOAT \
-  (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_W_FLOAT \
-  (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
 
 bool TryApplyDamage(TryApplyDamageData data) {  ///
   ASSERT(data.creatureIndex >= 0);
