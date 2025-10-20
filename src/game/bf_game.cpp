@@ -7382,7 +7382,6 @@ void GameFixedUpdate() {
         PlaySound(Sound_UI_CLICK);
       }
 
-#if defined(SDL_PLATFORM_DESKTOP)
       if (IsKeyPressed(SDL_SCANCODE_ESCAPE)) {
         if (g.meta.pausedShowingAchievements)
           g.meta.pausedShowingAchievements = false;
@@ -7390,7 +7389,6 @@ void GameFixedUpdate() {
           g.meta.scheduledTogglePause = true;
         PlaySound(Sound_UI_CLICK);
       }
-#endif
     }
     else
       g.meta.paused = false;
