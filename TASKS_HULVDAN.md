@@ -21,8 +21,18 @@ x weapon effects: show: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 x weapon effects: show: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 x weapon effects: show: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 
-* weapon effects: show:
-* weapon effects: show:
+* weapon effects: show: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+* weapon effects: show: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+* weapon effects: show: GET_STAT_EVERY_X_SECONDS
+* weapon effects: show: GET_STAT_EVERY_X_WALKED_METERS
+* weapon effects: show: GET_STAT_EVERY_X_IDLE_SECONDS
+* weapon effects: show: PROPERTY_WHEN_IDLE
+* weapon effects: show: PROPERTY_WHEN_WALKING
+* weapon effects: show: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+* weapon effects: show: SPAWNS_GARDEN_EVERY_X_SECONDS
+* weapon effects: show: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+* weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+* weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 * weapon effects: show:
 * weapon effects: show:
 * weapon effects: show:
@@ -37,6 +47,18 @@ x weapon effects: show: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 * weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 * weapon effects: impl: X_CHANCE_TO_EXPLODE
 * weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+* weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+* weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+* weapon effects: impl: GET_STAT_EVERY_X_SECONDS
+* weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS
+* weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS
+* weapon effects: impl: PROPERTY_WHEN_IDLE
+* weapon effects: impl: PROPERTY_WHEN_WALKING
+* weapon effects: impl: HITTING_SPAWNS_PROJECTILE_THAT_BOUNCES_X_TIMES_DEALING_Y_DAMAGE
+* weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS
+* weapon effects: impl: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+* weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+* weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 * weapon effects: impl:
 * weapon effects: impl:
 * weapon effects: impl:
@@ -60,7 +82,6 @@ melee weapon effects:
 - X chance to gain 1 coin upon killing an enemy with a crit
 - +X stat every Y seconds until the end of the wave (+10% attack speed, every 5 seconds)
 - -3 armor for every weapon you have
-- deals 8x5/12x6/15x7 (+100% elemental damage) burning damage
 - +X stat (tiered)
 - +X stat for every Y steps during this wave
 - +X stat for every Y killed enemies using this weapon TODO DURING THIS WAVE
@@ -74,9 +95,12 @@ melee weapon effects:
 - always crits when hitting burning enemies
 - stick: tiered bonus damage for each of the same weapon
 - 50/56/62/80% to gain coin unpon killing with crit using this weapon
-- deals 3x3/5x5/8x6/12x9 (+elemental) burning damage. burning spreads to additional -/-/1/1 nearby enemies
 - resets cooldown of offensive turrets upon attacking
 - spawns turret / incendiary turret / laser turret / explosive turrent
+
+- deals 8x5/12x6/15x7 (+100% elemental damage) burning damage
+- deals 3x3/5x5/8x6/12x9 (+elemental) burning damage.
+- burning spreads to additional -/-/1/1 nearby enemies
 
 ranged weapon effects:
 - cooldown is reset upon picking up coins

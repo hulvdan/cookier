@@ -2924,7 +2924,7 @@ void GameInit() {  ///
       ASSERT_FALSE(fb_cond->requires_stat());
     }
 
-    const char* const letters_[]{"X", "Y", "Z"};
+    const char* const letters_[]{"X", "Y", "Z", "W"};
     VIEW_FROM_ARRAY_DANGER(letters);
     FOR_RANGE (int, i, fb_cond->placeholders()->size()) {
       if (fb_cond->placeholders()->Get(i)->required()) {
