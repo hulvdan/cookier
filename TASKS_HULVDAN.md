@@ -36,9 +36,12 @@ x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 x weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 x weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 x weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+x yandex/web load savedata
 
-* yandex load save data
-* на русском апгрейд рукопашный урон хреново смотрится
+* fix: on start of the game player's health is 20.
+  Should be 25 (because of Build's effect)
+* fix guarantee input press
+* на русском апгрейд "рукопашный урон" хреново смотрится
 * weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS
 * weapon effects: impl: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
@@ -332,3 +335,4 @@ LATER:
 * aseprite show image center
 * yandex save: check it works
 * REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
+* emscripten: how to return string from localStorage from js function to c++?

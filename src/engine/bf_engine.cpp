@@ -3627,7 +3627,7 @@ SDL_AppResult EngineUpdate() {  ///
 }
 
 #ifdef BF_PLATFORM_Win
-struct Timestamp {
+struct Timestamp {  ///
   int year;
   int month;
   int day;
@@ -3668,7 +3668,7 @@ char* EncodeToHex(const u8* toEncodeLittleEndian, size_t size, Arena* arena) {  
   return result;
 }
 
-u8* DecodeFromHex(char* encoded, Arena* arena) {  ///
+u8* DecodeFromHex(const char* encoded, Arena* arena) {  ///
   const auto len = strlen(encoded);
   ASSERT(len > 0);
   ASSERT_FALSE(len % 2);
@@ -3699,25 +3699,10 @@ TEST_CASE ("EncodeToHex / DecodeFromHex") {  ///
   ASSERT(!memcmp(result, bytes, 256));
 }
 
-void LoadSaveData() {  ///
-#if defined(SDL_PLATFORM_DESKTOP)
-  auto saveData = SDL_LoadFile("save.bin", nullptr);
-#elif defined(BF_PLATFORM_WebYandex)
-#  error "Not implemented yet"
-#else
-#  error "Not implemented yet"
-#endif
-
-  if (saveData) {
-    GameLoad(BFSave::GetSave(saveData));
-    SDL_free(saveData);
-  }
-}
-
-// void _Save() {  ///
+// void _Save(Arena* arena) {  ///
 #if defined(SDL_PLATFORM_WIN32)
 
-void _Save() {
+void _Save(Arena* _) {
   ZoneScoped;
 
   DEFER {
@@ -3752,37 +3737,69 @@ void _Save() {
     LOGI("Save swap failed");
 }
 
-#elif defined(BF_PLATFORM_WebYandex)
+#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+
+#  if defined(BF_PLATFORM_WebYandex)
 
 // clang-format off
 EM_JS(void, js_Save, (const char* data), {
   window.player
-    .setData(UTF8ToString(data), /* flush */ true)
+    .setData({save: UTF8ToString(data)}, /* flush */ true)
     .then(() => {
       Module.ccall('saved_from_js', null, [], []);
     });
 });
+
+EM_JS(const char*, js_Load, (), {
+  return window.player.getData('save');
+});
 // clang-format on
 
-void _Save() {
+#  elif defined(BF_PLATFORM_Web)
+
+// clang-format off
+EM_JS(void, js_Save, (const char* data), {
+  localStorage.setItem('save', UTF8ToString(data));
+});
+
+EM_JS(const char*, js_Load, (), {
+  return localStorage.getItem('save');
+});
+// clang-format on
+
+#  else
+#    error "Not implemented"
+#  endif
+
+void _Save(Arena* arena) {
   ZoneScoped;
-
-  TEMP_USAGE(&g.meta.trashArena);
-
+  TEMP_USAGE(arena);
   auto fbb     = GameDumpStateForSaving();
-  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), &g.meta.trashArena);
+  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), arena);
   js_Save(encoded);
 }
 
-#elif defined(SDL_PLATFORM_EMSCRIPTEN)
-
-void _Save() {
-  LOGW("Save is not yet implemented for web");
-}
-
 #else
-#  error "_Save() is not implemented for your platform"
+#  error "_Save(Arena* arena) is not implemented for your platform"
 #endif
 // }
+
+void LoadSaveData(Arena* arena) {  ///
+  TEMP_USAGE(arena);
+
+#if defined(SDL_PLATFORM_DESKTOP)
+  auto saveData = SDL_LoadFile("save.bin", nullptr);
+#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+  auto saveData_ = js_Load();
+  auto saveData  = DecodeFromHex(saveData_, arena);
+#else
+#  error "Not implemented yet"
+#endif
+
+  if (saveData) {
+    GameLoad(BFSave::GetSave(saveData));
+    SDL_free(saveData);
+  }
+}
 
 ///
