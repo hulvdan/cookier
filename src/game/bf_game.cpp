@@ -3026,6 +3026,17 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       );
 
       IterateOverWeaponEffects(
+        EffectConditionType_DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES,
+        weapon.type,
+        [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+          int percent = WEAPON_EFFECT_PLACEHOLDER_X_INT;
+          if (fb->is_boss())
+            percent = WEAPON_EFFECT_PLACEHOLDER_Y_INT;
+          data.damage += Round(creature.health * (f32)percent / 100.0f);
+        }
+      );
+
+      IterateOverWeaponEffects(
         EffectConditionType_DROP_X_COINS_ON_HIT_WITH_Y_CHANCE,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {

@@ -34,8 +34,8 @@ x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 x weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+x weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 
-* weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 *
 * прописать читы в реадме
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
