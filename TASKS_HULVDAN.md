@@ -32,10 +32,14 @@ x weapon effects: show: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
 x weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 
-* weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
-* weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 * weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 * weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+*
+* прописать читы в реадме
+* стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
+*
+* weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
+* weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 * weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
 * weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 * weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES

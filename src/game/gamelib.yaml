@@ -394,9 +394,9 @@ ailments: # {  ###
 weapon_properties: # {  ###
   - type: INVALID
   - type: DAMAGE
-    name_locale: STAT_DAMAGE
+    name_locale: PROPERTY_DAMAGE
   - type: BURNING_SPREAD
-    name_locale: STAT_BURNING_SPREAD
+    name_locale: PROPERTY_BURNING_SPREAD
 # }
 
 effect_condition_variables: # {  ###
