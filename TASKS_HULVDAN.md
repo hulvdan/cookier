@@ -9,6 +9,8 @@ x weapon effects: gamelib.py placeholder aliases
 x weapon effects: effect `condition_x` `condition_y` etc to `condition_values` array
 x placeholders groups
   can specify "hitting an enemy spawns 3/4/5/6 projectiles dealing 50/60/70/80% {ranged damage icon} damage"
+x ref: placeholders on trashArena
+  remove BF_MAX_PLACEHOLDERS_IN_STRING
 
 * cheat: wheel on weapon changes tier
 * weapon effects:
@@ -18,9 +20,6 @@ x placeholders groups
 * weapon effects:
 * weapon effects:
 * weapon effects:
-* ref: placeholders on trashArena
-  remove BF_MAX_PLACEHOLDERS_IN_STRING
-* ref: placeholderCompound -> group
 
 melee weapon effects:
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
