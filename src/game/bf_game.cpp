@@ -2604,8 +2604,6 @@ void RunInit() {
   });
   g.run.previousPlayerPos = playerPos;
   g.run.playerLastRegenAt.SetNow();
-  PLAYER_CREATURE.health    = g.run.state.stats[StatType_HP];
-  PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
   // }
 
   g.run.camera.pos = GetCameraTargetPos();
@@ -2638,6 +2636,9 @@ void RunInit() {
     [&](auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
   );
+
+  PLAYER_CREATURE.health    = g.run.state.stats[StatType_HP];
+  PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
 
   // Filling MOB_BOSS_SHOOTING_FRAMES.
   {  ///
