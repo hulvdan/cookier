@@ -20,24 +20,18 @@ x weapon effects: show: X_CHANCE_TO_EXPLODE
 x weapon effects: show: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 x weapon effects: show: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 x weapon effects: show: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+x weapon effects: show: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+x weapon effects: show: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+x weapon effects: show: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+x weapon effects: show: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+x weapon effects: show: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
+x weapon effects: show: PROPERTY_WHEN_IDLE
+x weapon effects: show: PROPERTY_WHEN_WALKING
+x weapon effects: show: SPAWNS_GARDEN_EVERY_X_SECONDS
+x weapon effects: show: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+x weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 
-* weapon effects: show: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-* weapon effects: show: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
-* weapon effects: show: GET_STAT_EVERY_X_SECONDS
-* weapon effects: show: GET_STAT_EVERY_X_WALKED_METERS
-* weapon effects: show: GET_STAT_EVERY_X_IDLE_SECONDS
-* weapon effects: show: PROPERTY_WHEN_IDLE
-* weapon effects: show: PROPERTY_WHEN_WALKING
-* weapon effects: show: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
-* weapon effects: show: SPAWNS_GARDEN_EVERY_X_SECONDS
-* weapon effects: show: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
-* weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-* weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
-* weapon effects: show:
-* weapon effects: show:
-* weapon effects: show:
-* weapon effects: show:
-* weapon effects: show:
 * weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
 * weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 * weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
@@ -49,9 +43,9 @@ x weapon effects: show: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 * weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
 * weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
-* weapon effects: impl: GET_STAT_EVERY_X_SECONDS
-* weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS
-* weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS
+* weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+* weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+* weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
 * weapon effects: impl: PROPERTY_WHEN_IDLE
 * weapon effects: impl: PROPERTY_WHEN_WALKING
 * weapon effects: impl: HITTING_SPAWNS_PROJECTILE_THAT_BOUNCES_X_TIMES_DEALING_Y_DAMAGE
@@ -70,6 +64,12 @@ x weapon effects: show: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 * weapon effects: impl:
 * weapon effects: impl:
 * weapon effects: impl:
+* weapon effects: show: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
 
 melee weapon effects:
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)

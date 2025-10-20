@@ -58,20 +58,17 @@ WEAPON_EFFECT_DROP_X_COINS_ON_HIT_WITH_Y_CHANCE;Из врага с шансом 
 WEAPON_EFFECT_DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES;Наносит {X} здоровья врага в качестве доп. урона ({Y} против боссов);Dealing {X} of enemy HP as a bonus damage ({Y} for bosses);
 WEAPON_EFFECT_X_CHANCE_TO_EXPLODE;{X} шанс взрыва;{X} chance to explode;
 WEAPON_EFFECT_X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT;{X} шанс выпадения печеньги при убийстве критом;{X} chance to get a cookien upon killing with a crit;
-
-WEAPON_EFFECT_GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT;;;
-WEAPON_EFFECT_GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT;;;
-WEAPON_EFFECT_GET_STAT_EVERY_X_SECONDS;;;
-WEAPON_EFFECT_GET_STAT_EVERY_X_WALKED_METERS;;;
-WEAPON_EFFECT_GET_STAT_EVERY_X_IDLE_SECONDS;;;
-WEAPON_EFFECT_PROPERTY_WHEN_IDLE;;;
-WEAPON_EFFECT_PROPERTY_WHEN_WALKING;;;
-WEAPON_EFFECT_HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE;;;
-WEAPON_EFFECT_SPAWNS_GARDEN_EVERY_X_SECONDS;;;
-WEAPON_EFFECT_SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE;;;
-WEAPON_EFFECT_ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES;;;
-WEAPON_EFFECT_BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES;;;
-
+WEAPON_EFFECT_GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT;{STAT} {MODIFIER} за каждый занятый слот оружия;{MODIFIER} {STAT} for every occupied weapon slot;
+WEAPON_EFFECT_GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT;{STAT} {MODIFIER} за каждый свободный слот оружия;{MODIFIER} {STAT} for every empty weapon slot;
+WEAPON_EFFECT_GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE;{STAT} {MODIFIER} каждые {X}с до конца волны;{MODIFIER} {STAT} every {X}s until the end of the wave;
+WEAPON_EFFECT_GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE;{STAT} {MODIFIER} каждые {X} шагов до конца волны;{MODIFIER} {STAT} every {X} walked meters until the end of the wave;
+WEAPON_EFFECT_GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE;{STAT} {MODIFIER} каждые {X}с без движения;{MODIFIER} {STAT} every {X}s being idle until the end of the wave;
+WEAPON_EFFECT_PROPERTY_WHEN_IDLE;{PROPERTY} {MODIFIER} при отсутствии движения;{MODIFIER} {PROPERTY} when idle;
+WEAPON_EFFECT_PROPERTY_WHEN_WALKING;{PROPERTY} {MODIFIER} при ходьбе;{MODIFIER} {PROPERTY} when walking;
+WEAPON_EFFECT_SPAWNS_GARDEN_EVERY_X_SECONDS;Новый огород каждые {X}с;Spawns garden every {X}s;
+WEAPON_EFFECT_SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE;Новая мина каждые {X}с, наносящая {Y} урона;Spawns landmine every {X}s dealing {Y} damage;
+WEAPON_EFFECT_ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES;По горящим врагам атаки всегда критические;Always crits when hitting burning enemies;
+WEAPON_EFFECT_BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES;Горение распространяется на доп. врагов ({X});Burning spreads to additional {X} enemies;
 REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION;{CHANCE} шанс взрыва при попадании;{CHANCE} chance to explode on hit;
 ITEM_HELMET;Шлем;Helmet;
 ITEM_WHITE_FLAG;Белый Флаг;White Flag;
