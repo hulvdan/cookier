@@ -35,7 +35,11 @@ x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 x weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
 x weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+x weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 
+* weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+* weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS
+* weapon effects: impl: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
 *
 * прописать читы в реадме
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
@@ -44,7 +48,6 @@ x weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BO
 * weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 * weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
 * weapon effects: impl: X_CHANCE_TO_EXPLODE
-* weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
 * weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
 * weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
@@ -53,9 +56,6 @@ x weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BO
 * weapon effects: impl: PROPERTY_WHEN_IDLE
 * weapon effects: impl: PROPERTY_WHEN_WALKING
 * weapon effects: impl: HITTING_SPAWNS_PROJECTILE_THAT_BOUNCES_X_TIMES_DEALING_Y_DAMAGE
-* weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS
-* weapon effects: impl: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
-* weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 * weapon effects: impl:
 * weapon effects: impl:

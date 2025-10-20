@@ -2942,7 +2942,7 @@ struct TryApplyDamageData {  ///
   Vector2          directionOrZero                    = {0, 0};
   f32              knockbackMeters                    = 0;
   CreatureType     damagerCreatureType                = CreatureType_INVALID;
-  bool             isCrit                             = false;
+  f32              critDamageMultiplier               = 1;
   int              indexOfWeaponThatDidDamageOrMinus1 = -1;
   ApplyAilmentData ailment                            = {};
   f32              ailmentChance                      = 0;
@@ -2993,7 +2993,16 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   creature.aggroed = fb->can_aggro();
 
+  bool isCrit = false;
   if (data.creatureIndex) {
+    isCrit = GRAND.FRand() < (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
+
+    if (fb->is_boss()) {
+      data.damage += Round(
+        (f32)data.damage * (f32)g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES] / 100.0f
+      );
+    }
+
     if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
       auto&     weapon = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1];
       const int tierOffset
@@ -3050,12 +3059,25 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           }
         }
       );
+
+      if (creature.ailments[AilmentType_BURN - 1].startedAt.IsSet()) {
+        IterateOverWeaponEffects(
+          EffectConditionType_ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES,
+          weapon.type,
+          [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA { isCrit = true; }
+        );
+      }
     }
+
+    if (isCrit)
+      data.damage += Round((f32)data.damage * data.critDamageMultiplier);
+
+    data.damage = MAX(1, data.damage);
 
     auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
     if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
       MakeNumber({
-        .type  = (data.isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
+        .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
         .value = data.damage,
         .pos   = creature.pos,
       });
@@ -3420,11 +3442,6 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
   return fb->range_meters() + bonusRange;
 }
 
-bool IsCrit() {  ///
-  const f32 chance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
-  return GRAND.FRand() < chance;
-}
-
 int TryGetCreatureIndexById(int id) {  ///
   int i = -1;
   for (const auto& creature : g.run.creatures) {
@@ -3464,18 +3481,13 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndexOrMinus1) {  ///
   if (weapon.piercedCount < weapon.piercedCreatureIds.count) {
     weapon.piercedCreatureIds[weapon.piercedCount++] = creature.id;
 
-    int  damage = weapon.calculatedDamage;
-    bool isCrit = IsCrit();
-    if (isCrit)
-      damage = Round((f32)damage * fb->crit_damage_multiplier());
-
     TryApplyDamage({
-      .creatureIndex       = creatureIndex,
-      .damage              = damage,
-      .directionOrZero     = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      .knockbackMeters     = fb->knockback_meters(),
-      .damagerCreatureType = CreatureType_PLAYER,
-      .isCrit              = isCrit,
+      .creatureIndex        = creatureIndex,
+      .damage               = weapon.calculatedDamage,
+      .directionOrZero      = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      .knockbackMeters      = fb->knockback_meters(),
+      .damagerCreatureType  = CreatureType_PLAYER,
+      .critDamageMultiplier = fb->crit_damage_multiplier(),
       .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndexOrMinus1,
     });
   }
@@ -7018,29 +7030,13 @@ void MakeAOE(
         ))
       continue;
 
-    int  damage = Round((f32)baseDamage * GetExplosionDamageMultiplier());
-    bool isCrit = false;
+    int damage = Round((f32)baseDamage * GetExplosionDamageMultiplier());
     if (damager == CreatureType_PLAYER) {
       // Player damages mob.
       damage = ApplyPlayerStatDamageMultiplier(damage);
       damage = Round(
         damage * ((f32)g.run.state.stats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
       );
-
-      if (damage > 0) {
-        isCrit = IsCrit();
-        if (isCrit)
-          damage = Round((f32)damage * critDamageMultiplier);
-
-        if (fb_creature->is_boss()) {
-          damage = Round(
-            (f32)damage
-            * MAX(
-              0, (f32)(g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
-            )
-          );
-        }
-      }
     }
 
     TryApplyDamage({
@@ -7049,7 +7045,7 @@ void MakeAOE(
       .directionOrZero                    = Vector2DirectionOrRandom(pos, creature.pos),
       .knockbackMeters                    = knockbackMeters,
       .damagerCreatureType                = damager,
-      .isCrit                             = isCrit,
+      .critDamageMultiplier               = critDamageMultiplier,
       .indexOfWeaponThatDidDamageOrMinus1 = weaponIndexOrMinus1,
     });
   }
@@ -8165,14 +8161,11 @@ void GameFixedUpdate() {
             if (a.startedAt.IsSet()
                 && (a.startedAt.Elapsed().value % BURNING_RATE.value == 0))
             {
-              bool isCrit = false;
-              if (a.ownerCreatureType == CreatureType_PLAYER)
-                isCrit = IsCrit();
               TryApplyDamage({
                 .creatureIndex                      = creatureIndex,
                 .damage                             = a.value,
                 .damagerCreatureType                = a.ownerCreatureType,
-                .isCrit                             = isCrit,
+                .critDamageMultiplier               = BURNING_CRIT_DAMAGE_MULTIPLIER,
                 .indexOfWeaponThatDidDamageOrMinus1 = a.weaponIndexOrMinus1,
               });
             }
@@ -8519,21 +8512,9 @@ void GameFixedUpdate() {
           if (distSqr < SQR(radius)) {
             Vector2 knockbackDirection{};
 
-            int  damage = projectile.damage;
-            bool isCrit = false;
+            int damage = projectile.damage;
             if (projectile.ownerCreatureType == CreatureType_PLAYER) {
               // Player damages mob.
-              isCrit = IsCrit();
-              if (isCrit)
-                damage *= projectile.critDamageMultiplier;
-
-              if (fb_creature->is_boss()) {
-                damage *= MAX(
-                  0,
-                  (f32)(g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
-                );
-              }
-
               knockbackDirection
                 = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos);
             }
@@ -8558,7 +8539,7 @@ void GameFixedUpdate() {
                   .directionOrZero                    = knockbackDirection,
                   .knockbackMeters                    = knockback,
                   .damagerCreatureType                = projectile.ownerCreatureType,
-                  .isCrit                             = isCrit,
+                  .critDamageMultiplier               = projectile.critDamageMultiplier,
                   .indexOfWeaponThatDidDamageOrMinus1 = projectile.weaponIndexOrMinus1,
                   .ailment{
                     .type   = (AilmentType)fb->ailment_type(),
