@@ -412,6 +412,7 @@ effect_conditions: # {  ###
 
 weapon_effect_conditions: # {  ###
   - type: X_CHANCE_OF_EXPLOSION_ON_HIT
+    x_is_percent: true
   - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
   - type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
     y_condvar_type: DAMAGE
@@ -420,10 +421,24 @@ weapon_effect_conditions: # {  ###
     x_signed: true
   - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
     x_signed: true
+    x_is_percent: true
+    y_is_percent: true
   - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
     x_signed: true
+    x_is_percent: true
+    y_is_percent: true
   - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
   - type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+  - type: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+    y_is_percent: true
+  - type: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+    x_signed: true
+    x_is_percent: true
+    y_is_percent: true
+  - type: X_CHANCE_TO_EXPLODE
+    x_is_percent: true
+  - type: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+    x_is_percent: true
 # }
 
 items: # {  ###
@@ -674,6 +689,20 @@ weapons: # {  ###
       - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
         weaponproperty_type: DAMAGE
         value: 4 6 8 10
+      - effectcondition_type: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+        placeholders:
+          - ints: 10 30 60 120
+          - ints: 3 3 3 3
+      - effectcondition_type: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+        placeholders:
+          - ints: 2 5 12 20
+          - ints: 1 1 1 2
+      - effectcondition_type: X_CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 10 20 30 40
+      - effectcondition_type: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+        placeholders:
+          - ints: 20 40 70 100
     icon_texture_id: game_weapon_slingshot
     texture_ids:
       - game_weapon_slingshot
