@@ -15,12 +15,12 @@ x weapon effects: show: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 x weapon effects: show: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+x weapon effects: placeholder `is_percent`
 
-* weapon effects: show:
-* weapon effects: show:
-* weapon effects: show:
-* weapon effects: show:
-* weapon effects: show:
+* weapon effects: show: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+* weapon effects: show: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+* weapon effects: show: X_CHANCE_TO_EXPLODE
+* weapon effects: show: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * weapon effects: show:
 * weapon effects: show:
 * weapon effects: show:
@@ -33,6 +33,10 @@ x weapon effects: show: X_COOLDOWN_SECONDS_EVERY_Y_HITS
 * weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 * weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 * weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+* weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+* weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+* weapon effects: impl: X_CHANCE_TO_EXPLODE
+* weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * weapon effects: impl:
 * weapon effects: impl:
 * weapon effects: impl:

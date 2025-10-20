@@ -1679,7 +1679,7 @@ void PlaceholdGroupEnd() {  ///
   g.uiFlex.pgroupsLastIsActive = false;
 }
 
-// value must be statically allocated or live in trashArena.
+// `value` must be statically allocated or live in trashArena.
 void PlaceholdString(const char* value, Color color = palTextGreen) {  ///
   ASSERT(g.uiFlex.pgroupsLastIsActive);
   _AddPlaceholder({
@@ -1688,7 +1688,7 @@ void PlaceholdString(const char* value, Color color = palTextGreen) {  ///
   });
 }
 
-// value must be statically allocated or live in trashArena.
+// `placeholder` and `value` must be statically allocated or live in trashArena.
 void PlaceholdString(
   const char* placeholder,
   const char* value,
@@ -1707,6 +1707,7 @@ void PlaceholdBrokenLocale(int locale) {  ///
   });
 }
 
+// `placeholder` must be statically allocated or live in trashArena.
 void PlaceholdBrokenLocale(const char* placeholder, int locale) {  ///
   PlaceholdGroupBegin(placeholder);
   PlaceholdBrokenLocale(locale);
@@ -1721,6 +1722,7 @@ void PlaceholdImage(int texId) {  ///
   });
 }
 
+// `placeholder` must be statically allocated or live in trashArena.
 void PlaceholdImage(const char* placeholder, int texId) {  ///
   PlaceholdGroupBegin(placeholder);
   PlaceholdImage(texId);
@@ -4122,8 +4124,12 @@ void DoUI(bool draw) {
               auto formatFunc = FormatInt;
               if (fb_placeholder->signed_())
                 formatFunc = FormatSignedInt;
+              auto formatted = formatFunc(cv);
+              if (fb_placeholder->is_percent())
+                formatted = TextFormat("%s%%", formatted);
               PlaceholdString(
-                PushTextToArena(&g.meta.trashArena, placeholderName), (*formatFunc)(cv)
+                PushTextToArena(&g.meta.trashArena, placeholderName),
+                PushTextToArena(&g.meta.trashArena, formatted)
               );
             } break;
 
@@ -4132,8 +4138,12 @@ void DoUI(bool draw) {
               auto formatFunc = FormatFloatDot1WithoutLeadingZeros;
               if (fb_placeholder->signed_())
                 formatFunc = FormatSignedFloatDot1WithoutLeadingZeros;
+              auto formatted = formatFunc(cv);
+              if (fb_placeholder->is_percent())
+                formatted = TextFormat("%s%%", formatted);
               PlaceholdString(
-                PushTextToArena(&g.meta.trashArena, placeholderName), (*formatFunc)(cv)
+                PushTextToArena(&g.meta.trashArena, placeholderName),
+                PushTextToArena(&g.meta.trashArena, formatted)
               );
             } break;
 

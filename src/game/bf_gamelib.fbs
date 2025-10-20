@@ -153,6 +153,8 @@ table EffectConditionPlaceholder {
 
     // Used when condvar_type is INTEGER or FLOAT to place '+' if number is positive.
     signed_: bool;
+
+    is_percent: bool;
 }
 
 table EffectCondition {

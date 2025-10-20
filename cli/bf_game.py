@@ -124,6 +124,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                         "required": required,
                         "condvar_type": x.pop(f"{letter}_condvar_type", "INTEGER"),
                         "signed_": x.pop(f"{letter}_signed", False),
+                        "is_percent": x.pop(f"{letter}_is_percent", False),
                     }
                 )
 
