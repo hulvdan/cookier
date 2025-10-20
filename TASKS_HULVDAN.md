@@ -7,8 +7,10 @@ x fix player max HP
 x fix starting wave with a lot of money + piggyBank sets coins to 0
 x weapon effects: gamelib.py placeholder aliases
 x weapon effects: effect `condition_x` `condition_y` etc to `condition_values` array
+x placeholders groups
+  can specify "hitting an enemy spawns 3/4/5/6 projectiles dealing 50/60/70/80% {ranged damage icon} damage"
 
-* weapon effects: image placeholder
+* cheat: wheel on weapon changes tier
 * weapon effects:
 * weapon effects:
 * weapon effects:
@@ -16,8 +18,9 @@ x weapon effects: effect `condition_x` `condition_y` etc to `condition_values` a
 * weapon effects:
 * weapon effects:
 * weapon effects:
-* weapon effects:
-* hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
+* ref: placeholders on trashArena
+  remove BF_MAX_PLACEHOLDERS_IN_STRING
+* ref: placeholderCompound -> group
 
 melee weapon effects:
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)

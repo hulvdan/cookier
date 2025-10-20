@@ -567,10 +567,23 @@ weapons: # {  ###
       - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
         placeholders:
           - ints: 3 4 5 6
+          - ints: 1 2 3 4
+        damage_scalings:
+          - stat_type: DAMAGE_MELEE
+            percents_per_tier: 25 50 75 100
+          - stat_type: DAMAGE_RANGED
+            percents_per_tier: 50 60 70 80
+      - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
+        placeholders:
+          - ints: 3 4 5 6
           - ints: 0 0 0 0
         damage_scalings:
           - stat_type: DAMAGE_RANGED
             percents_per_tier: 50 60 70 80
+      - effectcondition_type: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
+        placeholders:
+          - ints: 3 4 5 6
+          - ints: 1 1 1 1
   - type: GUN
     min_tier_index: 0
     base_damage: 6 9 12 20

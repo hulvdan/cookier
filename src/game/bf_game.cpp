@@ -719,8 +719,8 @@ struct ThisWaveMob {  ///
 };
 
 struct Placeholder {  ///
-  PlaceholderType type        = {};
-  const char*     placeholder = {};
+  PlaceholderType type = {};
+  Placeholder*    next = nullptr;
 
   union {
     struct {
@@ -729,6 +729,8 @@ struct Placeholder {  ///
     } string;
 
     int brokenLocale_value;
+
+    int image_texId;
   } _u;
 
   const auto& string() const {
@@ -740,6 +742,19 @@ struct Placeholder {  ///
     ASSERT(type == PlaceholderType_BROKEN_LOCALE);
     return _u.brokenLocale_value;
   }
+
+  int image_texId() const {
+    ASSERT(type == PlaceholderType_IMAGE);
+    return _u.image_texId;
+  }
+};
+
+struct PlaceholderGroup {
+  const char*       placeholder = {};
+  PlaceholderGroup* next        = nullptr;
+
+  Placeholder* first = nullptr;
+  Placeholder* last  = nullptr;
 };
 
 struct Particle {  ///
@@ -953,8 +968,9 @@ struct GameData {
     int  currentWidth  = 0;
     int  maxWidth      = {};
 
-    Array<Placeholder, BF_MAX_PLACEHOLDERS_IN_STRING> placeholders      = {};
-    int                                               placeholdersCount = {};
+    PlaceholderGroup* pgroupsFirst        = nullptr;
+    PlaceholderGroup* pgroupsLast         = nullptr;
+    bool              pgroupsLastIsActive = false;
   } uiFlex;
 
   struct UI {  ///
@@ -1615,26 +1631,61 @@ void FlexAddRowForChildIfNeeded(int childWidth) {  ///
 }
 
 bool IsAlreadyPlaceholded(const char* placeholder) {  ///
-  FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-    if (!strcmp(g.uiFlex.placeholders[i].placeholder, placeholder))
+  auto pp = g.uiFlex.pgroupsFirst;
+  while (pp) {
+    if (!strcmp(pp->placeholder, placeholder))
       return true;
+    pp = pp->next;
   }
   return false;
 }
 
-void PlaceholdCompoundBegin() {  ///
+// `placeholder` must be statically allocated or live in trashArena.
+void PlaceholdGroupBegin(const char* placeholder) {  ///
+  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
+  ASSERT_FALSE(g.uiFlex.pgroupsLastIsActive);
+  g.uiFlex.pgroupsLastIsActive = true;
+
+  ASSERT((bool)g.uiFlex.pgroupsFirst == (bool)g.uiFlex.pgroupsLast);
+
+  auto pp = ALLOCATE_FOR(&g.meta.trashArena, PlaceholderGroup);
+  *pp     = {.placeholder = placeholder};
+
+  if (!g.uiFlex.pgroupsFirst)
+    g.uiFlex.pgroupsFirst = pp;
+  if (g.uiFlex.pgroupsLast)
+    g.uiFlex.pgroupsLast->next = pp;
+  g.uiFlex.pgroupsLast = pp;
 }
 
-void PlaceholdCompoundString() {  ///
+void _AddPlaceholder(Placeholder p) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+
+  auto pp = ALLOCATE_FOR(&g.meta.trashArena, Placeholder);
+  *pp     = p;
+
+  auto& group = *g.uiFlex.pgroupsLast;
+  if (!group.first)
+    group.first = pp;
+  if (group.last)
+    group.last->next = pp;
+  group.last = pp;
 }
 
-void PlaceholdCompoundBrokenLocale() {  ///
+void PlaceholdGroupEnd() {  ///
+  ASSERT(g.uiFlex.pgroupsFirst);
+  ASSERT(g.uiFlex.pgroupsLast);
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  g.uiFlex.pgroupsLastIsActive = false;
 }
 
-void PlaceholdCompoundImage() {  ///
-}
-
-void PlaceholdCompoundEnd() {  ///
+// value must be statically allocated or live in trashArena.
+void PlaceholdString(const char* value, Color color = palTextGreen) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_STRING,
+    ._u{.string{.value = value, .color = color}},
+  });
 }
 
 // value must be statically allocated or live in trashArena.
@@ -1643,23 +1694,37 @@ void PlaceholdString(
   const char* value,
   Color       color = palTextGreen
 ) {  ///
-  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
-  Placeholder p{
-    .type        = PlaceholderType_STRING,
-    .placeholder = placeholder,
-    ._u{.string{.value = value, .color = color}},
-  };
-  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = p;
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdString(value, color);
+  PlaceholdGroupEnd();
+}
+
+void PlaceholdBrokenLocale(int locale) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_BROKEN_LOCALE,
+    ._u{.brokenLocale_value = locale},
+  });
 }
 
 void PlaceholdBrokenLocale(const char* placeholder, int locale) {  ///
-  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
-  Placeholder p{
-    .type        = PlaceholderType_BROKEN_LOCALE,
-    .placeholder = placeholder,
-    ._u{.brokenLocale_value = locale},
-  };
-  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = p;
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdBrokenLocale(locale);
+  PlaceholdGroupEnd();
+}
+
+void PlaceholdImage(int texId) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_IMAGE,
+    ._u{.image_texId = texId},
+  });
+}
+
+void PlaceholdImage(const char* placeholder, int texId) {  ///
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdImage(texId);
+  PlaceholdGroupEnd();
 }
 
 void MakePickupable(MakePickupableData data) {  ///
@@ -1789,7 +1854,17 @@ void* PushClayCustomData(ClayCustomData data) {  ///
   return (void*)result;
 }
 
-void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
+void ResetPlaceholders() {  ///
+  ASSERT_FALSE(g.uiFlex.pgroupsLastIsActive);
+  g.uiFlex.pgroupsFirst = nullptr;
+  g.uiFlex.pgroupsLast  = nullptr;
+}
+
+void BF_CLAY_IMAGE(
+  ClayImageData data,
+  auto          innerLambda,
+  bool          _resetPlaceholders = true
+) {  ///
   const auto texture      = glib->atlas_textures()->Get(data.texId);
   const auto originalSize = glib->original_texture_sizes()->Get(data.texId);
 
@@ -1816,10 +1891,13 @@ void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
   }) {
     innerLambda();
   }
+
+  if (_resetPlaceholders)
+    ResetPlaceholders();
 }
 
-void BF_CLAY_IMAGE(ClayImageData data) {  ///
-  BF_CLAY_IMAGE(data, [] {});
+void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
+  BF_CLAY_IMAGE(data, [] {}, _resetPlaceholders);
 }
 
 // NOTE: This overload DOESN'T SAVE string to trash arena.
@@ -1890,11 +1968,13 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
           const auto requiredPlaceholder = string->placeholder()->c_str();
 
           bool found = false;
-          FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-            if (!strcmp(g.uiFlex.placeholders[i].placeholder, requiredPlaceholder)) {
+          auto group = g.uiFlex.pgroupsFirst;
+          while (group) {
+            if (!strcmp(group->placeholder, requiredPlaceholder)) {
               found = true;
               break;
             }
+            group = group->next;
           }
           ASSERT(found);
         }
@@ -1914,17 +1994,24 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
 
         if (string->placeholder()) {
           const auto placeholderString = string->placeholder()->c_str();
-          int        pl                = -1;
-          FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-            if (!strcmp(g.uiFlex.placeholders[i].placeholder, placeholderString)) {
-              pl = i;
+
+          auto group = g.uiFlex.pgroupsFirst;
+          bool found = false;
+          while (group) {
+            if (!strcmp(group->placeholder, placeholderString)) {
+              found = true;
               break;
             }
+            group = group->next;
           }
+          ASSERT(found);
 
-          const auto& placeholder = g.uiFlex.placeholders[pl];
-          ASSERT(placeholder.type);
-          clayPlaceholderFunctions[(int)placeholder.type - 1](&placeholder);
+          auto pp = group->first;
+          while (pp) {
+            ASSERT(pp->type);
+            clayPlaceholderFunctions[(int)pp->type - 1](pp);
+            pp = pp->next;
+          }
         }
         else {
           Clay_String text{
@@ -1939,7 +2026,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
   }
 
   if (_resetPlaceholders)
-    g.uiFlex.placeholdersCount = 0;
+    ResetPlaceholders();
 }
 
 void DestroyBody(Body* body) {  ///
@@ -2770,7 +2857,11 @@ void GameInit() {  ///
 
         case CondVarType_DAMAGE: {
           ASSERT(reqValues->ints()->size() == tierValues);
-          ASSERT(fb_effect->damage_scalings());
+          if (!fb_effect->damage_scalings()) {
+            FOR_RANGE (int, i, tierValues) {
+              ASSERT(reqValues->ints()->Get(i) > 0);
+            }
+          }
         } break;
 
         default:
@@ -2834,8 +2925,10 @@ void GameInit() {  ///
     const char* const letters_[]{"X", "Y", "Z"};
     VIEW_FROM_ARRAY_DANGER(letters);
     FOR_RANGE (int, i, fb_cond->placeholders()->size()) {
-      auto expectedLetter = letters[i];
-      ASSERT(checkPlaceholder(fb_cond->name_locale(), expectedLetter));
+      if (fb_cond->placeholders()->Get(i)->required()) {
+        auto expectedLetter = letters[i];
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), expectedLetter));
+      }
     }
   }
 #endif
@@ -3407,6 +3500,10 @@ void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  //
   BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
     placeholder->brokenLocale_value(), palTextWhite, false
   );
+}
+
+void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
+  BF_CLAY_IMAGE({.texId = placeholder->image_texId()}, false);
 }
 
 void FontBegin(Font* font) {  ///
@@ -4025,7 +4122,9 @@ void DoUI(bool draw) {
               auto formatFunc = FormatInt;
               if (fb_placeholder->signed_())
                 formatFunc = FormatSignedInt;
-              PlaceholdString(placeholderName, (*formatFunc)(cv));
+              PlaceholdString(
+                PushTextToArena(&g.meta.trashArena, placeholderName), (*formatFunc)(cv)
+              );
             } break;
 
             case CondVarType_FLOAT: {
@@ -4033,10 +4132,56 @@ void DoUI(bool draw) {
               auto formatFunc = FormatFloatDot1WithoutLeadingZeros;
               if (fb_placeholder->signed_())
                 formatFunc = FormatSignedFloatDot1WithoutLeadingZeros;
-              PlaceholdString(placeholderName, (*formatFunc)(cv));
+              PlaceholdString(
+                PushTextToArena(&g.meta.trashArena, placeholderName), (*formatFunc)(cv)
+              );
             } break;
 
             case CondVarType_DAMAGE: {
+              const int baseDamage = fb_vals->ints()->Get(tierOffset);
+              ASSERT(baseDamage >= 0);
+              auto scalings = fb_effect->damage_scalings();
+
+              int totalScalings = 0;
+              if (scalings) {
+                for (auto s : *scalings) {
+                  const int v = s->percents_per_tier()->Get(tierOffset);
+                  if (v)
+                    totalScalings++;
+                }
+              }
+
+              PlaceholdGroupBegin(placeholderName);
+
+              if (baseDamage) {
+                PlaceholdString(PushTextToArena(&g.meta.trashArena, FormatInt(baseDamage))
+                );
+
+                if (totalScalings) {
+                  PlaceholdString(" ");
+                  PlaceholdString("+");
+                  PlaceholdString(" ");
+                }
+              }
+
+              if (scalings) {
+                for (auto s : *scalings) {
+                  const int v = s->percents_per_tier()->Get(tierOffset);
+                  if (v) {
+                    PlaceholdString(TextFormat("%d%%", v));
+                    PlaceholdImage(fb_stats->Get(s->stat_type())->icon_texture_id());
+                    totalScalings--;
+
+                    if (totalScalings > 0) {
+                      PlaceholdString(" ");
+                      PlaceholdString("+");
+                      PlaceholdString(" ");
+                    }
+                  }
+                }
+              }
+
+              PlaceholdGroupEnd();
             } break;
 
             default:
@@ -4325,7 +4470,7 @@ void DoUI(bool draw) {
                   ));
                   BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
                   if (scalingIndex < fb_scalings->size() - 1)
-                    BF_CLAY_TEXT(", ");
+                    BF_CLAY_TEXT(" + ");
                 }
                 BF_CLAY_TEXT(")");
               }
