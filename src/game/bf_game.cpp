@@ -1025,7 +1025,7 @@ int ApplyPlayerStatDamageMultiplier(int damage) {  ///
   return Round((f32)damage * v);
 }
 
-void IterateOverSpecificWeaponEffects(
+void IterateOverWeaponEffects(
   EffectConditionType              condition,
   WeaponType                       type,
   auto /* void (auto fb_effect) */ innerLambda
@@ -1050,7 +1050,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
   damage     = ApplyDamageScalings(damage, tierOffset, fb->damage_scalings());
   damage     = ApplyPlayerStatDamageMultiplier(damage);
 
-  IterateOverSpecificWeaponEffects(
+  IterateOverWeaponEffects(
     EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
     type,
     [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
@@ -2472,22 +2472,6 @@ int GetNextLevelXp(int currentLevel) {  ///
   return SQR(currentLevel + 3);
 }
 
-void IterateOverWeaponEffects(
-  EffectConditionType condition,
-  WeaponType          type,
-  /* void (auto fb_effect) */
-  auto innerLambda
-) {
-  auto       fb         = glib->weapons()->Get(type);
-  const auto fb_effects = fb->effects();
-  if (!fb_effects)
-    return;
-  for (const auto fb_effect : *fb_effects) {
-    if (fb_effect->effectcondition_type() == condition)
-      innerLambda(fb_effect);
-  }
-}
-
 void IterateOverWeaponsEffects(
   EffectConditionType condition,
   /* void (
@@ -2964,6 +2948,23 @@ struct TryApplyDamageData {  ///
   f32              ailmentChance                      = 0;
 };
 
+#define WEAPON_EFFECT_PLACEHOLDER_X_INT \
+  (fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Y_INT \
+  (fb_effect->placeholders()->Get(1)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Z_INT \
+  (fb_effect->placeholders()->Get(2)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_W_INT \
+  (fb_effect->placeholders()->Get(3)->ints()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_X_FLOAT \
+  (fb_effect->placeholders()->Get(0)->floats()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Y_FLOAT \
+  (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_Z_FLOAT \
+  (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
+#define WEAPON_EFFECT_PLACEHOLDER_W_FLOAT \
+  (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
+
 bool TryApplyDamage(TryApplyDamageData data) {  ///
   ASSERT(data.creatureIndex >= 0);
   ASSERT(data.damage >= 0);
@@ -2993,6 +2994,38 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   creature.aggroed = fb->can_aggro();
 
   if (data.creatureIndex) {
+    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+      auto&     weapon = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1];
+      const int tierOffset
+        = weapon.tier - glib->weapons()->Get(weapon.type)->min_tier_index();
+
+      const f32 hpPercent = (f32)creature.health / (f32)creature.maxHealth;
+
+      IterateOverWeaponEffects(
+        EffectConditionType_X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP,
+        weapon.type,
+        [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+          auto requiredPercent = WEAPON_EFFECT_PLACEHOLDER_Y_INT;
+          if (hpPercent * 100 >= requiredPercent) {
+            data.damage
+              += Round((f32)data.damage * (f32)WEAPON_EFFECT_PLACEHOLDER_X_INT / 100.0f);
+          }
+        }
+      );
+
+      IterateOverWeaponEffects(
+        EffectConditionType_X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP,
+        weapon.type,
+        [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+          auto requiredPercent = WEAPON_EFFECT_PLACEHOLDER_Y_INT;
+          if (hpPercent * 100 <= requiredPercent) {
+            data.damage
+              += Round((f32)data.damage * (f32)WEAPON_EFFECT_PLACEHOLDER_X_INT / 100.0f);
+          }
+        }
+      );
+    }
+
     auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
     if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
       MakeNumber({
