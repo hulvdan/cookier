@@ -30,7 +30,6 @@
 #pragma once
 
 #include "box2d/box2d.h"
-#include "flatbuffers/bf_save_generated.h"
 
 // Clay.
 // ============================================================ {  ///
@@ -1280,9 +1279,7 @@ void AchievementMax(AchievementType type, int value) {  ///
   Save();
 }
 
-void Load(void* saveData) {  ///
-  const auto save = BFSave::GetSave(saveData);
-
+void GameLoad(const BFSave::Save* save) {  ///
   auto& s         = g.run.state;
   auto  tempItems = s.items;
   tempItems.Reset();
@@ -1442,7 +1439,7 @@ void Load(void* saveData) {  ///
   }
 }
 
-flatbuffers::FlatBufferBuilder DumpState() {  ///
+flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
   BFSave::SaveT fb_save{};
 
   {
@@ -2800,12 +2797,7 @@ void GameInit() {  ///
   ReloadFontsIfNeeded();
 
   RunInit();
-
-  auto saveData = SDL_LoadFile("save.bin", nullptr);
-  if (saveData) {
-    Load(saveData);
-    SDL_free(saveData);
-  }
+  LoadSaveData();
 
   // Checking that weapon effects weren't applied to difficulties, builds, and items.
 #if BF_ENABLE_ASSERTS
@@ -7055,77 +7047,6 @@ void MakeAOE(
   }
   *g.run.particles.Add() = p;
 }
-
-// void _Save() {  ///
-#if defined(SDL_PLATFORM_WIN32)
-
-void _Save() {
-  ZoneScoped;
-
-  DEFER {
-    ge.meta.previousSaveIsNotCompletedYet = false;
-  };
-
-  const auto toSwapPath = "save_to_swap.bin";
-
-  bool saved = false;
-  {
-    auto fbb = DumpState();
-    FOR_RANGE (int, i, 5) {
-      if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
-        saved = true;
-        break;
-      }
-    }
-  }
-  if (!saved) {
-    LOGE("Temp save failed");
-    return;
-  }
-
-  bool swapped = false;
-  FOR_RANGE (int, i, 5) {
-    if (SDL_RenamePath(toSwapPath, "save.bin")) {
-      swapped = true;
-      break;
-    }
-  }
-  if (!swapped)
-    LOGI("Save swap failed");
-}
-
-#elif defined(BF_PLATFORM_WebYandex)
-
-// clang-format off
-EM_JS(void, js_Save, (const char* data), {
-  window.player
-    .setData(UTF8ToString(data), /* flush */ true)
-    .then(() => {
-      Module.ccall('saved_from_js', null, [], []);
-    });
-});
-// clang-format on
-
-void _Save() {
-  ZoneScoped;
-
-  TEMP_USAGE(&g.meta.trashArena);
-
-  auto fbb     = DumpState();
-  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), &g.meta.trashArena);
-  js_Save(encoded);
-}
-
-#elif defined(SDL_PLATFORM_EMSCRIPTEN)
-
-void _Save() {
-  LOGW("Save is not yet implemented for web");
-}
-
-#else
-#  error "_Save() is not implemented for your platform"
-#endif
-// }
 
 int GetMobDamage(CreatureType type) {  ///
   auto fb = glib->creatures()->Get(type);
