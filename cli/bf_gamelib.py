@@ -7,7 +7,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
 from functools import partial
-from itertools import groupby
 from math import radians
 from pathlib import Path
 from typing import Any, TypeAlias
@@ -512,18 +511,6 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
                         data_values.languages[loc_index],
                         index_to_locale[string_index],
                     )
-
-        try:
-            max_placeholders = max(
-                len(list(placeholders))
-                for _, placeholders in groupby(all_russian_placeholders, lambda x: x[0])
-            )
-        except ValueError:
-            max_placeholders = 0
-
-        genline(
-            "constexpr int BF_MAX_PLACEHOLDERS_IN_STRING = {};\n".format(max_placeholders)
-        )
 
     return codepoints, locale_to_index
 
