@@ -942,11 +942,14 @@ struct GameData {
     Array<ThisWaveMob, CreatureType_COUNT> thisWaveMobs      = {};
     int                                    thisWaveMobsCount = 0;
 
-    FrameGame playerLastLifestealAt = {};
-    FrameGame playerLastRegenAt     = {};
-    Vector2   previousPlayerPos     = {};
-    f32       playerWalkedMeters    = 0;
-    int       playerIdleFrames      = 0;
+    Vector2 previousPlayerPos = {};
+
+    FrameGame playerLastLifestealAt         = {};
+    FrameGame playerLastRegenAt             = {};
+    f32       playerWalkedMetersDelta       = 0;
+    int       playerWalkedMeters            = 0;
+    int       playerContinuousIdleFrames    = 0;
+    int       playerContinuousWalkingFrames = 0;
 
     int cratesDroppedThisWave = 0;
     int turrelsToSpawn        = 0;
@@ -1115,6 +1118,30 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
     }
   );
 
+  if (g.run.state.screen == ScreenType_GAMEPLAY && !g.meta.paused) {
+    IterateOverWeaponEffects(
+      EffectConditionType_PROPERTY_WHEN_IDLE,
+      type,
+      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+          return;
+        if (g.run.playerContinuousIdleFrames > FIXED_FPS / 8)
+          applyEffectToDamage(fb_effect, 1);
+      }
+    );
+
+    IterateOverWeaponEffects(
+      EffectConditionType_PROPERTY_WHEN_WALKING,
+      type,
+      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+          return;
+        if (g.run.playerContinuousWalkingFrames > FIXED_FPS / 8)
+          applyEffectToDamage(fb_effect, 1);
+      }
+    );
+  }
+
   damage = MAX(1, damage);
   return damage;
 }
@@ -1228,16 +1255,21 @@ void OnWaveStarted() {  ///
   g.run.state.upgrades.rerolls = {};
   g.run.state.previousCoins    = g.run.state.stats[StatType_COINS];
 
-  g.run.bossCreatureId = 0;
+  g.run.playerWalkedMetersDelta       = 0;
+  g.run.playerWalkedMeters            = 0;
+  g.run.playerContinuousIdleFrames    = 0;
+  g.run.playerContinuousWalkingFrames = 0;
+
+  g.run.cratesDroppedThisWave = 0;
+  g.run.turrelsToSpawn        = g.run.state.stats[StatType_TURRELS_COUNT];
+  g.run.gardensToSpawn        = g.run.state.stats[StatType_GARDENS_COUNT];
 
   g.run.waveStartedAt = {};
   g.run.waveStartedAt.SetNow();
-  g.run.cratesDroppedThisWave = 0;
+
+  g.run.bossCreatureId = 0;
 
   RecalculateThisWaveMobs();
-
-  g.run.turrelsToSpawn = g.run.state.stats[StatType_TURRELS_COUNT];
-  g.run.gardensToSpawn = g.run.state.stats[StatType_GARDENS_COUNT];
 
   RecalculatePlayerWeaponDamages();
 }
@@ -8025,20 +8057,23 @@ void GameFixedUpdate() {
         g.run.previousPlayerPos = PLAYER_CREATURE.pos;
 
         if ((deltaMeters > 0) && !FloatEquals(deltaMeters, 0)) {
-          g.run.playerWalkedMeters += deltaMeters;
-          g.run.playerIdleFrames = 0;
+          g.run.playerWalkedMetersDelta += deltaMeters;
+          g.run.playerContinuousIdleFrames = 0;
+          g.run.playerContinuousWalkingFrames++;
         }
-        else
-          g.run.playerIdleFrames++;
+        else {
+          g.run.playerContinuousIdleFrames++;
+          g.run.playerContinuousWalkingFrames = 0;
+        }
 
-        while (g.run.playerWalkedMeters > 1) {
-          g.run.playerWalkedMeters -= 1;
+        while (g.run.playerWalkedMetersDelta > 1) {
+          g.run.playerWalkedMetersDelta -= 1;
+          g.run.playerWalkedMeters++;
           AchievementAdd(AchievementType_WALKER, 1);
         }
-        while (g.run.playerIdleFrames >= FIXED_FPS * 3 / 2) {
-          g.run.playerIdleFrames -= FIXED_FPS;
+
+        if (((g.run.playerContinuousIdleFrames + 1) % FIXED_FPS) == 0)
           AchievementAdd(AchievementType_IDLER, 1);
-        }
       }
     }
 
