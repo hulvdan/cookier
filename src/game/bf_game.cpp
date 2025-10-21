@@ -8654,13 +8654,13 @@ void GameFixedUpdate() {
                   .wasCrit       = &wasCrit,
                 }))
             {
-              // Applying EffectConditionType_PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT.
+              // Applying EffectConditionType_PIERCES_UP_TO_X_ENEMIES_ON_CRIT.
               if (wasCrit && projectile.weaponIndexOrMinus1 >= 0) {
                 const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
                 auto        fb_weapon  = glib->weapons()->Get(weapon.type);
                 const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
                 IterateOverWeaponEffects(
-                  EffectConditionType_PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT,
+                  EffectConditionType_PIERCES_UP_TO_X_ENEMIES_ON_CRIT,
                   weapon.type,
                   [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
                     if (projectile.effectCritPierce < EFFECT_PLACEHOLDER_X_INT) {

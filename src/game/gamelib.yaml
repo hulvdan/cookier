@@ -460,7 +460,7 @@ weapon_effect_conditions: # {  ###
     y_condvar_type: DAMAGE
   - type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
   - type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
-  - type: PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
+  - type: PIERCES_UP_TO_X_ENEMIES_ON_CRIT
     rectrict_only_ranged_weapons: true
 # }
 
@@ -680,7 +680,7 @@ weapons: # {  ###
     texture_ids:
       - game_weapon_gun
     effects:
-      - effectcondition_type: PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
+      - effectcondition_type: PIERCES_UP_TO_X_ENEMIES_ON_CRIT
         placeholders:
           - ints: 1 2 3 4
             #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
