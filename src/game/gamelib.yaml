@@ -608,9 +608,13 @@ weapons: # {  ###
       #     - ints: 20 20 20 20
       #     - ints: 70 65 60 55
       #
-      - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
-        weaponproperty_type: DAMAGE
-        value: 4 5 6 8
+      # - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+      #   weaponproperty_type: DAMAGE
+      #   value: 4 5 6 8
+      #
+      - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+        stat_type: DAMAGE
+        value: 3 5 7 10
         #
         # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
         #   placeholders:

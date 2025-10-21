@@ -40,9 +40,9 @@ x yandex/web load savedata
 x fix: on start of the game player's health is 20.
   Should be 25 (because of Build's effect)
 x weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+x weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+x weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
 
-* weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-* weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
 *
 * weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
 *
@@ -52,7 +52,6 @@ x weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 * weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS
 * weapon effects: impl: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
 *
-* прописать читы в реадме
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
 *
 * weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
