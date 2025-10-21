@@ -453,7 +453,6 @@ struct Weapon {  ///
   FrameGame  startedShootingAt                  = {};
   FrameGame  cooldownStartedAt                  = {};
   int        tier                               = {};
-  int        calculatedDamage                   = 0;
   int        thisWaveDamage                     = 0;
   f32        lastCollisionCheckShootingProgress = 0;
 
@@ -1104,10 +1103,6 @@ void RecalculatePlayerWeaponDamages() {  ///
   for (auto& weapon : g.run.state.weapons) {
     weaponIndexOrMinus1++;
     weapon.thisWaveDamage = 0;
-    if (weapon.type) {
-      weapon.calculatedDamage
-        = CalculateWeaponDamage(weaponIndexOrMinus1, weapon.type, weapon.tier);
-    }
   }
 }
 
@@ -3453,8 +3448,8 @@ int GetCreatureIndexById(int id) {  ///
   return index;
 }
 
-bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndexOrMinus1) {  ///
-  auto& weapon = g.run.state.weapons[*weaponIndexOrMinus1];
+bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
+  auto& weapon = g.run.state.weapons[*weaponIndex];
 
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
@@ -3477,13 +3472,13 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndexOrMinus1) {  ///
     weapon.piercedCreatureIds[weapon.piercedCount++] = creature.id;
 
     TryApplyDamage({
-      .creatureIndex        = creatureIndex,
-      .damage               = weapon.calculatedDamage,
-      .directionOrZero      = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      .knockbackMeters      = fb->knockback_meters(),
-      .damagerCreatureType  = CreatureType_PLAYER,
-      .critDamageMultiplier = fb->crit_damage_multiplier(),
-      .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndexOrMinus1,
+      .creatureIndex   = creatureIndex,
+      .damage          = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier),
+      .directionOrZero = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      .knockbackMeters = fb->knockback_meters(),
+      .damagerCreatureType                = CreatureType_PLAYER,
+      .critDamageMultiplier               = fb->crit_damage_multiplier(),
+      .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndex,
     });
   }
   return continueCollisions;
@@ -8286,13 +8281,13 @@ void GameFixedUpdate() {
 
             if (spawn) {
               MakeProjectile({
-                .type                 = projectileType,
-                .ownerCreatureType    = PLAYER_CREATURE.type,
-                .weaponIndexOrMinus1  = weaponIndex,
-                .pos                  = pos,
-                .dir                  = weapon.targetDir,
-                .range                = GetWeaponRangeMeters(weapon.type),
-                .damage               = weapon.calculatedDamage,
+                .type                = projectileType,
+                .ownerCreatureType   = PLAYER_CREATURE.type,
+                .weaponIndexOrMinus1 = weaponIndex,
+                .pos                 = pos,
+                .dir                 = weapon.targetDir,
+                .range               = GetWeaponRangeMeters(weapon.type),
+                .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
                 .critDamageMultiplier = fb->crit_damage_multiplier(),
                 .knockbackMeters      = fb->knockback_meters(),
                 .pierce               = fb->projectile_pierce(),
