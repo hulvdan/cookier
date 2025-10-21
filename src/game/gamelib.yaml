@@ -620,11 +620,17 @@ weapons: # {  ###
       #   weaponproperty_type: DAMAGE
       #   value: 100 100 100 100
       #
-      - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+      # - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+      #   stat_type: DAMAGE
+      #   value: 100 100 100 100
+      #   placeholders:
+      #     - ints: 4 3 2 1
+      #
+      - effectcondition_type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
         stat_type: DAMAGE
         value: 100 100 100 100
         placeholders:
-          - ints: 4 3 2 1
+          - floats: 4 3 2 1
             #
             # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
             #   placeholders:
