@@ -410,6 +410,11 @@ effect_conditions: # {  ###
   - type: KILL_X_ENEMIES_GET_STAT
   - type: END_OF_THE_WAVE_GET_STAT
   - type: START_OF_THE_WAVE_GET_STAT
+  - type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+    x_condvar_type: FLOAT
+  - type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+  - type: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
+    x_condvar_type: FLOAT
 # }
 
 weapon_effect_conditions: # {  ###
@@ -443,11 +448,6 @@ weapon_effect_conditions: # {  ###
     x_is_percent: true
   - type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
   - type: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
-  - type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
-    x_condvar_type: FLOAT
-  - type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
-  - type: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
-    x_condvar_type: FLOAT
   - type: PROPERTY_WHEN_IDLE
   - type: PROPERTY_WHEN_WALKING
   # - type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
@@ -616,21 +616,27 @@ weapons: # {  ###
       #   stat_type: DAMAGE
       #   value: 3 5 7 10
       #
-      - effectcondition_type: PROPERTY_WHEN_WALKING
-        weaponproperty_type: DAMAGE
+      # - effectcondition_type: PROPERTY_WHEN_WALKING
+      #   weaponproperty_type: DAMAGE
+      #   value: 100 100 100 100
+      #
+      - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+        stat_type: DAMAGE
         value: 100 100 100 100
-        #
-        # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
-        #   placeholders:
-        #     - ints: 3 4 5 6
-        #     - ints: 1 2 3 4
-        #     - ints: 0 0 1 2
-        #   damage_scalings:
-        #     - stat_type: DAMAGE_MELEE
-        #       percents_per_tier: 25 50 75 100
-        #     - stat_type: DAMAGE_RANGED
-        #       percents_per_tier: 50 60 70 80
-        #
+        placeholders:
+          - ints: 4 3 2 1
+            #
+            # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+            #   placeholders:
+            #     - ints: 3 4 5 6
+            #     - ints: 1 2 3 4
+            #     - ints: 0 0 1 2
+            #   damage_scalings:
+            #     - stat_type: DAMAGE_MELEE
+            #       percents_per_tier: 25 50 75 100
+            #     - stat_type: DAMAGE_RANGED
+            #       percents_per_tier: 50 60 70 80
+            #
   - type: GUN
     min_tier_index: 0
     base_damage: 6 9 12 20

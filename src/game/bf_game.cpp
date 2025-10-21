@@ -804,21 +804,21 @@ struct JustUnlockedAchievement {  ///
   FrameVisual     shownAt   = {};
 };
 
-#define WEAPON_EFFECT_PLACEHOLDER_X_INT \
+#define EFFECT_PLACEHOLDER_X_INT \
   (fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Y_INT \
+#define EFFECT_PLACEHOLDER_Y_INT \
   (fb_effect->placeholders()->Get(1)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Z_INT \
+#define EFFECT_PLACEHOLDER_Z_INT \
   (fb_effect->placeholders()->Get(2)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_W_INT \
+#define EFFECT_PLACEHOLDER_W_INT \
   (fb_effect->placeholders()->Get(3)->ints()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_X_FLOAT \
+#define EFFECT_PLACEHOLDER_X_FLOAT \
   (fb_effect->placeholders()->Get(0)->floats()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Y_FLOAT \
+#define EFFECT_PLACEHOLDER_Y_FLOAT \
   (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_Z_FLOAT \
+#define EFFECT_PLACEHOLDER_Z_FLOAT \
   (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
-#define WEAPON_EFFECT_PLACEHOLDER_W_FLOAT \
+#define EFFECT_PLACEHOLDER_W_FLOAT \
   (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
 
 struct GameData {
@@ -1008,6 +1008,10 @@ struct GameData {
   } ui;
 } g = {};
 
+void ChangeStat(StatType stat, int value) {  ///
+  g.run.state.stats[stat] += value;
+}
+
 int GetAchievementsCompletedPercent() {  ///
   ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
   ASSERT(g.player.achievementStepsCompleted >= 0);
@@ -1191,7 +1195,7 @@ void ApplyEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  
 
   auto value = fb_effect->value();
   if (value)
-    g.run.state.stats[statType] += value->Get(tierOffset) * times;
+    ChangeStat(statType, value->Get(tierOffset) * times);
 
   if (statType == StatType_COINS)
     SanitizeCoins();
@@ -3057,10 +3061,10 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         EffectConditionType_X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-          auto requiredPercent = WEAPON_EFFECT_PLACEHOLDER_Y_INT;
+          auto requiredPercent = EFFECT_PLACEHOLDER_Y_INT;
           if (hpPercent * 100 >= requiredPercent) {
             data.damage
-              += Round((f32)data.damage * (f32)WEAPON_EFFECT_PLACEHOLDER_X_INT / 100.0f);
+              += Round((f32)data.damage * (f32)EFFECT_PLACEHOLDER_X_INT / 100.0f);
           }
         }
       );
@@ -3069,10 +3073,10 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         EffectConditionType_X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-          auto requiredPercent = WEAPON_EFFECT_PLACEHOLDER_Y_INT;
+          auto requiredPercent = EFFECT_PLACEHOLDER_Y_INT;
           if (hpPercent * 100 <= requiredPercent) {
             data.damage
-              += Round((f32)data.damage * (f32)WEAPON_EFFECT_PLACEHOLDER_X_INT / 100.0f);
+              += Round((f32)data.damage * (f32)EFFECT_PLACEHOLDER_X_INT / 100.0f);
           }
         }
       );
@@ -3081,9 +3085,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         EffectConditionType_DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-          int percent = WEAPON_EFFECT_PLACEHOLDER_X_INT;
+          int percent = EFFECT_PLACEHOLDER_X_INT;
           if (fb->is_boss())
-            percent = WEAPON_EFFECT_PLACEHOLDER_Y_INT;
+            percent = EFFECT_PLACEHOLDER_Y_INT;
           data.damage += Round(creature.health * (f32)percent / 100.0f);
         }
       );
@@ -3092,12 +3096,12 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         EffectConditionType_DROP_X_COINS_ON_HIT_WITH_Y_CHANCE,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-          auto chance = (f32)WEAPON_EFFECT_PLACEHOLDER_Y_INT / 100.0f;
+          auto chance = (f32)EFFECT_PLACEHOLDER_Y_INT / 100.0f;
           if (GRAND.FRand() < chance) {
             MakePickupable({
               .type        = PickupableType_COIN,
               .pos         = creature.pos,
-              .coin_amount = WEAPON_EFFECT_PLACEHOLDER_X_INT,
+              .coin_amount = EFFECT_PLACEHOLDER_X_INT,
             });
           }
         }
@@ -3578,7 +3582,7 @@ void AddXP(f32 xp) {  ///
       const auto vals = fb->upgrade_values();
       if (!vals)
         continue;
-      g.run.state.stats[stat] += vals->Get(0);
+      ChangeStat(stat, vals->Get(0));
       break;
     }
   }
@@ -4007,11 +4011,11 @@ void DoUI(bool draw) {
           // Increasing stat by clicking on it in debug mode.
           if (stat && ge.meta.debugEnabled) {
             if (clicked())
-              g.run.state.stats[stat]++;
+              ChangeStat(stat, 1);
             if (rightClicked())
-              g.run.state.stats[stat] += 10;
+              ChangeStat(stat, 10);
             if (wheel && Clay_Hovered())
-              g.run.state.stats[stat] += wheel;
+              ChangeStat(stat, wheel);
           }
 
           const auto fb = fb_stats->Get(stat);
@@ -5998,7 +6002,7 @@ void DoUI(bool draw) {
                     g.run.scheduledShopReset = true;
                   }
 
-                  g.run.state.stats[upgrade.stat] += amount;
+                  ChangeStat(upgrade.stat, amount);
 
                   if (upgrade.stat == StatType_HP)
                     PLAYER_CREATURE.health += amount;
@@ -7263,7 +7267,7 @@ void GameFixedUpdate() {
         AddXP(harvesting);
         // Harvesting stat (if positive) grows by 5% upon finishing each wave.
         if (harvesting > 0)
-          harvesting = Ceil((f32)harvesting * 1.05f);
+          ChangeStat(StatType_HARVESTING, Ceil((f32)harvesting * 0.05f));
       }
 
       if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) || !g.run.state.waveWon) {
@@ -8064,12 +8068,37 @@ void GameFixedUpdate() {
         else {
           g.run.playerContinuousIdleFrames++;
           g.run.playerContinuousWalkingFrames = 0;
+
+          IterateOverEffects(
+            EffectConditionType_GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE,
+            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+              const auto lf = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
+              if ((g.run.playerWalkedMeters % lf.value) == 0) {
+                ChangeStat(
+                  (StatType)fb_effect->stat_type(),
+                  fb_effect->value()->Get(tierOffset) * times
+                );
+              }
+            }
+          );
         }
 
         while (g.run.playerWalkedMetersDelta > 1) {
           g.run.playerWalkedMetersDelta -= 1;
           g.run.playerWalkedMeters++;
           AchievementAdd(AchievementType_WALKER, 1);
+
+          IterateOverEffects(
+            EffectConditionType_GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE,
+            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+              if ((g.run.playerWalkedMeters % EFFECT_PLACEHOLDER_X_INT) == 0) {
+                ChangeStat(
+                  (StatType)fb_effect->stat_type(),
+                  fb_effect->value()->Get(tierOffset) * times
+                );
+              }
+            }
+          );
         }
 
         if (((g.run.playerContinuousIdleFrames + 1) % FIXED_FPS) == 0)
