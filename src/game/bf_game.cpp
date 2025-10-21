@@ -944,12 +944,12 @@ struct GameData {
 
     Vector2 previousPlayerPos = {};
 
-    FrameGame playerLastLifestealAt         = {};
-    FrameGame playerLastRegenAt             = {};
-    f32       playerWalkedMetersDelta       = 0;
-    int       playerWalkedMeters            = 0;
-    int       playerContinuousIdleFrames    = 0;
-    int       playerContinuousWalkingFrames = 0;
+    FrameGame playerLastLifestealAt             = {};
+    FrameGame playerLastRegenAt                 = {};
+    f32       playerWalkedMetersCumulativeDelta = 0;
+    int       playerWalkedMeters                = 0;
+    int       playerContinuousIdleFrames        = 0;
+    int       playerContinuousWalkingFrames     = 0;
 
     int cratesDroppedThisWave = 0;
     int turrelsToSpawn        = 0;
@@ -1259,10 +1259,10 @@ void OnWaveStarted() {  ///
   g.run.state.upgrades.rerolls = {};
   g.run.state.previousCoins    = g.run.state.stats[StatType_COINS];
 
-  g.run.playerWalkedMetersDelta       = 0;
-  g.run.playerWalkedMeters            = 0;
-  g.run.playerContinuousIdleFrames    = 0;
-  g.run.playerContinuousWalkingFrames = 0;
+  g.run.playerWalkedMetersCumulativeDelta = 0;
+  g.run.playerWalkedMeters                = 0;
+  g.run.playerContinuousIdleFrames        = 0;
+  g.run.playerContinuousWalkingFrames     = 0;
 
   g.run.cratesDroppedThisWave = 0;
   g.run.turrelsToSpawn        = g.run.state.stats[StatType_TURRELS_COUNT];
@@ -2689,8 +2689,8 @@ void RunInit() {
       BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
   );
 
-  PLAYER_CREATURE.health    = g.run.state.stats[StatType_HP];
-  PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
+  PLAYER_CREATURE.health    = MAX(1, g.run.state.stats[StatType_HP]);
+  PLAYER_CREATURE.maxHealth = MAX(1, g.run.state.stats[StatType_HP]);
 
   // Filling MOB_BOSS_SHOOTING_FRAMES.
   {  ///
@@ -7217,7 +7217,7 @@ void GameFixedUpdate() {
 
   // Updating player's maxHealth.
   {  ///
-    PLAYER_CREATURE.maxHealth = g.run.state.stats[StatType_HP];
+    PLAYER_CREATURE.maxHealth = MAX(1, g.run.state.stats[StatType_HP]);
     PLAYER_CREATURE.health    = MIN(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth);
   }
 
@@ -7404,8 +7404,8 @@ void GameFixedUpdate() {
     OnWaveStarted();
 
     const int health          = g.run.state.stats[StatType_HP];
-    PLAYER_CREATURE.health    = health;
-    PLAYER_CREATURE.maxHealth = health;
+    PLAYER_CREATURE.health    = MAX(1, health);
+    PLAYER_CREATURE.maxHealth = MAX(1, health);
 
     // Applying effects: START_OF_THE_WAVE_GET_STAT.
     IterateOverEffects(
@@ -8061,7 +8061,7 @@ void GameFixedUpdate() {
         g.run.previousPlayerPos = PLAYER_CREATURE.pos;
 
         if ((deltaMeters > 0) && !FloatEquals(deltaMeters, 0)) {
-          g.run.playerWalkedMetersDelta += deltaMeters;
+          g.run.playerWalkedMetersCumulativeDelta += deltaMeters;
           g.run.playerContinuousIdleFrames = 0;
           g.run.playerContinuousWalkingFrames++;
         }
@@ -8070,10 +8070,10 @@ void GameFixedUpdate() {
           g.run.playerContinuousWalkingFrames = 0;
 
           IterateOverEffects(
-            EffectConditionType_GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE,
+            EffectConditionType_GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE,
             [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
               const auto lf = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
-              if ((g.run.playerWalkedMeters % lf.value) == 0) {
+              if ((g.run.playerContinuousIdleFrames % lf.value) == 0) {
                 ChangeStat(
                   (StatType)fb_effect->stat_type(),
                   fb_effect->value()->Get(tierOffset) * times
@@ -8081,10 +8081,13 @@ void GameFixedUpdate() {
               }
             }
           );
+
+          if ((g.run.playerContinuousIdleFrames % FIXED_FPS) == 0)
+            AchievementAdd(AchievementType_IDLER, 1);
         }
 
-        while (g.run.playerWalkedMetersDelta > 1) {
-          g.run.playerWalkedMetersDelta -= 1;
+        while (g.run.playerWalkedMetersCumulativeDelta >= 1) {
+          g.run.playerWalkedMetersCumulativeDelta -= 1;
           g.run.playerWalkedMeters++;
           AchievementAdd(AchievementType_WALKER, 1);
 
@@ -8100,10 +8103,22 @@ void GameFixedUpdate() {
             }
           );
         }
-
-        if (((g.run.playerContinuousIdleFrames + 1) % FIXED_FPS) == 0)
-          AchievementAdd(AchievementType_IDLER, 1);
       }
+
+      // Processing EffectConditionType_GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE.
+      IterateOverEffects(  ///
+        EffectConditionType_GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE,
+        [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+          const auto lf = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
+          const auto e  = g.run.waveStartedAt.Elapsed();
+          if (((e.value + 1) % lf.value) == 0) {
+            ChangeStat(
+              (StatType)fb_effect->stat_type(),
+              fb_effect->value()->Get(tierOffset) * times
+            );
+          }
+        }
+      );
     }
 
     // Burning spread.

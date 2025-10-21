@@ -46,8 +46,8 @@ x weapon effects: impl: PROPERTY_WHEN_IDLE
 x weapon effects: impl: PROPERTY_WHEN_WALKING
 x weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
 x weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
+x weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 
-* weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 * weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
 *
 * fix guarantee input press
