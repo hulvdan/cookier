@@ -601,6 +601,7 @@ struct Projectile {  ///
   int                               damage               = {};
   f32                               critDamageMultiplier = {};
   int                               pierce               = {};
+  int                               effectCritPierce     = {};
   int                               bounce               = {};
   FrameGame                         createdAt            = {};
   Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds   = {};
@@ -2859,7 +2860,10 @@ void GameInit() {  ///
   LAMBDA (
     void,
     checkEffects,
-    (auto fb_effects, bool cantBeRestrictedToWeapons = true, int tierValues = 1)
+    (auto                  fb_effects,
+     bool                  cantBeRestrictedToWeapons = true,
+     int                   tierValues                = 1,
+     const BFGame::Weapon* fb_weapon                 = nullptr)
   )
   {
     if (!fb_effects)
@@ -2878,6 +2882,12 @@ void GameInit() {  ///
       ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
       if (fb_cond->requires_projectile())
         ASSERT(fb_effect->projectile_range_meters() > 0);
+
+      if (fb_cond->rectrict_only_ranged_weapons())
+        ASSERT(fb_cond->restrict() == 1);
+
+      if ((fb_cond->restrict() == 1) && fb_cond->rectrict_only_ranged_weapons())
+        ASSERT(fb_weapon->projectile_type());
 
       {
         int required = 0;
@@ -2941,7 +2951,7 @@ void GameInit() {  ///
   }
   for (auto fb : *glib->weapons()) {
     auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects(), false, TOTAL_TIERS - fb->min_tier_index());
+    checkEffects(fb->effects(), false, TOTAL_TIERS - fb->min_tier_index(), fb);
   }
 
   LAMBDA (bool, checkPlaceholder, (int locale_, const char* placeholder)) {
@@ -3016,6 +3026,7 @@ struct TryApplyDamageData {  ///
   int              indexOfWeaponThatDidDamageOrMinus1 = -1;
   ApplyAilmentData ailment                            = {};
   f32              ailmentChance                      = 0;
+  bool*            wasCrit                            = nullptr;
 };
 
 bool TryApplyDamage(TryApplyDamageData data) {  ///
@@ -3169,6 +3180,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       .pos   = creature.pos,
     });
   }
+
+  if (data.wasCrit)
+    *data.wasCrit = isCrit;
 
   // Player lifesteals.
   if (data.damagerCreatureType == CreatureType_PLAYER) {
@@ -8621,6 +8635,8 @@ void GameFixedUpdate() {
             if (fb->ailment_type() == AilmentType_BURN)
               ailmentSpread = MAX(0, g.run.state.stats[StatType_BURNING_SPREAD]);
 
+            bool wasCrit = false;
+
             if (TryApplyDamage({
                   .creatureIndex                      = creatureIndex,
                   .damage                             = damage,
@@ -8635,8 +8651,26 @@ void GameFixedUpdate() {
                     .spread = ailmentSpread,
                   },
                   .ailmentChance = fb->ailment_chance(),
+                  .wasCrit       = &wasCrit,
                 }))
             {
+              // Applying EffectConditionType_PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT.
+              if (wasCrit && projectile.weaponIndexOrMinus1 >= 0) {
+                const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
+                auto        fb_weapon  = glib->weapons()->Get(weapon.type);
+                const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
+                IterateOverWeaponEffects(
+                  EffectConditionType_PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT,
+                  weapon.type,
+                  [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                    if (projectile.effectCritPierce < EFFECT_PLACEHOLDER_X_INT) {
+                      projectile.effectCritPierce++;
+                      projectile.pierce++;
+                    }
+                  }
+                );
+              }
+
               auto maxBounce = projectile.bounce;
               auto maxPierce = projectile.pierce;
               if (projectile.ownerCreatureType == CreatureType_PLAYER) {
