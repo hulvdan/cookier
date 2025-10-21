@@ -39,7 +39,11 @@ x weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 x yandex/web load savedata
 x fix: on start of the game player's health is 20.
   Should be 25 (because of Build's effect)
+x weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 
+* weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+* weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+*
 * weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
 *
 * fix guarantee input press
@@ -51,11 +55,8 @@ x fix: on start of the game player's health is 20.
 * прописать читы в реадме
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
 *
-* weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 * weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
 * weapon effects: impl: X_CHANCE_TO_EXPLODE
-* weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-* weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
 * weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 * weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
 * weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
