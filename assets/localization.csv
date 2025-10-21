@@ -69,7 +69,7 @@ WEAPON_EFFECT_SPAWNS_GARDEN_EVERY_X_SECONDS;Новый огород каждые
 WEAPON_EFFECT_SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE;Новая мина каждые {X}с, наносящая {Y} урона;Spawns landmine every {X}s dealing {Y} damage;
 WEAPON_EFFECT_ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES;По горящим врагам атаки всегда критические;Always crits when hitting burning enemies;
 WEAPON_EFFECT_BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES;Горение распространяется на доп. врагов ({X});Burning spreads to additional {X} enemies;
-WEAPON_EFFECT_PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT;Криты дополнительно простреливают до {X};Crits pierce up to {X} enemies;
+WEAPON_EFFECT_PIERCES_UP_TO_X_ENEMIES_ON_CRIT;Криты дополнительно простреливают до {X};Crits pierce up to {X} enemies;
 REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION;{CHANCE} шанс взрыва при попадании;{CHANCE} chance to explode on hit;
 ITEM_HELMET;Шлем;Helmet;
 ITEM_WHITE_FLAG;Белый Флаг;White Flag;
