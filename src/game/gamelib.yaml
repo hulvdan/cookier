@@ -460,6 +460,8 @@ weapon_effect_conditions: # {  ###
     y_condvar_type: DAMAGE
   - type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
   - type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
+  - type: PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
+    rectrict_only_ranged_weapons: true
 # }
 
 items: # {  ###
@@ -677,22 +679,25 @@ weapons: # {  ###
     icon_texture_id: game_weapon_gun
     texture_ids:
       - game_weapon_gun
-      # effects:
-      #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
-      #     weaponproperty_type: DAMAGE
-      #     value: 4 6 8 10
-      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-      #     placeholders:
-      #       - ints: 20 20 20 20
-      #       - ints: 70 65 60 55
-      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-      #     placeholders:
-      #       - ints: 20 20 20 20
-      #       - ints: 75 80 85 90
-      #   - effectcondition_type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-      #     placeholders:
-      #       - floats: 2.0 1.6 1.2 0.8
-      #       - ints: 20 20 20 20
+    effects:
+      - effectcondition_type: PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
+        placeholders:
+          - ints: 1 2 3 4
+            #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+            #     weaponproperty_type: DAMAGE
+            #     value: 4 6 8 10
+            #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+            #     placeholders:
+            #       - ints: 20 20 20 20
+            #       - ints: 70 65 60 55
+            #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+            #     placeholders:
+            #       - ints: 20 20 20 20
+            #       - ints: 75 80 85 90
+            #   - effectcondition_type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+            #     placeholders:
+            #       - floats: 2.0 1.6 1.2 0.8
+            #       - ints: 20 20 20 20
   - type: SMG
     min_tier_index: 0
     base_damage: 3 6 9 12

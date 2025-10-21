@@ -49,10 +49,10 @@ x weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
 x weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 x weapon effects: impl: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
 x weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+x weapon effects: show: (ranged weapon) PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
+x weapon effects: impl: (ranged weapon) PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
 
 * weapon effects: impl: X_CHANCE_TO_EXPLODE
-* weapon effects: show: (ranged weapon) PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
-* weapon effects: impl: (ranged weapon) PIERCES_UP_TO_X_ENEMIES_ON_CRITICAL_HIT
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
   PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
 * weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS

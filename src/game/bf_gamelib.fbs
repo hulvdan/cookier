@@ -159,6 +159,7 @@ table EffectConditionPlaceholder {
 
 table EffectCondition {
     restrict: int; // 0 general, 1 weapon only.
+    rectrict_only_ranged_weapons: bool;
     name_locale: int;
     requires_stat: bool;
     requires_property: bool;
