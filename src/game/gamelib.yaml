@@ -423,6 +423,7 @@ weapon_effect_conditions: # {  ###
   - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
   - type: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
     y_condvar_type: DAMAGE
+    requires_projectile: true
   - type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
     x_condvar_type: FLOAT
     x_signed: true
@@ -626,11 +627,22 @@ weapons: # {  ###
       #   placeholders:
       #     - ints: 4 3 2 1
       #
-      - effectcondition_type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
-        stat_type: DAMAGE
+      # - effectcondition_type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+      #   stat_type: DAMAGE
+      #   value: 100 100 100 100
+      #   placeholders:
+      #     - floats: 4 3 2 1
+      #
+      - effectcondition_type: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
         value: 100 100 100 100
+        damage_scalings:
+          - stat_type: DAMAGE_RANGED
+            percents_per_tier: 50 60 70 80
+        projectile_type: ARROW
+        projectile_range_meters: 5
         placeholders:
-          - floats: 4 3 2 1
+          - ints: 3 4 5 6
+          - ints: 0 0 0 0
             #
             # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
             #   placeholders:
