@@ -49,9 +49,26 @@ x weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
 x weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 x weapon effects: impl: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
 x weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-x weapon effects: show: (ranged weapon) PIERCES_UP_TO_X_ENEMIES_ON_CRIT
-x weapon effects: impl: (ranged weapon) PIERCES_UP_TO_X_ENEMIES_ON_CRIT
+x weapon effects: show: (ranged weapon) PIERCES_UP_TO_X_TIMES_ON_CRIT
+x weapon effects: impl: (ranged weapon) PIERCES_UP_TO_X_TIMES_ON_CRIT
 
+* weapon effects: show: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
+* weapon effects: impl: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
+*
+* projectile weapon that shoots itself (javelin)
+*
+* gather other weapon/diffic/build/item effects
+*
+* slows down enemies in a radius around the projectile
+* every Nth (5 4 3 2) has +100 crit chance
+* SLOWS_ENEMIES_ON_HIT_BY_X_PERCENT_FOR_EVERY_STAT_YOU_HAVE (1%, 2%, engineering)
+* pierces through enemies
+* crits bounce
+*
+*
+*
+*
+*
 * weapon effects: impl: X_CHANCE_TO_EXPLODE
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
   PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
