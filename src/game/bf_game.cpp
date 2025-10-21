@@ -613,18 +613,19 @@ struct Projectile {  ///
 };
 
 struct MakeProjectileData {  ///
-  ProjectileType type                 = {};
-  CreatureType   ownerCreatureType    = {};
-  int            weaponIndexOrMinus1  = -1;
-  Vector2        pos                  = {};
-  Vector2        dir                  = {};
-  f32            range                = {};
-  int            damage               = {};
-  f32            critDamageMultiplier = {};
-  f32            knockbackMeters      = {};
-  int            pierce               = {};
-  int            bounce               = {};
-  int            anchorCreatureId     = {};
+  ProjectileType type                     = {};
+  CreatureType   ownerCreatureType        = {};
+  int            weaponIndexOrMinus1      = -1;
+  Vector2        pos                      = {};
+  Vector2        dir                      = {};
+  f32            range                    = {};
+  int            damage                   = {};
+  f32            critDamageMultiplier     = {};
+  f32            knockbackMeters          = {};
+  int            pierce                   = {};
+  int            bounce                   = {};
+  int            anchorCreatureId         = {};
+  int            alreadyDamagedCreatureId = 0;
 };
 
 struct Number {  ///
@@ -2020,7 +2021,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
   Color color              = palTextWhite,
   bool  _resetPlaceholders = true
 ) {                                  ///
-  const auto locale = (Loc)locale_;  // NOTE: Leaving this line for debug purposes.
+  const auto locale = (Loc)locale_;  // NOTE: Leaving for debug purposes.
 
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
   const auto localization_broken_lines = localization->broken_lines();
@@ -2353,6 +2354,11 @@ void MakeProjectile(MakeProjectileData data) {  ///
     .anchorCreatureId     = data.anchorCreatureId,
   };
   projectile.createdAt.SetNow();
+
+  if (data.alreadyDamagedCreatureId) {
+    projectile.damagedCreatureIds[projectile.damagedCount++]
+      = data.alreadyDamagedCreatureId;
+  }
 
   *g.run.projectiles.Add() = projectile;
 }
@@ -2865,13 +2871,19 @@ void GameInit() {  ///
     if (!fb_effects)
       return;
 
+    int effectIndex = -1;  // NOTE: Leaving for debug purposes.
     for (auto fb_effect : *fb_effects) {
+      effectIndex++;
+
       auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
       if (cantBeRestrictedToWeapons)
         ASSERT(fb_cond->restrict() == 0);
 
       ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
       ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
+      ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
+      if (fb_cond->requires_projectile())
+        ASSERT(fb_effect->projectile_range_meters() > 0);
 
       {
         int required = 0;
@@ -2939,7 +2951,7 @@ void GameInit() {  ///
   }
 
   LAMBDA (bool, checkPlaceholder, (int locale_, const char* placeholder)) {
-    const auto locale = (Loc)locale_;  // NOTE: Leaving this line for debug purposes.
+    const auto locale = (Loc)locale_;  // NOTE: Leaving for debug purposes.
 
     int localizationIndex = -1;
     for (auto loc : *glib->localizations()) {
@@ -3521,7 +3533,7 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
   if (weapon.piercedCount < weapon.piercedCreatureIds.count) {
     weapon.piercedCreatureIds[weapon.piercedCount++] = creature.id;
 
-    TryApplyDamage({
+    const bool hit = TryApplyDamage({
       .creatureIndex   = creatureIndex,
       .damage          = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier),
       .directionOrZero = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
@@ -3530,6 +3542,36 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
       .critDamageMultiplier               = fb->crit_damage_multiplier(),
       .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndex,
     });
+
+    const int tierOffset = weapon.tier - fb->min_tier_index();
+
+    if (hit) {
+      // Processing EffectConditionType_HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE.
+      IterateOverWeaponEffects(
+        EffectConditionType_HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE,
+        weapon.type,
+        [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+          int damage = EFFECT_PLACEHOLDER_Y_INT;
+          damage     = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings());
+          damage     = ApplyPlayerStatDamageMultiplier(damage);
+
+          const int toSpawn = EFFECT_PLACEHOLDER_X_INT;
+          FOR_RANGE (int, i, toSpawn) {
+            MakeProjectile({
+              .type                     = (ProjectileType)fb_effect->projectile_type(),
+              .ownerCreatureType        = CreatureType_PLAYER,
+              .weaponIndexOrMinus1      = *weaponIndex,
+              .pos                      = creature.pos,
+              .dir                      = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
+              .range                    = fb_effect->projectile_range_meters(),
+              .damage                   = damage,
+              .critDamageMultiplier     = fb->crit_damage_multiplier(),
+              .alreadyDamagedCreatureId = creature.id,
+            });
+          }
+        }
+      );
+    }
   }
   return continueCollisions;
 }

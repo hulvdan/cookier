@@ -162,6 +162,7 @@ table EffectCondition {
     name_locale: int;
     requires_stat: bool;
     requires_property: bool;
+    requires_projectile: bool;
     placeholders: [EffectConditionPlaceholder];
 }
 
@@ -181,7 +182,10 @@ table Effect {
     value: [int];
     value_multiplier: [float];
     placeholders: [EffectPlaceholderValue];
+
     projectile_type: int;
+    projectile_range_meters: float;
+
     damage_scalings: [DamageScaling];
 }
 
