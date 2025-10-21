@@ -612,9 +612,13 @@ weapons: # {  ###
       #   weaponproperty_type: DAMAGE
       #   value: 4 5 6 8
       #
-      - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-        stat_type: DAMAGE
-        value: 3 5 7 10
+      # - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+      #   stat_type: DAMAGE
+      #   value: 3 5 7 10
+      #
+      - effectcondition_type: PROPERTY_WHEN_WALKING
+        weaponproperty_type: DAMAGE
+        value: 100 100 100 100
         #
         # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
         #   placeholders:

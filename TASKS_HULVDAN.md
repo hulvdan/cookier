@@ -42,8 +42,9 @@ x fix: on start of the game player's health is 20.
 x weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
 x weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
 x weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+x weapon effects: impl: PROPERTY_WHEN_IDLE
+x weapon effects: impl: PROPERTY_WHEN_WALKING
 
-*
 * weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
 *
 * fix guarantee input press
@@ -59,8 +60,6 @@ x weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
 * weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 * weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
 * weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
-* weapon effects: impl: PROPERTY_WHEN_IDLE
-* weapon effects: impl: PROPERTY_WHEN_WALKING
 * weapon effects: impl: HITTING_SPAWNS_PROJECTILE_THAT_BOUNCES_X_TIMES_DEALING_Y_DAMAGE
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
 * weapon effects: impl:
