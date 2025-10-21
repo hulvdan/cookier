@@ -1065,6 +1065,20 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
   damage     = ApplyDamageScalings(damage, tierOffset, fb->damage_scalings());
   damage     = ApplyPlayerStatDamageMultiplier(damage);
 
+  LAMBDA (void, applyEffectToDamage, (auto fb_effect, int times)) {
+    if (times < 0)
+      return;
+
+    auto value = fb_effect->value();
+    if (value)
+      damage += value->Get(tierOffset) * times;
+
+    auto value_multiplier = fb_effect->value_multiplier();
+    if (value_multiplier) {
+      damage = Round((f32)damage * value_multiplier->Get(tierOffset) * (f32)times);
+    }
+  };
+
   IterateOverWeaponEffects(
     EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
     type,
@@ -1080,17 +1094,24 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
           sameWeapons++;
       }
 
-      if (sameWeapons > 0) {
-        auto value = fb_effect->value();
-        if (value)
-          damage += value->Get(tierOffset) * sameWeapons;
+      applyEffectToDamage(fb_effect, sameWeapons);
+    }
+  );
 
-        auto value_multiplier = fb_effect->value_multiplier();
-        if (value_multiplier) {
-          damage
-            = Round((f32)damage * value_multiplier->Get(tierOffset) * (f32)sameWeapons);
-        }
+  IterateOverWeaponEffects(
+    EffectConditionType_MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY,
+    type,
+    [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+      if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+        return;
+
+      int emptySlots = 0;
+      for (const auto& weapon : g.run.state.weapons) {
+        if (!weapon.type)
+          emptySlots++;
       }
+
+      applyEffectToDamage(fb_effect, emptySlots);
     }
   );
 

@@ -600,22 +600,29 @@ weapons: # {  ###
     effects:
       # - stat_type: HP
       #   value: 1 2 3 4
-      - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-        placeholders:
-          - ints: 20 20 20 20
-          - ints: 70 65 60 55
-            # value_multiplier: 1 1 1 1
-            # value_multiplier: 0.5 0.5 0.5 0.5
-    # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
-    #   placeholders:
-    #     - ints: 3 4 5 6
-    #     - ints: 1 2 3 4
-    #     - ints: 0 0 1 2
-    #   damage_scalings:
-    #     - stat_type: DAMAGE_MELEE
-    #       percents_per_tier: 25 50 75 100
-    #     - stat_type: DAMAGE_RANGED
-    #       percents_per_tier: 50 60 70 80
+      #   value_multiplier: 1 1 1 1
+      #   value_multiplier: 0.5 0.5 0.5 0.5
+      #
+      # - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+      #   placeholders:
+      #     - ints: 20 20 20 20
+      #     - ints: 70 65 60 55
+      #
+      - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+        weaponproperty_type: DAMAGE
+        value: 4 5 6 8
+        #
+        # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+        #   placeholders:
+        #     - ints: 3 4 5 6
+        #     - ints: 1 2 3 4
+        #     - ints: 0 0 1 2
+        #   damage_scalings:
+        #     - stat_type: DAMAGE_MELEE
+        #       percents_per_tier: 25 50 75 100
+        #     - stat_type: DAMAGE_RANGED
+        #       percents_per_tier: 50 60 70 80
+        #
   - type: GUN
     min_tier_index: 0
     base_damage: 6 9 12 20
