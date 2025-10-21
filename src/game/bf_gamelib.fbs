@@ -164,6 +164,8 @@ table EffectCondition {
     requires_stat: bool;
     requires_property: bool;
     requires_projectile: bool;
+    requires_pickupable: bool;
+    requires_tier: bool;
     placeholders: [EffectConditionPlaceholder];
 }
 
@@ -186,6 +188,10 @@ table Effect {
 
     projectile_type: int;
     projectile_range_meters: float;
+
+    pickupable_type: int;
+
+    tier: int = -1;
 
     damage_scalings: [DamageScaling];
 }
