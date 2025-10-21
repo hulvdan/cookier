@@ -460,6 +460,7 @@ struct Weapon {  ///
   int                           piercedCount       = 0;
 
   int killedEnemies = 0;
+  int hits          = 0;
 };
 
 struct Item {  ///
@@ -1151,14 +1152,6 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
   return damage;
 }
 
-void RecalculatePlayerWeaponDamages() {  ///
-  int weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.state.weapons) {
-    weaponIndexOrMinus1++;
-    weapon.thisWaveDamage = 0;
-  }
-}
-
 Vector2 GetPlayerWeaponOffset(int weaponIndex) {  ///
   int weaponsCount = 0;
   for (const auto& weapon : g.run.state.weapons) {
@@ -1276,7 +1269,10 @@ void OnWaveStarted() {  ///
 
   RecalculateThisWaveMobs();
 
-  RecalculatePlayerWeaponDamages();
+  for (auto& weapon : g.run.state.weapons) {
+    weapon.thisWaveDamage = 0;
+    weapon.hits           = 0;
+  }
 }
 
 void AchievementStepSetLock(const BFGame::AchievementStep* fb_step, bool locked) {  ///
@@ -1458,8 +1454,6 @@ void GameLoad(const BFSave::Save* save) {  ///
     g.run.scheduledShop = true;
   else if (s.screen == ScreenType_END)
     g.run.scheduledEnd = true;
-
-  RecalculatePlayerWeaponDamages();
 
   g.player.lockedBuilds  = {};
   g.player.lockedWeapons = {};
@@ -8487,8 +8481,27 @@ void GameFixedUpdate() {
             weapon.startedShootingAt = {};
             weapon.piercedCount      = 0;
             weapon.cooldownStartedAt.SetNow();
-            const auto variation = (int)(cooldownDur.value / 10);
-            weapon.cooldownStartedAt._value += GRAND.RandInt(-variation, variation);
+            weapon.hits++;
+
+            const int tierOffset = weapon.tier - fb->min_tier_index();
+
+            int cooldownFrames = 0;
+            IterateOverWeaponEffects(
+              EffectConditionType_X_COOLDOWN_SECONDS_EVERY_Y_HITS,
+              weapon.type,
+              [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+                if ((weapon.hits % EFFECT_PLACEHOLDER_Y_INT) == 0)
+                  cooldownFrames += lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT).value;
+              }
+            );
+
+            if (!cooldownFrames) {
+              const auto variation = (int)(cooldownDur.value / 10);
+              cooldownFrames       = GRAND.RandInt(-variation, variation);
+            }
+
+            weapon.cooldownStartedAt._value += cooldownFrames;
+
             weapon.lastCollisionCheckShootingProgress = 0;
           }
         }
