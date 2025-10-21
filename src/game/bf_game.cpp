@@ -3372,15 +3372,8 @@ void AddItem(ItemType type) {  ///
   );
 }
 
-void StableRemoveWeaponAndRemoveEffects(int index) {  ///
+void StableRemoveWeapon(int index) {  ///
   auto& weapon = g.run.state.weapons[index];
-
-  // Removing applied weapon stats.
-  const int tierOffset
-    = weapon.tier - glib->weapons()->Get(weapon.type)->min_tier_index();
-  IterateOverWeaponEffects({}, weapon.type, [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-    ApplyEffect(fb_effect, tierOffset, -1);
-  });
 
   for (int i = index + 1; i < g.run.state.weapons.count; i++)
     g.run.state.weapons[i - 1] = g.run.state.weapons[i];
@@ -3632,6 +3625,58 @@ void ButtonSFX(bool draw, Clay_ElementId id, bool hovered) {  ///
 
 int GetBuildTier(BuildType build) {  ///
   return MAX(0, (int)g.player.builds[build].maxDifficultyBeaten - 1);
+}
+
+void _UpdateImmediateWeaponEffects(int weaponIndex, int scale) {  ///
+  int occupiedSlots = 0;
+  int emptySlots    = 0;
+  for (auto& w : g.run.state.weapons) {
+    if (w.type)
+      occupiedSlots++;
+    else
+      emptySlots++;
+  }
+
+  struct {
+    EffectConditionType c;
+    int                 times;
+  } toUpdate_[]{
+    {EffectConditionType_DEFAULT_GET_STAT, 1},
+    {EffectConditionType_GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
+    {EffectConditionType_GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
+  };
+  VIEW_FROM_ARRAY_DANGER(toUpdate);
+
+  const auto& weapon = g.run.state.weapons[weaponIndex];
+  const int   tierOffset
+    = weapon.tier - glib->weapons()->Get(weapon.type)->min_tier_index();
+
+  for (auto c : toUpdate) {
+    IterateOverWeaponEffects(
+      c.c,
+      weapon.type,
+      [&](auto fb_effect)
+        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, c.times * scale); }
+    );
+  }
+}
+
+void ApplyImmediateWeaponEffects() {  ///
+  int weaponIndex = -1;
+  for (const auto& weapon : g.run.state.weapons) {
+    weaponIndex++;
+    if (weapon.type)
+      _UpdateImmediateWeaponEffects(weaponIndex, 1);
+  }
+}
+
+void RemoveImmediateWeaponEffects() {  ///
+  int weaponIndex = -1;
+  for (const auto& weapon : g.run.state.weapons) {
+    weaponIndex++;
+    if (weapon.type)
+      _UpdateImmediateWeaponEffects(weaponIndex, -1);
+  }
 }
 
 void DoUI(bool draw) {
@@ -4752,40 +4797,18 @@ void DoUI(bool draw) {
                     ASSERT(weapon.type == data.weapon);
                     ASSERT(weapon.tier == tier);
 
-                    const int tierOffset
-                      = tier - fb_weapons->Get(weapon.type)->min_tier_index();
-
-                    IterateOverWeaponEffects(
-                      {},
-                      weapon.type,
-                      [&](auto fb_effect)
-                        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, -1); }
-                    );
-
+                    RemoveImmediateWeaponEffects();
                     weapon.tier += 1;
-
-                    IterateOverWeaponEffects(
-                      {},
-                      weapon.type,
-                      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                        ApplyEffect(fb_effect, tierOffset + 1, 1);
-                      }
-                    );
+                    ApplyImmediateWeaponEffects();
                   }
                   else {
+                    RemoveImmediateWeaponEffects();
+
                     // Filling empty weapon slot if exists.
                     weapon.type = data.weapon;
                     weapon.tier = tier;
 
-                    // Applying weapon effects.
-                    const int tierOffset
-                      = tier - fb_weapons->Get(weapon.type)->min_tier_index();
-                    IterateOverWeaponEffects(
-                      {},
-                      weapon.type,
-                      [&](auto fb_effect)
-                        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, 1); }
-                    );
+                    ApplyImmediateWeaponEffects();
                   }
                 }
                 else if (data.item)
@@ -4864,36 +4887,23 @@ void DoUI(bool draw) {
             if (combined) {
               ASSERT(canCombineWithIndex >= 0);
 
-              const int tierOffset
-                = tier - fb_weapons->Get(weapon.type)->min_tier_index();
-
-              IterateOverWeaponEffects(
-                {},
-                weapon.type,
-                [&](auto fb_effect)
-                  BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, -1); }
-              );
-
+              RemoveImmediateWeaponEffects();
               weapon.tier += 1;
-
-              IterateOverWeaponEffects(
-                {},
-                weapon.type,
-                [&](auto fb_effect)
-                  BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset + 1, 1); }
-              );
 
               weapon.thisWaveDamage = 0;
               weapon.killedEnemies  = MAX(
                 weapon.killedEnemies,
                 g.run.state.weapons[canCombineWithIndex].killedEnemies
               );
-              StableRemoveWeaponAndRemoveEffects(canCombineWithIndex);
+              StableRemoveWeapon(canCombineWithIndex);
+              ApplyImmediateWeaponEffects();
               Save();
             }
             if (recycled) {
               ChangeCoins(recyclePrice);
-              StableRemoveWeaponAndRemoveEffects(data.weaponIndexOrMinus1);
+              RemoveImmediateWeaponEffects();
+              StableRemoveWeapon(data.weaponIndexOrMinus1);
+              ApplyImmediateWeaponEffects();
               Save();
             }
             if (cancelled || recycled || combined) {
