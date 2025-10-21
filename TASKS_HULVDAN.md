@@ -48,7 +48,14 @@ x weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
 x weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
 x weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 
-* weapon effects: impl: HIT_MAKES_X_PROJECTILES_DEALING_Y_DAMAGE
+* weapon effects: impl: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
+*
+* weapon / non weapon effects: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+* weapon / non weapon effects: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+* weapon / non weapon effects: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+* weapon / non weapon effects: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+* weapon / non weapon effects: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+*
 *
 * fix guarantee input press
 * на русском апгрейд "рукопашный урон" хреново смотрится
@@ -79,6 +86,11 @@ x weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
 * weapon effects: show:
 * weapon effects: show:
 * weapon effects: show:
+*
+* MY STAT: weapon effects: show: GET_STAT_WHEN_WALKING
+* MY STAT: weapon effects: show: GET_STAT_WHEN_IDLE
+* MY STAT: weapon effects: impl: GET_STAT_WHEN_WALKING
+* MY STAT: weapon effects: impl: GET_STAT_WHEN_IDLE
 
 melee weapon effects:
 - hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
