@@ -3749,10 +3749,6 @@ EM_JS(void, js_Save, (const char* data), {
       Module.ccall('saved_from_js', null, [], []);
     });
 });
-
-EM_JS(const char*, js_Load, (), {
-  return window.player.getData('save');
-});
 // clang-format on
 
 #  elif defined(BF_PLATFORM_Web)
@@ -3761,15 +3757,38 @@ EM_JS(const char*, js_Load, (), {
 EM_JS(void, js_Save, (const char* data), {
   localStorage.setItem('save', UTF8ToString(data));
 });
-
-EM_JS(const char*, js_Load, (), {
-  return localStorage.getItem('save');
-});
 // clang-format on
 
 #  else
 #    error "Not implemented"
 #  endif
+
+// clang-format off
+
+// Retuned string must be `free`-d!
+EM_JS(const char*, js_Load, (), {
+
+#  if defined(BF_PLATFORM_WebYandex)
+  var js_str = window.player.getData('save');
+#  elif defined(BF_PLATFORM_Web)
+  var js_str = localStorage.getItem('save');
+#  else
+#    error "Not implemented"
+#  endif
+
+  if (js_str) {
+    var len            = lengthBytesUTF8(js_str) + 1;
+    var string_on_heap = _malloc(len);
+    stringToUTF8(js_str, string_on_heap, len + 1);
+    return string_on_heap;
+  }
+  else {
+    var string_on_heap = _malloc(1);
+    stringToUTF8('\0', string_on_heap, 1);
+    return string_on_heap;
+  }
+});
+// clang-format on
 
 void _Save(Arena* arena) {
   ZoneScoped;
@@ -3790,15 +3809,27 @@ void LoadSaveData(Arena* arena) {  ///
 #if defined(SDL_PLATFORM_DESKTOP)
   auto saveData = SDL_LoadFile("save.bin", nullptr);
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
-  auto saveData_ = js_Load();
-  auto saveData  = DecodeFromHex(saveData_, arena);
+  auto      saveData_ = js_Load();
+  const u8* saveData  = nullptr;
+  if (saveData_[0])
+    saveData = DecodeFromHex(saveData_, arena);
+  free((void*)saveData_);
 #else
 #  error "Not implemented yet"
 #endif
 
   if (saveData) {
-    GameLoad(BFSave::GetSave(saveData));
+#if defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+    if (saveData[0])
+      GameLoad(BFSave::GetSave(saveData));
+#endif
+
+#if defined(SDL_PLATFORM_DESKTOP)
     SDL_free(saveData);
+#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+#else
+#  error "Not implemented yet"
+#endif
   }
 }
 
