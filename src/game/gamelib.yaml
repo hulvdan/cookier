@@ -429,6 +429,13 @@ effect_conditions: # {  ###
   - type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
     x_signed: true
     x_is_percent: true
+  - type: SPAWNS_GARDEN_EVERY__X__SECONDS
+    x_condvar_type: FLOAT
+  - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+    x_condvar_type: FLOAT
+    y_condvar_type: DAMAGE
+  - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+  - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
 # }
 
 build_effect_conditions: # { ###
@@ -468,17 +475,10 @@ weapon_effect_conditions: # {  ###
     x_is_percent: true
   - type: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
     x_is_percent: true
-  - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
-  - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
   - type: PROPERTY__WHEN_IDLE
   - type: PROPERTY__WHEN_WALKING
   # - type: HITTING_SPAWNS__X__PROJECTILES_THAT_BOUNCE__Y__TIMES_PIERCE__Z__TIMES_DEALING__W__DAMAGE
   #   w_condvar_type: DAMAGE
-  - type: SPAWNS_GARDEN_EVERY__X__SECONDS
-    x_condvar_type: FLOAT
-  - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
-    x_condvar_type: FLOAT
-    y_condvar_type: DAMAGE
   - type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
   - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
   - type: PIERCES_UP_TO__X__TIMES_ON_CRIT
@@ -518,8 +518,9 @@ items: # {  ###
     tier: 2
     count_cap: 3
     effects:
-      - stat_type: GARDENS_COUNT
-        value: 1
+      - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
+        placeholders:
+          - floats: 1
   - type: HELMET
     texture_id: ui_item_helmet
     tier: 2
@@ -1171,9 +1172,6 @@ stats: # {  ###
     is_secondary: true
     is_hidden: true
   - type: LANDMINES
-    is_secondary: true
-    is_hidden: true
-  - type: GARDENS_COUNT
     is_secondary: true
     is_hidden: true
   - type: ENEMY_HP_SCALE

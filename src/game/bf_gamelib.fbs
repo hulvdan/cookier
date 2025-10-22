@@ -209,7 +209,7 @@ table Item {
     tier: int;
     price: int;
     count_cap: int;
-    included_in_random_pool: bool = true;
+    deprecated: bool = true;
     effects: [Effect];
 }
 

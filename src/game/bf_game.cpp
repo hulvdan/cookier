@@ -956,7 +956,6 @@ struct GameData {
 
     int cratesDroppedThisWave = 0;
     int turrelsToSpawn        = 0;
-    int gardensToSpawn        = 0;
 
     FrameGame waveStartedAt = {};
 
@@ -1262,7 +1261,6 @@ void OnWaveStarted() {  ///
 
   g.run.cratesDroppedThisWave = 0;
   g.run.turrelsToSpawn        = g.run.state.stats[StatType_TURRELS_COUNT];
-  g.run.gardensToSpawn        = g.run.state.stats[StatType_GARDENS_COUNT];
 
   g.run.waveStartedAt = {};
   g.run.waveStartedAt.SetNow();
@@ -1460,32 +1458,6 @@ void GameLoad(const BFSave::Save* save) {  ///
   g.player.lockedBuilds  = {};
   g.player.lockedWeapons = {};
   g.player.lockedItems   = {};
-
-  // Recalculating unlocked builds, items and weapons based off achievements.
-  {
-    g.player.achievementStepsTotal     = 0;
-    g.player.achievementStepsCompleted = 0;
-
-    int i = -1;
-    for (const auto& x : g.player.achievements) {  ///
-      i++;
-      auto fb       = glib->achievements()->Get(i);
-      auto fb_steps = fb->steps();
-      if (!fb_steps)
-        continue;
-
-      g.player.achievementStepsTotal += fb_steps->size();
-      g.player.achievementStepsCompleted += fb_steps->size();
-
-      for (auto fb_step : *fb_steps) {
-        if (fb_step->value() > x.value)
-          AchievementStepSetLock(fb_step, true);
-      }
-    }
-
-    ASSERT(g.player.achievementStepsCompleted >= 0);
-    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
-  }
 }
 
 flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
@@ -2560,7 +2532,7 @@ ItemType GenerateRandomItem() {  ///
     if (g.player.lockedItems[type])
       continue;
     auto fb = fb_items->Get(type);
-    if (!fb->included_in_random_pool())
+    if (!fb->deprecated())
       continue;
     if (fb->count_cap() <= 0)
       break;
@@ -2878,12 +2850,12 @@ void ReloadFontsIfNeeded() {  ///
     = LoadFonts({.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData);
 }
 
-void GameInit() {  ///
+void GameInit() {
   ZoneScoped;
 
+  // Setup. {  ///
   g.meta.trashArena = MakeArena(16 * 1024);
   g.run.arena       = MakeArena(4 * 1024);
-
   TEMP_USAGE(&g.meta.trashArena);
 
   // Initializing Clay.
@@ -2897,198 +2869,224 @@ void GameInit() {  ///
     Clay_SetCullingEnabled(false);
     Clay_SetMeasureTextFunction(MeasureText, 0);
   }
+  // }
 
   ReloadFontsIfNeeded();
-
   RunInit();
   LoadSaveData(&g.meta.trashArena);
 
-  // Checking that weapon effects weren't applied to difficulties, builds, and items.
-#if BF_ENABLE_ASSERTS
-  LAMBDA (
-    void,
-    checkEffects,
-    (auto                  fb_effects,
-     bool                  canHaveWeaponOnly = false,
-     bool                  canHaveBuildOnly  = false,
-     int                   tierValues        = 1,
-     const BFGame::Weapon* fb_weapon         = nullptr)
-  )
-  {
-    const bool allowed = canHaveWeaponOnly && canHaveBuildOnly;
-    ASSERT_FALSE(allowed);
+  // Recalculating unlocked builds, items and weapons based off achievements.
+  {  ///
+    g.player.achievementStepsTotal     = 0;
+    g.player.achievementStepsCompleted = 0;
 
-    if (!fb_effects)
-      return;
+    int i = -1;
+    for (const auto& x : g.player.achievements) {  ///
+      i++;
+      auto fb       = glib->achievements()->Get(i);
+      auto fb_steps = fb->steps();
+      if (!fb_steps)
+        continue;
 
-    int effectIndex = -1;  // NOTE: For debug.
-    for (auto fb_effect : *fb_effects) {
-      effectIndex++;
+      g.player.achievementStepsTotal += fb_steps->size();
+      g.player.achievementStepsCompleted += fb_steps->size();
 
-      auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
+      for (auto fb_step : *fb_steps) {
+        if (fb_step->value() > x.value)
+          AchievementStepSetLock(fb_step, true);
+      }
+    }
 
-      int allowedValues_[]{0, 0};
-      VIEW_FROM_ARRAY_DANGER(allowedValues);
-      if (canHaveBuildOnly)
-        allowedValues[1] = 2;
-      if (canHaveWeaponOnly)
-        allowedValues[1] = 1;
-      ASSERT(allowedValues.Contains(fb_cond->restrict()));
+    ASSERT(g.player.achievementStepsCompleted >= 0);
+    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
+  }
 
-      ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
-      ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
-      ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
-
-      const bool allowed = fb_cond->requires_stat() && fb_cond->requires_property();
+  // Checking gamelib.
+  if (BF_ENABLE_ASSERTS) {  ///
+    LAMBDA (
+      void,
+      checkEffects,
+      (auto                  fb_effects,
+       bool                  canHaveWeaponOnly = false,
+       bool                  canHaveBuildOnly  = false,
+       int                   tierValues        = 1,
+       const BFGame::Weapon* fb_weapon         = nullptr)
+    )
+    {
+      const bool allowed = canHaveWeaponOnly && canHaveBuildOnly;
       ASSERT_FALSE(allowed);
 
-      if (fb_cond->requires_stat() || fb_cond->requires_property()) {
-        auto       v                     = fb_effect->value();
-        auto       vm                    = fb_effect->value_multiplier();
-        const bool atLeastOneIsSpecified = v || vm;
-        ASSERT(atLeastOneIsSpecified);
-        if (v)
-          ASSERT(v->size() == tierValues);
-        if (vm)
-          ASSERT(vm->size() == tierValues);
-      }
-      else
-        ASSERT_FALSE(fb_effect->value());
+      if (!fb_effects)
+        return;
 
-      if (fb_cond->requires_projectile())
-        ASSERT(fb_effect->projectile_range_meters() > 0);
+      int effectIndex = -1;  // NOTE: For debug.
+      for (auto fb_effect : *fb_effects) {
+        effectIndex++;
 
-      if (fb_cond->rectrict_only_ranged_weapons())
-        ASSERT(fb_cond->restrict() == 1);
+        auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
 
-      if ((fb_cond->restrict() == 1) && fb_cond->rectrict_only_ranged_weapons())
-        ASSERT(fb_weapon->projectile_type());
+        int allowedValues_[]{0, 0};
+        VIEW_FROM_ARRAY_DANGER(allowedValues);
+        if (canHaveBuildOnly)
+          allowedValues[1] = 2;
+        if (canHaveWeaponOnly)
+          allowedValues[1] = 1;
+        ASSERT(allowedValues.Contains(fb_cond->restrict()));
 
-      {
-        int required = 0;
-        for (auto v : *fb_cond->placeholders()) {
-          if (v->required())
-            required++;
+        ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
+        ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
+        ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
+
+        const bool allowed = fb_cond->requires_stat() && fb_cond->requires_property();
+        ASSERT_FALSE(allowed);
+
+        if (fb_cond->requires_stat() || fb_cond->requires_property()) {
+          auto       v                     = fb_effect->value();
+          auto       vm                    = fb_effect->value_multiplier();
+          const bool atLeastOneIsSpecified = v || vm;
+          ASSERT(atLeastOneIsSpecified);
+          if (v)
+            ASSERT(v->size() == tierValues);
+          if (vm)
+            ASSERT(vm->size() == tierValues);
         }
+        else
+          ASSERT_FALSE(fb_effect->value());
 
-        int  found = 0;
-        auto fep   = fb_effect->placeholders();
-        if (fep)
-          found = fep->size();
+        if (fb_cond->requires_projectile())
+          ASSERT(fb_effect->projectile_range_meters() > 0);
 
-        ASSERT(required == found);
-      }
+        if (fb_cond->rectrict_only_ranged_weapons())
+          ASSERT(fb_cond->restrict() == 1);
 
-      if (fb_cond->requires_item_or_weapon()) {
-        // Either item or weapon.
-        auto i                     = fb_effect->item_type();
-        auto w                     = fb_effect->weapon_type();
-        auto atLeastOneIsSpecified = i || w;
-        auto bothAreSpecified      = i && w;
-        ASSERT(atLeastOneIsSpecified);
-        ASSERT_FALSE(bothAreSpecified);
-      }
+        if ((fb_cond->restrict() == 1) && fb_cond->rectrict_only_ranged_weapons())
+          ASSERT(fb_weapon->projectile_type());
 
-      int reqIndex = -1;
-      for (auto fb_req : *fb_cond->placeholders()) {
-        reqIndex++;
-        if (!fb_req->required())
-          continue;
-
-        auto reqValues = fb_effect->placeholders()->Get(reqIndex);
-
-        switch ((CondVarType)fb_req->condvar_type()) {
-        case CondVarType_INTEGER: {
-          ASSERT(reqValues->ints()->size() == tierValues);
-        } break;
-
-        case CondVarType_FLOAT: {
-          ASSERT(reqValues->floats()->size() == tierValues);
-        } break;
-
-        case CondVarType_DAMAGE: {
-          if (!fb_effect->damage_scalings()) {
-            FOR_RANGE (int, i, tierValues) {
-              ASSERT(reqValues->ints()->Get(i) > 0);
-            }
+        {
+          int required = 0;
+          for (auto v : *fb_cond->placeholders()) {
+            if (v->required())
+              required++;
           }
-        } break;
 
-        default:
-          break;
+          int  found = 0;
+          auto fep   = fb_effect->placeholders();
+          if (fep)
+            found = fep->size();
+
+          ASSERT(required == found);
         }
-      }
-    }
-  };
 
-  for (auto fb : *glib->difficulties()) {
-    // NOTE: For debug.
-    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects(), false, false);
-  }
-  for (auto fb : *glib->builds()) {
-    // NOTE: For debug.
-    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects(), false, true);
-  }
-  for (auto fb : *glib->items()) {
-    // NOTE: For debug.
-    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects(), false, false);
-  }
-  for (auto fb : *glib->weapons()) {
-    // NOTE: For debug.
-    auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects(), true, false, TOTAL_TIERS - fb->min_tier_index(), fb);
-  }
+        if (fb_cond->requires_item_or_weapon()) {
+          // Either item or weapon.
+          auto i                     = fb_effect->item_type();
+          auto w                     = fb_effect->weapon_type();
+          auto atLeastOneIsSpecified = i || w;
+          auto bothAreSpecified      = i && w;
+          ASSERT(atLeastOneIsSpecified);
+          ASSERT_FALSE(bothAreSpecified);
+        }
 
-  LAMBDA (bool, checkPlaceholder, (int locale_, const char* placeholder)) {
-    const auto locale = (Loc)locale_;  // NOTE: For debug.
+        int reqIndex = -1;
+        for (auto fb_req : *fb_cond->placeholders()) {
+          reqIndex++;
+          if (!fb_req->required())
+            continue;
 
-    int localizationIndex = -1;
-    for (auto loc : *glib->localizations()) {
-      localizationIndex++;
+          auto reqValues = fb_effect->placeholders()->Get(reqIndex);
 
-      for (auto line : *loc->broken_lines()->Get(locale)->lines()) {
-        for (auto group : *line->groups()) {
-          for (auto datum : *group->strings()) {
-            if (datum->type() == BrokenStringDatumType_PLACEHOLDER) {
-              if (!strcmp(placeholder, datum->placeholder()->c_str()))
-                return true;
+          switch ((CondVarType)fb_req->condvar_type()) {
+          case CondVarType_INTEGER: {
+            ASSERT(reqValues->ints()->size() == tierValues);
+          } break;
+
+          case CondVarType_FLOAT: {
+            ASSERT(reqValues->floats()->size() == tierValues);
+          } break;
+
+          case CondVarType_DAMAGE: {
+            if (!fb_effect->damage_scalings()) {
+              FOR_RANGE (int, i, tierValues) {
+                ASSERT(reqValues->ints()->Get(i) > 0);
+              }
             }
+          } break;
+
+          default:
+            break;
           }
         }
       }
+    };
+
+    for (auto fb : *glib->difficulties()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), false, false);
     }
-    return false;
-  };
-
-  for (auto fb_cond : *glib->effect_conditions()) {
-    // NOTE: For debug.
-    auto id = glib->localization_debug_strings()->Get(fb_cond->name_locale())->c_str();
-
-    if (fb_cond->requires_stat()) {
-      ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT"));
-      ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
-      ASSERT_FALSE(fb_cond->requires_property());
+    for (auto fb : *glib->builds()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), false, true);
+    }
+    for (auto fb : *glib->items()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), false, false);
+    }
+    for (auto fb : *glib->weapons()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), true, false, TOTAL_TIERS - fb->min_tier_index(), fb);
     }
 
-    if (fb_cond->requires_property()) {
-      ASSERT(checkPlaceholder(fb_cond->name_locale(), "PROPERTY"));
-      ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
-      ASSERT_FALSE(fb_cond->requires_stat());
-    }
+    LAMBDA (bool, checkPlaceholder, (int locale_, const char* placeholder)) {
+      const auto locale = (Loc)locale_;  // NOTE: For debug.
 
-    const char* const letters_[]{"X", "Y", "Z", "W"};
-    VIEW_FROM_ARRAY_DANGER(letters);
-    FOR_RANGE (int, i, fb_cond->placeholders()->size()) {
-      if (fb_cond->placeholders()->Get(i)->required()) {
-        auto expectedLetter = letters[i];
-        ASSERT(checkPlaceholder(fb_cond->name_locale(), expectedLetter));
+      int localizationIndex = -1;
+      for (auto loc : *glib->localizations()) {
+        localizationIndex++;
+
+        for (auto line : *loc->broken_lines()->Get(locale)->lines()) {
+          for (auto group : *line->groups()) {
+            for (auto datum : *group->strings()) {
+              if (datum->type() == BrokenStringDatumType_PLACEHOLDER) {
+                if (!strcmp(placeholder, datum->placeholder()->c_str()))
+                  return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    };
+
+    for (auto fb_cond : *glib->effect_conditions()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb_cond->name_locale())->c_str();
+
+      if (fb_cond->requires_stat()) {
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT"));
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
+        ASSERT_FALSE(fb_cond->requires_property());
+      }
+
+      if (fb_cond->requires_property()) {
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "PROPERTY"));
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
+        ASSERT_FALSE(fb_cond->requires_stat());
+      }
+
+      const char* const letters_[]{"X", "Y", "Z", "W"};
+      VIEW_FROM_ARRAY_DANGER(letters);
+      FOR_RANGE (int, i, fb_cond->placeholders()->size()) {
+        if (fb_cond->placeholders()->Get(i)->required()) {
+          auto expectedLetter = letters[i];
+          ASSERT(checkPlaceholder(fb_cond->name_locale(), expectedLetter));
+        }
       }
     }
   }
-#endif
 }
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
@@ -8143,21 +8141,25 @@ void GameFixedUpdate() {
             }
           }
 
-          // Spawning gardens every 5 seconds.
-          if ((g.run.waveStartedAt.Elapsed().value + 1)
-                % (FIXED_FPS * SPAWNING_GARDENS_EVERY_N_SECONDS)
-              == 0)
-          {
-            if (g.run.gardensToSpawn > 0) {
-              g.run.gardensToSpawn--;
-              PreSpawn v{
-                .type = PreSpawnType_GARDEN,
-                .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
-              };
-              v.createdAt.SetNow();
-              *g.run.preSpawns.Add() = v;
+          // Spawning gardens.
+          IterateOverEffects(
+            EffectConditionType_SPAWNS_GARDEN_EVERY__X__SECONDS,
+            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+              auto e        = g.run.waveStartedAt.Elapsed().value;
+              auto interval = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
+              if (((e + 1) % interval.value) != 0)
+                return;
+
+              FOR_RANGE (int, i, times) {
+                PreSpawn v{
+                  .type = PreSpawnType_GARDEN,
+                  .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                };
+                v.createdAt.SetNow();
+                *g.run.preSpawns.Add() = v;
+              }
             }
-          }
+          );
 
           // Spawning trees every 10 seconds.
           if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
