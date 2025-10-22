@@ -2630,6 +2630,29 @@ int GetNextLevelXp(int currentLevel) {  ///
   return SQR(currentLevel + 3);
 }
 
+void AddItem(ItemType type) {  ///
+  bool increasedExistingItemCount = false;
+  for (auto& item : g.run.state.items) {
+    if (item.type == type) {
+      item.count++;
+      increasedExistingItemCount = true;
+      break;
+    }
+  }
+  if (!increasedExistingItemCount) {
+    Item item{.type = type, .count = 1};
+    *g.run.state.items.Add() = item;
+  }
+
+  IterateOverItemEffects(
+    {},
+    type,
+    1,
+    [&](auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
+  );
+}
+
 void RunInit() {
   ZoneScoped;
 
@@ -3506,29 +3529,6 @@ void RecalculateShopToPick() {  ///
     else if (x.weapon)
       x.price = GetWeaponPrice(x.weapon, x.tier);
   }
-}
-
-void AddItem(ItemType type) {  ///
-  bool increasedExistingItemCount = false;
-  for (auto& item : g.run.state.items) {
-    if (item.type == type) {
-      item.count++;
-      increasedExistingItemCount = true;
-      break;
-    }
-  }
-  if (!increasedExistingItemCount) {
-    Item item{.type = type, .count = 1};
-    *g.run.state.items.Add() = item;
-  }
-
-  IterateOverItemEffects(
-    {},
-    type,
-    1,
-    [&](auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
-  );
 }
 
 void StableRemoveWeapon(int index) {  ///
