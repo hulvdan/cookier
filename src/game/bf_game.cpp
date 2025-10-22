@@ -7417,8 +7417,17 @@ void GameFixedUpdate() {
         ChangeCoins(harvesting);
         AddXP(harvesting);
         // Harvesting stat (if positive) grows by 5% upon finishing each wave.
-        if (harvesting > 0)
-          ChangeStat(StatType_HARVESTING, Ceil((f32)harvesting * 0.05f));
+        if (harvesting > 0) {
+          int percent = 5;
+          IterateOverEffects(
+            EffectConditionType_HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE,
+            [&](auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA { percent += EFFECT_PLACEHOLDER_X_INT; }
+          );
+
+          if (percent > 0)
+            ChangeStat(StatType_HARVESTING, Ceil((f32)(harvesting * percent) / 100.0f));
+        }
       }
 
       if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) || !g.run.state.waveWon) {
