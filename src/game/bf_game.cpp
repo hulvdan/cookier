@@ -1006,6 +1006,7 @@ struct GameData {
 
     FrameVisual shopErrorGold    = {};
     FrameVisual shopErrorWeapons = {};
+    FrameVisual shopErrorBuild   = {};
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
   } ui;
@@ -4583,6 +4584,7 @@ void DoUI(bool draw) {
 
     bool canBuy                     = (price <= PLAYER_COINS);
     bool canBuyErrorWeapon          = false;
+    bool canBuyErrorBuild           = false;
     int  emptyOrSameWeaponSlotIndex = -1;
 
     if (canBuy && data.weapon) {
@@ -4611,6 +4613,28 @@ void DoUI(bool draw) {
         canBuyErrorWeapon = true;
         canBuy            = false;
       }
+    }
+    if (data.weapon) {
+      auto fb        = fb_weapons->Get(data.weapon);
+      auto is_ranged = fb->projectile_type();
+
+      if (is_ranged) {
+        IterateOverEffects(
+          EffectConditionType_CANT_EQUIP_RANGED_WEAPONS,
+          [&](auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA { canBuyErrorBuild = true; }
+        );
+      }
+      else {
+        IterateOverEffects(
+          EffectConditionType_CANT_EQUIP_MELEE_WEAPONS,
+          [&](auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA { canBuyErrorBuild = true; }
+        );
+      }
+
+      if (canBuyErrorBuild)
+        canBuy = false;
     }
     // }  ///
 
@@ -5003,7 +5027,11 @@ void DoUI(bool draw) {
                 Save();
               }
               else {
-                if (canBuyErrorWeapon) {
+                if (canBuyErrorBuild) {
+                  g.ui.shopErrorBuild = {};
+                  g.ui.shopErrorBuild.SetNow();
+                }
+                else if (canBuyErrorWeapon) {
                   g.ui.shopErrorWeapons = {};
                   g.ui.shopErrorWeapons.SetNow();
                 }
@@ -5375,6 +5403,13 @@ void DoUI(bool draw) {
             ItemType       itemType       = {};
 
             if (t == 0) {
+              BEAUTIFY_WIGGLING_DANGER_SCOPED(
+                g.ui.shopErrorBuild,
+                WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+                ERROR_WIGGLING_FRAMES,
+                ERROR_WIGGLING_TIMES
+              );
+
               componentUniversalSlot({
                 .id    = CLAY_IDI("shop_player_item", t),
                 .build = g.player.build,
