@@ -433,6 +433,7 @@ effect_conditions: # {  ###
     x_condvar_type: FLOAT
   - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
     x_condvar_type: FLOAT
+    x_divided_by_times: true
     y_condvar_type: DAMAGE
   - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
   - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
@@ -510,8 +511,13 @@ items: # {  ###
     tier: 3
     count_cap: 5
     effects:
-      - stat_type: LANDMINES
-        value: 1
+      - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+        placeholders:
+          - floats: 12
+          - ints: 10
+        damage_scalings:
+          - stat_type: ENGINEERING
+            percents_per_tier: 125
   - type: GARDEN
     texture_id: ui_item_todo
     price: 50
@@ -1171,9 +1177,6 @@ stats: # {  ###
   - type: TURRELS_COUNT
     is_secondary: true
     is_hidden: true
-  - type: LANDMINES
-    is_secondary: true
-    is_hidden: true
   - type: ENEMY_HP_SCALE
     is_percent: true
     is_secondary: true
@@ -1371,12 +1374,6 @@ achievements: # {  ###
       - value: 1
       - value: 1
       - value: 1
-# }
-
-landmine_damage_scalings: # {  ###
-  - stat_type: ENGINEERING
-    percents_per_tier:
-      - 100
 # }
 
 ###

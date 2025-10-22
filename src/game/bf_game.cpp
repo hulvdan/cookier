@@ -585,11 +585,16 @@ struct MakeCreatureData {  ///
   Vector2      pos  = {};
 };
 
+using DamageScalingsFBT = const flatbuffers::
+  Vector<flatbuffers::Offset<BFGame::DamageScaling>, flatbuffers::uoffset_t>*;
+
 struct PreSpawn {  ///
-  PreSpawnType type         = {};
-  CreatureType typeCreature = {};
-  Vector2      pos          = {};
-  FrameGame    createdAt    = {};
+  PreSpawnType      type           = {};
+  CreatureType      typeCreature   = {};
+  Vector2           pos            = {};
+  FrameGame         createdAt      = {};
+  int               damage         = {};
+  DamageScalingsFBT damageScalings = {};
 };
 
 struct Projectile {  ///
@@ -778,8 +783,10 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
 }
 
 struct Landmine {  ///
-  Vector2   pos                 = {};
-  FrameGame startedDetonationAt = {};
+  Vector2           pos                 = {};
+  FrameGame         startedDetonationAt = {};
+  int               damage              = {};
+  DamageScalingsFBT damageScalings      = {};
 };
 
 struct Garden {  ///
@@ -1559,11 +1566,18 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
 }
 
 struct MakeLandmineData {  ///
-  Vector2 pos = {};
+  Vector2           pos            = {};
+  int               damage         = {};
+  DamageScalingsFBT damageScalings = {};
 };
 
 void MakeLandmine(MakeLandmineData data) {  ///
-  Landmine v{.pos = data.pos};
+  ASSERT(data.damageScalings);
+  Landmine v{
+    .pos            = data.pos,
+    .damage         = data.damage,
+    .damageScalings = data.damageScalings,
+  };
   *g.run.landmines.Add() = v;
 }
 
@@ -2993,22 +3007,22 @@ void GameInit() {
           if (!fb_req->required())
             continue;
 
-          auto reqValues = fb_effect->placeholders()->Get(reqIndex);
+          auto placValues = fb_effect->placeholders()->Get(reqIndex);
 
           switch ((CondVarType)fb_req->condvar_type()) {
           case CondVarType_INTEGER: {
-            ASSERT(reqValues->ints()->size() == tierValues);
+            ASSERT(placValues->ints());
+            ASSERT(placValues->ints()->size() == tierValues);
           } break;
 
           case CondVarType_FLOAT: {
-            ASSERT(reqValues->floats()->size() == tierValues);
+            ASSERT(placValues->floats());
+            ASSERT(placValues->floats()->size() == tierValues);
           } break;
 
           case CondVarType_DAMAGE: {
-            if (!fb_effect->damage_scalings()) {
-              FOR_RANGE (int, i, tierValues) {
-                ASSERT(reqValues->ints()->Get(i) > 0);
-              }
+            FOR_RANGE (int, i, tierValues) {
+              ASSERT(placValues->ints()->Get(i) >= 0);
             }
           } break;
 
@@ -4434,7 +4448,9 @@ void DoUI(bool draw) {
 
             switch ((CondVarType)fb_placeholder->condvar_type()) {
             case CondVarType_INTEGER: {
-              auto cv         = fb_vals->ints()->Get(tierOffset);
+              auto cv = fb_vals->ints()->Get(tierOffset);
+              if (fb_placeholder->divided_by_times())
+                cv /= count;
               auto formatFunc = FormatInt;
               if (fb_placeholder->signed_())
                 formatFunc = FormatSignedInt;
@@ -4445,7 +4461,9 @@ void DoUI(bool draw) {
             } break;
 
             case CondVarType_FLOAT: {
-              auto cv         = fb_vals->floats()->Get(tierOffset);
+              auto cv = fb_vals->floats()->Get(tierOffset);
+              if (fb_placeholder->divided_by_times())
+                cv /= count;
               auto formatFunc = FormatFloatDot1WithoutLeadingZeros;
               if (fb_placeholder->signed_())
                 formatFunc = FormatSignedFloatDot1WithoutLeadingZeros;
@@ -8123,23 +8141,25 @@ void GameFixedUpdate() {
           }
 
           // Spawning landmines.
-          if (g.run.state.stats[StatType_LANDMINES] > 0) {
-            auto landminesSpawnInterval = SPAWNING_LANDMINES_INTERVAL_FRAMES;
-            landminesSpawnInterval.value /= g.run.state.stats[StatType_LANDMINES];
-            landminesSpawnInterval.value /= GetPlayerStatStructureAttackSpeedMultiplier();
-            landminesSpawnInterval.value = MAX(2, landminesSpawnInterval.value);
+          IterateOverEffects(
+            EffectConditionType_SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE,
+            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+              auto e = g.run.waveStartedAt.Elapsed().value;
+              auto interval
+                = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT / (f32)times);
+              if (((e + 1) % interval.value) != 0)
+                return;
 
-            if ((g.run.waveStartedAt.Elapsed().value + 1) % landminesSpawnInterval.value
-                == 0)
-            {
               PreSpawn v{
-                .type = PreSpawnType_LANDMINE,
-                .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                .type           = PreSpawnType_LANDMINE,
+                .pos            = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                .damage         = EFFECT_PLACEHOLDER_Y_INT,
+                .damageScalings = fb_effect->damage_scalings(),
               };
               v.createdAt.SetNow();
               *g.run.preSpawns.Add() = v;
             }
-          }
+          );
 
           // Spawning gardens.
           IterateOverEffects(
@@ -8202,7 +8222,11 @@ void GameFixedUpdate() {
           } break;
 
           case PreSpawnType_LANDMINE: {
-            MakeLandmine({.pos = v.pos});
+            MakeLandmine({
+              .pos            = v.pos,
+              .damage         = v.damage,
+              .damageScalings = v.damageScalings,
+            });
           } break;
 
           case PreSpawnType_GARDEN: {
@@ -8972,12 +8996,14 @@ void GameFixedUpdate() {
         if (landmine.startedDetonationAt.IsSet()
             && (landmine.startedDetonationAt.Elapsed() >= LANDMINE_DETONATION_FRAMES))
         {
+          int damage = landmine.damage;
+          damage     = ApplyDamageScalings(damage, 0, landmine.damageScalings);
           MakeAOE(
             CreatureType_PLAYER,
             ParticleType_EXPLOSION,
             landmine.pos,
             glib->landmine_explosion_radius(),
-            ApplyDamageScalings(1, 0, glib->landmine_damage_scalings()),
+            damage,
             glib->landmine_crit_damage_multiplier(),
             glib->landmine_knockback_meters(),
             -1

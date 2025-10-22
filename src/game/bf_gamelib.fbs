@@ -155,6 +155,8 @@ table EffectConditionPlaceholder {
     signed_: bool;
 
     is_percent: bool;
+
+    divided_by_times: bool;  // TODO: in bf_game.cpp assert that variable is FLOAT
 }
 
 table EffectCondition {
@@ -364,7 +366,6 @@ table GameLibrary {
     achievements: [Achievement] (required);
     // TABLE_GEN_END
 
-    landmine_damage_scalings: [DamageScaling];
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;
     landmine_explosion_radius: float = 1.5;
