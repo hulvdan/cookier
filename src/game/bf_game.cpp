@@ -1090,7 +1090,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
   };
 
   IterateOverWeaponEffects(
-    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
+    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY,
     type,
     [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
       if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
@@ -1109,7 +1109,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
   );
 
   IterateOverWeaponEffects(
-    EffectConditionType_MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY,
+    EffectConditionType_MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY,
     type,
     [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
       if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
@@ -1127,7 +1127,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
 
   if (g.run.state.screen == ScreenType_GAMEPLAY && !g.meta.paused) {
     IterateOverWeaponEffects(
-      EffectConditionType_PROPERTY_WHEN_IDLE,
+      EffectConditionType_PROPERTY__WHEN_IDLE,
       type,
       [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
         if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
@@ -1138,7 +1138,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
     );
 
     IterateOverWeaponEffects(
-      EffectConditionType_PROPERTY_WHEN_WALKING,
+      EffectConditionType_PROPERTY__WHEN_WALKING,
       type,
       [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
         if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
@@ -2861,11 +2861,14 @@ void GameInit() {  ///
     void,
     checkEffects,
     (auto                  fb_effects,
-     bool                  cantBeRestrictedToWeapons = true,
-     int                   tierValues                = 1,
-     const BFGame::Weapon* fb_weapon                 = nullptr)
+     bool                  canHaveWeaponOnly = false,
+     bool                  canHaveBuildOnly  = false,
+     int                   tierValues        = 1,
+     const BFGame::Weapon* fb_weapon         = nullptr)
   )
   {
+    ASSERT_FALSE(canHaveWeaponOnly && canHaveBuildOnly);
+
     if (!fb_effects)
       return;
 
@@ -2874,8 +2877,14 @@ void GameInit() {  ///
       effectIndex++;
 
       auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
-      if (cantBeRestrictedToWeapons)
-        ASSERT(fb_cond->restrict() == 0);
+
+      int allowedValues_[]{0, 0};
+      VIEW_FROM_ARRAY_DANGER(allowedValues);
+      if (canHaveBuildOnly)
+        allowedValues[1] = 2;
+      if (canHaveWeaponOnly)
+        allowedValues[1] = 1;
+      ASSERT(allowedValues.Contains(fb_cond->restrict()));
 
       ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
       ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
@@ -2939,19 +2948,19 @@ void GameInit() {  ///
 
   for (auto fb : *glib->difficulties()) {
     auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects());
+    checkEffects(fb->effects(), false, false);
   }
   for (auto fb : *glib->builds()) {
     auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects());
+    checkEffects(fb->effects(), false, true);
   }
   for (auto fb : *glib->items()) {
     auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects());
+    checkEffects(fb->effects(), false, false);
   }
   for (auto fb : *glib->weapons()) {
     auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
-    checkEffects(fb->effects(), false, TOTAL_TIERS - fb->min_tier_index(), fb);
+    checkEffects(fb->effects(), true, false, TOTAL_TIERS - fb->min_tier_index(), fb);
   }
 
   LAMBDA (bool, checkPlaceholder, (int locale_, const char* placeholder)) {
@@ -3099,7 +3108,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       );
 
       IterateOverWeaponEffects(
-        EffectConditionType_DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES,
+        EffectConditionType_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
           int percent = EFFECT_PLACEHOLDER_X_INT;
@@ -3110,7 +3119,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       );
 
       IterateOverWeaponEffects(
-        EffectConditionType_DROP_X_COINS_ON_HIT_WITH_Y_CHANCE,
+        EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
           auto chance = (f32)EFFECT_PLACEHOLDER_Y_INT / 100.0f;
@@ -3554,9 +3563,9 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
     const int tierOffset = weapon.tier - fb->min_tier_index();
 
     if (hit) {
-      // Processing EffectConditionType_HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE.
+      // Processing EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE.
       IterateOverWeaponEffects(
-        EffectConditionType_HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE,
+        EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
           int damage = EFFECT_PLACEHOLDER_Y_INT;
@@ -3727,9 +3736,9 @@ void _UpdateImmediateWeaponEffects(int weaponIndex, int scale) {  ///
     EffectConditionType c;
     int                 times;
   } toUpdate_[]{
-    {EffectConditionType_DEFAULT_GET_STAT, 1},
-    {EffectConditionType_GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
-    {EffectConditionType_GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
+    {EffectConditionType_DEFAULT_GET__STAT, 1},
+    {EffectConditionType_GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
+    {EffectConditionType_GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
   };
   VIEW_FROM_ARRAY_DANGER(toUpdate);
 
@@ -7274,9 +7283,9 @@ void GameFixedUpdate() {
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
     if ((g.run.state.screen != ScreenType_WAVE_END_ANIMATION) && g.run.state.waveWon) {
-      // Applying effects: END_OF_THE_WAVE_GET_STAT.
+      // Applying effects: END_OF_THE_WAVE_GET__STAT.
       IterateOverEffects(
-        EffectConditionType_END_OF_THE_WAVE_GET_STAT,
+        EffectConditionType_END_OF_THE_WAVE_GET__STAT,
         [&](auto fb_effect, int tierOffset, int times)
           BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
       );
@@ -7457,9 +7466,9 @@ void GameFixedUpdate() {
     PLAYER_CREATURE.health    = MAX(1, health);
     PLAYER_CREATURE.maxHealth = MAX(1, health);
 
-    // Applying effects: START_OF_THE_WAVE_GET_STAT.
+    // Applying effects: START_OF_THE_WAVE_GET__STAT.
     IterateOverEffects(
-      EffectConditionType_START_OF_THE_WAVE_GET_STAT,
+      EffectConditionType_START_OF_THE_WAVE_GET__STAT,
       [&](auto fb_effect, int tierOffset, int times)
         BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
     );
@@ -8120,7 +8129,7 @@ void GameFixedUpdate() {
           g.run.playerContinuousWalkingFrames = 0;
 
           IterateOverEffects(
-            EffectConditionType_GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE,
+            EffectConditionType_STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE,
             [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
               const auto lf = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
               if ((g.run.playerContinuousIdleFrames % lf.value) == 0) {
@@ -8142,7 +8151,7 @@ void GameFixedUpdate() {
           AchievementAdd(AchievementType_WALKER, 1);
 
           IterateOverEffects(
-            EffectConditionType_GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE,
+            EffectConditionType_STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE,
             [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
               if ((g.run.playerWalkedMeters % EFFECT_PLACEHOLDER_X_INT) == 0) {
                 ChangeStat(
@@ -8155,9 +8164,9 @@ void GameFixedUpdate() {
         }
       }
 
-      // Processing EffectConditionType_GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE.
+      // Processing EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE.
       IterateOverEffects(  ///
-        EffectConditionType_GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE,
+        EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE,
         [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
           const auto lf = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
           const auto e  = g.run.waveStartedAt.Elapsed();
@@ -8654,13 +8663,13 @@ void GameFixedUpdate() {
                   .wasCrit       = &wasCrit,
                 }))
             {
-              // Applying EffectConditionType_PIERCES_UP_TO_X_TIMES_ON_CRIT.
+              // Applying EffectConditionType_PIERCES_UP_TO__X__TIMES_ON_CRIT.
               if (wasCrit && projectile.weaponIndexOrMinus1 >= 0) {
                 const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
                 auto        fb_weapon  = glib->weapons()->Get(weapon.type);
                 const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
                 IterateOverWeaponEffects(
-                  EffectConditionType_PIERCES_UP_TO_X_TIMES_ON_CRIT,
+                  EffectConditionType_PIERCES_UP_TO__X__TIMES_ON_CRIT,
                   weapon.type,
                   [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
                     if (projectile.effectCritPierce < EFFECT_PLACEHOLDER_X_INT) {
@@ -8950,9 +8959,9 @@ void GameFixedUpdate() {
               if (creature.lastDamagedWeaponIndex >= 0)
                 g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
 
-              // Applying effects: KILL_X_ENEMIES_GET_STAT.
+              // Applying effects: STAT__EVERY__X__KILLED_ENEMIES.
               IterateOverEffects(
-                EffectConditionType_KILL_X_ENEMIES_GET_STAT,
+                EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
                 [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
                   const auto cond
                     = fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset);
@@ -8960,9 +8969,9 @@ void GameFixedUpdate() {
                     ApplyEffect(fb_effect, tierOffset, times);
                 }
               );
-              // Applying effects: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT.
+              // Applying effects: STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON.
               IterateOverWeaponsEffects(
-                EffectConditionType_KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT,
+                EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON,
                 [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
                   BF_FORCE_INLINE_LAMBDA {
                     auto cond

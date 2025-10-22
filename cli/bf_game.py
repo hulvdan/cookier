@@ -54,11 +54,11 @@ def field_to_list(container, field: str) -> None:
 
 def does_require(effect_condition_name: str, v: str) -> bool:
     requires = False
-    if effect_condition_name.startswith(f"{v}_"):
+    if effect_condition_name.startswith(f"{v}__"):
         requires = True
-    if effect_condition_name.endswith(f"_{v}"):
+    if effect_condition_name.endswith(f"__{v}"):
         requires = True
-    if f"_{v}_" in effect_condition_name:
+    if f"__{v}__" in effect_condition_name:
         requires = True
     return requires
 
@@ -96,6 +96,10 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
         for _, x in enumerate_table("effect_conditions"):
             x["name_locale"] = "EFFECT_{}".format(x["type"])
 
+        for x in gamelib.pop("build_effect_conditions", []):
+            x["name_locale"] = "BUILD_EFFECT_{}".format(x["type"])
+            gamelib["effect_conditions"].append({**x, "restrict": 2})
+
         for x in gamelib.pop("weapon_effect_conditions", []):
             x["name_locale"] = "WEAPON_EFFECT_{}".format(x["type"])
             gamelib["effect_conditions"].append({**x, "restrict": 1})
@@ -104,7 +108,12 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
             for cond in (
                 *(l.upper() for l in EFFECT_CONDITION_LETTERS),
                 "STAT",
-                "PROPERTY",
+                "PICKUPABLE",
+                "TIER",
+                "ITEM",
+                "WEAPON",
+                "ITEM_OR_WEAPON",
+                "WEAPONGROUP",
             ):
                 if does_require(x["type"], cond):
                     x["requires_{}".format(cond.lower())] = True

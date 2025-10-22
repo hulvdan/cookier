@@ -158,7 +158,7 @@ table EffectConditionPlaceholder {
 }
 
 table EffectCondition {
-    restrict: int; // 0 general, 1 weapon only.
+    restrict: int; // 0 general, 1 weapon only, 2 build only.
     rectrict_only_ranged_weapons: bool;
     name_locale: int;
     requires_stat: bool;
@@ -166,6 +166,10 @@ table EffectCondition {
     requires_projectile: bool;
     requires_pickupable: bool;
     requires_tier: bool;
+    requires_item: bool;
+    requires_weapon: bool;
+    requires_item_or_weapon: bool;
+    required_weapongroup: bool;
     placeholders: [EffectConditionPlaceholder];
 }
 

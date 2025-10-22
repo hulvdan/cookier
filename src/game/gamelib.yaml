@@ -406,61 +406,76 @@ effect_condition_variables: # {  ###
 # }
 
 effect_conditions: # {  ###
-  - type: DEFAULT_GET_STAT
-  - type: KILL_X_ENEMIES_GET_STAT
-  - type: END_OF_THE_WAVE_GET_STAT
-  - type: START_OF_THE_WAVE_GET_STAT
-  - type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+  - type: DEFAULT_GET__STAT
+  - type: STAT__EVERY__X__KILLED_ENEMIES
+  - type: END_OF_THE_WAVE_GET__STAT
+  - type: START_OF_THE_WAVE_GET__STAT
+  - type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
     x_condvar_type: FLOAT
-  - type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
-  - type: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
+  - type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+  - type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
     x_condvar_type: FLOAT
+  - type: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN
+  - type: X__STAT_UPON_LEVEL_UP
+  - type: X__COINS_UPON_PICKING_UP_A_CRATE
+  - type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+  - type: STAT__WHEN_WALKING
+  - type: STAT__WHEN_IDLE
+  - type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+# }
+
+build_effect_conditions: # { ###
+  - type: START_WITH__X__ITEM
+  - type: START_WITH__X__WEAPON
+  - type: START_WITH__X__ITEM_OR_WEAPON
+  - type: CANT_EQUIP_MELEE_WEAPONS
+  - type: CANT_EQUIP_RANGED_WEAPONS
 # }
 
 weapon_effect_conditions: # {  ###
-  - type: X_CHANCE_OF_EXPLOSION_ON_HIT
+  - type: X__CHANCE_OF_EXPLOSION_ON_HIT
     x_is_percent: true
-  - type: KILL_X_ENEMIES_USING_THIS_WEAPON_GET_STAT
-  - type: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
+  - type: STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON
+  - type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
     y_condvar_type: DAMAGE
     requires_projectile: true
-  - type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+  - type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
     x_condvar_type: FLOAT
     x_signed: true
-  - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP
     x_signed: true
     x_is_percent: true
     y_is_percent: true
-  - type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP
     x_signed: true
     x_is_percent: true
     y_is_percent: true
-  - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
-  - type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
-  - type: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+  - type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
+  - type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
+  - type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
     y_is_percent: true
-  - type: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+  - type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
     x_signed: true
     x_is_percent: true
     y_is_percent: true
-  - type: X_CHANCE_TO_EXPLODE
+  - type: X__CHANCE_TO_EXPLODE
     x_is_percent: true
-  - type: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+  - type: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
     x_is_percent: true
-  - type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-  - type: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
-  - type: PROPERTY_WHEN_IDLE
-  - type: PROPERTY_WHEN_WALKING
-  # - type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+  - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+  - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+  - type: PROPERTY__WHEN_IDLE
+  - type: PROPERTY__WHEN_WALKING
+  # - type: HITTING_SPAWNS__X__PROJECTILES_THAT_BOUNCE__Y__TIMES_PIERCE__Z__TIMES_DEALING__W__DAMAGE
   #   w_condvar_type: DAMAGE
-  - type: SPAWNS_GARDEN_EVERY_X_SECONDS
+  - type: SPAWNS_GARDEN_EVERY__X__SECONDS
     x_condvar_type: FLOAT
-  - type: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+  - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
     x_condvar_type: FLOAT
     y_condvar_type: DAMAGE
   - type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-  - type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
-  - type: PIERCES_UP_TO_X_TIMES_ON_CRIT
+  - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
+  - type: PIERCES_UP_TO__X__TIMES_ON_CRIT
     rectrict_only_ranged_weapons: true
 # }
 
@@ -524,7 +539,7 @@ items: # {  ###
     effects:
       - stat_type: ENEMIES
         value: 5
-      - effectcondition_type: KILL_X_ENEMIES_GET_STAT
+      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
         stat_type: ENEMIES
         value: 1
         placeholders:
@@ -535,7 +550,7 @@ items: # {  ###
     price: 50
     count_cap: 1
     effects:
-      - effectcondition_type: START_OF_THE_WAVE_GET_STAT
+      - effectcondition_type: START_OF_THE_WAVE_GET__STAT
         stat_type: COINS
         value_multiplier: 1.2
   - type: TODO_REROLLER
@@ -611,31 +626,31 @@ weapons: # {  ###
       #     - ints: 20 20 20 20
       #     - ints: 70 65 60 55
       #
-      # - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+      # - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
       #   weaponproperty_type: DAMAGE
       #   value: 4 5 6 8
       #
-      # - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+      # - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
       #   stat_type: DAMAGE
       #   value: 3 5 7 10
       #
-      # - effectcondition_type: PROPERTY_WHEN_WALKING
+      # - effectcondition_type: PROPERTY__WHEN_WALKING
       #   weaponproperty_type: DAMAGE
       #   value: 100 100 100 100
       #
-      # - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+      # - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
       #   stat_type: DAMAGE
       #   value: 100 100 100 100
       #   placeholders:
       #     - ints: 4 3 2 1
       #
-      # - effectcondition_type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+      # - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
       #   stat_type: DAMAGE
       #   value: 100 100 100 100
       #   placeholders:
       #     - floats: 4 3 2 1
       #
-      # - effectcondition_type: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
+      # - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
       #   value: 100 100 100 100
       #   damage_scalings:
       #     - stat_type: DAMAGE_RANGED
@@ -646,7 +661,7 @@ weapons: # {  ###
       #     - ints: 3 4 5 6
       #     - ints: 0 0 0 0
       #
-      - effectcondition_type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+      - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
         placeholders:
           - floats: 3 2.5 2 1.2
           - ints: 5 5 5 5
@@ -680,10 +695,10 @@ weapons: # {  ###
     texture_ids:
       - game_weapon_gun
     effects:
-      - effectcondition_type: PIERCES_UP_TO_X_TIMES_ON_CRIT
+      - effectcondition_type: PIERCES_UP_TO__X__TIMES_ON_CRIT
         placeholders:
           - ints: 1 2 3 4
-            #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+            #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
             #     weaponproperty_type: DAMAGE
             #     value: 4 6 8 10
             #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
@@ -694,7 +709,7 @@ weapons: # {  ###
             #     placeholders:
             #       - ints: 20 20 20 20
             #       - ints: 75 80 85 90
-            #   - effectcondition_type: X_COOLDOWN_SECONDS_EVERY_Y_HITS
+            #   - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
             #     placeholders:
             #       - floats: 2.0 1.6 1.2 0.8
             #       - ints: 20 20 20 20
@@ -716,28 +731,28 @@ weapons: # {  ###
     texture_ids:
       - game_weapon_smg
       # effects:
-      #   - effectcondition_type: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
+      #   - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
       #     stat_type: DAMAGE
       #     value: 1 1 1 1
-      #   - effectcondition_type: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
+      #   - effectcondition_type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
       #     stat_type: DAMAGE
       #     value: 1 1 1 1
-      #   - effectcondition_type: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
+      #   - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
       #     stat_type: DAMAGE
       #     value: 1 1 1 1
       #     placeholders:
       #       - floats: 29 19 14 11
-      #   - effectcondition_type: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
+      #   - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
       #     stat_type: DAMAGE
       #     value: 1 1 1 1
       #     placeholders:
       #       - ints: 50 45 38 30
-      #   - effectcondition_type: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
+      #   - effectcondition_type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
       #     stat_type: DAMAGE
       #     value: 1 1 1 1
       #     placeholders:
       #       - floats: 7 6 5 4
-      #   - effectcondition_type: PROPERTY_WHEN_IDLE
+      #   - effectcondition_type: PROPERTY__WHEN_IDLE
       #     weaponproperty_type: DAMAGE
       #     value: 4 6 8 10
   - type: BOW
@@ -759,13 +774,13 @@ weapons: # {  ###
     texture_ids:
       - game_weapon_bow
       # effects:
-      #   - effectcondition_type: PROPERTY_WHEN_WALKING
+      #   - effectcondition_type: PROPERTY__WHEN_WALKING
       #     weaponproperty_type: DAMAGE
       #     value: 4 6 8 10
-      #   - effectcondition_type: SPAWNS_GARDEN_EVERY_X_SECONDS
+      #   - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
       #     placeholders:
       #       - floats: 15 14 12 10
-      #   - effectcondition_type: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+      #   - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
       #     placeholders:
       #       - floats: 12 9 6 3
       #       - ints: 3 4 5 6
@@ -773,7 +788,7 @@ weapons: # {  ###
       #       - stat_type: ENGINEERING
       #         percents_per_tier: 100 125 150 200
       #   - effectcondition_type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-      #   - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
+      #   - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
       #     placeholders:
       #       - ints: 1 2 3 4
   - type: SLINGSHOT
@@ -792,21 +807,21 @@ weapons: # {  ###
     max_price: 120
     shooting_duration_frames: 12
     effects:
-      - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
+      - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
         weaponproperty_type: DAMAGE
         value: 4 6 8 10
-      - effectcondition_type: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
+      - effectcondition_type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
         placeholders:
           - ints: 10 30 60 120
           - ints: 3 3 3 3
-      - effectcondition_type: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+      - effectcondition_type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
         placeholders:
           - ints: 2 5 12 20
           - ints: 1 1 1 2
-      - effectcondition_type: X_CHANCE_TO_EXPLODE
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
         placeholders:
           - ints: 10 20 30 40
-      - effectcondition_type: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+      - effectcondition_type: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
         placeholders:
           - ints: 20 40 70 100
     icon_texture_id: game_weapon_slingshot

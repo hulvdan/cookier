@@ -13,59 +13,75 @@ x placeholders groups
   can specify "hitting an enemy spawns 3/4/5/6 projectiles dealing 50/60/70/80% {ranged damage icon} damage"
 x ref: placeholders on trashArena
   remove BF_MAX_PLACEHOLDERS_IN_STRING
-x weapon effects: show: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
+x weapon effects: show: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
 x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 x weapon effects: show: X_COOLDOWN_SECONDS_EVERY_Y_HITS
 x weapon effects: placeholder `is_percent`
 x weapon effects: show: X_CHANCE_TO_EXPLODE
 x weapon effects: show: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
-x weapon effects: show: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
-x weapon effects: show: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
-x weapon effects: show: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-x weapon effects: show: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
-x weapon effects: show: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
-x weapon effects: show: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
-x weapon effects: show: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
-x weapon effects: show: PROPERTY_WHEN_IDLE
-x weapon effects: show: PROPERTY_WHEN_WALKING
-x weapon effects: show: SPAWNS_GARDEN_EVERY_X_SECONDS
-x weapon effects: show: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
+x weapon effects: show: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+x weapon effects: show: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+x weapon effects: show: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+x weapon effects: show: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+x weapon effects: show: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+x weapon effects: show: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+x weapon effects: show: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
+x weapon effects: show: PROPERTY__WHEN_IDLE
+x weapon effects: show: PROPERTY__WHEN_WALKING
+x weapon effects: show: SPAWNS_GARDEN_EVERY__X__SECONDS
+x weapon effects: show: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
 x weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
+x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-x weapon effects: impl: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
-x weapon effects: impl: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+x weapon effects: impl: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+x weapon effects: impl: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
 x weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 x yandex/web load savedata
 x fix: on start of the game player's health is 20.
   Should be 25 (because of Build's effect)
-x weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE_PROPERTY
-x weapon effects: impl: GET_STAT_FOR_EVERY_OCCUPIED_WEAPON_SLOT
-x weapon effects: impl: GET_STAT_FOR_EVERY_EMPTY_WEAPON_SLOT
-x weapon effects: impl: PROPERTY_WHEN_IDLE
-x weapon effects: impl: PROPERTY_WHEN_WALKING
-x weapon effects: impl: GET_STAT_EVERY_X_WALKED_METERS_DURING_THIS_WAVE
-x weapon effects: impl: GET_STAT_EVERY_X_IDLE_SECONDS_DURING_THIS_WAVE
-x weapon effects: impl: GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE
-x weapon effects: impl: HIT_SPAWNS_X_PROJECTILES_DEALING_Y_DAMAGE
+x weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
+x weapon effects: impl: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+x weapon effects: impl: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+x weapon effects: impl: PROPERTY__WHEN_IDLE
+x weapon effects: impl: PROPERTY__WHEN_WALKING
+x weapon effects: impl: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+x weapon effects: impl: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
+x weapon effects: impl: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+x weapon effects: impl: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 x weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-x weapon effects: show: (ranged weapon) PIERCES_UP_TO_X_TIMES_ON_CRIT
-x weapon effects: impl: (ranged weapon) PIERCES_UP_TO_X_TIMES_ON_CRIT
+x weapon effects: show: (ranged weapon) PIERCES_UP_TO__X__TIMES_ON_CRIT
+x weapon effects: impl: (ranged weapon) PIERCES_UP_TO__X__TIMES_ON_CRIT
 x gathered most of the weapon effects
 
-* START_WITH_X_ITEM
-* START_WITH_X_WEAPON
-* X_CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
-* X_STAT_UPON_LEVEL_UP
-* X_COINS_UPON_PICKING_UP_A_CRATE
-* X_PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
-* GET_STAT_WHEN_WALKING
-* GET_STAT_WHEN_IDLE
-* HARVESTING_INCREASES_BY_ADDITIONAL_X_PERCENT_AT_THE_END_OF_THE_WAVE
-* CANT_EQUIP_MELEE_WEAPONS
-* CANT_EQUIP_RANGED_WEAPONS
+* weapon effects: show: START_WITH__X__ITEM_OR_WEAPON
+* weapon effects: show: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
+* weapon effects: show: X__STAT_UPON_LEVEL_UP
+* weapon effects: show: X__COINS_UPON_PICKING_UP_A_CRATE
+* weapon effects: show: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+* weapon effects: show: STAT__WHEN_WALKING
+* weapon effects: show: STAT__WHEN_IDLE
+* weapon effects: show: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+* weapon effects: show: CANT_EQUIP_MELEE_WEAPONS
+* weapon effects: show: CANT_EQUIP_RANGED_WEAPONS
+*
+* weapon effects: impl: START_WITH__X__ITEM_OR_WEAPON
+* weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
+* weapon effects: impl: X__STAT_UPON_LEVEL_UP
+* weapon effects: impl: X__COINS_UPON_PICKING_UP_A_CRATE
+* weapon effects: impl: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+* weapon effects: impl: STAT__WHEN_WALKING
+* weapon effects: impl: STAT__WHEN_IDLE
+* weapon effects: impl: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+* weapon effects: impl: CANT_EQUIP_MELEE_WEAPONS
+* weapon effects: impl: CANT_EQUIP_RANGED_WEAPONS
+*
+* weapon effects: impl: X__CHANCE_TO_EXPLODE
+* weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
+  PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
+* weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
+* weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
 *
 * STAT_FOR_WEAPONGROUP
 * PROPERTY_FOR_WEAPONGROUP
@@ -97,9 +113,9 @@ x gathered most of the weapon effects
 * GET_STAT_FOR_Y_SECONDS_UPON_PICKUPABLE
 * GET_STAT_DURING_THE_NEXT_WAVE
 * GET_STAT_FOR_EVERY_LIVING_ENEMY
-* GET_STAT_EVERY_X_SECONDS_DURING_THIS_WAVE_BONUS_IS_LOST_UPON_TAKING_DAMAGE
-* GET_STAT_UPON_PICKUPABLE_WHILE_AT_MAX_HP (1 max hp, consumable)
-* GET_STAT_UPON_PICKUPABLE_WHILE_AT_MAX_HP_UNTIL_THE_END_OF_THE_WAVE (1 hp regen, consumable)
+* STAT__EVERY__X__SECONDS_DURING_THIS_WAVE_BONUS_IS_LOST_UPON_TAKING_DAMAGE
+* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP (1 max hp, consumable)
+* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP_UNTIL_THE_END_OF_THE_WAVE (1 hp regen, consumable)
 * PROJECTILES_GET_PIERCING_UPON_CRIT
 * PROJECTILES_GET_BOUNCE_UPON_CRIT
 * stat: accuracy [-PI32 / 4, PI32 / 4]
@@ -110,7 +126,7 @@ x gathered most of the weapon effects
 * GARDEN_SPAWNS_EVERY_N_SECONDS (spawns a garden that creates apple every 15 seconds)
 * CHANCE_TO_HEAL_X_HP_UPON_KILLING
 * ITEMS_WILL_BE_X_TIER_HIGHER_UPON_THE_NEXT_REROLL
-* CRITS_DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+* CRITS_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
 * BURNING_DEALS_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
 * STAT_IS_CAPPED
 * ENEMIES_TAKE_X_PERCENT_MORE_DAMAGE_DURING_Y_SECONDS_UPON_ELEMENTAL_DAMAGE
@@ -182,11 +198,6 @@ x gathered most of the weapon effects
 *
 *
 *
-* weapon effects: impl: X_CHANCE_TO_EXPLODE
-* weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL_X_ENEMIES
-  PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
-* weapon effects: impl: SPAWNS_GARDEN_EVERY_X_SECONDS
-* weapon effects: impl: SPAWNS_LANDMINE_EVERY_X_SECONDS_DEALING_Y_DAMAGE
 *
 *
 * fix guarantee input press
@@ -216,8 +227,8 @@ x gathered most of the weapon effects
 *
 * weapon / non weapon effects: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 * weapon / non weapon effects: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-* weapon / non weapon effects: DROP_X_COINS_ON_HIT_WITH_Y_CHANCE
-* weapon / non weapon effects: DEAL_X_PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE_Y_FOR_BOSSES
+* weapon / non weapon effects: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+* weapon / non weapon effects: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
 * weapon / non weapon effects: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
 *
 
