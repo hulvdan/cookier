@@ -3703,7 +3703,10 @@ void AddXP(f32 xp) {  ///
 
   auto nextLevelXp = GetNextLevelXp(g.run.state.level);
 
+  int addedLevels = 0;
+
   while (g.run.state.xp >= nextLevelXp) {
+    addedLevels++;
     g.run.state.xp -= nextLevelXp;
     g.run.state.level++;
     nextLevelXp = GetNextLevelXp(g.run.state.level);
@@ -3720,6 +3723,15 @@ void AddXP(f32 xp) {  ///
       ChangeStat(stat, vals->Get(0));
       break;
     }
+  }
+
+  if (addedLevels > 0) {
+    IterateOverEffects(
+      EffectConditionType_STAT__UPON_LEVEL_UP,
+      [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+        ApplyStatEffect(fb_effect, tierOffset, times * addedLevels);
+      }
+    );
   }
 
   Save();
