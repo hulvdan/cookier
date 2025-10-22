@@ -69,10 +69,10 @@ x weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of th
 x weapon effects: impl: STAT__UPON_LEVEL_UP
 x weapon effects: impl: X__COINS_UPON_PICKING_UP_A_CRATE
 x weapon effects: impl: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+x weapon effects: impl: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
 
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
-* weapon effects: impl: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
 * weapon effects: impl: CANT_EQUIP_MELEE_WEAPONS
 * weapon effects: impl: CANT_EQUIP_RANGED_WEAPONS
 *
