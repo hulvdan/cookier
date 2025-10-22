@@ -65,8 +65,8 @@ x weapon effects: show: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_EN
 x weapon effects: show: CANT_EQUIP_MELEE_WEAPONS
 x weapon effects: show: CANT_EQUIP_RANGED_WEAPONS
 x weapon effects: impl: START_WITH__X__ITEM_OR_WEAPON
+x weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
 
-* weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
 * weapon effects: impl: STAT__UPON_LEVEL_UP
 * weapon effects: impl: X__COINS_UPON_PICKING_UP_A_CRATE
 * weapon effects: impl: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
