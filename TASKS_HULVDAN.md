@@ -75,16 +75,18 @@ x weapon effects: impl: CANT_EQUIP_RANGED_WEAPONS
 x fix tests
 x wave end pickup crates
 - wave end fix coins flying towards player
+x fix new game coin achievement
+x weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
 
+* structures in a circle around center
+* weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+*
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
 *
 * weapon effects: impl: X__CHANCE_TO_EXPLODE
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
   PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
-* weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
-* weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
-*
 * STAT_FOR_WEAPONGROUP
 * PROPERTY_FOR_WEAPONGROUP
 *
