@@ -1791,6 +1791,97 @@ void PlaceholdImage(const char* placeholder, int texId) {  ///
   PlaceholdGroupEnd();
 }
 
+void IterateOverWeaponsEffects(
+  EffectConditionType condition,
+  /* void (
+       int weaponIndexOrMinus1,
+       Weapon& weapon,
+       int tierOffset,
+       auto fb_effect) */
+  auto innerLambda
+) {  ///
+  const auto fb_weapons          = glib->weapons();
+  int        weaponIndexOrMinus1 = -1;
+  for (auto& weapon : g.run.state.weapons) {
+    weaponIndexOrMinus1++;
+    if (!weapon.type)
+      continue;
+    const auto fb         = fb_weapons->Get(weapon.type);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition) {
+          innerLambda(
+            weaponIndexOrMinus1, weapon, weapon.tier - fb->min_tier_index(), fb_effect
+          );
+        }
+      }
+    }
+  }
+}
+
+void IterateOverItemEffects(
+  EffectConditionType condition,
+  ItemType            type,
+  int                 count,
+  /* void (auto fb_effect, int tierOffset, int times)*/
+  auto innerLambda
+) {  ///
+  const auto fb         = glib->items()->Get(type);
+  const auto fb_effects = fb->effects();
+  if (fb_effects) {
+    for (const auto fb_effect : *fb_effects) {
+      if (fb_effect->effectcondition_type() == condition)
+        innerLambda(fb_effect, 0, count);
+    }
+  }
+}
+
+void IterateOverEffects(
+  EffectConditionType                                         condition,
+  auto /* void (auto fb_effect, int tierOffset, int times) */ innerLambda
+) {  ///
+#if BF_ENABLE_ASSERTS
+  auto fb_conditions = glib->effect_conditions();
+  auto fb            = fb_conditions->Get(condition);
+  ASSERT(fb->restrict() != 1);
+#endif
+
+  IterateOverWeaponsEffects(
+    condition,
+    [&](int weaponIndexOrMinus1, Weapon& weapon, int tierOffset, auto fb_effect)
+      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, tierOffset, 1); }
+  );
+
+  // Iterating over items.
+  for (auto& item : g.run.state.items)
+    IterateOverItemEffects(condition, item.type, item.count, innerLambda);
+
+  // Iterating over difficulty effects.
+  {
+    const auto fb         = glib->difficulties()->Get(g.player.difficulty);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(fb_effect, 0, 1);
+      }
+    }
+  }
+
+  // Iterating over build effects.
+  {
+    const auto fb         = glib->builds()->Get(g.player.build);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(fb_effect, 0, 1);
+      }
+    }
+  }
+}
+
 void MakePickupable(MakePickupableData data) {  ///
   ASSERT(data.type);
 
@@ -1816,6 +1907,19 @@ void MakePickupable(MakePickupableData data) {  ///
   }
 
   pickupable.createdAt.SetNow();
+
+  if (pickupable.type == PickupableType_COIN) {
+    f32 chanceToInstaPickup = 0;
+    IterateOverEffects(
+      EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN,
+      [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+        chanceToInstaPickup += (f32)(EFFECT_PLACEHOLDER_X_INT * times) / 100.0f;
+      }
+    );
+    if (GRAND.FRand() < chanceToInstaPickup)
+      pickupable.pickedUpAt.SetNow();
+  }
+
   *g.run.pickupables.Add() = pickupable;
 }
 
@@ -2537,97 +2641,6 @@ int GetWeaponRecyclePrice(WeaponType type, int tier) {  ///
 
 int GetNextLevelXp(int currentLevel) {  ///
   return SQR(currentLevel + 3);
-}
-
-void IterateOverWeaponsEffects(
-  EffectConditionType condition,
-  /* void (
-       int weaponIndexOrMinus1,
-       Weapon& weapon,
-       int tierOffset,
-       auto fb_effect) */
-  auto innerLambda
-) {  ///
-  const auto fb_weapons          = glib->weapons();
-  int        weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.state.weapons) {
-    weaponIndexOrMinus1++;
-    if (!weapon.type)
-      continue;
-    const auto fb         = fb_weapons->Get(weapon.type);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition) {
-          innerLambda(
-            weaponIndexOrMinus1, weapon, weapon.tier - fb->min_tier_index(), fb_effect
-          );
-        }
-      }
-    }
-  }
-}
-
-void IterateOverItemEffects(
-  EffectConditionType condition,
-  ItemType            type,
-  int                 count,
-  /* void (auto fb_effect, int tierOffset, int times)*/
-  auto innerLambda
-) {  ///
-  const auto fb         = glib->items()->Get(type);
-  const auto fb_effects = fb->effects();
-  if (fb_effects) {
-    for (const auto fb_effect : *fb_effects) {
-      if (fb_effect->effectcondition_type() == condition)
-        innerLambda(fb_effect, 0, count);
-    }
-  }
-}
-
-void IterateOverEffects(
-  EffectConditionType                                         condition,
-  auto /* void (auto fb_effect, int tierOffset, int times) */ innerLambda
-) {  ///
-#if BF_ENABLE_ASSERTS
-  auto fb_conditions = glib->effect_conditions();
-  auto fb            = fb_conditions->Get(condition);
-  ASSERT(fb->restrict() != 1);
-#endif
-
-  IterateOverWeaponsEffects(
-    condition,
-    [&](int weaponIndexOrMinus1, Weapon& weapon, int tierOffset, auto fb_effect)
-      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, tierOffset, 1); }
-  );
-
-  // Iterating over items.
-  for (auto& item : g.run.state.items)
-    IterateOverItemEffects(condition, item.type, item.count, innerLambda);
-
-  // Iterating over difficulty effects.
-  {
-    const auto fb         = glib->difficulties()->Get(g.player.difficulty);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 0, 1);
-      }
-    }
-  }
-
-  // Iterating over build effects.
-  {
-    const auto fb         = glib->builds()->Get(g.player.build);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 0, 1);
-      }
-    }
-  }
 }
 
 void RunInit() {
