@@ -72,11 +72,12 @@ x weapon effects: impl: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
 x weapon effects: impl: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
 x weapon effects: impl: CANT_EQUIP_MELEE_WEAPONS
 x weapon effects: impl: CANT_EQUIP_RANGED_WEAPONS
+x fix tests
+x wave end pickup crates
+- wave end fix coins flying towards player
 
-*
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
-* wave end pickup crates
 *
 * weapon effects: impl: X__CHANCE_TO_EXPLODE
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
