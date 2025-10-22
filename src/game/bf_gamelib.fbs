@@ -164,12 +164,12 @@ table EffectCondition {
     requires_stat: bool;
     requires_property: bool;
     requires_projectile: bool;
-    requires_pickupable: bool;
-    requires_tier: bool;
-    requires_item: bool;
-    requires_weapon: bool;
-    requires_item_or_weapon: bool;
-    required_weapongroup: bool;
+    // requires_pickupable: bool;
+    // requires_tier: bool;
+    // requires_item: bool;
+    // requires_weapon: bool;
+    requires_item_or_weapon: bool;  // Either item or weapon.
+    // required_weapongroup: bool;
     placeholders: [EffectConditionPlaceholder];
 }
 
@@ -196,6 +196,9 @@ table Effect {
     pickupable_type: int;
 
     tier: int = -1;
+
+    item_type: int;
+    weapon_type: int;
 
     damage_scalings: [DamageScaling];
 }
