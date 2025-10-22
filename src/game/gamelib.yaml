@@ -1272,7 +1272,7 @@ builds: # {  ###
         value: 7
       - effectcondition_type: STAT__UPON_LEVEL_UP
         stat_type: DAMAGE
-        value: 1
+        value: 69
       - effectcondition_type: X__COINS_UPON_PICKING_UP_A_CRATE
         placeholders:
           - ints: 30
