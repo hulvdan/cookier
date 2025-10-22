@@ -6089,7 +6089,16 @@ void DoUI(bool draw) {
               BF_CLAY_SPACER_VERTICAL;
 
               // Stat + amount.
-              const auto amount = fb->upgrade_values()->Get(upgrade.tier);
+              int amount = fb->upgrade_values()->Get(upgrade.tier);
+
+              IterateOverEffects(
+                EffectConditionType_X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES,
+                [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+                  amount
+                    += Ceil(amount * (f32)(EFFECT_PLACEHOLDER_X_INT * times) / 100.0f);
+                }
+              );
+
               CLAY({.layout{
                 BF_CLAY_SIZING_GROW_X,
                 .childGap = GAP_SMALL,
