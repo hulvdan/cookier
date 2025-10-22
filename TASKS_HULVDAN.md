@@ -70,12 +70,12 @@ x weapon effects: impl: STAT__UPON_LEVEL_UP
 x weapon effects: impl: X__COINS_UPON_PICKING_UP_A_CRATE
 x weapon effects: impl: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
 x weapon effects: impl: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+x weapon effects: impl: CANT_EQUIP_MELEE_WEAPONS
+x weapon effects: impl: CANT_EQUIP_RANGED_WEAPONS
 
+*
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
-* weapon effects: impl: CANT_EQUIP_MELEE_WEAPONS
-* weapon effects: impl: CANT_EQUIP_RANGED_WEAPONS
-*
 * wave end pickup crates
 *
 * weapon effects: impl: X__CHANCE_TO_EXPLODE
