@@ -2915,7 +2915,8 @@ void GameInit() {  ///
      const BFGame::Weapon* fb_weapon         = nullptr)
   )
   {
-    ASSERT_FALSE(canHaveWeaponOnly && canHaveBuildOnly);
+    const bool allowed = canHaveWeaponOnly && canHaveBuildOnly;
+    ASSERT_FALSE(allowed);
 
     if (!fb_effects)
       return;
@@ -2938,12 +2939,14 @@ void GameInit() {  ///
       ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
       ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
 
-      ASSERT_FALSE(fb_cond->requires_stat() && fb_cond->requires_property());
+      const bool allowed = fb_cond->requires_stat() && fb_cond->requires_property();
+      ASSERT_FALSE(allowed);
 
       if (fb_cond->requires_stat() || fb_cond->requires_property()) {
-        auto v  = fb_effect->value();
-        auto vm = fb_effect->value_multiplier();
-        ASSERT(v || vm);
+        auto       v                     = fb_effect->value();
+        auto       vm                    = fb_effect->value_multiplier();
+        const bool atLeastOneIsSpecified = v || vm;
+        ASSERT(atLeastOneIsSpecified);
         if (v)
           ASSERT(v->size() == tierValues);
         if (vm)
@@ -2978,10 +2981,12 @@ void GameInit() {  ///
 
       if (fb_cond->requires_item_or_weapon()) {
         // Either item or weapon.
-        auto i = fb_effect->item_type();
-        auto w = fb_effect->weapon_type();
-        ASSERT(i || w);
-        ASSERT_FALSE(i && w);
+        auto i                     = fb_effect->item_type();
+        auto w                     = fb_effect->weapon_type();
+        auto atLeastOneIsSpecified = i || w;
+        auto bothAreSpecified      = i && w;
+        ASSERT(atLeastOneIsSpecified);
+        ASSERT_FALSE(bothAreSpecified);
       }
 
       int reqIndex = -1;
@@ -7309,6 +7314,76 @@ int GetMobDamage(CreatureType type) {  ///
          );
 }
 
+void Pickup(Pickupable* pickupable_) {  ///
+  auto& pickupable = *pickupable_;
+
+  pickupable.pickedUpAt.SetNow();
+
+  const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
+
+  switch (pickupable.type) {
+  case PickupableType_COIN: {
+    const auto& data    = pickupable.DataCoin();
+    int         amount  = data.amount;
+    int         xNumber = 1;
+
+    if (g.run.state.notPickedUpCoins > 0) {
+      int toAdd = amount;
+      if (toAdd > g.run.state.notPickedUpCoins)
+        toAdd = g.run.state.notPickedUpCoins;
+
+      g.run.state.notPickedUpCoins -= toAdd;
+      g.run.state.notPickedUpCoinsVisual -= toAdd;
+      amount += toAdd;
+      xNumber *= 2;
+    }
+
+    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+    {
+      amount *= 2;
+      xNumber *= 2;
+    }
+
+    if (xNumber > 1) {
+      MakeNumber({
+        .type  = NumberType_PICKUPABLE,
+        .value = xNumber,
+        .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+      });
+    }
+
+    ChangeCoins(amount);
+    AddXP((f32)amount);
+
+    auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
+    if (GRAND.FRand() < healChance)
+      HealPlayer();
+  } break;
+
+  case PickupableType_CONSUMABLE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+  } break;
+
+  case PickupableType_CRATE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+    g.run.state.crates++;
+
+    IterateOverEffects(
+      EffectConditionType_X__COINS_UPON_PICKING_UP_A_CRATE,
+      [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+        const int amount = times * EFFECT_PLACEHOLDER_X_INT;
+        ChangeCoins(amount);
+      }
+    );
+  } break;
+
+  default:
+    INVALID_PATH;
+  }
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -7405,6 +7480,16 @@ void GameFixedUpdate() {
   {  ///
     PLAYER_CREATURE.maxHealth = MAX(1, g.run.state.stats[StatType_HP]);
     PLAYER_CREATURE.health    = MIN(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth);
+  }
+
+  // Picking up remaining crates at the end of the wave.
+  if (g.run.scheduledWaveCompleted.IsSet()) {  ///
+    for (auto& pickupable : g.run.pickupables) {
+      if (pickupable.type != PickupableType_CRATE)
+        continue;
+      if (!pickupable.pickedUpAt.IsSet())
+        Pickup(&pickupable);
+    }
   }
 
   // Advancing to UI after wave completion animation finishes.
@@ -8171,88 +8256,16 @@ void GameFixedUpdate() {
         ZoneScopedN("Picking up pickupables.");
 
         for (auto& pickupable : g.run.pickupables) {
-          if (pickupable.pickedUpAt.IsSet()) {
-            pickupable.pos
-              = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
-          }
-          else {
-            auto pickupRangeScale = (f32)(100 + g.run.state.stats[StatType_PICKUP_RANGE]);
-            pickupRangeScale      = MAX(30, pickupRangeScale);
-            pickupRangeScale /= 100.0f;
+          if (pickupable.pickedUpAt.IsSet())
+            continue;
 
-            if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
-                <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
-            {
-              pickupable.pickedUpAt.SetNow();
+          auto pickupRangeScale = (f32)(100 + g.run.state.stats[StatType_PICKUP_RANGE]);
+          pickupRangeScale      = MAX(30, pickupRangeScale);
+          pickupRangeScale /= 100.0f;
 
-              const int consumableOrCrateHeal
-                = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
-
-              switch (pickupable.type) {
-              case PickupableType_COIN: {
-                const auto& data    = pickupable.DataCoin();
-                int         amount  = data.amount;
-                int         xNumber = 1;
-
-                if (g.run.state.notPickedUpCoins > 0) {
-                  int toAdd = amount;
-                  if (toAdd > g.run.state.notPickedUpCoins)
-                    toAdd = g.run.state.notPickedUpCoins;
-
-                  g.run.state.notPickedUpCoins -= toAdd;
-                  g.run.state.notPickedUpCoinsVisual -= toAdd;
-                  amount += toAdd;
-                  xNumber *= 2;
-                }
-
-                if (GRAND.FRand()
-                    < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-                {
-                  amount *= 2;
-                  xNumber *= 2;
-                }
-
-                if (xNumber > 1) {
-                  MakeNumber({
-                    .type  = NumberType_PICKUPABLE,
-                    .value = xNumber,
-                    .pos
-                    = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
-                  });
-                }
-
-                ChangeCoins(amount);
-                AddXP((f32)amount);
-
-                auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
-                if (GRAND.FRand() < healChance)
-                  HealPlayer();
-              } break;
-
-              case PickupableType_CONSUMABLE: {
-                if (consumableOrCrateHeal > 0)
-                  HealPlayer(consumableOrCrateHeal);
-              } break;
-
-              case PickupableType_CRATE: {
-                if (consumableOrCrateHeal > 0)
-                  HealPlayer(consumableOrCrateHeal);
-                g.run.state.crates++;
-
-                IterateOverEffects(
-                  EffectConditionType_X__COINS_UPON_PICKING_UP_A_CRATE,
-                  [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-                    const int amount = times * EFFECT_PLACEHOLDER_X_INT;
-                    ChangeCoins(amount);
-                  }
-                );
-              } break;
-
-              default:
-                INVALID_PATH;
-              }
-            }
-          }
+          if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
+              <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
+            Pickup(&pickupable);
         }
       }
 
@@ -8324,61 +8337,73 @@ void GameFixedUpdate() {
       );
     }
 
+    // Picked up pickupables fly towards player.
+    for (auto& pickupable : g.run.pickupables) {  ///
+      ZoneScopedN("Picked up pickupables fly towards player.");
+
+      if (pickupable.pickedUpAt.IsSet()) {
+        pickupable.pos
+          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
+      }
+    }
+
     // Burning spread.
-    for (auto& creature : g.run.creatures) {  ///
+    {  ///
       ZoneScopedN("Burning spread.");
 
-      auto& a = creature.ailments[AilmentType_BURN - 1];
-      if (!a.startedAt.IsSet())
-        continue;
-      if ((a.spread <= 0))
-        continue;
-
-      auto       fb         = fb_creatures->Get(creature.type);
-      const auto isFriendly = (fb->hostility_type() == HostilityType_FRIENDLY);
-
-      for (auto& otherCreature : g.run.creatures) {
-        if (creature.id == otherCreature.id)
+      for (auto& creature : g.run.creatures) {
+        auto& a = creature.ailments[AilmentType_BURN - 1];
+        if (!a.startedAt.IsSet())
           continue;
-        if (otherCreature.diedAt.IsSet())
+        if ((a.spread <= 0))
           continue;
 
-        auto       fb_other = fb_creatures->Get(otherCreature.type);
-        const auto otherIsFriendly
-          = (fb_other->hostility_type() == HostilityType_FRIENDLY);
-        if (isFriendly == otherIsFriendly)
-          continue;
+        auto       fb         = fb_creatures->Get(creature.type);
+        const auto isFriendly = (fb->hostility_type() == HostilityType_FRIENDLY);
 
-        bool canBurn = true;
-        auto resists = fb_other->resists_ailment_types();
-        if (resists) {
-          for (auto v : *resists) {
-            if (v == AilmentType_BURN) {
-              canBurn = false;
-              break;
+        for (auto& otherCreature : g.run.creatures) {
+          if (creature.id == otherCreature.id)
+            continue;
+          if (otherCreature.diedAt.IsSet())
+            continue;
+
+          auto       fb_other = fb_creatures->Get(otherCreature.type);
+          const auto otherIsFriendly
+            = (fb_other->hostility_type() == HostilityType_FRIENDLY);
+          if (isFriendly == otherIsFriendly)
+            continue;
+
+          bool canBurn = true;
+          auto resists = fb_other->resists_ailment_types();
+          if (resists) {
+            for (auto v : *resists) {
+              if (v == AilmentType_BURN) {
+                canBurn = false;
+                break;
+              }
             }
           }
+          if (!canBurn)
+            continue;
+
+          const auto& aa = otherCreature.ailments[AilmentType_BURN - 1];
+          if (aa.startedAt.IsSet())
+            continue;
+
+          const auto d = Vector2DistanceSqr(creature.pos, otherCreature.pos);
+          if (d > SQR(BURNING_SPREAD_DISTANCE))
+            continue;
+
+          ApplyAilment(
+            &otherCreature,
+            a.ownerCreatureType,
+            {.type = AilmentType_BURN, .value = a.value, .spread = 0}
+          );
+          a.spread--;
+
+          if (a.spread <= 0)
+            break;
         }
-        if (!canBurn)
-          continue;
-
-        const auto& aa = otherCreature.ailments[AilmentType_BURN - 1];
-        if (aa.startedAt.IsSet())
-          continue;
-
-        const auto d = Vector2DistanceSqr(creature.pos, otherCreature.pos);
-        if (d > SQR(BURNING_SPREAD_DISTANCE))
-          continue;
-
-        ApplyAilment(
-          &otherCreature,
-          a.ownerCreatureType,
-          {.type = AilmentType_BURN, .value = a.value, .spread = 0}
-        );
-        a.spread--;
-
-        if (a.spread <= 0)
-          break;
       }
     }
 
@@ -9734,6 +9759,7 @@ void GameDraw() {
       const auto e = pickupable.pickedUpAt.Elapsed();
       fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
     }
+    fade = EaseOutCubic(fade);
 
     auto pos = WorldToLogical(pickupable.pos, &g.run.camera);
     if (pickupable.startedFlyingAt.IsSet()) {
