@@ -1256,6 +1256,11 @@ builds: # {  ###
         item_type: TURREL
         placeholders:
           - ints: 0
+      - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
+      - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
+      - effectcondition_type: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN
+        placeholders:
+          - ints: 25
   - type: NINJA
     starting_weapon_types:
       - SLINGSHOT
@@ -1265,6 +1270,15 @@ builds: # {  ###
         value: 15
       - stat_type: DODGE
         value: 7
+      - effectcondition_type: STAT__UPON_LEVEL_UP
+        stat_type: DAMAGE
+        value: 1
+      - effectcondition_type: X__COINS_UPON_PICKING_UP_A_CRATE
+        placeholders:
+          - ints: 30
+      - effectcondition_type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+        placeholders:
+          - ints: 35
   - type: WIZARD
     starting_weapon_types:
       - WAND
@@ -1276,6 +1290,15 @@ builds: # {  ###
         value: 10
       - stat_type: ARMOR
         value: 6
+      - effectcondition_type: STAT__WHEN_WALKING
+        stat_type: DAMAGE
+        value: 1
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: DAMAGE
+        value: 1
+      - effectcondition_type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+        placeholders:
+          - ints: 8
 # }
 
 achievements: # {  ###
