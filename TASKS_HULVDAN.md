@@ -56,16 +56,15 @@ x weapon effects: impl: (ranged weapon) PIERCES_UP_TO__X__TIMES_ON_CRIT
 x gathered most of the weapon effects
 x weapon effects: show: START_WITH__X__ITEM_OR_WEAPON
 x weapon effects: show: STAT__WHEN_IDLE
+x weapon effects: show: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
+x weapon effects: show: STAT__UPON_LEVEL_UP
+x weapon effects: show: X__COINS_UPON_PICKING_UP_A_CRATE
+x weapon effects: show: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+x weapon effects: show: STAT__WHEN_WALKING
+x weapon effects: show: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+x weapon effects: show: CANT_EQUIP_MELEE_WEAPONS
+x weapon effects: show: CANT_EQUIP_RANGED_WEAPONS
 
-* weapon effects: show: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
-* weapon effects: show: STAT__UPON_LEVEL_UP
-* weapon effects: show: X__COINS_UPON_PICKING_UP_A_CRATE
-* weapon effects: show: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
-* weapon effects: show: STAT__WHEN_WALKING
-* weapon effects: show: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
-* weapon effects: show: CANT_EQUIP_MELEE_WEAPONS
-* weapon effects: show: CANT_EQUIP_RANGED_WEAPONS
-*
 * weapon effects: impl: START_WITH__X__ITEM_OR_WEAPON
 * weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
 * weapon effects: impl: STAT__UPON_LEVEL_UP

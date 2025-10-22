@@ -2889,6 +2889,21 @@ void GameInit() {  ///
       ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
       ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
       ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
+
+      ASSERT_FALSE(fb_cond->requires_stat() && fb_cond->requires_property());
+
+      if (fb_cond->requires_stat() || fb_cond->requires_property()) {
+        auto v  = fb_effect->value();
+        auto vm = fb_effect->value_multiplier();
+        ASSERT(v || vm);
+        if (v)
+          ASSERT(v->size() == tierValues);
+        if (vm)
+          ASSERT(vm->size() == tierValues);
+      }
+      else
+        ASSERT_FALSE(fb_effect->value());
+
       if (fb_cond->requires_projectile())
         ASSERT(fb_effect->projectile_range_meters() > 0);
 
