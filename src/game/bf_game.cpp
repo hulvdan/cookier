@@ -8185,6 +8185,14 @@ void GameFixedUpdate() {
                 if (consumableOrCrateHeal > 0)
                   HealPlayer(consumableOrCrateHeal);
                 g.run.state.crates++;
+
+                IterateOverEffects(
+                  EffectConditionType_X__COINS_UPON_PICKING_UP_A_CRATE,
+                  [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+                    const int amount = times * EFFECT_PLACEHOLDER_X_INT;
+                    ChangeCoins(amount);
+                  }
+                );
               } break;
 
               default:

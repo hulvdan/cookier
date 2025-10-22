@@ -1275,7 +1275,7 @@ builds: # {  ###
         value: 69
       - effectcondition_type: X__COINS_UPON_PICKING_UP_A_CRATE
         placeholders:
-          - ints: 30
+          - ints: 6666
       - effectcondition_type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
         placeholders:
           - ints: 35

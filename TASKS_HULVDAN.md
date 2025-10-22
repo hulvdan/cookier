@@ -67,8 +67,9 @@ x weapon effects: show: CANT_EQUIP_RANGED_WEAPONS
 x weapon effects: impl: START_WITH__X__ITEM_OR_WEAPON
 x weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
 x weapon effects: impl: STAT__UPON_LEVEL_UP
+x weapon effects: impl: X__COINS_UPON_PICKING_UP_A_CRATE
 
-* weapon effects: impl: X__COINS_UPON_PICKING_UP_A_CRATE
+* wave end pickup crates
 * weapon effects: impl: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
