@@ -1180,7 +1180,7 @@ void SanitizeCoins() {  ///
     PLAYER_COINS = int_max;
 }
 
-void ApplyEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  ///
+void ApplyStatEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  ///
   ASSERT(times != 0);
 
   const auto statType = (StatType)fb_effect->stat_type();
@@ -2592,7 +2592,7 @@ void IterateOverEffects(
 #if BF_ENABLE_ASSERTS
   auto fb_conditions = glib->effect_conditions();
   auto fb            = fb_conditions->Get(condition);
-  ASSERT(fb->restrict() == 0);
+  ASSERT(fb->restrict() != 1);
 #endif
 
   IterateOverWeaponsEffects(
@@ -2687,7 +2687,41 @@ void RunInit() {
   IterateOverEffects(
     {},
     [&](auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
+      BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
+  );
+
+  // Processing EffectConditionType_START_WITH__X__ITEM_OR_WEAPON.
+  IterateOverEffects(  ///
+    EffectConditionType_START_WITH__X__ITEM_OR_WEAPON,
+    [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+      ASSERT(times > 0);
+      ASSERT(tierOffset == 0);
+
+      auto item   = (ItemType)fb_effect->item_type();
+      auto weapon = (WeaponType)fb_effect->weapon_type();
+
+      if (item)
+        AddItem(item);
+
+      if (weapon) {
+        int  weaponIndex = -1;
+        bool added       = false;
+        for (auto& w : g.run.state.weapons) {
+          ASSERT(times > 0);
+          weaponIndex++;
+          if (w.type)
+            continue;
+
+          added = true;
+          w     = {.type = weapon};
+
+          times--;
+          if (times <= 0)
+            break;
+        }
+        ASSERT(added);
+      }
+    }
   );
 
   PLAYER_CREATURE.health    = MAX(1, g.run.state.stats[StatType_HP]);
@@ -3462,7 +3496,7 @@ void AddItem(ItemType type) {  ///
     type,
     1,
     [&](auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
+      BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
   );
 }
 
@@ -3777,8 +3811,9 @@ void _UpdateImmediateWeaponEffects(int weaponIndex, int scale) {  ///
     IterateOverWeaponEffects(
       c.c,
       weapon.type,
-      [&](auto fb_effect)
-        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, c.times * scale); }
+      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+        ApplyStatEffect(fb_effect, tierOffset, c.times * scale);
+      }
     );
   }
 }
@@ -7310,7 +7345,7 @@ void GameFixedUpdate() {
       IterateOverEffects(
         EffectConditionType_END_OF_THE_WAVE_GET__STAT,
         [&](auto fb_effect, int tierOffset, int times)
-          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
+          BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
       );
 
       // Making coins fly.
@@ -7493,7 +7528,7 @@ void GameFixedUpdate() {
     IterateOverEffects(
       EffectConditionType_START_OF_THE_WAVE_GET__STAT,
       [&](auto fb_effect, int tierOffset, int times)
-        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, tierOffset, times); }
+        BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
     );
 
     Save();
@@ -8989,7 +9024,7 @@ void GameFixedUpdate() {
                   const auto cond
                     = fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset);
                   if (g.run.state.playerKilledEnemies % cond == 0)
-                    ApplyEffect(fb_effect, tierOffset, times);
+                    ApplyStatEffect(fb_effect, tierOffset, times);
                 }
               );
               // Applying effects: STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON.
@@ -9001,7 +9036,7 @@ void GameFixedUpdate() {
                       = fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset);
                     if ((weaponIndex == creature.lastDamagedWeaponIndex)
                         && ((weapon.killedEnemies % cond) == 0))
-                      ApplyEffect(fb_effect, tierOffset, 1);
+                      ApplyStatEffect(fb_effect, tierOffset, 1);
                   }
               );
             }
