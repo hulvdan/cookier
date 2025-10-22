@@ -50,9 +50,9 @@ EFFECT_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE;{STAT} {MODIFIER} каждые {
 EFFECT_STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE;{STAT} {MODIFIER} каждые {X} шагов до конца волны;{MODIFIER} {STAT} every {X} walked meters until the end of the wave;
 EFFECT_STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE;{STAT} {MODIFIER} каждые {X}с без движения;{MODIFIER} {STAT} every {X}s being idle until the end of the wave;
 EFFECT_X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN;{X} шанс мгновенно притянуть выпавшую печеньгу;{X} chance to instantly attack dropped cookien;
-EFFECT_X__STAT_UPON_LEVEL_UP;{X} при поднятии уровня;{X} upon level up;
+EFFECT_STAT__UPON_LEVEL_UP;{STAT} {MODIFIER} при поднятии уровня;{MODIFIER} {STAT} upon level up;
 EFFECT_X__COINS_UPON_PICKING_UP_A_CRATE;{X} печенег при поднятии сундука;{X} cookiens when picking up a chest;
-EFFECT_X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES;{X} значения статов при поднятии уровня;{X} stats when choosing level up upgrades;
+EFFECT_X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES;{X} статов при поднятии уровня;{X} stats when choosing level up upgrades;
 EFFECT_STAT__WHEN_WALKING;{STAT} {MODIFIER} при ходьбе;{MODIFIER} {STAT} when walking;
 EFFECT_STAT__WHEN_IDLE;{STAT} {MODIFIER} при отсутствии движения;{MODIFIER} {STAT} when idle;
 EFFECT_HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE;Сбор дополнительно увеличивается на {X} в конце волны;Harvesting additionally increases by {X} at the end of the wave;

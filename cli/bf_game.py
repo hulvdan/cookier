@@ -108,12 +108,13 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
             for cond in (
                 *(l.upper() for l in EFFECT_CONDITION_LETTERS),
                 "STAT",
-                "PICKUPABLE",
-                "TIER",
-                "ITEM",
-                "WEAPON",
+                "PROPERTY",
+                # "PICKUPABLE",
+                # "TIER",
+                # "ITEM",
+                # "WEAPON",
                 "ITEM_OR_WEAPON",
-                "WEAPONGROUP",
+                # "WEAPONGROUP",
             ):
                 if does_require(x["type"], cond):
                     x["requires_{}".format(cond.lower())] = True

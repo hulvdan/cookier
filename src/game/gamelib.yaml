@@ -403,6 +403,7 @@ effect_condition_variables: # {  ###
   - type: INTEGER
   - type: FLOAT
   - type: DAMAGE
+  - type: ITEM_OR_WEAPON
 # }
 
 effect_conditions: # {  ###
@@ -416,18 +417,23 @@ effect_conditions: # {  ###
   - type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
     x_condvar_type: FLOAT
   - type: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN
-  - type: X__STAT_UPON_LEVEL_UP
+    x_signed: true
+    x_is_percent: true
+  - type: STAT__UPON_LEVEL_UP
   - type: X__COINS_UPON_PICKING_UP_A_CRATE
   - type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+    x_signed: true
+    x_is_percent: true
   - type: STAT__WHEN_WALKING
   - type: STAT__WHEN_IDLE
   - type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+    x_signed: true
+    x_is_percent: true
 # }
 
 build_effect_conditions: # { ###
-  - type: START_WITH__X__ITEM
-  - type: START_WITH__X__WEAPON
   - type: START_WITH__X__ITEM_OR_WEAPON
+    x_condvar_type: ITEM_OR_WEAPON
   - type: CANT_EQUIP_MELEE_WEAPONS
   - type: CANT_EQUIP_RANGED_WEAPONS
 # }
@@ -1239,6 +1245,17 @@ builds: # {  ###
         value: 3
       - stat_type: LUCK
         value: 5
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: DAMAGE
+        value: 20
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        weapon_type: BOW
+        placeholders:
+          - ints: 0
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        item_type: TURREL
+        placeholders:
+          - ints: 0
   - type: NINJA
     starting_weapon_types:
       - SLINGSHOT
