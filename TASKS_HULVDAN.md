@@ -13,26 +13,7 @@ x placeholders groups
   can specify "hitting an enemy spawns 3/4/5/6 projectiles dealing 50/60/70/80% {ranged damage icon} damage"
 x ref: placeholders on trashArena
   remove BF_MAX_PLACEHOLDERS_IN_STRING
-x weapon effects: show: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
-x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-x weapon effects: show: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-x weapon effects: show: X_COOLDOWN_SECONDS_EVERY_Y_HITS
 x weapon effects: placeholder `is_percent`
-x weapon effects: show: X_CHANCE_TO_EXPLODE
-x weapon effects: show: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
-x weapon effects: show: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
-x weapon effects: show: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
-x weapon effects: show: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
-x weapon effects: show: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
-x weapon effects: show: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
-x weapon effects: show: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
-x weapon effects: show: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
-x weapon effects: show: PROPERTY__WHEN_IDLE
-x weapon effects: show: PROPERTY__WHEN_WALKING
-x weapon effects: show: SPAWNS_GARDEN_EVERY__X__SECONDS
-x weapon effects: show: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
-x weapon effects: show: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-x weapon effects: show: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
 x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 x weapon effects: impl: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
@@ -51,19 +32,8 @@ x weapon effects: impl: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
 x weapon effects: impl: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
 x weapon effects: impl: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 x weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-x weapon effects: show: (ranged weapon) PIERCES_UP_TO__X__TIMES_ON_CRIT
 x weapon effects: impl: (ranged weapon) PIERCES_UP_TO__X__TIMES_ON_CRIT
 x gathered most of the weapon effects
-x weapon effects: show: START_WITH__X__ITEM_OR_WEAPON
-x weapon effects: show: STAT__WHEN_IDLE
-x weapon effects: show: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
-x weapon effects: show: STAT__UPON_LEVEL_UP
-x weapon effects: show: X__COINS_UPON_PICKING_UP_A_CRATE
-x weapon effects: show: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
-x weapon effects: show: STAT__WHEN_WALKING
-x weapon effects: show: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
-x weapon effects: show: CANT_EQUIP_MELEE_WEAPONS
-x weapon effects: show: CANT_EQUIP_RANGED_WEAPONS
 x weapon effects: impl: START_WITH__X__ITEM_OR_WEAPON
 x weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
 x weapon effects: impl: STAT__UPON_LEVEL_UP
@@ -77,10 +47,9 @@ x wave end pickup crates
 - wave end fix coins flying towards player
 x fix new game coin achievement
 x weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
+x weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
 
-* structures in a circle around center
-* weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
-*
+* yandex save: emscripten pass string from C++
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
 *
@@ -93,9 +62,8 @@ x weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
 * weapon effects: show: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
 * weapon effects: impl: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
 *
+* structures in a circle around center
 * projectile weapon that shoots itself (javelin)
-*
-* gather other weapon/diffic/build/item effects
 *
 * slows down enemies in a radius around the projectile
 * every Nth (5 4 3 2) has +100 crit chance
@@ -323,7 +291,6 @@ item effects:
 * keyboard UI nav:
 * touch: pause button during gameplay
 * touch: can play using finger
-* yandex save: emscripten pass string from C++
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
