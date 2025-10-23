@@ -790,6 +790,12 @@ struct Camera {
   f32     texturesScale = 1;
 };
 
+enum SavedataLoadingType {
+  SavedataLoadingType_NOT_LOADED,
+  SavedataLoadingType_JUST_FISNIHED,
+  SavedataLoadingType_FISNIHED,
+};
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -853,6 +859,12 @@ struct EngineData {
     const Camera* _currentCamera = nullptr;
 
     bool previousSaveIsNotCompletedYet = false;
+
+    SavedataLoadingType loading  = {};
+    const u8*           savedata = {};
+
+    // 0 - not loaded yet, 1 - savedata is empty (null), 2 - got savedata.
+    int jsLoadedSavedata = 0;
   } meta;
 
   struct Settings {
@@ -3743,6 +3755,12 @@ void _Save(Arena* _) {
 
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
 
+extern "C" {
+EMSCRIPTEN_KEEPALIVE void mark_js_returned_savedata(int value) {  ///
+  ge.meta.jsLoadedSavedata = value;
+}
+}
+
 #  if defined(BF_PLATFORM_WebYandex)
 
 // clang-format off
@@ -3770,26 +3788,43 @@ EM_JS(void, js_Save, (const char* data), {
 // clang-format off
 
 // Retuned string must be `free`-d!
-EM_JS(const char*, js_Load, (), {
+EM_JS(void, js_Load, (), {
 #  if defined(BF_PLATFORM_WebYandex)
-  var js_str = window.player.getData(['save']);
+  window.savedataLoaded = false;
+  window.savedataLoadingStarted = false;
+  window.savedata = null;
+
+  if (!window.savedataLoadingStarted) {
+    window.savedataLoadingStarted = true;
+
+    window.player.getData(['save']).then((obj) => {
+      window.savedata = obj?.save;
+      window.savedataLoaded = true;
+    }).catch(() => {
+      window.savedataLoaded = true;
+    });
+  }
+
+  if (!window.savedataLoaded)
+    return;
+
 #  elif defined(BF_PLATFORM_Web)
   var js_str = localStorage.getItem('save');
 #  else
 #    error "Not implemented"
 #  endif
 
-  if (js_str) {
-    var len            = lengthBytesUTF8(js_str) + 1;
-    var string_on_heap = _malloc(len);
-    stringToUTF8(js_str, string_on_heap, len + 1);
-    return string_on_heap;
+  if (!js_str) {
+    mark_js_returned_savedata(1);
+    return null;
   }
-  else {
-    var string_on_heap = _malloc(1);
-    stringToUTF8('\0', string_on_heap, 1);
-    return string_on_heap;
-  }
+
+  mark_js_returned_savedata(2);
+
+  var len            = lengthBytesUTF8(js_str) + 1;
+  var string_on_heap = _malloc(len);
+  stringToUTF8(js_str, string_on_heap, len + 1);
+  return string_on_heap;
 });
 // clang-format on
 
@@ -3806,34 +3841,54 @@ void _Save(Arena* arena) {
 #endif
 // }
 
-void LoadSaveData(Arena* arena) {  ///
+SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
   TEMP_USAGE(arena);
 
-#if defined(SDL_PLATFORM_DESKTOP)
-  auto saveData = SDL_LoadFile("save.bin", nullptr);
-#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
-  auto      saveData_ = js_Load();
-  const u8* saveData  = nullptr;
-  if (saveData_[0])
-    saveData = DecodeFromHex(saveData_, arena);
-  free((void*)saveData_);
-#else
-#  error "Not implemented yet"
-#endif
+  if (ge.meta.loading == SavedataLoadingType_JUST_FISNIHED)
+    ge.meta.loading = SavedataLoadingType_FISNIHED;
+  if (ge.meta.loading == SavedataLoadingType_FISNIHED)
+    return SavedataLoadingType_FISNIHED;
 
-  if (saveData) {
-#if defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
-    if (saveData[0])
-      GameLoad(BFSave::GetSave(saveData));
-#endif
-
+  if (ge.meta.loading == SavedataLoadingType_NOT_LOADED) {
 #if defined(SDL_PLATFORM_DESKTOP)
-    SDL_free(saveData);
+
+    // Desktop loads immediately.
+    ge.meta.savedata = (const u8*)SDL_LoadFile("save.bin", nullptr);
+    ge.meta.loading  = SavedataLoadingType_JUST_FISNIHED;
+
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+
+    // JS loads asynchronously.
+    const char* savedata_ = js_Load();
+    if (ge.meta.jsLoadedSavedata)
+      ge.meta.loading = SavedataLoadingType_JUST_FISNIHED;
+    else
+      return SavedataLoadingType_NOT_LOADED;
+
+    if (ge.meta.jsLoadedSavedata == 2) {
+      ge.meta.savedata = DecodeFromHex(savedata_, arena);
+      free((void*)savedata_);
+    }
+
 #else
 #  error "Not implemented yet"
 #endif
   }
+  else
+    INVALID_PATH;
+
+  if (ge.meta.savedata) {
+    GameLoad(BFSave::GetSave(ge.meta.savedata));
+
+#if defined(SDL_PLATFORM_DESKTOP)
+    SDL_free((void*)ge.meta.savedata);
+#endif
+
+    ge.meta.savedata = nullptr;
+  }
+
+  ASSERT(ge.meta.loading == SavedataLoadingType_JUST_FISNIHED);
+  return ge.meta.loading;
 }
 
 ///
