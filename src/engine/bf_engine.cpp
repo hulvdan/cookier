@@ -3763,9 +3763,12 @@ EM_JS(void, js_Save, (const char* data), {
 // NOTE: Returned string must be `free`-d when `ge.meta.jsLoadedSavedata == 2`
 EM_JS(const char*, jsLoad, (), {
 #  if defined(BF_PLATFORM_WebYandex)
-  window.jsLoad_savedataLoaded = false;
-  window.jsLoad_savedataLoadingStarted = false;
-  window.jsLoad_savedata = null;
+  if (!window.jsLoad_savedataLoaded)
+    window.jsLoad_savedataLoaded = false;
+  if (!window.jsLoad_savedataLoadingStarted)
+    window.jsLoad_savedataLoadingStarted = false;
+  if (!window.jsLoad_savedata)
+    window.jsLoad_savedata = null;
 
   if (!window.jsLoad_savedataLoadingStarted) {
     window.jsLoad_savedataLoadingStarted = true;
