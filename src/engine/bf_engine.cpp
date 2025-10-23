@@ -3643,30 +3643,30 @@ SDL_AppResult EngineUpdate() {  ///
 }
 
 #ifdef BF_PLATFORM_Win
-struct Timestamp {  ///
-  int year;
-  int month;
-  int day;
-  int hour;
-  int minute;
-  int second;
-  int msecond;
-};
+// struct Timestamp {  ///
+//   int year;
+//   int month;
+//   int day;
+//   int hour;
+//   int minute;
+//   int second;
+//   int msecond;
+// };
 
-Timestamp GetTimestamp() {  ///
-  SYSTEMTIME t{};
-  GetSystemTime(&t);
-
-  return Timestamp{
-    .year    = t.wYear,
-    .month   = t.wMonth,
-    .day     = t.wDay,
-    .hour    = t.wHour,
-    .minute  = t.wMinute,
-    .second  = t.wSecond,
-    .msecond = t.wMilliseconds,
-  };
-}
+// Timestamp GetTimestamp() {  ///
+//   SYSTEMTIME t{};
+//   GetSystemTime(&t);
+//
+//   return Timestamp{
+//     .year    = t.wYear,
+//     .month   = t.wMonth,
+//     .day     = t.wDay,
+//     .hour    = t.wHour,
+//     .minute  = t.wMinute,
+//     .second  = t.wSecond,
+//     .msecond = t.wMilliseconds,
+//   };
+// }
 #endif
 
 char* EncodeToHex(const u8* toEncodeLittleEndian, size_t size, Arena* arena) {  ///
