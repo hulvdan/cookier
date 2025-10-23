@@ -883,6 +883,24 @@ weapons: # {  ###
     icon_texture_id: game_weapon_wand2
     texture_ids:
       - game_weapon_wand2
+  - type: JAVELIN
+    min_tier_index: 0
+    base_damage: 3 6 9 12
+    weaponkind_type: RANGED
+    projectile_type: JAVELIN
+    damage_scalings:
+      - stat_type: DAMAGE_RANGED
+        percents_per_tier: 85 90 95 100
+    max_price: 130
+    knockback_meters: 1
+    cooldown_frames: 10
+    shooting_duration_frames: 15
+    shoots_itself: true
+    projectile_spawn_frames: 15
+    range_meters: 14
+    icon_texture_id: game_weapon_javelin
+    texture_ids:
+      - game_weapon_javelin
 # }
 
 projectiles: # {  ###
@@ -920,6 +938,10 @@ projectiles: # {  ###
     ailment_value: 3
     texture_ids:
       - game_projectile_fire
+  - type: JAVELIN
+    speed: 16
+    texture_ids:
+      - game_weapon_javelin
   - type: MOB
     color: 0xff0000ff
     speed: 10
@@ -1264,8 +1286,8 @@ builds: # {  ###
         item_type: TURREL
         placeholders:
           - ints: 0
-      - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
-      - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
+      # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
+      # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
       - effectcondition_type: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN
         placeholders:
           - ints: 25

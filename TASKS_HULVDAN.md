@@ -1,68 +1,18 @@
 WORKING SINCE 2025-09-07
 
-x yandex save: pass data
-x ref remove g.run.state.statsWithoutItems
-x fix black flag trash memory effect in shop
-  ("for every TRASH killed enemies")
-  to index `condition_value` pass `tierOffset`
-x fix player max HP
-x fix starting wave with a lot of money + piggyBank sets coins to 0
-x weapon effects: gamelib.py placeholder aliases
-x weapon effects: effect `condition_x` `condition_y` etc to `condition_values` array
-x placeholders groups
-  can specify "hitting an enemy spawns 3/4/5/6 projectiles dealing 50/60/70/80% {ranged damage icon} damage"
-x ref: placeholders on trashArena
-  remove BF_MAX_PLACEHOLDERS_IN_STRING
-x weapon effects: placeholder `is_percent`
-x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-x weapon effects: impl: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-x weapon effects: impl: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
-x weapon effects: impl: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
-x weapon effects: impl: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-x yandex/web load savedata
-x fix: on start of the game player's health is 20.
-  Should be 25 (because of Build's effect)
-x weapon effects: impl: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
-x weapon effects: impl: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
-x weapon effects: impl: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
-x weapon effects: impl: PROPERTY__WHEN_IDLE
-x weapon effects: impl: PROPERTY__WHEN_WALKING
-x weapon effects: impl: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
-x weapon effects: impl: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
-x weapon effects: impl: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
-x weapon effects: impl: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
-x weapon effects: impl: X_COOLDOWN_SECONDS_EVERY_Y_HITS
-x weapon effects: impl: (ranged weapon) PIERCES_UP_TO__X__TIMES_ON_CRIT
-x gathered most of the weapon effects
-x weapon effects: impl: START_WITH__X__ITEM_OR_WEAPON
-x weapon effects: impl: X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN (25%) (max 4 of this item)
-x weapon effects: impl: STAT__UPON_LEVEL_UP
-x weapon effects: impl: X__COINS_UPON_PICKING_UP_A_CRATE
-x weapon effects: impl: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
-x weapon effects: impl: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
-x weapon effects: impl: CANT_EQUIP_MELEE_WEAPONS
-x weapon effects: impl: CANT_EQUIP_RANGED_WEAPONS
-x fix tests
-x wave end pickup crates
-- wave end fix coins flying towards player
-x fix new game coin achievement
-x weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
-x weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
-x web/yandex saving
 x yandex save
-x weapon effects: impl: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
+x weapon effects: BOUNCES_UP_TO_X_TIMES_ON_CRIT
+x javelin: ranged weapon that shoots itself
 
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
+* structures in a circle around center
 *
 * weapon effects: impl: X__CHANCE_TO_EXPLODE
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
   PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
 * STAT_FOR_WEAPONGROUP
 * PROPERTY_FOR_WEAPONGROUP
-*
-* structures in a circle around center
-* projectile weapon that shoots itself (javelin)
 *
 * slows down enemies in a radius around the projectile
 * every Nth (5 4 3 2) has +100 crit chance
@@ -455,6 +405,5 @@ LATER:
 * keyboard input prompts
 * is brotato arena squared?
 * aseprite show image center
-* yandex save: check it works
 * REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
-* emscripten: how to return string from localStorage from js function to c++?
+* weapon groups

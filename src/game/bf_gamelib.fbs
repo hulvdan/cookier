@@ -233,6 +233,7 @@ table Weapon {
     knockback_meters: float;
     cooldown_frames: int;
     shooting_duration_frames: int;
+    shoots_itself: bool;
     projectile_type: int;
     projectile_spawn_frames: [int];
     projectile_pierce: int = 0;
