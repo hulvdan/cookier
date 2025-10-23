@@ -3555,7 +3555,6 @@ SDL_AppResult EngineUpdate() {  ///
   if (!initialized) {
     initialized = true;
     GameInit();
-    GameReady();
   }
 
   static f32 frameTime = 0.0f;
@@ -3763,12 +3762,12 @@ EM_JS(void, js_Save, (const char* data), {
 // NOTE: Returned string must be `free`-d when `ge.meta.jsLoadedSavedata == 2`
 EM_JS(const char*, jsLoad, (), {
 #  if defined(BF_PLATFORM_WebYandex)
-  if (!window.jsLoad_savedataLoaded)
+  if (!window.jsLoadCalled) {
+    window.jsLoadCalled = true;
     window.jsLoad_savedataLoaded = false;
-  if (!window.jsLoad_savedataLoadingStarted)
     window.jsLoad_savedataLoadingStarted = false;
-  if (!window.jsLoad_savedata)
     window.jsLoad_savedata = null;
+  }
 
   if (!window.jsLoad_savedataLoadingStarted) {
     window.jsLoad_savedataLoadingStarted = true;

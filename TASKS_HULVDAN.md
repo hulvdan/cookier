@@ -4,18 +4,20 @@ x yandex save
 x weapon effects: BOUNCES_UP_TO_X_TIMES_ON_CRIT
 x javelin: ranged weapon that shoots itself
 x fix: guarantee input press
-x show: EVERY__X__USE_CHANGE_CRIT_BY__Y
+x show: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
 x show: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
 x show: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
 x show: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
 x show: X__PERCENT_MORE_COINS_FROM_RECYCLING
 x placeholder-image scales with font size
+x yandex: mark game ready after loading save file
 
-* EVERY__X__USE_CHANGE_CRIT_BY__Y
+* fix: yandex: build not drawing
+* EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
   should be able to target one weapon OR all weapons
   (This weapon)
 *
-* impl: EVERY__X__USE_CHANGE_CRIT_BY__Y (5 4 3 2)
+* impl: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y (5 4 3 2)
 * impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING (50%, 5 hp)
 * impl: X__CHANCE_TO_HEAL__Y__HP_UPON_PICKUPABLE (8%, 1 hp, coin)
 * impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_PICKING_UP_A_COIN (25%, 1 + 25% luck)
