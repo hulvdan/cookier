@@ -50,6 +50,7 @@ x weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
 x weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
 x web/yandex saving
 x yandex save
+x weapon effects: impl: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
 
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
@@ -59,9 +60,6 @@ x yandex save
   PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
 * STAT_FOR_WEAPONGROUP
 * PROPERTY_FOR_WEAPONGROUP
-*
-* weapon effects: show: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
-* weapon effects: impl: (ranged weapon) BOUNCES_UP_TO_X_TIMES_ON_CRIT
 *
 * structures in a circle around center
 * projectile weapon that shoots itself (javelin)

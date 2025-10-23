@@ -79,7 +79,8 @@ WEAPON_EFFECT_PROPERTY__WHEN_IDLE;{PROPERTY} {MODIFIER} при отсутств�
 WEAPON_EFFECT_PROPERTY__WHEN_WALKING;{PROPERTY} {MODIFIER} при ходьбе;{PROPERTY} {MODIFIER} when walking;
 WEAPON_EFFECT_ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES;По горящим врагам атаки всегда критические;Always crits when hitting burning enemies;
 WEAPON_EFFECT_BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES;Горение распространяется на доп. врагов ({X});Burning spreads to additional {X} enemies;
-WEAPON_EFFECT_PIERCES_UP_TO__X__TIMES_ON_CRIT;Криты дополнительно простреливают до {X};Crits pierce up to {X} enemies;
+WEAPON_EFFECT_PIERCES_UP_TO__X__TIMES_ON_CRIT;Криты дополнительно простреливают до {X};Crits pierce up to {X} times;
+WEAPON_EFFECT_BOUNCES_UP_TO__X__TIMES_ON_CRIT;Криты дополнительно отскакивают до {X};Crits bounce up to {X} times;
 REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION;{CHANCE} шанс взрыва при попадании;{CHANCE} chance to explode on hit;
 ITEM_HELMET;Шлем;Helmet;
 ITEM_WHITE_FLAG;Белый Флаг;White Flag;

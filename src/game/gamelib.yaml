@@ -484,6 +484,8 @@ weapon_effect_conditions: # {  ###
   - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
   - type: PIERCES_UP_TO__X__TIMES_ON_CRIT
     rectrict_only_ranged_weapons: true
+  - type: BOUNCES_UP_TO__X__TIMES_ON_CRIT
+    rectrict_only_ranged_weapons: true
 # }
 
 items: # {  ###
@@ -708,7 +710,12 @@ weapons: # {  ###
     texture_ids:
       - game_weapon_gun
     effects:
-      - effectcondition_type: PIERCES_UP_TO__X__TIMES_ON_CRIT
+      #
+      # - effectcondition_type: PIERCES_UP_TO__X__TIMES_ON_CRIT
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
+      - effectcondition_type: BOUNCES_UP_TO__X__TIMES_ON_CRIT
         placeholders:
           - ints: 1 2 3 4
             #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
