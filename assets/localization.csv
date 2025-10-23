@@ -60,7 +60,7 @@ EFFECT_SPAWNS_GARDEN_EVERY__X__SECONDS;Новый огород каждые {X}�
 EFFECT_SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE;Новая мина каждые {X}с, наносящая {Y} урона;Spawns a landmine every {X}s dealing {Y} damage;
 EFFECT_GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT;{STAT} {MODIFIER} за каждый занятый слот оружия;{MODIFIER} {STAT} for every occupied weapon slot;
 EFFECT_GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT;{STAT} {MODIFIER} за каждый свободный слот оружия;{MODIFIER} {STAT} for every empty weapon slot;
-EFFECT_EVERY__X__USE_CHANGE__Y__CRIT;{Y} крит шанс каждую {X}ую атаку;Gets {Y} crit chance every {X} attacks;
+EFFECT_EVERY__X__USE_CHANGE_CRIT_BY__Y;{Y} крит шанс каждую {X}ую атаку;Gets {Y} crit chance every {X} attacks;
 EFFECT_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING;{X} шанс вылечить {Y} здоровья после уворота;{X} chance to heal {Y} HP upon dodging;
 EFFECT_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE;{PICKUPABLE} при подборе имеет {X} шанс вылечить {Y} здоровья;{X} chance to heal {Y} HP upon picking up a {PICKUPABLE};
 EFFECT_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE;{PICKUPABLE} при подборе имеет {X} шанс нанести {Y} урона;{X} chance to deal {Y} damage upon picking up a {PICKUPABLE};

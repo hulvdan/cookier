@@ -437,7 +437,7 @@ effect_conditions: # {  ###
     y_condvar_type: DAMAGE
   - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
   - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
-  - type: EVERY__X__USE_CHANGE__Y__CRIT
+  - type: EVERY__X__USE_CHANGE_CRIT_BY__Y
     y_is_percent: true
     y_signed: true
   - type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
@@ -465,7 +465,6 @@ build_effect_conditions: # { ###
 weapon_effect_conditions: # {  ###
   - type: X__CHANCE_OF_EXPLOSION_ON_HIT
     x_is_percent: true
-  - type: STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON
   - type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
     y_condvar_type: DAMAGE
     requires_projectile: true
@@ -514,10 +513,10 @@ items: # {  ###
     effects:
       - stat_type: TURRELS_COUNT
         value: 1
-      - effectcondition_type: EVERY__X__USE_CHANGE__Y__CRIT
+      - effectcondition_type: EVERY__X__USE_CHANGE_CRIT_BY__Y
         placeholders:
-          - ints: 50
-          - ints: 30
+          - ints: 3
+          - ints: 100
       - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
         placeholders:
           - ints: 67

@@ -1857,7 +1857,11 @@ void IterateOverEffects(
   IterateOverWeaponsEffects(
     condition,
     [&](int weaponIndexOrMinus1, Weapon& weapon, int tierOffset, auto fb_effect)
-      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, tierOffset, 1); }
+      BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->only_this_weapon() || fb_effect->only_other_weapons())
+          return;
+        innerLambda(fb_effect, tierOffset, 1);
+      }
   );
 
   // Iterating over items.
@@ -2950,6 +2954,11 @@ void GameInit() {
         if (canHaveWeaponOnly)
           allowedValues[1] = 1;
         ASSERT(allowedValues.Contains(fb_cond->restrict()));
+
+        if (!canHaveWeaponOnly) {
+          ASSERT_FALSE(fb_effect->only_this_weapon());
+          ASSERT_FALSE(fb_effect->only_other_weapons());
+        }
 
         ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
         ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
@@ -9276,7 +9285,7 @@ void GameFixedUpdate() {
               );
               // Applying effects: STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON.
               IterateOverWeaponsEffects(
-                EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON,
+                EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
                 [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
                   BF_FORCE_INLINE_LAMBDA {
                     auto cond

@@ -204,6 +204,9 @@ table Effect {
     weapon_type: int;
 
     damage_scalings: [DamageScaling];
+
+    only_this_weapon: bool;
+    only_other_weapons: bool;
 }
 
 table Item {
