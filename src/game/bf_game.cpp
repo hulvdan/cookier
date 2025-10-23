@@ -2890,54 +2890,6 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
-  // Setup. {  ///
-  g.meta.trashArena = MakeArena(16 * 1024);
-  g.run.arena       = MakeArena(4 * 1024);
-  TEMP_USAGE(&g.meta.trashArena);
-
-  // Initializing Clay.
-  {
-    auto size = Clay_MinMemorySize();
-    Clay_Initialize(
-      Clay_CreateArenaWithCapacityAndMemory(size, BF_ALLOC(size)),
-      Clay_Dimensions{(f32)LOGICAL_RESOLUTION.x, (f32)LOGICAL_RESOLUTION.y},
-      Clay_ErrorHandler{HandleClayErrors}
-    );
-    Clay_SetCullingEnabled(false);
-    Clay_SetMeasureTextFunction(MeasureText, 0);
-  }
-  // }
-
-  ReloadFontsIfNeeded();
-  RunInit();
-  LoadSaveData(&g.meta.trashArena);
-
-  // Recalculating unlocked builds, items and weapons based off achievements.
-  {  ///
-    g.player.achievementStepsTotal     = 0;
-    g.player.achievementStepsCompleted = 0;
-
-    int i = -1;
-    for (const auto& x : g.player.achievements) {  ///
-      i++;
-      auto fb       = glib->achievements()->Get(i);
-      auto fb_steps = fb->steps();
-      if (!fb_steps)
-        continue;
-
-      g.player.achievementStepsTotal += fb_steps->size();
-      g.player.achievementStepsCompleted += fb_steps->size();
-
-      for (auto fb_step : *fb_steps) {
-        if (fb_step->value() > x.value)
-          AchievementStepSetLock(fb_step, true);
-      }
-    }
-
-    ASSERT(g.player.achievementStepsCompleted >= 0);
-    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
-  }
-
   // Checking gamelib.
   if (BF_ENABLE_ASSERTS) {  ///
     LAMBDA (
@@ -3123,6 +3075,56 @@ void GameInit() {
         }
       }
     }
+  }
+
+  // Setup. {  ///
+  g.meta.trashArena = MakeArena(16 * 1024);
+  g.run.arena       = MakeArena(4 * 1024);
+  TEMP_USAGE(&g.meta.trashArena);
+
+  // Initializing Clay.
+  {
+    auto size = Clay_MinMemorySize();
+    Clay_Initialize(
+      Clay_CreateArenaWithCapacityAndMemory(size, BF_ALLOC(size)),
+      Clay_Dimensions{(f32)LOGICAL_RESOLUTION.x, (f32)LOGICAL_RESOLUTION.y},
+      Clay_ErrorHandler{HandleClayErrors}
+    );
+    Clay_SetCullingEnabled(false);
+    Clay_SetMeasureTextFunction(MeasureText, 0);
+  }
+  // }
+
+  ReloadFontsIfNeeded();  // TODO: remove this line?
+
+  RunInit();
+}
+
+void GameInitAfterLoading() {  ///
+  // Recalculating unlocked builds, items and weapons based off achievements.
+  {  ///
+    g.player.achievementStepsTotal     = 0;
+    g.player.achievementStepsCompleted = 0;
+
+    int i = -1;
+    for (const auto& x : g.player.achievements) {  ///
+      i++;
+      auto fb       = glib->achievements()->Get(i);
+      auto fb_steps = fb->steps();
+      if (!fb_steps)
+        continue;
+
+      g.player.achievementStepsTotal += fb_steps->size();
+      g.player.achievementStepsCompleted += fb_steps->size();
+
+      for (auto fb_step : *fb_steps) {
+        if (fb_step->value() > x.value)
+          AchievementStepSetLock(fb_step, true);
+      }
+    }
+
+    ASSERT(g.player.achievementStepsCompleted >= 0);
+    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
   }
 }
 
@@ -7406,6 +7408,15 @@ void Pickup(Pickupable* pickupable_) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
+  // Waiting for completion of save data loading.
+  {  ///
+    auto loaded = LoadSaveDataOnce(&g.meta.trashArena);
+    if (loaded == LoadStateType_JUST_FISNIHED)
+      GameInitAfterLoading();
+    else if (loaded != LoadStateType_FISNIHED)
+      return;
+  }
+
   // Setup. {  ///
   ReloadFontsIfNeeded();
 
@@ -9341,6 +9352,10 @@ int GetTextureIdByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
 
 void GameDraw() {
   ZoneScoped;
+
+  // Waiting for completion of save data loading.
+  if (!ge.meta.loading)
+    return;
 
   // Setup.
   // {  ///
