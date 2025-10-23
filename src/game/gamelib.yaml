@@ -420,7 +420,7 @@ effect_conditions: # {  ###
     x_signed: true
     x_is_percent: true
   - type: STAT__UPON_LEVEL_UP
-  - type: X__COINS_UPON_PICKING_UP_A_CRATE
+  - type: X__COINS_UPON__PICKUPABLE
   - type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
     x_signed: true
     x_is_percent: true
@@ -437,6 +437,22 @@ effect_conditions: # {  ###
     y_condvar_type: DAMAGE
   - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
   - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+  - type: EVERY__X__USE_CHANGE__Y__CRIT
+    y_is_percent: true
+    y_signed: true
+  - type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+    x_is_percent: true
+    x_signed: true
+  - type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+    x_is_percent: true
+    x_signed: true
+  - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+    x_is_percent: true
+    x_signed: true
+    y_condvar_type: DAMAGE
+  - type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+    x_is_percent: true
+    x_signed: true
 # }
 
 build_effect_conditions: # { ###
@@ -498,6 +514,30 @@ items: # {  ###
     effects:
       - stat_type: TURRELS_COUNT
         value: 1
+      - effectcondition_type: EVERY__X__USE_CHANGE__Y__CRIT
+        placeholders:
+          - ints: 50
+          - ints: 30
+      - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+        placeholders:
+          - ints: 67
+          - ints: 3
+      - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+        pickupable_type: COIN
+        placeholders:
+          - ints: 10
+          - ints: 1
+      - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+        pickupable_type: COIN
+        placeholders:
+          - ints: 50
+          - ints: 3
+        damage_scalings:
+          - stat_type: LUCK
+            percents_per_tier: 200
+      - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+        placeholders:
+          - ints: 35
   - type: TURREL_ENHANCE_TODO
     texture_id: ui_item_todo
     price: 15
@@ -1303,7 +1343,8 @@ builds: # {  ###
       - effectcondition_type: STAT__UPON_LEVEL_UP
         stat_type: DAMAGE
         value: 69
-      - effectcondition_type: X__COINS_UPON_PICKING_UP_A_CRATE
+      - effectcondition_type: X__COINS_UPON__PICKUPABLE
+        pickupable_type: CRATE
         placeholders:
           - ints: 6666
       - effectcondition_type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES

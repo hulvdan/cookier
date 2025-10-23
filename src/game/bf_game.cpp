@@ -223,10 +223,13 @@ struct Beautify {
   BEAUTIFY(b);
 
 struct ClayImageData {
-  int     texId         = {};
-  Margins sourceMargins = {0, 0};
-  Color   color         = WHITE;
-  Color   flash         = TRANSPARENT_BLACK;
+  int     texId          = {};
+  Vector2 scale          = {1, 1};
+  Margins sourceMargins  = {0, 0};
+  Color   color          = WHITE;
+  Color   flash          = TRANSPARENT_BLACK;
+  Vector2 overriddenSize = {};  // Values must be > 0 to override.
+
   // f32   scale     = {};
   // ImageFitType fitType   = {};
 };
@@ -737,9 +740,14 @@ struct Placeholder {  ///
       Color       color;
     } string;
 
-    int brokenLocale_value;
+    struct {
+      int   value;
+      Color color;
+    } brokenLocale;
 
-    int image_texId;
+    struct {
+      int texId;
+    } image;
   } _u;
 
   const auto& string() const {
@@ -747,14 +755,14 @@ struct Placeholder {  ///
     return _u.string;
   }
 
-  int brokenLocale_value() const {
+  const auto& brokenLocale() const {
     ASSERT(type == PlaceholderType_BROKEN_LOCALE);
-    return _u.brokenLocale_value;
+    return _u.brokenLocale;
   }
 
-  int image_texId() const {
+  const auto& image() const {
     ASSERT(type == PlaceholderType_IMAGE);
-    return _u.image_texId;
+    return _u.image;
   }
 };
 
@@ -1018,6 +1026,8 @@ struct GameData {
     FrameVisual shopErrorBuild   = {};
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
+
+    i16 clayZIndex = 0;
   } ui;
 } g = {};
 
@@ -1751,18 +1761,25 @@ void PlaceholdString(
   PlaceholdGroupEnd();
 }
 
-void PlaceholdBrokenLocale(int locale) {  ///
+void PlaceholdBrokenLocale(int locale, Color color = palTextWhite) {  ///
   ASSERT(g.uiFlex.pgroupsLastIsActive);
   _AddPlaceholder({
     .type = PlaceholderType_BROKEN_LOCALE,
-    ._u{.brokenLocale_value = locale},
+    ._u{.brokenLocale{
+      .value = locale,
+      .color = color,
+    }},
   });
 }
 
 // `placeholder` must be statically allocated or live in trashArena.
-void PlaceholdBrokenLocale(const char* placeholder, int locale) {  ///
+void PlaceholdBrokenLocale(
+  const char* placeholder,
+  int         locale,
+  Color       color = palTextWhite
+) {  ///
   PlaceholdGroupBegin(placeholder);
-  PlaceholdBrokenLocale(locale);
+  PlaceholdBrokenLocale(locale, color);
   PlaceholdGroupEnd();
 }
 
@@ -1770,7 +1787,7 @@ void PlaceholdImage(int texId) {  ///
   ASSERT(g.uiFlex.pgroupsLastIsActive);
   _AddPlaceholder({
     .type = PlaceholderType_IMAGE,
-    ._u{.image_texId = texId},
+    ._u{.image{.texId = texId}},
   });
 }
 
@@ -2026,28 +2043,37 @@ void BF_CLAY_IMAGE(
   const auto texture      = glib->atlas_textures()->Get(data.texId);
   const auto originalSize = glib->original_texture_sizes()->Get(data.texId);
 
+  f32 w = (f32)originalSize->x() * data.scale.x * ASSETS_TO_LOGICAL_RATIO;
+  f32 h = (f32)originalSize->y() * data.scale.y * ASSETS_TO_LOGICAL_RATIO;
+
+  ASSERT(data.overriddenSize.x >= 0);
+  ASSERT(data.overriddenSize.y >= 0);
+  if (data.overriddenSize.x > 0)
+    w = data.overriddenSize.x;
+  if (data.overriddenSize.y > 0)
+    h = data.overriddenSize.y;
+
   if (g.uiFlex.active)
-    FlexAddRowForChildIfNeeded(Ceil((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO));
+    FlexAddRowForChildIfNeeded(Ceil(w));
 
   CLAY({
-    .layout{
-      .sizing{
-        .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
-        .height = CLAY_SIZING_FIXED((f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO),
-      },
-      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-    },
-  })
-  CLAY({
-    .layout{
-      .sizing{
-        .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
-        .height = CLAY_SIZING_FIXED((f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO),
-      },
-    },
-    .image{.imageData = PushClayImageData(data)},
+    .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
   }) {
-    innerLambda();
+    CLAY({
+      .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
+      .image{.imageData = PushClayImageData(data)},
+      .floating{
+        .zIndex = g.ui.clayZIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+        .attachTo           = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      innerLambda();
+    }
   }
 
   if (_resetPlaceholders)
@@ -2948,11 +2974,16 @@ void GameInit() {
         if (fb_cond->requires_projectile())
           ASSERT(fb_effect->projectile_range_meters() > 0);
 
+        if (fb_cond->rectrict_only_melee_weapons())
+          ASSERT(fb_cond->restrict() == 1);
         if (fb_cond->rectrict_only_ranged_weapons())
           ASSERT(fb_cond->restrict() == 1);
-
-        if ((fb_cond->restrict() == 1) && fb_cond->rectrict_only_ranged_weapons())
-          ASSERT(fb_weapon->projectile_type());
+        if (fb_cond->restrict() == 1) {
+          if (fb_cond->rectrict_only_melee_weapons())
+            ASSERT_FALSE(fb_weapon->projectile_type());
+          if (fb_cond->rectrict_only_ranged_weapons())
+            ASSERT(fb_weapon->projectile_type());
+        }
 
         {
           int required = 0;
@@ -3068,6 +3099,9 @@ void GameInit() {
         ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
         ASSERT_FALSE(fb_cond->requires_stat());
       }
+
+      if (fb_cond->requires_pickupable())
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "PICKUPABLE"));
 
       const char* const letters_[]{"X", "Y", "Z", "W"};
       VIEW_FROM_ARRAY_DANGER(letters);
@@ -3787,11 +3821,31 @@ void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
 }
 
 void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED(placeholder->brokenLocale_value(), palTextWhite, false);
+  const auto& d = placeholder->brokenLocale();
+  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, d.color, false);
 }
 
 void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
-  BF_CLAY_IMAGE({.texId = placeholder->image_texId()}, false);
+  const auto& d = placeholder->image();
+
+  auto fb = glib->original_texture_sizes()->Get(d.texId);
+
+  f32 h              = (f32)g.meta.fontUI.size;
+  f32 fontScaleToFit = g.meta.fontUI._scaleToFit;
+  if (g.ui.overriddenFont) {
+    h              = (f32)g.ui.overriddenFont->size;
+    fontScaleToFit = g.ui.overriddenFont->_scaleToFit;
+  }
+
+  f32 scale = h / ((f32)fb->y() * ASSETS_TO_LOGICAL_RATIO);
+  BF_CLAY_IMAGE(
+    {
+      .texId = d.texId,
+      .scale{scale, scale},
+      .overriddenSize{0, h / fontScaleToFit},
+    },
+    false
+  );
 }
 
 void FontBegin(Font* font) {  ///
@@ -3944,8 +3998,9 @@ void DoUI(bool draw) {
     _wheel *= 10;
   if (draw)
     _wheel = 0;
-  const int wheel  = _wheel;
-  i16       zIndex = 0;
+  const int wheel = _wheel;
+
+  auto& zIndex = g.ui.clayZIndex;
 
   const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
 
@@ -4410,7 +4465,8 @@ void DoUI(bool draw) {
             (isPositive == fb_stat->negative_is_good() ? palTextRed : palTextGreen)
           );
         }
-        else if (fb_effect->weaponproperty_type()) {
+
+        if (fb_effect->weaponproperty_type()) {
           const auto fb_prop
             = fb_weapon_properties->Get(fb_effect->weaponproperty_type());
           PlaceholdBrokenLocale("PROPERTY", fb_prop->name_locale());
@@ -4438,6 +4494,11 @@ void DoUI(bool draw) {
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
             palTextGreen
           );
+        }
+
+        if (fb_effect->pickupable_type()) {
+          auto fb_pickupable = fb_pickupables->Get(fb_effect->pickupable_type());
+          PlaceholdBrokenLocale("PICKUPABLE", fb_pickupable->name_locale(), palTextGreen);
         }
 
         const auto cond                = fb_effect->effectcondition_type();
@@ -7072,6 +7133,8 @@ void DoUI(bool draw) {
   ASSERT_FALSE(g.ui.overriddenFont);
   auto drawCommands = Clay_EndLayout();
 
+  ASSERT(g.ui.clayZIndex == 0);
+
   // Drawing UI.
   if (draw) {
     ZoneScopedN("Drawing UI");
@@ -7135,6 +7198,7 @@ void DoUI(bool draw) {
             DrawGroup_CommandTexture({
               .texId = data.texId,
               .pos{bb.x + bb.width / 2, bb.y + bb.height / 2},
+              .scale         = data.scale,
               .sourceMargins = data.sourceMargins,
               .color{
                 data.color.r,
@@ -7352,6 +7416,16 @@ void Pickup(Pickupable* pickupable_) {  ///
 
   const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
 
+  IterateOverEffects(
+    EffectConditionType_X__COINS_UPON__PICKUPABLE,
+    [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+      if (fb_effect->pickupable_type() == pickupable.type) {
+        const int amount = times * EFFECT_PLACEHOLDER_X_INT;
+        ChangeCoins(amount);
+      }
+    }
+  );
+
   switch (pickupable.type) {
   case PickupableType_COIN: {
     const auto& data    = pickupable.DataCoin();
@@ -7400,14 +7474,6 @@ void Pickup(Pickupable* pickupable_) {  ///
     if (consumableOrCrateHeal > 0)
       HealPlayer(consumableOrCrateHeal);
     g.run.state.crates++;
-
-    IterateOverEffects(
-      EffectConditionType_X__COINS_UPON_PICKING_UP_A_CRATE,
-      [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-        const int amount = times * EFFECT_PLACEHOLDER_X_INT;
-        ChangeCoins(amount);
-      }
-    );
   } break;
 
   default:

@@ -161,12 +161,13 @@ table EffectConditionPlaceholder {
 
 table EffectCondition {
     restrict: int; // 0 general, 1 weapon only, 2 build only.
+    rectrict_only_melee_weapons: bool;
     rectrict_only_ranged_weapons: bool;
     name_locale: int;
     requires_stat: bool;
     requires_property: bool;
     requires_projectile: bool;
-    // requires_pickupable: bool;
+    requires_pickupable: bool;
     // requires_tier: bool;
     // requires_item: bool;
     // requires_weapon: bool;
@@ -269,6 +270,7 @@ table Particle {
 }
 
 table Pickupable {
+    name_locale: int;
     texture_id: int;
 }
 

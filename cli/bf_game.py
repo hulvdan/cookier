@@ -88,6 +88,12 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 
     transforms: list[tuple[str, str, dict[str, int]]] = []
 
+    # Pickupables.
+    # ============================================================
+    for i, x in enumerate_table("pickupables"):
+        if i > 0:
+            x["name_locale"] = "PICKUPABLE_{}".format(x["type"])
+
     # Effect conditions.
     # ============================================================
     EFFECT_CONDITION_LETTERS = ("x", "y", "z", "w")
@@ -109,7 +115,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 *(l.upper() for l in EFFECT_CONDITION_LETTERS),
                 "STAT",
                 "PROPERTY",
-                # "PICKUPABLE",
+                "PICKUPABLE",
                 # "TIER",
                 # "ITEM",
                 # "WEAPON",
