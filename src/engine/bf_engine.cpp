@@ -3769,6 +3769,9 @@ EM_JS(void, js_Save, (const char* data), {
     .setData({save: UTF8ToString(data)}, /* flush */ true)
     .then(() => {
       Module.ccall('saved_from_js', null, [], []);
+    })
+    .catch(() => {
+      Module.ccall('saved_from_js', null, [], []);
     });
 });
 // clang-format on
@@ -3778,6 +3781,7 @@ EM_JS(void, js_Save, (const char* data), {
 // clang-format off
 EM_JS(void, js_Save, (const char* data), {
   localStorage.setItem('save', UTF8ToString(data));
+  Module.ccall('saved_from_js', null, [], []);
 });
 // clang-format on
 
@@ -3787,43 +3791,43 @@ EM_JS(void, js_Save, (const char* data), {
 
 // clang-format off
 
-// Retuned string must be `free`-d!
-EM_JS(void, js_Load, (), {
+// NOTE: Returned string must be `free`-d when `ge.meta.jsLoadedSavedata == 2`
+EM_JS(const char*, jsLoad, (), {
 #  if defined(BF_PLATFORM_WebYandex)
-  window.savedataLoaded = false;
-  window.savedataLoadingStarted = false;
-  window.savedata = null;
+  window.jsLoad_savedataLoaded = false;
+  window.jsLoad_savedataLoadingStarted = false;
+  window.jsLoad_savedata = null;
 
-  if (!window.savedataLoadingStarted) {
-    window.savedataLoadingStarted = true;
+  if (!window.jsLoad_savedataLoadingStarted) {
+    window.jsLoad_savedataLoadingStarted = true;
 
     window.player.getData(['save']).then((obj) => {
-      window.savedata = obj?.save;
-      window.savedataLoaded = true;
+      window.jsLoad_savedata = obj?.save;
+      window.jsLoad_savedataLoaded = true;
     }).catch(() => {
-      window.savedataLoaded = true;
+      window.jsLoad_savedataLoaded = true;
     });
   }
 
-  if (!window.savedataLoaded)
-    return;
+  if (!window.jsLoad_savedataLoaded)
+    return null;
 
 #  elif defined(BF_PLATFORM_Web)
-  var js_str = localStorage.getItem('save');
+  window.jsLoad_savedata = localStorage.getItem('save');
 #  else
 #    error "Not implemented"
 #  endif
 
-  if (!js_str) {
-    mark_js_returned_savedata(1);
+  if (!window.jsLoad_savedata) {
+    Module.ccall('mark_js_returned_savedata', null, ['number'], [1]);
     return null;
   }
 
-  mark_js_returned_savedata(2);
+  Module.ccall('mark_js_returned_savedata', null, ['number'], [2]);
 
-  var len            = lengthBytesUTF8(js_str) + 1;
+  var len            = lengthBytesUTF8(window.jsLoad_savedata) + 1;
   var string_on_heap = _malloc(len);
-  stringToUTF8(js_str, string_on_heap, len + 1);
+  stringToUTF8(window.jsLoad_savedata, string_on_heap, len + 1);
   return string_on_heap;
 });
 // clang-format on
@@ -3859,15 +3863,15 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
 
     // JS loads asynchronously.
-    const char* savedata_ = js_Load();
+    const char* savedata = jsLoad();
     if (ge.meta.jsLoadedSavedata)
       ge.meta.loading = SavedataLoadingType_JUST_FISNIHED;
     else
       return SavedataLoadingType_NOT_LOADED;
 
     if (ge.meta.jsLoadedSavedata == 2) {
-      ge.meta.savedata = DecodeFromHex(savedata_, arena);
-      free((void*)savedata_);
+      ge.meta.savedata = DecodeFromHex(savedata, arena);
+      free((void*)savedata);
     }
 
 #else
