@@ -1500,6 +1500,10 @@ void FlushDrawCommands() {
         // }
 
         switch (command.type) {
+        case DrawCommandType_INVALID: {  ///
+          INVALID_PATH;
+        } break;
+
         case DrawCommandType_TEXTURE: {  ///
           if (!mode) {
             drawCallIndicesCount += 6;
@@ -3767,9 +3771,8 @@ EM_JS(void, js_Save, (const char* data), {
 
 // Retuned string must be `free`-d!
 EM_JS(const char*, js_Load, (), {
-
 #  if defined(BF_PLATFORM_WebYandex)
-  var js_str = window.player.getData('save');
+  var js_str = window.player.getData(['save']);
 #  elif defined(BF_PLATFORM_Web)
   var js_str = localStorage.getItem('save');
 #  else
