@@ -49,6 +49,7 @@ app = typer.Typer(
 )
 
 
+@timing
 def make_web_build_archive(zip_path: Path, base_path: Path) -> None:
     with zipfile.ZipFile(zip_path, "w") as archive:
         for filepath in (
