@@ -7475,7 +7475,9 @@ void GameFixedUpdate() {
 
   // Show / hide cursor.
   {  ///
-    if ((g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused)
+    if (((g.run.state.screen == ScreenType_GAMEPLAY)
+         || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
+        && !g.meta.paused)
       SDL_HideCursor();
     else
       SDL_ShowCursor();
