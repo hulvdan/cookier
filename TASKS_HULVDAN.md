@@ -49,8 +49,8 @@ x fix new game coin achievement
 x weapon effects: impl: SPAWNS_GARDEN_EVERY__X__SECONDS
 x weapon effects: impl: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
 x web/yandex saving
+x yandex save
 
-* yandex save
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
 *
