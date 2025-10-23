@@ -814,12 +814,10 @@ struct EngineData {
 
     int         _keyboardStateCount    = {};
     const bool* _keyboardState         = {};
-    bool*       _keyboardStatePrev     = {};
     bool*       _keyboardStatePressed  = {};
     bool*       _keyboardStateReleased = {};
 
     u32     _mouseState         = {};
-    u32     _mouseStatePrev     = {};
     u32     _mouseStatePressed  = {};
     u32     _mouseStateReleased = {};
     Vector2 _mousePos           = {};
@@ -2334,14 +2332,15 @@ void _OnTouchMoved(Touch touch) {  ///
   ASSERT(found);
 }
 
-void ResetInputState() {  ///
-  ge.meta._mouseStatePressed  = 0;
-  ge.meta._mouseStateReleased = 0;
-  ge.meta._mouseWheel         = 0;
+void _ClearControlsCache() {  ///
   FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
     ge.meta._keyboardStatePressed[i]  = false;
     ge.meta._keyboardStateReleased[i] = false;
   }
+
+  ge.meta._mouseStatePressed  = 0;
+  ge.meta._mouseStateReleased = 0;
+  ge.meta._mouseWheel         = 0;
 
   // Removing previously released touches.
   {
@@ -2408,18 +2407,18 @@ TEST_CASE ("Touch controls") {  ///
     ASSERT(IsTouchPressed(id(1)));
     ASSERT(IsTouchDown(id(1)));
     ASSERT(!IsTouchReleased(id(1)));
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(!IsTouchPressed(id(1)));
     ASSERT(IsTouchDown(id(1)));
     ASSERT(!IsTouchReleased(id(1)));
-    ResetInputState();
+    _ClearControlsCache();
 
     _OnTouchUp(touch(1));
     ASSERT(!IsTouchPressed(id(1)));
     ASSERT(!IsTouchDown(id(1)));
     ASSERT(IsTouchReleased(id(1)));
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(ge.meta._touches.count == 0);
   }
@@ -2430,12 +2429,12 @@ TEST_CASE ("Touch controls") {  ///
     ASSERT(ge.meta._touches.count == 2);
     ASSERT(ge.meta._touchIDs.count == 2);
 
-    ResetInputState();
+    _ClearControlsCache();
 
     _OnTouchUp(touch(4));
     _OnTouchUp(touch(3));
 
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(ge.meta._touches.count == 0);
     ASSERT(ge.meta._touchIDs.count == 0);
@@ -2445,12 +2444,12 @@ TEST_CASE ("Touch controls") {  ///
     _OnTouchDown(touch(5));
     _OnTouchDown(touch(6));
 
-    ResetInputState();
+    _ClearControlsCache();
 
     _OnTouchUp(touch(5));
     _OnTouchUp(touch(6));
 
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(ge.meta._touches.count == 0);
     ASSERT(ge.meta._touchIDs.count == 0);
@@ -2716,12 +2715,16 @@ void InitEngine() {  ///
 
   ge.meta._touches.Reserve(8);
   ge.meta._touchIDs.Reserve(8);
-  ge.meta._keyboardStatePrev
-    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
+
+#if BF_DEBUG
+  ge.meta._keyboardStatePressed  = (bool*)BF_ALLOC(ge.meta._keyboardStateCount);
+  ge.meta._keyboardStateReleased = (bool*)BF_ALLOC(ge.meta._keyboardStateCount);
+#else
   ge.meta._keyboardStatePressed
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
   ge.meta._keyboardStateReleased
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
+#endif
 
   glib = BFGame::GetGameLibrary(SDL_LoadFile("resources/gamelib.bin", nullptr));
 
@@ -3226,46 +3229,6 @@ void EngineOnFrameStart() {
   auto           ratioActual   = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y;
   ge.meta.screenToLogicalRatio = ratioActual / ratioLogical;
 
-  // Controls. Keyboard.
-  {  ///
-    FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
-      ge.meta._keyboardStatePressed[i]
-        = !ge.meta._keyboardStatePrev[i] && ge.meta._keyboardState[i];
-      ge.meta._keyboardStateReleased[i]
-        = ge.meta._keyboardStatePrev[i] && !ge.meta._keyboardState[i];
-    }
-
-    memcpy(
-      (void*)ge.meta._keyboardStatePrev,
-      (void*)ge.meta._keyboardState,
-      sizeof(bool) * ge.meta._keyboardStateCount
-    );
-  }
-
-  // Controls. Mouse.
-  {  ///
-    ge.meta._mouseState = SDL_GetMouseState(&ge.meta._mousePos.x, &ge.meta._mousePos.y);
-    ge.meta._mousePos.y = ge.meta.screenSize.y - ge.meta._mousePos.y;
-
-    int mouseButtons[]{
-      SDL_BUTTON_LMASK,
-      SDL_BUTTON_MMASK,
-      SDL_BUTTON_RMASK,
-      SDL_BUTTON_X1MASK,
-      SDL_BUTTON_X2MASK,
-    };
-    ge.meta._mouseStatePressed  = 0;
-    ge.meta._mouseStateReleased = 0;
-    for (auto v : mouseButtons) {
-      auto isDown  = ge.meta._mouseState & v;
-      auto wasDown = ge.meta._mouseStatePrev & v;
-      ge.meta._mouseStatePressed |= (~wasDown & isDown);
-      ge.meta._mouseStateReleased |= (wasDown & ~isDown);
-    }
-
-    ge.meta._mouseStatePrev = ge.meta._mouseState;
-  }
-
   // Caching ScreenToLogical data.
   {  ///
     const auto r = ge.meta.screenToLogicalRatio;
@@ -3614,11 +3577,17 @@ SDL_AppResult EngineUpdate() {  ///
   while (frameTime >= FIXED_DT) {
     frameTime -= FIXED_DT;
 
+    SDL_PumpEvents();
+
+    // Controls. Mouse.
+    ge.meta._mouseState = SDL_GetMouseState(&ge.meta._mousePos.x, &ge.meta._mousePos.y);
+    ge.meta._mousePos.y = ge.meta.screenSize.y - ge.meta._mousePos.y;
+
     GameFixedUpdate();
+
     if (ge.meta.exitScheduled)
       return SDL_APP_SUCCESS;
-
-    ResetInputState();
+    _ClearControlsCache();
 
     simulated++;
 

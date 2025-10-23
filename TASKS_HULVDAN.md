@@ -3,6 +3,7 @@ WORKING SINCE 2025-09-07
 x yandex save
 x weapon effects: BOUNCES_UP_TO_X_TIMES_ON_CRIT
 x javelin: ranged weapon that shoots itself
+x fix: guarantee input press
 
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
@@ -121,7 +122,6 @@ x javelin: ranged weapon that shoots itself
 *
 *
 *
-* fix guarantee input press
 * на русском апгрейд "рукопашный урон" хреново смотрится
   мб "рукопашная"?
 * weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
