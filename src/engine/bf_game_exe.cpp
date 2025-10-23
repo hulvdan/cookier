@@ -87,11 +87,11 @@ EMSCRIPTEN_KEEPALIVE void pause_from_js() {  ///
 EMSCRIPTEN_KEEPALIVE void resume_from_js() {  ///
   ge.meta.windowIsInactive = false;
 }
+#  endif
 
 EMSCRIPTEN_KEEPALIVE void saved_from_js() {  ///
   ge.meta.previousSaveIsNotCompletedYet = false;
 }
-#  endif
 
 EMSCRIPTEN_KEEPALIVE void set_localization_from_js(int localization) {  ///
   ge.meta.localization = localization;
