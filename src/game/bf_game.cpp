@@ -461,6 +461,8 @@ struct Weapon {  ///
 
   int killedEnemies = 0;
   int hits          = 0;
+
+  FrameGame lastShotAt = {};
 };
 
 struct Item {  ///
@@ -3075,6 +3077,13 @@ void GameInit() {
           ASSERT(checkPlaceholder(fb_cond->name_locale(), expectedLetter));
         }
       }
+    }
+
+    for (auto fb : *glib->weapons()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      if (fb->shoots_itself())
+        ASSERT(fb->projectile_type());
     }
   }
 
@@ -8672,6 +8681,9 @@ void GameFixedUpdate() {
                 .pierce               = fb->projectile_pierce(),
                 .bounce               = fb->projectile_bounce(),
               });
+
+              weapon.lastShotAt = {};
+              weapon.lastShotAt.SetNow();
             }
           }
           else {
@@ -9612,6 +9624,13 @@ void GameDraw() {
         else {
           scale.x  = (weapon.targetDir.x >= 0 ? 1 : -1);
           rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
+        }
+
+        if (fb->shoots_itself()) {
+          if (weapon.lastShotAt.IsSet()) {
+            f32 t = MIN(1, weapon.lastShotAt.Elapsed().Progress(ANIMATION_1_FRAMES));
+            fade *= EaseInQuad(t);
+          }
         }
 
         DrawGroup_OneShotTexture(

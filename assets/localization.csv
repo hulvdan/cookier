@@ -56,8 +56,8 @@ EFFECT_X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES;{X} статов при под
 EFFECT_STAT__WHEN_WALKING;{STAT} {MODIFIER} при ходьбе;{MODIFIER} {STAT} when walking;
 EFFECT_STAT__WHEN_IDLE;{STAT} {MODIFIER} при отсутствии движения;{MODIFIER} {STAT} when idle;
 EFFECT_HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE;Сбор дополнительно увеличивается на {X} в конце волны;Harvesting additionally increases by {X} at the end of the wave;
-EFFECT_SPAWNS_GARDEN_EVERY__X__SECONDS;Новый огород каждые {X}с;Spawns garden every {X}s;
-EFFECT_SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE;Новая мина каждые {X}с, наносящая {Y} урона;Spawns landmine every {X}s dealing {Y} damage;
+EFFECT_SPAWNS_GARDEN_EVERY__X__SECONDS;Новый огород каждые {X}с;Spawns a garden every {X}s;
+EFFECT_SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE;Новая мина каждые {X}с, наносящая {Y} урона;Spawns a landmine every {X}s dealing {Y} damage;
 EFFECT_GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT;{STAT} {MODIFIER} за каждый занятый слот оружия;{MODIFIER} {STAT} for every occupied weapon slot;
 EFFECT_GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT;{STAT} {MODIFIER} за каждый свободный слот оружия;{MODIFIER} {STAT} for every empty weapon slot;
 BUILD_EFFECT_START_WITH__X__ITEM_OR_WEAPON;Стартует ещё и с {X};Additionally starts with {X};
@@ -106,6 +106,7 @@ WEAPON_BOW;Лук;Bow;
 WEAPON_SLINGSHOT;Рогатка;Slingshot;
 WEAPON_WAND;Огнилка;Firer;
 WEAPON_WAND2;Молнилка;Lightner;
+WEAPON_JAVELIN;Копьё;Javelin;
 PROPERTY_DAMAGE;Урон этого оружия;Damage of this weapon;
 PROPERTY_BURNING_SPREAD;Распространение Горения этого оружия;Burning Spread of this weapon;
 STAT_COINS;Печеньги;Cookiens;
