@@ -7099,6 +7099,9 @@ void DoUI(bool draw) {
 
         if (!mode) {
           switch (cmd.commandType) {
+          case CLAY_RENDER_COMMAND_TYPE_NONE:
+            break;
+
           case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {  ///
             const auto& d = cmd.renderData.rectangle;
             DrawGroup_CommandRect({
