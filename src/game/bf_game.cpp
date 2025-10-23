@@ -7496,8 +7496,10 @@ void GameFixedUpdate() {
   // Waiting for completion of save data loading.
   {  ///
     auto loaded = LoadSaveDataOnce(&g.meta.trashArena);
-    if (loaded == SavedataLoadingType_JUST_FISNIHED)
+    if (loaded == SavedataLoadingType_JUST_FISNIHED) {
       GameInitAfterLoading();
+      GameReady();
+    }
     else if (loaded != SavedataLoadingType_FISNIHED)
       return;
   }
