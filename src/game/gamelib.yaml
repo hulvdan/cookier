@@ -469,8 +469,6 @@ effect_conditions: # {  ###
     x_condvar_type: FLOAT
     x_signed: true
     x_multiplied_by_times: true
-  - type: X__CHANCE_OF_EXPLOSION_ON_HIT
-    x_is_percent: true
   - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP
     x_signed: true
     x_multiplied_by_times: true
@@ -851,31 +849,35 @@ weapons: # {  ###
     icon_texture_id: game_weapon_smg
     texture_ids:
       - game_weapon_smg
-      # effects:
-      #   - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
-      #     stat_type: DAMAGE
-      #     value: 1 1 1 1
-      #   - effectcondition_type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
-      #     stat_type: DAMAGE
-      #     value: 1 1 1 1
-      #   - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
-      #     stat_type: DAMAGE
-      #     value: 1 1 1 1
-      #     placeholders:
-      #       - floats: 29 19 14 11
-      #   - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
-      #     stat_type: DAMAGE
-      #     value: 1 1 1 1
-      #     placeholders:
-      #       - ints: 50 45 38 30
-      #   - effectcondition_type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
-      #     stat_type: DAMAGE
-      #     value: 1 1 1 1
-      #     placeholders:
-      #       - floats: 7 6 5 4
-      #   - effectcondition_type: PROPERTY__WHEN_IDLE
-      #     weaponproperty_type: DAMAGE
-      #     value: 4 6 8 10
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        only_this_weapon: true
+        placeholders:
+          - ints: 100 100 100 100
+            #   - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #   - effectcondition_type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #   - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #     placeholders:
+            #       - floats: 29 19 14 11
+            #   - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #     placeholders:
+            #       - ints: 50 45 38 30
+            #   - effectcondition_type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #     placeholders:
+            #       - floats: 7 6 5 4
+            #   - effectcondition_type: PROPERTY__WHEN_IDLE
+            #     weaponproperty_type: DAMAGE
+            #     value: 4 6 8 10
   - type: BOW
     min_tier_index: 0
     weaponkind_type: RANGED
@@ -1018,9 +1020,6 @@ projectiles: # {  ###
   - type: BULLET_EXPLOSIVE
     speed: 14
     aoe_on_travel_end: false
-    aoe_radius: 1.5
-    aoe_particle_type: EXPLOSION
-    aoe_chance: 1
     texture_ids:
       - game_projectile_bullet_explosive
   - type: STONE

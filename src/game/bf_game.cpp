@@ -5073,31 +5073,6 @@ void DoUI(bool draw) {
             }
           }
 
-          // Explosion.
-          {
-            auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
-            if (chance > 0) {
-              CLAY({.layout{
-                .childGap        = GAP_FLEX,
-                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-              }}) {
-                FlexBegin(CARD_WIDTH, 0);
-
-                PlaceholdString(
-                  "CHANCE",
-                  TextFormat(
-                    "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
-                  )
-                );
-                BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                  Loc_REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
-                );
-
-                FlexEnd();
-              }
-            }
-          }
-
           componentEffectsExploded(fb->effects(), tierOffset, 1, CARD_WIDTH);
 
           // This wave damage.
@@ -7402,7 +7377,6 @@ f32 GetCreatureSpeed(const Creature& creature) {  ///
 
 void MakeAOE(
   CreatureType damager,
-  ParticleType particleType,
   Vector2      pos,
   f32          baseRadius,
   int          baseDamage,
@@ -7413,7 +7387,7 @@ void MakeAOE(
   const f32 sizeMultiplier = GetExplosionSizeMultiplier();
 
   Particle p{
-    .type  = particleType,
+    .type  = ParticleType_EXPLOSION,
     .pos   = pos,
     .scale = sizeMultiplier,
   };
@@ -8946,7 +8920,7 @@ void GameFixedUpdate() {
         if (projectile.travelledDistance >= projectile.range) {
           if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
             *g.run.projectilesToRemove.Add() = projectileIndex;
-            if (fb->aoe_particle_type() && fb->aoe_on_travel_end())
+            if (fb->aoe_on_travel_end())
               createAoe = true;
           }
         }
@@ -9145,20 +9119,29 @@ void GameFixedUpdate() {
               }
               else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
                 *g.run.projectilesToRemove.Add() = projectileIndex;
-                if (fb->aoe_on_contact())
-                  createAoe = true;
+                createAoe                        = true;
               }
             }
           }
         }
 
+        f32 chanceToExplode = 0;
+
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_EXPLODE,
+          projectile.weaponIndexOrMinus1,
+          [&](Weapon* w, auto fb_effect, int tierOffset, int count)
+            BF_FORCE_INLINE_LAMBDA {
+              chanceToExplode += (f32)(EFFECT_X_INT * count) / 100.0f;
+            }
+        );
+
         // Creating AOE particle.
-        if (createAoe && fb->aoe_particle_type() && (GRAND.FRand() < fb->aoe_chance())) {
+        if (createAoe && (GRAND.FRand() < chanceToExplode)) {
           MakeAOE(
             projectile.ownerCreatureType,
-            (ParticleType)fb->aoe_particle_type(),
             projectile.pos,
-            fb->aoe_radius(),
+            glib->explosion_radius(),
             projectile.damage,
             projectile.critDamageMultiplier,
             projectile.knockbackMeters,
@@ -9226,7 +9209,6 @@ void GameFixedUpdate() {
           damage     = ApplyDamageScalings(damage, 0, landmine.damageScalings);
           MakeAOE(
             CreatureType_PLAYER,
-            ParticleType_EXPLOSION,
             landmine.pos,
             glib->landmine_explosion_radius(),
             damage,
@@ -9806,10 +9788,12 @@ void GameDraw() {
           rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
         }
 
+        f32 weaponFade = fade;
+
         if (fb->shoots_itself()) {
           if (weapon.lastShotAt.IsSet()) {
             f32 t = MIN(1, weapon.lastShotAt.Elapsed().Progress(ANIMATION_1_FRAMES));
-            fade *= EaseInQuad(t);
+            weaponFade *= EaseInQuad(t);
           }
         }
 
@@ -9819,7 +9803,7 @@ void GameDraw() {
             .rotation = rotation,
             .pos      = pos,
             .scale    = scale,
-            .color    = Fade(ColorFromRGBA(fb->color()), fade),
+            .color    = Fade(ColorFromRGBA(fb->color()), weaponFade),
           },
           PLAYER_WEAPONS_DRAW_Z[weaponsCount - 1][i]
         );

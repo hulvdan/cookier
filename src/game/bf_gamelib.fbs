@@ -261,11 +261,7 @@ table Projectile {
     ailment_chance: float;
     ailment_value: int;
     collider_radius: float = 0.4;
-    aoe_on_contact: bool = true;
     aoe_on_travel_end: bool = true;
-    aoe_radius: float;
-    aoe_particle_type: int;
-    aoe_chance: float;
     texture_ids: [int];
 }
 
@@ -377,6 +373,8 @@ table GameLibrary {
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;
     landmine_explosion_radius: float = 1.5;
+
+    explosion_radius: float = 1.5;
     // GAME STUFF END
 }
 
