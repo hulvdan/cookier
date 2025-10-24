@@ -492,8 +492,9 @@ effect_conditions: # {  ###
     y_multiplied_by_times: true
   - type: X__CHANCE_TO_EXPLODE
     x_is_percent: true
-  - type: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+  - type: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
     x_is_percent: true
+    y_multiplied_by_times: true
   - type: PROPERTY__WHEN_IDLE
   - type: PROPERTY__WHEN_WALKING
   - type: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
@@ -931,23 +932,24 @@ weapons: # {  ###
     max_price: 120
     shooting_duration_frames: 12
     effects:
-      - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
-        weaponproperty_type: DAMAGE
-        value: 4 6 8 10
-      - effectcondition_type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+      # - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
+      #   weaponproperty_type: DAMAGE
+      #   value: 4 6 8 10
+      # - effectcondition_type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+      #   placeholders:
+      #     - ints: 10 30 60 120
+      #     - ints: 3 3 3 3
+      # - effectcondition_type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+      #   placeholders:
+      #     - ints: 2 5 12 20
+      #     - ints: 1 1 1 2
+      # - effectcondition_type: X__CHANCE_TO_EXPLODE
+      #   placeholders:
+      #     - ints: 10 20 30 40
+      - effectcondition_type: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
         placeholders:
-          - ints: 10 30 60 120
-          - ints: 3 3 3 3
-      - effectcondition_type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
-        placeholders:
-          - ints: 2 5 12 20
-          - ints: 1 1 1 2
-      - effectcondition_type: X__CHANCE_TO_EXPLODE
-        placeholders:
-          - ints: 10 20 30 40
-      - effectcondition_type: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
-        placeholders:
-          - ints: 20 40 70 100
+          - ints: 33 33 33 33
+          - ints: 300 400 500 600
     icon_texture_id: game_weapon_slingshot
     texture_ids:
       - game_weapon_slingshot
