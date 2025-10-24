@@ -744,6 +744,11 @@ weapons: # {  ###
       - game_weapon_gun
     effects:
       #
+      # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
+      #   all_weapons: true
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
       # - effectcondition_type: CRITS_PIERCE_UP_TO__X__TIMES
       #   placeholders:
       #     - ints: 1 2 3 4
@@ -752,10 +757,12 @@ weapons: # {  ###
       #   only_this_weapon: true
       #   placeholders:
       #     - ints: 1 2 3 4
+      #
       # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
       #   only_other_weapons: true
       #   placeholders:
       #     - ints: 1 2 3 4
+      #
       - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
         # all_weapons: true
         # only_this_weapon: true
