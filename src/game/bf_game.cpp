@@ -3210,6 +3210,14 @@ struct TryApplyDamageData {  ///
   bool*            outJustKilled                      = nullptr;
 };
 
+void HealPlayer(int amount = 1) {  ///
+  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+    PLAYER_CREATURE.health
+      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+  }
+  Save();
+}
+
 bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (data.outWasCrit)
     *data.outWasCrit = false;
@@ -3352,6 +3360,18 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           ))
       {
         MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
+
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING,
+          -1,
+          [&](Weapon* w, auto fb_effect, int tierOffset, int count)
+            BF_FORCE_INLINE_LAMBDA {
+              FOR_RANGE (int, i, count) {
+                if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                  HealPlayer(EFFECT_Y_INT);
+              }
+            }
+        );
 
         // TODO: lastInvincibilityTriggeredAt?
         creature.lastDamagedAt = {};
@@ -3867,14 +3887,6 @@ bool CanSpawnMoreCreatures() {  ///
   const auto framesUntilTheEndOfTheWave
     = GetWaveDuration(g.run.state.waveIndex) - g.run.waveStartedAt.Elapsed();
   return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
-}
-
-void HealPlayer(f32 amount = 1) {  ///
-  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
-    PLAYER_CREATURE.health
-      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
-  }
-  Save();
 }
 
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
