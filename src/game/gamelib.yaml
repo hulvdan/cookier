@@ -455,6 +455,10 @@ effect_conditions: # {  ###
     x_signed: true
   - type: CRITS_PIERCE_UP_TO__X__TIMES
   - type: CRITS_BOUNCE_UP_TO__X__TIMES
+  - type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+    requires_projectile: true
+    x_multiplied_by_times: true
+    y_condvar_type: DAMAGE
 # }
 
 build_effect_conditions: # { ###
@@ -467,9 +471,6 @@ build_effect_conditions: # { ###
 weapon_effect_conditions: # {  ###
   - type: X__CHANCE_OF_EXPLOSION_ON_HIT
     x_is_percent: true
-  - type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
-    y_condvar_type: DAMAGE
-    requires_projectile: true
   - type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
     x_condvar_type: FLOAT
     x_signed: true
@@ -495,8 +496,6 @@ weapon_effect_conditions: # {  ###
     x_is_percent: true
   - type: PROPERTY__WHEN_IDLE
   - type: PROPERTY__WHEN_WALKING
-  # - type: HITTING_SPAWNS__X__PROJECTILES_THAT_BOUNCE__Y__TIMES_PIERCE__Z__TIMES_DEALING__W__DAMAGE
-  #   w_condvar_type: DAMAGE
   - type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
   - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
 # }
@@ -781,9 +780,9 @@ weapons: # {  ###
             #     - ints: 100 100 100 100
       - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
         stat_type: ATTACK_SPEED
+        value: 1 1 1 1
         only_this_weapon: true
         placeholders:
-          - ints: 100 100 100 100
           - ints: 3 3 3 3
             #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
             #     weaponproperty_type: DAMAGE
@@ -800,6 +799,15 @@ weapons: # {  ###
             #     placeholders:
             #       - floats: 2.0 1.6 1.2 0.8
             #       - ints: 20 20 20 20
+      - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+        projectile_type: JAVELIN
+        projectile_range_meters: 5
+        placeholders:
+          - ints: 3 4 5 6
+          - ints: 0 0 0 0
+        damage_scalings:
+          - stat_type: DAMAGE_RANGED
+            percents_per_tier: 50 60 70 80
   - type: SMG
     min_tier_index: 0
     base_damage: 3 6 9 12
