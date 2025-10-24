@@ -603,42 +603,44 @@ struct PreSpawn {  ///
 };
 
 struct Projectile {  ///
-  ProjectileType                    type                 = {};
-  CreatureType                      ownerCreatureType    = {};
-  int                               weaponIndexOrMinus1  = -1;
-  Vector2                           pos                  = {};
-  Vector2                           dir                  = {};
-  int                               damage               = {};
-  f32                               critDamageMultiplier = {};
-  int                               pierce               = {};
-  int                               effectCritPierce     = {};
-  int                               effectCritBounce     = {};
-  int                               bounce               = {};
-  FrameGame                         createdAt            = {};
-  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds   = {};
-  int                               damagedCount         = {};
-  int                               piercedCount         = 0;
-  int                               bouncedCount         = 0;
-  f32                               knockbackMeters      = {};
-  f32                               range                = {};
-  f32                               travelledDistance    = 0;
-  int                               anchorCreatureId     = {};
+  ProjectileType                    type                      = {};
+  CreatureType                      ownerCreatureType         = {};
+  int                               weaponIndexOrMinus1       = -1;
+  Vector2                           pos                       = {};
+  Vector2                           dir                       = {};
+  int                               damage                    = {};
+  f32                               critDamageMultiplier      = {};
+  int                               pierce                    = {};
+  int                               effectCritPierce          = {};
+  int                               effectCritBounce          = {};
+  int                               bounce                    = {};
+  FrameGame                         createdAt                 = {};
+  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds        = {};
+  int                               damagedCount              = {};
+  int                               piercedCount              = 0;
+  int                               bouncedCount              = 0;
+  f32                               knockbackMeters           = {};
+  f32                               range                     = {};
+  f32                               travelledDistance         = 0;
+  int                               anchorCreatureId          = {};
+  bool                              dontSpawnProjectilesOnHit = false;
 };
 
 struct MakeProjectileData {  ///
-  ProjectileType type                     = {};
-  CreatureType   ownerCreatureType        = {};
-  int            weaponIndexOrMinus1      = -1;
-  Vector2        pos                      = {};
-  Vector2        dir                      = {};
-  f32            range                    = {};
-  int            damage                   = {};
-  f32            critDamageMultiplier     = {};
-  f32            knockbackMeters          = {};
-  int            pierce                   = {};
-  int            bounce                   = {};
-  int            anchorCreatureId         = {};
-  int            alreadyDamagedCreatureId = 0;
+  ProjectileType type                      = {};
+  CreatureType   ownerCreatureType         = {};
+  int            weaponIndexOrMinus1       = -1;
+  Vector2        pos                       = {};
+  Vector2        dir                       = {};
+  f32            range                     = {};
+  int            damage                    = {};
+  f32            critDamageMultiplier      = {};
+  f32            knockbackMeters           = {};
+  int            pierce                    = {};
+  int            bounce                    = {};
+  int            anchorCreatureId          = {};
+  int            alreadyDamagedCreatureId  = 0;
+  bool           dontSpawnProjectilesOnHit = false;
 };
 
 struct Number {  ///
@@ -975,17 +977,18 @@ struct GameData {
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
-#define VECTORS_TABLE          \
-  X(Creature, creatures)       \
-  X(Landmine, landmines)       \
-  X(Garden, gardens)           \
-  X(PreSpawn, preSpawns)       \
-  X(Projectile, projectiles)   \
-  X(int, projectilesToRemove)  \
-  X(BodyShape, bodyShapes)     \
-  X(int, justDamagedCreatures) \
-  X(Number, numbers)           \
-  X(Pickupable, pickupables)   \
+#define VECTORS_TABLE                      \
+  X(Creature, creatures)                   \
+  X(Landmine, landmines)                   \
+  X(Garden, gardens)                       \
+  X(PreSpawn, preSpawns)                   \
+  X(Projectile, projectiles)               \
+  X(MakeProjectileData, projectilesToMake) \
+  X(int, projectilesToRemove)              \
+  X(BodyShape, bodyShapes)                 \
+  X(int, justDamagedCreatures)             \
+  X(Number, numbers)                       \
+  X(Pickupable, pickupables)               \
   X(Particle, particles)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -2062,7 +2065,6 @@ void BF_CLAY_IMAGE(
   }) {
     CLAY({
       .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
-      .image{.imageData = PushClayImageData(data)},
       .floating{
         .zIndex = g.ui.clayZIndex,
         .attachPoints{
@@ -2074,7 +2076,12 @@ void BF_CLAY_IMAGE(
       },
     }) {
       FLOATING_BEAUTIFY;
-      innerLambda();
+      CLAY({
+        .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
+        .image{.imageData = PushClayImageData(data)},
+      }) {
+        innerLambda();
+      }
     }
   }
 
@@ -2456,28 +2463,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
   if (data.ownerCreatureType == CreatureType_PLAYER)
     ASSERT(data.weaponIndexOrMinus1 >= 0);
 
-  Projectile projectile{
-    .type                 = data.type,
-    .ownerCreatureType    = data.ownerCreatureType,
-    .weaponIndexOrMinus1  = data.weaponIndexOrMinus1,
-    .pos                  = data.pos,
-    .dir                  = data.dir,
-    .damage               = data.damage,
-    .critDamageMultiplier = data.critDamageMultiplier,
-    .pierce               = data.pierce,
-    .bounce               = data.bounce,
-    .knockbackMeters      = data.knockbackMeters,
-    .range                = data.range,
-    .anchorCreatureId     = data.anchorCreatureId,
-  };
-  projectile.createdAt.SetNow();
-
-  if (data.alreadyDamagedCreatureId) {
-    projectile.damagedCreatureIds[projectile.damagedCount++]
-      = data.alreadyDamagedCreatureId;
-  }
-
-  *g.run.projectiles.Add() = projectile;
+  *g.run.projectilesToMake.Add() = data;
 }
 
 void GamePreInit() {  ///
@@ -3016,7 +3002,10 @@ void GameInit() {
           if (fep)
             found = fep->size();
 
-          ASSERT(required == found);
+          if (found > required)
+            INVALID_PATH;  // You specified MORE entries in `placeholders` than needed.
+          if (found < required)
+            INVALID_PATH;  // You specified LESS entries in `placeholders` than needed.
         }
 
         if (fb_cond->requires_item_or_weapon()) {
@@ -3700,6 +3689,40 @@ int GetCreatureIndexById(int id) {  ///
   return index;
 }
 
+void EffectSpawnProjectilesOnHit(
+  const Creature& creature,
+  int             weaponIndex,
+  f32             critDamageMultiplier
+) {
+  ASSERT(weaponIndex >= 0);
+
+  IterateOverEffects(
+    EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE,
+    weaponIndex,
+    [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+      int damage = EFFECT_Y_INT;
+      damage     = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings());
+      damage     = ApplyPlayerStatDamageMultiplier(damage);
+
+      const int toSpawn = EFFECT_X_INT * times;
+      FOR_RANGE (int, i, toSpawn) {
+        MakeProjectile({
+          .type                      = (ProjectileType)fb_effect->projectile_type(),
+          .ownerCreatureType         = CreatureType_PLAYER,
+          .weaponIndexOrMinus1       = weaponIndex,
+          .pos                       = creature.pos,
+          .dir                       = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
+          .range                     = fb_effect->projectile_range_meters(),
+          .damage                    = damage,
+          .critDamageMultiplier      = critDamageMultiplier,
+          .alreadyDamagedCreatureId  = creature.id,
+          .dontSpawnProjectilesOnHit = true,
+        });
+      }
+    }
+  );
+}
+
 bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
   auto& weapon = g.run.state.weapons[*weaponIndex];
 
@@ -3735,33 +3758,8 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
 
     const int tierOffset = weapon.tier - fb->min_tier_index();
 
-    if (hit) {
-      // Processing EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE.
-      IterateOverWeaponEffects(
-        EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE,
-        weapon.type,
-        [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-          int damage = EFFECT_Y_INT;
-          damage     = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings());
-          damage     = ApplyPlayerStatDamageMultiplier(damage);
-
-          const int toSpawn = EFFECT_X_INT;
-          FOR_RANGE (int, i, toSpawn) {
-            MakeProjectile({
-              .type                     = (ProjectileType)fb_effect->projectile_type(),
-              .ownerCreatureType        = CreatureType_PLAYER,
-              .weaponIndexOrMinus1      = *weaponIndex,
-              .pos                      = creature.pos,
-              .dir                      = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
-              .range                    = fb_effect->projectile_range_meters(),
-              .damage                   = damage,
-              .critDamageMultiplier     = fb->crit_damage_multiplier(),
-              .alreadyDamagedCreatureId = creature.id,
-            });
-          }
-        }
-      );
-    }
+    if (hit)
+      EffectSpawnProjectilesOnHit(creature, *weaponIndex, fb->crit_damage_multiplier());
   }
   return continueCollisions;
 }
@@ -4016,8 +4014,8 @@ void DoUI(bool draw) {
 
   Clay_BeginLayout();
 
-  Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
-  int                              beautifiersCount = 0;
+  auto& beautifiers      = g.ui.clayBeautifiers;
+  auto& beautifiersCount = g.ui.clayBeautifiersCount;
 
   constexpr u16 GAP_FLEX                 = 2;
   constexpr u16 GAP_SMALL                = 8;
@@ -7195,6 +7193,7 @@ void DoUI(bool draw) {
 
     auto& beautifiers      = g.ui.clayBeautifiers;
     auto& beautifiersCount = g.ui.clayBeautifiersCount;
+    ASSERT(beautifiersCount == 0);
 
     FOR_RANGE (int, mode, 2) {
       // 0 - drawing ui.
@@ -9024,12 +9023,25 @@ void GameFixedUpdate() {
                   .wasCrit       = &wasCrit,
                 }))
             {
+              auto fb_weapon = ((projectile.weaponIndexOrMinus1 >= 0)
+                ? fb_weapons->Get(g.run.state.weapons[projectile.weaponIndexOrMinus1].type)
+                : nullptr);
+
+              if (!projectile.dontSpawnProjectilesOnHit
+                  && (projectile.weaponIndexOrMinus1 >= 0))
+              {
+                EffectSpawnProjectilesOnHit(
+                  creature,
+                  projectile.weaponIndexOrMinus1,
+                  fb_weapon->crit_damage_multiplier()
+                );
+              }
+
               // Applying:
               // - EffectConditionType_CRITS_PIERCE_UP_TO__X__TIMES.
               // - EffectConditionType_CRITS_BOUNCE_UP_TO__X__TIMES.
-              if (wasCrit && projectile.weaponIndexOrMinus1 >= 0) {
+              if (wasCrit && (projectile.weaponIndexOrMinus1 >= 0)) {
                 const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
-                auto        fb_weapon  = glib->weapons()->Get(weapon.type);
                 const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
 
                 IterateOverEffects(
@@ -9151,6 +9163,36 @@ void GameFixedUpdate() {
           );
         }
       }
+    }
+
+    // Making projectiles.
+    {  ///
+      for (auto& data : g.run.projectilesToMake) {
+        Projectile projectile{
+          .type                      = data.type,
+          .ownerCreatureType         = data.ownerCreatureType,
+          .weaponIndexOrMinus1       = data.weaponIndexOrMinus1,
+          .pos                       = data.pos,
+          .dir                       = data.dir,
+          .damage                    = data.damage,
+          .critDamageMultiplier      = data.critDamageMultiplier,
+          .pierce                    = data.pierce,
+          .bounce                    = data.bounce,
+          .knockbackMeters           = data.knockbackMeters,
+          .range                     = data.range,
+          .anchorCreatureId          = data.anchorCreatureId,
+          .dontSpawnProjectilesOnHit = data.dontSpawnProjectilesOnHit,
+        };
+        projectile.createdAt.SetNow();
+
+        if (data.alreadyDamagedCreatureId) {
+          projectile.damagedCreatureIds[projectile.damagedCount++]
+            = data.alreadyDamagedCreatureId;
+        }
+
+        *g.run.projectiles.Add() = projectile;
+      }
+      g.run.projectilesToMake.Reset();
     }
 
     // Detonating landmines.
