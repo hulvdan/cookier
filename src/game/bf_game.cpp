@@ -462,8 +462,8 @@ struct Weapon {  ///
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
 
-  int killedEnemies = 0;
-  int hits          = 0;
+  int thisWaveKilledEnemies = 0;
+  int thisWaveUseCount      = 0;
 
   FrameGame lastShotAt = {};
 };
@@ -842,6 +842,8 @@ struct JustUnlockedAchievement {  ///
 #define EFFECT_PLACEHOLDER_W_FLOAT \
   (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
 
+constexpr int MAX_BEAUTIFIERS = 32;
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena = {};
@@ -1027,7 +1029,9 @@ struct GameData {
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
 
-    i16 clayZIndex = 0;
+    i16                              clayZIndex = 0;
+    Array<Beautify, MAX_BEAUTIFIERS> clayBeautifiers{};
+    int                              clayBeautifiersCount = 0;
   } ui;
 } g = {};
 
@@ -1290,8 +1294,8 @@ void OnWaveStarted() {  ///
   RecalculateThisWaveMobs();
 
   for (auto& weapon : g.run.state.weapons) {
-    weapon.thisWaveDamage = 0;
-    weapon.hits           = 0;
+    weapon.thisWaveDamage   = 0;
+    weapon.thisWaveUseCount = 0;
   }
 }
 
@@ -1392,9 +1396,9 @@ void GameLoad(const BFSave::Save* save) {  ///
   int weaponIndex = 0;
   for (auto x : *save->weapons()) {
     s.weapons[weaponIndex++] = {
-      .type          = (WeaponType)x->type(),
-      .tier          = x->tier(),
-      .killedEnemies = x->killed_enemies(),
+      .type                  = (WeaponType)x->type(),
+      .tier                  = x->tier(),
+      .thisWaveKilledEnemies = x->killed_enemies(),
     };
   }
 
@@ -1519,7 +1523,7 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
       fb_save.weapons.push_back(std::make_unique<BFSave::WeaponT>(BFSave::WeaponT{
         .type           = weapon.type,
         .tier           = weapon.tier,
-        .killed_enemies = weapon.killedEnemies,
+        .killed_enemies = weapon.thisWaveKilledEnemies,
       }));
     }
 
@@ -2060,6 +2064,9 @@ void BF_CLAY_IMAGE(
   if (g.uiFlex.active)
     FlexAddRowForChildIfNeeded(Ceil(w));
 
+  auto& beautifiers      = g.ui.clayBeautifiers;
+  auto& beautifiersCount = g.ui.clayBeautifiersCount;
+
   CLAY({
     .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
   }) {
@@ -2076,6 +2083,7 @@ void BF_CLAY_IMAGE(
         .attachTo           = CLAY_ATTACH_TO_PARENT,
       },
     }) {
+      FLOATING_BEAUTIFY;
       innerLambda();
     }
   }
@@ -3240,7 +3248,45 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   bool isCrit = false;
   if (data.creatureIndex) {
-    isCrit = GRAND.FRand() < (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
+    f32 critChance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
+
+    IterateOverEffects(
+      EffectConditionType_EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y,
+      [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+        if (data.indexOfWeaponThatDidDamageOrMinus1 < 0)
+          return;
+        const auto& weapon = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1];
+        if ((weapon.thisWaveUseCount % EFFECT_PLACEHOLDER_X_INT) == 0)
+          critChance += (f32)(EFFECT_PLACEHOLDER_Y_INT * times) / 100.0f;
+      }
+    );
+    IterateOverWeaponsEffects(
+      EffectConditionType_EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y,
+      [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
+        BF_FORCE_INLINE_LAMBDA {
+          f32 delta = (f32)EFFECT_PLACEHOLDER_Y_INT / 100.0f;
+
+          bool change = false;
+
+          if (fb_effect->only_this_weapon()) {
+            if ((weaponIndex == data.indexOfWeaponThatDidDamageOrMinus1)
+                && ((weapon.thisWaveUseCount % EFFECT_PLACEHOLDER_X_INT) == 0))
+              change = true;
+          }
+          else if (fb_effect->only_other_weapons()) {
+            if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+              if ((weaponIndex != data.indexOfWeaponThatDidDamageOrMinus1)
+                  && ((weapon.thisWaveUseCount % EFFECT_PLACEHOLDER_X_INT) == 0))
+                change = true;
+            }
+          }
+
+          if (change)
+            critChance += delta;
+        }
+    );
+
+    isCrit = GRAND.FRand() < critChance;
 
     if (fb->is_boss()) {
       data.damage += Round(
@@ -3983,10 +4029,9 @@ void DoUI(bool draw) {
     Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
   }
 
-  constexpr int MAX_BEAUTIFIERS      = 32;
-  const auto    localization         = glib->localizations()->Get(ge.meta.localization);
-  const auto    localization_strings = localization->strings();
-  const auto    localization_broken_lines = localization->broken_lines();
+  const auto localization              = glib->localizations()->Get(ge.meta.localization);
+  const auto localization_strings      = localization->strings();
+  const auto localization_broken_lines = localization->broken_lines();
 
   TEMP_USAGE(&g.meta.trashArena);
 
@@ -4443,6 +4488,15 @@ void DoUI(bool draw) {
         FlexBegin(maxWidth, 0);
 
         f32 v = 0;
+
+        if (fb_effect->only_this_weapon() || fb_effect->only_other_weapons()) {
+          BF_CLAY_TEXT("(", secondaryTextColor);
+          if (fb_effect->only_this_weapon())
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, secondaryTextColor);
+          if (fb_effect->only_other_weapons())
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_OTHER_WEAPONS, secondaryTextColor);
+          BF_CLAY_TEXT(") ", secondaryTextColor);
+        }
 
         if (fb_effect->stat_type()) {
           const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
@@ -5204,10 +5258,10 @@ void DoUI(bool draw) {
               RemoveImmediateWeaponEffects();
               weapon.tier += 1;
 
-              weapon.thisWaveDamage = 0;
-              weapon.killedEnemies  = MAX(
-                weapon.killedEnemies,
-                g.run.state.weapons[canCombineWithIndex].killedEnemies
+              weapon.thisWaveDamage        = 0;
+              weapon.thisWaveKilledEnemies = MAX(
+                weapon.thisWaveKilledEnemies,
+                g.run.state.weapons[canCombineWithIndex].thisWaveKilledEnemies
               );
               StableRemoveWeapon(canCombineWithIndex);
               ApplyImmediateWeaponEffects();
@@ -7148,8 +7202,8 @@ void DoUI(bool draw) {
   if (draw) {
     ZoneScopedN("Drawing UI");
 
-    Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
-    int                              beautifiersCount = 0;
+    auto& beautifiers      = g.ui.clayBeautifiers;
+    auto& beautifiersCount = g.ui.clayBeautifiersCount;
 
     FOR_RANGE (int, mode, 2) {
       // 0 - drawing ui.
@@ -8715,6 +8769,7 @@ void GameFixedUpdate() {
               if (!weapon.startedShootingAt.IsSet()) {
                 weapon.targetDir = dir;
                 weapon.startedShootingAt.SetNow();
+                weapon.thisWaveUseCount++;
               }
               targetSet = true;
             }
@@ -8805,7 +8860,7 @@ void GameFixedUpdate() {
             weapon.startedShootingAt = {};
             weapon.piercedCount      = 0;
             weapon.cooldownStartedAt.SetNow();
-            weapon.hits++;
+            weapon.thisWaveUseCount++;
 
             const int tierOffset = weapon.tier - fb->min_tier_index();
 
@@ -8814,7 +8869,7 @@ void GameFixedUpdate() {
               EffectConditionType_X__COOLDOWN_SECONDS_EVERY__Y__HITS,
               weapon.type,
               [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                if ((weapon.hits % EFFECT_PLACEHOLDER_Y_INT) == 0)
+                if ((weapon.thisWaveUseCount % EFFECT_PLACEHOLDER_Y_INT) == 0)
                   cooldownFrames += lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT).value;
               }
             );
@@ -9273,7 +9328,8 @@ void GameFixedUpdate() {
               AchievementAdd(AchievementType_KILLER, 1);
 
               if (creature.lastDamagedWeaponIndex >= 0)
-                g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
+                g.run.state.weapons[creature.lastDamagedWeaponIndex]
+                  .thisWaveKilledEnemies++;
 
               // Applying effects: STAT__EVERY__X__KILLED_ENEMIES.
               IterateOverEffects(
@@ -9288,14 +9344,22 @@ void GameFixedUpdate() {
               // Applying effects: STAT__EVERY__X__KILLED_ENEMIES_USING_THIS_WEAPON.
               IterateOverWeaponsEffects(
                 EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
-                [&](int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect)
-                  BF_FORCE_INLINE_LAMBDA {
-                    auto cond
-                      = fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset);
+                [&](
+                  int weaponIndex, const Weapon& weapon, int tierOffset, auto fb_effect
+                ) BF_FORCE_INLINE_LAMBDA {
+                  if (fb_effect->only_this_weapon()) {
                     if ((weaponIndex == creature.lastDamagedWeaponIndex)
-                        && ((weapon.killedEnemies % cond) == 0))
+                        && ((weapon.thisWaveKilledEnemies % EFFECT_PLACEHOLDER_X_INT) == 0))
                       ApplyStatEffect(fb_effect, tierOffset, 1);
                   }
+                  else if (fb_effect->only_other_weapons()) {
+                    if ((weaponIndex != creature.lastDamagedWeaponIndex)
+                        && ((weapon.thisWaveKilledEnemies % EFFECT_PLACEHOLDER_X_INT) == 0))
+                      ApplyStatEffect(fb_effect, tierOffset, 1);
+                  }
+                  else
+                    INVALID_PATH;
+                }
               );
             }
 

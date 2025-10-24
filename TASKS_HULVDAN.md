@@ -11,8 +11,16 @@ x show: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
 x show: X__PERCENT_MORE_COINS_FROM_RECYCLING
 x placeholder-image scales with font size
 x yandex: mark game ready after loading save file
+x (this weapon only) / (other weapons only) localization strings
 
-* fix: yandex: build not drawing
++100% крит шанс каждую 3 (третью) атаку
+
+2 атаки дают +100% крит шанс
+5 атак дают +100% крит шанс
+На 5ю атаку
+
+* ref beautifiers double linked list
+  (remove MAX_BEAUTIFIERS)
 * EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
   should be able to target one weapon OR all weapons
   (This weapon)
@@ -420,3 +428,4 @@ LATER:
 * aseprite show image center
 * REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
 * weapon groups
+* fix: yandex: build not drawing

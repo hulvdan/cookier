@@ -437,7 +437,7 @@ effect_conditions: # {  ###
     y_condvar_type: DAMAGE
   - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
   - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
-  - type: EVERY__X__USE_CHANGE_CRIT_BY__Y
+  - type: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
     y_is_percent: true
     y_signed: true
   - type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
@@ -513,30 +513,26 @@ items: # {  ###
     effects:
       - stat_type: TURRELS_COUNT
         value: 1
-      - effectcondition_type: EVERY__X__USE_CHANGE_CRIT_BY__Y
-        placeholders:
-          - ints: 3
-          - ints: 100
-      - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
-        placeholders:
-          - ints: 67
-          - ints: 3
-      - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
-        pickupable_type: COIN
-        placeholders:
-          - ints: 10
-          - ints: 1
-      - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
-        pickupable_type: COIN
-        placeholders:
-          - ints: 50
-          - ints: 3
-        damage_scalings:
-          - stat_type: LUCK
-            percents_per_tier: 200
-      - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
-        placeholders:
-          - ints: 35
+        # - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+        #   placeholders:
+        #     - ints: 67
+        #     - ints: 3
+        # - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+        #   pickupable_type: COIN
+        #   placeholders:
+        #     - ints: 10
+        #     - ints: 1
+        # - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+        #   pickupable_type: COIN
+        #   placeholders:
+        #     - ints: 50
+        #     - ints: 3
+        #   damage_scalings:
+        #     - stat_type: LUCK
+        #       percents_per_tier: 200
+        # - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+        #   placeholders:
+        #     - ints: 35
   - type: TURREL_ENHANCE_TODO
     texture_id: ui_item_todo
     price: 15
@@ -757,6 +753,12 @@ weapons: # {  ###
       - effectcondition_type: BOUNCES_UP_TO__X__TIMES_ON_CRIT
         placeholders:
           - ints: 1 2 3 4
+      - effectcondition_type: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
+        # only_this_weapon: true
+        only_other_weapons: true
+        placeholders:
+          - ints: 3 3 3 3
+          - ints: 100 100 100 100
             #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
             #     weaponproperty_type: DAMAGE
             #     value: 4 6 8 10
