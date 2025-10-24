@@ -23,19 +23,8 @@ x impl: universal: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
 x impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
 x impl: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
 x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+x impl: X__PERCENT_MORE_COINS_FROM_RECYCLING
 
-* impl: X__PERCENT_MORE_COINS_FROM_RECYCLING
-
-*
-* ref beautifiers double linked list
-  (remove MAX_BEAUTIFIERS)
-*
-* impl: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y (5 4 3 2)
-* impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING (50%, 5 hp)
-* impl: X__CHANCE_TO_HEAL__Y__HP_UPON_PICKUPABLE (8%, 1 hp, coin)
-* impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_PICKING_UP_A_COIN (25%, 1 + 25% luck)
-* impl: X__PERCENT_MORE_COINS_FROM_RECYCLING
-*
 * weapon effects: impl: STAT__WHEN_WALKING
 * weapon effects: impl: STAT__WHEN_IDLE
 * structures in a circle around center

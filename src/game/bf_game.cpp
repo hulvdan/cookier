@@ -2655,8 +2655,16 @@ int GetWeaponPrice(WeaponType type, int tier) {  ///
   return Round((f32)fb->max_price() * PRICE_SCALINGS_PER_TIER[tier]);
 }
 
-int GetWeaponRecyclePrice(WeaponType type, int tier) {  ///
-  return GetWeaponPrice(type, tier) / RECYCLE_PRICE_FACTOR;
+int ToRecyclePrice(int price) {
+  int percent = 0;
+  IterateOverEffects(
+    EffectConditionType_X__PERCENT_MORE_COINS_FROM_RECYCLING,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { percent += EFFECT_X_INT * times; }
+  );
+  f32 scale = MAX(0, 1.0f + (f32)percent / 100.0f) / 3.0f;
+  return Ceil((f32)price * scale);
 }
 
 int GetNextLevelXp(int currentLevel) {  ///
@@ -4801,11 +4809,11 @@ void DoUI(bool draw) {
     int recyclePrice = 0;
     if (fb_weapon) {
       price        = GetWeaponPrice(data.weapon, tier);
-      recyclePrice = GetWeaponRecyclePrice(data.weapon, tier);
+      recyclePrice = ToRecyclePrice(price);
     }
     if (fb_item) {
       price        = fb_item->price();
-      recyclePrice = price / RECYCLE_PRICE_FACTOR;
+      recyclePrice = ToRecyclePrice(price);
     }
     price = ApplyStatItemsPrice(price);
 
@@ -5280,7 +5288,8 @@ void DoUI(bool draw) {
               );
             }
 
-            const int recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+            const int recyclePrice
+              = ToRecyclePrice(GetWeaponPrice(weapon.type, weapon.tier));
 
             // Recycle button.
             const bool recycled = componentButton(
@@ -6217,7 +6226,7 @@ void DoUI(bool draw) {
                 BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_TAKE, textColor); }
             );
 
-            int recyclePrice = fb->price() / RECYCLE_PRICE_FACTOR;
+            const int recyclePrice = ToRecyclePrice(fb->price());
 
             const bool recycled = componentButton(
               {.id = CLAY_ID("button_picked_up_item_recycle")},
@@ -10263,4 +10272,4 @@ void GameDraw() {
   }
 }
 
-///
+//

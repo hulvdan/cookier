@@ -753,6 +753,9 @@ weapons: # {  ###
     texture_ids:
       - game_weapon_gun
       # effects:
+      #   - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+      #     placeholders:
+      #       - ints: 400 800 1200 1600
       #
       # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
       #   all_weapons: true
