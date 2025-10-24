@@ -1916,18 +1916,17 @@ void MakePickupable(MakePickupableData data) {  ///
 
   pickupable.createdAt.SetNow();
 
-  if (pickupable.type == PickupableType_COIN) {
-    f32 chanceToInstaPickup = 0;
-    IterateOverEffects(
-      EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN,
-      -1,
-      [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+  f32 chanceToInstaPickup = 0;
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE,
+    -1,
+    [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+      if (pickupable.type == fb_effect->pickupable_type())
         chanceToInstaPickup += (f32)(EFFECT_X_INT * times) / 100.0f;
-      }
-    );
-    if (GRAND.FRand() < chanceToInstaPickup)
-      pickupable.pickedUpAt.SetNow();
-  }
+    }
+  );
+  if (GRAND.FRand() < chanceToInstaPickup)
+    pickupable.pickedUpAt.SetNow();
 
   *g.run.pickupables.Add() = pickupable;
 }
