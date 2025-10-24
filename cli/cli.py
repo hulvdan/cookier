@@ -50,6 +50,18 @@ app = typer.Typer(
 
 
 @timing
+def make_web_build_archive(zip_path: Path, base_path: Path) -> None:
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        for filepath in (
+            "index.data",
+            "index.html",
+            "index.js",
+            "index.wasm",
+        ):
+            archive.write(base_path / filepath, filepath)
+
+
+@timing
 def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
     command = [
         "cmake",
@@ -99,7 +111,12 @@ def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType
             )
 
         case BuildPlatform.Web | BuildPlatform.WebYandex:
-            run_command(rf"cmake --build .cmake\{platform}_{build_type} -t {target}")
+            run_command(rf"cmake --build .cmake/{platform}_{build_type} -t {target}")
+
+            if platform == BuildPlatform.WebYandex:
+                make_web_build_archive(
+                    TEMP_DIR / "yandex.zip", Path(f".cmake/{platform}_{build_type}")
+                )
 
         case _:
             assert False, f"Not supported platform: {platform}"
@@ -186,7 +203,7 @@ def do_cmake_ninja_files() -> None:
         rf"""
             cmake
             -G Ninja
-            -B .cmake\ninja
+            -B .cmake/ninja
             -D CMAKE_CXX_COMPILER=cl
             -D CMAKE_C_COMPILER=cl
             -D PLATFORM={BuildPlatform.Win}
@@ -200,7 +217,7 @@ def do_compile_commands_json() -> None:
     run_command(
         r"""
             ninja
-            -C .cmake\ninja
+            -C .cmake/ninja
             -f build.ninja
             -t compdb
             > compile_commands.json
@@ -336,10 +353,7 @@ def deploy_itch():
         build(BuildTarget.game, BuildPlatform.Web, BuildType.Release)
 
     zip_path = TEMP_DIR / "itch.zip"
-
-    with zipfile.ZipFile(zip_path, "w") as archive:
-        for filepath in ("index.data", "index.html", "index.js", "index.wasm"):
-            archive.write(Path(".cmake/Web_Release") / filepath, filepath)
+    make_web_build_archive(zip_path, Path(".cmake/Web_Release"))
 
     target = "{}:html".format(data_values.itch_target)
     run_command([BUTLER_PATH, "push", zip_path, target])
@@ -351,12 +365,6 @@ def deploy_yandex():
 
     with git_stash():
         build(BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release)
-
-    zip_path = TEMP_DIR / "yandex.zip"
-
-    with zipfile.ZipFile(zip_path, "w") as archive:
-        for filepath in ("index.data", "index.html", "index.js", "index.wasm"):
-            archive.write(Path(".cmake/WebYandex_Release") / filepath, filepath)
 
 
 @command

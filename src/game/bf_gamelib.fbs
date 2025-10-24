@@ -62,6 +62,24 @@ struct Pos {
 }
 
 // GAME STUFF
+table Stat {
+    icon_texture_id: int;
+    name_locale: int;
+    is_hidden: bool;
+    negative_is_good: bool;
+    is_percent: bool;
+    is_secondary: bool;
+    player_value: int;
+    upgrade_name_locale: int;
+    upgrade_texture_id: int;
+    upgrade_values: [int];
+}
+
+table DamageScaling {
+    stat_type: int;
+    percents_per_tier: [int] (required);
+}
+
 table Hostility {
     color: uint = 0xffffffff;
 }
@@ -126,20 +144,71 @@ table Creature {
     shadow_offset_y: float = -0.5;
 }
 
+table CondVar {
+}
+
+table EffectConditionPlaceholder {
+    required: bool;
+    condvar_type: int;
+
+    // Used when condvar_type is INTEGER or FLOAT to place '+' if number is positive.
+    signed_: bool;
+
+    is_percent: bool;
+
+    multiplied_by_times: bool;  // TODO: in bf_game.cpp assert that variable is FLOAT
+    divided_by_times: bool;  // TODO: in bf_game.cpp assert that variable is FLOAT
+}
+
 table EffectCondition {
+    restrict: int; // 0 general, 1 weapon only, 2 build only.
+    rectrict_only_melee_weapons: bool;
+    rectrict_only_ranged_weapons: bool;
+    name_locale: int;
+    requires_stat: bool;
+    requires_property: bool;
+    requires_projectile: bool;
+    requires_pickupable: bool;
+    // requires_tier: bool;
+    // requires_item: bool;
+    // requires_weapon: bool;
+    requires_item_or_weapon: bool;  // Either item or weapon.
+    // required_weapongroup: bool;
+    placeholders: [EffectConditionPlaceholder];
 }
 
 table WeaponProperty {
     name_locale: int;
 }
 
+table EffectPlaceholderValue {
+    ints: [int];
+    floats: [float];
+}
+
 table Effect {
     stat_type: int;
     weaponproperty_type: int;
     effectcondition_type: int;
-    value: int;
-    value_multiplier: float = 1;
-    condition_value: int;
+    value: [int];
+    value_multiplier: [float];
+    placeholders: [EffectPlaceholderValue];
+
+    projectile_type: int;
+    projectile_range_meters: float;
+
+    pickupable_type: int;
+
+    tier: int = -1;
+
+    item_type: int;
+    weapon_type: int;
+
+    damage_scalings: [DamageScaling];
+
+    all_weapons: bool;
+    only_this_weapon: bool;
+    only_other_weapons: bool;
 }
 
 table Item {
@@ -148,7 +217,7 @@ table Item {
     tier: int;
     price: int;
     count_cap: int;
-    included_in_random_pool: bool = true;
+    deprecated: bool = true;
     effects: [Effect];
 }
 
@@ -158,11 +227,6 @@ table Ailment {
 
 table WeaponKind {
     stat_type: int;
-}
-
-table DamageScaling {
-    stat_type: int;
-    percents_per_tier: [int] (required);
 }
 
 table Weapon {
@@ -175,6 +239,7 @@ table Weapon {
     knockback_meters: float;
     cooldown_frames: int;
     shooting_duration_frames: int;
+    shoots_itself: bool;
     projectile_type: int;
     projectile_spawn_frames: [int];
     projectile_pierce: int = 0;
@@ -196,11 +261,7 @@ table Projectile {
     ailment_chance: float;
     ailment_value: int;
     collider_radius: float = 0.4;
-    aoe_on_contact: bool = true;
     aoe_on_travel_end: bool = true;
-    aoe_radius: float;
-    aoe_particle_type: int;
-    aoe_chance: float;
     texture_ids: [int];
 }
 
@@ -210,24 +271,12 @@ table Particle {
 }
 
 table Pickupable {
+    name_locale: int;
     texture_id: int;
 }
 
 table Number {
     color: uint = 0xffffffff;
-}
-
-table Stat {
-    icon_texture_id: int;
-    name_locale: int;
-    is_hidden: bool;
-    negative_is_good: bool;
-    is_percent: bool;
-    is_secondary: bool;
-    player_value: int;
-    upgrade_name_locale: int;
-    upgrade_texture_id: int;
-    upgrade_values: [int];
 }
 
 table PreSpawn {
@@ -271,6 +320,7 @@ table GameLibrary {
 
     vignette_texture_id: int;
 
+    localization_debug_strings: [string] (required);
     localizations: [Localization] (required);
 
     // GAME STUFF
@@ -304,6 +354,7 @@ table GameLibrary {
     creatures: [Creature] (required);
     weapon_properties: [WeaponProperty] (required);
     ailments: [Ailment] (required);
+    effect_condition_variables: [CondVar] (required);
     effect_conditions: [EffectCondition] (required);
     items: [Item] (required);
     weapon_kinds: [WeaponKind] (required);
@@ -319,10 +370,11 @@ table GameLibrary {
     achievements: [Achievement] (required);
     // TABLE_GEN_END
 
-    landmine_damage_scalings: [DamageScaling];
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;
     landmine_explosion_radius: float = 1.5;
+
+    explosion_radius: float = 1.5;
     // GAME STUFF END
 }
 

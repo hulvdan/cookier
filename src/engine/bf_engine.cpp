@@ -1,5 +1,15 @@
 #pragma once
 
+#include "flatbuffers/bf_save_generated.h"
+
+// Functions that MUST be implemented by the user of the engine in `bf_game.cpp`:
+void                           GameInit();
+void                           GameReady();
+void                           GameFixedUpdate();
+void                           GameDraw();
+flatbuffers::FlatBufferBuilder GameDumpStateForSaving();
+void                           GameLoad(const BFSave::Save* save);
+
 #if BF_DEBUG
 #  define STB_IMAGE_WRITE_IMPLEMENTATION
 #  include "stb_image_write.h"
@@ -780,6 +790,12 @@ struct Camera {
   f32     texturesScale = 1;
 };
 
+enum SavedataLoadingType {
+  SavedataLoadingType_NOT_LOADED,
+  SavedataLoadingType_JUST_FISNIHED,
+  SavedataLoadingType_FISNIHED,
+};
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -798,12 +814,10 @@ struct EngineData {
 
     int         _keyboardStateCount    = {};
     const bool* _keyboardState         = {};
-    bool*       _keyboardStatePrev     = {};
     bool*       _keyboardStatePressed  = {};
     bool*       _keyboardStateReleased = {};
 
     u32     _mouseState         = {};
-    u32     _mouseStatePrev     = {};
     u32     _mouseStatePressed  = {};
     u32     _mouseStateReleased = {};
     Vector2 _mousePos           = {};
@@ -843,6 +857,12 @@ struct EngineData {
     const Camera* _currentCamera = nullptr;
 
     bool previousSaveIsNotCompletedYet = false;
+
+    SavedataLoadingType loading  = {};
+    const u8*           savedata = {};
+
+    // 0 - not loaded yet, 1 - savedata is empty (null), 2 - got savedata.
+    int jsLoadedSavedata = 0;
   } meta;
 
   struct Settings {
@@ -1490,6 +1510,10 @@ void FlushDrawCommands() {
         // }
 
         switch (command.type) {
+        case DrawCommandType_INVALID: {  ///
+          INVALID_PATH;
+        } break;
+
         case DrawCommandType_TEXTURE: {  ///
           if (!mode) {
             drawCallIndicesCount += 6;
@@ -2308,14 +2332,15 @@ void _OnTouchMoved(Touch touch) {  ///
   ASSERT(found);
 }
 
-void ResetInputState() {  ///
-  ge.meta._mouseStatePressed  = 0;
-  ge.meta._mouseStateReleased = 0;
-  ge.meta._mouseWheel         = 0;
+void _ClearControlsCache() {  ///
   FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
     ge.meta._keyboardStatePressed[i]  = false;
     ge.meta._keyboardStateReleased[i] = false;
   }
+
+  ge.meta._mouseStatePressed  = 0;
+  ge.meta._mouseStateReleased = 0;
+  ge.meta._mouseWheel         = 0;
 
   // Removing previously released touches.
   {
@@ -2382,18 +2407,18 @@ TEST_CASE ("Touch controls") {  ///
     ASSERT(IsTouchPressed(id(1)));
     ASSERT(IsTouchDown(id(1)));
     ASSERT(!IsTouchReleased(id(1)));
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(!IsTouchPressed(id(1)));
     ASSERT(IsTouchDown(id(1)));
     ASSERT(!IsTouchReleased(id(1)));
-    ResetInputState();
+    _ClearControlsCache();
 
     _OnTouchUp(touch(1));
     ASSERT(!IsTouchPressed(id(1)));
     ASSERT(!IsTouchDown(id(1)));
     ASSERT(IsTouchReleased(id(1)));
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(ge.meta._touches.count == 0);
   }
@@ -2404,12 +2429,12 @@ TEST_CASE ("Touch controls") {  ///
     ASSERT(ge.meta._touches.count == 2);
     ASSERT(ge.meta._touchIDs.count == 2);
 
-    ResetInputState();
+    _ClearControlsCache();
 
     _OnTouchUp(touch(4));
     _OnTouchUp(touch(3));
 
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(ge.meta._touches.count == 0);
     ASSERT(ge.meta._touchIDs.count == 0);
@@ -2419,12 +2444,12 @@ TEST_CASE ("Touch controls") {  ///
     _OnTouchDown(touch(5));
     _OnTouchDown(touch(6));
 
-    ResetInputState();
+    _ClearControlsCache();
 
     _OnTouchUp(touch(5));
     _OnTouchUp(touch(6));
 
-    ResetInputState();
+    _ClearControlsCache();
 
     ASSERT(ge.meta._touches.count == 0);
     ASSERT(ge.meta._touchIDs.count == 0);
@@ -2690,12 +2715,16 @@ void InitEngine() {  ///
 
   ge.meta._touches.Reserve(8);
   ge.meta._touchIDs.Reserve(8);
-  ge.meta._keyboardStatePrev
-    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
+
+#if BF_DEBUG
+  ge.meta._keyboardStatePressed  = (bool*)BF_ALLOC(ge.meta._keyboardStateCount);
+  ge.meta._keyboardStateReleased = (bool*)BF_ALLOC(ge.meta._keyboardStateCount);
+#else
   ge.meta._keyboardStatePressed
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
   ge.meta._keyboardStateReleased
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
+#endif
 
   glib = BFGame::GetGameLibrary(SDL_LoadFile("resources/gamelib.bin", nullptr));
 
@@ -3200,46 +3229,6 @@ void EngineOnFrameStart() {
   auto           ratioActual   = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y;
   ge.meta.screenToLogicalRatio = ratioActual / ratioLogical;
 
-  // Controls. Keyboard.
-  {  ///
-    FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
-      ge.meta._keyboardStatePressed[i]
-        = !ge.meta._keyboardStatePrev[i] && ge.meta._keyboardState[i];
-      ge.meta._keyboardStateReleased[i]
-        = ge.meta._keyboardStatePrev[i] && !ge.meta._keyboardState[i];
-    }
-
-    memcpy(
-      (void*)ge.meta._keyboardStatePrev,
-      (void*)ge.meta._keyboardState,
-      sizeof(bool) * ge.meta._keyboardStateCount
-    );
-  }
-
-  // Controls. Mouse.
-  {  ///
-    ge.meta._mouseState = SDL_GetMouseState(&ge.meta._mousePos.x, &ge.meta._mousePos.y);
-    ge.meta._mousePos.y = ge.meta.screenSize.y - ge.meta._mousePos.y;
-
-    int mouseButtons[]{
-      SDL_BUTTON_LMASK,
-      SDL_BUTTON_MMASK,
-      SDL_BUTTON_RMASK,
-      SDL_BUTTON_X1MASK,
-      SDL_BUTTON_X2MASK,
-    };
-    ge.meta._mouseStatePressed  = 0;
-    ge.meta._mouseStateReleased = 0;
-    for (auto v : mouseButtons) {
-      auto isDown  = ge.meta._mouseState & v;
-      auto wasDown = ge.meta._mouseStatePrev & v;
-      ge.meta._mouseStatePressed |= (~wasDown & isDown);
-      ge.meta._mouseStateReleased |= (wasDown & ~isDown);
-    }
-
-    ge.meta._mouseStatePrev = ge.meta._mouseState;
-  }
-
   // Caching ScreenToLogical data.
   {  ///
     const auto r = ge.meta.screenToLogicalRatio;
@@ -3414,7 +3403,37 @@ TEST_CASE ("StripLeadingZerosInFloat") {  ///
   ASSERT(strlen(buffer) == 1);
 }
 
-const char* PushTextToArena(Arena* arena, const char* text, int* outLen) {  ///
+char* FormatInt(int v) {  ///
+  return TextFormat("%d", v);
+}
+
+char* FormatSignedInt(int v) {  ///
+  auto format = "%d";
+  if (v >= 0)
+    format = "+%d";
+  return TextFormat(format, v);
+}
+
+char* FormatFloatDot1(f32 v) {  ///
+  return TextFormat("%.1f", v);
+}
+
+char* FormatSignedFloatDot1(f32 v) {  ///
+  auto format = "%.1f";
+  if (v >= 0)
+    format = "+%.1f";
+  return TextFormat(format, v);
+}
+
+char* FormatFloatDot1WithoutLeadingZeros(f32 v) {  ///
+  return StripLeadingZerosInFloat(FormatFloatDot1(v));
+}
+
+char* FormatSignedFloatDot1WithoutLeadingZeros(f32 v) {  ///
+  return StripLeadingZerosInFloat(FormatSignedFloatDot1(v));
+}
+
+const char* PushTextToArena(Arena* arena, const char* text, int* outLen = nullptr) {  ///
   size_t len = strlen(text);
   auto   s   = ALLOCATE_ARRAY(arena, u8, len + 1);
   memcpy(s, text, len);
@@ -3529,11 +3548,6 @@ struct FrameVisual {
   }
 };
 
-void GameInit();
-void GameReady();
-void GameFixedUpdate();
-void GameDraw();
-
 SDL_AppResult EngineUpdate() {  ///
   ZoneScoped;
 
@@ -3541,7 +3555,6 @@ SDL_AppResult EngineUpdate() {  ///
   if (!initialized) {
     initialized = true;
     GameInit();
-    GameReady();
   }
 
   static f32 frameTime = 0.0f;
@@ -3563,11 +3576,17 @@ SDL_AppResult EngineUpdate() {  ///
   while (frameTime >= FIXED_DT) {
     frameTime -= FIXED_DT;
 
+    SDL_PumpEvents();
+
+    // Controls. Mouse.
+    ge.meta._mouseState = SDL_GetMouseState(&ge.meta._mousePos.x, &ge.meta._mousePos.y);
+    ge.meta._mousePos.y = ge.meta.screenSize.y - ge.meta._mousePos.y;
+
     GameFixedUpdate();
+
     if (ge.meta.exitScheduled)
       return SDL_APP_SUCCESS;
-
-    ResetInputState();
+    _ClearControlsCache();
 
     simulated++;
 
@@ -3592,30 +3611,30 @@ SDL_AppResult EngineUpdate() {  ///
 }
 
 #ifdef BF_PLATFORM_Win
-struct Timestamp {
-  int year;
-  int month;
-  int day;
-  int hour;
-  int minute;
-  int second;
-  int msecond;
-};
+// struct Timestamp {  ///
+//   int year;
+//   int month;
+//   int day;
+//   int hour;
+//   int minute;
+//   int second;
+//   int msecond;
+// };
 
-Timestamp GetTimestamp() {  ///
-  SYSTEMTIME t{};
-  GetSystemTime(&t);
-
-  return Timestamp{
-    .year    = t.wYear,
-    .month   = t.wMonth,
-    .day     = t.wDay,
-    .hour    = t.wHour,
-    .minute  = t.wMinute,
-    .second  = t.wSecond,
-    .msecond = t.wMilliseconds,
-  };
-}
+// Timestamp GetTimestamp() {  ///
+//   SYSTEMTIME t{};
+//   GetSystemTime(&t);
+//
+//   return Timestamp{
+//     .year    = t.wYear,
+//     .month   = t.wMonth,
+//     .day     = t.wDay,
+//     .hour    = t.wHour,
+//     .minute  = t.wMinute,
+//     .second  = t.wSecond,
+//     .msecond = t.wMilliseconds,
+//   };
+// }
 #endif
 
 char* EncodeToHex(const u8* toEncodeLittleEndian, size_t size, Arena* arena) {  ///
@@ -3633,7 +3652,7 @@ char* EncodeToHex(const u8* toEncodeLittleEndian, size_t size, Arena* arena) {  
   return result;
 }
 
-u8* DecodeFromHex(char* encoded, Arena* arena) {  ///
+u8* DecodeFromHex(const char* encoded, Arena* arena) {  ///
   const auto len = strlen(encoded);
   ASSERT(len > 0);
   ASSERT_FALSE(len % 2);
@@ -3662,6 +3681,189 @@ TEST_CASE ("EncodeToHex / DecodeFromHex") {  ///
   auto t      = EncodeToHex(bytes, 256, &arena);
   auto result = DecodeFromHex(t, &arena);
   ASSERT(!memcmp(result, bytes, 256));
+}
+
+// void _Save(Arena* arena) {  ///
+#if defined(SDL_PLATFORM_WIN32)
+
+void _Save(Arena* _) {
+  ZoneScoped;
+
+  DEFER {
+    ge.meta.previousSaveIsNotCompletedYet = false;
+  };
+
+  const auto toSwapPath = "save_to_swap.bin";
+
+  bool saved = false;
+  {
+    auto fbb = GameDumpStateForSaving();
+    FOR_RANGE (int, i, 5) {
+      if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
+        saved = true;
+        break;
+      }
+    }
+  }
+  if (!saved) {
+    LOGE("Temp save failed");
+    return;
+  }
+
+  bool swapped = false;
+  FOR_RANGE (int, i, 5) {
+    if (SDL_RenamePath(toSwapPath, "save.bin")) {
+      swapped = true;
+      break;
+    }
+  }
+  if (!swapped)
+    LOGI("Save swap failed");
+}
+
+#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+
+extern "C" {
+EMSCRIPTEN_KEEPALIVE void mark_js_returned_savedata(int value) {  ///
+  ge.meta.jsLoadedSavedata = value;
+}
+}
+
+#  if defined(BF_PLATFORM_WebYandex)
+
+// clang-format off
+EM_JS(void, js_Save, (const char* data), {
+  window.player
+    .setData({save: UTF8ToString(data)}, /* flush */ true)
+    .then(() => {
+      Module.ccall('saved_from_js', null, [], []);
+    })
+    .catch(() => {
+      Module.ccall('saved_from_js', null, [], []);
+    });
+});
+// clang-format on
+
+#  elif defined(BF_PLATFORM_Web)
+
+// clang-format off
+EM_JS(void, js_Save, (const char* data), {
+  localStorage.setItem('save', UTF8ToString(data));
+  Module.ccall('saved_from_js', null, [], []);
+});
+// clang-format on
+
+#  else
+#    error "Not implemented"
+#  endif
+
+// clang-format off
+
+// NOTE: Returned string must be `free`-d when `ge.meta.jsLoadedSavedata == 2`
+EM_JS(const char*, jsLoad, (), {
+#  if defined(BF_PLATFORM_WebYandex)
+  if (!window.jsLoadCalled) {
+    window.jsLoadCalled = true;
+    window.jsLoad_savedataLoaded = false;
+    window.jsLoad_savedataLoadingStarted = false;
+    window.jsLoad_savedata = null;
+  }
+
+  if (!window.jsLoad_savedataLoadingStarted) {
+    window.jsLoad_savedataLoadingStarted = true;
+
+    window.player.getData(['save']).then((obj) => {
+      window.jsLoad_savedata = obj?.save;
+      window.jsLoad_savedataLoaded = true;
+    }).catch(() => {
+      window.jsLoad_savedataLoaded = true;
+    });
+  }
+
+  if (!window.jsLoad_savedataLoaded)
+    return null;
+
+#  elif defined(BF_PLATFORM_Web)
+  window.jsLoad_savedata = localStorage.getItem('save');
+#  else
+#    error "Not implemented"
+#  endif
+
+  if (!window.jsLoad_savedata) {
+    Module.ccall('mark_js_returned_savedata', null, ['number'], [1]);
+    return null;
+  }
+
+  Module.ccall('mark_js_returned_savedata', null, ['number'], [2]);
+
+  var len            = lengthBytesUTF8(window.jsLoad_savedata) + 1;
+  var string_on_heap = _malloc(len);
+  stringToUTF8(window.jsLoad_savedata, string_on_heap, len + 1);
+  return string_on_heap;
+});
+// clang-format on
+
+void _Save(Arena* arena) {
+  ZoneScoped;
+  TEMP_USAGE(arena);
+  auto fbb     = GameDumpStateForSaving();
+  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), arena);
+  js_Save(encoded);
+}
+
+#else
+#  error "_Save(Arena* arena) is not implemented for your platform"
+#endif
+// }
+
+SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
+  TEMP_USAGE(arena);
+
+  if (ge.meta.loading == SavedataLoadingType_JUST_FISNIHED)
+    ge.meta.loading = SavedataLoadingType_FISNIHED;
+  if (ge.meta.loading == SavedataLoadingType_FISNIHED)
+    return SavedataLoadingType_FISNIHED;
+
+  if (ge.meta.loading == SavedataLoadingType_NOT_LOADED) {
+#if defined(SDL_PLATFORM_DESKTOP)
+
+    // Desktop loads immediately.
+    ge.meta.savedata = (const u8*)SDL_LoadFile("save.bin", nullptr);
+    ge.meta.loading  = SavedataLoadingType_JUST_FISNIHED;
+
+#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+
+    // JS loads asynchronously.
+    const char* savedata = jsLoad();
+    if (ge.meta.jsLoadedSavedata)
+      ge.meta.loading = SavedataLoadingType_JUST_FISNIHED;
+    else
+      return SavedataLoadingType_NOT_LOADED;
+
+    if (ge.meta.jsLoadedSavedata == 2) {
+      ge.meta.savedata = DecodeFromHex(savedata, arena);
+      free((void*)savedata);
+    }
+
+#else
+#  error "Not implemented yet"
+#endif
+  }
+  else
+    INVALID_PATH;
+
+  if (ge.meta.savedata) {
+    GameLoad(BFSave::GetSave(ge.meta.savedata));
+
+#if defined(SDL_PLATFORM_DESKTOP)
+    SDL_free((void*)ge.meta.savedata);
+#endif
+
+    ge.meta.savedata = nullptr;
+  }
+
+  ASSERT(ge.meta.loading == SavedataLoadingType_JUST_FISNIHED);
+  return ge.meta.loading;
 }
 
 ///
