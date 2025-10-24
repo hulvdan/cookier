@@ -180,7 +180,6 @@ VIEW_FROM_ARRAY_DANGER(PRICE_SCALINGS_PER_TIER);
 
 constexpr int MAX_DODGE_PERCENT      = 60;
 constexpr f32 RANGE_GETS_HALVED_WHEN = -50;
-constexpr int RECYCLE_PRICE_FACTOR   = 3;
 
 constexpr auto BURNING_RATE    = lframe::Scaled(15);
 constexpr auto ZAP_SPEED_SCALE = 0.4f;
