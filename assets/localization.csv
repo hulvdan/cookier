@@ -123,7 +123,7 @@ STAT_DAMAGE;Урон;Damage;
 STAT_DAMAGE_MELEE;Рукопашный Урон;Melee Damage;
 STAT_DAMAGE_RANGED;Дальний Урон;Ranged Damage;
 STAT_DAMAGE_ELEMENTAL;Природный Урон;Elemental Damage;
-STAT_ATTACK_SPEED;Ловкость;Attack Speed;
+STAT_ATTACK_SPEED;Скорость Атаки;Attack Speed;
 STAT_CRIT_CHANCE;Шанс Крита;Crit Chance;
 STAT_ENGINEERING;Ремесло;Engineering;
 STAT_RANGE;Дальность;Range;
