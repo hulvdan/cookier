@@ -4,7 +4,7 @@ x yandex save
 x weapon effects: BOUNCES_UP_TO_X_TIMES_ON_CRIT
 x javelin: ranged weapon that shoots itself
 x fix: guarantee input press
-x show: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
+x show: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
 x show: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
 x show: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
 x show: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
@@ -12,16 +12,25 @@ x show: X__PERCENT_MORE_COINS_FROM_RECYCLING
 x placeholder-image scales with font size
 x yandex: mark game ready after loading save file
 x (this weapon only) / (other weapons only) localization strings
-
-* EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
+x EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
   should be able to target one weapon OR all weapons
   (This weapon)
+x fix: flying coins stood on the floor after flying
+
+* X__CHANCE_TO_EXPLODE
+* X__CHANCE_OF_EXPLOSION_ON_HIT
+
+* impl: universal: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+* impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+* impl: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+* impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+* impl: X__PERCENT_MORE_COINS_FROM_RECYCLING
+
 *
-* fix: flying coins stood on the floor after flying
 * ref beautifiers double linked list
   (remove MAX_BEAUTIFIERS)
 *
-* impl: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y (5 4 3 2)
+* impl: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y (5 4 3 2)
 * impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING (50%, 5 hp)
 * impl: X__CHANCE_TO_HEAL__Y__HP_UPON_PICKUPABLE (8%, 1 hp, coin)
 * impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_PICKING_UP_A_COIN (25%, 1 + 25% luck)
@@ -167,7 +176,7 @@ x (this weapon only) / (other weapons only) localization strings
 * weapon / non weapon effects: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
 * weapon / non weapon effects: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
 * weapon / non weapon effects: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
-* weapon / non weapon effects: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+* weapon / non weapon effects: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
 *
 
 melee weapon effects:
