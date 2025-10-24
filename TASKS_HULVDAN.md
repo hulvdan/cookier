@@ -13,17 +13,6 @@ x placeholder-image scales with font size
 x yandex: mark game ready after loading save file
 x (this weapon only) / (other weapons only) localization strings
 
-+100% крит шанс каждую 3 (третью) атаку
-
-2 атаки дают +100% крит шанс
-5 атак дают +100% крит шанс
-На 5ю атаку
-
-+100% крит шанс за атаки (2/3/4/5)
-
-Атаки (2/3/4/5) дают крит шанс
-Использования (2/3/4/5) дают крит шанс
-
 * EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
   should be able to target one weapon OR all weapons
   (This weapon)

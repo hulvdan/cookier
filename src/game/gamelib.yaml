@@ -758,8 +758,8 @@ weapons: # {  ###
       #     - ints: 1 2 3 4
       - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
         # all_weapons: true
-        only_this_weapon: true
-        # only_other_weapons: true
+        # only_this_weapon: true
+        only_other_weapons: true
         placeholders:
           - ints: 1 2 3 4
             # - effectcondition_type: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
@@ -772,12 +772,12 @@ weapons: # {  ###
             #   placeholders:
             #     - ints: 3 3 3 3
             #     - ints: 100 100 100 100
-            # - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
-            #   stat_type: ATTACK_SPEED
-            #   only_this_weapon: true
-            #   placeholders:
-            #     - ints: 3 3 3 3
-            #     - ints: 100 100 100 100
+      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
+        stat_type: ATTACK_SPEED
+        only_this_weapon: true
+        placeholders:
+          - ints: 100 100 100 100
+          - ints: 3 3 3 3
             #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
             #     weaponproperty_type: DAMAGE
             #     value: 4 6 8 10
