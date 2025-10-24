@@ -3207,10 +3207,16 @@ struct TryApplyDamageData {  ///
   int              indexOfWeaponThatDidDamageOrMinus1 = -1;
   ApplyAilmentData ailment                            = {};
   f32              ailmentChance                      = 0;
-  bool*            wasCrit                            = nullptr;
+  bool*            outWasCrit                         = nullptr;
+  bool*            outJustKilled                      = nullptr;
 };
 
 bool TryApplyDamage(TryApplyDamageData data) {  ///
+  if (data.outWasCrit)
+    *data.outWasCrit = false;
+  if (data.outJustKilled)
+    *data.outJustKilled = false;
+
   ASSERT(data.creatureIndex >= 0);
   ASSERT(data.damage >= 0);
   if (data.damage != int_max) {
@@ -3241,6 +3247,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (data.damage == int_max) {
     creature.killedBecauseOfTheEndOfTheWave = true;
     creature.health                         = 0;
+    if (data.outJustKilled)
+      *data.outJustKilled = true;
   }
   else if (!creature.killedBecauseOfTheEndOfTheWave) {
     bool isCrit = false;
@@ -3265,26 +3273,6 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           (f32)data.damage * (f32)g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES]
           / 100.0f
         );
-      }
-
-      {
-        int coins = 0;
-        IterateOverEffects(
-          EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              if (GRAND.FRand() < (f32)EFFECT_Y_INT / 100.0f)
-                coins += EFFECT_X_INT * times;
-            }
-        );
-        if (coins > 0) {
-          MakePickupable({
-            .type        = PickupableType_COIN,
-            .pos         = creature.pos,
-            .coin_amount = coins,
-          });
-        }
       }
 
       IterateOverEffects(
@@ -3387,8 +3375,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       });
     }
 
-    if (data.wasCrit)
-      *data.wasCrit = isCrit;
+    if (data.outWasCrit)
+      *data.outWasCrit = isCrit;
 
     // Player lifesteals.
     if (data.damagerCreatureType == CreatureType_PLAYER) {
@@ -3413,6 +3401,47 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
     creature.health -= data.damage;
 
+    int effectDroppedCoins = 0;
+
+    if (creature.health <= 0) {
+      if (data.outJustKilled)
+        *data.outJustKilled = true;
+
+      if (isCrit) {
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                effectDroppedCoins += EFFECT_Y_INT * times;
+            }
+        );
+      }
+    }
+
+    IterateOverEffects(
+      EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
+      data.indexOfWeaponThatDidDamageOrMinus1,
+      [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+        if (GRAND.FRand() < (f32)EFFECT_Y_INT / 100.0f)
+          effectDroppedCoins += EFFECT_X_INT * times;
+      }
+    );
+
+    if (effectDroppedCoins > 0) {
+      MakePickupable({
+        .type        = PickupableType_COIN,
+        .pos         = creature.pos,
+        .coin_amount = effectDroppedCoins,
+      });
+    }
+
+    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
+        += data.damage;
+    }
+
     bool ailmentCanBeApplied = true;
     auto resists             = fb->resists_ailment_types();
     if (resists) {
@@ -3435,10 +3464,6 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
       }
     }
-
-    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
-        += data.damage;
   }
 
   creature.lastDamagedAt = {};
@@ -8997,7 +9022,7 @@ void GameFixedUpdate() {
                     .spread = ailmentSpread,
                   },
                   .ailmentChance = fb->ailment_chance(),
-                  .wasCrit       = &wasCrit,
+                  .outWasCrit    = &wasCrit,
                 }))
             {
               auto fb_weapon = ((projectile.weaponIndexOrMinus1 >= 0)
