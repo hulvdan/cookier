@@ -19,11 +19,18 @@ x (this weapon only) / (other weapons only) localization strings
 5 атак дают +100% крит шанс
 На 5ю атаку
 
-* ref beautifiers double linked list
-  (remove MAX_BEAUTIFIERS)
++100% крит шанс за атаки (2/3/4/5)
+
+Атаки (2/3/4/5) дают крит шанс
+Использования (2/3/4/5) дают крит шанс
+
 * EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
   should be able to target one weapon OR all weapons
   (This weapon)
+*
+* fix: flying coins stood on the floor after flying
+* ref beautifiers double linked list
+  (remove MAX_BEAUTIFIERS)
 *
 * impl: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y (5 4 3 2)
 * impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING (50%, 5 hp)

@@ -156,6 +156,7 @@ table EffectConditionPlaceholder {
 
     is_percent: bool;
 
+    multiplied_by_times: bool;  // TODO: in bf_game.cpp assert that variable is FLOAT
     divided_by_times: bool;  // TODO: in bf_game.cpp assert that variable is FLOAT
 }
 
@@ -205,6 +206,7 @@ table Effect {
 
     damage_scalings: [DamageScaling];
 
+    all_weapons: bool;
     only_this_weapon: bool;
     only_other_weapons: bool;
 }
