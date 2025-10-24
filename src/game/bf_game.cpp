@@ -825,22 +825,14 @@ struct JustUnlockedAchievement {  ///
   FrameVisual     shownAt   = {};
 };
 
-#define EFFECT_PLACEHOLDER_X_INT \
-  (fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset))
-#define EFFECT_PLACEHOLDER_Y_INT \
-  (fb_effect->placeholders()->Get(1)->ints()->Get(tierOffset))
-#define EFFECT_PLACEHOLDER_Z_INT \
-  (fb_effect->placeholders()->Get(2)->ints()->Get(tierOffset))
-#define EFFECT_PLACEHOLDER_W_INT \
-  (fb_effect->placeholders()->Get(3)->ints()->Get(tierOffset))
-#define EFFECT_PLACEHOLDER_X_FLOAT \
-  (fb_effect->placeholders()->Get(0)->floats()->Get(tierOffset))
-#define EFFECT_PLACEHOLDER_Y_FLOAT \
-  (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
-#define EFFECT_PLACEHOLDER_Z_FLOAT \
-  (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
-#define EFFECT_PLACEHOLDER_W_FLOAT \
-  (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
+#define EFFECT_X_INT (fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset))
+#define EFFECT_Y_INT (fb_effect->placeholders()->Get(1)->ints()->Get(tierOffset))
+#define EFFECT_Z_INT (fb_effect->placeholders()->Get(2)->ints()->Get(tierOffset))
+#define EFFECT_W_INT (fb_effect->placeholders()->Get(3)->ints()->Get(tierOffset))
+#define EFFECT_X_FLOAT (fb_effect->placeholders()->Get(0)->floats()->Get(tierOffset))
+#define EFFECT_Y_FLOAT (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
+#define EFFECT_Z_FLOAT (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
+#define EFFECT_W_FLOAT (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
 
 constexpr int MAX_BEAUTIFIERS = 32;
 
@@ -1802,54 +1794,12 @@ void PlaceholdImage(const char* placeholder, int texId) {  ///
   PlaceholdGroupEnd();
 }
 
-void IterateOverPlayerWeaponsEffects(
-  EffectConditionType condition,
-  int                 weaponIndex,
-  /* void (
-       Weapon& w,
-       int tierOffset,
-       auto fb_effect) */
-  auto innerLambda
-) {  ///
-  auto& w = g.run.state.weapons[weaponIndex];
-
-  const auto fb_weapons = glib->weapons();
-  int        wi         = -1;
-  for (auto& weapon : g.run.state.weapons) {
-    wi++;
-    if (!weapon.type)
-      continue;
-
-    const auto fb         = fb_weapons->Get(weapon.type);
-    const auto fb_effects = fb->effects();
-    if (!fb_effects)
-      continue;
-
-    for (const auto fb_effect : *fb_effects) {
-      if (fb_effect->effectcondition_type() != condition)
-        continue;
-
-      bool call = false;
-      if (fb_effect->only_this_weapon() && (wi == weaponIndex))
-        call = true;
-      else if (fb_effect->only_other_weapons()) {
-        if (wi != weaponIndex)
-          call = true;
-      }
-      else if (!fb_effect->only_other_weapons() && !fb_effect->only_this_weapon())
-        call = true;
-
-      if (call)
-        innerLambda(w, weapon.tier - fb->min_tier_index(), fb_effect);
-    }
-  }
-}
-
 void IterateOverItemEffects(
+  Weapon*             w,
   EffectConditionType condition,
   ItemType            type,
   int                 count,
-  /* void (auto fb_effect, int tierOffset, int times)*/
+  /* void (Weapon* w, auto fb_effect, int tierOffset, int times)*/
   auto innerLambda
 ) {  ///
   const auto fb         = glib->items()->Get(type);
@@ -1857,42 +1807,59 @@ void IterateOverItemEffects(
   if (fb_effects) {
     for (const auto fb_effect : *fb_effects) {
       if (fb_effect->effectcondition_type() == condition)
-        innerLambda(fb_effect, 0, count);
+        innerLambda(w, fb_effect, 0, count);
     }
   }
 }
 
 void IterateOverEffects(
-  EffectConditionType                                         condition,
-  auto /* void (auto fb_effect, int tierOffset, int times) */ innerLambda
+  EffectConditionType condition,
+  int                 weaponIndexOrMinus1,
+  auto /* void (Weapon* w, auto fb_effect, int tierOffset, int times) */ innerLambda
 ) {  ///
 #if BF_ENABLE_ASSERTS
   auto fb_conditions = glib->effect_conditions();
   auto fb            = fb_conditions->Get(condition);
   ASSERT(fb->restrict() != 1);
 #endif
+  Weapon* w = nullptr;
+  if (weaponIndexOrMinus1 >= 0) {
+    const auto& weapon = g.run.state.weapons[weaponIndexOrMinus1];
+    ASSERT(weapon.type);
+    if (weapon.type)
+      w = g.run.state.weapons.base + weaponIndexOrMinus1;
+  }
 
   int wi = -1;
   for (auto& weapon : g.run.state.weapons) {
     wi++;
+
     if (!weapon.type)
       continue;
+
     auto fb         = glib->weapons()->Get(weapon.type);
     auto fb_effects = fb->effects();
     if (!fb_effects)
       continue;
+
     for (const auto fb_effect : *fb_effects) {
       if (fb_effect->effectcondition_type() != condition)
         continue;
-      if (fb_effect->only_this_weapon() || fb_effect->only_other_weapons())
-        continue;
-      innerLambda(fb_effect, weapon.tier - fb->min_tier_index(), 1);
+
+      bool call = true;
+      if (fb_effect->only_this_weapon())
+        call = (weaponIndexOrMinus1 == wi);
+      if (fb_effect->only_other_weapons())
+        call = (weaponIndexOrMinus1 >= 0) && (weaponIndexOrMinus1 != wi);
+
+      if (call)
+        innerLambda(w, fb_effect, weapon.tier - fb->min_tier_index(), 1);
     }
   }
 
   // Iterating over items.
   for (auto& item : g.run.state.items)
-    IterateOverItemEffects(condition, item.type, item.count, innerLambda);
+    IterateOverItemEffects(nullptr, condition, item.type, item.count, innerLambda);
 
   // Iterating over difficulty effects.
   {
@@ -1901,7 +1868,7 @@ void IterateOverEffects(
     if (fb_effects) {
       for (const auto fb_effect : *fb_effects) {
         if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 0, 1);
+          innerLambda(nullptr, fb_effect, 0, 1);
       }
     }
   }
@@ -1913,7 +1880,7 @@ void IterateOverEffects(
     if (fb_effects) {
       for (const auto fb_effect : *fb_effects) {
         if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 0, 1);
+          innerLambda(nullptr, fb_effect, 0, 1);
       }
     }
   }
@@ -1949,8 +1916,9 @@ void MakePickupable(MakePickupableData data) {  ///
     f32 chanceToInstaPickup = 0;
     IterateOverEffects(
       EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT_A_COIN,
-      [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-        chanceToInstaPickup += (f32)(EFFECT_PLACEHOLDER_X_INT * times) / 100.0f;
+      -1,
+      [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+        chanceToInstaPickup += (f32)(EFFECT_X_INT * times) / 100.0f;
       }
     );
     if (GRAND.FRand() < chanceToInstaPickup)
@@ -2708,10 +2676,11 @@ void AddItem(ItemType type) {  ///
   }
 
   IterateOverItemEffects(
+    nullptr,
     {},
     type,
     1,
-    [&](auto fb_effect, int tierOffset, int times)
+    [&](Weapon* w, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
   );
 }
@@ -2772,14 +2741,16 @@ void RunInit() {
 
   IterateOverEffects(
     {},
-    [&](auto fb_effect, int tierOffset, int times)
+    -1,
+    [&](Weapon* w, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
   );
 
   // Processing EffectConditionType_START_WITH__X__ITEM_OR_WEAPON.
   IterateOverEffects(  ///
     EffectConditionType_START_WITH__X__ITEM_OR_WEAPON,
-    [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+    -1,
+    [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
       ASSERT(times > 0);
       ASSERT(tierOffset == 0);
 
@@ -3290,19 +3261,12 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
         IterateOverEffects(
           EffectConditionType_EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y,
-          [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-            const auto& w = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1];
-            if ((w.thisWaveUseCount % EFFECT_PLACEHOLDER_X_INT) == 0)
-              critChance += (f32)(EFFECT_PLACEHOLDER_Y_INT * times) / 100.0f;
-          }
-        );
-        IterateOverPlayerWeaponsEffects(
-          EffectConditionType_EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y,
           data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon& w, int tierOffset, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-            if ((w.thisWaveUseCount % EFFECT_PLACEHOLDER_X_INT) == 0)
-              critChance += (f32)EFFECT_PLACEHOLDER_Y_INT / 100.0f;
-          }
+          [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if ((w->thisWaveUseCount % EFFECT_X_INT) == 0)
+                critChance += (f32)(EFFECT_Y_INT * times) / 100.0f;
+            }
         );
       }
 
@@ -3326,10 +3290,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP,
           weapon.type,
           [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-            auto requiredPercent = EFFECT_PLACEHOLDER_Y_INT;
+            auto requiredPercent = EFFECT_Y_INT;
             if (hpPercent * 100 >= requiredPercent) {
-              data.damage
-                += Round((f32)data.damage * (f32)EFFECT_PLACEHOLDER_X_INT / 100.0f);
+              data.damage += Round((f32)data.damage * (f32)EFFECT_X_INT / 100.0f);
             }
           }
         );
@@ -3338,10 +3301,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP,
           weapon.type,
           [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-            auto requiredPercent = EFFECT_PLACEHOLDER_Y_INT;
+            auto requiredPercent = EFFECT_Y_INT;
             if (hpPercent * 100 <= requiredPercent) {
-              data.damage
-                += Round((f32)data.damage * (f32)EFFECT_PLACEHOLDER_X_INT / 100.0f);
+              data.damage += Round((f32)data.damage * (f32)EFFECT_X_INT / 100.0f);
             }
           }
         );
@@ -3350,9 +3312,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           EffectConditionType_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES,
           weapon.type,
           [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-            int percent = EFFECT_PLACEHOLDER_X_INT;
+            int percent = EFFECT_X_INT;
             if (fb->is_boss())
-              percent = EFFECT_PLACEHOLDER_Y_INT;
+              percent = EFFECT_Y_INT;
             data.damage += Round(creature.health * (f32)percent / 100.0f);
           }
         );
@@ -3361,12 +3323,12 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
           weapon.type,
           [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-            auto chance = (f32)EFFECT_PLACEHOLDER_Y_INT / 100.0f;
+            auto chance = (f32)EFFECT_Y_INT / 100.0f;
             if (GRAND.FRand() < chance) {
               MakePickupable({
                 .type        = PickupableType_COIN,
                 .pos         = creature.pos,
-                .coin_amount = EFFECT_PLACEHOLDER_X_INT,
+                .coin_amount = EFFECT_X_INT,
               });
             }
           }
@@ -3779,11 +3741,11 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
         EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE,
         weapon.type,
         [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-          int damage = EFFECT_PLACEHOLDER_Y_INT;
+          int damage = EFFECT_Y_INT;
           damage     = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings());
           damage     = ApplyPlayerStatDamageMultiplier(damage);
 
-          const int toSpawn = EFFECT_PLACEHOLDER_X_INT;
+          const int toSpawn = EFFECT_X_INT;
           FOR_RANGE (int, i, toSpawn) {
             MakeProjectile({
               .type                     = (ProjectileType)fb_effect->projectile_type(),
@@ -3863,7 +3825,8 @@ void AddXP(f32 xp) {  ///
   if (addedLevels > 0) {
     IterateOverEffects(
       EffectConditionType_STAT__UPON_LEVEL_UP,
-      [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+      -1,
+      [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
         ApplyStatEffect(fb_effect, tierOffset, times * addedLevels);
       }
     );
@@ -4803,14 +4766,16 @@ void DoUI(bool draw) {
       if (is_ranged) {
         IterateOverEffects(
           EffectConditionType_CANT_EQUIP_RANGED_WEAPONS,
-          [&](auto fb_effect, int tierOffset, int times)
+          -1,
+          [&](Weapon* w, auto fb_effect, int tierOffset, int times)
             BF_FORCE_INLINE_LAMBDA { canBuyErrorBuild = true; }
         );
       }
       else {
         IterateOverEffects(
           EffectConditionType_CANT_EQUIP_MELEE_WEAPONS,
-          [&](auto fb_effect, int tierOffset, int times)
+          -1,
+          [&](Weapon* w, auto fb_effect, int tierOffset, int times)
             BF_FORCE_INLINE_LAMBDA { canBuyErrorBuild = true; }
         );
       }
@@ -6310,10 +6275,11 @@ void DoUI(bool draw) {
 
               IterateOverEffects(
                 EffectConditionType_X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES,
-                [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-                  amount
-                    += Ceil(amount * (f32)(EFFECT_PLACEHOLDER_X_INT * times) / 100.0f);
-                }
+                -1,
+                [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+                  BF_FORCE_INLINE_LAMBDA {
+                    amount += Ceil(amount * (f32)(EFFECT_X_INT * times) / 100.0f);
+                  }
               );
 
               CLAY({.layout{
@@ -7506,9 +7472,10 @@ void Pickup(Pickupable* pickupable_) {  ///
 
   IterateOverEffects(
     EffectConditionType_X__COINS_UPON__PICKUPABLE,
-    [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+    -1,
+    [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
       if (fb_effect->pickupable_type() == pickupable.type) {
-        const int amount = times * EFFECT_PLACEHOLDER_X_INT;
+        const int amount = times * EFFECT_X_INT;
         ChangeCoins(amount);
       }
     }
@@ -7696,7 +7663,8 @@ void GameFixedUpdate() {
       // Applying effects: END_OF_THE_WAVE_GET__STAT.
       IterateOverEffects(
         EffectConditionType_END_OF_THE_WAVE_GET__STAT,
-        [&](auto fb_effect, int tierOffset, int times)
+        -1,
+        [&](Weapon* w, auto fb_effect, int tierOffset, int times)
           BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
       );
 
@@ -7739,8 +7707,9 @@ void GameFixedUpdate() {
           int percent = 5;
           IterateOverEffects(
             EffectConditionType_HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE,
-            [&](auto fb_effect, int tierOffset, int times)
-              BF_FORCE_INLINE_LAMBDA { percent += EFFECT_PLACEHOLDER_X_INT; }
+            -1,
+            [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA { percent += EFFECT_X_INT; }
           );
 
           if (percent > 0)
@@ -7888,7 +7857,8 @@ void GameFixedUpdate() {
     // Applying effects: START_OF_THE_WAVE_GET__STAT.
     IterateOverEffects(
       EffectConditionType_START_OF_THE_WAVE_GET__STAT,
-      [&](auto fb_effect, int tierOffset, int times)
+      -1,
+      [&](Weapon* w, auto fb_effect, int tierOffset, int times)
         BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
     );
 
@@ -8327,42 +8297,45 @@ void GameFixedUpdate() {
           // Spawning landmines.
           IterateOverEffects(
             EffectConditionType_SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE,
-            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-              auto e = g.run.waveStartedAt.Elapsed().value;
-              auto interval
-                = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT / (f32)times);
-              if (((e + 1) % interval.value) != 0)
-                return;
+            -1,
+            [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                auto e        = g.run.waveStartedAt.Elapsed().value;
+                auto interval = lframe::FromSeconds(EFFECT_X_FLOAT / (f32)times);
+                if (((e + 1) % interval.value) != 0)
+                  return;
 
-              PreSpawn v{
-                .type           = PreSpawnType_LANDMINE,
-                .pos            = creaturesWorldSpawnBounds.GetRandomPosInside(),
-                .damage         = EFFECT_PLACEHOLDER_Y_INT,
-                .damageScalings = fb_effect->damage_scalings(),
-              };
-              v.createdAt.SetNow();
-              *g.run.preSpawns.Add() = v;
-            }
+                PreSpawn v{
+                  .type           = PreSpawnType_LANDMINE,
+                  .pos            = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                  .damage         = EFFECT_Y_INT,
+                  .damageScalings = fb_effect->damage_scalings(),
+                };
+                v.createdAt.SetNow();
+                *g.run.preSpawns.Add() = v;
+              }
           );
 
           // Spawning gardens.
           IterateOverEffects(
             EffectConditionType_SPAWNS_GARDEN_EVERY__X__SECONDS,
-            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-              auto e        = g.run.waveStartedAt.Elapsed().value;
-              auto interval = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
-              if (((e + 1) % interval.value) != 0)
-                return;
+            -1,
+            [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                auto e        = g.run.waveStartedAt.Elapsed().value;
+                auto interval = lframe::FromSeconds(EFFECT_X_FLOAT);
+                if (((e + 1) % interval.value) != 0)
+                  return;
 
-              FOR_RANGE (int, i, times) {
-                PreSpawn v{
-                  .type = PreSpawnType_GARDEN,
-                  .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
-                };
-                v.createdAt.SetNow();
-                *g.run.preSpawns.Add() = v;
+                FOR_RANGE (int, i, times) {
+                  PreSpawn v{
+                    .type = PreSpawnType_GARDEN,
+                    .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                  };
+                  v.createdAt.SetNow();
+                  *g.run.preSpawns.Add() = v;
+                }
               }
-            }
           );
 
           // Spawning trees every 10 seconds.
@@ -8497,15 +8470,17 @@ void GameFixedUpdate() {
 
           IterateOverEffects(
             EffectConditionType_STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE,
-            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-              const auto lf = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
-              if ((g.run.playerContinuousIdleFrames % lf.value) == 0) {
-                ChangeStat(
-                  (StatType)fb_effect->stat_type(),
-                  fb_effect->value()->Get(tierOffset) * times
-                );
+            -1,
+            [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
+                if ((g.run.playerContinuousIdleFrames % lf.value) == 0) {
+                  ChangeStat(
+                    (StatType)fb_effect->stat_type(),
+                    fb_effect->value()->Get(tierOffset) * times
+                  );
+                }
               }
-            }
           );
 
           if ((g.run.playerContinuousIdleFrames % FIXED_FPS) == 0)
@@ -8519,14 +8494,16 @@ void GameFixedUpdate() {
 
           IterateOverEffects(
             EffectConditionType_STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE,
-            [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-              if ((g.run.playerWalkedMeters % EFFECT_PLACEHOLDER_X_INT) == 0) {
-                ChangeStat(
-                  (StatType)fb_effect->stat_type(),
-                  fb_effect->value()->Get(tierOffset) * times
-                );
+            -1,
+            [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                if ((g.run.playerWalkedMeters % EFFECT_X_INT) == 0) {
+                  ChangeStat(
+                    (StatType)fb_effect->stat_type(),
+                    fb_effect->value()->Get(tierOffset) * times
+                  );
+                }
               }
-            }
           );
         }
       }
@@ -8534,8 +8511,9 @@ void GameFixedUpdate() {
       // Processing EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE.
       IterateOverEffects(  ///
         EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE,
-        [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-          const auto lf = lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT);
+        -1,
+        [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+          const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
           const auto e  = g.run.waveStartedAt.Elapsed();
           if (((e.value + 1) % lf.value) == 0) {
             ChangeStat(
@@ -8896,8 +8874,8 @@ void GameFixedUpdate() {
               EffectConditionType_X__COOLDOWN_SECONDS_EVERY__Y__HITS,
               weapon.type,
               [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                if ((weapon.thisWaveUseCount % EFFECT_PLACEHOLDER_Y_INT) == 0)
-                  cooldownFrames += lframe::FromSeconds(EFFECT_PLACEHOLDER_X_FLOAT).value;
+                if ((weapon.thisWaveUseCount % EFFECT_Y_INT) == 0)
+                  cooldownFrames += lframe::FromSeconds(EFFECT_X_FLOAT).value;
               }
             );
 
@@ -9056,41 +9034,25 @@ void GameFixedUpdate() {
 
                 IterateOverEffects(
                   EffectConditionType_CRITS_PIERCE_UP_TO__X__TIMES,
-                  [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-                    if (projectile.effectCritPierce < EFFECT_PLACEHOLDER_X_INT) {
-                      projectile.effectCritPierce += times;
-                      projectile.pierce += times;
+                  projectile.weaponIndexOrMinus1,
+                  [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+                    BF_FORCE_INLINE_LAMBDA {
+                      if (projectile.effectCritPierce < EFFECT_X_INT) {
+                        projectile.effectCritPierce += times;
+                        projectile.pierce += times;
+                      }
                     }
-                  }
                 );
                 IterateOverEffects(
                   EffectConditionType_CRITS_BOUNCE_UP_TO__X__TIMES,
-                  [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-                    if (projectile.effectCritBounce < EFFECT_PLACEHOLDER_X_INT) {
-                      projectile.effectCritBounce += times;
-                      projectile.bounce += times;
-                    }
-                  }
-                );
-                IterateOverPlayerWeaponsEffects(
-                  EffectConditionType_CRITS_PIERCE_UP_TO__X__TIMES,
                   projectile.weaponIndexOrMinus1,
-                  [&](Weapon& w, int tierOffset, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                    if (projectile.effectCritPierce < EFFECT_PLACEHOLDER_X_INT) {
-                      projectile.effectCritPierce++;
-                      projectile.pierce++;
+                  [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+                    BF_FORCE_INLINE_LAMBDA {
+                      if (projectile.effectCritBounce < EFFECT_X_INT) {
+                        projectile.effectCritBounce += times;
+                        projectile.bounce += times;
+                      }
                     }
-                  }
-                );
-                IterateOverPlayerWeaponsEffects(
-                  EffectConditionType_CRITS_BOUNCE_UP_TO__X__TIMES,
-                  projectile.weaponIndexOrMinus1,
-                  [&](Weapon& w, int tierOffset, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                    if (projectile.effectCritBounce < EFFECT_PLACEHOLDER_X_INT) {
-                      projectile.effectCritBounce++;
-                      projectile.bounce++;
-                    }
-                  }
                 );
               }
 
@@ -9380,23 +9342,17 @@ void GameFixedUpdate() {
               // Applying effects: STAT__EVERY__X__KILLED_ENEMIES.
               IterateOverEffects(
                 EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
-                [&](auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
-                  const auto cond
-                    = fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset);
-                  if (g.run.state.playerKilledEnemies % cond == 0)
-                    ApplyStatEffect(fb_effect, tierOffset, times);
-                }
-              );
-              if (creature.lastDamagedWeaponIndex >= 0) {
-                IterateOverPlayerWeaponsEffects(
-                  EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
-                  creature.lastDamagedWeaponIndex,
-                  [&](Weapon& w, int tierOffset, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                    if ((w.thisWaveKilledEnemies % EFFECT_PLACEHOLDER_X_INT) == 0)
-                      ApplyStatEffect(fb_effect, tierOffset, 1);
+                creature.lastDamagedWeaponIndex,
+                [&](Weapon* w, auto fb_effect, int tierOffset, int times)
+                  BF_FORCE_INLINE_LAMBDA {
+                    if (w) {
+                      if ((w->thisWaveKilledEnemies % EFFECT_X_INT) == 0)
+                        ApplyStatEffect(fb_effect, tierOffset, 1);
+                    }
+                    else if ((g.run.state.playerKilledEnemies % EFFECT_X_INT) == 0)
+                      ApplyStatEffect(fb_effect, tierOffset, times);
                   }
-                );
-              }
+              );
             }
 
             // Wave gets set to completed upon killing boss.
