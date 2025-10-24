@@ -3366,10 +3366,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           -1,
           [&](Weapon* w, auto fb_effect, int tierOffset, int count)
             BF_FORCE_INLINE_LAMBDA {
-              FOR_RANGE (int, i, count) {
-                if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
-                  HealPlayer(EFFECT_Y_INT);
-              }
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                HealPlayer(EFFECT_Y_INT * count);
             }
         );
 
@@ -7487,11 +7485,22 @@ void Pickup(Pickupable* pickupable_) {  ///
   const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
 
   IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, auto fb_effect, int tierOffset, int count) BF_FORCE_INLINE_LAMBDA {
+      if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
+        if (fb_effect->pickupable_type() == pickupable.type)
+          HealPlayer(EFFECT_Y_INT * count);
+      }
+    }
+  );
+
+  IterateOverEffects(
     EffectConditionType_X__COINS_UPON__PICKUPABLE,
     -1,
-    [&](Weapon* w, auto fb_effect, int tierOffset, int times) BF_FORCE_INLINE_LAMBDA {
+    [&](Weapon* w, auto fb_effect, int tierOffset, int count) BF_FORCE_INLINE_LAMBDA {
       if (fb_effect->pickupable_type() == pickupable.type) {
-        const int amount = times * EFFECT_X_INT;
+        const int amount = count * EFFECT_X_INT;
         ChangeCoins(amount);
       }
     }
