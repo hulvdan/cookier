@@ -7,7 +7,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
 from functools import partial
-from itertools import groupby
 from math import radians
 from pathlib import Path
 from typing import Any, TypeAlias
@@ -99,12 +98,6 @@ def degrees_to_radians_recursive_transform(gamelib_recursed) -> None:
                     degrees_to_radians_recursive_transform(v)
 
 
-def _get_placeholder_from_string(string: str) -> str | None:
-    if string.startswith("{") and string.endswith("}"):
-        return string[1:-1]
-    return None
-
-
 @unique
 class BrokenStringDatumType(Enum):
     INVALID = 0
@@ -143,7 +136,8 @@ def process_group(string: str) -> StringGroup:
             )
         result.append(
             BrokenStringDatum(
-                type=BrokenStringDatumType.PLACEHOLDER, string=string[l + 1 : r]
+                type=BrokenStringDatumType.PLACEHOLDER,
+                string=string[l + 1 : r].split("__", 1)[0],
             )
         )
         string = string[r + 1 :]
@@ -326,7 +320,7 @@ def test_process_group():
             ],
         ),
         (
-            " +{CHANCE}%, to explode ",
+            " +{CHANCE__ALIAS}%, to explode ",
             [
                 [
                     [
@@ -448,6 +442,8 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
     for strings in loc_by_languages.values():
         assert len(loc_ids) == len(strings)
 
+    gamelib["localization_debug_strings"] = loc_ids
+
     locale_to_index: dict[str, int] = {key: i for i, key in enumerate(loc_ids)}
     index_to_locale = {i: codename for codename, i in locale_to_index.items()}
 
@@ -515,18 +511,6 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
                         data_values.languages[loc_index],
                         index_to_locale[string_index],
                     )
-
-        try:
-            max_placeholders = max(
-                len(list(placeholders))
-                for _, placeholders in groupby(all_russian_placeholders, lambda x: x[0])
-            )
-        except ValueError:
-            max_placeholders = 0
-
-        genline(
-            "constexpr int BF_MAX_PLACEHOLDERS_IN_STRING = {};\n".format(max_placeholders)
-        )
 
     return codepoints, locale_to_index
 

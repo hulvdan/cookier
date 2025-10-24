@@ -180,7 +180,6 @@ VIEW_FROM_ARRAY_DANGER(PRICE_SCALINGS_PER_TIER);
 
 constexpr int MAX_DODGE_PERCENT      = 60;
 constexpr f32 RANGE_GETS_HALVED_WHEN = -50;
-constexpr int RECYCLE_PRICE_FACTOR   = 3;
 
 constexpr auto BURNING_RATE    = lframe::Scaled(15);
 constexpr auto ZAP_SPEED_SCALE = 0.4f;
@@ -273,5 +272,7 @@ constexpr auto ANIMATION_4_FRAMES = lframe::FromSeconds(5.0f);
 constexpr auto ACHIEVEMENT_TOTAL_FRAMES = ANIMATION_3_FRAMES;
 constexpr auto ACHIEVEMENT_IN_FRAMES    = ANIMATION_1_FRAMES;
 constexpr auto ACHIEVEMENT_OUT_FRAMES   = ANIMATION_1_FRAMES;
+
+constexpr f32 BURNING_CRIT_DAMAGE_MULTIPLIER = 1.5f;
 
 ///

@@ -1,71 +1,243 @@
-x стилизовал UI под brotato
-  (размеры шрифтов, обводки, цвета фреймов, цвета текстов, hover кнопок)
-x локализация теперь вся в localization.csv
-x sfx ui hover / click / error
-x когда нет денег и игрок пытается купить - монетки туда-сюдакают
-x когда нет свободного слота и игрок пытается купить оружие - оружия туда-сюдакают
-x чёткие шрифты
-x при старте след волны удаляю все поднимаемые предметы
-x 10% вариация кулдауна оружий
-x вариация урона +/- 1
-x моб, что 100% дропает сундук
-x существа загораются белым на небольшое время, когда получают урон
-x норм меню (пока что кнопка P в браузере)
-x save / load на ПК
-x save / load health so that cheating doesn't work
-x if health is 0 and it's gameplay -> show end screen
-x Differentiate notPickedUpCoins/notPickedUpCoinsVisual
-  so that saving during ScreenType_WAVE_END_ANIMATION would be fair
-x reopening game during the wave resets coins and xp
-  to the values at the start of the wave
-x save/load difficulty, build, achievements
-x difficulty levels
-x new run: can select difficulty + build + weapon and start a run
-x new run: explain button error through wiggling
-x new run: don't show lock if weapon doesn't exist
-x new run: save/load last run difficulty/build/weapon
-x new run: starting a new run works without bugs
-x achievements: show recently got achievements on screen and what they unlock
-x achievements: remove build lock in gamelib.fbs
-x achievements: locked items/weapons/classes can't be acquired before unlocking
-x achievements: calculating WALKER / IDLER
-x achievements: descriptions
-x achievements screen: drew cells
-x locale gen caps (New Run / NEW RUN)
-x achievements screen: ACHIEVEMENTS label
-x achievements screen: pressing ESCAPE returns us back to paused menu
-x achievements screen: showing achievement description in right column
-x achievements: same style for screen / in-game achievements
-x sliding achievement slot flashing
-x achievements screen: show progress %
-x achievements screen: not completed yet achievement show progress percent
-  (walker 10 000 meters (52%))
-x achievements show progress in menu
-  (PRECALCULATE TOTAL STEPS / COMPLETED STEPS AND PERCENT)
-x achievements: COINS
-x sliding achievement doesn't get dimmed by pause menu
-x achievements screen: showing reward description in right column
-x game recalc weapon damage on Load
-x ref BIG_UNIVERSAL_CARD (none, item, weapon, build, difficulty, build, overrideTier etc)
-x ach screen: item's data isn't affected by game state
-x shop: item counts font
-x showing item count in componentUniversalCard
-x achievements screen: weapon's data doesn't get affected by game state
-x ref componentSlotAnything
-x ref: remove componentTooltip
-x ref: componentUniversalDetails
-x show build/difficulty in shop/pause/end
-x RunInit: apply difficulty/build traits
-x fix save load money
-x fix save load (saved during wave completed animation)
-x showing max build beaten difficulty
-x fix: new run: bow make it locked when it's actually locked
-x fix: achievements: "complete difficulty level 3 (2/3)" remove this "(2/3)"
-x fix: nuked caching player weapon offsets
-x ref extract reroll button
-x show weapon base damage
-x boss projectiles impl
+WORKING SINCE 2025-09-07
 
+x yandex save
+x weapon effects: BOUNCES_UP_TO_X_TIMES_ON_CRIT
+x javelin: ranged weapon that shoots itself
+x fix: guarantee input press
+x show: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+x show: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+x show: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+x show: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+x show: X__PERCENT_MORE_COINS_FROM_RECYCLING
+x placeholder-image scales with font size
+x yandex: mark game ready after loading save file
+x (this weapon only) / (other weapons only) localization strings
+x EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+  should be able to target one weapon OR all weapons
+  (This weapon)
+x fix: flying coins stood on the floor after flying
+x weapon effects: impl: X__CHANCE_TO_EXPLODE
+x X__CHANCE_TO_EXPLODE
+x X__CHANCE_OF_EXPLOSION_ON_HIT
+x impl: universal: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
+x impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+x impl: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+x impl: X__PERCENT_MORE_COINS_FROM_RECYCLING
+
+* weapon effects: impl: STAT__WHEN_WALKING
+* weapon effects: impl: STAT__WHEN_IDLE
+* structures in a circle around center
+*
+* weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
+  PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
+* STAT_FOR_WEAPONGROUP
+* PROPERTY_FOR_WEAPONGROUP
+* PROJECTILES_GET_PIERCING_UPON_CRIT
+* PROJECTILES_GET_BOUNCE_UPON_CRIT
+*
+* slows down enemies in a radius around the projectile
+* SLOWS_ENEMIES_ON_HIT_BY_X_PERCENT_FOR_EVERY_STAT_YOU_HAVE (1%, 2%, engineering)
+* pierces through enemies
+* crits bounce
+*
+* shoots 6 alien eyes aound you for every 3 seconds dealing 6 + 50% HP damage each
+* random weapon is upgraded upon entering the shop, gain +2 armor when theres no weapon to upgrade
+* SPAWN_PROJECTILE_FROM_ENEMY_CORPSE_DEALING_Y_DAMAGE
+* SPECIAL_ENEMIES_APPEAR_AT_THE_BEGINNING_OF_NEXT_WAVE
+* WEAPONS_MINIMUM_COOLDOWN_IS_X_SECONDS
+* X_SELF_DAMAGE_PER_Y_SECONDS (-X здоровье раз в Yс) (no invulnerability)
+* GET_STAT_FOR_EVERY_STAT2_YOU_HAVE
+* X_CHANCE_TO_GET_STAT_Y_CHANCE_TO_GET_STAT2_UPON_REROLLING
+* GET_STAT_FOR_Y_SECONDS_UPON_PICKUPABLE
+* GET_STAT_DURING_THE_NEXT_WAVE
+* GET_STAT_FOR_EVERY_LIVING_ENEMY
+* STAT__EVERY__X__SECONDS_DURING_THIS_WAVE_BONUS_IS_LOST_UPON_TAKING_DAMAGE
+* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP (1 max hp, consumable)
+* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP_UNTIL_THE_END_OF_THE_WAVE (1 hp regen, consumable)
+* stat: accuracy [-PI32 / 4, PI32 / 4]
+* STAT_FOR_EVERY_DIFFERENT_TIER_ITEM
+* STAT_FOR_EVERY_BURNING_ENEMY
+* STAT_FOR_EVERY_DIFFERENT_WEAPON
+* DAMAGE_SCALES_WITH_ADDITIONAL__Y
+* GARDEN_SPAWNS_EVERY_N_SECONDS (spawns a garden that creates apple every 15 seconds)
+* CHANCE_TO_HEAL__X__HP_UPON_KILLING
+* ITEMS_WILL_BE__X__TIER_HIGHER_UPON_THE_NEXT_REROLL
+* CRITS_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+* BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+* STAT_IS_CAPPED
+* ENEMIES_TAKE__X__PERCENT_MORE_DAMAGE_DURING__Y__SECONDS_AFTER_ELEMENTAL_DAMAGE
+  ("Elemental Damage" string is GREEN)
+* CONSUMABLES_HEAL_OVER__X__SECONDS
+* STRUCTURES_CAN_CRIT
+* TURRENT_FROM_DEAD_TREE
+* STAT_WHILE_LOWER_THAN_X_PERCENT_HP (hp regen x2, <=50% hp)
+* STAT_WHILE_HIGHER_THAN_X_PERCENT_HP
+* ON_DEATH_ENEMIES_EXPLODE_WITH_X_PERCENT_CHANCE_DEALING_Y_DAMAGE
+* DEAL_X_DAMAGE_AFTER_DODGING_ENEMY_ATTACK (300% melee, one time to that enemy specifically)
+* STARTING_WITH_X_PERCENT_LESS_HP
+  !!! STARTING_WITH_1_HP
+* START_THE_NEXT_WAVE_WITH_1_HP
+  !!! STARTING_WITH_X_PERCENT_LESS_HP
+* EVERY_RANGED_WEAPON_X_TH_SHOT_HAS_ADDITIONAL_X_PROJECTILES (5th, +3 projectiles)
+* GET_STAT_EVERY_TIME_YOU_GET_ITEM_THAT_INCREASES_STAT2
+* PICKUPABLE_EXPLODES_WITH_X_PERCENT_CHANCE_DEALING_Y_DAMAGE (apple, 50%, 10 + 100% Max HP)
+* NULLIFIES_ONE_HIT_TAKEN_EVERY_WAVE
+* X_PERCENT_CHANCE_TO_HEAL_Y_HP_UPON_KILLING
+* X_PERCENT_CHANCE_TO_HEAL_Y_HP_UPON_KILLING_WITH_CRIT (20%, 1 hp)
+* RESTORE_X_HP_PER_SECOND_WITHOUT_ABILITY_TO_HEAL_ANY_OTHER_WAY (5 hp per seconds. life steal / apples don't work anymore)
+* TURRET_DEALING_X_DAMAGE
+* EXPLOSIVE_TURRET_DEALING_X_DAMAGE
+* INCENDIARY_TURRET_DEALING_X_DAMAGE
+* LITTLE_DUDE_DEALING_X_DAMAGE_SPAWNING_Y_PROJECTILES (10 + 75% engineering + 75% elemental damage, 10 projectiles)
+* SLOW_DOWN_ENEMY_BY_X_PERCENT_ON_HIT_MAX_IS_Y (5, 20)
+* BOT_THAT_SLOWS_DOWN_ENEMIES_BY_X_PERCENT_IN_RADIUS_Y_METERS
+* EXPLODE_ONCE_UPON_BEING_BELOW_X_PERCENT_HP_DEALING_Y_DAMAGE
+* stat_type: EXTRA_ITEM_IN_A_CRATE
+* stat_type: LOOT_ALIENS_CHANCE_SCALE
+* stat_type: LOOT_ALIENS_SPEED
+* STAT_MODIFICATION_CHANGED_BY_X_PERCENT
+  !!! in localization: instead of increased / decreased use "'Max HP' modifications: +-50%"
+* stat_type: XP_REQUIRED_TO_LEVEL_UP
+* stat_type: MAX_N_MELEE_WEAPONS
+* stat_type: MAX_N_RANGED_WEAPONS
+* CANT_EQUIP_WEAPONS_ABOVE_TIER
+* CANT_EQUIP_WEAPONS_BELOW_TIER
+* X_COINS_AT_THE_END_OF_THE_WAVE_FOR_EVERY_ENEMY
+* stat_type: WEAPONS_PRICE
+* LOSE_N_PERCENT_COINS_AT_THE_START_OF_THE_WAVE
+* stat_type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
+* stat_type: COINS_DROPPED
+* stat_type: COINS_DROPPED_FROM_ENEMIES
+* SHOP_ALWAYS_SELLS_AT_LEAST_X_WEAPON
+* SHOP_ALWAYS_SELLS_AT_LEAST_X_ITEM
+* WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
+* X_MATERIALS_PER_SECOND_MAX_Y_WHILE_IDLE
+* X_MATERIALS_PER_SECOND_MAX_Y_WHILE_WALKING
+* GET_STAT_FOR_EVERY_X_COINS
+* DEAL_Y_DAMAGE_TO_A_RANDOM_ENEMY_UPON_HEALING
+* turrets don't attack trees
+* CANT_ATTACK_WHILE_MOVING
+* CANT_ATTACK_WHILE_IDLE
+* CANT_USE_WEAPONS
+* EXPLODE_FOR_X_DAMAGE_Y_CRIT_MULTIPLIER_UPON_TAKING_DAMAGE
+* X_PERCENT_COINS_CONVERTED_INTO_MAX_HP_BUY_ITEMS_WITH_MAX_HP
+* GAIN_WEAPON_SLOT_UPON_LEVEL_UP_INSTEAD_OF_UPGRADE_MAX_X
+* START_WITH_X_WEAPON_SLOTS
+* WEAPONS_MUST_BE_UNIQUE
+* CONVERT_X_UNCOLLECTED_COINS_INTO_STAT
+* WEAPON_DAMAGE_SCALES_WITH_N_PERCENT_STAT
+*
+*
+*
+*
+*
+*
+*
+*
+*
+* на русском апгрейд "рукопашный урон" хреново смотрится
+  мб "рукопашная"?
+* weapon effects: impl: X_CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+*
+* стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
+*
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: impl:
+* weapon effects: show: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+* weapon effects: show:
+*
+* weapon / non weapon effects: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+* weapon / non weapon effects: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+* weapon / non weapon effects: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+* weapon / non weapon effects: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+* weapon / non weapon effects: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
+*
+
+melee weapon effects:
+- hitting enemy spawns 3/4/5/6 projectiles that deal (50/60/70/80% of ranged damage)
+- deal +25/+50 damage for every free weapon slot
+- drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
+- cooldown is 1.83s/1.52s every 30/40 shots
+- deal 10%/20% of enemy current health as bonus damage (1%/2% bosses + elites)
+- +1/+1/+1/+2 healing from consumables
+- melee weapon also can explode with some chance
+- X chance to gain 1 coin upon killing an enemy with a crit
+- +X stat every Y seconds until the end of the wave (+10% attack speed, every 5 seconds)
+- -3 armor for every weapon you have
+- +X stat (tiered)
+- +X stat for every Y steps during this wave
+- +X stat for every Y killed enemies using this weapon TODO DURING THIS WAVE
+- -X% damage while standing still
+- hitting enemy spawns lightning projectile that bounces -/1/2/3 times
+  and inflicts 5/6/8/11 + (80% elemental damage)
+- damaged enemies take 10% more damage for 3 seconds. stacks 3/5/7/10 times
+- spawns garden every 15/14/12/10 seconds
+- landmine spawns every 12/9/6/3 seconds dealing 10 + 100% engineering damage
+- +X% tiered damage against targets above/below Y% health
+- always crits when hitting burning enemies
+- stick: tiered bonus damage for each of the same weapon
+- 50/56/62/80% to gain coin unpon killing with crit using this weapon
+- resets cooldown of offensive turrets upon attacking
+- spawns turret / incendiary turret / laser turret / explosive turrent
+
+- deals 8x5/12x6/15x7 (+100% elemental damage) burning damage
+- deals 3x3/5x5/8x6/12x9 (+elemental) burning damage.
+- burning spreads to additional -/-/1/1 nearby enemies
+
+ranged weapon effects:
+- cooldown is reset upon picking up coins
+- cooldown is X every Y shots
+- pierces X enemies dealing -Y damage with each pierce
+- pierces up to X enemies on critical hit
+- projectiles explode on hit
+- hitting an enemy that has than 50/65/70/75% hp
+  has 10/15/20/25% chance to CHARM it for 8 seconds
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+
+item effects:
+-
+-
+
+* implement all weapon/item/build/difficulty effects
+* weapon tags (primitive etc.) + set bonuses
 * can take damage if dodged
 * fix: web release: why pressing P doesn't show pause UI?
 * keyboard UI nav: pecked up item
@@ -82,7 +254,6 @@ x boss projectiles impl
 * keyboard UI nav:
 * touch: pause button during gameplay
 * touch: can play using finger
-* yandex save: emscripten pass string from C++
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
@@ -104,7 +275,6 @@ x boss projectiles impl
 * stat descriptions
 * coin pickup particles
 * stats coloring
-* weapon tags (primitive etc.) + set bonuses
 * on-player-equipped item layers (hats, decals, etc.) (isaac-like)
 *
 *
@@ -249,3 +419,6 @@ LATER:
 * keyboard input prompts
 * is brotato arena squared?
 * aseprite show image center
+* REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
+* weapon groups
+* fix: yandex: build not drawing

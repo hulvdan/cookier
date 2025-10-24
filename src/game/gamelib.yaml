@@ -1,4 +1,4 @@
-render_z:
+render_z: # {  ###
   - INVALID
   - SCREEN_BACKGROUND
   - FLOOR
@@ -21,7 +21,9 @@ render_z:
   - SCREEN_FADE
   - UI
   - GIZMOS
-sounds:
+# }
+
+sounds: # {  ###
   - type: UI_CLICK
     pool: 4
   - type: UI_ERROR
@@ -145,10 +147,12 @@ shadow_texture_ids:
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 landmine_texture_id: game_landmine
 garden_texture_id: game_garden
-# «Hostility» is about colors of «spawn crosses» in brotato.
+# }
+
+# "Hostility" is about colors of "spawn crosses" in brotato.
 # Colors differ based on whether a creature that will be spawned
 # would be neutral (like trees), friendly (like flying bots), or hostile (like mobs).
-hostilities:
+hostilities: # {  ###
   - type: INVALID
   - type: MOB
     color: 0xc02931ff
@@ -156,14 +160,18 @@ hostilities:
     color: 0x66a650ff
   - type: FRIENDLY
     color: 0x208cb2ff
-pre_spawns:
+# }
+
+pre_spawns: # {  ###
   - type: INVALID
   - type: CREATURE
   - type: LANDMINE
     hostility_type: FRIENDLY
   - type: GARDEN
     hostility_type: FRIENDLY
-creatures:
+# }
+
+creatures: # {  ###
   - type: INVALID
   - type: PLAYER
     speed: 7.5
@@ -373,27 +381,136 @@ creatures:
     can_move: false
     idle_texture_ids:
       - game_creature_tree
-ailments:
+# }
+
+ailments: # {  ###
   - type: INVALID
   - type: BURN
     duration_seconds: 2
   - type: ZAP
     duration_seconds: 3
-weapon_properties:
+# }
+
+weapon_properties: # {  ###
   - type: INVALID
   - type: DAMAGE
     name_locale: STAT_DAMAGE
-effect_conditions:
-  - type: INVALID
-  # Universal (both weapons and items can have these).
-  - type: KILL_N_ENEMIES_GET_STAT
-  - type: END_OF_THE_WAVE_GET_STAT
-  - type: START_OF_THE_WAVE_GET_STAT
-  # Weapons only.
-  - type: KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT
-  - type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
-    # Items only.
-items:
+  - type: BURNING_SPREAD
+    name_locale: STAT_BURNING_SPREAD
+# }
+
+effect_condition_variables: # {  ###
+  - type: INTEGER
+  - type: FLOAT
+  - type: DAMAGE
+  - type: ITEM_OR_WEAPON
+# }
+
+effect_conditions: # {  ###
+  - type: DEFAULT_GET__STAT
+  - type: STAT__EVERY__X__KILLED_ENEMIES
+  - type: END_OF_THE_WAVE_GET__STAT
+  - type: START_OF_THE_WAVE_GET__STAT
+  - type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+    x_condvar_type: FLOAT
+  - type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+  - type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
+    x_condvar_type: FLOAT
+  - type: X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
+    x_signed: true
+    x_is_percent: true
+  - type: STAT__UPON_LEVEL_UP
+  - type: X__COINS_UPON__PICKUPABLE
+  - type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+    x_signed: true
+    x_is_percent: true
+  - type: STAT__WHEN_WALKING
+  - type: STAT__WHEN_IDLE
+  - type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+    x_signed: true
+    x_is_percent: true
+  - type: SPAWNS_GARDEN_EVERY__X__SECONDS
+    x_condvar_type: FLOAT
+  - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+    x_condvar_type: FLOAT
+    x_divided_by_times: true
+    y_condvar_type: DAMAGE
+  - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+  - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+  - type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+    y_is_percent: true
+    y_signed: true
+  - type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+    x_is_percent: true
+    x_signed: true
+    y_multiplied_by_times: true
+  - type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+    x_is_percent: true
+    x_signed: true
+    y_multiplied_by_times: true
+  - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+    x_is_percent: true
+    x_signed: true
+    y_condvar_type: DAMAGE
+    y_multiplied_by_times: true
+  - type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+    x_multiplied_by_times: true
+    x_is_percent: true
+    x_signed: true
+  - type: CRITS_PIERCE_UP_TO__X__TIMES
+    x_multiplied_by_times: true
+  - type: CRITS_BOUNCE_UP_TO__X__TIMES
+    x_multiplied_by_times: true
+  - type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+    requires_projectile: true
+    x_multiplied_by_times: true
+    y_condvar_type: DAMAGE
+  - type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+    x_condvar_type: FLOAT
+    x_signed: true
+    x_multiplied_by_times: true
+  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+  - type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
+  - type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
+  - type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+    x_multiplied_by_times: true
+    y_is_percent: true
+  - type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+    y_multiplied_by_times: true
+  - type: X__CHANCE_TO_EXPLODE
+    x_is_percent: true
+  - type: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
+    x_is_percent: true
+    y_multiplied_by_times: true
+  - type: PROPERTY__WHEN_IDLE
+  - type: PROPERTY__WHEN_WALKING
+  - type: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
+    x_multiplied_by_times: true
+  - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
+    x_multiplied_by_times: true
+# }
+
+build_effect_conditions: # { ###
+  - type: START_WITH__X__ITEM_OR_WEAPON
+    x_condvar_type: ITEM_OR_WEAPON
+  - type: CANT_EQUIP_MELEE_WEAPONS
+  - type: CANT_EQUIP_RANGED_WEAPONS
+# }
+
+items: # {  ###
   - type: INVALID
   - type: TURREL
     texture_id: ui_item_todo
@@ -403,6 +520,26 @@ items:
     effects:
       - stat_type: TURRELS_COUNT
         value: 1
+        # - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+        #   placeholders:
+        #     - ints: 67
+        #     - ints: 3
+        # - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+        #   pickupable_type: COIN
+        #   placeholders:
+        #     - ints: 10
+        #     - ints: 1
+        # - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+        #   pickupable_type: COIN
+        #   placeholders:
+        #     - ints: 50
+        #     - ints: 3
+        #   damage_scalings:
+        #     - stat_type: LUCK
+        #       percents_per_tier: 200
+        # - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+        #   placeholders:
+        #     - ints: 35
   - type: TURREL_ENHANCE_TODO
     texture_id: ui_item_todo
     price: 15
@@ -418,16 +555,22 @@ items:
     tier: 3
     count_cap: 5
     effects:
-      - stat_type: LANDMINES
-        value: 1
+      - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+        placeholders:
+          - floats: 12
+          - ints: 10
+        damage_scalings:
+          - stat_type: ENGINEERING
+            percents_per_tier: 125
   - type: GARDEN
     texture_id: ui_item_todo
     price: 50
     tier: 2
     count_cap: 3
     effects:
-      - stat_type: GARDENS_COUNT
-        value: 1
+      - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
+        placeholders:
+          - floats: 1
   - type: HELMET
     texture_id: ui_item_helmet
     tier: 2
@@ -453,17 +596,18 @@ items:
     effects:
       - stat_type: ENEMIES
         value: 5
-      - effectcondition_type: KILL_N_ENEMIES_GET_STAT
+      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
         stat_type: ENEMIES
         value: 1
-        condition_value: 50
+        placeholders:
+          - ints: 50
   - type: PIGGY_BANK
     texture_id: ui_item_piggy_bank
     tier: 2
     price: 50
     count_cap: 1
     effects:
-      - effectcondition_type: START_OF_THE_WAVE_GET_STAT
+      - effectcondition_type: START_OF_THE_WAVE_GET__STAT
         stat_type: COINS
         value_multiplier: 1.2
   - type: TODO_REROLLER
@@ -474,12 +618,16 @@ items:
     effects:
       - stat_type: FREE_REROLLS
         value: 1
-weapon_kinds:
+# }
+
+weapon_kinds: # {  ###
   - type: INVALID
   - type: MELEE
   - type: RANGED
   - type: ELEMENTAL
-weapons:
+# }
+
+weapons: # {  ###
   #
   # If a weapon doesn't have `projectile_type` specified,
   # then it's a STRIKING weapon that gets "shot" itself.
@@ -509,18 +657,10 @@ weapons:
   - type: SWORD
     min_tier_index: 0
     weaponkind_type: MELEE
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     damage_scalings:
       - stat_type: DAMAGE_MELEE
-        percents_per_tier:
-          - 80
-          - 80
-          - 80
-          - 80
+        percents_per_tier: 80 80 80 80
     crit_damage_multiplier: 1.5
     max_price: 122
     cooldown_frames: 20
@@ -532,79 +672,227 @@ weapons:
     icon_texture_id: game_weapon_sword
     texture_ids:
       - game_weapon_sword
+      # effects:
+      # - stat_type: HP
+      #   value: 1 2 3 4
+      #   value_multiplier: 1 1 1 1
+      #   value_multiplier: 0.5 0.5 0.5 0.5
+      #
+      # - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+      #   placeholders:
+      #     - ints: 20 20 20 20
+      #     - ints: 70 65 60 55
+      #
+      # - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
+      #   weaponproperty_type: DAMAGE
+      #   value: 4 5 6 8
+      #
+      # - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+      #   stat_type: DAMAGE
+      #   value: 3 5 7 10
+      #
+      # - effectcondition_type: PROPERTY__WHEN_WALKING
+      #   weaponproperty_type: DAMAGE
+      #   value: 100 100 100 100
+      #
+      # - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+      #   stat_type: DAMAGE
+      #   value: 100 100 100 100
+      #   placeholders:
+      #     - ints: 4 3 2 1
+      #
+      # - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+      #   stat_type: DAMAGE
+      #   value: 100 100 100 100
+      #   placeholders:
+      #     - floats: 4 3 2 1
+      #
+      # - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+      #   value: 100 100 100 100
+      #   damage_scalings:
+      #     - stat_type: DAMAGE_RANGED
+      #       percents_per_tier: 50 60 70 80
+      #   projectile_type: ARROW
+      #   projectile_range_meters: 5
+      #   placeholders:
+      #     - ints: 3 4 5 6
+      #     - ints: 0 0 0 0
+      #
+      # - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+      #   only_other_weapons: true
+      #   placeholders:
+      #     - floats: 3 2.5 2 1.2
+      #     - ints: 5 5 5 5
+      #
+      # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
+      #   placeholders:
+      #     - ints: 3 4 5 6
+      #     - ints: 1 2 3 4
+      #     - ints: 0 0 1 2
+      #   damage_scalings:
+      #     - stat_type: DAMAGE_MELEE
+      #       percents_per_tier: 25 50 75 100
+      #     - stat_type: DAMAGE_RANGED
+      #       percents_per_tier: 50 60 70 80
+      #
   - type: GUN
     min_tier_index: 0
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     weaponkind_type: RANGED
     projectile_type: BULLET
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 85
-          - 90
-          - 95
-          - 100
+        percents_per_tier: 85 90 95 100
     max_price: 130
     knockback_meters: 1
     cooldown_frames: 10
     shooting_duration_frames: 20
-    projectile_spawn_frames:
-      - 6
+    projectile_spawn_frames: 6
     range_meters: 5
     icon_texture_id: game_weapon_gun
     texture_ids:
       - game_weapon_gun
+      # effects:
+      #   - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+      #     placeholders:
+      #       - ints: 400 800 1200 1600
+      #
+      # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
+      #   all_weapons: true
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
+      # - effectcondition_type: CRITS_PIERCE_UP_TO__X__TIMES
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
+      # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
+      #   only_this_weapon: true
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
+      # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
+      #   only_other_weapons: true
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
+      # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
+      #   # all_weapons: true
+      #   # only_this_weapon: true
+      #   only_other_weapons: true
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
+      # - effectcondition_type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+      #   only_other_weapons: true
+      #   placeholders:
+      #     - ints: 3 3 3 3
+      #     - ints: 100 100 100 100
+      #
+      # - effectcondition_type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+      #   only_this_weapon: true
+      #   placeholders:
+      #     - ints: 3 3 3 3
+      #     - ints: 100 100 100 100
+      #
+      # - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
+      #   stat_type: ATTACK_SPEED
+      #   value: 1 1 1 1
+      #   only_this_weapon: true
+      #   placeholders:
+      #     - ints: 3 3 3 3
+      #
+      #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
+      #     weaponproperty_type: DAMAGE
+      #     value: 4 6 8 10
+      #
+      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+      #     placeholders:
+      #       - ints: 20 20 20 20
+      #       - ints: 70 65 60 55
+      #
+      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+      #     placeholders:
+      #       - ints: 20 20 20 20
+      #       - ints: 75 80 85 90
+      #
+      #   - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+      #     placeholders:
+      #       - floats: 2.0 1.6 1.2 0.8
+      #       - ints: 20 20 20 20
+      #
+      # - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+      #   projectile_type: JAVELIN
+      #   projectile_range_meters: 5
+      #   placeholders:
+      #     - ints: 3 4 5 6
+      #     - ints: 0 0 0 0
+      #   damage_scalings:
+      #     - stat_type: DAMAGE_RANGED
+      #       percents_per_tier: 50 60 70 80
+      #
+      # - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+      #   only_other_weapons: true
+      #   placeholders:
+      #     - floats: 3 3 3 3
+      #     - ints: 3 4 5 6
   - type: SMG
     min_tier_index: 0
-    base_damage:
-      - 3
-      - 6
-      - 9
-      - 12
+    base_damage: 3 6 9 12
     weaponkind_type: RANGED
     projectile_type: BULLET_EXPLOSIVE
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 85
-          - 90
-          - 95
-          - 100
+        percents_per_tier: 85 90 95 100
     max_price: 130
     knockback_meters: 1
     cooldown_frames: 15
     shooting_duration_frames: 15
-    projectile_spawn_frames:
-      - 2
-      - 14
+    projectile_spawn_frames: 2 14
     range_meters: 7
     icon_texture_id: game_weapon_smg
     texture_ids:
       - game_weapon_smg
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        only_this_weapon: true
+        placeholders:
+          - ints: 100 100 100 100
+            #   - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #   - effectcondition_type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #   - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #     placeholders:
+            #       - floats: 29 19 14 11
+            #   - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #     placeholders:
+            #       - ints: 50 45 38 30
+            #   - effectcondition_type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
+            #     stat_type: DAMAGE
+            #     value: 1 1 1 1
+            #     placeholders:
+            #       - floats: 7 6 5 4
+            #   - effectcondition_type: PROPERTY__WHEN_IDLE
+            #     weaponproperty_type: DAMAGE
+            #     value: 4 6 8 10
   - type: BOW
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 2
     cooldown_frames: 16
     projectile_type: ARROW
-    projectile_spawn_frames:
-      - 4
+    projectile_spawn_frames: 4
     projectile_pierce: 1
     range_meters: 8
     max_price: 140
@@ -612,57 +900,74 @@ weapons:
     icon_texture_id: ui_weapon_bow
     texture_ids:
       - game_weapon_bow
+      # effects:
+      #   - effectcondition_type: PROPERTY__WHEN_WALKING
+      #     weaponproperty_type: DAMAGE
+      #     value: 4 6 8 10
+      #   - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
+      #     placeholders:
+      #       - floats: 15 14 12 10
+      #   - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+      #     placeholders:
+      #       - floats: 12 9 6 3
+      #       - ints: 3 4 5 6
+      #     damage_scalings:
+      #       - stat_type: ENGINEERING
+      #         percents_per_tier: 100 125 150 200
+      #   - effectcondition_type: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
+      #EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+      #   - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
+      #     placeholders:
+      #       - ints: 1 2 3 4
   - type: SLINGSHOT
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 6
-      - 9
-      - 12
-      - 20
+    base_damage: 6 9 12 20
     damage_scalings:
       - stat_type: DAMAGE_RANGED
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 0.5
     cooldown_frames: 20
     projectile_type: STONE
-    projectile_spawn_frames:
-      - 7
+    projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 12
     max_price: 120
     shooting_duration_frames: 12
     effects:
-      - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
-        weaponproperty_type: DAMAGE
-        value: 3
+      # - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
+      #   weaponproperty_type: DAMAGE
+      #   value: 4 6 8 10
+      # - effectcondition_type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+      #   placeholders:
+      #     - ints: 10 30 60 120
+      #     - ints: 3 3 3 3
+      # - effectcondition_type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+      #   placeholders:
+      #     - ints: 2 5 12 20
+      #     - ints: 1 1 1 2
+      # - effectcondition_type: X__CHANCE_TO_EXPLODE
+      #   placeholders:
+      #     - ints: 10 20 30 40
+      - effectcondition_type: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
+        only_this_weapon: true
+        placeholders:
+          - ints: 33 33 33 33
+          - ints: 300 400 500 600
     icon_texture_id: game_weapon_slingshot
     texture_ids:
       - game_weapon_slingshot
   - type: WAND
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 1
-      - 2
-      - 3
-      - 3
+    base_damage: 1 2 3 3
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 1
     cooldown_frames: 20
     projectile_type: FIRE
-    projectile_spawn_frames:
-      - 7
+    projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 12
     max_price: 130
@@ -673,23 +978,14 @@ weapons:
   - type: WAND2
     min_tier_index: 0
     weaponkind_type: RANGED
-    base_damage:
-      - 1
-      - 1
-      - 1
-      - 1
+    base_damage: 1 1 1 1
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
-        percents_per_tier:
-          - 70
-          - 85
-          - 100
-          - 115
+        percents_per_tier: 70 85 100 115
     knockback_meters: 1
     cooldown_frames: 20
     projectile_type: LIGHTNING
-    projectile_spawn_frames:
-      - 7
+    projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 4
     max_price: 120
@@ -697,7 +993,27 @@ weapons:
     icon_texture_id: game_weapon_wand2
     texture_ids:
       - game_weapon_wand2
-projectiles:
+  - type: JAVELIN
+    min_tier_index: 0
+    base_damage: 3 6 9 12
+    weaponkind_type: RANGED
+    projectile_type: JAVELIN
+    damage_scalings:
+      - stat_type: DAMAGE_RANGED
+        percents_per_tier: 85 90 95 100
+    max_price: 130
+    knockback_meters: 1
+    cooldown_frames: 10
+    shooting_duration_frames: 15
+    shoots_itself: true
+    projectile_spawn_frames: 15
+    range_meters: 14
+    icon_texture_id: game_weapon_javelin
+    texture_ids:
+      - game_weapon_javelin
+# }
+
+projectiles: # {  ###
   - type: INVALID
   - type: ARROW
     speed: 12
@@ -710,9 +1026,6 @@ projectiles:
   - type: BULLET_EXPLOSIVE
     speed: 14
     aoe_on_travel_end: false
-    aoe_radius: 1.5
-    aoe_particle_type: EXPLOSION
-    aoe_chance: 1
     texture_ids:
       - game_projectile_bullet_explosive
   - type: STONE
@@ -732,6 +1045,10 @@ projectiles:
     ailment_value: 3
     texture_ids:
       - game_projectile_fire
+  - type: JAVELIN
+    speed: 16
+    texture_ids:
+      - game_weapon_javelin
   - type: MOB
     color: 0xff0000ff
     speed: 10
@@ -743,13 +1060,17 @@ projectiles:
     texture_ids:
       - game_projectile_arrow
       # - game_projectile_mob
-particles:
+# }
+
+particles: # {  ###
   - type: INVALID
   - type: EXPLOSION
     duration_seconds: 0.4
     texture_ids:
       - game_particle_explosion_1
-pickupables:
+# }
+
+pickupables: # {  ###
   - type: INVALID
   - type: COIN
     texture_id: game_pickupable_coin
@@ -757,7 +1078,9 @@ pickupables:
     texture_id: game_pickupable_consumable
   - type: CRATE
     texture_id: game_pickupable_crate
-numbers:
+# }
+
+numbers: # {  ###
   - type: INVALID
   - type: DAMAGE
     color: 0xefcb84ff
@@ -771,7 +1094,9 @@ numbers:
     color: 0x66a650ff
   - type: LEVEL_UP
     color: 0x66a650ff
-stats:
+# }
+
+stats: # {  ###
   - type: INVALID
   - type: COINS
     icon_texture_id: ui_coin
@@ -988,27 +1313,23 @@ stats:
   - type: TURRELS_COUNT
     is_secondary: true
     is_hidden: true
-  - type: LANDMINES
-    is_secondary: true
-    is_hidden: true
-  - type: GARDENS_COUNT
-    is_secondary: true
-    is_hidden: true
   - type: ENEMY_HP_SCALE
     is_percent: true
     is_secondary: true
     is_hidden: true
-placeholders:
+# }
+
+placeholders: # {  ###
   - type: INVALID
   - type: STRING
   - type: BROKEN_LOCALE
-difficulties:
+  - type: IMAGE
+# }
+
+difficulties: # {  ###
   - type: INVALID
   - type: D0
     texture_id: ui_difficulty_0
-    effects:
-      - stat_type: ENEMY_HP_SCALE
-        value: 0
   - type: D1
     texture_id: ui_difficulty_1
     effects:
@@ -1042,7 +1363,9 @@ difficulties:
         value: 75
       - stat_type: ENEMY_SPEED
         value: 20
-builds:
+# }
+
+builds: # {  ###
   - type: INVALID
   - type: DEFAULT
     starting_weapon_types:
@@ -1056,6 +1379,23 @@ builds:
         value: 3
       - stat_type: LUCK
         value: 5
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: DAMAGE
+        value: 20
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        weapon_type: BOW
+        placeholders:
+          - ints: 0
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        item_type: TURREL
+        placeholders:
+          - ints: 0
+      # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
+      # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
+      - effectcondition_type: X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
+        pickupable_type: COIN
+        placeholders:
+          - ints: 25
   - type: NINJA
     starting_weapon_types:
       - SLINGSHOT
@@ -1065,6 +1405,16 @@ builds:
         value: 15
       - stat_type: DODGE
         value: 7
+      - effectcondition_type: STAT__UPON_LEVEL_UP
+        stat_type: DAMAGE
+        value: 69
+      - effectcondition_type: X__COINS_UPON__PICKUPABLE
+        pickupable_type: CRATE
+        placeholders:
+          - ints: 6666
+      - effectcondition_type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+        placeholders:
+          - ints: 35
   - type: WIZARD
     starting_weapon_types:
       - WAND
@@ -1076,7 +1426,18 @@ builds:
         value: 10
       - stat_type: ARMOR
         value: 6
-achievements:
+      - effectcondition_type: STAT__WHEN_WALKING
+        stat_type: DAMAGE
+        value: 1
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: DAMAGE
+        value: 1
+      - effectcondition_type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+        placeholders:
+          - ints: 8
+# }
+
+achievements: # {  ###
   - type: INVALID
   - type: DIFFICULTY
     steps:
@@ -1148,7 +1509,6 @@ achievements:
       - value: 1
       - value: 1
       - value: 1
-landmine_damage_scalings:
-  - stat_type: ENGINEERING
-    percents_per_tier:
-      - 100
+# }
+
+###

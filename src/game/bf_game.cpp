@@ -30,7 +30,6 @@
 #pragma once
 
 #include "box2d/box2d.h"
-#include "flatbuffers/bf_save_generated.h"
 
 // Clay.
 // ============================================================ {  ///
@@ -224,10 +223,13 @@ struct Beautify {
   BEAUTIFY(b);
 
 struct ClayImageData {
-  int     texId         = {};
-  Margins sourceMargins = {0, 0};
-  Color   color         = WHITE;
-  Color   flash         = TRANSPARENT_BLACK;
+  int     texId          = {};
+  Vector2 scale          = {1, 1};
+  Margins sourceMargins  = {0, 0};
+  Color   color          = WHITE;
+  Color   flash          = TRANSPARENT_BLACK;
+  Vector2 overriddenSize = {};  // Values must be > 0 to override.
+
   // f32   scale     = {};
   // ImageFitType fitType   = {};
 };
@@ -319,34 +321,34 @@ static const char* const g_gameVersion = BF_VERSION
   ;
 // }
 
-enum ShapeCategory : u32 {
+enum ShapeCategory : u32 {  ///
   ShapeCategory_STATIC     = 1 << 0,
   ShapeCategory_PLAYER     = 1 << 1,
   ShapeCategory_CREATURE   = 1 << 2,
   ShapeCategory_PROJECTILE = 1 << 3,
 };
 
-enum BodyType : u32 {
+enum BodyType : u32 {  ///
   BodyType_INVALID,
   BodyType_STATIC,
   BodyType_CREATURE,
 };
 
-enum ShapeUserDataType : u32 {
+enum ShapeUserDataType : u32 {  ///
   ShapeUserDataType_INVALID,
   ShapeUserDataType_STATIC,
   ShapeUserDataType_CREATURE,
 };
 
-struct ShapeUserData {
+struct ShapeUserData {  ///
   ShapeUserDataType type   = {};
   int               _value = {};
 
-  static ShapeUserData Static() {  ///
+  static ShapeUserData Static() {
     return {.type = ShapeUserDataType_STATIC};
   }
 
-  static ShapeUserData Creature(int value) {  ///
+  static ShapeUserData Creature(int value) {
     ASSERT(value >= 0);
     return {
       .type   = ShapeUserDataType_CREATURE,
@@ -354,12 +356,12 @@ struct ShapeUserData {
     };
   }
 
-  int GetCreatureId() const {  ///
+  int GetCreatureId() const {
     ASSERT(type == ShapeUserDataType_CREATURE);
     return _value;
   }
 
-  static ShapeUserData FromPointer(void* ptr) {  ///
+  static ShapeUserData FromPointer(void* ptr) {
     static_assert((sizeof(ShapeUserData) == 4) || (sizeof(ShapeUserData) == 8));
 
     if (sizeof(void*) == 8) {
@@ -384,7 +386,7 @@ struct ShapeUserData {
     }
   }
 
-  void* ToPointer() {  ///
+  void* ToPointer() {
     if (sizeof(void*) == 8) {
       // 64-bit.
       return *(void**)this;
@@ -402,18 +404,18 @@ struct ShapeUserData {
   }
 };
 
-struct Body {
+struct Body {  ///
   int      createdId = {};
   b2BodyId id        = {};
 };
 
-enum BodyShapeType {
+enum BodyShapeType {  ///
   BodyShapeType_INVALID,
   BodyShapeType_CIRCLE,
   BodyShapeType_RECT,
 };
 
-struct BodyShape {
+struct BodyShape {  ///
   bool          active = true;
   Body          body   = {};
   BodyShapeType type   = {};
@@ -429,18 +431,18 @@ struct BodyShape {
     } _rect;
   } _u;
 
-  auto& DataCircle() {  ///
+  auto& DataCircle() {
     ASSERT(type == BodyShapeType_CIRCLE);
     return _u._circle;
   }
 
-  auto& DataRect() {  ///
+  auto& DataRect() {
     ASSERT(type == BodyShapeType_RECT);
     return _u._rect;
   }
 };
 
-struct MakeBodyData {
+struct MakeBodyData {  ///
   BodyType      type     = {};
   bool          isSensor = false;
   f32           density  = 1.0f;
@@ -448,32 +450,34 @@ struct MakeBodyData {
   bool          isPlayer = {};
 };
 
-struct Weapon {
+struct Weapon {  ///
   WeaponType type                               = {};
   Vector2    targetDir                          = {};
   FrameGame  startedShootingAt                  = {};
   FrameGame  cooldownStartedAt                  = {};
   int        tier                               = {};
-  int        calculatedDamage                   = 0;
   int        thisWaveDamage                     = 0;
   f32        lastCollisionCheckShootingProgress = 0;
 
   Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
   int                           piercedCount       = 0;
 
-  int killedEnemies = 0;
+  int thisWaveKilledEnemies = 0;
+  int thisWaveUseCount      = 0;
+
+  FrameGame lastShotAt = {};
 };
 
-struct Item {
+struct Item {  ///
   ItemType type  = {};
   int      count = {};
 };
 
-struct CreatureController {
+struct CreatureController {  ///
   Vector2 move = {};
 };
 
-struct Ailment {
+struct Ailment {  ///
   CreatureType ownerCreatureType   = {};
   int          weaponIndexOrMinus1 = {};
 
@@ -484,13 +488,13 @@ struct Ailment {
   int value = {};
 };
 
-struct ApplyAilmentData {
+struct ApplyAilmentData {  ///
   AilmentType type   = AilmentType_INVALID;
   int         value  = 0;
   int         spread = {};
 };
 
-struct Creature {
+struct Creature {  ///
   int                id                             = {};
   CreatureType       type                           = {};
   int                health                         = {};
@@ -540,109 +544,119 @@ struct Creature {
     } boss;
   } _mob;
 
-  auto& DataTurrel() {  ///
+  auto& DataTurrel() {
     ASSERT(type == CreatureType_TURREL);
     return _mob.turrel;
   };
 
-  const auto& DataTurrel() const {  ///
+  const auto& DataTurrel() const {
     ASSERT(type == CreatureType_TURREL);
     return _mob.turrel;
   };
 
-  auto& DataRanger() {  ///
+  auto& DataRanger() {
     ASSERT(type == CreatureType_RANGER);
     return _mob.ranger;
   };
 
-  const auto& DataRanger() const {  ///
+  const auto& DataRanger() const {
     ASSERT(type == CreatureType_RANGER);
     return _mob.ranger;
   };
 
-  auto& DataRusher() {  ///
+  auto& DataRusher() {
     ASSERT(type == CreatureType_RUSHER);
     return _mob.rusher;
   };
 
-  const auto& DataRusher() const {  ///
+  const auto& DataRusher() const {
     ASSERT(type == CreatureType_RUSHER);
     return _mob.rusher;
   };
 
-  auto& DataBoss() {  ///
+  auto& DataBoss() {
     ASSERT(type == CreatureType_BOSS);
     return _mob.boss;
   };
 
-  const auto& DataBoss() const {  ///
+  const auto& DataBoss() const {
     ASSERT(type == CreatureType_BOSS);
     return _mob.boss;
   };
 };
 
-struct MakeCreatureData {
+struct MakeCreatureData {  ///
   CreatureType type = {};
   Vector2      pos  = {};
 };
 
-struct PreSpawn {
-  PreSpawnType type         = {};
-  CreatureType typeCreature = {};
-  Vector2      pos          = {};
-  FrameGame    createdAt    = {};
+using DamageScalingsFBT = const flatbuffers::
+  Vector<flatbuffers::Offset<BFGame::DamageScaling>, flatbuffers::uoffset_t>*;
+
+struct PreSpawn {  ///
+  PreSpawnType      type           = {};
+  CreatureType      typeCreature   = {};
+  Vector2           pos            = {};
+  FrameGame         createdAt      = {};
+  int               damage         = {};
+  DamageScalingsFBT damageScalings = {};
 };
 
-struct Projectile {
-  ProjectileType                    type                 = {};
-  CreatureType                      ownerCreatureType    = {};
-  int                               weaponIndexOrMinus1  = -1;
-  Vector2                           pos                  = {};
-  Vector2                           dir                  = {};
-  int                               damage               = {};
-  f32                               critDamageMultiplier = {};
-  int                               pierce               = {};
-  int                               bounce               = {};
-  FrameGame                         createdAt            = {};
-  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds   = {};
-  int                               damagedCount         = {};
-  int                               piercedCount         = 0;
-  int                               bouncedCount         = 0;
-  f32                               knockbackMeters      = {};
-  f32                               range                = {};
-  f32                               travelledDistance    = 0;
-  int                               anchorCreatureId     = {};
+struct Projectile {  ///
+  ProjectileType                    type                      = {};
+  CreatureType                      ownerCreatureType         = {};
+  int                               weaponIndexOrMinus1       = -1;
+  Vector2                           pos                       = {};
+  Vector2                           dir                       = {};
+  int                               damage                    = {};
+  f32                               critDamageMultiplier      = {};
+  int                               pierce                    = {};
+  int                               effectCritPierce          = {};
+  int                               effectCritBounce          = {};
+  int                               bounce                    = {};
+  FrameGame                         createdAt                 = {};
+  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds        = {};
+  int                               damagedCount              = {};
+  int                               piercedCount              = 0;
+  int                               bouncedCount              = 0;
+  f32                               knockbackMeters           = {};
+  f32                               range                     = {};
+  f32                               travelledDistance         = 0;
+  int                               anchorCreatureId          = {};
+  bool                              dontSpawnProjectilesOnHit = false;
 };
 
-struct MakeProjectileData {
-  ProjectileType type                 = {};
-  CreatureType   ownerCreatureType    = {};
-  int            weaponIndexOrMinus1  = -1;
-  Vector2        pos                  = {};
-  Vector2        dir                  = {};
-  f32            range                = {};
-  int            damage               = {};
-  f32            critDamageMultiplier = {};
-  f32            knockbackMeters      = {};
-  int            pierce               = {};
-  int            bounce               = {};
-  int            anchorCreatureId     = {};
+struct MakeProjectileData {  ///
+  ProjectileType type                      = {};
+  CreatureType   ownerCreatureType         = {};
+  int            weaponIndexOrMinus1       = -1;
+  Vector2        pos                       = {};
+  Vector2        dir                       = {};
+  f32            range                     = {};
+  int            damage                    = {};
+  f32            critDamageMultiplier      = {};
+  f32            knockbackMeters           = {};
+  int            pierce                    = {};
+  int            bounce                    = {};
+  int            anchorCreatureId          = {};
+  int            alreadyDamagedCreatureId  = 0;
+  bool           dontSpawnProjectilesOnHit = false;
 };
 
-struct Number {
+struct Number {  ///
   NumberType type      = {};
   int        value     = {};
   Vector2    pos       = {};
   FrameGame  createdAt = {};
 };
 
-struct MakePickupableData {
+struct MakePickupableData {  ///
   PickupableType type        = {};
   Vector2        pos         = {};
   int            coin_amount = {};
 };
 
-struct Pickupable {
+struct Pickupable {  ///
   PickupableType type            = {};
   Vector2        pos             = {};
   FrameGame      createdAt       = {};
@@ -655,18 +669,18 @@ struct Pickupable {
     } coin;
   } _u;
 
-  auto& DataCoin() {  ///
+  auto& DataCoin() {
     ASSERT(type == PickupableType_COIN);
     return _u.coin;
   }
 
-  const auto& DataCoin() const {  ///
+  const auto& DataCoin() const {
     ASSERT(type == PickupableType_COIN);
     return _u.coin;
   }
 };
 
-struct MakeNumberData {
+struct MakeNumberData {  ///
   NumberType type  = {};
   int        value = {};
   Vector2    pos   = {};
@@ -683,7 +697,7 @@ lframe GetWaveDuration(int waveIndex) {  ///
   return lframe::Unscaled(seconds * FIXED_FPS);
 }
 
-enum ScreenType {
+enum ScreenType {  ///
   ScreenType_NEW_RUN,
   ScreenType_GAMEPLAY,
   ScreenType_WAVE_END_ANIMATION,
@@ -693,19 +707,19 @@ enum ScreenType {
   ScreenType_END,
 };
 
-struct ShopItem {
+struct ShopItem {  ///
   WeaponType weapon = {};
   ItemType   item   = {};
   int        price  = {};
   int        tier   = {};
 };
 
-struct Upgrade {
+struct Upgrade {  ///
   StatType stat = {};
   int      tier = {};
 };
 
-struct Rerolls {
+struct Rerolls {  ///
   int rerolledFreeTimes = 0;
   int rerolledTimes     = 0;
 
@@ -713,14 +727,14 @@ struct Rerolls {
   int  GetPrice() const;
 };
 
-struct ThisWaveMob {
+struct ThisWaveMob {  ///
   CreatureType type              = {};
   f32          accumulatedFactor = {};
 };
 
-struct Placeholder {
-  PlaceholderType type        = {};
-  const char*     placeholder = {};
+struct Placeholder {  ///
+  PlaceholderType type = {};
+  Placeholder*    next = nullptr;
 
   union {
     struct {
@@ -728,21 +742,41 @@ struct Placeholder {
       Color       color;
     } string;
 
-    int brokenLocale_value;
+    struct {
+      int   value;
+      Color color;
+    } brokenLocale;
+
+    struct {
+      int texId;
+    } image;
   } _u;
 
-  const auto& string() const {  ///
+  const auto& string() const {
     ASSERT(type == PlaceholderType_STRING);
     return _u.string;
   }
 
-  int brokenLocale_value() const {  ///
+  const auto& brokenLocale() const {
     ASSERT(type == PlaceholderType_BROKEN_LOCALE);
-    return _u.brokenLocale_value;
+    return _u.brokenLocale;
+  }
+
+  const auto& image() const {
+    ASSERT(type == PlaceholderType_IMAGE);
+    return _u.image;
   }
 };
 
-struct Particle {
+struct PlaceholderGroup {
+  const char*       placeholder = {};
+  PlaceholderGroup* next        = nullptr;
+
+  Placeholder* first = nullptr;
+  Placeholder* last  = nullptr;
+};
+
+struct Particle {  ///
   ParticleType type      = {};
   Vector2      pos       = {};
   f32          scale     = 1;
@@ -761,38 +795,51 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
   return 0;
 }
 
-struct Landmine {
-  Vector2   pos                 = {};
-  FrameGame startedDetonationAt = {};
+struct Landmine {  ///
+  Vector2           pos                 = {};
+  FrameGame         startedDetonationAt = {};
+  int               damage              = {};
+  DamageScalingsFBT damageScalings      = {};
 };
 
-struct Garden {
+struct Garden {  ///
   Vector2   pos       = {};
   FrameGame createdAt = {};
 };
 
-struct UIButtonState {
+struct UIButtonState {  ///
   Clay_ElementId id               = {};
   bool           thisFrameUpdated = false;
   bool           hovered          = false;
 };
 
-struct Build {
+struct Build {  ///
   DifficultyType maxDifficultyBeaten = {};
 };
 
-struct Achievement {
+struct Achievement {  ///
   i64 value = {};
 };
 
-struct JustUnlockedAchievement {
+struct JustUnlockedAchievement {  ///
   AchievementType type      = {};
   int             stepIndex = {};
   FrameVisual     shownAt   = {};
 };
 
+#define EFFECT_X_INT (fb_effect->placeholders()->Get(0)->ints()->Get(tierOffset))
+#define EFFECT_Y_INT (fb_effect->placeholders()->Get(1)->ints()->Get(tierOffset))
+#define EFFECT_Z_INT (fb_effect->placeholders()->Get(2)->ints()->Get(tierOffset))
+#define EFFECT_W_INT (fb_effect->placeholders()->Get(3)->ints()->Get(tierOffset))
+#define EFFECT_X_FLOAT (fb_effect->placeholders()->Get(0)->floats()->Get(tierOffset))
+#define EFFECT_Y_FLOAT (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
+#define EFFECT_Z_FLOAT (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
+#define EFFECT_W_FLOAT (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
+
+constexpr int MAX_BEAUTIFIERS = 32;
+
 struct GameData {
-  struct Meta {
+  struct Meta {  ///
     Arena trashArena = {};
 
     // NOTE: Reorder loading upon reordering fonts.
@@ -825,7 +872,7 @@ struct GameData {
     FrameVisual lastSaveAt    = {};
   } meta;
 
-  struct {
+  struct {  ///
     DifficultyType difficulty = DifficultyType_D0;
     BuildType      build      = BuildType_DEFAULT;
     WeaponType     weapon     = WeaponType_SWORD;
@@ -841,7 +888,7 @@ struct GameData {
     int achievementStepsCompleted = 0;
   } player;
 
-  struct Run {
+  struct Run {  ///
     struct State {
       bool       won    = false;
       ScreenType screen = ScreenType_GAMEPLAY;
@@ -861,9 +908,9 @@ struct GameData {
       int crates                 = 0;
       int toSpawn                = 3;
 
-      Array<Weapon, PLAYER_WEAPONS_COUNT> weapons           = {};
-      Vector<Item>                        items             = {};
-      Array<int, StatType_COUNT>          statsWithoutItems = {};
+      Array<int, StatType_COUNT>          stats   = {};
+      Array<Weapon, PLAYER_WEAPONS_COUNT> weapons = {};
+      Vector<Item>                        items   = {};
 
       // NOTE: Downwards goes data associated with different screens (ref: ScreenType).
       struct {
@@ -888,7 +935,6 @@ struct GameData {
     bool reload = false;
 
     FrameVisual scheduledWaveCompleted      = {};
-    bool        recalculatePlayerStats      = false;
     bool        scheduledUI                 = false;
     bool        scheduledNewRun             = false;
     bool        scheduledPickedUpItems      = false;
@@ -913,35 +959,36 @@ struct GameData {
     Array<ThisWaveMob, CreatureType_COUNT> thisWaveMobs      = {};
     int                                    thisWaveMobsCount = 0;
 
-    FrameGame playerLastLifestealAt = {};
-    FrameGame playerLastRegenAt     = {};
-    Vector2   previousPlayerPos     = {};
-    f32       playerWalkedMeters    = 0;
-    int       playerIdleFrames      = 0;
+    Vector2 previousPlayerPos = {};
+
+    FrameGame playerLastLifestealAt             = {};
+    FrameGame playerLastRegenAt                 = {};
+    f32       playerWalkedMetersCumulativeDelta = 0;
+    int       playerWalkedMeters                = 0;
+    int       playerContinuousIdleFrames        = 0;
+    int       playerContinuousWalkingFrames     = 0;
 
     int cratesDroppedThisWave = 0;
     int turrelsToSpawn        = 0;
-    int gardensToSpawn        = 0;
 
     FrameGame waveStartedAt = {};
 
     int bossCreatureId = 0;
 
-    Array<int, StatType_COUNT> playerStats = {};
-
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
-#define VECTORS_TABLE          \
-  X(Creature, creatures)       \
-  X(Landmine, landmines)       \
-  X(Garden, gardens)           \
-  X(PreSpawn, preSpawns)       \
-  X(Projectile, projectiles)   \
-  X(int, projectilesToRemove)  \
-  X(BodyShape, bodyShapes)     \
-  X(int, justDamagedCreatures) \
-  X(Number, numbers)           \
-  X(Pickupable, pickupables)   \
+#define VECTORS_TABLE                      \
+  X(Creature, creatures)                   \
+  X(Landmine, landmines)                   \
+  X(Garden, gardens)                       \
+  X(PreSpawn, preSpawns)                   \
+  X(Projectile, projectiles)               \
+  X(MakeProjectileData, projectilesToMake) \
+  X(int, projectilesToRemove)              \
+  X(BodyShape, bodyShapes)                 \
+  X(int, justDamagedCreatures)             \
+  X(Number, numbers)                       \
+  X(Pickupable, pickupables)               \
   X(Particle, particles)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -949,18 +996,19 @@ struct GameData {
 #undef X
   } run;
 
-  struct {
+  struct {  ///
     bool active        = false;
     bool addedChildren = false;
     u16  childGap      = {};
     int  currentWidth  = 0;
     int  maxWidth      = {};
 
-    Array<Placeholder, BF_MAX_PLACEHOLDERS_IN_STRING> placeholders      = {};
-    int                                               placeholdersCount = {};
+    PlaceholderGroup* pgroupsFirst        = nullptr;
+    PlaceholderGroup* pgroupsLast         = nullptr;
+    bool              pgroupsLastIsActive = false;
   } uiFlex;
 
-  struct UI {
+  struct UI {  ///
     Vector2                   notPickedUpCoinsLogicalPos = {};
     const Font*               overriddenFont             = {};
     Array<UIButtonState, 128> buttonStates               = {};
@@ -972,10 +1020,19 @@ struct GameData {
 
     FrameVisual shopErrorGold    = {};
     FrameVisual shopErrorWeapons = {};
+    FrameVisual shopErrorBuild   = {};
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
+
+    i16                              clayZIndex = 0;
+    Array<Beautify, MAX_BEAUTIFIERS> clayBeautifiers{};
+    int                              clayBeautifiersCount = 0;
   } ui;
 } g = {};
+
+void ChangeStat(StatType stat, int value) {  ///
+  g.run.state.stats[stat] += value;
+}
 
 int GetAchievementsCompletedPercent() {  ///
   ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
@@ -996,11 +1053,16 @@ void Save() {  ///
 }
 
 // NOTE: Doesn't apply `StatType_DAMAGE`.
-int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
+int ApplyDamageScalings(
+  int  baseDamage,
+  int  tier,
+  auto fb_damageScalings,
+  int  times
+) {  ///
   if (fb_damageScalings) {
     for (auto scaling : *fb_damageScalings) {
-      auto statValue = g.run.playerStats[scaling->stat_type()];
-      auto percent   = scaling->percents_per_tier()->Get(tier);
+      auto statValue = g.run.state.stats[scaling->stat_type()];
+      auto percent   = scaling->percents_per_tier()->Get(tier) * times;
       baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
     }
   }
@@ -1008,11 +1070,11 @@ int ApplyDamageScalings(int baseDamage, int tier, auto fb_damageScalings) {  ///
 }
 
 int ApplyPlayerStatDamageMultiplier(int damage) {  ///
-  auto v = (f32)(100 + g.run.playerStats[StatType_DAMAGE]) / 100.0f;
+  auto v = (f32)(100 + g.run.state.stats[StatType_DAMAGE]) / 100.0f;
   return Round((f32)damage * v);
 }
 
-void IterateOverSpecificWeaponEffects(
+void IterateOverWeaponEffects(
   EffectConditionType              condition,
   WeaponType                       type,
   auto /* void (auto fb_effect) */ innerLambda
@@ -1026,54 +1088,194 @@ void IterateOverSpecificWeaponEffects(
   }
 }
 
+void IterateOverItemEffects(
+  Weapon*             w,
+  int                 wi,
+  EffectConditionType condition,
+  ItemType            type,
+  int                 count,
+  /* void (Weapon* w, int wi, auto fb_effect, int tierOffset, int times)*/
+  auto innerLambda
+) {  ///
+  const auto fb         = glib->items()->Get(type);
+  const auto fb_effects = fb->effects();
+  if (fb_effects) {
+    for (const auto fb_effect : *fb_effects) {
+      if (fb_effect->effectcondition_type() == condition)
+        innerLambda(w, wi, fb_effect, 0, count);
+    }
+  }
+}
+
+void IterateOverEffects(
+  EffectConditionType condition,
+  int                 weaponIndexOrMinus1,
+  auto /* void (Weapon* w, int wi, auto fb_effect, int tierOffset, int times) */
+    innerLambda
+) {  ///
+#if BF_ENABLE_ASSERTS
+  auto fb_conditions = glib->effect_conditions();
+  auto fb            = fb_conditions->Get(condition);
+  ASSERT(fb->restrict() != 1);
+#endif
+  Weapon* w = nullptr;
+  if (weaponIndexOrMinus1 >= 0) {
+    const auto& weapon = g.run.state.weapons[weaponIndexOrMinus1];
+    ASSERT(weapon.type);
+    if (weapon.type)
+      w = g.run.state.weapons.base + weaponIndexOrMinus1;
+  }
+
+  int wi = -1;
+  for (auto& weapon : g.run.state.weapons) {
+    wi++;
+
+    if (!weapon.type)
+      continue;
+
+    auto fb         = glib->weapons()->Get(weapon.type);
+    auto fb_effects = fb->effects();
+    if (!fb_effects)
+      continue;
+
+    for (const auto fb_effect : *fb_effects) {
+      if (fb_effect->effectcondition_type() != condition)
+        continue;
+
+      bool call = true;
+      if (fb_effect->only_this_weapon())
+        call = (weaponIndexOrMinus1 == wi);
+      if (fb_effect->only_other_weapons())
+        call = (weaponIndexOrMinus1 >= 0) && (weaponIndexOrMinus1 != wi);
+
+      if (call)
+        innerLambda(
+          w, weaponIndexOrMinus1, fb_effect, weapon.tier - fb->min_tier_index(), 1
+        );
+    }
+  }
+
+  // Iterating over items.
+  for (auto& item : g.run.state.items)
+    IterateOverItemEffects(
+      w, weaponIndexOrMinus1, condition, item.type, item.count, innerLambda
+    );
+
+  // Iterating over difficulty effects.
+  {
+    const auto fb         = glib->difficulties()->Get(g.player.difficulty);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(w, weaponIndexOrMinus1, fb_effect, 0, 1);
+      }
+    }
+  }
+
+  // Iterating over build effects.
+  {
+    const auto fb         = glib->builds()->Get(g.player.build);
+    const auto fb_effects = fb->effects();
+    if (fb_effects) {
+      for (const auto fb_effect : *fb_effects) {
+        if (fb_effect->effectcondition_type() == condition)
+          innerLambda(w, weaponIndexOrMinus1, fb_effect, 0, 1);
+      }
+    }
+  }
+}
+
 int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) {  ///
   ASSERT(tier < 4);
   const auto fb = glib->weapons()->Get(type);
   ASSERT(tier >= fb->min_tier_index());
 
-  int damage = fb->base_damage()->Get(tier - fb->min_tier_index());
-  damage
-    = ApplyDamageScalings(damage, tier - fb->min_tier_index(), fb->damage_scalings());
-  damage = ApplyPlayerStatDamageMultiplier(damage);
+  int tierOffset = tier - fb->min_tier_index();
 
-  IterateOverSpecificWeaponEffects(
-    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY,
-    type,
-    [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-      if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
-        return;
+  int damage = fb->base_damage()->Get(tierOffset);
+  damage     = ApplyDamageScalings(damage, tierOffset, fb->damage_scalings(), 1);
+  damage     = ApplyPlayerStatDamageMultiplier(damage);
 
-      int sameWeapons = 0;
-      int i           = -1;
-      for (const auto& weapon : g.run.state.weapons) {
-        i++;
-        if ((weaponIndexOrMinus1 != i) && (weapon.type == type))
-          sameWeapons++;
+  LAMBDA (void, applyEffectToDamage, (auto fb_effect, int tierOffset2, int times)) {
+    if (times < 0)
+      return;
+
+    auto value = fb_effect->value();
+    if (value)
+      damage += value->Get(tierOffset2) * times;
+
+    auto value_multiplier = fb_effect->value_multiplier();
+    if (value_multiplier)
+      damage = Round((f32)damage * value_multiplier->Get(tierOffset2) * (f32)times);
+  };
+
+  IterateOverEffects(
+    EffectConditionType_MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY,
+    weaponIndexOrMinus1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+          return;
+
+        int sameWeapons = 0;
+        int i           = -1;
+        for (const auto& weapon : g.run.state.weapons) {
+          i++;
+          if ((weaponIndexOrMinus1 != i) && (weapon.type == type))
+            sameWeapons++;
+        }
+
+        applyEffectToDamage(fb_effect, tierOffset, sameWeapons * times);
       }
-      if (sameWeapons > 0) {
-        auto v = fb_effect->value();
-        if (v == 0)
-          damage = Round(damage * fb_effect->value_multiplier() * (f32)sameWeapons);
-        else
-          damage += v * sameWeapons;
-      }
-    }
   );
+
+  IterateOverEffects(
+    EffectConditionType_MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY,
+    weaponIndexOrMinus1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+          return;
+
+        int emptySlots = 0;
+        for (const auto& weapon : g.run.state.weapons) {
+          if (!weapon.type)
+            emptySlots++;
+        }
+
+        applyEffectToDamage(fb_effect, tierOffset, emptySlots * times);
+      }
+  );
+
+  if (g.run.state.screen == ScreenType_GAMEPLAY && !g.meta.paused) {
+    IterateOverEffects(
+      EffectConditionType_PROPERTY__WHEN_IDLE,
+      weaponIndexOrMinus1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+            return;
+          if (g.run.playerContinuousIdleFrames > FIXED_FPS / 8)
+            applyEffectToDamage(fb_effect, tierOffset, times);
+        }
+    );
+
+    IterateOverEffects(
+      EffectConditionType_PROPERTY__WHEN_WALKING,
+      weaponIndexOrMinus1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
+            return;
+          if (g.run.playerContinuousWalkingFrames > FIXED_FPS / 8)
+            applyEffectToDamage(fb_effect, tierOffset, times);
+        }
+    );
+  }
 
   damage = MAX(1, damage);
   return damage;
-}
-
-void RecalculatePlayerWeaponDamages() {  ///
-  int weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.state.weapons) {
-    weaponIndexOrMinus1++;
-    weapon.thisWaveDamage = 0;
-    if (weapon.type) {
-      weapon.calculatedDamage
-        = CalculateWeaponDamage(weaponIndexOrMinus1, weapon.type, weapon.tier);
-    }
-  }
 }
 
 Vector2 GetPlayerWeaponOffset(int weaponIndex) {  ///
@@ -1096,31 +1298,53 @@ Vector2 GetPlayerWeaponOffset(int weaponIndex) {  ///
 }
 
 #define PLAYER_CREATURE (g.run.creatures[0])
-#define PLAYER_COINS (g.run.state.statsWithoutItems[StatType_COINS])
+#define PLAYER_COINS (g.run.state.stats[StatType_COINS])
 
 void SanitizeCoins() {  ///
   if (PLAYER_COINS < 0)
     PLAYER_COINS = int_max;
 }
 
-void ApplyEffect(const BFGame::Effect* fb_effect, int times = 1) {  ///
-  ASSERT(times > 0);
-  if (fb_effect->stat_type()) {
-    g.run.state.statsWithoutItems[fb_effect->stat_type()] += fb_effect->value() * times;
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
-    if (fb_effect->value_multiplier() != 1)
-      g.run.state.statsWithoutItems[fb_effect->stat_type()]
-        *= 1 + (fb_effect->value_multiplier() - 1) * times;
-    if ((StatType)fb_effect->stat_type() == StatType_COINS)
-      SanitizeCoins();
+void ApplyStatEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  ///
+  ASSERT(times != 0);
+
+  const auto statType = (StatType)fb_effect->stat_type();
+  ASSERT(statType);
+  if (!statType)
+    return;
+
+  auto value = fb_effect->value();
+  if (value)
+    ChangeStat(statType, value->Get(tierOffset) * times);
+
+  if (statType == StatType_COINS)
+    SanitizeCoins();
+
+  auto value_multiplier = fb_effect->value_multiplier();
+  if (value_multiplier) {
+    const f32 vm = value_multiplier->Get(tierOffset);
+    if (!FloatEquals(vm, 1)) {
+      f32 multiplier = (1 + (vm - 1) * fabs((f32)times));
+      if (times < 0)
+        multiplier = 1 / multiplier;
+
+      int&      statValue = g.run.state.stats[statType];
+      const f32 newVal    = (f32)statValue * multiplier;
+      if (newVal > (f32)int_max)
+        statValue = int_max;
+      else if (newVal < (f32)int_min)
+        statValue = int_min;
+      else
+        statValue = Round(newVal);
+    }
   }
 
-  g.run.recalculatePlayerStats = true;
+  if (statType == StatType_COINS)
+    SanitizeCoins();
 }
 
 f32 GetLuckFactor() {  ///
-  return MAX(0, 1.0f + (f32)g.run.playerStats[StatType_LUCK] / 100.0f);
+  return MAX(0, 1.0f + (f32)g.run.state.stats[StatType_LUCK] / 100.0f);
 }
 
 void RecalculateThisWaveMobs() {  ///
@@ -1153,20 +1377,27 @@ void RecalculateThisWaveMobs() {  ///
 
 void OnWaveStarted() {  ///
   g.run.state.upgrades.rerolls = {};
-  g.run.state.previousCoins    = g.run.state.statsWithoutItems[StatType_COINS];
+  g.run.state.previousCoins    = g.run.state.stats[StatType_COINS];
 
-  g.run.bossCreatureId = 0;
+  g.run.playerWalkedMetersCumulativeDelta = 0;
+  g.run.playerWalkedMeters                = 0;
+  g.run.playerContinuousIdleFrames        = 0;
+  g.run.playerContinuousWalkingFrames     = 0;
+
+  g.run.cratesDroppedThisWave = 0;
+  g.run.turrelsToSpawn        = g.run.state.stats[StatType_TURRELS_COUNT];
 
   g.run.waveStartedAt = {};
   g.run.waveStartedAt.SetNow();
-  g.run.cratesDroppedThisWave = 0;
+
+  g.run.bossCreatureId = 0;
 
   RecalculateThisWaveMobs();
 
-  g.run.turrelsToSpawn = g.run.playerStats[StatType_TURRELS_COUNT];
-  g.run.gardensToSpawn = g.run.playerStats[StatType_GARDENS_COUNT];
-
-  RecalculatePlayerWeaponDamages();
+  for (auto& weapon : g.run.state.weapons) {
+    weapon.thisWaveDamage   = 0;
+    weapon.thisWaveUseCount = 0;
+  }
 }
 
 void AchievementStepSetLock(const BFGame::AchievementStep* fb_step, bool locked) {  ///
@@ -1222,29 +1453,7 @@ void AchievementMax(AchievementType type, int value) {  ///
   Save();
 }
 
-void RecalculatePlayerStats() {  ///
-  ZoneScoped;
-
-  FOR_RANGE (int, i, StatType_COUNT)
-    g.run.playerStats[i] = g.run.state.statsWithoutItems[i];
-
-  for (auto& item : g.run.state.items) {
-    const auto fb         = glib->items()->Get(item.type);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (!fb_effect->effectcondition_type())
-          g.run.playerStats[fb_effect->stat_type()] += fb_effect->value() * item.count;
-      }
-    }
-  }
-
-  PLAYER_CREATURE.maxHealth = g.run.playerStats[StatType_HP];
-}
-
-void Load(void* saveData) {  ///
-  const auto save = BFSave::GetSave(saveData);
-
+void GameLoad(const BFSave::Save* save) {  ///
   auto& s         = g.run.state;
   auto  tempItems = s.items;
   tempItems.Reset();
@@ -1284,15 +1493,17 @@ void Load(void* saveData) {  ///
   s.crates                 = save->crates();
   s.toSpawn                = save->to_spawn();
 
+  // Loading saved weapons.
   int weaponIndex = 0;
   for (auto x : *save->weapons()) {
     s.weapons[weaponIndex++] = {
-      .type          = (WeaponType)x->type(),
-      .tier          = x->tier(),
-      .killedEnemies = x->killed_enemies(),
+      .type                  = (WeaponType)x->type(),
+      .tier                  = x->tier(),
+      .thisWaveKilledEnemies = x->killed_enemies(),
     };
   }
 
+  // Loading saved items.
   auto fb_items = save->items();
   if (fb_items) {
     for (auto x : *fb_items) {
@@ -1303,13 +1514,20 @@ void Load(void* saveData) {  ///
     }
   }
 
-  for (auto& x : s.statsWithoutItems)
-    x = 0;
+  // Resetting stats to default values.
+  {
+    auto fb_stats = glib->stats();
+    int  i        = 0;
+    for (auto& x : s.stats)
+      x = fb_stats->Get(i++)->player_value();
+  }
+
+  // Loading values of previosly saved stats.
   int  statIndex = 0;
-  auto fb_stats  = save->stats_without_items();
+  auto fb_stats  = save->stats();
   if (fb_stats) {
     for (auto x : *fb_stats)
-      s.statsWithoutItems[statIndex++] = x;
+      s.stats[statIndex++] = x;
   }
 
   s.pickedUpItem.toPick = (ItemType)save->screen_picked_up_item__to_pick();
@@ -1362,41 +1580,12 @@ void Load(void* saveData) {  ///
   else if (s.screen == ScreenType_END)
     g.run.scheduledEnd = true;
 
-  RecalculatePlayerStats();
-  RecalculatePlayerWeaponDamages();
-
   g.player.lockedBuilds  = {};
   g.player.lockedWeapons = {};
   g.player.lockedItems   = {};
-
-  // Recalculating unlocked builds, items and weapons based off achievements.
-  {
-    g.player.achievementStepsTotal     = 0;
-    g.player.achievementStepsCompleted = 0;
-
-    int i = -1;
-    for (const auto& x : g.player.achievements) {  ///
-      i++;
-      auto fb       = glib->achievements()->Get(i);
-      auto fb_steps = fb->steps();
-      if (!fb_steps)
-        continue;
-
-      g.player.achievementStepsTotal += fb_steps->size();
-      g.player.achievementStepsCompleted += fb_steps->size();
-
-      for (auto fb_step : *fb_steps) {
-        if (fb_step->value() > x.value)
-          AchievementStepSetLock(fb_step, true);
-      }
-    }
-
-    ASSERT(g.player.achievementStepsCompleted >= 0);
-    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
-  }
 }
 
-flatbuffers::FlatBufferBuilder DumpState() {  ///
+flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
   BFSave::SaveT fb_save{};
 
   {
@@ -1435,7 +1624,7 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
       fb_save.weapons.push_back(std::make_unique<BFSave::WeaponT>(BFSave::WeaponT{
         .type           = weapon.type,
         .tier           = weapon.tier,
-        .killed_enemies = weapon.killedEnemies,
+        .killed_enemies = weapon.thisWaveKilledEnemies,
       }));
     }
 
@@ -1446,8 +1635,8 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
       }));
     }
 
-    for (const auto& x : g.run.state.statsWithoutItems)
-      fb_save.stats_without_items.push_back(x);
+    for (const auto& x : g.run.state.stats)
+      fb_save.stats.push_back(x);
 
     fb_save.screen_picked_up_item__to_pick = s.pickedUpItem.toPick;
 
@@ -1480,7 +1669,7 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
     });
 
     if (s.screen == ScreenType_GAMEPLAY) {
-      fb_save.stats_without_items[StatType_COINS] = s.previousCoins;
+      fb_save.stats[StatType_COINS] = s.previousCoins;
 
       fb_save.level  = fb_save.previous_level;
       fb_save.xp     = s.previousXp;
@@ -1494,16 +1683,23 @@ flatbuffers::FlatBufferBuilder DumpState() {  ///
   return fbb;
 }
 
-struct MakeLandmineData {
-  Vector2 pos = {};
+struct MakeLandmineData {  ///
+  Vector2           pos            = {};
+  int               damage         = {};
+  DamageScalingsFBT damageScalings = {};
 };
 
 void MakeLandmine(MakeLandmineData data) {  ///
-  Landmine v{.pos = data.pos};
+  ASSERT(data.damageScalings);
+  Landmine v{
+    .pos            = data.pos,
+    .damage         = data.damage,
+    .damageScalings = data.damageScalings,
+  };
   *g.run.landmines.Add() = v;
 }
 
-struct MakeGardenData {
+struct MakeGardenData {  ///
   Vector2 pos = {};
 };
 
@@ -1602,39 +1798,113 @@ void FlexAddRowForChildIfNeeded(int childWidth) {  ///
 }
 
 bool IsAlreadyPlaceholded(const char* placeholder) {  ///
-  FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-    if (!strcmp(g.uiFlex.placeholders[i].placeholder, placeholder))
+  auto pp = g.uiFlex.pgroupsFirst;
+  while (pp) {
+    if (!strcmp(pp->placeholder, placeholder))
       return true;
+    pp = pp->next;
   }
   return false;
 }
 
-// value must be statically allocated or live in trashArena.
+void _AddPlaceholder(Placeholder p) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+
+  auto pp = ALLOCATE_FOR(&g.meta.trashArena, Placeholder);
+  *pp     = p;
+
+  auto& group = *g.uiFlex.pgroupsLast;
+  if (!group.first)
+    group.first = pp;
+  if (group.last)
+    group.last->next = pp;
+  group.last = pp;
+}
+
+// `placeholder` must be statically allocated or live in trashArena.
+void PlaceholdGroupBegin(const char* placeholder) {  ///
+  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
+  ASSERT_FALSE(g.uiFlex.pgroupsLastIsActive);
+  g.uiFlex.pgroupsLastIsActive = true;
+
+  ASSERT((bool)g.uiFlex.pgroupsFirst == (bool)g.uiFlex.pgroupsLast);
+
+  auto pp = ALLOCATE_FOR(&g.meta.trashArena, PlaceholderGroup);
+  *pp     = {.placeholder = placeholder};
+
+  if (!g.uiFlex.pgroupsFirst)
+    g.uiFlex.pgroupsFirst = pp;
+  if (g.uiFlex.pgroupsLast)
+    g.uiFlex.pgroupsLast->next = pp;
+  g.uiFlex.pgroupsLast = pp;
+}
+
+void PlaceholdGroupEnd() {  ///
+  ASSERT(g.uiFlex.pgroupsFirst);
+  ASSERT(g.uiFlex.pgroupsLast);
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  g.uiFlex.pgroupsLastIsActive = false;
+}
+
+// `value` must be statically allocated or live in trashArena.
+void PlaceholdString(const char* value, Color color = palTextGreen) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_STRING,
+    ._u{.string{.value = value, .color = color}},
+  });
+}
+
+// `placeholder` and `value` must be statically allocated or live in trashArena.
 void PlaceholdString(
   const char* placeholder,
   const char* value,
   Color       color = palTextGreen
 ) {  ///
-  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
-  Placeholder p{
-    .type        = PlaceholderType_STRING,
-    .placeholder = placeholder,
-    ._u{.string{.value = value, .color = color}},
-  };
-  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = p;
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdString(value, color);
+  PlaceholdGroupEnd();
 }
 
-void PlaceholdBrokenLocale(const char* placeholder, int locale) {  ///
-  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
-  Placeholder p{
-    .type        = PlaceholderType_BROKEN_LOCALE,
-    .placeholder = placeholder,
-    ._u{.brokenLocale_value = locale},
-  };
-  g.uiFlex.placeholders[g.uiFlex.placeholdersCount++] = p;
+void PlaceholdBrokenLocale(int locale, Color color = palTextWhite) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_BROKEN_LOCALE,
+    ._u{.brokenLocale{
+      .value = locale,
+      .color = color,
+    }},
+  });
+}
+
+// `placeholder` must be statically allocated or live in trashArena.
+void PlaceholdBrokenLocale(
+  const char* placeholder,
+  int         locale,
+  Color       color = palTextWhite
+) {  ///
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdBrokenLocale(locale, color);
+  PlaceholdGroupEnd();
+}
+
+void PlaceholdImage(int texId) {  ///
+  ASSERT(g.uiFlex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_IMAGE,
+    ._u{.image{.texId = texId}},
+  });
+}
+
+// `placeholder` must be statically allocated or live in trashArena.
+void PlaceholdImage(const char* placeholder, int texId) {  ///
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdImage(texId);
+  PlaceholdGroupEnd();
 }
 
 void MakePickupable(MakePickupableData data) {  ///
+  ASSERT(data.coin_amount >= 0);
   ASSERT(data.type);
 
   Pickupable pickupable{
@@ -1646,6 +1916,7 @@ void MakePickupable(MakePickupableData data) {  ///
   case PickupableType_COIN: {
     auto& d  = pickupable.DataCoin();
     d.amount = data.coin_amount;
+    ASSERT(d.amount > 0);
   } break;
 
   case PickupableType_CONSUMABLE:
@@ -1659,6 +1930,20 @@ void MakePickupable(MakePickupableData data) {  ///
   }
 
   pickupable.createdAt.SetNow();
+
+  f32 chanceToInstaPickup = 0;
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (pickupable.type == fb_effect->pickupable_type())
+          chanceToInstaPickup += (f32)(EFFECT_X_INT * times) / 100.0f;
+      }
+  );
+  if (GRAND.FRand() < chanceToInstaPickup)
+    pickupable.pickedUpAt.SetNow();
+
   *g.run.pickupables.Add() = pickupable;
 }
 
@@ -1761,37 +2046,67 @@ void* PushClayCustomData(ClayCustomData data) {  ///
   return (void*)result;
 }
 
-void BF_CLAY_IMAGE(ClayImageData data, auto innerLambda) {  ///
+void ResetPlaceholders() {  ///
+  ASSERT_FALSE(g.uiFlex.pgroupsLastIsActive);
+  g.uiFlex.pgroupsFirst = nullptr;
+  g.uiFlex.pgroupsLast  = nullptr;
+}
+
+void BF_CLAY_IMAGE(
+  ClayImageData data,
+  auto          innerLambda,
+  bool          _resetPlaceholders = true
+) {  ///
   const auto texture      = glib->atlas_textures()->Get(data.texId);
   const auto originalSize = glib->original_texture_sizes()->Get(data.texId);
 
+  f32 w = (f32)originalSize->x() * data.scale.x * ASSETS_TO_LOGICAL_RATIO;
+  f32 h = (f32)originalSize->y() * data.scale.y * ASSETS_TO_LOGICAL_RATIO;
+
+  ASSERT(data.overriddenSize.x >= 0);
+  ASSERT(data.overriddenSize.y >= 0);
+  if (data.overriddenSize.x > 0)
+    w = data.overriddenSize.x;
+  if (data.overriddenSize.y > 0)
+    h = data.overriddenSize.y;
+
   if (g.uiFlex.active)
-    FlexAddRowForChildIfNeeded(Ceil((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO));
+    FlexAddRowForChildIfNeeded(Ceil(w));
+
+  auto& beautifiers      = g.ui.clayBeautifiers;
+  auto& beautifiersCount = g.ui.clayBeautifiersCount;
 
   CLAY({
-    .layout{
-      .sizing{
-        .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
-        .height = CLAY_SIZING_FIXED((f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO),
-      },
-      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-    },
-  })
-  CLAY({
-    .layout{
-      .sizing{
-        .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
-        .height = CLAY_SIZING_FIXED((f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO),
-      },
-    },
-    .image{.imageData = PushClayImageData(data)},
+    .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
   }) {
-    innerLambda();
+    CLAY({
+      .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
+      .floating{
+        .zIndex = g.ui.clayZIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+        .attachTo           = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+      CLAY({
+        .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
+        .image{.imageData = PushClayImageData(data)},
+      }) {
+        innerLambda();
+      }
+    }
   }
+
+  if (_resetPlaceholders)
+    ResetPlaceholders();
 }
 
-void BF_CLAY_IMAGE(ClayImageData data) {  ///
-  BF_CLAY_IMAGE(data, [] {});
+void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
+  BF_CLAY_IMAGE(data, [] {}, _resetPlaceholders);
 }
 
 // NOTE: This overload DOESN'T SAVE string to trash arena.
@@ -1841,11 +2156,13 @@ void BF_CLAY_TEXT(const char* text, Color color = palTextWhite) {  ///
   BF_CLAY_TEXT(string, color);
 }
 
-void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+void BF_CLAY_TEXT_BROKEN_LOCALIZED(
   int   locale_,
   Color color              = palTextWhite,
   bool  _resetPlaceholders = true
-) {  ///
+) {                                  ///
+  const auto locale = (Loc)locale_;  // NOTE: For debug.
+
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
   const auto localization_broken_lines = localization->broken_lines();
 
@@ -1856,15 +2173,17 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
         for (auto string : *group->strings()) {
           if (!string->placeholder())
             continue;
+
+          const auto requiredPlaceholder = string->placeholder()->c_str();
+
           bool found = false;
-          FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-            if (!strcmp(
-                  g.uiFlex.placeholders[i].placeholder, string->placeholder()->c_str()
-                ))
-            {
+          auto group = g.uiFlex.pgroupsFirst;
+          while (group) {
+            if (!strcmp(group->placeholder, requiredPlaceholder)) {
               found = true;
               break;
             }
+            group = group->next;
           }
           ASSERT(found);
         }
@@ -1884,17 +2203,24 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
 
         if (string->placeholder()) {
           const auto placeholderString = string->placeholder()->c_str();
-          int        pl                = -1;
-          FOR_RANGE (int, i, g.uiFlex.placeholdersCount) {
-            if (!strcmp(g.uiFlex.placeholders[i].placeholder, placeholderString)) {
-              pl = i;
+
+          auto group = g.uiFlex.pgroupsFirst;
+          bool found = false;
+          while (group) {
+            if (!strcmp(group->placeholder, placeholderString)) {
+              found = true;
               break;
             }
+            group = group->next;
           }
+          ASSERT(found);
 
-          const auto& placeholder = g.uiFlex.placeholders[pl];
-          ASSERT(placeholder.type);
-          clayPlaceholderFunctions[(int)placeholder.type - 1](&placeholder);
+          auto pp = group->first;
+          while (pp) {
+            ASSERT(pp->type);
+            clayPlaceholderFunctions[(int)pp->type - 1](pp);
+            pp = pp->next;
+          }
         }
         else {
           Clay_String text{
@@ -1909,7 +2235,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
   }
 
   if (_resetPlaceholders)
-    g.uiFlex.placeholdersCount = 0;
+    ResetPlaceholders();
 }
 
 void DestroyBody(Body* body) {  ///
@@ -1996,7 +2322,7 @@ void HandleClayErrors(Clay_ErrorData errorData) {  ///
   }
 }
 
-struct MakeRectBodyData {
+struct MakeRectBodyData {  ///
   Vector2      pos      = {};
   Vector2      size     = {};
   Vector2      anchor   = Vector2Half();
@@ -2023,7 +2349,7 @@ Body MakeRectBody(MakeRectBodyData data) {  ///
   return makeBodyResult.body;
 }
 
-struct MakeCircleBodyData {
+struct MakeCircleBodyData {  ///
   Vector2      pos           = {};
   f32          radius        = {};
   f32          hurtboxRadius = {};
@@ -2083,7 +2409,7 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   if (fb->hostility_type() != HostilityType_FRIENDLY) {
     const f32 mobHpScale
-      = (f32)(100 + g.run.playerStats[StatType_ENEMY_HP_SCALE]) / 100.0f;
+      = (f32)(100 + g.run.state.stats[StatType_ENEMY_HP_SCALE]) / 100.0f;
     health = Round((f32)health * mobHpScale);
   }
 
@@ -2153,23 +2479,7 @@ void MakeProjectile(MakeProjectileData data) {  ///
   if (data.ownerCreatureType == CreatureType_PLAYER)
     ASSERT(data.weaponIndexOrMinus1 >= 0);
 
-  Projectile projectile{
-    .type                 = data.type,
-    .ownerCreatureType    = data.ownerCreatureType,
-    .weaponIndexOrMinus1  = data.weaponIndexOrMinus1,
-    .pos                  = data.pos,
-    .dir                  = data.dir,
-    .damage               = data.damage,
-    .critDamageMultiplier = data.critDamageMultiplier,
-    .pierce               = data.pierce,
-    .bounce               = data.bounce,
-    .knockbackMeters      = data.knockbackMeters,
-    .range                = data.range,
-    .anchorCreatureId     = data.anchorCreatureId,
-  };
-  projectile.createdAt.SetNow();
-
-  *g.run.projectiles.Add() = projectile;
+  *g.run.projectilesToMake.Add() = data;
 }
 
 void GamePreInit() {  ///
@@ -2177,12 +2487,12 @@ void GamePreInit() {  ///
   ge.settings.backgroundColor = ColorFromRGBA(0x241207ff);
 }
 
-struct Line {
+struct Line {  ///
   Vector2 v1 = {};
   Vector2 v2 = {};
 };
 
-struct MakeWallsData {
+struct MakeWallsData {  ///
   const View<Line> lines     = {};
   View<Body>       outBodies = {};
 };
@@ -2269,7 +2579,7 @@ ItemType GenerateRandomItem() {  ///
     if (g.player.lockedItems[type])
       continue;
     auto fb = fb_items->Get(type);
-    if (!fb->included_in_random_pool())
+    if (!fb->deprecated())
       continue;
     if (fb->count_cap() <= 0)
       break;
@@ -2284,7 +2594,7 @@ int _ApplyStatPrice(StatType s, int price) {  ///
   VIEW_FROM_ARRAY_DANGER(allowed);
   ASSERT(allowed.Contains(s));
 
-  int stat = g.run.playerStats[s];
+  int stat = g.run.state.stats[s];
   if (stat == 0)
     return price;
   stat        = MAX(-100, stat);
@@ -2303,7 +2613,7 @@ int ApplyStatRerollPrice(int price) {  ///
 
 int GetNumberOfTreesToSpawn() {  ///
   // ref: https://brotato.wiki.spellsandguns.com/Trees#Spawn
-  const int stat = g.run.playerStats[StatType_TREES];
+  const int stat = g.run.state.stats[StatType_TREES];
 
   int min = stat / 3;
 
@@ -2345,83 +2655,45 @@ int GetWeaponPrice(WeaponType type, int tier) {  ///
   return Round((f32)fb->max_price() * PRICE_SCALINGS_PER_TIER[tier]);
 }
 
-int GetWeaponRecyclePrice(WeaponType type, int tier) {  ///
-  return GetWeaponPrice(type, tier) / RECYCLE_PRICE_FACTOR;
+int ToRecyclePrice(int price) {
+  int percent = 0;
+  IterateOverEffects(
+    EffectConditionType_X__PERCENT_MORE_COINS_FROM_RECYCLING,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { percent += EFFECT_X_INT * times; }
+  );
+  f32 scale = MAX(0, 1.0f + (f32)percent / 100.0f) / 3.0f;
+  return Ceil((f32)price * scale);
 }
 
 int GetNextLevelXp(int currentLevel) {  ///
   return SQR(currentLevel + 3);
 }
 
-void IterateOverWeaponEffects(
-  EffectConditionType                                                       condition,
-  auto /* void (int weaponIndexOrMinus1, Weapon& weapon, auto fb_effect) */ innerLambda
-) {  ///
-  const auto fb_weapons          = glib->weapons();
-  int        weaponIndexOrMinus1 = -1;
-  for (auto& weapon : g.run.state.weapons) {
-    weaponIndexOrMinus1++;
-    if (!weapon.type)
-      continue;
-    const auto fb         = fb_weapons->Get(weapon.type);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(weaponIndexOrMinus1, weapon, fb_effect);
-      }
+void AddItem(ItemType type) {  ///
+  bool increasedExistingItemCount = false;
+  for (auto& item : g.run.state.items) {
+    if (item.type == type) {
+      item.count++;
+      increasedExistingItemCount = true;
+      break;
     }
   }
-}
+  if (!increasedExistingItemCount) {
+    Item item{.type = type, .count = 1};
+    *g.run.state.items.Add() = item;
+  }
 
-void IterateOverEffects(
-  EffectConditionType                         condition,
-  auto /* void (auto fb_effect, int times) */ innerLambda
-) {  ///
-  IterateOverWeaponEffects(
-    condition,
-    [&](int _, Weapon& weapon, auto fb_effect)
-      BF_FORCE_INLINE_LAMBDA { innerLambda(fb_effect, 1); }
+  IterateOverItemEffects(
+    nullptr,
+    -1,
+    {},
+    type,
+    1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
   );
-
-  // Iterating over items.
-  {
-    const auto fb_items = glib->items();
-    for (auto& item : g.run.state.items) {
-      const auto fb         = fb_items->Get(item.type);
-      const auto fb_effects = fb->effects();
-      if (fb_effects) {
-        for (const auto fb_effect : *fb_effects) {
-          if (fb_effect->effectcondition_type() == condition)
-            innerLambda(fb_effect, item.count);
-        }
-      }
-    }
-  }
-
-  // Iterating over difficulty effects.
-  {
-    const auto fb         = glib->difficulties()->Get(g.player.difficulty);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 1);
-      }
-    }
-  }
-
-  // Iterating over build effects.
-  {
-    const auto fb         = glib->builds()->Get(g.player.build);
-    const auto fb_effects = fb->effects();
-    if (fb_effects) {
-      for (const auto fb_effect : *fb_effects) {
-        if (fb_effect->effectcondition_type() == condition)
-          innerLambda(fb_effect, 1);
-      }
-    }
-  }
 }
 
 void RunInit() {
@@ -2437,14 +2709,13 @@ void RunInit() {
     g.run.world         = b2CreateWorld(&worldDef);
   }
 
-  // Initializing `g.run.state.statsWithoutItems`.
+  // Initializing `g.run.state.stats`.
   FOR_RANGE (int, stat, (int)StatType_COUNT) {  ///
-    const auto fb                       = glib->stats()->Get(stat);
-    g.run.state.statsWithoutItems[stat] = fb->player_value();
+    const auto fb           = glib->stats()->Get(stat);
+    g.run.state.stats[stat] = fb->player_value();
   }
-  g.run.recalculatePlayerStats = true;
 
-  // Making player.
+  // Making player. {  ///
   auto playerPos = (Vector2)WORLD_SIZE / 2.0f;
   MakeCreature({
     .type = CreatureType_PLAYER,
@@ -2452,8 +2723,7 @@ void RunInit() {
   });
   g.run.previousPlayerPos = playerPos;
   g.run.playerLastRegenAt.SetNow();
-  PLAYER_CREATURE.health    = g.run.state.statsWithoutItems[StatType_HP];
-  PLAYER_CREATURE.maxHealth = g.run.state.statsWithoutItems[StatType_HP];
+  // }
 
   g.run.camera.pos = GetCameraTargetPos();
 
@@ -2480,9 +2750,51 @@ void RunInit() {
     MakeWalls({.lines = lines});
   }
 
-  IterateOverEffects({}, [&](auto fb_effect, int times) BF_FORCE_INLINE_LAMBDA {
-    ApplyEffect(fb_effect, times);
-  });
+  IterateOverEffects(
+    {},
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
+  );
+
+  // Processing EffectConditionType_START_WITH__X__ITEM_OR_WEAPON.
+  IterateOverEffects(  ///
+    EffectConditionType_START_WITH__X__ITEM_OR_WEAPON,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        ASSERT(times > 0);
+        ASSERT(tierOffset == 0);
+
+        auto item   = (ItemType)fb_effect->item_type();
+        auto weapon = (WeaponType)fb_effect->weapon_type();
+
+        if (item)
+          AddItem(item);
+
+        if (weapon) {
+          int  weaponIndex = -1;
+          bool added       = false;
+          for (auto& w : g.run.state.weapons) {
+            ASSERT(times > 0);
+            weaponIndex++;
+            if (w.type)
+              continue;
+
+            added = true;
+            w     = {.type = weapon};
+
+            times--;
+            if (times <= 0)
+              break;
+          }
+          ASSERT(added);
+        }
+      }
+  );
+
+  PLAYER_CREATURE.health    = MAX(1, g.run.state.stats[StatType_HP]);
+  PLAYER_CREATURE.maxHealth = MAX(1, g.run.state.stats[StatType_HP]);
 
   // Filling MOB_BOSS_SHOOTING_FRAMES.
   {  ///
@@ -2621,11 +2933,232 @@ void ReloadFontsIfNeeded() {  ///
     = LoadFonts({.count = loadFontData.count, .base = &g.meta.fontUI}, loadFontData);
 }
 
-void GameInit() {  ///
+void GameInit() {
   ZoneScoped;
 
+  // Checking gamelib.
+  if (BF_ENABLE_ASSERTS) {  ///
+    LAMBDA (
+      void,
+      checkEffects,
+      (auto                  fb_effects,
+       bool                  canHaveWeaponOnly = false,
+       bool                  canHaveBuildOnly  = false,
+       int                   tierValues        = 1,
+       const BFGame::Weapon* fb_weapon         = nullptr)
+    )
+    {
+      const bool allowed = canHaveWeaponOnly && canHaveBuildOnly;
+      ASSERT_FALSE(allowed);
+
+      if (!fb_effects)
+        return;
+
+      int effectIndex = -1;  // NOTE: For debug.
+      for (auto fb_effect : *fb_effects) {
+        effectIndex++;
+
+        auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
+
+        int allowedValues_[]{0, 0};
+        VIEW_FROM_ARRAY_DANGER(allowedValues);
+        if (canHaveBuildOnly)
+          allowedValues[1] = 2;
+        if (canHaveWeaponOnly)
+          allowedValues[1] = 1;
+        ASSERT(allowedValues.Contains(fb_cond->restrict()));
+
+        if (!canHaveWeaponOnly) {
+          ASSERT_FALSE(fb_effect->only_this_weapon());
+          ASSERT_FALSE(fb_effect->only_other_weapons());
+          ASSERT_FALSE(fb_effect->all_weapons());
+        }
+
+        // Max 1 can be specified.
+        ASSERT(
+          (int)fb_effect->only_this_weapon()        //
+            + (int)fb_effect->only_other_weapons()  //
+            + (int)fb_effect->all_weapons()
+          <= 1
+        );
+
+        ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
+        ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
+        ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
+
+        const bool allowed = fb_cond->requires_stat() && fb_cond->requires_property();
+        ASSERT_FALSE(allowed);
+
+        if (fb_cond->requires_stat() || fb_cond->requires_property()) {
+          auto       v                     = fb_effect->value();
+          auto       vm                    = fb_effect->value_multiplier();
+          const bool atLeastOneIsSpecified = v || vm;
+          ASSERT(atLeastOneIsSpecified);
+          if (v)
+            ASSERT(v->size() == tierValues);
+          if (vm)
+            ASSERT(vm->size() == tierValues);
+        }
+        else
+          ASSERT_FALSE(fb_effect->value());
+
+        if (fb_cond->requires_projectile())
+          ASSERT(fb_effect->projectile_range_meters() > 0);
+
+        if (fb_cond->rectrict_only_melee_weapons())
+          ASSERT(fb_cond->restrict() == 1);
+        if (fb_cond->rectrict_only_ranged_weapons())
+          ASSERT(fb_cond->restrict() == 1);
+        if (fb_cond->restrict() == 1) {
+          if (fb_cond->rectrict_only_melee_weapons())
+            ASSERT_FALSE(fb_weapon->projectile_type());
+          if (fb_cond->rectrict_only_ranged_weapons())
+            ASSERT(fb_weapon->projectile_type());
+        }
+
+        {
+          int required = 0;
+          for (auto v : *fb_cond->placeholders()) {
+            if (v->required())
+              required++;
+          }
+
+          int  found = 0;
+          auto fep   = fb_effect->placeholders();
+          if (fep)
+            found = fep->size();
+
+          if (found > required)
+            INVALID_PATH;  // You specified MORE entries in `placeholders` than needed.
+          if (found < required)
+            INVALID_PATH;  // You specified LESS entries in `placeholders` than needed.
+        }
+
+        if (fb_cond->requires_item_or_weapon()) {
+          // Either item or weapon.
+          auto i                     = fb_effect->item_type();
+          auto w                     = fb_effect->weapon_type();
+          auto atLeastOneIsSpecified = i || w;
+          auto bothAreSpecified      = i && w;
+          ASSERT(atLeastOneIsSpecified);
+          ASSERT_FALSE(bothAreSpecified);
+        }
+
+        int reqIndex = -1;
+        for (auto fb_req : *fb_cond->placeholders()) {
+          reqIndex++;
+          if (!fb_req->required())
+            continue;
+
+          auto placValues = fb_effect->placeholders()->Get(reqIndex);
+
+          switch ((CondVarType)fb_req->condvar_type()) {
+          case CondVarType_INTEGER: {
+            ASSERT(placValues->ints());
+            ASSERT(placValues->ints()->size() == tierValues);
+          } break;
+
+          case CondVarType_FLOAT: {
+            ASSERT(placValues->floats());
+            ASSERT(placValues->floats()->size() == tierValues);
+          } break;
+
+          case CondVarType_DAMAGE: {
+            FOR_RANGE (int, i, tierValues) {
+              ASSERT(placValues->ints()->Get(i) >= 0);
+            }
+          } break;
+
+          default:
+            break;
+          }
+        }
+      }
+    };
+
+    for (auto fb : *glib->difficulties()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), false, false);
+    }
+    for (auto fb : *glib->builds()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), false, true);
+    }
+    for (auto fb : *glib->items()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), false, false);
+    }
+    for (auto fb : *glib->weapons()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      checkEffects(fb->effects(), true, false, TOTAL_TIERS - fb->min_tier_index(), fb);
+    }
+
+    LAMBDA (bool, checkPlaceholder, (int locale_, const char* placeholder)) {
+      const auto locale = (Loc)locale_;  // NOTE: For debug.
+
+      int localizationIndex = -1;
+      for (auto loc : *glib->localizations()) {
+        localizationIndex++;
+
+        for (auto line : *loc->broken_lines()->Get(locale)->lines()) {
+          for (auto group : *line->groups()) {
+            for (auto datum : *group->strings()) {
+              if (datum->type() == BrokenStringDatumType_PLACEHOLDER) {
+                if (!strcmp(placeholder, datum->placeholder()->c_str()))
+                  return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
+    };
+
+    for (auto fb_cond : *glib->effect_conditions()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb_cond->name_locale())->c_str();
+
+      if (fb_cond->requires_stat()) {
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT"));
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
+        ASSERT_FALSE(fb_cond->requires_property());
+      }
+
+      if (fb_cond->requires_property()) {
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "PROPERTY"));
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));
+        ASSERT_FALSE(fb_cond->requires_stat());
+      }
+
+      if (fb_cond->requires_pickupable())
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "PICKUPABLE"));
+
+      const char* const letters_[]{"X", "Y", "Z", "W"};
+      VIEW_FROM_ARRAY_DANGER(letters);
+      FOR_RANGE (int, i, fb_cond->placeholders()->size()) {
+        if (fb_cond->placeholders()->Get(i)->required()) {
+          auto expectedLetter = letters[i];
+          ASSERT(checkPlaceholder(fb_cond->name_locale(), expectedLetter));
+        }
+      }
+    }
+
+    for (auto fb : *glib->weapons()) {
+      // NOTE: For debug.
+      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      if (fb->shoots_itself())
+        ASSERT(fb->projectile_type());
+    }
+  }
+
+  // Setup. {  ///
   g.meta.trashArena = MakeArena(16 * 1024);
   g.run.arena       = MakeArena(4 * 1024);
+  TEMP_USAGE(&g.meta.trashArena);
 
   // Initializing Clay.
   {
@@ -2638,15 +3171,38 @@ void GameInit() {  ///
     Clay_SetCullingEnabled(false);
     Clay_SetMeasureTextFunction(MeasureText, 0);
   }
+  // }
 
-  ReloadFontsIfNeeded();
+  ReloadFontsIfNeeded();  // TODO: remove this line?
 
   RunInit();
+}
 
-  auto saveData = SDL_LoadFile("save.bin", nullptr);
-  if (saveData) {
-    Load(saveData);
-    SDL_free(saveData);
+void GameInitAfterLoading() {  ///
+  // Recalculating unlocked builds, items and weapons based off achievements.
+  {  ///
+    g.player.achievementStepsTotal     = 0;
+    g.player.achievementStepsCompleted = 0;
+
+    int i = -1;
+    for (const auto& x : g.player.achievements) {  ///
+      i++;
+      auto fb       = glib->achievements()->Get(i);
+      auto fb_steps = fb->steps();
+      if (!fb_steps)
+        continue;
+
+      g.player.achievementStepsTotal += fb_steps->size();
+      g.player.achievementStepsCompleted += fb_steps->size();
+
+      for (auto fb_step : *fb_steps) {
+        if (fb_step->value() > x.value)
+          AchievementStepSetLock(fb_step, true);
+      }
+    }
+
+    ASSERT(g.player.achievementStepsCompleted >= 0);
+    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
   }
 }
 
@@ -2660,25 +3216,40 @@ constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
 f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  ///
   f32 lifesteal = 0;
   if (affectedByGame)
-    lifesteal += (f32)g.run.playerStats[StatType_LIFE_STEAL] / 100.0f;
+    lifesteal += (f32)g.run.state.stats[StatType_LIFE_STEAL] / 100.0f;
   if (typeOrInvalid)
     lifesteal += glib->weapons()->Get(typeOrInvalid)->life_steal_percent() / 100.0f;
   return lifesteal;
 }
 
-struct TryApplyDamageData {
+struct TryApplyDamageData {  ///
   int              creatureIndex                      = {};
   int              damage                             = {};
   Vector2          directionOrZero                    = {0, 0};
   f32              knockbackMeters                    = 0;
   CreatureType     damagerCreatureType                = CreatureType_INVALID;
-  bool             isCrit                             = false;
+  f32              critDamageMultiplier               = 1;
   int              indexOfWeaponThatDidDamageOrMinus1 = -1;
   ApplyAilmentData ailment                            = {};
   f32              ailmentChance                      = 0;
+  bool*            outWasCrit                         = nullptr;
+  bool*            outJustKilled                      = nullptr;
 };
 
+void HealPlayer(int amount = 1) {  ///
+  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+    PLAYER_CREATURE.health
+      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+  }
+  Save();
+}
+
 bool TryApplyDamage(TryApplyDamageData data) {  ///
+  if (data.outWasCrit)
+    *data.outWasCrit = false;
+  if (data.outJustKilled)
+    *data.outJustKilled = false;
+
   ASSERT(data.creatureIndex >= 0);
   ASSERT(data.damage >= 0);
   if (data.damage != int_max) {
@@ -2706,111 +3277,244 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   creature.aggroed = fb->can_aggro();
 
-  if (data.creatureIndex) {
-    auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
-    if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
+  if (data.damage == int_max) {
+    creature.killedBecauseOfTheEndOfTheWave = true;
+    creature.health                         = 0;
+    if (data.outJustKilled)
+      *data.outJustKilled = true;
+  }
+  else if (!creature.killedBecauseOfTheEndOfTheWave) {
+    bool isCrit = false;
+
+    if (data.creatureIndex) {
+      f32 critChance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
+
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+        IterateOverEffects(
+          EffectConditionType_EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if ((w->thisWaveUseCount % EFFECT_X_INT) == 0)
+                critChance += (f32)(EFFECT_Y_INT * times) / 100.0f;
+            }
+        );
+      }
+
+      if (fb->is_boss()) {
+        data.damage += Round(
+          (f32)data.damage * (f32)g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES]
+          / 100.0f
+        );
+      }
+
+      IterateOverEffects(
+        EffectConditionType_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES,
+        data.indexOfWeaponThatDidDamageOrMinus1,
+        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA {
+            int percent = EFFECT_X_INT * times;
+            if (fb->is_boss())
+              percent = EFFECT_Y_INT * times;
+            data.damage += Round(creature.health * (f32)percent / 100.0f);
+          }
+      );
+
+      if (creature.ailments[AilmentType_BURN - 1].startedAt.IsSet()) {
+        IterateOverEffects(
+          EffectConditionType_HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA { critChance += (f32)(EFFECT_X_INT * times); }
+        );
+      }
+
+      {
+        const f32 hpPercent = (f32)creature.health / (f32)creature.maxHealth;
+
+        IterateOverEffects(
+          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              auto requiredPercent = EFFECT_Y_INT;
+              if (hpPercent * 100 >= requiredPercent) {
+                data.damage
+                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
+              }
+            }
+        );
+
+        IterateOverEffects(
+          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              auto requiredPercent = EFFECT_Y_INT;
+              if (hpPercent * 100 <= requiredPercent) {
+                data.damage
+                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
+              }
+            }
+        );
+      }
+
+      isCrit = GRAND.FRand() < critChance;
+      if (isCrit)
+        data.damage += Round((f32)data.damage * data.critDamageMultiplier);
+
+      data.damage = MAX(1, data.damage);
+
+      auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
+      if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
+        MakeNumber({
+          .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
+          .value = data.damage,
+          .pos   = creature.pos,
+        });
+      }
+    }
+    else {
+      // Can't hurt player if he was recently damaged.
+      if (creature.lastDamagedAt.IsSet()
+          && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
+        return false;
+
+      // Dodge.
+      if (GRAND.FRand() < MIN(
+            (f32)MAX_DODGE_PERCENT / 100.0f,
+            (f32)g.run.state.stats[StatType_DODGE] / 100.0f
+          ))
+      {
+        MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
+
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING,
+          -1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                HealPlayer(EFFECT_Y_INT * times);
+            }
+        );
+
+        // TODO: lastInvincibilityTriggeredAt?
+        creature.lastDamagedAt = {};
+        creature.lastDamagedAt.SetNow();
+        return false;
+      }
+
+      // Applying player's armor.
+      auto armor = (f32)g.run.state.stats[StatType_ARMOR];
+      if (armor > 0)
+        data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
+      else if (armor < 0)
+        data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
+      data.damage = MAX(1, data.damage);
+
       MakeNumber({
-        .type  = (data.isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
+        .type  = NumberType_DAMAGE_MOB,
         .value = data.damage,
         .pos   = creature.pos,
       });
     }
-  }
-  else {
-    // Can't hurt player if he was recently damaged.
-    if (creature.lastDamagedAt.IsSet()
-        && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
-      return false;
 
-    // Dodge.
-    if (GRAND.FRand() < MIN(
-          (f32)MAX_DODGE_PERCENT / 100.0f, (f32)g.run.playerStats[StatType_DODGE] / 100.0f
-        ))
-    {
-      MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
+    if (data.outWasCrit)
+      *data.outWasCrit = isCrit;
 
-      // TODO: lastInvincibilityTriggeredAt?
-      creature.lastDamagedAt = {};
-      creature.lastDamagedAt.SetNow();
-      return false;
-    }
+    // Player lifesteals.
+    if (data.damagerCreatureType == CreatureType_PLAYER) {
+      auto weaponType = WeaponType_INVALID;
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
+        weaponType = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
 
-    // Applying player's armor.
-    auto armor = (f32)g.run.playerStats[StatType_ARMOR];
-    if (armor > 0)
-      data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
-    else if (armor < 0)
-      data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
-    data.damage = MAX(1, data.damage);
+      if (GRAND.FRand() < GetLifestealChance(weaponType)) {
+        bool canLifesteal = true;
+        if (g.run.playerLastLifestealAt.IsSet()
+            && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
+          canLifesteal = false;
 
-    MakeNumber({
-      .type  = NumberType_DAMAGE_MOB,
-      .value = data.damage,
-      .pos   = creature.pos,
-    });
-  }
-
-  // Player lifesteals.
-  if (data.damagerCreatureType == CreatureType_PLAYER) {
-    auto weaponType = WeaponType_INVALID;
-    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-      weaponType = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
-
-    if (GRAND.FRand() < GetLifestealChance(weaponType)) {
-      bool canLifesteal = true;
-      if (g.run.playerLastLifestealAt.IsSet()
-          && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
-        canLifesteal = false;
-
-      if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
-        PLAYER_CREATURE.health
-          = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-        g.run.playerLastLifestealAt = {};
-        g.run.playerLastLifestealAt.SetNow();
+        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
+          PLAYER_CREATURE.health
+            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+          g.run.playerLastLifestealAt = {};
+          g.run.playerLastLifestealAt.SetNow();
+        }
       }
     }
-  }
 
-  if (data.damage == int_max) {
-    creature.killedBecauseOfTheEndOfTheWave = true;
-    creature.health                         = 0;
-  }
-  else
     creature.health -= data.damage;
 
-  bool ailmentCanBeApplied = true;
-  auto resists             = fb->resists_ailment_types();
-  if (resists) {
-    for (auto v : *resists) {
-      if (v == data.ailment.type) {
-        ailmentCanBeApplied = false;
-        break;
+    int effectDroppedCoins = 0;
+
+    if (creature.health <= 0) {
+      if (data.outJustKilled)
+        *data.outJustKilled = true;
+
+      if (isCrit) {
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                effectDroppedCoins += EFFECT_Y_INT * times;
+            }
+        );
+      }
+    }
+
+    IterateOverEffects(
+      EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
+      data.indexOfWeaponThatDidDamageOrMinus1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          if (GRAND.FRand() < (f32)EFFECT_Y_INT / 100.0f)
+            effectDroppedCoins += EFFECT_X_INT * times;
+        }
+    );
+
+    if (effectDroppedCoins > 0) {
+      MakePickupable({
+        .type        = PickupableType_COIN,
+        .pos         = creature.pos,
+        .coin_amount = effectDroppedCoins,
+      });
+    }
+
+    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
+        += data.damage;
+    }
+
+    bool ailmentCanBeApplied = true;
+    auto resists             = fb->resists_ailment_types();
+    if (resists) {
+      for (auto v : *resists) {
+        if (v == data.ailment.type) {
+          ailmentCanBeApplied = false;
+          break;
+        }
+      }
+    }
+
+    if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance))
+    {
+      auto damage = data.ailment.value;
+      if (data.damagerCreatureType == CreatureType_PLAYER)
+        damage += g.run.state.stats[StatType_DAMAGE_ELEMENTAL];
+
+      if ((data.ailment.value == 0) || (damage > 0)) {
+        data.ailment.value = damage;
+        ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
       }
     }
   }
 
-  if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance)) {
-    auto damage = data.ailment.value;
-    if (data.damagerCreatureType == CreatureType_PLAYER)
-      damage += g.run.playerStats[StatType_DAMAGE_ELEMENTAL];
-
-    if ((data.ailment.value == 0) || (damage > 0)) {
-      data.ailment.value = damage;
-      ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
-    }
-  }
-
-  if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-    g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
-      += data.damage;
-
-  if (data.damage != int_max) {
-    creature.lastDamagedAt = {};
-    creature.lastDamagedAt.SetNow();
-    creature.lastDamagedFlashAt = {};
-    creature.lastDamagedFlashAt.SetNow();
-  }
-
+  creature.lastDamagedAt = {};
+  creature.lastDamagedAt.SetNow();
+  creature.lastDamagedFlashAt = {};
+  creature.lastDamagedFlashAt.SetNow();
   creature.lastDamagedWeaponIndex = data.indexOfWeaponThatDidDamageOrMinus1;
 
   data.knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
@@ -2880,14 +3584,14 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
 void Rerolls::Roll() {  ///
   PLAYER_COINS -= ApplyStatRerollPrice(GetPrice());
   ASSERT(PLAYER_COINS >= 0);
-  if (rerolledFreeTimes < g.run.playerStats[StatType_FREE_REROLLS])
+  if (rerolledFreeTimes < g.run.state.stats[StatType_FREE_REROLLS])
     rerolledFreeTimes++;
   else
     rerolledTimes++;
 }
 
 int Rerolls::GetPrice() const {  ///
-  if (rerolledFreeTimes < g.run.playerStats[StatType_FREE_REROLLS])
+  if (rerolledFreeTimes < g.run.state.stats[StatType_FREE_REROLLS])
     return 0;
   return GetRerollPrice(g.run.state.waveIndex, rerolledTimes);
 }
@@ -2971,24 +3675,9 @@ void RecalculateShopToPick() {  ///
   }
 }
 
-void AddItem(ItemType type) {  ///
-  bool increasedExistingItemCount = false;
-  for (auto& item : g.run.state.items) {
-    if (item.type == type) {
-      item.count++;
-      increasedExistingItemCount = true;
-      break;
-    }
-  }
-  if (!increasedExistingItemCount) {
-    Item item{.type = type, .count = 1};
-    *g.run.state.items.Add() = item;
-  }
-
-  g.run.recalculatePlayerStats = true;
-}
-
 void StableRemoveWeapon(int index) {  ///
+  auto& weapon = g.run.state.weapons[index];
+
   for (int i = index + 1; i < g.run.state.weapons.count; i++)
     g.run.state.weapons[i - 1] = g.run.state.weapons[i];
   g.run.state.weapons[g.run.state.weapons.count - 1] = {};
@@ -3001,11 +3690,11 @@ f32 _AttackSpeedMultiplier(int v) {  ///
 }
 
 f32 GetPlayerStatAttackSpeedMultiplier() {  ///
-  return _AttackSpeedMultiplier(g.run.playerStats[StatType_ATTACK_SPEED]);
+  return _AttackSpeedMultiplier(g.run.state.stats[StatType_ATTACK_SPEED]);
 }
 
 f32 GetPlayerStatStructureAttackSpeedMultiplier() {  ///
-  return _AttackSpeedMultiplier(g.run.playerStats[StatType_STRUCTURE_ATTACK_SPEED]);
+  return _AttackSpeedMultiplier(g.run.state.stats[StatType_STRUCTURE_ATTACK_SPEED]);
 }
 
 lframe ApplyAttackSpeedToDuration(int duration) {  ///
@@ -3024,12 +3713,12 @@ lframe ApplyStructureAttackSpeedToDuration(int duration) {  ///
 }
 
 f32 GetExplosionDamageMultiplier() {  ///
-  auto v = (f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE];
+  auto v = (f32)g.run.state.stats[StatType_EXPLOSION_DAMAGE];
   return MAX(0, 1.0f + v / 100.0f);
 }
 
 f32 GetExplosionSizeMultiplier() {  ///
-  auto v = (f32)g.run.playerStats[StatType_EXPLOSION_SIZE];
+  auto v = (f32)g.run.state.stats[StatType_EXPLOSION_SIZE];
   if (v >= 0)
     return 1 + v / 100.0f;
   return powf(2, v / 50);
@@ -3041,7 +3730,7 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
 
   f32 range = 0;
   if (affectedByGame)
-    range = (f32)g.run.playerStats[StatType_RANGE];
+    range = (f32)g.run.state.stats[StatType_RANGE];
 
   f32 bonusRange = 0;
 
@@ -3060,11 +3749,6 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
   return fb->range_meters() + bonusRange;
 }
 
-bool IsCrit() {  ///
-  const f32 chance = (f32)g.run.playerStats[StatType_CRIT_CHANCE] / 100.0f;
-  return GRAND.FRand() < chance;
-}
-
 int TryGetCreatureIndexById(int id) {  ///
   int i = -1;
   for (const auto& creature : g.run.creatures) {
@@ -3081,8 +3765,43 @@ int GetCreatureIndexById(int id) {  ///
   return index;
 }
 
-bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndexOrMinus1) {  ///
-  auto& weapon = g.run.state.weapons[*weaponIndexOrMinus1];
+void EffectSpawnProjectilesOnHit(
+  const Creature& creature,
+  int             weaponIndex,
+  f32             critDamageMultiplier
+) {
+  ASSERT(weaponIndex >= 0);
+
+  IterateOverEffects(
+    EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE,
+    weaponIndex,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        int damage = EFFECT_Y_INT * times;
+        damage     = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
+        damage     = ApplyPlayerStatDamageMultiplier(damage);
+
+        const int toSpawn = EFFECT_X_INT * times;
+        FOR_RANGE (int, i, toSpawn) {
+          MakeProjectile({
+            .type                      = (ProjectileType)fb_effect->projectile_type(),
+            .ownerCreatureType         = CreatureType_PLAYER,
+            .weaponIndexOrMinus1       = weaponIndex,
+            .pos                       = creature.pos,
+            .dir                       = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
+            .range                     = fb_effect->projectile_range_meters(),
+            .damage                    = damage,
+            .critDamageMultiplier      = critDamageMultiplier,
+            .alreadyDamagedCreatureId  = creature.id,
+            .dontSpawnProjectilesOnHit = true,
+          });
+        }
+      }
+  );
+}
+
+bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
+  auto& weapon = g.run.state.weapons[*weaponIndex];
 
   const bool continueCollisions = true;
   const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
@@ -3104,20 +3823,20 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndexOrMinus1) {  ///
   if (weapon.piercedCount < weapon.piercedCreatureIds.count) {
     weapon.piercedCreatureIds[weapon.piercedCount++] = creature.id;
 
-    int  damage = weapon.calculatedDamage;
-    bool isCrit = IsCrit();
-    if (isCrit)
-      damage = Round((f32)damage * fb->crit_damage_multiplier());
-
-    TryApplyDamage({
-      .creatureIndex       = creatureIndex,
-      .damage              = damage,
-      .directionOrZero     = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      .knockbackMeters     = fb->knockback_meters(),
-      .damagerCreatureType = CreatureType_PLAYER,
-      .isCrit              = isCrit,
-      .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndexOrMinus1,
+    const bool hit = TryApplyDamage({
+      .creatureIndex   = creatureIndex,
+      .damage          = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier),
+      .directionOrZero = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      .knockbackMeters = fb->knockback_meters(),
+      .damagerCreatureType                = CreatureType_PLAYER,
+      .critDamageMultiplier               = fb->crit_damage_multiplier(),
+      .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndex,
     });
+
+    const int tierOffset = weapon.tier - fb->min_tier_index();
+
+    if (hit)
+      EffectSpawnProjectilesOnHit(creature, *weaponIndex, fb->crit_damage_multiplier());
   }
   return continueCollisions;
 }
@@ -3147,7 +3866,7 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
 
 void AddXP(f32 xp) {  ///
   if (xp > 0)
-    xp *= (f32)(MAX(1, g.run.playerStats[StatType_XP_GAIN] + 100)) / 100.0f;
+    xp *= (f32)(MAX(1, g.run.state.stats[StatType_XP_GAIN] + 100)) / 100.0f;
 
   g.run.state.xp += xp;
   g.run.state.xp = MAX(0, g.run.state.xp);
@@ -3156,7 +3875,10 @@ void AddXP(f32 xp) {  ///
 
   auto nextLevelXp = GetNextLevelXp(g.run.state.level);
 
+  int addedLevels = 0;
+
   while (g.run.state.xp >= nextLevelXp) {
+    addedLevels++;
     g.run.state.xp -= nextLevelXp;
     g.run.state.level++;
     nextLevelXp = GetNextLevelXp(g.run.state.level);
@@ -3170,10 +3892,20 @@ void AddXP(f32 xp) {  ///
       const auto vals = fb->upgrade_values();
       if (!vals)
         continue;
-      g.run.state.statsWithoutItems[stat] += vals->Get(0);
-      g.run.recalculatePlayerStats = true;
+      ChangeStat(stat, vals->Get(0));
       break;
     }
+  }
+
+  if (addedLevels > 0) {
+    IterateOverEffects(
+      EffectConditionType_STAT__UPON_LEVEL_UP,
+      -1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          ApplyStatEffect(fb_effect, tierOffset, times * addedLevels);
+        }
+    );
   }
 
   Save();
@@ -3185,52 +3917,36 @@ bool CanSpawnMoreCreatures() {  ///
   return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
 }
 
-void HealPlayer(f32 amount = 1) {  ///
-  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
-    PLAYER_CREATURE.health
-      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
-  }
-  Save();
-}
-
-void ClayEffectCondition_KILL_N_ENEMIES_GET_STAT(const BFGame::Effect* fb_effect) {  ///
-  PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_KILL_N_ENEMIES);
-}
-
-void ClayEffectCondition_END_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_END_OF_THE_WAVE);
-}
-
-void ClayEffectCondition_START_OF_THE_WAVE_GET_STAT(const BFGame::Effect* fb_effect
-) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_AT_THE_START_OF_THE_WAVE);
-}
-
-void ClayEffectCondition_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT(
-  const BFGame::Effect* fb_effect
-) {  ///
-  PlaceholdString("ENEMIES", TextFormat("%d", fb_effect->condition_value()));
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_KILL_N_ENEMIES_USING_THIS_WEAPON
-  );
-}
-
-void ClayEffectCondition_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY(
-  const BFGame::Effect* fb_effect
-) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-    Loc_WEAPON_EFFECT_MORE_OF_THE_SAME_WEAPON_MORE_PROPERTY
-  );
-}
-
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
   const auto& string = placeholder->string();
   BF_CLAY_TEXT(string.value, string.color);
 }
 
 void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
-  BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
-    placeholder->brokenLocale_value(), palTextWhite, false
+  const auto& d = placeholder->brokenLocale();
+  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, d.color, false);
+}
+
+void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
+  const auto& d = placeholder->image();
+
+  auto fb = glib->original_texture_sizes()->Get(d.texId);
+
+  f32 h              = (f32)g.meta.fontUI.size;
+  f32 fontScaleToFit = g.meta.fontUI._scaleToFit;
+  if (g.ui.overriddenFont) {
+    h              = (f32)g.ui.overriddenFont->size;
+    fontScaleToFit = g.ui.overriddenFont->_scaleToFit;
+  }
+
+  f32 scale = h / ((f32)fb->y() * ASSETS_TO_LOGICAL_RATIO);
+  BF_CLAY_IMAGE(
+    {
+      .texId = d.texId,
+      .scale{scale, scale},
+      .overriddenSize{0, h / fontScaleToFit},
+    },
+    false
   );
 }
 
@@ -3278,6 +3994,59 @@ int GetBuildTier(BuildType build) {  ///
   return MAX(0, (int)g.player.builds[build].maxDifficultyBeaten - 1);
 }
 
+void _UpdateImmediateWeaponEffects(int weaponIndex, int scale) {  ///
+  int occupiedSlots = 0;
+  int emptySlots    = 0;
+  for (auto& w : g.run.state.weapons) {
+    if (w.type)
+      occupiedSlots++;
+    else
+      emptySlots++;
+  }
+
+  struct {
+    EffectConditionType c;
+    int                 times;
+  } toUpdate_[]{
+    {EffectConditionType_DEFAULT_GET__STAT, 1},
+    {EffectConditionType_GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
+    {EffectConditionType_GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
+  };
+  VIEW_FROM_ARRAY_DANGER(toUpdate);
+
+  const auto& weapon = g.run.state.weapons[weaponIndex];
+  const int   tierOffset
+    = weapon.tier - glib->weapons()->Get(weapon.type)->min_tier_index();
+
+  for (auto c : toUpdate) {
+    IterateOverWeaponEffects(
+      c.c,
+      weapon.type,
+      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+        ApplyStatEffect(fb_effect, tierOffset, c.times * scale);
+      }
+    );
+  }
+}
+
+void ApplyImmediateWeaponEffects() {  ///
+  int weaponIndex = -1;
+  for (const auto& weapon : g.run.state.weapons) {
+    weaponIndex++;
+    if (weapon.type)
+      _UpdateImmediateWeaponEffects(weaponIndex, 1);
+  }
+}
+
+void RemoveImmediateWeaponEffects() {  ///
+  int weaponIndex = -1;
+  for (const auto& weapon : g.run.state.weapons) {
+    weaponIndex++;
+    if (weapon.type)
+      _UpdateImmediateWeaponEffects(weaponIndex, -1);
+  }
+}
+
 void DoUI(bool draw) {
   ZoneScoped;
 
@@ -3298,6 +4067,7 @@ void DoUI(bool draw) {
   const auto fb_difficulties        = glib->difficulties();
   const auto fb_achievements        = glib->achievements();
   const auto fb_builds              = glib->builds();
+  const auto fb_effectConditions    = glib->effect_conditions();
 
   if (!draw) {
     // Updating clay mouse pos.
@@ -3306,17 +4076,16 @@ void DoUI(bool draw) {
     Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
   }
 
-  constexpr int MAX_BEAUTIFIERS      = 32;
-  const auto    localization         = glib->localizations()->Get(ge.meta.localization);
-  const auto    localization_strings = localization->strings();
-  const auto    localization_broken_lines = localization->broken_lines();
+  const auto localization              = glib->localizations()->Get(ge.meta.localization);
+  const auto localization_strings      = localization->strings();
+  const auto localization_broken_lines = localization->broken_lines();
 
   TEMP_USAGE(&g.meta.trashArena);
 
   Clay_BeginLayout();
 
-  Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
-  int                              beautifiersCount = 0;
+  auto& beautifiers      = g.ui.clayBeautifiers;
+  auto& beautifiersCount = g.ui.clayBeautifiersCount;
 
   constexpr u16 GAP_FLEX                 = 2;
   constexpr u16 GAP_SMALL                = 8;
@@ -3330,8 +4099,9 @@ void DoUI(bool draw) {
     _wheel *= 10;
   if (draw)
     _wheel = 0;
-  const int wheel  = _wheel;
-  i16       zIndex = 0;
+  const int wheel = _wheel;
+
+  auto& zIndex = g.ui.clayZIndex;
 
   const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
 
@@ -3355,8 +4125,7 @@ void DoUI(bool draw) {
     + GAP_FLEX;                                              // Gap between them.
   // }
 
-  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED_DANGER, (int locale, Color color = palTextWhite))
-  {  ///
+  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, Color color = palTextWhite)) {  ///
     auto        string = localization_strings->Get(locale);
     Clay_String text{
       .isStaticallyAllocated = true,
@@ -3457,7 +4226,7 @@ void DoUI(bool draw) {
       {.id = CLAY_ID("button_shop_reroll")},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_REROLL, textColor);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_REROLL, textColor);
 
           ASSERT(price >= 0);
 
@@ -3517,7 +4286,7 @@ void DoUI(bool draw) {
         BF_CLAY_SIZING_GROW_X,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
-        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STATS);
+        BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS);
       }
 
       // Primary / secondary buttons.
@@ -3535,7 +4304,7 @@ void DoUI(bool draw) {
             .paddingHorizontal = GAP_SMALL,
           },
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STATS_PRIMARY, textColor);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_PRIMARY, textColor);
           }
         );
 
@@ -3546,7 +4315,7 @@ void DoUI(bool draw) {
             .paddingHorizontal = GAP_SMALL,
           },
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STATS_SECONDARY, textColor);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_SECONDARY, textColor);
           }
         );
 
@@ -3572,18 +4341,12 @@ void DoUI(bool draw) {
         }}) {
           // Increasing stat by clicking on it in debug mode.
           if (stat && ge.meta.debugEnabled) {
-            if (clicked()) {
-              g.run.state.statsWithoutItems[stat]++;
-              g.run.recalculatePlayerStats = true;
-            }
-            if (rightClicked()) {
-              g.run.state.statsWithoutItems[stat] += 10;
-              g.run.recalculatePlayerStats = true;
-            }
-            if (wheel && Clay_Hovered()) {
-              g.run.state.statsWithoutItems[stat] += wheel;
-              g.run.recalculatePlayerStats = true;
-            }
+            if (clicked())
+              ChangeStat(stat, 1);
+            if (rightClicked())
+              ChangeStat(stat, 10);
+            if (wheel && Clay_Hovered())
+              ChangeStat(stat, wheel);
           }
 
           const auto fb = fb_stats->Get(stat);
@@ -3611,7 +4374,7 @@ void DoUI(bool draw) {
 
           if (fb->is_percent())
             BF_CLAY_TEXT("% ");
-          BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
+          BF_CLAY_TEXT_LOCALIZED(locale);
           BF_CLAY_SPACER_HORIZONTAL;
           BF_CLAY_TEXT(" ");
           BF_CLAY_TEXT(TextFormat("%d", value));
@@ -3641,7 +4404,7 @@ void DoUI(bool draw) {
         const auto fb   = glib->stats()->Get(type);
         if (!fb->is_hidden() && (fb->is_secondary() == g.run.showingSecondaryStats)) {
           componentStatsEntry(
-            fb->icon_texture_id(), fb->name_locale(), g.run.playerStats[type], type
+            fb->icon_texture_id(), fb->name_locale(), g.run.state.stats[type], type
           );
         }
       }
@@ -3752,9 +4515,14 @@ void DoUI(bool draw) {
     return result;
   };
 
-  LAMBDA (void, componentEffectsExploded, (auto fb_effects, int count, int maxWidth))
+  LAMBDA (
+    void,
+    componentEffectsExploded,
+    (auto fb_effects, int tierOffset, int count, int maxWidth)
+  )
   {  ///
     ASSERT(count > 0);
+    ASSERT(tierOffset >= 0);
     if (!fb_effects)
       return;
 
@@ -3768,6 +4536,21 @@ void DoUI(bool draw) {
 
         f32 v = 0;
 
+        if (fb_effect->only_this_weapon()       //
+            || fb_effect->only_other_weapons()  //
+            || fb_effect->all_weapons())
+        {
+          // auto color = secondaryTextColor;
+          auto color = palTextWhite;
+          if (fb_effect->only_this_weapon())
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, color);
+          if (fb_effect->only_other_weapons())
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_OTHER_WEAPONS, color);
+          if (fb_effect->all_weapons())
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ALL_WEAPONS, color);
+          BF_CLAY_TEXT(": ", color);
+        }
+
         if (fb_effect->stat_type()) {
           const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
 
@@ -3777,9 +4560,11 @@ void DoUI(bool draw) {
           PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
 
           bool isPercent = fb_stat->is_percent();
-          v              = (f32)fb_effect->value();
-          if (v == 0) {
-            v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
+          auto value     = fb_effect->value();
+          if (value)
+            v = (f32)value->Get(tierOffset);
+          else {
+            v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
           v *= count;
@@ -3796,15 +4581,18 @@ void DoUI(bool draw) {
             (isPositive == fb_stat->negative_is_good() ? palTextRed : palTextGreen)
           );
         }
-        else if (fb_effect->weaponproperty_type()) {
+
+        if (fb_effect->weaponproperty_type()) {
           const auto fb_prop
             = fb_weapon_properties->Get(fb_effect->weaponproperty_type());
           PlaceholdBrokenLocale("PROPERTY", fb_prop->name_locale());
 
-          v              = (f32)fb_effect->value();
           bool isPercent = false;
-          if (v == 0) {
-            v         = (fb_effect->value_multiplier() - 1.0f) * 100.0f;
+          auto value     = fb_effect->value();
+          if (value)
+            v = (f32)value->Get(tierOffset);
+          else {
+            v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
           v *= count;
@@ -3823,14 +4611,149 @@ void DoUI(bool draw) {
             palTextGreen
           );
         }
-        else
-          INVALID_PATH;
 
-        const auto cond = fb_effect->effectcondition_type();
-        if (cond)
-          clayEffectConditionFunctions[cond - 1](fb_effect);
-        else if (!FloatEquals(v, 0))
-          BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_EFFECT_DEFAULT_WEAPON_STAT);
+        if (fb_effect->pickupable_type()) {
+          auto fb_pickupable = fb_pickupables->Get(fb_effect->pickupable_type());
+          PlaceholdBrokenLocale("PICKUPABLE", fb_pickupable->name_locale(), palTextGreen);
+        }
+
+        const auto cond                = fb_effect->effectcondition_type();
+        auto       fb_cond             = fb_effectConditions->Get(cond);
+        auto       fb_condPlaceholders = fb_cond->placeholders();
+
+        if (fb_condPlaceholders) {
+          char index = -1;
+          for (auto fb_placeholder : *fb_condPlaceholders) {
+            index++;
+
+            if (!fb_placeholder->required())
+              continue;
+
+            auto fb_vals = fb_effect->placeholders()->Get(index);
+
+            char placeholderName[2]{'X', '\0'};
+            placeholderName[0] += index;
+
+            PlaceholdGroupBegin(PushTextToArena(&g.meta.trashArena, placeholderName));
+
+            switch ((CondVarType)fb_placeholder->condvar_type()) {
+            case CondVarType_INTEGER: {
+              auto cv = fb_vals->ints()->Get(tierOffset);
+
+              if (fb_placeholder->multiplied_by_times())
+                cv *= count;
+              if (fb_placeholder->divided_by_times())
+                cv /= count;
+
+              auto formatFunc = FormatInt;
+              if (fb_placeholder->signed_())
+                formatFunc = FormatSignedInt;
+
+              auto formatted = formatFunc(cv);
+              if (fb_placeholder->is_percent())
+                formatted = TextFormat("%s%%", formatted);
+
+              PlaceholdString(PushTextToArena(&g.meta.trashArena, formatted));
+            } break;
+
+            case CondVarType_FLOAT: {
+              auto cv = fb_vals->floats()->Get(tierOffset);
+
+              if (fb_placeholder->multiplied_by_times())
+                cv *= count;
+              if (fb_placeholder->divided_by_times())
+                cv /= count;
+
+              auto formatFunc = FormatFloatDot1WithoutLeadingZeros;
+              if (fb_placeholder->signed_())
+                formatFunc = FormatSignedFloatDot1WithoutLeadingZeros;
+
+              auto formatted = formatFunc(cv);
+              if (fb_placeholder->is_percent())
+                formatted = TextFormat("%s%%", formatted);
+
+              PlaceholdString(PushTextToArena(&g.meta.trashArena, formatted));
+            } break;
+
+            case CondVarType_DAMAGE: {
+              int baseDamage = fb_vals->ints()->Get(tierOffset);
+              ASSERT(baseDamage >= 0);
+
+              if (fb_placeholder->multiplied_by_times())
+                baseDamage *= count;
+              if (fb_placeholder->divided_by_times())
+                baseDamage /= count;
+
+              auto scalings = fb_effect->damage_scalings();
+
+              int totalScalings = 0;
+              if (scalings) {
+                for (auto s : *scalings) {
+                  const int v = s->percents_per_tier()->Get(tierOffset);
+                  if (v)
+                    totalScalings++;
+                }
+              }
+
+              if (baseDamage) {
+                PlaceholdString(PushTextToArena(&g.meta.trashArena, FormatInt(baseDamage))
+                );
+
+                if (totalScalings) {
+                  PlaceholdString(" ");
+                  PlaceholdString("+");
+                  PlaceholdString(" ");
+                }
+              }
+
+              if (scalings) {
+                for (auto s : *scalings) {
+                  int v = s->percents_per_tier()->Get(tierOffset);
+                  if (fb_placeholder->multiplied_by_times())
+                    v *= count;
+                  if (fb_placeholder->divided_by_times())
+                    v /= count;
+
+                  if (!v)
+                    continue;
+
+                  PlaceholdString(TextFormat("%d%%", v));
+                  PlaceholdImage(fb_stats->Get(s->stat_type())->icon_texture_id());
+                  totalScalings--;
+
+                  if (totalScalings > 0) {
+                    PlaceholdString(" ");
+                    PlaceholdString("+");
+                    PlaceholdString(" ");
+                  }
+                }
+              }
+            } break;
+
+            case CondVarType_ITEM_OR_WEAPON: {
+              auto item   = (ItemType)fb_effect->item_type();
+              auto weapon = (WeaponType)fb_effect->weapon_type();
+              int  locale = 0;
+              if (item)
+                locale = fb_items->Get(item)->name_locale();
+              else if (weapon)
+                locale = fb_weapons->Get(weapon)->name_locale();
+              else
+                INVALID_PATH;
+
+              PlaceholdString(localization_strings->Get(locale)->c_str());
+            } break;
+
+            default:
+              INVALID_PATH;
+              break;
+            }
+
+            PlaceholdGroupEnd();
+          }
+        }
+
+        BF_CLAY_TEXT_BROKEN_LOCALIZED(fb_cond->name_locale());
 
         FlexEnd();
       }
@@ -3886,16 +4809,17 @@ void DoUI(bool draw) {
     int recyclePrice = 0;
     if (fb_weapon) {
       price        = GetWeaponPrice(data.weapon, tier);
-      recyclePrice = GetWeaponRecyclePrice(data.weapon, tier);
+      recyclePrice = ToRecyclePrice(price);
     }
     if (fb_item) {
       price        = fb_item->price();
-      recyclePrice = price / RECYCLE_PRICE_FACTOR;
+      recyclePrice = ToRecyclePrice(price);
     }
     price = ApplyStatItemsPrice(price);
 
     bool canBuy                     = (price <= PLAYER_COINS);
     bool canBuyErrorWeapon          = false;
+    bool canBuyErrorBuild           = false;
     int  emptyOrSameWeaponSlotIndex = -1;
 
     if (canBuy && data.weapon) {
@@ -3925,30 +4849,54 @@ void DoUI(bool draw) {
         canBuy            = false;
       }
     }
+    if (data.weapon) {
+      auto fb        = fb_weapons->Get(data.weapon);
+      auto is_ranged = fb->projectile_type();
+
+      if (is_ranged) {
+        IterateOverEffects(
+          EffectConditionType_CANT_EQUIP_RANGED_WEAPONS,
+          -1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA { canBuyErrorBuild = true; }
+        );
+      }
+      else {
+        IterateOverEffects(
+          EffectConditionType_CANT_EQUIP_MELEE_WEAPONS,
+          -1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA { canBuyErrorBuild = true; }
+        );
+      }
+
+      if (canBuyErrorBuild)
+        canBuy = false;
+    }
     // }  ///
 
-    // CLAY(...) {  ///
-    CLAY({.layout{.sizing{
-      .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-      .height
-      = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
-    }}})
-    // }
+    CLAY(  ///
+      {.layout{.sizing{
+        .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+        .height
+        = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
+      }}}
+    )
     if (!data.hideIfEmpty || atLeastOneIsSpecified) {
-      // CLAY(...) {  ///
-      CLAY({
-        .layout{
-          BF_CLAY_SIZING_GROW_XY,
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-          .childGap        = GAP_SMALL,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        },
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), slotColors[2 * tier], slotColors[2 * tier + 1]
-        ),
-      })
-      // }
-      {
+      CLAY(
+        ///
+        {
+          .layout{
+            BF_CLAY_SIZING_GROW_XY,
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            .childGap        = GAP_SMALL,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), slotColors[2 * tier], slotColors[2 * tier + 1]
+          ),
+        }
+      ) {
         // Icon, name.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           // Icon. {  ///
@@ -3966,40 +4914,36 @@ void DoUI(bool draw) {
           // Name, secondary stuff.
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             if (data.difficulty) {  ///
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
+              BF_CLAY_TEXT_LOCALIZED(
                 fb_difficulty->name_locale(), textColorsPerTier[tier]
               );
 
               FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_DIFFICULTY, secondaryTextColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY, secondaryTextColor);
               FontEnd();
             }
             if (data.build) {  ///
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
-                fb_build->name_locale(), textColorsPerTier[tier]
-              );
+              BF_CLAY_TEXT_LOCALIZED(fb_build->name_locale(), textColorsPerTier[tier]);
               FontBegin(&g.meta.fontStats);
               const auto d = g.player.builds[data.build].maxDifficultyBeaten;
               if (d > 0) {
                 CLAY({}) {
                   auto dd = fb_difficulties->Get(d);
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(dd->name_locale(), secondaryTextColor);
+                  BF_CLAY_TEXT_LOCALIZED(dd->name_locale(), secondaryTextColor);
                 }
               }
               else
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD, secondaryTextColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD, secondaryTextColor);
               FontEnd();
             }
             if (data.item) {  ///
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
-                fb_item->name_locale(), textColorsPerTier[tier]
-              );
+              BF_CLAY_TEXT_LOCALIZED(fb_item->name_locale(), textColorsPerTier[tier]);
 
               FontBegin(&g.meta.fontStats);
               if (fb_item->count_cap() > 0) {
                 if (fb_item->count_cap() > 1) {
                   CLAY({}) {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_LIMITED, secondaryTextColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, secondaryTextColor);
 
                     if (data.affectedByGame) {
                       int currentCount = 0;
@@ -4022,18 +4966,16 @@ void DoUI(bool draw) {
                   }
                 }
                 else
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_UNIQUE, secondaryTextColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_UNIQUE, secondaryTextColor);
               }
               else
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEM, secondaryTextColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM, secondaryTextColor);
               FontEnd();
             }
             if (data.weapon) {  ///
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
-                fb_weapon->name_locale(), textColorsPerTier[tier]
-              );
+              BF_CLAY_TEXT_LOCALIZED(fb_weapon->name_locale(), textColorsPerTier[tier]);
               FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPON, secondaryTextColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPON, secondaryTextColor);
               FontEnd();
             }
           }
@@ -4043,23 +4985,34 @@ void DoUI(bool draw) {
 
         // Difficulty stats.
         if (data.difficulty) {  ///
-          componentEffectsExploded(fb_difficulty->effects(), data.count, CARD_WIDTH);
+          componentEffectsExploded(fb_difficulty->effects(), 0, data.count, CARD_WIDTH);
         }
         // Build stats.
         if (data.build) {  ///
-          componentEffectsExploded(fb_build->effects(), data.count, CARD_WIDTH);
+          componentEffectsExploded(fb_build->effects(), 0, data.count, CARD_WIDTH);
         }
         // Item stats.
         if (data.item) {  ///
           componentEffectsExploded(
-            fb_items->Get(data.item)->effects(), data.count, CARD_WIDTH
+            fb_items->Get(data.item)->effects(), 0, data.count, CARD_WIDTH
           );
         }
         // Weapon stats.
         if (data.weapon) {  ///
+          const auto fb = fb_weapons->Get(data.weapon);
+
+          int tierOffset = 0;
+          if (data.overrideTier >= 0)
+            tierOffset = data.overrideTier - fb->min_tier_index();
+          ASSERT(tierOffset >= 0);
+
           int thisWaveDamage = 0;
-          if (data.weaponIndexOrMinus1 >= 0)
-            thisWaveDamage = g.run.state.weapons[data.weaponIndexOrMinus1].thisWaveDamage;
+          if (data.weaponIndexOrMinus1 >= 0) {
+            const auto& weapon = g.run.state.weapons[data.weaponIndexOrMinus1];
+            tierOffset         = weapon.tier - fb->min_tier_index();
+            ASSERT(tierOffset >= 0);
+            thisWaveDamage = weapon.thisWaveDamage;
+          }
 
           LAMBDA (void, componentWeaponStatEntry, (int labelLocale, auto&& innerLambda)) {
             CLAY({.layout{
@@ -4068,14 +5021,12 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               FlexBegin(CARD_WIDTH, 0);
-              BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(labelLocale, secondaryTextColor);
+              BF_CLAY_TEXT_BROKEN_LOCALIZED(labelLocale, secondaryTextColor);
               BF_CLAY_TEXT(": ", secondaryTextColor);
               innerLambda();
               FlexEnd();
             }
           };
-
-          const auto fb = fb_weapons->Get(data.weapon);
 
           // Damage.
           componentWeaponStatEntry(
@@ -4104,7 +5055,7 @@ void DoUI(bool draw) {
                   ));
                   BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
                   if (scalingIndex < fb_scalings->size() - 1)
-                    BF_CLAY_TEXT(", ");
+                    BF_CLAY_TEXT(" + ");
                 }
                 BF_CLAY_TEXT(")");
               }
@@ -4117,7 +5068,7 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT(TextFormat(
                 "x%.1f (%d%%)",
                 fb->crit_damage_multiplier(),
-                MIN(100, MAX(0, g.run.playerStats[StatType_CRIT_CHANCE]))
+                MIN(100, MAX(0, g.run.state.stats[StatType_CRIT_CHANCE]))
               ));
             });
           }
@@ -4144,7 +5095,7 @@ void DoUI(bool draw) {
           {
             f32 value = fb->knockback_meters();
             if (data.affectedByGame)
-              value *= (f32)(100 + g.run.playerStats[StatType_KNOCKBACK]) / 100.0f;
+              value *= (f32)(100 + g.run.state.stats[StatType_KNOCKBACK]) / 100.0f;
             componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat("%.1f", value)));
             });
@@ -4168,7 +5119,7 @@ void DoUI(bool draw) {
           if (fb->projectile_type()) {
             int value = fb->projectile_pierce();
             if (data.affectedByGame)
-              value += g.run.playerStats[StatType_PIERCING];
+              value += g.run.state.stats[StatType_PIERCING];
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(TextFormat("%d", value));
@@ -4180,7 +5131,7 @@ void DoUI(bool draw) {
           if (fb->projectile_type()) {
             int value = fb->projectile_bounce();
             if (data.affectedByGame)
-              value += g.run.playerStats[StatType_BOUNCES];
+              value += g.run.state.stats[StatType_BOUNCES];
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(TextFormat("%d", value));
@@ -4207,31 +5158,7 @@ void DoUI(bool draw) {
             }
           }
 
-          // Explosion.
-          {
-            auto chance = fb_projectiles->Get(fb->projectile_type())->aoe_chance();
-            if (chance > 0) {
-              CLAY({.layout{
-                .childGap        = GAP_FLEX,
-                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-              }}) {
-                FlexBegin(CARD_WIDTH, 0);
-
-                PlaceholdString(
-                  "CHANCE",
-                  TextFormat(
-                    "+%s%%", StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
-                  )
-                );
-                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(Loc_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
-                );
-
-                FlexEnd();
-              }
-            }
-          }
-
-          componentEffectsExploded(fb->effects(), 1, CARD_WIDTH);
+          componentEffectsExploded(fb->effects(), tierOffset, 1, CARD_WIDTH);
 
           // This wave damage.
           ASSERT(thisWaveDamage >= 0);
@@ -4288,12 +5215,19 @@ void DoUI(bool draw) {
                     // Upgrading an existing weapon if no empty slot found.
                     ASSERT(weapon.type == data.weapon);
                     ASSERT(weapon.tier == tier);
+
+                    RemoveImmediateWeaponEffects();
                     weapon.tier += 1;
+                    ApplyImmediateWeaponEffects();
                   }
                   else {
+                    RemoveImmediateWeaponEffects();
+
                     // Filling empty weapon slot if exists.
                     weapon.type = data.weapon;
                     weapon.tier = tier;
+
+                    ApplyImmediateWeaponEffects();
                   }
                 }
                 else if (data.item)
@@ -4305,7 +5239,11 @@ void DoUI(bool draw) {
                 Save();
               }
               else {
-                if (canBuyErrorWeapon) {
+                if (canBuyErrorBuild) {
+                  g.ui.shopErrorBuild = {};
+                  g.ui.shopErrorBuild.SetNow();
+                }
+                else if (canBuyErrorWeapon) {
                   g.ui.shopErrorWeapons = {};
                   g.ui.shopErrorWeapons.SetNow();
                 }
@@ -4345,18 +5283,19 @@ void DoUI(bool draw) {
               combined = componentButton(
                 {.id = CLAY_ID("button_weapon_combine")},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_COMBINE, textColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_COMBINE, textColor);
                 }
               );
             }
 
-            const int recyclePrice = GetWeaponRecyclePrice(weapon.type, weapon.tier);
+            const int recyclePrice
+              = ToRecyclePrice(GetWeaponPrice(weapon.type, weapon.tier));
 
             // Recycle button.
             const bool recycled = componentButton(
               {.id = CLAY_ID("button_weapon_recycle")},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RECYCLE, textColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_RECYCLE, textColor);
                 BF_CLAY_TEXT(TextFormat(" (+%d)", recyclePrice), textColor);
               }
             );
@@ -4365,24 +5304,30 @@ void DoUI(bool draw) {
             const bool cancelled = componentButton(
               {.id = CLAY_ID("button_weapon_cancel")},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_CANCEL, textColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL, textColor);
               }
             );
 
             if (combined) {
               ASSERT(canCombineWithIndex >= 0);
+
+              RemoveImmediateWeaponEffects();
               weapon.tier += 1;
-              weapon.thisWaveDamage = 0;
-              weapon.killedEnemies  = MAX(
-                weapon.killedEnemies,
-                g.run.state.weapons[canCombineWithIndex].killedEnemies
+
+              weapon.thisWaveDamage        = 0;
+              weapon.thisWaveKilledEnemies = MAX(
+                weapon.thisWaveKilledEnemies,
+                g.run.state.weapons[canCombineWithIndex].thisWaveKilledEnemies
               );
               StableRemoveWeapon(canCombineWithIndex);
+              ApplyImmediateWeaponEffects();
               Save();
             }
             if (recycled) {
               ChangeCoins(recyclePrice);
+              RemoveImmediateWeaponEffects();
               StableRemoveWeapon(data.weaponIndexOrMinus1);
+              ApplyImmediateWeaponEffects();
               Save();
             }
             if (cancelled || recycled || combined) {
@@ -4496,7 +5441,7 @@ void DoUI(bool draw) {
 
         if (type) {
           if (g.player.achievements[type].value >= fb_step->value()) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(fb->name_locale(), nameColor);
+            BF_CLAY_TEXT_LOCALIZED(fb->name_locale(), nameColor);
             static const char* romanNumbers_[]{
               "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
               "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
@@ -4535,7 +5480,7 @@ void DoUI(bool draw) {
             }
             else
               PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
-            BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->description_locale());
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(fb->description_locale());
             int percent = MIN(100, v * 100 / fb_step->value());
             if ((percent < 100) && (fb_step->value() > 1)) {
               BF_CLAY_TEXT(" ");
@@ -4671,6 +5616,13 @@ void DoUI(bool draw) {
             ItemType       itemType       = {};
 
             if (t == 0) {
+              BEAUTIFY_WIGGLING_DANGER_SCOPED(
+                g.ui.shopErrorBuild,
+                WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+                ERROR_WIGGLING_FRAMES,
+                ERROR_WIGGLING_TIMES
+              );
+
               componentUniversalSlot({
                 .id    = CLAY_IDI("shop_player_item", t),
                 .build = g.player.build,
@@ -4726,19 +5678,21 @@ void DoUI(bool draw) {
       || (g.run.state.screen == ScreenType_PICKED_UP_ITEM)      //
       || (g.run.state.screen == ScreenType_UPGRADES))
   {
-    CLAY({
-      .layout{
-        BF_CLAY_SIZING_GROW_XY,
-        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
-        )
-      },
-      .floating{
-        .zIndex             = zIndex,
-        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-        .attachTo           = CLAY_ATTACH_TO_PARENT,
-      },
-    })
+    CLAY(  ///
+      {
+        .layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+            PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          )
+        },
+        .floating{
+          .zIndex             = zIndex,
+          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+          .attachTo           = CLAY_ATTACH_TO_PARENT,
+        },
+      }
+    )
     CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
       FLOATING_BEAUTIFY;
 
@@ -4905,7 +5859,7 @@ void DoUI(bool draw) {
         FLOATING_BEAUTIFY;
 
         CLAY({}) {
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE);
           BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
         }
 
@@ -4985,7 +5939,7 @@ void DoUI(bool draw) {
 
       // "NEW RUN" label.
       FontBegin(&g.meta.fontWaveCompletion);
-      BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_NEW_RUN__CAPS);
+      BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS);
       FontEnd();
 
       CLAY({.layout{
@@ -4994,7 +5948,7 @@ void DoUI(bool draw) {
       }}) {
         // Difficulties.
         FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_DIFFICULTY);
+        BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY);
         FontEnd();
 
         CLAY({}) {
@@ -5057,7 +6011,7 @@ void DoUI(bool draw) {
 
         // Builds.
         FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BUILD);
+        BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD);
         FontEnd();
 
         auto buildsX = 6;
@@ -5136,7 +6090,7 @@ void DoUI(bool draw) {
 
         // Starting weapons.
         FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_STARTING_WEAPON);
+        BF_CLAY_TEXT_LOCALIZED(Loc_UI_STARTING_WEAPON);
         FontEnd();
 
         CLAY({}) {
@@ -5217,9 +6171,8 @@ void DoUI(bool draw) {
         const bool canGo = p.difficulty && p.build && p.weapon;
         const bool go    = componentButton(
           {.id = CLAY_ID("button_new_run_go"), .growX = true},
-          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_GO, textColor);
-          }
+          [&](bool hovered, Color textColor)
+            BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_GO, textColor); }
         );
 
         if (go) {
@@ -5256,7 +6209,7 @@ void DoUI(bool draw) {
           const auto fb   = fb_items->Get(type);
 
           // "Item Found" label.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEM_FOUND);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM_FOUND);
 
           // Item.
           componentUniversalCard({
@@ -5269,18 +6222,17 @@ void DoUI(bool draw) {
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             const bool took = componentButton(
               {.id = CLAY_ID("button_picked_up_item_take")},
-              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_TAKE, textColor);
-              }
+              [&](bool hovered, Color textColor)
+                BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_TAKE, textColor); }
             );
 
-            int recyclePrice = fb->price() / RECYCLE_PRICE_FACTOR;
+            const int recyclePrice = ToRecyclePrice(fb->price());
 
             const bool recycled = componentButton(
               {.id = CLAY_ID("button_picked_up_item_recycle")},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RECYCLE, textColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_RECYCLE, textColor);
                   BF_CLAY_TEXT(TextFormat(" (+%d)", recyclePrice), textColor);
                 }
               }
@@ -5334,7 +6286,7 @@ void DoUI(bool draw) {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
         // Level up label.
-        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_LEVEL_UP);
+        BF_CLAY_TEXT_LOCALIZED(Loc_UI_LEVEL_UP);
 
         // Upgrades.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -5377,7 +6329,7 @@ void DoUI(bool draw) {
                 );
 
                 // Name.
-                BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(
+                BF_CLAY_TEXT_BROKEN_LOCALIZED(
                   fb->upgrade_name_locale(), textColorsPerTier[upgrade.tier]
                 );
               }
@@ -5385,7 +6337,17 @@ void DoUI(bool draw) {
               BF_CLAY_SPACER_VERTICAL;
 
               // Stat + amount.
-              const auto amount = fb->upgrade_values()->Get(upgrade.tier);
+              int amount = fb->upgrade_values()->Get(upgrade.tier);
+
+              IterateOverEffects(
+                EffectConditionType_X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES,
+                -1,
+                [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+                  BF_FORCE_INLINE_LAMBDA {
+                    amount += Ceil(amount * (f32)(EFFECT_X_INT * times) / 100.0f);
+                  }
+              );
+
               CLAY({.layout{
                 BF_CLAY_SIZING_GROW_X,
                 .childGap = GAP_SMALL,
@@ -5411,7 +6373,7 @@ void DoUI(bool draw) {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                   }}) {
                     FlexBegin(UPGRADE_FRAME_WIDTH - d.boundingBox.width, 0);
-                    BF_CLAY_TEXT_BROKEN_LOCALIZED_DANGER(fb->name_locale());
+                    BF_CLAY_TEXT_BROKEN_LOCALIZED(fb->name_locale());
                     FlexEnd();
                   }
                 }
@@ -5425,7 +6387,7 @@ void DoUI(bool draw) {
                 bool chosen = componentButton(
                   {.id = CLAY_IDI("button_upgrades_choose", i)},
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_CHOOSE, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_CHOOSE, textColor);
                   }
                 );
                 if (!draw && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + i)))
@@ -5443,8 +6405,7 @@ void DoUI(bool draw) {
                     g.run.scheduledShopReset = true;
                   }
 
-                  g.run.state.statsWithoutItems[upgrade.stat] += amount;
-                  g.run.recalculatePlayerStats = true;
+                  ChangeStat(upgrade.stat, amount);
 
                   if (upgrade.stat == StatType_HP)
                     PLAYER_CREATURE.health += amount;
@@ -5511,9 +6472,9 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           // Wave.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_SHOP);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_SHOP);
           BF_CLAY_TEXT(" (");
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE);
           BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 1));
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -5605,7 +6566,7 @@ void DoUI(bool draw) {
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
           CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
 
             CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
 
@@ -5624,7 +6585,7 @@ void DoUI(bool draw) {
                   weaponsCount++;
               }
 
-              BF_CLAY_TEXT_LOCALIZED_DANGER(
+              BF_CLAY_TEXT_LOCALIZED(
                 Loc_UI_WEAPONS, (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
               );
 
@@ -5699,9 +6660,9 @@ void DoUI(bool draw) {
           const bool nextWavePressed = componentButton(
             {.id = CLAY_ID("button_shop_next_wave"), .growX = true},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_GO, textColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_GO, textColor);
               BF_CLAY_TEXT(" (", textColor);
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE, textColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, textColor);
               BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 2), textColor);
             }
           );
@@ -5738,13 +6699,13 @@ void DoUI(bool draw) {
         // Run Won / Lost.
         {
           const int locale = (g.run.state.won ? Loc_UI_WON : Loc_UI_LOST);
-          BF_CLAY_TEXT_LOCALIZED_DANGER(locale);
+          BF_CLAY_TEXT_LOCALIZED(locale);
         }
 
         BF_CLAY_TEXT(". ");
 
         // Wave.
-        BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
+        BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE);
         BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
       }
 
@@ -5771,7 +6732,7 @@ void DoUI(bool draw) {
 
           if (weaponsCount > 0) {
             // Weapons label.
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPONS);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS);
 
             // Weapons.
             CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -5795,7 +6756,7 @@ void DoUI(bool draw) {
           }
 
           // Items label.
-          BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
           // Items.
           componentItemsGrid({.itemsX = 10, .detailsBelow = 1});
         }
@@ -5809,16 +6770,14 @@ void DoUI(bool draw) {
       }}) {
         const bool restarted = componentButton(
           {.id = CLAY_ID("button_end_restart")},
-          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RESTART, textColor);
-          }
+          [&](bool hovered, Color textColor)
+            BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART, textColor); }
         );
 
         const bool newRun = componentButton(
           {.id = CLAY_ID("button_end_new_run")},
-          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_NEW_RUN, textColor);
-          }
+          [&](bool hovered, Color textColor)
+            BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN, textColor); }
         );
 
         if (restarted)
@@ -5853,17 +6812,19 @@ void DoUI(bool draw) {
 
   // Pause / Achievements.
   if (g.meta.paused) {
-    CLAY({
-      .floating{
-        .zIndex = zIndex,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+    CLAY(  ///
+      {
+        .floating{
+          .zIndex = zIndex,
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
         },
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
-    }) {
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      }
+    ) {
       FLOATING_BEAUTIFY;
 
       // Achievements.
@@ -5895,7 +6856,7 @@ void DoUI(bool draw) {
           // "Achievements" label.
           FontBegin(&g.meta.fontWaveCompletion);
           CLAY({}) {
-            BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS__CAPS);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS__CAPS);
 
             int percent = GetAchievementsCompletedPercent();
 
@@ -6035,9 +6996,8 @@ void DoUI(bool draw) {
           // Back button.
           const bool back = componentButton(
             {.id = CLAY_ID("button_pause_achievements_back")},
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_BACK, textColor);
-            }
+            [&](bool hovered, Color textColor)
+              BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK, textColor); }
           );
 
           if (back) {
@@ -6063,7 +7023,7 @@ void DoUI(bool draw) {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           }}) {
             CLAY({}) {
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WAVE);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE);
               BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
             }
 
@@ -6075,28 +7035,28 @@ void DoUI(bool draw) {
               const bool resumed = componentButton(
                 {.id = CLAY_ID("button_pause_resume"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RESUME, textColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME, textColor);
                 }
               );
 
               const bool restarted = componentButton(
                 {.id = CLAY_ID("button_pause_restart"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_RESTART, textColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART, textColor);
                 }
               );
 
               const bool newRun = componentButton(
                 {.id = CLAY_ID("button_pause_new_run"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_NEW_RUN, textColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN, textColor);
                 }
               );
 
               const bool achievements = componentButton(
                 {.id = CLAY_ID("button_pause_achievements"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ACHIEVEMENTS, textColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS, textColor);
                   int percent = GetAchievementsCompletedPercent();
                   if (percent > 0)
                     BF_CLAY_TEXT(TextFormat(" %d%%", percent), textColor);
@@ -6108,7 +7068,7 @@ void DoUI(bool draw) {
               exited = componentButton(
                 {.id = CLAY_ID("button_pause_exit"), .growX = true},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_EXIT, textColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_EXIT, textColor);
                 }
               );
 #endif
@@ -6143,7 +7103,7 @@ void DoUI(bool draw) {
             }}) {
               if (weaponsCount > 0) {
                 // Weapons label.
-                BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_WEAPONS);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS);
 
                 // Weapons.
                 CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -6167,7 +7127,7 @@ void DoUI(bool draw) {
               }
 
               // Items label.
-              BF_CLAY_TEXT_LOCALIZED_DANGER(Loc_UI_ITEMS);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
               // Items.
               componentItemsGrid({.itemsX = 6});
             }
@@ -6293,12 +7253,15 @@ void DoUI(bool draw) {
   ASSERT_FALSE(g.ui.overriddenFont);
   auto drawCommands = Clay_EndLayout();
 
+  ASSERT(g.ui.clayZIndex == 0);
+
   // Drawing UI.
   if (draw) {
     ZoneScopedN("Drawing UI");
 
-    Array<Beautify, MAX_BEAUTIFIERS> beautifiers{};
-    int                              beautifiersCount = 0;
+    auto& beautifiers      = g.ui.clayBeautifiers;
+    auto& beautifiersCount = g.ui.clayBeautifiersCount;
+    ASSERT(beautifiersCount == 0);
 
     FOR_RANGE (int, mode, 2) {
       // 0 - drawing ui.
@@ -6332,6 +7295,9 @@ void DoUI(bool draw) {
 
         if (!mode) {
           switch (cmd.commandType) {
+          case CLAY_RENDER_COMMAND_TYPE_NONE:
+            break;
+
           case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {  ///
             const auto& d = cmd.renderData.rectangle;
             DrawGroup_CommandRect({
@@ -6353,6 +7319,7 @@ void DoUI(bool draw) {
             DrawGroup_CommandTexture({
               .texId = data.texId,
               .pos{bb.x + bb.width / 2, bb.y + bb.height / 2},
+              .scale         = data.scale,
               .sourceMargins = data.sourceMargins,
               .color{
                 data.color.r,
@@ -6488,7 +7455,7 @@ Vector2 ForecastWhereProjectileWillHitCreature(
 f32 GetCreatureSpeed(const Creature& creature) {  ///
   f32 speed = creature.speed * creature.speedModifier;
   if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
-    speed *= (f32)(g.run.playerStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
+    speed *= (f32)(g.run.state.stats[StatType_ENEMY_SPEED] + 100) / 100.0f;
     speed = MAX(0, speed);
   }
   return speed;
@@ -6496,7 +7463,6 @@ f32 GetCreatureSpeed(const Creature& creature) {  ///
 
 void MakeAOE(
   CreatureType damager,
-  ParticleType particleType,
   Vector2      pos,
   f32          baseRadius,
   int          baseDamage,
@@ -6507,7 +7473,7 @@ void MakeAOE(
   const f32 sizeMultiplier = GetExplosionSizeMultiplier();
 
   Particle p{
-    .type  = particleType,
+    .type  = ParticleType_EXPLOSION,
     .pos   = pos,
     .scale = sizeMultiplier,
   };
@@ -6531,29 +7497,13 @@ void MakeAOE(
         ))
       continue;
 
-    int  damage = Round((f32)baseDamage * GetExplosionDamageMultiplier());
-    bool isCrit = false;
+    int damage = Round((f32)baseDamage * GetExplosionDamageMultiplier());
     if (damager == CreatureType_PLAYER) {
       // Player damages mob.
       damage = ApplyPlayerStatDamageMultiplier(damage);
       damage = Round(
-        damage * ((f32)g.run.playerStats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
+        damage * ((f32)g.run.state.stats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
       );
-
-      if (damage > 0) {
-        isCrit = IsCrit();
-        if (isCrit)
-          damage = Round((f32)damage * critDamageMultiplier);
-
-        if (fb_creature->is_boss()) {
-          damage = Round(
-            (f32)damage
-            * MAX(
-              0, (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
-            )
-          );
-        }
-      }
     }
 
     TryApplyDamage({
@@ -6562,82 +7512,12 @@ void MakeAOE(
       .directionOrZero                    = Vector2DirectionOrRandom(pos, creature.pos),
       .knockbackMeters                    = knockbackMeters,
       .damagerCreatureType                = damager,
-      .isCrit                             = isCrit,
+      .critDamageMultiplier               = critDamageMultiplier,
       .indexOfWeaponThatDidDamageOrMinus1 = weaponIndexOrMinus1,
     });
   }
   *g.run.particles.Add() = p;
 }
-
-#if defined(SDL_PLATFORM_WIN32)
-
-void _Save() {  ///
-  ZoneScoped;
-
-  DEFER {
-    ge.meta.previousSaveIsNotCompletedYet = false;
-  };
-
-  const auto toSwapPath = "save_to_swap.bin";
-
-  bool saved = false;
-  {
-    auto fbb = DumpState();
-    FOR_RANGE (int, i, 5) {
-      if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
-        saved = true;
-        break;
-      }
-    }
-  }
-  if (!saved) {
-    LOGE("Temp save failed");
-    return;
-  }
-
-  bool swapped = false;
-  FOR_RANGE (int, i, 5) {
-    if (SDL_RenamePath(toSwapPath, "save.bin")) {
-      swapped = true;
-      break;
-    }
-  }
-  if (!swapped)
-    LOGI("Save swap failed");
-}
-
-#elif defined(BF_PLATFORM_WebYandex)
-
-// clang-format off
-EM_JS(void, js_Save, (), {
-  // TODO YANDEX SAVE pass string
-  window.player
-    .setData(/* TODO data */ "", /* flush */ true)
-    .then(() => {
-      Module.ccall('saved_from_js', null, [], []);
-    });
-});
-// clang-format on
-
-void _Save() {  ///
-  ZoneScoped;
-
-  TEMP_USAGE(&g.meta.trashArena);
-
-  auto fbb     = DumpState();
-  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), &g.meta.trashArena);
-  js_Save();
-}
-
-#elif defined(SDL_PLATFORM_EMSCRIPTEN)
-
-void _Save() {  ///
-  LOGW("Save is not yet implemented for web");
-}
-
-#else
-#  error "_Save() is not implemented for your platform"
-#endif
 
 int GetMobDamage(CreatureType type) {  ///
   auto fb = glib->creatures()->Get(type);
@@ -6649,9 +7529,152 @@ int GetMobDamage(CreatureType type) {  ///
          );
 }
 
+void Pickup(Pickupable* pickupable_) {  ///
+  auto& pickupable = *pickupable_;
+
+  pickupable.pickedUpAt.SetNow();
+
+  auto fb_creatures = glib->creatures();
+
+  const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
+          if (fb_effect->pickupable_type() != pickupable.type)
+            return;
+
+          FOR_RANGE (int, i, 5) {
+            auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
+            const auto& creature      = g.run.creatures[creatureIndex];
+
+            if (creature.diedAt.IsSet())
+              continue;
+
+            auto fb = fb_creatures->Get(creature.type);
+            if (fb->hostility_type() == HostilityType_FRIENDLY)
+              continue;
+
+            int damage = EFFECT_Y_INT * times;
+            damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
+            damage = ApplyPlayerStatDamageMultiplier(damage);
+
+            f32 critDamageMultiplier = 1.5f;
+            if (w) {
+              critDamageMultiplier
+                = glib->weapons()->Get(w->type)->crit_damage_multiplier();
+            }
+
+            TryApplyDamage({
+              .creatureIndex                      = (int)creatureIndex,
+              .damage                             = damage,
+              .damagerCreatureType                = CreatureType_PLAYER,
+              .critDamageMultiplier               = critDamageMultiplier,
+              .indexOfWeaponThatDidDamageOrMinus1 = wi,
+            });
+
+            break;
+          }
+        }
+      }
+  );
+
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
+          if (fb_effect->pickupable_type() == pickupable.type)
+            HealPlayer(EFFECT_Y_INT * times);
+        }
+      }
+  );
+
+  IterateOverEffects(
+    EffectConditionType_X__COINS_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->pickupable_type() == pickupable.type) {
+          const int amount = times * EFFECT_X_INT;
+          ChangeCoins(amount);
+        }
+      }
+  );
+
+  switch (pickupable.type) {
+  case PickupableType_COIN: {
+    const auto& data    = pickupable.DataCoin();
+    int         amount  = data.amount;
+    int         xNumber = 1;
+
+    if (g.run.state.notPickedUpCoins > 0) {
+      int toAdd = amount;
+      if (toAdd > g.run.state.notPickedUpCoins)
+        toAdd = g.run.state.notPickedUpCoins;
+
+      g.run.state.notPickedUpCoins -= toAdd;
+      g.run.state.notPickedUpCoinsVisual -= toAdd;
+      amount += toAdd;
+      xNumber *= 2;
+    }
+
+    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+    {
+      amount *= 2;
+      xNumber *= 2;
+    }
+
+    if (xNumber > 1) {
+      MakeNumber({
+        .type  = NumberType_PICKUPABLE,
+        .value = xNumber,
+        .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+      });
+    }
+
+    ChangeCoins(amount);
+    AddXP((f32)amount);
+
+    auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
+    if (GRAND.FRand() < healChance)
+      HealPlayer();
+  } break;
+
+  case PickupableType_CONSUMABLE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+  } break;
+
+  case PickupableType_CRATE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+    g.run.state.crates++;
+  } break;
+
+  default:
+    INVALID_PATH;
+  }
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
+  // Waiting for completion of save data loading.
+  {  ///
+    auto loaded = LoadSaveDataOnce(&g.meta.trashArena);
+    if (loaded == SavedataLoadingType_JUST_FISNIHED) {
+      GameInitAfterLoading();
+      GameReady();
+    }
+    else if (loaded != SavedataLoadingType_FISNIHED)
+      return;
+  }
+
+  // Setup. {  ///
   ReloadFontsIfNeeded();
 
   const auto fb_preSpawns      = glib->pre_spawns();
@@ -6664,6 +7687,7 @@ void GameFixedUpdate() {
   const auto fb_difficulties   = glib->difficulties();
   const auto fb_achievements   = glib->achievements();
   const auto fb_builds         = glib->builds();
+  // }
 
   // Save.
   if (g.meta.scheduledSave && !ge.meta.previousSaveIsNotCompletedYet) {  ///
@@ -6682,7 +7706,7 @@ void GameFixedUpdate() {
       LOGI("Saving...");
 
       ge.meta.previousSaveIsNotCompletedYet = true;
-      _Save();
+      _Save(&g.meta.trashArena);
     }
   }
 
@@ -6698,7 +7722,9 @@ void GameFixedUpdate() {
 
   // Show / hide cursor.
   {  ///
-    if ((g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused)
+    if (((g.run.state.screen == ScreenType_GAMEPLAY)
+         || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
+        && !g.meta.paused)
       SDL_HideCursor();
     else
       SDL_ShowCursor();
@@ -6739,20 +7765,31 @@ void GameFixedUpdate() {
     }
   }
 
-  // Recalculating player stats.
-  if (g.run.recalculatePlayerStats) {  ///
-    g.run.recalculatePlayerStats = false;
-    RecalculatePlayerStats();
+  // Updating player's maxHealth.
+  {  ///
+    PLAYER_CREATURE.maxHealth = MAX(1, g.run.state.stats[StatType_HP]);
+    PLAYER_CREATURE.health    = MIN(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth);
+  }
+
+  // Picking up remaining crates at the end of the wave.
+  if (g.run.scheduledWaveCompleted.IsSet()) {  ///
+    for (auto& pickupable : g.run.pickupables) {
+      if (pickupable.type != PickupableType_CRATE)
+        continue;
+      if (!pickupable.pickedUpAt.IsSet())
+        Pickup(&pickupable);
+    }
   }
 
   // Advancing to UI after wave completion animation finishes.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
     if ((g.run.state.screen != ScreenType_WAVE_END_ANIMATION) && g.run.state.waveWon) {
-      // Applying effects: END_OF_THE_WAVE_GET_STAT.
+      // Applying effects: END_OF_THE_WAVE_GET__STAT.
       IterateOverEffects(
-        EffectConditionType_END_OF_THE_WAVE_GET_STAT,
-        [&](auto fb_effect, int times)
-          BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, times); }
+        EffectConditionType_END_OF_THE_WAVE_GET__STAT,
+        -1,
+        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
       );
 
       // Making coins fly.
@@ -6786,12 +7823,22 @@ void GameFixedUpdate() {
     if (g.run.scheduledWaveCompleted.Elapsed() >= WAVE_COMPLETED_FRAMES) {
       {
         // Applying StatType_HARVESTING.
-        auto& harvesting = g.run.playerStats[StatType_HARVESTING];
+        auto& harvesting = g.run.state.stats[StatType_HARVESTING];
         ChangeCoins(harvesting);
         AddXP(harvesting);
         // Harvesting stat (if positive) grows by 5% upon finishing each wave.
-        if (harvesting > 0)
-          harvesting = Ceil((f32)harvesting * 1.05f);
+        if (harvesting > 0) {
+          int percent = 5;
+          IterateOverEffects(
+            EffectConditionType_HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE,
+            -1,
+            [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA { percent += EFFECT_X_INT; }
+          );
+
+          if (percent > 0)
+            ChangeStat(StatType_HARVESTING, Ceil((f32)(harvesting * percent) / 100.0f));
+        }
       }
 
       if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) || !g.run.state.waveWon) {
@@ -6927,14 +7974,16 @@ void GameFixedUpdate() {
     g.run.state.previousXp = g.run.state.xp;
     OnWaveStarted();
 
-    const int health          = g.run.playerStats[StatType_HP];
-    PLAYER_CREATURE.health    = health;
-    PLAYER_CREATURE.maxHealth = health;
+    const int health          = g.run.state.stats[StatType_HP];
+    PLAYER_CREATURE.health    = MAX(1, health);
+    PLAYER_CREATURE.maxHealth = MAX(1, health);
 
+    // Applying effects: START_OF_THE_WAVE_GET__STAT.
     IterateOverEffects(
-      EffectConditionType_START_OF_THE_WAVE_GET_STAT,
-      [&](auto fb_effect, int times)
-        BF_FORCE_INLINE_LAMBDA { ApplyEffect(fb_effect, times); }
+      EffectConditionType_START_OF_THE_WAVE_GET__STAT,
+      -1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
     );
 
     Save();
@@ -6950,7 +7999,6 @@ void GameFixedUpdate() {
         PlaySound(Sound_UI_CLICK);
       }
 
-#if defined(SDL_PLATFORM_DESKTOP)
       if (IsKeyPressed(SDL_SCANCODE_ESCAPE)) {
         if (g.meta.pausedShowingAchievements)
           g.meta.pausedShowingAchievements = false;
@@ -6958,7 +8006,6 @@ void GameFixedUpdate() {
           g.meta.scheduledTogglePause = true;
         PlaySound(Sound_UI_CLICK);
       }
-#endif
     }
     else
       g.meta.paused = false;
@@ -7030,9 +8077,11 @@ void GameFixedUpdate() {
         }
 
         // Player HP regen.
-        if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {  ///
+        if (!PLAYER_CREATURE.diedAt.IsSet()
+            && PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)
+        {  ///
           const bool canRegen = g.run.playerLastRegenAt.Elapsed()
-                                >= GetFramesPerRegen(g.run.playerStats[StatType_REGEN]);
+                                >= GetFramesPerRegen(g.run.state.stats[StatType_REGEN]);
           if (canRegen) {
             PLAYER_CREATURE.health
               = MIN(PLAYER_CREATURE.health + 1, PLAYER_CREATURE.maxHealth);
@@ -7203,7 +8252,7 @@ void GameFixedUpdate() {
             auto& data = creature.DataTurrel();
 
             f32 rangeMeters = fb->turrel_range_meters();
-            rangeMeters *= (f32)g.run.playerStats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
+            rangeMeters *= (f32)g.run.state.stats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
             rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
 
             auto originalSize
@@ -7262,8 +8311,8 @@ void GameFixedUpdate() {
                 = ApplyStructureAttackSpeedToDuration(MOB_TURREL_SHOOT_FRAME.value);
               if (e == shotFrame) {
                 int damage = fb->projectile_damage();
-                damage     = ApplyDamageScalings(damage, 0, fb->turrel_damage_scalings());
-                damage     = ApplyPlayerStatDamageMultiplier(damage);
+                damage = ApplyDamageScalings(damage, 0, fb->turrel_damage_scalings(), 1);
+                damage = ApplyPlayerStatDamageMultiplier(damage);
                 MakeProjectile({
                   .type                 = projectileType,
                   .ownerCreatureType    = creature.type,
@@ -7332,7 +8381,7 @@ void GameFixedUpdate() {
         };
 
         int  spawnEnemiesEvery = FIXED_FPS;
-        auto multiplier        = 1 + (f32)g.run.playerStats[StatType_ENEMIES] / 100.0f;
+        auto multiplier        = 1 + (f32)g.run.state.stats[StatType_ENEMIES] / 100.0f;
         multiplier             = MAX(0.001f, multiplier);
         spawnEnemiesEvery      = Round((f32)spawnEnemiesEvery / multiplier);
         spawnEnemiesEvery      = MAX(1, spawnEnemiesEvery);
@@ -7370,39 +8419,48 @@ void GameFixedUpdate() {
           }
 
           // Spawning landmines.
-          if (g.run.playerStats[StatType_LANDMINES] > 0) {
-            auto landminesSpawnInterval = SPAWNING_LANDMINES_INTERVAL_FRAMES;
-            landminesSpawnInterval.value /= g.run.playerStats[StatType_LANDMINES];
-            landminesSpawnInterval.value /= GetPlayerStatStructureAttackSpeedMultiplier();
-            landminesSpawnInterval.value = MAX(2, landminesSpawnInterval.value);
+          IterateOverEffects(
+            EffectConditionType_SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE,
+            -1,
+            [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                auto e        = g.run.waveStartedAt.Elapsed().value;
+                auto interval = lframe::FromSeconds(EFFECT_X_FLOAT / (f32)times);
+                if (((e + 1) % interval.value) != 0)
+                  return;
 
-            if ((g.run.waveStartedAt.Elapsed().value + 1) % landminesSpawnInterval.value
-                == 0)
-            {
-              PreSpawn v{
-                .type = PreSpawnType_LANDMINE,
-                .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
-              };
-              v.createdAt.SetNow();
-              *g.run.preSpawns.Add() = v;
-            }
-          }
+                PreSpawn v{
+                  .type           = PreSpawnType_LANDMINE,
+                  .pos            = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                  .damage         = EFFECT_Y_INT,
+                  .damageScalings = fb_effect->damage_scalings(),
+                };
+                v.createdAt.SetNow();
+                *g.run.preSpawns.Add() = v;
+              }
+          );
 
-          // Spawning gardens every 5 seconds.
-          if ((g.run.waveStartedAt.Elapsed().value + 1)
-                % (FIXED_FPS * SPAWNING_GARDENS_EVERY_N_SECONDS)
-              == 0)
-          {
-            if (g.run.gardensToSpawn > 0) {
-              g.run.gardensToSpawn--;
-              PreSpawn v{
-                .type = PreSpawnType_GARDEN,
-                .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
-              };
-              v.createdAt.SetNow();
-              *g.run.preSpawns.Add() = v;
-            }
-          }
+          // Spawning gardens.
+          IterateOverEffects(
+            EffectConditionType_SPAWNS_GARDEN_EVERY__X__SECONDS,
+            -1,
+            [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                auto e        = g.run.waveStartedAt.Elapsed().value;
+                auto interval = lframe::FromSeconds(EFFECT_X_FLOAT);
+                if (((e + 1) % interval.value) != 0)
+                  return;
+
+                FOR_RANGE (int, i, times) {
+                  PreSpawn v{
+                    .type = PreSpawnType_GARDEN,
+                    .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                  };
+                  v.createdAt.SetNow();
+                  *g.run.preSpawns.Add() = v;
+                }
+              }
+          );
 
           // Spawning trees every 10 seconds.
           if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
@@ -7445,7 +8503,11 @@ void GameFixedUpdate() {
           } break;
 
           case PreSpawnType_LANDMINE: {
-            MakeLandmine({.pos = v.pos});
+            MakeLandmine({
+              .pos            = v.pos,
+              .damage         = v.damage,
+              .damageScalings = v.damageScalings,
+            });
           } break;
 
           case PreSpawnType_GARDEN: {
@@ -7501,80 +8563,16 @@ void GameFixedUpdate() {
         ZoneScopedN("Picking up pickupables.");
 
         for (auto& pickupable : g.run.pickupables) {
-          if (pickupable.pickedUpAt.IsSet()) {
-            pickupable.pos
-              = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
-          }
-          else {
-            auto pickupRangeScale = (f32)(100 + g.run.playerStats[StatType_PICKUP_RANGE]);
-            pickupRangeScale      = MAX(30, pickupRangeScale);
-            pickupRangeScale /= 100.0f;
+          if (pickupable.pickedUpAt.IsSet())
+            continue;
 
-            if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
-                <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
-            {
-              pickupable.pickedUpAt.SetNow();
+          auto pickupRangeScale = (f32)(100 + g.run.state.stats[StatType_PICKUP_RANGE]);
+          pickupRangeScale      = MAX(30, pickupRangeScale);
+          pickupRangeScale /= 100.0f;
 
-              const int consumableOrCrateHeal
-                = MIN(1, g.run.playerStats[StatType_CONSUMABLE_HEAL]);
-
-              switch (pickupable.type) {
-              case PickupableType_COIN: {
-                const auto& data    = pickupable.DataCoin();
-                int         amount  = data.amount;
-                int         xNumber = 1;
-
-                if (g.run.state.notPickedUpCoins > 0) {
-                  int toAdd = amount;
-                  if (toAdd > g.run.state.notPickedUpCoins)
-                    toAdd = g.run.state.notPickedUpCoins;
-
-                  g.run.state.notPickedUpCoins -= toAdd;
-                  g.run.state.notPickedUpCoinsVisual -= toAdd;
-                  amount += toAdd;
-                  xNumber *= 2;
-                }
-
-                if (GRAND.FRand()
-                    < (f32)g.run.playerStats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-                {
-                  amount *= 2;
-                  xNumber *= 2;
-                }
-
-                if (xNumber > 1) {
-                  MakeNumber({
-                    .type  = NumberType_PICKUPABLE,
-                    .value = xNumber,
-                    .pos
-                    = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
-                  });
-                }
-
-                ChangeCoins(amount);
-                AddXP((f32)amount);
-
-                auto healChance = (f32)g.run.playerStats[StatType_COINS_HEAL] / 100.0f;
-                if (GRAND.FRand() < healChance)
-                  HealPlayer();
-              } break;
-
-              case PickupableType_CONSUMABLE: {
-                if (consumableOrCrateHeal > 0)
-                  HealPlayer(consumableOrCrateHeal);
-              } break;
-
-              case PickupableType_CRATE: {
-                if (consumableOrCrateHeal > 0)
-                  HealPlayer(consumableOrCrateHeal);
-                g.run.state.crates++;
-              } break;
-
-              default:
-                INVALID_PATH;
-              }
-            }
-          }
+          if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
+              <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
+            Pickup(&pickupable);
         }
       }
 
@@ -7586,78 +8584,139 @@ void GameFixedUpdate() {
         g.run.previousPlayerPos = PLAYER_CREATURE.pos;
 
         if ((deltaMeters > 0) && !FloatEquals(deltaMeters, 0)) {
-          g.run.playerWalkedMeters += deltaMeters;
-          g.run.playerIdleFrames = 0;
+          g.run.playerWalkedMetersCumulativeDelta += deltaMeters;
+          g.run.playerContinuousIdleFrames = 0;
+          g.run.playerContinuousWalkingFrames++;
         }
-        else
-          g.run.playerIdleFrames++;
+        else {
+          g.run.playerContinuousIdleFrames++;
+          g.run.playerContinuousWalkingFrames = 0;
 
-        while (g.run.playerWalkedMeters > 1) {
-          g.run.playerWalkedMeters -= 1;
+          IterateOverEffects(
+            EffectConditionType_STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE,
+            -1,
+            [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
+                if ((g.run.playerContinuousIdleFrames % lf.value) == 0) {
+                  ChangeStat(
+                    (StatType)fb_effect->stat_type(),
+                    fb_effect->value()->Get(tierOffset) * times
+                  );
+                }
+              }
+          );
+
+          if ((g.run.playerContinuousIdleFrames % FIXED_FPS) == 0)
+            AchievementAdd(AchievementType_IDLER, 1);
+        }
+
+        while (g.run.playerWalkedMetersCumulativeDelta >= 1) {
+          g.run.playerWalkedMetersCumulativeDelta -= 1;
+          g.run.playerWalkedMeters++;
           AchievementAdd(AchievementType_WALKER, 1);
+
+          IterateOverEffects(
+            EffectConditionType_STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE,
+            -1,
+            [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+              BF_FORCE_INLINE_LAMBDA {
+                if ((g.run.playerWalkedMeters % EFFECT_X_INT) == 0) {
+                  ChangeStat(
+                    (StatType)fb_effect->stat_type(),
+                    fb_effect->value()->Get(tierOffset) * times
+                  );
+                }
+              }
+          );
         }
-        while (g.run.playerIdleFrames >= FIXED_FPS * 3 / 2) {
-          g.run.playerIdleFrames -= FIXED_FPS;
-          AchievementAdd(AchievementType_IDLER, 1);
-        }
+      }
+
+      // Processing EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE.
+      IterateOverEffects(  ///
+        EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE,
+        -1,
+        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA {
+            const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
+            const auto e  = g.run.waveStartedAt.Elapsed();
+            if (((e.value + 1) % lf.value) == 0) {
+              ChangeStat(
+                (StatType)fb_effect->stat_type(),
+                fb_effect->value()->Get(tierOffset) * times
+              );
+            }
+          }
+      );
+    }
+
+    // Picked up pickupables fly towards player.
+    for (auto& pickupable : g.run.pickupables) {  ///
+      ZoneScopedN("Picked up pickupables fly towards player.");
+
+      if (pickupable.pickedUpAt.IsSet()) {
+        pickupable.pos
+          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
       }
     }
 
     // Burning spread.
-    for (auto& creature : g.run.creatures) {  ///
+    {  ///
       ZoneScopedN("Burning spread.");
 
-      auto& a = creature.ailments[AilmentType_BURN - 1];
-      if (!a.startedAt.IsSet())
-        continue;
-      if ((a.spread <= 0))
-        continue;
-
-      auto       fb         = fb_creatures->Get(creature.type);
-      const auto isFriendly = (fb->hostility_type() == HostilityType_FRIENDLY);
-
-      for (auto& otherCreature : g.run.creatures) {
-        if (creature.id == otherCreature.id)
+      for (auto& creature : g.run.creatures) {
+        auto& a = creature.ailments[AilmentType_BURN - 1];
+        if (!a.startedAt.IsSet())
           continue;
-        if (otherCreature.diedAt.IsSet())
+        if ((a.spread <= 0))
           continue;
 
-        auto       fb_other = fb_creatures->Get(otherCreature.type);
-        const auto otherIsFriendly
-          = (fb_other->hostility_type() == HostilityType_FRIENDLY);
-        if (isFriendly == otherIsFriendly)
-          continue;
+        auto       fb         = fb_creatures->Get(creature.type);
+        const auto isFriendly = (fb->hostility_type() == HostilityType_FRIENDLY);
 
-        bool canBurn = true;
-        auto resists = fb_other->resists_ailment_types();
-        if (resists) {
-          for (auto v : *resists) {
-            if (v == AilmentType_BURN) {
-              canBurn = false;
-              break;
+        for (auto& otherCreature : g.run.creatures) {
+          if (creature.id == otherCreature.id)
+            continue;
+          if (otherCreature.diedAt.IsSet())
+            continue;
+
+          auto       fb_other = fb_creatures->Get(otherCreature.type);
+          const auto otherIsFriendly
+            = (fb_other->hostility_type() == HostilityType_FRIENDLY);
+          if (isFriendly == otherIsFriendly)
+            continue;
+
+          bool canBurn = true;
+          auto resists = fb_other->resists_ailment_types();
+          if (resists) {
+            for (auto v : *resists) {
+              if (v == AilmentType_BURN) {
+                canBurn = false;
+                break;
+              }
             }
           }
+          if (!canBurn)
+            continue;
+
+          const auto& aa = otherCreature.ailments[AilmentType_BURN - 1];
+          if (aa.startedAt.IsSet())
+            continue;
+
+          const auto d = Vector2DistanceSqr(creature.pos, otherCreature.pos);
+          if (d > SQR(BURNING_SPREAD_DISTANCE))
+            continue;
+
+          ApplyAilment(
+            &otherCreature,
+            a.ownerCreatureType,
+            {.type = AilmentType_BURN, .value = a.value, .spread = 0}
+          );
+          a.spread--;
+
+          if (a.spread <= 0)
+            break;
         }
-        if (!canBurn)
-          continue;
-
-        const auto& aa = otherCreature.ailments[AilmentType_BURN - 1];
-        if (aa.startedAt.IsSet())
-          continue;
-
-        const auto d = Vector2DistanceSqr(creature.pos, otherCreature.pos);
-        if (d > SQR(BURNING_SPREAD_DISTANCE))
-          continue;
-
-        ApplyAilment(
-          &otherCreature,
-          a.ownerCreatureType,
-          {.type = AilmentType_BURN, .value = a.value, .spread = 0}
-        );
-        a.spread--;
-
-        if (a.spread <= 0)
-          break;
       }
     }
 
@@ -7676,14 +8735,11 @@ void GameFixedUpdate() {
             if (a.startedAt.IsSet()
                 && (a.startedAt.Elapsed().value % BURNING_RATE.value == 0))
             {
-              bool isCrit = false;
-              if (a.ownerCreatureType == CreatureType_PLAYER)
-                isCrit = IsCrit();
               TryApplyDamage({
                 .creatureIndex                      = creatureIndex,
                 .damage                             = a.value,
                 .damagerCreatureType                = a.ownerCreatureType,
-                .isCrit                             = isCrit,
+                .critDamageMultiplier               = BURNING_CRIT_DAMAGE_MULTIPLIER,
                 .indexOfWeaponThatDidDamageOrMinus1 = a.weaponIndexOrMinus1,
               });
             }
@@ -7711,7 +8767,7 @@ void GameFixedUpdate() {
 
         f32 speed = GetCreatureSpeed(creature);
         if (creature.type == CreatureType_PLAYER) {
-          speed *= MAX(0, (f32)(100 + g.run.playerStats[StatType_SPEED]) / 100.0f);
+          speed *= MAX(0, (f32)(100 + g.run.state.stats[StatType_SPEED]) / 100.0f);
           if (g.meta.godMode)
             speed *= 1.5f;
         }
@@ -7843,6 +8899,7 @@ void GameFixedUpdate() {
               if (!weapon.startedShootingAt.IsSet()) {
                 weapon.targetDir = dir;
                 weapon.startedShootingAt.SetNow();
+                weapon.thisWaveUseCount++;
               }
               targetSet = true;
             }
@@ -7876,18 +8933,21 @@ void GameFixedUpdate() {
 
             if (spawn) {
               MakeProjectile({
-                .type                 = projectileType,
-                .ownerCreatureType    = PLAYER_CREATURE.type,
-                .weaponIndexOrMinus1  = weaponIndex,
-                .pos                  = pos,
-                .dir                  = weapon.targetDir,
-                .range                = GetWeaponRangeMeters(weapon.type),
-                .damage               = weapon.calculatedDamage,
+                .type                = projectileType,
+                .ownerCreatureType   = PLAYER_CREATURE.type,
+                .weaponIndexOrMinus1 = weaponIndex,
+                .pos                 = pos,
+                .dir                 = weapon.targetDir,
+                .range               = GetWeaponRangeMeters(weapon.type),
+                .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
                 .critDamageMultiplier = fb->crit_damage_multiplier(),
                 .knockbackMeters      = fb->knockback_meters(),
                 .pierce               = fb->projectile_pierce(),
                 .bounce               = fb->projectile_bounce(),
               });
+
+              weapon.lastShotAt = {};
+              weapon.lastShotAt.SetNow();
             }
           }
           else {
@@ -7927,11 +8987,26 @@ void GameFixedUpdate() {
           }
 
           if (e >= shootingDur) {
+            const auto variation      = (int)(cooldownDur.value / 10);
+            int        cooldownFrames = GRAND.RandInt(-variation, variation);
+
+            IterateOverEffects(
+              EffectConditionType_X__COOLDOWN_SECONDS_EVERY__Y__HITS,
+              weaponIndex,
+              [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+                BF_FORCE_INLINE_LAMBDA {
+                  if ((w->thisWaveUseCount % EFFECT_Y_INT) == 0) {
+                    cooldownFrames
+                      += lframe::FromSeconds(EFFECT_X_FLOAT * (f32)times).value;
+                  }
+                }
+            );
+
             weapon.startedShootingAt = {};
             weapon.piercedCount      = 0;
+            weapon.thisWaveUseCount++;
             weapon.cooldownStartedAt.SetNow();
-            const auto variation = (int)(cooldownDur.value / 10);
-            weapon.cooldownStartedAt._value += GRAND.RandInt(-variation, variation);
+            weapon.cooldownStartedAt._value += cooldownFrames;
             weapon.lastCollisionCheckShootingProgress = 0;
           }
         }
@@ -7990,7 +9065,7 @@ void GameFixedUpdate() {
         if (projectile.travelledDistance >= projectile.range) {
           if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
             *g.run.projectilesToRemove.Add() = projectileIndex;
-            if (fb->aoe_particle_type() && fb->aoe_on_travel_end())
+            if (fb->aoe_on_travel_end())
               createAoe = true;
           }
         }
@@ -8030,27 +9105,15 @@ void GameFixedUpdate() {
           if (distSqr < SQR(radius)) {
             Vector2 knockbackDirection{};
 
-            int  damage = projectile.damage;
-            bool isCrit = false;
+            int damage = projectile.damage;
             if (projectile.ownerCreatureType == CreatureType_PLAYER) {
               // Player damages mob.
-              isCrit = IsCrit();
-              if (isCrit)
-                damage *= projectile.critDamageMultiplier;
-
-              if (fb_creature->is_boss()) {
-                damage *= MAX(
-                  0,
-                  (f32)(g.run.playerStats[StatType_DAMAGE_AGAINST_BOSSES] + 100) / 100.0f
-                );
-              }
-
               knockbackDirection
                 = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos);
             }
 
             const f32 piercingDamageMultiplier
-              = (f32)g.run.playerStats[StatType_PIERCING_DAMAGE] / 100.0f;
+              = (f32)g.run.state.stats[StatType_PIERCING_DAMAGE] / 100.0f;
 
             f32 knockback = projectile.knockbackMeters;
 
@@ -8061,7 +9124,9 @@ void GameFixedUpdate() {
 
             int ailmentSpread = 0;
             if (fb->ailment_type() == AilmentType_BURN)
-              ailmentSpread = MAX(0, g.run.playerStats[StatType_BURNING_SPREAD]);
+              ailmentSpread = MAX(0, g.run.state.stats[StatType_BURNING_SPREAD]);
+
+            bool wasCrit = false;
 
             if (TryApplyDamage({
                   .creatureIndex                      = creatureIndex,
@@ -8069,7 +9134,7 @@ void GameFixedUpdate() {
                   .directionOrZero                    = knockbackDirection,
                   .knockbackMeters                    = knockback,
                   .damagerCreatureType                = projectile.ownerCreatureType,
-                  .isCrit                             = isCrit,
+                  .critDamageMultiplier               = projectile.critDamageMultiplier,
                   .indexOfWeaponThatDidDamageOrMinus1 = projectile.weaponIndexOrMinus1,
                   .ailment{
                     .type   = (AilmentType)fb->ailment_type(),
@@ -8077,13 +9142,59 @@ void GameFixedUpdate() {
                     .spread = ailmentSpread,
                   },
                   .ailmentChance = fb->ailment_chance(),
+                  .outWasCrit    = &wasCrit,
                 }))
             {
+              auto fb_weapon = ((projectile.weaponIndexOrMinus1 >= 0)
+                ? fb_weapons->Get(g.run.state.weapons[projectile.weaponIndexOrMinus1].type)
+                : nullptr);
+
+              if (!projectile.dontSpawnProjectilesOnHit
+                  && (projectile.weaponIndexOrMinus1 >= 0))
+              {
+                EffectSpawnProjectilesOnHit(
+                  creature,
+                  projectile.weaponIndexOrMinus1,
+                  fb_weapon->crit_damage_multiplier()
+                );
+              }
+
+              // Applying:
+              // - EffectConditionType_CRITS_PIERCE_UP_TO__X__TIMES.
+              // - EffectConditionType_CRITS_BOUNCE_UP_TO__X__TIMES.
+              if (wasCrit && (projectile.weaponIndexOrMinus1 >= 0)) {
+                const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
+                const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
+
+                IterateOverEffects(
+                  EffectConditionType_CRITS_PIERCE_UP_TO__X__TIMES,
+                  projectile.weaponIndexOrMinus1,
+                  [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+                    BF_FORCE_INLINE_LAMBDA {
+                      if (projectile.effectCritPierce < EFFECT_X_INT) {
+                        projectile.effectCritPierce += times;
+                        projectile.pierce += times;
+                      }
+                    }
+                );
+                IterateOverEffects(
+                  EffectConditionType_CRITS_BOUNCE_UP_TO__X__TIMES,
+                  projectile.weaponIndexOrMinus1,
+                  [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+                    BF_FORCE_INLINE_LAMBDA {
+                      if (projectile.effectCritBounce < EFFECT_X_INT) {
+                        projectile.effectCritBounce += times;
+                        projectile.bounce += times;
+                      }
+                    }
+                );
+              }
+
               auto maxBounce = projectile.bounce;
               auto maxPierce = projectile.pierce;
               if (projectile.ownerCreatureType == CreatureType_PLAYER) {
-                maxBounce += g.run.playerStats[StatType_BOUNCES];
-                maxPierce += g.run.playerStats[StatType_PIERCING];
+                maxBounce += g.run.state.stats[StatType_BOUNCES];
+                maxPierce += g.run.state.stats[StatType_PIERCING];
               }
 
               bool canBounce = projectile.bouncedCount < maxBounce;
@@ -8153,20 +9264,29 @@ void GameFixedUpdate() {
               }
               else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
                 *g.run.projectilesToRemove.Add() = projectileIndex;
-                if (fb->aoe_on_contact())
-                  createAoe = true;
+                createAoe                        = true;
               }
             }
           }
         }
 
+        f32 chanceToExplode = 0;
+
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_EXPLODE,
+          projectile.weaponIndexOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              chanceToExplode += (f32)(EFFECT_X_INT * times) / 100.0f;
+            }
+        );
+
         // Creating AOE particle.
-        if (createAoe && fb->aoe_particle_type() && (GRAND.FRand() < fb->aoe_chance())) {
+        if (createAoe && (GRAND.FRand() < chanceToExplode)) {
           MakeAOE(
             projectile.ownerCreatureType,
-            (ParticleType)fb->aoe_particle_type(),
             projectile.pos,
-            fb->aoe_radius(),
+            glib->explosion_radius(),
             projectile.damage,
             projectile.critDamageMultiplier,
             projectile.knockbackMeters,
@@ -8174,6 +9294,36 @@ void GameFixedUpdate() {
           );
         }
       }
+    }
+
+    // Making projectiles.
+    {  ///
+      for (auto& data : g.run.projectilesToMake) {
+        Projectile projectile{
+          .type                      = data.type,
+          .ownerCreatureType         = data.ownerCreatureType,
+          .weaponIndexOrMinus1       = data.weaponIndexOrMinus1,
+          .pos                       = data.pos,
+          .dir                       = data.dir,
+          .damage                    = data.damage,
+          .critDamageMultiplier      = data.critDamageMultiplier,
+          .pierce                    = data.pierce,
+          .bounce                    = data.bounce,
+          .knockbackMeters           = data.knockbackMeters,
+          .range                     = data.range,
+          .anchorCreatureId          = data.anchorCreatureId,
+          .dontSpawnProjectilesOnHit = data.dontSpawnProjectilesOnHit,
+        };
+        projectile.createdAt.SetNow();
+
+        if (data.alreadyDamagedCreatureId) {
+          projectile.damagedCreatureIds[projectile.damagedCount++]
+            = data.alreadyDamagedCreatureId;
+        }
+
+        *g.run.projectiles.Add() = projectile;
+      }
+      g.run.projectilesToMake.Reset();
     }
 
     // Detonating landmines.
@@ -8200,12 +9350,13 @@ void GameFixedUpdate() {
         if (landmine.startedDetonationAt.IsSet()
             && (landmine.startedDetonationAt.Elapsed() >= LANDMINE_DETONATION_FRAMES))
         {
+          int damage = landmine.damage;
+          damage     = ApplyDamageScalings(damage, 0, landmine.damageScalings, 1);
           MakeAOE(
             CreatureType_PLAYER,
-            ParticleType_EXPLOSION,
             landmine.pos,
             glib->landmine_explosion_radius(),
-            ApplyDamageScalings(1, 0, glib->landmine_damage_scalings()),
+            damage,
             glib->landmine_crit_damage_multiplier(),
             glib->landmine_knockback_meters(),
             -1
@@ -8355,22 +9506,24 @@ void GameFixedUpdate() {
               g.run.state.playerKilledEnemies++;
               AchievementAdd(AchievementType_KILLER, 1);
 
-              if (creature.lastDamagedWeaponIndex >= 0)
-                g.run.state.weapons[creature.lastDamagedWeaponIndex].killedEnemies++;
+              if (creature.lastDamagedWeaponIndex >= 0) {
+                g.run.state.weapons[creature.lastDamagedWeaponIndex]
+                  .thisWaveKilledEnemies++;
+              }
 
+              // Applying effects: STAT__EVERY__X__KILLED_ENEMIES.
               IterateOverEffects(
-                EffectConditionType_KILL_N_ENEMIES_GET_STAT,
-                [&](auto fb_effect, int times) BF_FORCE_INLINE_LAMBDA {
-                  if (g.run.state.playerKilledEnemies % fb_effect->condition_value() == 0)
-                    ApplyEffect(fb_effect, times);
-                }
-              );
-              IterateOverWeaponEffects(
-                EffectConditionType_KILL_N_ENEMIES_USING_THIS_WEAPON_GET_STAT,
-                [&](int _, Weapon& weapon, auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-                  if (weapon.killedEnemies % fb_effect->condition_value() == 0)
-                    ApplyEffect(fb_effect, 1);
-                }
+                EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
+                creature.lastDamagedWeaponIndex,
+                [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+                  BF_FORCE_INLINE_LAMBDA {
+                    if (w) {
+                      if ((w->thisWaveKilledEnemies % EFFECT_X_INT) == 0)
+                        ApplyStatEffect(fb_effect, tierOffset, 1);
+                    }
+                    else if ((g.run.state.playerKilledEnemies % EFFECT_X_INT) == 0)
+                      ApplyStatEffect(fb_effect, tierOffset, times);
+                  }
               );
             }
 
@@ -8532,6 +9685,10 @@ int GetTextureIdByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
 
 void GameDraw() {
   ZoneScoped;
+
+  // Waiting for completion of save data loading.
+  if (!ge.meta.loading)
+    return;
 
   // Setup.
   // {  ///
@@ -8776,13 +9933,22 @@ void GameDraw() {
           rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
         }
 
+        f32 weaponFade = fade;
+
+        if (fb->shoots_itself()) {
+          if (weapon.lastShotAt.IsSet()) {
+            f32 t = MIN(1, weapon.lastShotAt.Elapsed().Progress(ANIMATION_1_FRAMES));
+            weaponFade *= EaseInQuad(t);
+          }
+        }
+
         DrawGroup_OneShotTexture(
           {
             .texId    = fb->texture_ids()->Get(0),
             .rotation = rotation,
             .pos      = pos,
             .scale    = scale,
-            .color    = Fade(ColorFromRGBA(fb->color()), fade),
+            .color    = Fade(ColorFromRGBA(fb->color()), weaponFade),
           },
           PLAYER_WEAPONS_DRAW_Z[weaponsCount - 1][i]
         );
@@ -8981,6 +10147,7 @@ void GameDraw() {
       const auto e = pickupable.pickedUpAt.Elapsed();
       fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
     }
+    fade = EaseOutCubic(fade);
 
     auto pos = WorldToLogical(pickupable.pos, &g.run.camera);
     if (pickupable.startedFlyingAt.IsSet()) {
@@ -9105,4 +10272,4 @@ void GameDraw() {
   }
 }
 
-///
+//

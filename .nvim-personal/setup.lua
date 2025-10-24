@@ -122,7 +122,7 @@ vim.keymap.set("n", "<leader>0", function()
         if (vim.bo.filetype == "cpp") or (vim.bo.filetype == "jsonc") then
             vim.fn.execute([[%g/\/\/\//silent!normal! $bbzf%]])
         else
-            vim.fn.execute([[%g/###/silent!normal! j$zf%]])
+            vim.fn.execute([[%g/###/silent!normal! $bbzf%]])
         end
         vim.api.nvim_input("hl0$`z")
     end

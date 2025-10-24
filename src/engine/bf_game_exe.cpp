@@ -87,11 +87,11 @@ EMSCRIPTEN_KEEPALIVE void pause_from_js() {  ///
 EMSCRIPTEN_KEEPALIVE void resume_from_js() {  ///
   ge.meta.windowIsInactive = false;
 }
+#  endif
 
 EMSCRIPTEN_KEEPALIVE void saved_from_js() {  ///
   ge.meta.previousSaveIsNotCompletedYet = false;
 }
-#  endif
 
 EMSCRIPTEN_KEEPALIVE void set_localization_from_js(int localization) {  ///
   ge.meta.localization = localization;
@@ -398,19 +398,34 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_DOWN: {  ///
-    switch (event->key.key) {
-#if defined(SDL_PLATFORM_DESKTOP)
-    case SDLK_F11: {
+    if (event->key.scancode == SDL_SCANCODE_F11) {
       auto window     = SDL_GetWindowFromID(event->key.windowID);
       auto mode       = SDL_GetWindowFullscreenMode(window);
       auto fullscreen = SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN;
       SDL_SetWindowFullscreen(window, !fullscreen);
-    } break;
-#endif
-
-    default:
-      break;
     }
+
+    ge.meta._keyboardStatePressed[event->key.scancode] = true;
+  } break;
+
+  case SDL_EVENT_KEY_UP: {  ///
+    ge.meta._keyboardStateReleased[event->key.scancode] = true;
+  } break;
+
+  case SDL_EVENT_MOUSE_BUTTON_DOWN: {  ///
+    auto b = event->button.button;
+    ASSERT(b > 0);
+    ASSERT(b < 32);
+    if ((b > 0) && (b < 32))
+      MARK_BIT(&ge.meta._mouseStatePressed, b - 1);
+  } break;
+
+  case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
+    auto b = event->button.button;
+    ASSERT(b > 0);
+    ASSERT(b < 32);
+    if ((b > 0) && (b < 32))
+      MARK_BIT(&ge.meta._mouseStateReleased, b - 1);
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
