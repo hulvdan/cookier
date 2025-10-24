@@ -16,9 +16,9 @@ x EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
   should be able to target one weapon OR all weapons
   (This weapon)
 x fix: flying coins stood on the floor after flying
-
-* X__CHANCE_TO_EXPLODE
-* X__CHANCE_OF_EXPLOSION_ON_HIT
+x weapon effects: impl: X__CHANCE_TO_EXPLODE
+x X__CHANCE_TO_EXPLODE
+x X__CHANCE_OF_EXPLOSION_ON_HIT
 
 * impl: universal: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
 * impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
@@ -40,7 +40,6 @@ x fix: flying coins stood on the floor after flying
 * weapon effects: impl: STAT__WHEN_IDLE
 * structures in a circle around center
 *
-* weapon effects: impl: X__CHANCE_TO_EXPLODE
 * weapon effects: impl: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
   PROBABLY CAN USE JUST PROPERTY WITH AN ALREADY EXISTING EFFECT
 * STAT_FOR_WEAPONGROUP
