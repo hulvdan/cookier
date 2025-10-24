@@ -394,9 +394,9 @@ ailments: # {  ###
 weapon_properties: # {  ###
   - type: INVALID
   - type: DAMAGE
-    name_locale: PROPERTY_DAMAGE
+    name_locale: STAT_DAMAGE
   - type: BURNING_SPREAD
-    name_locale: PROPERTY_BURNING_SPREAD
+    name_locale: STAT_BURNING_SPREAD
 # }
 
 effect_condition_variables: # {  ###
@@ -437,28 +437,71 @@ effect_conditions: # {  ###
     y_condvar_type: DAMAGE
   - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
   - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
-  - type: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
+  - type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
     y_is_percent: true
     y_signed: true
   - type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
     x_is_percent: true
     x_signed: true
+    y_multiplied_by_times: true
   - type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
     x_is_percent: true
     x_signed: true
+    y_multiplied_by_times: true
   - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
     x_is_percent: true
     x_signed: true
     y_condvar_type: DAMAGE
+    y_multiplied_by_times: true
   - type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+    x_multiplied_by_times: true
     x_is_percent: true
     x_signed: true
   - type: CRITS_PIERCE_UP_TO__X__TIMES
+    x_multiplied_by_times: true
   - type: CRITS_BOUNCE_UP_TO__X__TIMES
+    x_multiplied_by_times: true
   - type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
     requires_projectile: true
     x_multiplied_by_times: true
     y_condvar_type: DAMAGE
+  - type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+    x_condvar_type: FLOAT
+    x_signed: true
+    x_multiplied_by_times: true
+  - type: X__CHANCE_OF_EXPLOSION_ON_HIT
+    x_is_percent: true
+  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+  - type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
+  - type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
+  - type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
+    x_multiplied_by_times: true
+    y_is_percent: true
+  - type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+    y_multiplied_by_times: true
+  - type: X__CHANCE_TO_EXPLODE
+    x_is_percent: true
+  - type: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
+    x_is_percent: true
+  - type: PROPERTY__WHEN_IDLE
+  - type: PROPERTY__WHEN_WALKING
+  - type: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
+    x_multiplied_by_times: true
+  - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
+    x_multiplied_by_times: true
 # }
 
 build_effect_conditions: # { ###
@@ -466,38 +509,6 @@ build_effect_conditions: # { ###
     x_condvar_type: ITEM_OR_WEAPON
   - type: CANT_EQUIP_MELEE_WEAPONS
   - type: CANT_EQUIP_RANGED_WEAPONS
-# }
-
-weapon_effect_conditions: # {  ###
-  - type: X__CHANCE_OF_EXPLOSION_ON_HIT
-    x_is_percent: true
-  - type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
-    x_condvar_type: FLOAT
-    x_signed: true
-  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP
-    x_signed: true
-    x_is_percent: true
-    y_is_percent: true
-  - type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP
-    x_signed: true
-    x_is_percent: true
-    y_is_percent: true
-  - type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
-  - type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
-  - type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
-    y_is_percent: true
-  - type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
-    x_signed: true
-    x_is_percent: true
-    y_is_percent: true
-  - type: X__CHANCE_TO_EXPLODE
-    x_is_percent: true
-  - type: X__CHANCE_TO_GET_COIN_UPON_KILLING_WITH_CRIT
-    x_is_percent: true
-  - type: PROPERTY__WHEN_IDLE
-  - type: PROPERTY__WHEN_WALKING
-  - type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
-  - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
 # }
 
 items: # {  ###
@@ -709,6 +720,7 @@ weapons: # {  ###
       #     - ints: 0 0 0 0
       #
       - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+        only_other_weapons: true
         placeholders:
           - floats: 3 2.5 2 1.2
           - ints: 5 5 5 5
@@ -762,52 +774,66 @@ weapons: # {  ###
       #   placeholders:
       #     - ints: 1 2 3 4
       #
-      - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
-        # all_weapons: true
-        # only_this_weapon: true
+      # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
+      #   # all_weapons: true
+      #   # only_this_weapon: true
+      #   only_other_weapons: true
+      #   placeholders:
+      #     - ints: 1 2 3 4
+      #
+      # - effectcondition_type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+      #   only_other_weapons: true
+      #   placeholders:
+      #     - ints: 3 3 3 3
+      #     - ints: 100 100 100 100
+      #
+      # - effectcondition_type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+      #   only_this_weapon: true
+      #   placeholders:
+      #     - ints: 3 3 3 3
+      #     - ints: 100 100 100 100
+      #
+      # - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
+      #   stat_type: ATTACK_SPEED
+      #   value: 1 1 1 1
+      #   only_this_weapon: true
+      #   placeholders:
+      #     - ints: 3 3 3 3
+      #
+      #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
+      #     weaponproperty_type: DAMAGE
+      #     value: 4 6 8 10
+      #
+      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
+      #     placeholders:
+      #       - ints: 20 20 20 20
+      #       - ints: 70 65 60 55
+      #
+      #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
+      #     placeholders:
+      #       - ints: 20 20 20 20
+      #       - ints: 75 80 85 90
+      #
+      #   - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+      #     placeholders:
+      #       - floats: 2.0 1.6 1.2 0.8
+      #       - ints: 20 20 20 20
+      #
+      # - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+      #   projectile_type: JAVELIN
+      #   projectile_range_meters: 5
+      #   placeholders:
+      #     - ints: 3 4 5 6
+      #     - ints: 0 0 0 0
+      #   damage_scalings:
+      #     - stat_type: DAMAGE_RANGED
+      #       percents_per_tier: 50 60 70 80
+      #
+      - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
         only_other_weapons: true
         placeholders:
-          - ints: 1 2 3 4
-            # - effectcondition_type: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
-            #   only_other_weapons: true
-            #   placeholders:
-            #     - ints: 3 3 3 3
-            #     - ints: 100 100 100 100
-            # - effectcondition_type: EVERY__X__USE_CHANGE_CRIT_CHANCE_BY__Y
-            #   only_this_weapon: true
-            #   placeholders:
-            #     - ints: 3 3 3 3
-            #     - ints: 100 100 100 100
-      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
-        stat_type: ATTACK_SPEED
-        value: 1 1 1 1
-        only_this_weapon: true
-        placeholders:
-          - ints: 3 3 3 3
-            #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
-            #     weaponproperty_type: DAMAGE
-            #     value: 4 6 8 10
-            #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-            #     placeholders:
-            #       - ints: 20 20 20 20
-            #       - ints: 70 65 60 55
-            #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-            #     placeholders:
-            #       - ints: 20 20 20 20
-            #       - ints: 75 80 85 90
-            #   - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
-            #     placeholders:
-            #       - floats: 2.0 1.6 1.2 0.8
-            #       - ints: 20 20 20 20
-      - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
-        projectile_type: JAVELIN
-        projectile_range_meters: 5
-        placeholders:
+          - floats: 3 3 3 3
           - ints: 3 4 5 6
-          - ints: 0 0 0 0
-        damage_scalings:
-          - stat_type: DAMAGE_RANGED
-            percents_per_tier: 50 60 70 80
   - type: SMG
     min_tier_index: 0
     base_damage: 3 6 9 12
@@ -882,7 +908,8 @@ weapons: # {  ###
       #     damage_scalings:
       #       - stat_type: ENGINEERING
       #         percents_per_tier: 100 125 150 200
-      #   - effectcondition_type: ALWAYS_CRITS_WHEN_HITTING_BURNING_ENEMIES
+      #   - effectcondition_type: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
+      #EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
       #   - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
       #     placeholders:
       #       - ints: 1 2 3 4
@@ -1298,9 +1325,6 @@ difficulties: # {  ###
   - type: INVALID
   - type: D0
     texture_id: ui_difficulty_0
-    effects:
-      - stat_type: ENEMY_HP_SCALE
-        value: 0
   - type: D1
     texture_id: ui_difficulty_1
     effects:
