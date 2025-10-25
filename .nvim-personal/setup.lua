@@ -57,13 +57,13 @@ function rebuild_tasks()
         {
             "z_serve_web_debug",
             function()
-                vim.fn.execute([[term python -m http.server -d .cmake\Web_Debug 8000]])
+                vim.fn.execute([[term python -m http.server -d .cmake\Web_Debug -b 0.0.0.0 8000]])
             end,
         },
         {
             "x_serve_web_release",
             function()
-                vim.fn.execute([[term python -m http.server -d .cmake\Web_Release 8001]])
+                vim.fn.execute([[term python -m http.server -d .cmake\Web_Release -b 0.0.0.0 8001]])
             end,
         },
         {

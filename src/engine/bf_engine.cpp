@@ -2655,6 +2655,8 @@ void _UnloadTexture(Texture2D* texture) {  ///
 void InitEngine() {  ///
   ZoneScopedN("InitEngine");
 
+  SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+
   ge.meta._keyboardState = SDL_GetKeyboardState(&ge.meta._keyboardStateCount);
 
   size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardStateCount;

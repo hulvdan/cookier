@@ -24,9 +24,20 @@ x impl: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
 x impl: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
 x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
 x impl: X__PERCENT_MORE_COINS_FROM_RECYCLING
+x touch: emulate touch controls in debug when device is set to mobile
+x touch: can play using finger
+x test on phone: can play
+- test on phone: touching screen with another finger overrides old touch
+- test on phone: untouching returns control to previous finger
 
-* touch: emulate touch controls in debug when device is set to mobile
-* touch: can play using finger
+* touch: fix double press
+* show controls above strips
+* can play with only a mouse
+* bigger buttons (bigger button font)
+* touch: pressing item again removes hover from it
+* touch:
+* mobile: sounds don't work
+* mobile: looks like framebuffer didn't scale
 * touch: pause button during gameplay
 * structures in a circle around center
 * на русском апгрейд "рукопашный урон" хреново смотрится

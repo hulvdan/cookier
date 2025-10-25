@@ -16,11 +16,11 @@ draw_z: # {  ###
   - WEAPONS_4
   - WEAPONS_5
   - WEAPONS_6
-  - TOUCH_CONTROLS
   - DAMAGE_NUMBERS
   - VIGNETTE
   - SCREEN_FADE
   - UI
+  - TOUCH_CONTROLS
   - GIZMOS
 # }
 
@@ -85,17 +85,13 @@ sounds: # {  ###
     #   pool: 2
     # - type: GAME_MONSTRO_JUMP
     #   pool: 2
-vignette_texture_id: vignette
 ui_health_player_texture_ids:
   - ui_health_player_back
   - ui_health_player_top
 ui_health_boss_texture_ids:
   - ui_health_boss_back
   - ui_health_boss_top
-ui_coin_texture_id: ui_coin
-ui_coin_x2_texture_id: ui_coin_x2
 ui_modal_fade: 0.75
-ui_item_slot_texture_id: ui_item_slot
 ui_item_slot_colors:
   # Tier 0 (default, hovered, disabled)
   - 0x3a3a41ff # Colors. Gray.
@@ -139,17 +135,10 @@ ui_button_nine_slice:
   right: 32
   top: 32
   bottom: 48
-ui_item_locked_texture_id: ui_item_locked
-ui_item_question_texture_id: ui_item_question
 shadow_texture_ids:
   - game_shadow_1
   - game_shadow_2
   - game_shadow_3
-decal_pre_spawn_texture_id: game_decal_pre_spawn
-landmine_texture_id: game_landmine
-garden_texture_id: game_garden
-ui_controls_touch_base_texture_id: ui_controls_touch_base
-ui_controls_touch_handle_texture_id: ui_controls_touch_handle
 ui_controls_touch_handle_margin: 16
 # }
 

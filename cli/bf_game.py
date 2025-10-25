@@ -349,12 +349,32 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                             assert v not in container, "{} {} duplicated".format(field, v)
                             container.append(v)
 
+    with open(SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
+        gamelib_fbs_lines = [l.strip() for l in in_file if l.strip()]
+
+    # Texture bind.
+    # ============================================================
+    if 1:
+        start = -1
+        end = -1
+        for i, line in enumerate(gamelib_fbs_lines):
+            if "AUTOMATIC_TEXTURE_BIND_START" in line:
+                assert start == -1
+                start = i + 1
+            if "AUTOMATIC_TEXTURE_BIND_END" in line:
+                assert end == -1
+                end = i
+                break
+        assert start >= 0
+        assert end > start
+
+        for i in range(start, end):
+            field = gamelib_fbs_lines[i].split(":", 1)[0]
+            gamelib[field] = field.split("_texture_id", 1)[0]
+
     # Tables.
     # ============================================================
     if 1:
-        with open(SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
-            gamelib_fbs_lines = in_file.readlines()
-
         start = -1
         end = -1
         for i, line in enumerate(gamelib_fbs_lines):
