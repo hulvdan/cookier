@@ -623,10 +623,18 @@ struct TouchID {
 
 constexpr TouchID InvalidTouchID = {};
 
-struct Touch {
-  TouchID _id         = {};
-  Vector2 _screenPos  = {};
-  Vector2 _screenDPos = {};
+struct _TouchEvent {
+  TouchID _id          = {};
+  i64     _number      = {};
+  Vector2 _screenPos   = {};
+  Vector2 _screenDelta = {};
+};
+
+struct TouchData {
+  i64     number      = {};
+  Vector2 screenPos   = {};
+  Vector2 screenDelta = {};
+  u64     userData    = {};
 };
 
 enum _TouchDataState : u32 {
@@ -637,10 +645,8 @@ enum _TouchDataState : u32 {
 };
 
 struct _TouchData {
-  Vector2 _screenPos  = {};
-  Vector2 _screenDPos = {};
-  u64     _userData   = {};
-  u32     _state      = {};
+  TouchData data  = {};
+  u32       state = {};
 };
 
 struct Margins {
@@ -823,8 +829,9 @@ struct EngineData {
     Vector2 _mousePos           = {};
     int     _mouseWheel         = {};
 
-    Vector<TouchID>    _touchIDs = {};
-    Vector<_TouchData> _touches  = {};
+    Vector<TouchID>    _touchIDs            = {};
+    Vector<_TouchData> _touches             = {};
+    TouchID            _latestActiveTouchID = {};
 
     i64 ticks         = {};
     f64 prevFrameTime = {};
@@ -832,7 +839,7 @@ struct EngineData {
 
     Arena _arena = {};
 
-    DeviceType deviceType = DeviceType_DESKTOP;
+    DeviceType device = DeviceType_DESKTOP;
 
     Vector2 _screenToLogicalScale = {};
     Vector2 _screenToLogicalAdd   = {};
@@ -1297,12 +1304,12 @@ static const u8 _utf8d[364] {  ///
 };
 // clang-format on
 
-u32 _UTF8Decode(u32* _state, u8 _ch, u32* _codep) {  ///
+u32 _UTF8Decode(u32* state, u8 _ch, u32* _codep) {  ///
   u32 byte = _ch;
   u32 type = _utf8d[byte];
-  *_codep  = (*_state != 0) ? (byte & 0x3fu) | (*_codep << 6) : (0xff >> type) & (byte);
-  *_state  = _utf8d[256 + *_state + type];
-  return *_state;
+  *_codep  = (*state != 0) ? (byte & 0x3fu) | (*_codep << 6) : (0xff >> type) & (byte);
+  *state   = _utf8d[256 + *state + type];
+  return *state;
 }
 
 // NOTE: Be sure to handle `0` - the sentinel value.
@@ -2288,44 +2295,49 @@ void FlushDrawCommands() {
   ge.draw.groups.Reset();
 }
 
-void _OnTouchDown(Touch touch) {  ///
+void _OnTouchDown(_TouchEvent touch) {  ///
   for (auto id : ge.meta._touchIDs)
     ASSERT(id != touch._id);
 
   _TouchData d{
-    ._screenPos  = touch._screenPos,
-    ._screenDPos = touch._screenDPos,
-    ._state      = _TouchDataState_PRESSED | _TouchDataState_DOWN,
+    .data{
+      .number      = touch._number,
+      .screenPos   = touch._screenPos,
+      .screenDelta = touch._screenDelta,
+    },
+    .state = _TouchDataState_PRESSED | _TouchDataState_DOWN,
   };
   *ge.meta._touchIDs.Add() = touch._id;
   *ge.meta._touches.Add()  = d;
+
+  ge.meta._latestActiveTouchID = touch._id;
 }
 
-void _OnTouchUp(Touch touch) {  ///
+void _OnTouchUp(_TouchEvent touch) {  ///
   auto found = false;
-  // Marking as released. It will be removed on calling `ResetInputState`.
+  // Marking as released. It will be removed on calling `_ClearControlsCache`.
   FOR_RANGE (int, i, ge.meta._touches.count) {
     auto id = ge.meta._touchIDs[i];
     if (id == touch._id) {
-      found        = true;
-      auto& t      = ge.meta._touches[i];
-      t._screenPos = touch._screenPos;
-      t._state |= _TouchDataState_RELEASED;
-      t._state &= ~_TouchDataState_DOWN;
+      found            = true;
+      auto& t          = ge.meta._touches[i];
+      t.data.screenPos = touch._screenPos;
+      t.state |= _TouchDataState_RELEASED;
+      t.state &= ~_TouchDataState_DOWN;
       break;
     }
   }
   ASSERT(found);
 }
 
-void _OnTouchMoved(Touch touch) {  ///
+void _OnTouchMoved(_TouchEvent touch) {  ///
   auto found = false;
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == touch._id) {
-      found         = true;
-      auto& t       = ge.meta._touches[i];
-      t._screenPos  = touch._screenPos;
-      t._screenDPos = touch._screenDPos;
+      found              = true;
+      auto& t            = ge.meta._touches[i];
+      t.data.screenPos   = touch._screenPos;
+      t.data.screenDelta = touch._screenDelta;
       break;
     }
   }
@@ -2347,7 +2359,7 @@ void _ClearControlsCache() {  ///
     auto total = ge.meta._touches.count;
     auto off   = 0;
     FOR_RANGE (int, i, total) {
-      if (ge.meta._touches[i - off]._state & _TouchDataState_RELEASED) {
+      if (ge.meta._touches[i - off].state & _TouchDataState_RELEASED) {
         auto id = ge.meta._touchIDs[i - off];
         ge.meta._touchIDs.UnstableRemoveAt(i - off);
         ge.meta._touches.UnstableRemoveAt(i - off);
@@ -2356,15 +2368,30 @@ void _ClearControlsCache() {  ///
     }
   }
 
+  // Setting `ge.meta._latestActiveTouchID`.
+  {
+    ge.meta._latestActiveTouchID = {};
+    int highestNumber            = 0;
+    FOR_RANGE (int, i, ge.meta._touches.count) {
+      const auto& t = ge.meta._touches[i];
+      if (highestNumber < t.data.number) {
+        highestNumber                = t.data.number;
+        ge.meta._latestActiveTouchID = ge.meta._touchIDs[i];
+      }
+    }
+  }
+
   for (auto& t : ge.meta._touches)
-    t._state &= ~_TouchDataState_PRESSED;
+    t.state &= ~_TouchDataState_PRESSED;
 }
 
 bool IsTouchPressed(TouchID id) {  ///
+  if (id == InvalidTouchID)
+    return false;
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
-      return t._state & _TouchDataState_PRESSED;
+      return t.state & _TouchDataState_PRESSED;
     }
   }
   INVALID_PATH;  // Not found.
@@ -2372,10 +2399,12 @@ bool IsTouchPressed(TouchID id) {  ///
 }
 
 bool IsTouchReleased(TouchID id) {  ///
+  if (id == InvalidTouchID)
+    return false;
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
-      return t._state & _TouchDataState_RELEASED;
+      return t.state & _TouchDataState_RELEASED;
     }
   }
   INVALID_PATH;  // Not found.
@@ -2386,17 +2415,17 @@ bool IsTouchDown(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
-      return t._state & _TouchDataState_DOWN;
+      return t.state & _TouchDataState_DOWN;
     }
   }
   return false;
 }
 
-TEST_CASE ("Touch controls") {  ///
+TEST_CASE ("_TouchEvent controls") {  ///
   LAMBDA (TouchID, id, (SDL_TouchID i)) {
     return {._touchID = i, ._fingerID = i};
   };
-  LAMBDA (Touch, touch, (SDL_TouchID _id)) {
+  LAMBDA (_TouchEvent, touch, (SDL_TouchID _id)) {
     return {._id = id(_id)};
   };
 
@@ -3268,20 +3297,16 @@ bool IsKeyReleased(SDL_Scancode key) {  ///
 #define IsMouseReleased(button_) \
   (ge.meta._mouseStateReleased & (SDL_BUTTON_##button_##MASK))
 
-Vector2 GetTouchScreenPos(TouchID id) {  ///
+const TouchData GetTouchData(TouchID id) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
-      return ge.meta._touches[i]._screenPos;
+      const auto& t = ge.meta._touches[i];
+      return TouchData{
+        .number      = t.data.number,
+        .screenPos   = t.data.screenPos,
+        .screenDelta = t.data.screenDelta,
+      };
     }
-  }
-  INVALID_PATH;  // Not found.
-  return {};
-}
-
-Vector2 GetTouchScreenDPos(TouchID id) {  ///
-  FOR_RANGE (int, i, ge.meta._touches.count) {
-    if (ge.meta._touchIDs[i] == id)
-      return ge.meta._touches[i]._screenDPos;
   }
   INVALID_PATH;  // Not found.
   return {};
@@ -3290,20 +3315,11 @@ Vector2 GetTouchScreenDPos(TouchID id) {  ///
 void SetTouchUserData(TouchID id, u64 userData) {  ///
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
-      ge.meta._touches[i]._userData = userData;
+      ge.meta._touches[i].data.userData = userData;
       return;
     }
   }
   INVALID_PATH;  // Not found.
-}
-
-u64 GetTouchUserData(TouchID id) {  ///
-  FOR_RANGE (int, i, ge.meta._touches.count) {
-    if (ge.meta._touchIDs[i] == id)
-      return ge.meta._touches[i]._userData;
-  }
-  INVALID_PATH;  // Not found.
-  return 0;
 }
 
 Vector2 GetMouseScreenPos() {  ///
@@ -3568,7 +3584,7 @@ SDL_AppResult EngineUpdate() {  ///
       IncrementSetZeroOn(&ge.meta.localization, 2);
 
     if (IsKeyPressed(SDL_SCANCODE_F4))
-      IncrementSetZeroOn((int*)&ge.meta.deviceType, (int)DeviceType_COUNT);
+      IncrementSetZeroOn((int*)&ge.meta.device, (int)DeviceType_COUNT);
   }
 
   int simulated = 0;

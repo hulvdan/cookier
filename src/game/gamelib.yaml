@@ -147,6 +147,9 @@ shadow_texture_ids:
 decal_pre_spawn_texture_id: game_decal_pre_spawn
 landmine_texture_id: game_landmine
 garden_texture_id: game_garden
+ui_controls_touch_base_texture_id: ui_controls_touch_base
+ui_controls_touch_handle_texture_id: ui_controls_touch_handle
+ui_controls_touch_handle_margin: 0
 # }
 
 # "Hostility" is about colors of "spawn crosses" in brotato.

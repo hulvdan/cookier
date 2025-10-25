@@ -25,10 +25,10 @@ x impl: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
 x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
 x impl: X__PERCENT_MORE_COINS_FROM_RECYCLING
 
-* structures in a circle around center
-
-* touch: pause button during gameplay
+* touch: emulate touch controls in debug when device is set to mobile
 * touch: can play using finger
+* touch: pause button during gameplay
+* structures in a circle around center
 * на русском апгрейд "рукопашный урон" хреново смотрится
   мб "рукопашная"?
 *
