@@ -318,8 +318,6 @@ table GameLibrary {
     atlas_textures: [Texture] (required);
     original_texture_sizes: [Pos] (required);
 
-    vignette_texture_id: int;
-
     localization_debug_strings: [string] (required);
     localizations: [Localization] (required);
 
@@ -327,26 +325,30 @@ table GameLibrary {
     ui_health_player_texture_ids: [int] (required);
     ui_health_boss_texture_ids: [int] (required);
     ui_modal_fade: float;
-    ui_coin_texture_id: int;
-    ui_coin_x2_texture_id: int;
-    ui_item_slot_texture_id: int;
     ui_item_slot_colors: [uint] (required);
     ui_button_colors: [uint] (required);
     ui_item_big_frame_color: uint;
-    ui_shop_current_level_icon_texture_id: uint;
+    ui_shop_current_level_icon_texture_id: int;
     ui_frame_nine_slice: NineSlice;
     ui_button_nine_slice: NineSlice;
-    ui_item_locked_texture_id: int;
-    ui_item_question_texture_id: int;
 
     shadow_texture_ids: [int];
 
-    decal_pre_spawn_texture_id: int;
-    landmine_texture_id: int;
-    garden_texture_id: int;
-
+    // AUTOMATIC_TEXTURE_BIND_START
+    ui_item_slot_texture_id: int;
+    vignette_texture_id: int;
+    ui_coin_texture_id: int;
+    ui_coin_x2_texture_id: int;
+    ui_item_locked_texture_id: int;
+    ui_item_question_texture_id: int;
+    game_decal_pre_spawn_texture_id: int;
+    game_landmine_texture_id: int;
+    game_garden_texture_id: int;
     ui_controls_touch_base_texture_id: int;
     ui_controls_touch_handle_texture_id: int;
+    ui_icon_settings_texture_id: int;
+    // AUTOMATIC_TEXTURE_BIND_END
+
     ui_controls_touch_handle_margin: int;
 
     // NOTE: «Table Gen» works in Python `bf_game.py`.

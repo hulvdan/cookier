@@ -9826,7 +9826,7 @@ void GameDraw() {
 
   // Drawing prespawns.
   {  ///
-    const auto texId = glib->decal_pre_spawn_texture_id();
+    const auto texId = glib->game_decal_pre_spawn_texture_id();
 
     DrawGroup_Begin(DrawZ_FLOOR_DECALS);
     DrawGroup_SetSortY(0);
@@ -10060,14 +10060,14 @@ void GameDraw() {
 
   // Drawing landmines.
   {  ///
-    const auto texId = glib->landmine_texture_id();
+    const auto texId = glib->game_landmine_texture_id();
     for (const auto& v : g.run.landmines)
       DrawGroup_OneShotTexture({.texId = texId, .pos = v.pos}, DrawZ_LANDMINES);
   }
 
   // Drawing gardens.
   {  ///
-    const auto texId = glib->garden_texture_id();
+    const auto texId = glib->game_garden_texture_id();
     for (const auto& v : g.run.gardens)
       DrawGroup_OneShotTexture({.texId = texId, .pos = v.pos}, DrawZ_DEFAULT);
   }
@@ -10329,6 +10329,9 @@ void GameDraw() {
   if ((g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused) {  ///
     auto& t = g.meta.touch;
 
+    DrawGroup_Begin(DrawZ_TOUCH_CONTROLS);
+    DrawGroup_SetSortY(0);
+
     FOR_RANGE (int, i, 1) {
       if (t.touchIDs[i] == InvalidTouchID)
         continue;
@@ -10337,9 +10340,6 @@ void GameDraw() {
       auto       endPos   = t.logicalPos[i * 2 + 1];
       if (startPos != endPos)
         endPos = startPos + t.dir[i] * g.ui.touchControlMaxLogicalOffset;
-
-      DrawGroup_Begin(DrawZ_TOUCH_CONTROLS);
-      DrawGroup_SetSortY(0);
 
       const struct {
         Vector2 pos   = {};
@@ -10351,9 +10351,9 @@ void GameDraw() {
       for (auto& d : data) {
         DrawGroup_CommandTexture({.texId = d.texId, .pos = d.pos});
       }
-
-      DrawGroup_End();
     }
+
+    DrawGroup_End();
   }
 
   DoUI(true);
