@@ -40,5 +40,5 @@ STAT_ENEMY_SPEED;                    Скорость Врагов;             
 STAT_REROLL_PRICE;                   Цена Перебрасывания . скидка Перебрасывания;       Reroll Price;
 STAT_TURRELS_COUNT;                  Туррели;                                           Turrels;
 STAT_LANDMINES;                      Частота спавна мин;                                Landmines;
-STAT_GARDENS_COUNT;                  Сады;                                              Gardens;
+STAT_GARDENS_COUNT;                  Огороды;                                              Gardens;
 STAT_ENEMY_HP_SCALE;                 Здоровье Врагов;                                   Enemy Health;

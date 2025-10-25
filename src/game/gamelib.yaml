@@ -235,10 +235,7 @@ creatures: # {  ###
     speed: 5
     speed_variation: 0.8
     idle_texture_ids:
-      - game_creature_player_idle_1
-      - game_creature_player_idle_2
-      - game_creature_player_idle_3
-      - game_creature_player_idle_4
+      - game_creature_player_move_1
     move_texture_ids:
       - game_creature_player_move_1
       - game_creature_player_move_2
@@ -257,10 +254,7 @@ creatures: # {  ###
     speed: 7
     speed_variation: 0.8
     idle_texture_ids:
-      - game_creature_player_idle_1
-      - game_creature_player_idle_2
-      - game_creature_player_idle_3
-      - game_creature_player_idle_4
+      - game_creature_player_move_1
     move_texture_ids:
       - game_creature_player_move_1
       - game_creature_player_move_2
@@ -281,10 +275,7 @@ creatures: # {  ###
     coins_dropped: 3
     aggro_distance: 7
     idle_texture_ids:
-      - game_creature_player_idle_1
-      - game_creature_player_idle_2
-      - game_creature_player_idle_3
-      - game_creature_player_idle_4
+      - game_creature_player_move_1
     move_texture_ids:
       - game_creature_player_move_1
       - game_creature_player_move_2
@@ -307,10 +298,7 @@ creatures: # {  ###
     on_death_spawns_distance_min: 3
     on_death_spawns_distance_max: 1
     idle_texture_ids:
-      - game_creature_player_idle_1
-      - game_creature_player_idle_2
-      - game_creature_player_idle_3
-      - game_creature_player_idle_4
+      - game_creature_player_move_1
     move_texture_ids:
       - game_creature_player_move_1
       - game_creature_player_move_2
@@ -333,10 +321,7 @@ creatures: # {  ###
     consumable_drop_chance: inf
     crate_instead_of_consumable_factor: inf
     idle_texture_ids:
-      - game_creature_player_idle_1
-      - game_creature_player_idle_2
-      - game_creature_player_idle_3
-      - game_creature_player_idle_4
+      - game_creature_player_move_1
     move_texture_ids:
       - game_creature_player_move_1
       - game_creature_player_move_2
@@ -539,9 +524,9 @@ items: # {  ###
     tier: 2
     effects:
       - stat_type: STRUCTURE_ATTACK_SPEED
-        value: 50
+        value: 5
       - stat_type: STRUCTURE_RANGE
-        value: 50
+        value: 25
   - type: LANDMINE
     texture_id: ui_item_todo
     price: 25
@@ -563,7 +548,7 @@ items: # {  ###
     effects:
       - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
         placeholders:
-          - floats: 1
+          - floats: 15
   - type: HELMET
     texture_id: ui_item_helmet
     tier: 2
@@ -946,7 +931,7 @@ weapons: # {  ###
         only_this_weapon: true
         placeholders:
           - ints: 33 33 33 33
-          - ints: 300 400 500 600
+          - ints: 3 4 5 6
     icon_texture_id: game_weapon_slingshot
     texture_ids:
       - game_weapon_slingshot

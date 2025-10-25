@@ -870,6 +870,9 @@ struct GameData {
 
     bool        scheduledSave = false;
     FrameVisual lastSaveAt    = {};
+
+    bool    playerUsesKeyboard = false;
+    Vector2 previousMousePos   = {};
   } meta;
 
   struct {  ///
@@ -1031,6 +1034,13 @@ struct GameData {
     f32 touchControlMaxLogicalOffset = {};
   } ui;
 } g = {};
+
+void TriggerWaveCompleted(bool instant) {  ///
+  ASSERT_FALSE(g.run.scheduledWaveCompleted.IsSet());
+  g.run.scheduledWaveCompleted.SetNow();
+  if (instant)
+    g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
+}
 
 void ChangeStat(StatType stat, int value) {  ///
   g.run.state.stats[stat] += value;
@@ -1569,10 +1579,8 @@ void GameLoad(const BFSave::Save* save) {  ///
     g.meta.paused = true;
     OnWaveStarted();
   }
-  else if (s.screen == ScreenType_WAVE_END_ANIMATION) {
-    g.run.scheduledWaveCompleted.SetNow();
-    g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
-  }
+  else if (s.screen == ScreenType_WAVE_END_ANIMATION)
+    TriggerWaveCompleted(true);
   else if (s.screen == ScreenType_PICKED_UP_ITEM)
     g.run.scheduledPickedUpItems = true;
   else if (s.screen == ScreenType_UPGRADES)
@@ -2938,6 +2946,9 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
+  SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+  SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");
+
   // Checking gamelib.
   if (BF_ENABLE_ASSERTS) {  ///
     LAMBDA (
@@ -3158,7 +3169,7 @@ void GameInit() {
   }
 
   // Setup. {  ///
-  g.meta.trashArena = MakeArena(16 * 1024);
+  g.meta.trashArena = MakeArena(64 * 1024);
   g.run.arena       = MakeArena(4 * 1024);
   TEMP_USAGE(&g.meta.trashArena);
 
@@ -3191,6 +3202,8 @@ void GameInit() {
   }
 
   RunInit();
+
+  g.meta.previousMousePos = GetMouseScreenPos();
 }
 
 void GameInitAfterLoading() {  ///
@@ -4175,12 +4188,7 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (bool, clicked, ()) {  ///
-    return !draw && Clay_Hovered()
-           && (IsMousePressed(L) || IsTouchReleased(ge.meta._latestActiveTouchID));
-  };
-
-  LAMBDA (bool, rightClicked, ()) {  ///
-    return !draw && Clay_Hovered() && IsMousePressed(R);
+    return !draw && Clay_Hovered() && (IsTouchPressed(ge.meta._latestActiveTouchID));
   };
 
   struct ComponentButtonData {  ///
@@ -4363,8 +4371,6 @@ void DoUI(bool draw) {
           if (stat && ge.meta.debugEnabled) {
             if (clicked())
               ChangeStat(stat, 1);
-            if (rightClicked())
-              ChangeStat(stat, 10);
             if (wheel && Clay_Hovered())
               ChangeStat(stat, wheel);
           }
@@ -5714,16 +5720,8 @@ void DoUI(bool draw) {
     }) {
       FLOATING_BEAUTIFY;
 
-      bool shown = false;
-      if (showVersion) {
+      if (showVersion)
         BF_CLAY_TEXT(g_gameVersion);
-        shown = true;
-      }
-      if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
-        if (shown)
-          BF_CLAY_TEXT(" ");
-        BF_CLAY_TEXT("[EMULATING MOBILE]");
-      }
     }
 
     FontEnd();
@@ -5755,7 +5753,7 @@ void DoUI(bool draw) {
 
       FontBegin(&g.meta.fontUIOutlined);
 
-      // Health bar + coins + not picked up coins.
+      // (Health bar + pause button) + xp bar + coins + not picked up coins.
       // {  ///
       const auto  texs   = glib->ui_health_player_texture_ids();
       const auto& player = PLAYER_CREATURE;
@@ -5776,29 +5774,10 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
-        BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
-          CLAY({
-            .floating{
-              .zIndex = zIndex,
-              .attachPoints{
-                .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-                .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-              },
-              .attachTo = CLAY_ATTACH_TO_PARENT,
-            },
-          }) {
-            FLOATING_BEAUTIFY;
-
-            const auto health = MAX(0, PLAYER_CREATURE.health);
-
-            BF_CLAY_IMAGE({
-              .texId = texs->Get(1),
-              .sourceMargins{
-                .right = Clamp01(1.0f - (f32)health / (f32)PLAYER_CREATURE.maxHealth)
-              },
-              .color = palRed,
-            });
-
+        // Health bar + pause button.
+        CLAY({}) {
+          // Health bar.
+          BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .floating{
                 .zIndex = zIndex,
@@ -5810,13 +5789,69 @@ void DoUI(bool draw) {
               },
             }) {
               FLOATING_BEAUTIFY;
-              BF_CLAY_TEXT(
-                TextFormat("%d / %d", Round(health), Round(PLAYER_CREATURE.maxHealth))
-              );
-            }
-          }
-        });
 
+              const auto health = MAX(0, PLAYER_CREATURE.health);
+
+              BF_CLAY_IMAGE({
+                .texId = texs->Get(1),
+                .sourceMargins{
+                  .right = Clamp01(1.0f - (f32)health / (f32)PLAYER_CREATURE.maxHealth)
+                },
+                .color = palRed,
+              });
+
+              CLAY({
+                .floating{
+                  .zIndex = zIndex,
+                  .attachPoints{
+                    .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                    .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  },
+                  .attachTo = CLAY_ATTACH_TO_PARENT,
+                },
+              }) {
+                FLOATING_BEAUTIFY;
+                BF_CLAY_TEXT(
+                  TextFormat("%d / %d", Round(health), Round(PLAYER_CREATURE.maxHealth))
+                );
+              }
+            }
+          });
+
+          // Pause button.
+          CLAY({.floating{
+            .offset{GAP_BIG},
+            .attachPoints{
+              .element = CLAY_ATTACH_POINT_LEFT_TOP,
+              .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
+            },
+            .attachTo = CLAY_ATTACH_TO_PARENT,
+          }}) {
+            FLOATING_BEAUTIFY;
+
+            bool canPause = (g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused;
+
+            auto color = WHITE;
+            if (canPause) {
+              if (Clay_Hovered())
+                color = palGreen;
+            }
+            else
+              color = palGray;
+
+            BF_CLAY_IMAGE(
+              {.texId = glib->ui_icon_settings_texture_id(), .color = color},
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                if (clicked() && canPause) {
+                  g.meta.scheduledTogglePause = true;
+                  PlaySound(Sound_UI_CLICK);
+                }
+              }
+            );
+          }
+        }
+
+        // XP.
         BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({
             .floating{
@@ -7754,12 +7789,13 @@ void GameFixedUpdate() {
     Save();
   }
 
-  // Show / hide cursor.
-  {  ///
-    const bool emulatingMobile = BF_DEBUG && (ge.meta.device == DeviceType_MOBILE);
+  if ((g.run.state.screen != ScreenType_GAMEPLAY) || g.meta.paused)
+    g.meta.touch.touchIDs[0] = InvalidTouchID;
 
-    if (!emulatingMobile
-        && ((g.run.state.screen == ScreenType_GAMEPLAY) || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
+  // Show / hide cursor.
+  {                                                     ///
+    if (g.meta.playerUsesKeyboard                       //
+        && (g.run.state.screen == ScreenType_GAMEPLAY)  //
         && !g.meta.paused)
       SDL_HideCursor();
     else
@@ -8071,6 +8107,12 @@ void GameFixedUpdate() {
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
+      auto mousePos = GetMouseScreenPos();
+      if (mousePos != g.meta.previousMousePos) {
+        g.meta.playerUsesKeyboard = false;
+        g.meta.previousMousePos   = mousePos;
+      }
+
       // Touch controls.
       {  ///
         auto& t = g.meta.touch;
@@ -8080,7 +8122,8 @@ void GameFixedUpdate() {
         }
 
         for (auto id : GetTouchIDs()) {
-          auto touch = GetTouchData(id);
+          g.meta.playerUsesKeyboard = false;
+          auto touch                = GetTouchData(id);
 
           if (touch.userData == u64_max)
             continue;
@@ -8148,7 +8191,7 @@ void GameFixedUpdate() {
       // Finishing wave opens upgrades screen.
       if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.state.waveIndex)) {  ///
         if (!g.run.scheduledWaveCompleted.IsSet()) {
-          g.run.scheduledWaveCompleted.SetNow();
+          TriggerWaveCompleted(false);
           g.run.state.waveWon = true;
           Save();
         }
@@ -8171,8 +8214,10 @@ void GameFixedUpdate() {
             if (IsKeyDown(SDL_SCANCODE_D))
               move.x += 1;
 
-            if (move.x || move.y)
-              move = Vector2Normalize(move);
+            if (move.x || move.y) {
+              move                      = Vector2Normalize(move);
+              g.meta.playerUsesKeyboard = true;
+            }
           }
 
           PLAYER_CREATURE.controller.move = move;
@@ -9115,6 +9160,36 @@ void GameFixedUpdate() {
       }
     }
 
+    // Making projectiles.
+    {  ///
+      for (auto& data : g.run.projectilesToMake) {
+        Projectile projectile{
+          .type                      = data.type,
+          .ownerCreatureType         = data.ownerCreatureType,
+          .weaponIndexOrMinus1       = data.weaponIndexOrMinus1,
+          .pos                       = data.pos,
+          .dir                       = data.dir,
+          .damage                    = data.damage,
+          .critDamageMultiplier      = data.critDamageMultiplier,
+          .pierce                    = data.pierce,
+          .bounce                    = data.bounce,
+          .knockbackMeters           = data.knockbackMeters,
+          .range                     = data.range,
+          .anchorCreatureId          = data.anchorCreatureId,
+          .dontSpawnProjectilesOnHit = data.dontSpawnProjectilesOnHit,
+        };
+        projectile.createdAt.SetNow();
+
+        if (data.alreadyDamagedCreatureId) {
+          projectile.damagedCreatureIds[projectile.damagedCount++]
+            = data.alreadyDamagedCreatureId;
+        }
+
+        *g.run.projectiles.Add() = projectile;
+      }
+      g.run.projectilesToMake.Reset();
+    }
+
     // Updating projectiles:
     // - Movement.
     // - Marking to remove because of travel distance.
@@ -9398,36 +9473,6 @@ void GameFixedUpdate() {
       }
     }
 
-    // Making projectiles.
-    {  ///
-      for (auto& data : g.run.projectilesToMake) {
-        Projectile projectile{
-          .type                      = data.type,
-          .ownerCreatureType         = data.ownerCreatureType,
-          .weaponIndexOrMinus1       = data.weaponIndexOrMinus1,
-          .pos                       = data.pos,
-          .dir                       = data.dir,
-          .damage                    = data.damage,
-          .critDamageMultiplier      = data.critDamageMultiplier,
-          .pierce                    = data.pierce,
-          .bounce                    = data.bounce,
-          .knockbackMeters           = data.knockbackMeters,
-          .range                     = data.range,
-          .anchorCreatureId          = data.anchorCreatureId,
-          .dontSpawnProjectilesOnHit = data.dontSpawnProjectilesOnHit,
-        };
-        projectile.createdAt.SetNow();
-
-        if (data.alreadyDamagedCreatureId) {
-          projectile.damagedCreatureIds[projectile.damagedCount++]
-            = data.alreadyDamagedCreatureId;
-        }
-
-        *g.run.projectiles.Add() = projectile;
-      }
-      g.run.projectilesToMake.Reset();
-    }
-
     // Detonating landmines.
     {  ///
       const int total = g.run.landmines.count;
@@ -9537,7 +9582,7 @@ void GameFixedUpdate() {
           if (!index) {
             // Player died.
             if (!g.run.scheduledWaveCompleted.IsSet()) {
-              g.run.scheduledWaveCompleted.SetNow();
+              TriggerWaveCompleted(false);
               g.run.state.waveWon = false;
               Save();
             }
@@ -9632,7 +9677,7 @@ void GameFixedUpdate() {
             // Wave gets set to completed upon killing boss.
             if (fb->is_boss()) {
               if (!g.run.scheduledWaveCompleted.IsSet()) {
-                g.run.scheduledWaveCompleted.SetNow();
+                TriggerWaveCompleted(false);
                 g.run.state.waveWon = true;
                 Save();
               }
