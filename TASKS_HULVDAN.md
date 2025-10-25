@@ -29,8 +29,9 @@ x touch: can play using finger
 x test on phone: can play
 - test on phone: touching screen with another finger overrides old touch
 - test on phone: untouching returns control to previous finger
+x pause button works good
+x touch: fix double press
 
-* touch: fix double press
 * show controls above strips
 * can play with only a mouse
 * bigger buttons (bigger button font)
