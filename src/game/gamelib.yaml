@@ -1,4 +1,4 @@
-render_z: # {  ###
+draw_z: # {  ###
   - INVALID
   - SCREEN_BACKGROUND
   - FLOOR
@@ -16,6 +16,7 @@ render_z: # {  ###
   - WEAPONS_4
   - WEAPONS_5
   - WEAPONS_6
+  - TOUCH_CONTROLS
   - DAMAGE_NUMBERS
   - VIGNETTE
   - SCREEN_FADE
@@ -149,7 +150,7 @@ landmine_texture_id: game_landmine
 garden_texture_id: game_garden
 ui_controls_touch_base_texture_id: ui_controls_touch_base
 ui_controls_touch_handle_texture_id: ui_controls_touch_handle
-ui_controls_touch_handle_margin: 0
+ui_controls_touch_handle_margin: 16
 # }
 
 # "Hostility" is about colors of "spawn crosses" in brotato.
