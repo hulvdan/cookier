@@ -103,7 +103,7 @@ EMSCRIPTEN_KEEPALIVE void resize_from_js(int w, int h) {  ///
 }
 
 EMSCRIPTEN_KEEPALIVE void set_device_type_from_js(int type) {  ///
-  ge.meta.deviceType = (DeviceType)type;
+  ge.meta.device = (DeviceType)type;
   LOGI("Set device %d", type);
 }
 }
@@ -382,6 +382,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
 }
 
 SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
+  static i64 nextTouchNumber = 1;
+
   switch (event->type) {
   case SDL_EVENT_QUIT:
   case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -413,25 +415,51 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN: {  ///
-    auto b = event->button.button;
+    auto& e = event->button;
+    auto  b = e.button;
     ASSERT(b > 0);
     ASSERT(b < 32);
-    if ((b > 0) && (b < 32))
-      MARK_BIT(&ge.meta._mouseStatePressed, b - 1);
+
+    if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
+      // Emulating touch controls.
+      _OnTouchDown({
+        ._id{._touchID = 1, ._fingerID = 1},
+        ._number    = nextTouchNumber++,
+        ._screenPos = Vector2{e.x, ge.meta.screenSize.y - e.y},
+      });
+    }
+    else {
+      if ((b > 0) && (b < 32))
+        MARK_BIT(&ge.meta._mouseStatePressed, b - 1);
+    }
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
-    auto b = event->button.button;
+    auto& e = event->button;
+    auto  b = e.button;
     ASSERT(b > 0);
     ASSERT(b < 32);
-    if ((b > 0) && (b < 32))
-      MARK_BIT(&ge.meta._mouseStateReleased, b - 1);
+
+    if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
+      // Emulating touch controls.
+      _OnTouchUp({
+        ._id{._touchID = 1, ._fingerID = 1},
+        ._screenPos = Vector2{e.x, ge.meta.screenSize.y - e.y},
+      });
+    }
+    else {
+      ASSERT(b > 0);
+      ASSERT(b < 32);
+      if ((b > 0) && (b < 32))
+        MARK_BIT(&ge.meta._mouseStateReleased, b - 1);
+    }
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
     const auto& d = event->tfinger;
     _OnTouchDown({
       ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
+      ._number    = nextTouchNumber++,
       ._screenPos = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
     });
   } break;
@@ -448,25 +476,23 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     const auto& d = event->tfinger;
     _OnTouchMoved({
       ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
-      ._screenPos  = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
-      ._screenDPos = Vector2{d.dx, -d.dy} * (Vector2)ge.meta.screenSize,
+      ._screenPos   = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
+      ._screenDelta = Vector2{d.dx, -d.dy} * (Vector2)ge.meta.screenSize,
     });
   } break;
 
-  case SDL_EVENT_MOUSE_WHEEL: {
+  case SDL_EVENT_MOUSE_WHEEL: {  ///
     const auto& d       = event->wheel;
     ge.meta._mouseWheel = MIN(1, MAX(-1, (d.direction ? -1 : 1) * d.integer_y));
   } break;
 
-  case SDL_EVENT_WINDOW_FOCUS_LOST: {
+  case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///
     // Required by yandex.
-    // TODO: check if it works.
     ma_engine_set_volume(&ge.meta._soundManager.engine, 0);
   } break;
 
-  case SDL_EVENT_WINDOW_FOCUS_GAINED: {
+  case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
     // Required by yandex.
-    // TODO: check if it works.
     ma_engine_set_volume(&ge.meta._soundManager.engine, ge.meta._soundManager.volume);
   } break;
 

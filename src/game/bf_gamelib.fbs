@@ -345,6 +345,10 @@ table GameLibrary {
     landmine_texture_id: int;
     garden_texture_id: int;
 
+    ui_controls_touch_base_texture_id: int;
+    ui_controls_touch_handle_texture_id: int;
+    ui_controls_touch_handle_margin: int;
+
     // NOTE: «Table Gen» works in Python `bf_game.py`.
     // It goes through the field names in the following TABLE_GEN_START/END region.
     // Then makes code generation magic (enums in `bf_codegen.cpp`, recursive replaces)

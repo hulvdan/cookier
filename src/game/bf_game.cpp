@@ -856,9 +856,9 @@ struct GameData {
     bool godMode = false;
 
     struct Touch {
-      Array<Vector2, 4> pos      = {};  // lstarted, ltarget, rstarted, rtarget.
-      Array<Vector2, 2> dir      = {};
-      Array<TouchID, 2> touchIDs = {};
+      Array<Vector2, 2> logicalPos = {};  // started, target.
+      Array<Vector2, 1> dir        = {};
+      Array<TouchID, 1> touchIDs   = {};
       // FrameGame      rightLastPressedAt = {};
     } touch;
 
@@ -4070,9 +4070,13 @@ void DoUI(bool draw) {
   const auto fb_effectConditions    = glib->effect_conditions();
 
   if (!draw) {
-    // Updating clay mouse pos.
-    // TODO: TOUCH!
-    const auto pos = ScreenPosToLogical(GetMouseScreenPos());
+    // Updating clay touch/mouse pos.
+    auto pos = ScreenPosToLogical(GetMouseScreenPos());
+    if (ge.meta._latestActiveTouchID != InvalidTouchID) {
+      auto d = GetTouchData(ge.meta._latestActiveTouchID);
+      pos    = ScreenPosToLogical(d.screenPos);
+    }
+
     Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
   }
 
@@ -4156,7 +4160,8 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (bool, clicked, ()) {  ///
-    return !draw && Clay_Hovered() && IsMousePressed(L);
+    return !draw && Clay_Hovered()
+           && (IsMousePressed(L) || IsTouchReleased(ge.meta._latestActiveTouchID));
   };
 
   LAMBDA (bool, rightClicked, ()) {  ///
@@ -5672,6 +5677,43 @@ void DoUI(bool draw) {
     }
   };
 
+  // Game's version.
+  {  ///
+    bool showVersion = ge.meta.debugEnabled;
+#if BF_SHOW_VERSION
+    showVersion = true;
+#endif
+
+    FontBegin(&g.meta.fontUIOutlined);
+
+    CLAY({
+      .floating{
+        .offset{PADDING_OUTER_HORIZONTAL, -PADDING_OUTER_VERTICAL},
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
+          .parent  = CLAY_ATTACH_POINT_LEFT_BOTTOM,
+        },
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+
+      bool shown = false;
+      if (showVersion) {
+        BF_CLAY_TEXT(g_gameVersion);
+        shown = true;
+      }
+      if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
+        if (shown)
+          BF_CLAY_TEXT(" ");
+        BF_CLAY_TEXT("[EMULATING MOBILE]");
+      }
+    }
+
+    FontEnd();
+  }
+
   // Gameplay.
   if ((g.run.state.screen == ScreenType_GAMEPLAY)               //
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION)  //
@@ -5872,29 +5914,6 @@ void DoUI(bool draw) {
             BF_CLAY_TEXT(TextFormat("%d", remainingSeconds));
           }
         }
-      }
-      // }
-
-      // Game's version.
-      // {  ///
-      CLAY({
-        .floating{
-          .zIndex = zIndex,
-          .attachPoints{
-            .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
-            .parent  = CLAY_ATTACH_POINT_LEFT_BOTTOM,
-          },
-          .attachTo = CLAY_ATTACH_TO_PARENT,
-        },
-      }) {
-        FLOATING_BEAUTIFY;
-
-        bool showVersion = ge.meta.debugEnabled;
-#if BF_SHOW_VERSION
-        showVersion = true;
-#endif
-        if (showVersion)
-          BF_CLAY_TEXT(g_gameVersion);
       }
       // }
 
@@ -7722,8 +7741,10 @@ void GameFixedUpdate() {
 
   // Show / hide cursor.
   {  ///
-    if (((g.run.state.screen == ScreenType_GAMEPLAY)
-         || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
+    const bool emulatingMobile = BF_DEBUG && (ge.meta.device == DeviceType_MOBILE);
+
+    if (!emulatingMobile
+        && ((g.run.state.screen == ScreenType_GAMEPLAY) || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
         && !g.meta.paused)
       SDL_HideCursor();
     else
@@ -8035,6 +8056,81 @@ void GameFixedUpdate() {
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
+      // Touch controls.
+      {  ///
+        auto& t = g.meta.touch;
+        for (auto& id : t.touchIDs) {
+          if (!IsTouchDown(id))
+            id = {};
+        }
+
+        for (auto id : GetTouchIDs()) {
+          auto touch = GetTouchData(id);
+
+          if (touch.userData == u64_max)
+            continue;
+
+          if (IsTouchPressed(id)) {
+            auto touchIndex = 0;
+            auto pos        = ScreenPosToLogical(touch.screenPos);
+
+            if (t.touchIDs[touchIndex] == InvalidTouchID) {
+              t.touchIDs[touchIndex]       = id;
+              t.logicalPos[touchIndex * 2] = pos;
+              touch.userData               = (u64)touchIndex;
+              SetTouchUserData(id, (u64)touchIndex);
+
+              // if (touchIndex == 1) {
+              //   if (t.rightLastPressedAt.IsSet()
+              //       && (t.rightLastPressedAt.Elapsed() <= TOUCH_DOUBLE_TAP_FRAMES))
+              //   {
+              //     PLAYER_CREATURE.controller.bomb = true;
+              //     t.rightLastPressedAt            = {};
+              //   }
+              //   else {
+              //     t.rightLastPressedAt = {};
+              //     t.rightLastPressedAt.SetNow();
+              //   }
+              // }
+            }
+            else {
+              SetTouchUserData(id, u64_max);
+              continue;
+            }
+          }
+
+          auto index                  = (int)touch.userData;
+          t.logicalPos[index * 2 + 1] = ScreenPosToLogical(touch.screenPos);
+
+          break;
+        }
+
+        auto wBase = glib->original_texture_sizes()
+                       ->Get(glib->ui_controls_touch_base_texture_id())
+                       ->x();
+        auto wHandle = glib->original_texture_sizes()
+                         ->Get(glib->ui_controls_touch_handle_texture_id())
+                         ->x();
+
+        const f32 maxLogicalOffset
+          = (f32)(wBase / 2 - wHandle / 2 - glib->ui_controls_touch_handle_margin())
+            * ASSETS_TO_LOGICAL_RATIO;
+
+        FOR_RANGE (int, i, 1) {
+          if (t.touchIDs[i] == InvalidTouchID)
+            continue;
+
+          auto startPos  = t.logicalPos[i * 2];
+          auto targetPos = t.logicalPos[i * 2 + 1];
+          t.dir[i]       = Vector2Zero();
+          if (startPos != targetPos) {
+            t.dir[i] = Vector2Normalize(targetPos - startPos)
+                       * MIN(maxLogicalOffset, Vector2Distance(startPos, targetPos))
+                       / maxLogicalOffset;
+          }
+        }
+      }
+
 #if BF_ENABLE_ASSERTS
       for (auto& creature : g.run.creatures) {  ///
         if ((creature.health <= 0) && !creature.diedAt.IsSet())
@@ -8056,21 +8152,20 @@ void GameFixedUpdate() {
         {  ///
           Vector2 move{};
 
-          if (IsKeyDown(SDL_SCANCODE_W))
-            move.y += 1;
-          if (IsKeyDown(SDL_SCANCODE_A))
-            move.x -= 1;
-          if (IsKeyDown(SDL_SCANCODE_S))
-            move.y -= 1;
-          if (IsKeyDown(SDL_SCANCODE_D))
-            move.x += 1;
+          if (g.meta.touch.touchIDs[0] != InvalidTouchID)
+            move = g.meta.touch.dir[0];
+          else {
+            if (IsKeyDown(SDL_SCANCODE_W))
+              move.y += 1;
+            if (IsKeyDown(SDL_SCANCODE_A))
+              move.x -= 1;
+            if (IsKeyDown(SDL_SCANCODE_S))
+              move.y -= 1;
+            if (IsKeyDown(SDL_SCANCODE_D))
+              move.x += 1;
 
-          if (move.x || move.y)
-            move = Vector2Normalize(move);
-
-          if (move == Vector2Zero()) {
-            if (g.meta.touch.touchIDs[0] != InvalidTouchID)
-              move = g.meta.touch.dir[0];
+            if (move.x || move.y)
+              move = Vector2Normalize(move);
           }
 
           PLAYER_CREATURE.controller.move = move;
