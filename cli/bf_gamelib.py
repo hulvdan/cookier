@@ -617,7 +617,7 @@ def convert_gamelib_json_to_binary(
         genline("};\n")
 
     gamelib |= atlas_data
-    genenum(genline, "DrawZ", gamelib.pop("render_z"), add_count=True)
+    genenum(genline, "DrawZ", gamelib.pop("draw_z"), add_count=True)
 
     localization_codepoints, locale_to_index = _do_localization(genline, gamelib)
 

@@ -382,7 +382,9 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
 }
 
 SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
-  static i64 nextTouchNumber = 1;
+  static i64     nextTouchNumber     = 1;
+  static bool    emulatedTouchIsDown = false;
+  static TouchID emulatedTouchID{._touchID = 1, ._fingerID = 1};
 
   switch (event->type) {
   case SDL_EVENT_QUIT:
@@ -422,10 +424,11 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
 
     if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
       // Emulating touch controls.
+      emulatedTouchIsDown = true;
       _OnTouchDown({
-        ._id{._touchID = 1, ._fingerID = 1},
-        ._number    = nextTouchNumber++,
-        ._screenPos = Vector2{e.x, ge.meta.screenSize.y - e.y},
+        ._id     = emulatedTouchID,
+        ._number = nextTouchNumber++,
+        ._screenPos{e.x, ge.meta.screenSize.y - e.y},
       });
     }
     else {
@@ -442,9 +445,10 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
 
     if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
       // Emulating touch controls.
+      emulatedTouchIsDown = false;
       _OnTouchUp({
-        ._id{._touchID = 1, ._fingerID = 1},
-        ._screenPos = Vector2{e.x, ge.meta.screenSize.y - e.y},
+        ._id = emulatedTouchID,
+        ._screenPos{e.x, ge.meta.screenSize.y - e.y},
       });
     }
     else {
@@ -455,35 +459,46 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     }
   } break;
 
+  case SDL_EVENT_MOUSE_MOTION: {  ///
+    if (emulatedTouchIsDown) {
+      const auto& e = event->motion;
+      _OnTouchMoved({
+        ._id = emulatedTouchID,
+        ._screenPos{e.x, ge.meta.screenSize.y - e.y},
+        ._screenDelta{e.xrel, -e.yrel},
+      });
+    }
+  } break;
+
   case SDL_EVENT_FINGER_DOWN: {  ///
-    const auto& d = event->tfinger;
+    const auto& e = event->tfinger;
     _OnTouchDown({
-      ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
+      ._id{._touchID = e.touchID, ._fingerID = e.fingerID},
       ._number    = nextTouchNumber++,
-      ._screenPos = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
+      ._screenPos = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
     });
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
-    const auto& d = event->tfinger;
+    const auto& e = event->tfinger;
     _OnTouchUp({
-      ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
-      ._screenPos = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
+      ._id{._touchID = e.touchID, ._fingerID = e.fingerID},
+      ._screenPos = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
     });
   } break;
 
   case SDL_EVENT_FINGER_MOTION: {  ///
-    const auto& d = event->tfinger;
+    const auto& e = event->tfinger;
     _OnTouchMoved({
-      ._id{._touchID = d.touchID, ._fingerID = d.fingerID},
-      ._screenPos   = Vector2{d.x, 1 - d.y} * (Vector2)ge.meta.screenSize,
-      ._screenDelta = Vector2{d.dx, -d.dy} * (Vector2)ge.meta.screenSize,
+      ._id{._touchID = e.touchID, ._fingerID = e.fingerID},
+      ._screenPos   = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
+      ._screenDelta = Vector2{e.dx, -e.dy} * (Vector2)ge.meta.screenSize,
     });
   } break;
 
   case SDL_EVENT_MOUSE_WHEEL: {  ///
-    const auto& d       = event->wheel;
-    ge.meta._mouseWheel = MIN(1, MAX(-1, (d.direction ? -1 : 1) * d.integer_y));
+    const auto& e       = event->wheel;
+    ge.meta._mouseWheel = MIN(1, MAX(-1, (e.direction ? -1 : 1) * e.integer_y));
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///

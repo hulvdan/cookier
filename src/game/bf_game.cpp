@@ -1027,6 +1027,8 @@ struct GameData {
     i16                              clayZIndex = 0;
     Array<Beautify, MAX_BEAUTIFIERS> clayBeautifiers{};
     int                              clayBeautifiersCount = 0;
+
+    f32 touchControlMaxLogicalOffset = {};
   } ui;
 } g = {};
 
@@ -3174,6 +3176,19 @@ void GameInit() {
   // }
 
   ReloadFontsIfNeeded();  // TODO: remove this line?
+
+  // Setting `g.ui.touchControlMaxLogicalOffset`.
+  {  ///
+    auto wBase = glib->original_texture_sizes()
+                   ->Get(glib->ui_controls_touch_base_texture_id())
+                   ->x();
+    auto wHandle = glib->original_texture_sizes()
+                     ->Get(glib->ui_controls_touch_handle_texture_id())
+                     ->x();
+    g.ui.touchControlMaxLogicalOffset
+      = ((f32)wBase / 2 - (f32)wHandle / 2 - (f32)glib->ui_controls_touch_handle_margin())
+        * ASSETS_TO_LOGICAL_RATIO;
+  }
 
   RunInit();
 }
@@ -8105,17 +8120,6 @@ void GameFixedUpdate() {
           break;
         }
 
-        auto wBase = glib->original_texture_sizes()
-                       ->Get(glib->ui_controls_touch_base_texture_id())
-                       ->x();
-        auto wHandle = glib->original_texture_sizes()
-                         ->Get(glib->ui_controls_touch_handle_texture_id())
-                         ->x();
-
-        const f32 maxLogicalOffset
-          = (f32)(wBase / 2 - wHandle / 2 - glib->ui_controls_touch_handle_margin())
-            * ASSETS_TO_LOGICAL_RATIO;
-
         FOR_RANGE (int, i, 1) {
           if (t.touchIDs[i] == InvalidTouchID)
             continue;
@@ -8124,9 +8128,12 @@ void GameFixedUpdate() {
           auto targetPos = t.logicalPos[i * 2 + 1];
           t.dir[i]       = Vector2Zero();
           if (startPos != targetPos) {
-            t.dir[i] = Vector2Normalize(targetPos - startPos)
-                       * MIN(maxLogicalOffset, Vector2Distance(startPos, targetPos))
-                       / maxLogicalOffset;
+            t.dir[i]
+              = Vector2Normalize(targetPos - startPos)
+                * (MIN(
+                  g.ui.touchControlMaxLogicalOffset, Vector2Distance(startPos, targetPos)
+                )
+                / g.ui.touchControlMaxLogicalOffset);
           }
         }
       }
@@ -10315,6 +10322,37 @@ void GameDraw() {
         },
         DrawZ_UI
       );
+    }
+  }
+
+  // Drawing touch controls.
+  if ((g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused) {  ///
+    auto& t = g.meta.touch;
+
+    FOR_RANGE (int, i, 1) {
+      if (t.touchIDs[i] == InvalidTouchID)
+        continue;
+
+      const auto startPos = t.logicalPos[i * 2];
+      auto       endPos   = t.logicalPos[i * 2 + 1];
+      if (startPos != endPos)
+        endPos = startPos + t.dir[i] * g.ui.touchControlMaxLogicalOffset;
+
+      DrawGroup_Begin(DrawZ_TOUCH_CONTROLS);
+      DrawGroup_SetSortY(0);
+
+      const struct {
+        Vector2 pos   = {};
+        int     texId = {};
+      } data[]{
+        {.pos = startPos, .texId = glib->ui_controls_touch_base_texture_id()},
+        {.pos = endPos, .texId = glib->ui_controls_touch_handle_texture_id()},
+      };
+      for (auto& d : data) {
+        DrawGroup_CommandTexture({.texId = d.texId, .pos = d.pos});
+      }
+
+      DrawGroup_End();
     }
   }
 
