@@ -1389,7 +1389,7 @@ builds: # {  ###
       - effectcondition_type: X__COINS_UPON__PICKUPABLE
         pickupable_type: CRATE
         placeholders:
-          - ints: 6666
+          - ints: 25
       - effectcondition_type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
         placeholders:
           - ints: 35
