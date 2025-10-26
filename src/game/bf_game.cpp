@@ -872,6 +872,7 @@ struct ControlsGroup {  ///
   ControlsDimension* first = {};
   ControlsDimension* last  = {};
 
+  // NOTE: Use direction-1 to index.
   ControlsGroupID connectionsPerDirection[4] = {};
 
   ControlsGroup* next = {};
@@ -1080,7 +1081,7 @@ struct GameData {
   } ui;
 } g = {};
 
-ControlsGroup* _GetControlsGroupByID(ControlsGroupID id) {  ///
+ControlsGroup* _GetControlsGroup(ControlsGroupID id) {  ///
   auto group = g.ui.controlsGroupsLast;
   while (group) {
     if (group->id == id)
@@ -1115,9 +1116,16 @@ ControlsGroupID MakeControlsGroup(Direction direction) {  ///
 }
 
 void ControlsGroupNewDimension(ControlsGroupID groupId) {  ///
-  auto group = _GetControlsGroupByID(groupId);
+  auto group = _GetControlsGroup(groupId);
   if (!group)
     return;
+
+  // Adding multiple dimensions is permitted only to horizontal groups
+  // (that have `direction == Direction_RIGHT`).
+  if (group->last && (group->direction != Direction_RIGHT)) {
+    INVALID_PATH;
+    return;
+  }
 
   auto dim = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsDimension);
   *dim     = {
@@ -1132,7 +1140,9 @@ void ControlsGroupNewDimension(ControlsGroupID groupId) {  ///
 }
 
 void ControlsGroupAdd(ControlsGroupID groupId, Clay_ElementId id) {  ///
-  auto group = _GetControlsGroupByID(groupId);
+  ASSERT(id.id);
+
+  auto group = _GetControlsGroup(groupId);
   if (!group)
     return;
 
@@ -1152,6 +1162,18 @@ void ControlsGroupAdd(ControlsGroupID groupId, Clay_ElementId id) {  ///
   if (!dim->first)
     dim->first = elem;
   dim->last = elem;
+}
+
+void ControlsGroupConnect(ControlsGroupID from, Direction dir, ControlsGroupID to) {  ///
+  auto g1 = _GetControlsGroup(from);
+  auto g2 = _GetControlsGroup(to);
+  if (!g1 || !g2)
+    return;
+
+  ASSERT(dir);
+  auto d = (int)dir - 1;
+  ASSERT(g1->connectionsPerDirection[d] == 0);
+  g1->connectionsPerDirection[d] = to;
 }
 
 void TriggerWaveCompleted(bool instant) {  ///
@@ -4358,7 +4380,7 @@ void DoUI(bool draw) {
     if (data.growX)
       sizing.width = CLAY_SIZING_GROW(0);
 
-    if (data.group)
+    if (data.id.id && data.group)
       ControlsGroupAdd(data.group, data.id);
 
     bool isSelected
@@ -4438,16 +4460,19 @@ void DoUI(bool draw) {
   };
 
   struct ComponentSlotData {  ///
-    Clay_ElementId id         = {};
-    bool           hidden     = {};
-    bool           canHover   = {};
-    int            tier       = {};
-    f32            flashWhite = 0;
+    Clay_ElementId  id         = {};
+    ControlsGroupID group      = {};
+    bool            hidden     = {};
+    bool            canHover   = {};
+    int             tier       = {};
+    f32             flashWhite = 0;
   };
 
   LAMBDA (void, componentSlot, (ComponentSlotData data, auto innerLambda)) {  ///
     if (data.canHover)
       ASSERT(data.id.id);
+    if (data.group)
+      ControlsGroupAdd(data.group, data.id);
 
     const int texId        = glib->ui_item_slot_texture_id();
     auto      originalSize = original_texture_sizes->Get(texId);
@@ -4618,7 +4643,8 @@ void DoUI(bool draw) {
   };
 
   struct ComponentUniversalSlotData {  ///
-    Clay_ElementId id = {};
+    Clay_ElementId  id    = {};
+    ControlsGroupID group = {};
 
     DifficultyType difficulty = {};
     BuildType      build      = {};
@@ -4669,7 +4695,8 @@ void DoUI(bool draw) {
 
     componentSlot(
       {
-        .id = data.id,
+        .id    = data.id,
+        .group = data.group,
         .hidden
         = (!onlyOneOrNone && (data.hidden == ComponentUniversalSlotHiddenType_HIDE)),
         .canHover = data.canHover,
@@ -5793,11 +5820,13 @@ void DoUI(bool draw) {
   };
 
   struct ComponentItemsGridData {  ///
-    int  itemsX       = {};
-    bool detailsBelow = false;
+    ControlsGroupID group        = {};
+    int             itemsX       = {};
+    bool            detailsBelow = false;
   };
 
   LAMBDA (void, componentItemsGrid, (ComponentItemsGridData data)) {  ///
+    ASSERT(data.group);
     ASSERT(data.itemsX > 0);
 
     CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
@@ -5805,11 +5834,14 @@ void DoUI(bool draw) {
       const int ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
 
       FOR_RANGE (int, y, ITEMS_Y) {
+        ControlsGroupNewDimension(data.group);
+
         CLAY({.layout{.childGap = GAP_SMALL}})
         FOR_RANGE (int, x, ITEMS_X) {
           const int t = y * ITEMS_X + x;
           if (t >= g.run.state.items.count + 2)
             break;
+
           CLAY({}) {
             int            itemCount      = 1;
             DifficultyType difficultyType = {};
@@ -5826,6 +5858,7 @@ void DoUI(bool draw) {
 
               componentUniversalSlot({
                 .id    = CLAY_IDI("shop_player_item", t),
+                .group = data.group,
                 .build = g.player.build,
               });
               buildType = g.player.build;
@@ -5833,6 +5866,7 @@ void DoUI(bool draw) {
             else if (t == 1) {
               componentUniversalSlot({
                 .id         = CLAY_IDI("shop_player_item", t),
+                .group      = data.group,
                 .difficulty = g.player.difficulty,
               });
               difficultyType = g.player.difficulty;
@@ -5841,6 +5875,7 @@ void DoUI(bool draw) {
               auto& item = g.run.state.items[t - 2];
               componentUniversalSlot({
                 .id    = CLAY_IDI("shop_player_item", t),
+                .group = data.group,
                 .item  = item.type,
                 .count = item.count,
               });
@@ -7282,6 +7317,17 @@ void DoUI(bool draw) {
         auto pauseButtonsGroup = MakeControlsGroup(Direction_DOWN);
         ControlsGroupNewDimension(pauseButtonsGroup);
 
+        auto pauseWeaponsGroup = MakeControlsGroup(Direction_RIGHT);
+        ControlsGroupNewDimension(pauseWeaponsGroup);
+
+        auto pauseItemsGroup = MakeControlsGroup(Direction_RIGHT);
+
+        ControlsGroupConnect(pauseButtonsGroup, Direction_RIGHT, pauseWeaponsGroup);
+        ControlsGroupConnect(pauseWeaponsGroup, Direction_LEFT, pauseButtonsGroup);
+        ControlsGroupConnect(pauseItemsGroup, Direction_LEFT, pauseButtonsGroup);
+        ControlsGroupConnect(pauseItemsGroup, Direction_UP, pauseWeaponsGroup);
+        ControlsGroupConnect(pauseWeaponsGroup, Direction_DOWN, pauseItemsGroup);
+
         // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
           .childGap = GAP_BIG,
@@ -7413,6 +7459,7 @@ void DoUI(bool draw) {
                         // Weapon.
                         componentUniversalSlot({
                           .id     = CLAY_IDI("pause_player_weapon", weaponIndex),
+                          .group  = pauseWeaponsGroup,
                           .weapon = weapon.type,
                           .tier   = weapon.tier,
                         });
@@ -7427,7 +7474,7 @@ void DoUI(bool draw) {
               // Items label.
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
               // Items.
-              componentItemsGrid({.itemsX = 6});
+              componentItemsGrid({.group = pauseItemsGroup, .itemsX = 6});
             }
           }
 
@@ -7578,6 +7625,34 @@ void DoUI(bool draw) {
               else if (uiElementSwitchDirection == Direction_UP) {
                 if (elem->prev)
                   toSelect = elem->prev->id;
+              }
+              else if (uiElementSwitchDirection == Direction_RIGHT) {
+                auto to = group->connectionsPerDirection[(int)Direction_RIGHT - 1];
+                if (to) {
+                  auto group2 = _GetControlsGroup(to);
+                  ASSERT(group2->first);
+                  if (group2->first) {
+                    auto elem = group2->first->first;
+                    ASSERT(elem);
+                    if (elem)
+                      toSelect = group2->first->first->id;
+                  }
+                }
+              }
+              else if (uiElementSwitchDirection == Direction_LEFT) {
+                auto to = group->connectionsPerDirection[(int)Direction_LEFT - 1];
+                if (to) {
+                  auto group2 = _GetControlsGroup(to);
+                  ASSERT(group2->first);
+                  if (group2->first) {
+                    auto elem = group2->first->first;
+                    if (group2->direction == Direction_RIGHT)
+                      elem = group2->first->last;
+                    ASSERT(elem);
+                    if (elem)
+                      toSelect = group2->first->first->id;
+                  }
+                }
               }
             }
             else if (group->direction == Direction_RIGHT) {
