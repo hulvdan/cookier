@@ -1153,9 +1153,10 @@ void ControlsGroupAdd(ControlsGroupID groupId, Clay_ElementId id) {  ///
     return;
 
   auto dim = group->last;
-  ASSERT(dim);
-  if (!dim)
-    return;
+  if (!dim) {
+    ControlsGroupNewRow(groupId);
+    dim = group->last;
+  }
 
   auto elem = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsEntry);
   *elem     = {
@@ -1170,7 +1171,12 @@ void ControlsGroupAdd(ControlsGroupID groupId, Clay_ElementId id) {  ///
   dim->last = elem;
 }
 
-void ControlsGroupConnect(ControlsGroupID from, Direction dir, ControlsGroupID to) {  ///
+void ControlsGroupConnect(
+  ControlsGroupID from,
+  Direction       dir,
+  ControlsGroupID to,
+  bool            bidirectional = true
+) {  ///
   auto g1 = _GetControlsGroup(from);
   auto g2 = _GetControlsGroup(to);
   if (!g1 || !g2)
@@ -1180,6 +1186,11 @@ void ControlsGroupConnect(ControlsGroupID from, Direction dir, ControlsGroupID t
   auto d = (int)dir - 1;
   ASSERT(g1->connectionsPerDirection[d] == 0);
   g1->connectionsPerDirection[d] = to;
+
+  if (bidirectional) {
+    auto opposite                         = (d + 2) % 4;
+    g2->connectionsPerDirection[opposite] = from;
+  }
 }
 
 void TriggerWaveCompleted(bool instant) {  ///
@@ -7121,6 +7132,16 @@ void DoUI(bool draw) {
 
       // Achievements.
       if (g.meta.pausedShowingAchievements) {  ///
+        auto achievementsBackButtonGroup = MakeControlsGroup();
+        auto achievementsGridGroup       = MakeControlsGroup();
+
+        ControlsGroupConnect(
+          achievementsBackButtonGroup, Direction_UP, achievementsGridGroup
+        );
+        ControlsGroupConnect(
+          achievementsGridGroup, Direction_UP, achievementsBackButtonGroup
+        );
+
         shownAchievementsThisFrame = true;
         if (!shownAchievementsPrevFrame)
           g.ui.selectedElement = {};
@@ -7193,6 +7214,8 @@ void DoUI(bool draw) {
                 g.meta.pausedAchievementsHoveredAchievementStep = 0;
 
                 FOR_RANGE (int, y, achievementsY) {
+                  ControlsGroupNewRow(achievementsGridGroup);
+
                   CLAY({.layout{.childGap = GAP_SMALL}})
                   FOR_RANGE (int, x, achievementsX) {
                     if (shownSlots >= totalSlots)
@@ -7229,6 +7252,7 @@ void DoUI(bool draw) {
 
                       componentUniversalSlot({
                         .id       = id,
+                        .group    = achievementsGridGroup,
                         .build    = (BuildType)fb_step->unlocks_build_type(),
                         .item     = (ItemType)fb_step->unlocks_item_type(),
                         .weapon   = (WeaponType)fb_step->unlocks_weapon_type(),
@@ -7294,6 +7318,7 @@ void DoUI(bool draw) {
           }
 
           const auto backButtonId = CLAY_ID("button_pause_achievements_back");
+          ControlsGroupAdd(achievementsBackButtonGroup, backButtonId);
           if (uiElementSwitchDirection && !g.ui.selectedElement.id)
             g.ui.selectedElement = backButtonId;
           if (!shownAchievementsPrevFrame && g.meta.playerUsesKeyboard)
@@ -7321,18 +7346,9 @@ void DoUI(bool draw) {
           g.ui.selectedElement = {};
 
         auto pauseButtonsGroup = MakeControlsGroup();
-        ControlsGroupNewRow(pauseButtonsGroup);
-
         auto pauseWeaponsGroup = MakeControlsGroup();
-        ControlsGroupNewRow(pauseWeaponsGroup);
-
-        // auto pauseItemsGroup = MakeControlsGroup();
 
         ControlsGroupConnect(pauseButtonsGroup, Direction_RIGHT, pauseWeaponsGroup);
-        ControlsGroupConnect(pauseWeaponsGroup, Direction_LEFT, pauseButtonsGroup);
-        // ControlsGroupConnect(pauseItemsGroup, Direction_LEFT, pauseButtonsGroup);
-        // ControlsGroupConnect(pauseItemsGroup, Direction_UP, pauseWeaponsGroup);
-        // ControlsGroupConnect(pauseWeaponsGroup, Direction_DOWN, pauseItemsGroup);
 
         // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
