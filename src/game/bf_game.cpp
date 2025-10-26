@@ -6432,10 +6432,20 @@ void DoUI(bool draw) {
                   }
                 });
 
-                // Name.
-                BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                  fb->upgrade_name_locale(), textColorsPerTier[upgrade.tier]
-                );
+                CLAY({.layout{
+                  .childGap        = GAP_SMALL,
+                  .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                }}) {
+                  // Name.
+                  BF_CLAY_TEXT_BROKEN_LOCALIZED(
+                    fb->upgrade_name_locale(), textColorsPerTier[upgrade.tier]
+                  );
+
+                  // "Upgrade" label.
+                  FontBegin(&g.meta.fontStats);
+                  BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_UPGRADE, secondaryTextColor);
+                  FontEnd();
+                }
               }
 
               BF_CLAY_SPACER_VERTICAL;

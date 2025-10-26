@@ -45,6 +45,7 @@ UI_STARTING_WEAPON;Начальное Оружие;Starting Weapon;
 UI_ALL_WEAPONS;Все оружия;All weapons;
 UI_ONLY_THIS_WEAPON;Это оружие;This weapon;
 UI_ONLY_OTHER_WEAPONS;Другие оружия;Other weapons;
+UI_UPGRADE;Улучшение;Upgrade;
 EFFECT_DEFAULT_GET__STAT;{STAT} {MODIFIER};{MODIFIER} {STAT};
 EFFECT_STAT__EVERY__X__KILLED_ENEMIES;{STAT} {MODIFIER} каждые {X} убийств;{MODIFIER} {STAT} every {X} kills;
 EFFECT_START_OF_THE_WAVE_GET__STAT;{STAT} {MODIFIER} в начале волны;{MODIFIER} {STAT} at the start of the wave;
