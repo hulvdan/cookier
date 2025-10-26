@@ -818,10 +818,9 @@ struct EngineData {
     f32 screenToLogicalRatio = {};
     f32 screenScale          = {};
 
-    int         _keyboardStateCount    = {};
-    const bool* _keyboardState         = {};
-    bool*       _keyboardStatePressed  = {};
-    bool*       _keyboardStateReleased = {};
+    View<const bool> _keyboardState         = {};
+    bool*            _keyboardStatePressed  = {};
+    bool*            _keyboardStateReleased = {};
 
     u32     _mouseState         = {};
     u32     _mouseStatePressed  = {};
@@ -2345,7 +2344,7 @@ void _OnTouchMoved(_TouchEvent touch) {  ///
 }
 
 void _ClearControlsCache() {  ///
-  FOR_RANGE (int, i, ge.meta._keyboardStateCount) {
+  FOR_RANGE (int, i, ge.meta._keyboardState.count) {
     ge.meta._keyboardStatePressed[i]  = false;
     ge.meta._keyboardStateReleased[i] = false;
   }
@@ -2655,9 +2654,9 @@ void _UnloadTexture(Texture2D* texture) {  ///
 void InitEngine() {  ///
   ZoneScopedN("InitEngine");
 
-  ge.meta._keyboardState = SDL_GetKeyboardState(&ge.meta._keyboardStateCount);
+  ge.meta._keyboardState.base = SDL_GetKeyboardState(&ge.meta._keyboardState.count);
 
-  size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardStateCount;
+  size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardState.count;
   for (auto& params : g_sounds) {
     arenaSize += sizeof(ma_sound) * params.pool * params.variations;
     arenaSize += sizeof(int) * params.variations;
@@ -2746,13 +2745,13 @@ void InitEngine() {  ///
   ge.meta._touchIDs.Reserve(8);
 
 #if BF_DEBUG
-  ge.meta._keyboardStatePressed  = (bool*)BF_ALLOC(ge.meta._keyboardStateCount);
-  ge.meta._keyboardStateReleased = (bool*)BF_ALLOC(ge.meta._keyboardStateCount);
+  ge.meta._keyboardStatePressed  = (bool*)BF_ALLOC(ge.meta._keyboardState.count);
+  ge.meta._keyboardStateReleased = (bool*)BF_ALLOC(ge.meta._keyboardState.count);
 #else
   ge.meta._keyboardStatePressed
-    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
+    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardState.count);
   ge.meta._keyboardStateReleased
-    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardStateCount);
+    = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardState.count);
 #endif
 
   glib = BFGame::GetGameLibrary(SDL_LoadFile("resources/gamelib.bin", nullptr));
@@ -3249,10 +3248,9 @@ f32 FrameTime() {  ///
 }
 
 void EngineOnFrameStart() {
-  ge.draw.flushedThisFrame = false;
-  ge.meta.ticks            = (i64)SDL_GetTicks();
-  ge.meta.prevFrameTime    = ge.meta.frameTime;
-  ge.meta.frameTime        = GetTime();
+  ge.meta.ticks         = (i64)SDL_GetTicks();
+  ge.meta.prevFrameTime = ge.meta.frameTime;
+  ge.meta.frameTime     = GetTime();
 
   constexpr auto ratioLogical  = (f32)LOGICAL_RESOLUTION.x / (f32)LOGICAL_RESOLUTION.y;
   auto           ratioActual   = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y;
@@ -3620,6 +3618,7 @@ SDL_AppResult EngineUpdate() {  ///
   // TODO: record / replay inputs.
   // TODO: mb IsKeyPressed and other functions should also raise.
   ge.meta.logicRand._raise = true;
+  ge.draw.flushedThisFrame = false;
   GameDraw();
   ge.meta.logicRand._raise = false;
 

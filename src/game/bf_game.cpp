@@ -838,9 +838,50 @@ struct JustUnlockedAchievement {  ///
 
 constexpr int MAX_BEAUTIFIERS = 32;
 
+enum Direction {
+  Direction_NONE,
+  Direction_RIGHT,
+  Direction_UP,
+  Direction_LEFT,
+  Direction_DOWN,
+};
+
+using ControlsGroupID = int;
+
+struct ControlsEntry {
+  Clay_ElementId id = {};
+
+  ControlsEntry* next = {};
+  ControlsEntry* prev = {};
+};
+
+struct ControlsDimension {
+  ControlsEntry* first = {};
+  ControlsEntry* last  = {};
+
+  ControlsDimension* next = {};
+  ControlsDimension* prev = {};
+};
+
+struct ControlsGroup {  ///
+  ControlsGroupID id        = {};
+  Direction       direction = {};
+
+  int currentDimension = {};
+
+  ControlsDimension* first = {};
+  ControlsDimension* last  = {};
+
+  ControlsGroupID connectionsPerDirection[4] = {};
+
+  ControlsGroup* next = {};
+  ControlsGroup* prev = {};
+};
+
 struct GameData {
   struct Meta {  ///
-    Arena trashArena = {};
+    Arena trashArena         = {};
+    Arena transientDataArena = {};
 
     // NOTE: Reorder loading upon reordering fonts.
     Font fontUI                 = {};
@@ -1033,20 +1074,85 @@ struct GameData {
 
     f32 touchControlMaxLogicalOffset = {};
 
-    Clay_ElementId selectedElement = {};
+    Clay_ElementId selectedElement     = {};
+    ControlsGroup* controlsGroupsFirst = {};
+    ControlsGroup* controlsGroupsLast  = {};
   } ui;
 } g = {};
 
-// using ControlsGroup = int;
-//
-// ControlsGroup MakeControlsGroup() {
-// }
-//
-// void BeginControlsGroup() {
-// }
-//
-// void EndControlsGroup() {
-// }
+ControlsGroup* _GetControlsGroupByID(ControlsGroupID id) {  ///
+  auto group = g.ui.controlsGroupsLast;
+  while (group) {
+    if (group->id == id)
+      return group;
+    group = group->prev;
+  }
+  INVALID_PATH;
+  return nullptr;
+}
+
+ControlsGroupID MakeControlsGroup(Direction direction) {  ///
+  Direction allowed_[]{Direction_RIGHT, Direction_DOWN};
+  VIEW_FROM_ARRAY_DANGER(allowed);
+  ASSERT(allowed.Contains(direction));
+
+  static ControlsGroupID nextId = 1;
+
+  auto p = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsGroup);
+  *p     = {
+        .id        = nextId++,
+        .direction = direction,
+        .prev      = g.ui.controlsGroupsLast,
+  };
+
+  if (p->prev)
+    p->prev->next = p;
+  if (!g.ui.controlsGroupsFirst)
+    g.ui.controlsGroupsFirst = p;
+  g.ui.controlsGroupsLast = p;
+
+  return p->id;
+}
+
+void ControlsGroupNewDimension(ControlsGroupID groupId) {  ///
+  auto group = _GetControlsGroupByID(groupId);
+  if (!group)
+    return;
+
+  auto dim = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsDimension);
+  *dim     = {
+        .prev = group->last,
+  };
+
+  if (dim->prev)
+    dim->prev->next = dim;
+  if (!group->first)
+    group->first = dim;
+  group->last = dim;
+}
+
+void ControlsGroupAdd(ControlsGroupID groupId, Clay_ElementId id) {  ///
+  auto group = _GetControlsGroupByID(groupId);
+  if (!group)
+    return;
+
+  auto dim = group->last;
+  ASSERT(dim);
+  if (!dim)
+    return;
+
+  auto elem = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsEntry);
+  *elem     = {
+        .id   = id,
+        .prev = dim->last,
+  };
+
+  if (elem->prev)
+    elem->prev->next = elem;
+  if (!dim->first)
+    dim->first = elem;
+  dim->last = elem;
+}
 
 void TriggerWaveCompleted(bool instant) {  ///
   ASSERT_FALSE(g.run.scheduledWaveCompleted.IsSet());
@@ -3182,8 +3288,9 @@ void GameInit() {
   }
 
   // Setup. {  ///
-  g.meta.trashArena = MakeArena(64 * 1024);
-  g.run.arena       = MakeArena(4 * 1024);
+  g.meta.trashArena         = MakeArena(64 * 1024);
+  g.meta.transientDataArena = MakeArena(64 * 1024);
+  g.run.arena               = MakeArena(4 * 1024);
   TEMP_USAGE(&g.meta.trashArena);
 
   // Initializing Clay.
@@ -4088,15 +4195,38 @@ void RemoveImmediateWeaponEffects() {  ///
   }
 }
 
+// NOTE: Logic must be executed only when `draw` is false!
+// e.g. updating mouse position, processing `clicked()`,
+// logically reacting to `Clay_Hovered()`, changing game's state, etc.
 void DoUI(bool draw) {
   ZoneScoped;
 
-  // NOTE: Logic must be executed only when `draw` is false!
-  // e.g. updating mouse position, processing `clicked()`,
-  // logically reacting to `Clay_Hovered()`, changing game's state, etc.
-
   // Setup.
   // {  ///
+  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&g.meta.transientDataArena);
+
+  bool        shownPauseThisFrame        = false;
+  bool        shownAchievementsThisFrame = false;
+  static bool shownPausePrevFrame        = false;
+  static bool shownAchievementsPrevFrame = false;
+
+  DEFER {
+    shownPausePrevFrame        = shownPauseThisFrame;
+    shownAchievementsPrevFrame = shownAchievementsThisFrame;
+  };
+
+  Direction uiElementSwitchDirection_ = Direction_NONE;
+  if (IsKeyPressed(SDL_SCANCODE_D) || IsKeyPressed(SDL_SCANCODE_RIGHT))
+    uiElementSwitchDirection_ = Direction_RIGHT;
+  if (IsKeyPressed(SDL_SCANCODE_W) || IsKeyPressed(SDL_SCANCODE_UP))
+    uiElementSwitchDirection_ = Direction_UP;
+  if (IsKeyPressed(SDL_SCANCODE_A) || IsKeyPressed(SDL_SCANCODE_LEFT))
+    uiElementSwitchDirection_ = Direction_LEFT;
+  if (IsKeyPressed(SDL_SCANCODE_S) || IsKeyPressed(SDL_SCANCODE_DOWN))
+    uiElementSwitchDirection_ = Direction_DOWN;
+  const Direction uiElementSwitchDirection = uiElementSwitchDirection_;
+
   const auto fb_atlas_textures      = glib->atlas_textures();
   const auto original_texture_sizes = glib->original_texture_sizes();
   const auto fb_items               = glib->items();
@@ -4118,14 +4248,15 @@ void DoUI(bool draw) {
       pos    = ScreenPosToLogical(d.screenPos);
     }
 
-    Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
+    if (g.meta.playerUsesKeyboard)
+      Clay_SetPointerState({-1, -1}, false);
+    else
+      Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
   }
 
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
   const auto localization_strings      = localization->strings();
   const auto localization_broken_lines = localization->broken_lines();
-
-  TEMP_USAGE(&g.meta.trashArena);
 
   Clay_BeginLayout();
 
@@ -4205,11 +4336,12 @@ void DoUI(bool draw) {
   };
 
   struct ComponentButtonData {  ///
-    Clay_ElementId id                = {};
-    bool           selected          = false;
-    bool           growX             = false;
-    u16            paddingHorizontal = GAP_BIG;
-    bool           enabled           = true;
+    Clay_ElementId  id                = {};
+    ControlsGroupID group             = {};
+    bool            selected          = false;
+    bool            growX             = false;
+    u16             paddingHorizontal = GAP_BIG;
+    bool            enabled           = true;
   };
 
   LAMBDA (
@@ -4225,6 +4357,9 @@ void DoUI(bool draw) {
     Clay_Sizing sizing{};
     if (data.growX)
       sizing.width = CLAY_SIZING_GROW(0);
+
+    if (data.group)
+      ControlsGroupAdd(data.group, data.id);
 
     bool isSelected
       = (g.ui.selectedElement.id && (g.ui.selectedElement.id == data.id.id));
@@ -4273,7 +4408,9 @@ void DoUI(bool draw) {
       if (justSelected)
         ButtonSFX(draw, data.id, true);
 
-      result = clicked();
+      result |= clicked();
+      if (isSelected)
+        result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
     }
 
     return result;
@@ -6943,6 +7080,10 @@ void DoUI(bool draw) {
 
       // Achievements.
       if (g.meta.pausedShowingAchievements) {  ///
+        shownAchievementsThisFrame = true;
+        if (!shownAchievementsPrevFrame)
+          g.ui.selectedElement = {};
+
         CLAY({.layout{
           .childGap = GAP_BIG,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -7111,9 +7252,15 @@ void DoUI(bool draw) {
             }
           }
 
+          const auto backButtonId = CLAY_ID("button_pause_achievements_back");
+          if (uiElementSwitchDirection && !g.ui.selectedElement.id)
+            g.ui.selectedElement = backButtonId;
+          if (!shownAchievementsPrevFrame && g.meta.playerUsesKeyboard)
+            g.ui.selectedElement = backButtonId;
+
           // Back button.
           const bool back = componentButton(
-            {.id = CLAY_ID("button_pause_achievements_back")},
+            {.id = backButtonId},
             [&](bool hovered, Color textColor)
               BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK, textColor); }
           );
@@ -7128,6 +7275,13 @@ void DoUI(bool draw) {
       }
       // Pause.
       else {  ///
+        shownPauseThisFrame = true;
+        if (!shownPausePrevFrame)
+          g.ui.selectedElement = {};
+
+        auto pauseButtonsGroup = MakeControlsGroup(Direction_DOWN);
+        ControlsGroupNewDimension(pauseButtonsGroup);
+
         // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
           .childGap = GAP_BIG,
@@ -7150,29 +7304,51 @@ void DoUI(bool draw) {
               .childGap        = GAP_SMALL,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
+              const auto resumeButtonId = CLAY_ID("button_pause_resume");
+              if (!g.ui.selectedElement.id)
+                g.ui.selectedElement = resumeButtonId;
+              if (!shownPausePrevFrame && g.meta.playerUsesKeyboard)
+                g.ui.selectedElement = resumeButtonId;
+
               const bool resumed = componentButton(
-                {.id = CLAY_ID("button_pause_resume"), .growX = true},
+                {
+                  .id    = resumeButtonId,
+                  .group = pauseButtonsGroup,
+                  .growX = true,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME, textColor);
                 }
               );
 
               const bool restarted = componentButton(
-                {.id = CLAY_ID("button_pause_restart"), .growX = true},
+                {
+                  .id    = CLAY_ID("button_pause_restart"),
+                  .group = pauseButtonsGroup,
+                  .growX = true,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART, textColor);
                 }
               );
 
               const bool newRun = componentButton(
-                {.id = CLAY_ID("button_pause_new_run"), .growX = true},
+                {
+                  .id    = CLAY_ID("button_pause_new_run"),
+                  .group = pauseButtonsGroup,
+                  .growX = true,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN, textColor);
                 }
               );
 
               const bool achievements = componentButton(
-                {.id = CLAY_ID("button_pause_achievements"), .growX = true},
+                {
+                  .id    = CLAY_ID("button_pause_achievements"),
+                  .group = pauseButtonsGroup,
+                  .growX = true,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS, textColor);
                   int percent = GetAchievementsCompletedPercent();
@@ -7184,7 +7360,11 @@ void DoUI(bool draw) {
               bool exited = false;
 #if defined(SDL_PLATFORM_DESKTOP)
               exited = componentButton(
-                {.id = CLAY_ID("button_pause_exit"), .growX = true},
+                {
+                  .id    = CLAY_ID("button_pause_exit"),
+                  .group = pauseButtonsGroup,
+                  .growX = true,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_TEXT_LOCALIZED(Loc_UI_EXIT, textColor);
                 }
@@ -7367,6 +7547,67 @@ void DoUI(bool draw) {
       }
     }
   }
+
+  // Control groups navigation.
+  if (uiElementSwitchDirection) {  ///
+    auto toSelect = g.ui.selectedElement;
+
+    auto group = g.ui.controlsGroupsFirst;
+    while (group) {
+      ASSERT(group->next != group);
+      ASSERT(group->prev != group);
+
+      auto dim = group->first;
+
+      while (dim) {
+        ASSERT(dim->next != dim);
+        ASSERT(dim->prev != dim);
+
+        auto elem = dim->first;
+
+        while (elem) {
+          ASSERT(elem->next != elem);
+          ASSERT(elem->prev != elem);
+
+          if (elem->id.id == g.ui.selectedElement.id) {
+            if (group->direction == Direction_DOWN) {
+              if (uiElementSwitchDirection == Direction_DOWN) {
+                if (elem->next)
+                  toSelect = elem->next->id;
+              }
+              else if (uiElementSwitchDirection == Direction_UP) {
+                if (elem->prev)
+                  toSelect = elem->prev->id;
+              }
+            }
+            else if (group->direction == Direction_RIGHT) {
+              if (uiElementSwitchDirection == Direction_RIGHT) {
+                if (elem->next)
+                  toSelect = elem->next->id;
+              }
+              else if (uiElementSwitchDirection == Direction_LEFT) {
+                if (elem->prev)
+                  toSelect = elem->prev->id;
+              }
+            }
+            else
+              INVALID_PATH;
+          }
+          elem = elem->next;
+        }
+        dim = dim->next;
+      }
+      group = group->next;
+    }
+
+    if (g.ui.selectedElement.id != toSelect.id) {
+      g.ui.selectedElement = toSelect;
+      PlaySound(Sound_UI_HOVER_SMALL);
+    }
+  }
+
+  g.ui.controlsGroupsFirst = nullptr;
+  g.ui.controlsGroupsLast  = nullptr;
 
   ASSERT_FALSE(g.ui.overriddenFont);
   auto drawCommands = Clay_EndLayout();
@@ -7781,6 +8022,9 @@ void Pickup(Pickupable* pickupable_) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
+  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&g.meta.transientDataArena);
+
   // Waiting for completion of save data loading.
   {  ///
     auto loaded = LoadSaveDataOnce(&g.meta.trashArena);
@@ -7805,6 +8049,11 @@ void GameFixedUpdate() {
   const auto fb_difficulties   = glib->difficulties();
   const auto fb_achievements   = glib->achievements();
   const auto fb_builds         = glib->builds();
+
+  for (bool buttonIsDown : ge.meta._keyboardState) {
+    if (buttonIsDown)
+      g.meta.playerUsesKeyboard = true;
+  }
   // }
 
   // Save.
@@ -7842,10 +8091,8 @@ void GameFixedUpdate() {
     g.meta.touch.touchIDs[0] = InvalidTouchID;
 
   // Show / hide cursor.
-  {                                                     ///
-    if (g.meta.playerUsesKeyboard                       //
-        && (g.run.state.screen == ScreenType_GAMEPLAY)  //
-        && !g.meta.paused)
+  {  ///
+    if (g.meta.playerUsesKeyboard)
       SDL_HideCursor();
     else
       SDL_ShowCursor();
@@ -8144,6 +8391,12 @@ void GameFixedUpdate() {
     = (g.run.state.screen == ScreenType_GAMEPLAY)
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION);
 
+  auto mousePos = GetMouseScreenPos();
+  if ((mousePos != g.meta.previousMousePos) || (GetTouchIDs().count > 0)) {
+    g.meta.playerUsesKeyboard = false;
+    g.meta.previousMousePos   = mousePos;
+  }
+
   // Updating gameplay.
   if (!ge.meta.windowIsInactive && !g.meta.paused && gameplayOrWaveEndScreen) {
     ZoneScopedN("Updating gameplay.");
@@ -8156,12 +8409,6 @@ void GameFixedUpdate() {
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
-      auto mousePos = GetMouseScreenPos();
-      if (mousePos != g.meta.previousMousePos) {
-        g.meta.playerUsesKeyboard = false;
-        g.meta.previousMousePos   = mousePos;
-      }
-
       // Touch controls.
       {  ///
         auto& t = g.meta.touch;
@@ -8254,19 +8501,17 @@ void GameFixedUpdate() {
           if (g.meta.touch.touchIDs[0] != InvalidTouchID)
             move = g.meta.touch.dir[0];
           else {
-            if (IsKeyDown(SDL_SCANCODE_W))
-              move.y += 1;
-            if (IsKeyDown(SDL_SCANCODE_A))
-              move.x -= 1;
-            if (IsKeyDown(SDL_SCANCODE_S))
-              move.y -= 1;
-            if (IsKeyDown(SDL_SCANCODE_D))
+            if (IsKeyDown(SDL_SCANCODE_D) || IsKeyDown(SDL_SCANCODE_RIGHT))
               move.x += 1;
+            if (IsKeyDown(SDL_SCANCODE_W) || IsKeyDown(SDL_SCANCODE_UP))
+              move.y += 1;
+            if (IsKeyDown(SDL_SCANCODE_A) || IsKeyDown(SDL_SCANCODE_LEFT))
+              move.x -= 1;
+            if (IsKeyDown(SDL_SCANCODE_S) || IsKeyDown(SDL_SCANCODE_DOWN))
+              move.y -= 1;
 
-            if (move.x || move.y) {
-              move                      = Vector2Normalize(move);
-              g.meta.playerUsesKeyboard = true;
-            }
+            if (move.x || move.y)
+              move = Vector2Normalize(move);
           }
 
           PLAYER_CREATURE.controller.move = move;
@@ -9882,6 +10127,9 @@ int GetTextureIdByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
 void GameDraw() {
   ZoneScoped;
 
+  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&g.meta.transientDataArena);
+
   // Waiting for completion of save data loading.
   if (!ge.meta.loading)
     return;
@@ -10492,6 +10740,7 @@ void GameDraw() {
     debugTextArena("ge.meta._arena", ge.meta._arena);
     debugTextArena("g.run.arena", g.run.arena);
     debugTextArena("g.meta.trashArena", g.meta.trashArena);
+    debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
 
 #define X(type_, name_) DebugText("g.run." #name_ ".count: %d", g.run.name_.count);
     VECTORS_TABLE;
