@@ -32,29 +32,18 @@ x test on phone: can play
 x pause button works good
 x touch: fix double press
 x preserving hovered element state
+x ui keyboard: pause
+x ui keyboard: pause: stats
+x ui keyboard: achievements
 
-* UI nav: pause: switch from buttons to weapons
-* UI nav: pause: switch from weapons to items
-* UI nav: pause: switch from items to weapons
-* UI nav: pause: switch from weapon to buttons
-* UI nav: pause: switch from items to buttons
-* UI nav: pause: switch from weapons to stats
-* UI nav: pause: switch from items to stats
-* UI nav: pause: switch from stats to weapons
-* UI nav: pause: switch from stats to items
-* UI nav: pause: switch from buttons to stats (in case no weapons and no items)
-* UI nav: pause: switch from stats to buttons (in case no weapons and no items)
-* UI nav: pause:
-* UI nav: pause:
-* UI nav: picked up item
-* UI nav: upgrades
-* UI nav: shop
-* UI nav: end
-* UI nav: achievements
-* UI nav: new run
-* UI nav:
-* UI nav:
-* UI nav:
+* ui keyboard: picked up item
+* ui keyboard: upgrades
+* ui keyboard: shop
+* ui keyboard: end
+* ui keyboard: new run
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
 *
 * enemy that tanks 1-3 damage
 * engine: make `Arena` growing (by default it asserts)
@@ -78,12 +67,6 @@ x preserving hovered element state
 * weapon groups (primitive, medical, etc.) + set bonuses
 * can take damage if dodged
 * fix: web release: why pressing P doesn't show pause UI?
-* keyboard UI nav:
-* keyboard UI nav:
-* keyboard UI nav:
-* keyboard UI nav:
-* keyboard UI nav:
-* keyboard UI nav:
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
