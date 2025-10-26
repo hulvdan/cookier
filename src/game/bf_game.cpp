@@ -1032,8 +1032,21 @@ struct GameData {
     int                              clayBeautifiersCount = 0;
 
     f32 touchControlMaxLogicalOffset = {};
+
+    Clay_ElementId selectedElement = {};
   } ui;
 } g = {};
+
+// using ControlsGroup = int;
+//
+// ControlsGroup MakeControlsGroup() {
+// }
+//
+// void BeginControlsGroup() {
+// }
+//
+// void EndControlsGroup() {
+// }
 
 void TriggerWaveCompleted(bool instant) {  ///
   ASSERT_FALSE(g.run.scheduledWaveCompleted.IsSet());
@@ -2876,7 +2889,7 @@ void ReloadFontsIfNeeded() {  ///
     // fontUI.
     {
       .filepath        = fontpath,
-      .size            = 15,
+      .size            = 18,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
@@ -2884,7 +2897,7 @@ void ReloadFontsIfNeeded() {  ///
     // fontUIOutlined.
     {
       .filepath        = fontpath,
-      .size            = 15,
+      .size            = 18,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
@@ -2894,7 +2907,7 @@ void ReloadFontsIfNeeded() {  ///
     // fontUIBig.
     {
       .filepath        = fontpath,
-      .size            = 20,
+      .size            = 22,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
@@ -4213,6 +4226,11 @@ void DoUI(bool draw) {
     if (data.growX)
       sizing.width = CLAY_SIZING_GROW(0);
 
+    bool isSelected
+      = (g.ui.selectedElement.id && (g.ui.selectedElement.id == data.id.id));
+
+    bool justSelected = false;
+
     CLAY({.id = data.id, .layout{.sizing{sizing}}}) {
       CLAY({
         .layout{
@@ -4227,21 +4245,33 @@ void DoUI(bool draw) {
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
-          (Clay_Hovered() && data.enabled
+          ((Clay_Hovered() && data.enabled || isSelected)
              ? palWhite
              : (data.selected ? TRANSPARENT_BLACK : slotColors[0])),
-          (Clay_Hovered() && data.enabled
+          ((Clay_Hovered() && data.enabled || isSelected)
              ? TRANSPARENT_BLACK
              : (data.selected ? TRANSPARENT_BLACK : slotColors[1]))
         ),
       }) {
         bool hovered = Clay_Hovered() && data.enabled;
+        if (hovered) {
+          if (g.ui.selectedElement.id != data.id.id) {
+            g.ui.selectedElement = data.id;
+            justSelected         = true;
+          }
+          isSelected = true;
+        }
+
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          innerLambda(hovered, (hovered ? palTextBlack : palTextWhite));
+          innerLambda(
+            (hovered || isSelected),
+            ((hovered || isSelected) ? palTextBlack : palTextWhite)
+          );
         }
       }
 
-      ButtonSFX(draw, data.id, Clay_Hovered() && data.enabled);
+      if (justSelected)
+        ButtonSFX(draw, data.id, true);
 
       result = clicked();
     }
@@ -4271,13 +4301,17 @@ void DoUI(bool draw) {
   };
 
   struct ComponentSlotData {  ///
-    bool hidden     = {};
-    bool canHover   = {};
-    int  tier       = {};
-    f32  flashWhite = 0;
+    Clay_ElementId id         = {};
+    bool           hidden     = {};
+    bool           canHover   = {};
+    int            tier       = {};
+    f32            flashWhite = 0;
   };
 
   LAMBDA (void, componentSlot, (ComponentSlotData data, auto innerLambda)) {  ///
+    if (data.canHover)
+      ASSERT(data.id.id);
+
     const int texId        = glib->ui_item_slot_texture_id();
     auto      originalSize = original_texture_sizes->Get(texId);
 
@@ -4288,9 +4322,12 @@ void DoUI(bool draw) {
     if (!data.hidden) {
       auto color = slotColors[2 * data.tier];
       auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
-      if (data.canHover && Clay_Hovered()) {
-        color = palWhite;
-        flash = TRANSPARENT_BLACK;
+      if ((data.canHover && Clay_Hovered())
+          || (g.ui.selectedElement.id && (g.ui.selectedElement.id == data.id.id)))
+      {
+        g.ui.selectedElement = data.id;
+        color                = palWhite;
+        flash                = TRANSPARENT_BLACK;
       }
 
       BF_CLAY_IMAGE({.texId = texId, .color = color, .flash = flash}, innerLambda);
@@ -4495,6 +4532,7 @@ void DoUI(bool draw) {
 
     componentSlot(
       {
+        .id = data.id,
         .hidden
         = (!onlyOneOrNone && (data.hidden == ComponentUniversalSlotHiddenType_HIDE)),
         .canHover = data.canHover,
@@ -6383,19 +6421,16 @@ void DoUI(bool draw) {
             }) {
               CLAY({.layout{.childGap = GAP_SMALL}}) {
                 // Slot with upgrade's image.
-                componentSlot(
-                  {.canHover = false, .tier = upgrade.tier},
-                  [&]() BF_FORCE_INLINE_LAMBDA {
-                    CLAY({
-                      .layout{
-                        BF_CLAY_SIZING_GROW_XY,
-                        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                      },
-                    }) {
-                      BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
-                    }
+                componentSlot({.tier = upgrade.tier}, [&]() BF_FORCE_INLINE_LAMBDA {
+                  CLAY({
+                    .layout{
+                      BF_CLAY_SIZING_GROW_XY,
+                      BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+                    },
+                  }) {
+                    BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
                   }
-                );
+                });
 
                 // Name.
                 BF_CLAY_TEXT_BROKEN_LOCALIZED(
@@ -6996,10 +7031,12 @@ void DoUI(bool draw) {
                       else
                         tier = 3;
 
+                      auto id = CLAY_IDI(
+                        "paused_achievement", 100 * currentAchievement + currentStep
+                      );
+
                       componentUniversalSlot({
-                        .id = CLAY_IDI(
-                          "paused_achievement", 100 * currentAchievement + currentStep
-                        ),
+                        .id       = id,
                         .build    = (BuildType)fb_step->unlocks_build_type(),
                         .item     = (ItemType)fb_step->unlocks_item_type(),
                         .weapon   = (WeaponType)fb_step->unlocks_weapon_type(),
@@ -7008,7 +7045,9 @@ void DoUI(bool draw) {
                         .canHover = canHover,
                       });
 
-                      if (canHover && Clay_Hovered()) {
+                      if ((canHover && Clay_Hovered())
+                          || (id.id == g.ui.selectedElement.id))
+                      {
                         g.meta.pausedAchievementsHoveredAchievement = currentAchievement;
                         g.meta.pausedAchievementsHoveredAchievementStep = currentStep;
                       }
