@@ -1091,6 +1091,25 @@ ControlsGroup* _GetControlsGroup(ControlsGroupID id) {  ///
   return nullptr;
 }
 
+ControlsEntry* _GetPreferredControlsEntry(ControlsEntry* first, int preferredIndex) {  ///
+  ASSERT(preferredIndex >= 0);
+  while ((preferredIndex > 0) && first->next) {
+    first = first->next;
+    preferredIndex--;
+  }
+  return first;
+}
+
+ControlsDimension*
+_GetPreferredControlsDimension(ControlsDimension* first, int preferredIndex) {  ///
+  ASSERT(preferredIndex >= 0);
+  while ((preferredIndex > 0) && first->next) {
+    first = first->next;
+    preferredIndex--;
+  }
+  return first;
+}
+
 ControlsGroupID MakeControlsGroup() {  ///
   static ControlsGroupID nextId = 1;
 
@@ -1111,7 +1130,7 @@ ControlsGroupID MakeControlsGroup() {  ///
 
 void ControlsGroupNewRow(ControlsGroupID groupId) {  ///
   auto group = _GetControlsGroup(groupId);
-  if (!group)
+  if (!group || (group->last && !group->last->first))
     return;
 
   auto dim = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsDimension);
@@ -7307,13 +7326,13 @@ void DoUI(bool draw) {
         auto pauseWeaponsGroup = MakeControlsGroup();
         ControlsGroupNewRow(pauseWeaponsGroup);
 
-        auto pauseItemsGroup = MakeControlsGroup();
+        // auto pauseItemsGroup = MakeControlsGroup();
 
         ControlsGroupConnect(pauseButtonsGroup, Direction_RIGHT, pauseWeaponsGroup);
         ControlsGroupConnect(pauseWeaponsGroup, Direction_LEFT, pauseButtonsGroup);
-        ControlsGroupConnect(pauseItemsGroup, Direction_LEFT, pauseButtonsGroup);
-        ControlsGroupConnect(pauseItemsGroup, Direction_UP, pauseWeaponsGroup);
-        ControlsGroupConnect(pauseWeaponsGroup, Direction_DOWN, pauseItemsGroup);
+        // ControlsGroupConnect(pauseItemsGroup, Direction_LEFT, pauseButtonsGroup);
+        // ControlsGroupConnect(pauseItemsGroup, Direction_UP, pauseWeaponsGroup);
+        // ControlsGroupConnect(pauseWeaponsGroup, Direction_DOWN, pauseItemsGroup);
 
         // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
@@ -7469,7 +7488,7 @@ void DoUI(bool draw) {
               // Items label.
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
               // Items.
-              componentItemsGrid({.group = pauseItemsGroup, .itemsX = 6});
+              componentItemsGrid({.group = pauseWeaponsGroup, .itemsX = 6});
             }
           }
 
@@ -7601,13 +7620,19 @@ void DoUI(bool draw) {
 
       auto dim = group->first;
 
+      int preferredDimIndex = -1;
       while (dim) {
+        preferredDimIndex++;
+
         ASSERT(dim->next != dim);
         ASSERT(dim->prev != dim);
 
         auto elem = dim->first;
 
+        int preferredElemIndex = -1;
         while (elem) {
+          preferredElemIndex++;
+
           ASSERT(elem->next != elem);
           ASSERT(elem->prev != elem);
 
@@ -7635,8 +7660,10 @@ void DoUI(bool draw) {
               }
             }
             else if (uiElementSwitchDirection == Direction_DOWN) {
-              if (dim->next && dim->next->first)
-                toSelect = dim->next->first->id;
+              if (dim->next && dim->next->first) {
+                toSelect
+                  = _GetPreferredControlsEntry(dim->next->first, preferredElemIndex)->id;
+              }
               else {
                 auto to = group->connectionsPerDirection[(int)Direction_DOWN - 1];
                 if (to) {
@@ -7646,8 +7673,10 @@ void DoUI(bool draw) {
               }
             }
             else if (uiElementSwitchDirection == Direction_UP) {
-              if (dim->prev)
-                toSelect = dim->prev->first->id;
+              if (dim->prev) {
+                toSelect
+                  = _GetPreferredControlsEntry(dim->prev->first, preferredElemIndex)->id;
+              }
               else {
                 auto to = group->connectionsPerDirection[(int)Direction_UP - 1];
                 if (to) {
@@ -7659,6 +7688,7 @@ void DoUI(bool draw) {
             else
               INVALID_PATH;
           }
+
           elem = elem->next;
         }
         dim = dim->next;
@@ -7666,7 +7696,7 @@ void DoUI(bool draw) {
       group = group->next;
     }
 
-    if (g.ui.selectedElement.id != toSelect.id) {
+    if (!draw && (g.ui.selectedElement.id != toSelect.id)) {
       g.ui.selectedElement = toSelect;
       PlaySound(Sound_UI_HOVER_SMALL);
     }
