@@ -35,18 +35,25 @@ x preserving hovered element state
 x ui keyboard: pause
 x ui keyboard: pause: stats
 x ui keyboard: achievements
+x ui keyboard: upgrades
+x ui keyboard: shop
 
 * ui keyboard: picked up item
-* ui keyboard: upgrades
-* ui keyboard: shop
 * ui keyboard: end
 * ui keyboard: new run
+* ui keyboard: shop: don't add hidden weapons to group
+* ui keyboard: shop: when context menu is active, don't process shop context at all
+* ui keyboard: shop: change selected button after buying/recycling/combining
 * ui keyboard:
 * ui keyboard:
 * ui keyboard:
+* ui keyboard: shop: stats
+* ui keyboard: upgrades: stats
+* ui keyboard: picked up item: stats
+* ui keyboard: end: stats
 *
 * enemy that tanks 1-3 damage
-* engine: make `Arena` growing (by default it asserts)
+* engine: make `Arena` growing (by default it should assert)
 *
 * show controls above strips
 * bigger buttons (bigger button font)
