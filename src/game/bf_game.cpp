@@ -864,8 +864,7 @@ struct ControlsDimension {
 };
 
 struct ControlsGroup {  ///
-  ControlsGroupID id        = {};
-  Direction       direction = {};
+  ControlsGroupID id = {};
 
   int currentDimension = {};
 
@@ -1092,18 +1091,13 @@ ControlsGroup* _GetControlsGroup(ControlsGroupID id) {  ///
   return nullptr;
 }
 
-ControlsGroupID MakeControlsGroup(Direction direction) {  ///
-  Direction allowed_[]{Direction_RIGHT, Direction_DOWN};
-  VIEW_FROM_ARRAY_DANGER(allowed);
-  ASSERT(allowed.Contains(direction));
-
+ControlsGroupID MakeControlsGroup() {  ///
   static ControlsGroupID nextId = 1;
 
   auto p = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsGroup);
   *p     = {
-        .id        = nextId++,
-        .direction = direction,
-        .prev      = g.ui.controlsGroupsLast,
+        .id   = nextId++,
+        .prev = g.ui.controlsGroupsLast,
   };
 
   if (p->prev)
@@ -1115,17 +1109,10 @@ ControlsGroupID MakeControlsGroup(Direction direction) {  ///
   return p->id;
 }
 
-void ControlsGroupNewDimension(ControlsGroupID groupId) {  ///
+void ControlsGroupNewRow(ControlsGroupID groupId) {  ///
   auto group = _GetControlsGroup(groupId);
   if (!group)
     return;
-
-  // Adding multiple dimensions is permitted only to horizontal groups
-  // (that have `direction == Direction_RIGHT`).
-  if (group->last && (group->direction != Direction_RIGHT)) {
-    INVALID_PATH;
-    return;
-  }
 
   auto dim = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsDimension);
   *dim     = {
@@ -5834,7 +5821,7 @@ void DoUI(bool draw) {
       const int ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
 
       FOR_RANGE (int, y, ITEMS_Y) {
-        ControlsGroupNewDimension(data.group);
+        ControlsGroupNewRow(data.group);
 
         CLAY({.layout{.childGap = GAP_SMALL}})
         FOR_RANGE (int, x, ITEMS_X) {
@@ -7314,13 +7301,13 @@ void DoUI(bool draw) {
         if (!shownPausePrevFrame)
           g.ui.selectedElement = {};
 
-        auto pauseButtonsGroup = MakeControlsGroup(Direction_DOWN);
-        ControlsGroupNewDimension(pauseButtonsGroup);
+        auto pauseButtonsGroup = MakeControlsGroup();
+        ControlsGroupNewRow(pauseButtonsGroup);
 
-        auto pauseWeaponsGroup = MakeControlsGroup(Direction_RIGHT);
-        ControlsGroupNewDimension(pauseWeaponsGroup);
+        auto pauseWeaponsGroup = MakeControlsGroup();
+        ControlsGroupNewRow(pauseWeaponsGroup);
 
-        auto pauseItemsGroup = MakeControlsGroup(Direction_RIGHT);
+        auto pauseItemsGroup = MakeControlsGroup();
 
         ControlsGroupConnect(pauseButtonsGroup, Direction_RIGHT, pauseWeaponsGroup);
         ControlsGroupConnect(pauseWeaponsGroup, Direction_LEFT, pauseButtonsGroup);
@@ -7367,6 +7354,8 @@ void DoUI(bool draw) {
                 }
               );
 
+              ControlsGroupNewRow(pauseButtonsGroup);
+
               const bool restarted = componentButton(
                 {
                   .id    = CLAY_ID("button_pause_restart"),
@@ -7378,6 +7367,8 @@ void DoUI(bool draw) {
                 }
               );
 
+              ControlsGroupNewRow(pauseButtonsGroup);
+
               const bool newRun = componentButton(
                 {
                   .id    = CLAY_ID("button_pause_new_run"),
@@ -7388,6 +7379,8 @@ void DoUI(bool draw) {
                   BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN, textColor);
                 }
               );
+
+              ControlsGroupNewRow(pauseButtonsGroup);
 
               const bool achievements = componentButton(
                 {
@@ -7405,6 +7398,8 @@ void DoUI(bool draw) {
 
               bool exited = false;
 #if defined(SDL_PLATFORM_DESKTOP)
+              ControlsGroupNewRow(pauseButtonsGroup);
+
               exited = componentButton(
                 {
                   .id    = CLAY_ID("button_pause_exit"),
@@ -7617,52 +7612,48 @@ void DoUI(bool draw) {
           ASSERT(elem->prev != elem);
 
           if (elem->id.id == g.ui.selectedElement.id) {
-            if (group->direction == Direction_DOWN) {
-              if (uiElementSwitchDirection == Direction_DOWN) {
-                if (elem->next)
-                  toSelect = elem->next->id;
-              }
-              else if (uiElementSwitchDirection == Direction_UP) {
-                if (elem->prev)
-                  toSelect = elem->prev->id;
-              }
-              else if (uiElementSwitchDirection == Direction_RIGHT) {
+            if (uiElementSwitchDirection == Direction_RIGHT) {
+              if (elem->next)
+                toSelect = elem->next->id;
+              else {
                 auto to = group->connectionsPerDirection[(int)Direction_RIGHT - 1];
                 if (to) {
-                  auto group2 = _GetControlsGroup(to);
-                  ASSERT(group2->first);
-                  if (group2->first) {
-                    auto elem = group2->first->first;
-                    ASSERT(elem);
-                    if (elem)
-                      toSelect = group2->first->first->id;
-                  }
-                }
-              }
-              else if (uiElementSwitchDirection == Direction_LEFT) {
-                auto to = group->connectionsPerDirection[(int)Direction_LEFT - 1];
-                if (to) {
-                  auto group2 = _GetControlsGroup(to);
-                  ASSERT(group2->first);
-                  if (group2->first) {
-                    auto elem = group2->first->first;
-                    if (group2->direction == Direction_RIGHT)
-                      elem = group2->first->last;
-                    ASSERT(elem);
-                    if (elem)
-                      toSelect = group2->first->first->id;
-                  }
+                  auto gto = _GetControlsGroup(to);
+                  toSelect = gto->first->first->id;
                 }
               }
             }
-            else if (group->direction == Direction_RIGHT) {
-              if (uiElementSwitchDirection == Direction_RIGHT) {
-                if (elem->next)
-                  toSelect = elem->next->id;
+            else if (uiElementSwitchDirection == Direction_LEFT) {
+              if (elem->prev)
+                toSelect = elem->prev->id;
+              else {
+                auto to = group->connectionsPerDirection[(int)Direction_LEFT - 1];
+                if (to) {
+                  auto gto = _GetControlsGroup(to);
+                  toSelect = gto->first->last->id;
+                }
               }
-              else if (uiElementSwitchDirection == Direction_LEFT) {
-                if (elem->prev)
-                  toSelect = elem->prev->id;
+            }
+            else if (uiElementSwitchDirection == Direction_DOWN) {
+              if (dim->next && dim->next->first)
+                toSelect = dim->next->first->id;
+              else {
+                auto to = group->connectionsPerDirection[(int)Direction_DOWN - 1];
+                if (to) {
+                  auto gto = _GetControlsGroup(to);
+                  toSelect = gto->first->first->id;
+                }
+              }
+            }
+            else if (uiElementSwitchDirection == Direction_UP) {
+              if (dim->prev)
+                toSelect = dim->prev->first->id;
+              else {
+                auto to = group->connectionsPerDirection[(int)Direction_UP - 1];
+                if (to) {
+                  auto gto = _GetControlsGroup(to);
+                  toSelect = gto->last->first->id;
+                }
               }
             }
             else
