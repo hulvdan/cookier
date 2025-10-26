@@ -1177,19 +1177,27 @@ void ControlsGroupConnect(
   ControlsGroupID to,
   bool            bidirectional = true
 ) {  ///
+  ASSERT(dir);
+
   auto g1 = _GetControlsGroup(from);
   auto g2 = _GetControlsGroup(to);
   if (!g1 || !g2)
     return;
 
-  ASSERT(dir);
-  auto d = (int)dir - 1;
-  ASSERT(g1->connectionsPerDirection[d] == 0);
-  g1->connectionsPerDirection[d] = to;
+  // Can't connect groups where at least one of them is empty.
+  if (!g1->first || !g1->first->first || !g2->first || !g2->first->first)
+    return;
+
+  const int d = (int)dir - 1;
+
+  if (!g1->connectionsPerDirection[d])
+    g1->connectionsPerDirection[d] = to;
 
   if (bidirectional) {
-    auto opposite                         = (d + 2) % 4;
-    g2->connectionsPerDirection[opposite] = from;
+    auto opposite = (d + 2) % 4;
+
+    if (!g2->connectionsPerDirection[opposite])
+      g2->connectionsPerDirection[opposite] = from;
   }
 }
 
@@ -4245,14 +4253,33 @@ void DoUI(bool draw) {
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
-  bool        shownPauseThisFrame        = false;
-  bool        shownAchievementsThisFrame = false;
-  static bool shownPausePrevFrame        = false;
-  static bool shownAchievementsPrevFrame = false;
+  enum ControlsContext {
+    ControlsContext_PAUSE,
+    ControlsContext_ACHIEVEMENTS,
+    ControlsContext_NEW_RUN,
+    ControlsContext_PICKED_UP_ITEM,
+    ControlsContext_UPGRADES,
+    ControlsContext_SHOP,
+    ControlsContext_END,
+    ControlsContext_COUNT,
+  };
+
+  static struct {
+    bool thisFrame = false;
+    bool prevFrame = false;
+  } controlsContexts[ControlsContext_COUNT];
 
   DEFER {
-    shownPausePrevFrame        = shownPauseThisFrame;
-    shownAchievementsPrevFrame = shownAchievementsThisFrame;
+    for (auto& x : controlsContexts) {
+      x.prevFrame = x.thisFrame;
+      x.thisFrame = false;
+    }
+  };
+
+  LAMBDA (void, onControlsContextShow, (ControlsContext x)) {
+    controlsContexts[x].thisFrame = true;
+    if (!controlsContexts[x].prevFrame)
+      g.ui.selectedElement = {};
   };
 
   Direction uiElementSwitchDirection_ = Direction_NONE;
@@ -4265,6 +4292,13 @@ void DoUI(bool draw) {
   if (IsKeyPressed(SDL_SCANCODE_S) || IsKeyPressed(SDL_SCANCODE_DOWN))
     uiElementSwitchDirection_ = Direction_DOWN;
   const Direction uiElementSwitchDirection = uiElementSwitchDirection_;
+
+  LAMBDA (void, markControlAsDefault, (ControlsContext context, Clay_ElementId id)) {
+    if (uiElementSwitchDirection && !g.ui.selectedElement.id)
+      g.ui.selectedElement = id;
+    if (!controlsContexts[context].prevFrame && g.meta.playerUsesKeyboard)
+      g.ui.selectedElement = id;
+  };
 
   const auto fb_atlas_textures      = glib->atlas_textures();
   const auto original_texture_sizes = glib->original_texture_sizes();
@@ -4455,9 +4489,9 @@ void DoUI(bool draw) {
     return result;
   };
 
-  LAMBDA (bool, componentButtonReroll, (int price)) {  ///
+  LAMBDA (bool, componentButtonReroll, (ControlsGroupID group, int price)) {  ///
     return componentButton(
-      {.id = CLAY_ID("button_shop_reroll")},
+      {.id = CLAY_ID("button_shop_reroll"), .group = group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
           BF_CLAY_TEXT_LOCALIZED(Loc_UI_REROLL, textColor);
@@ -5020,8 +5054,10 @@ void DoUI(bool draw) {
 
     bool setFixedHeight = false;
 
-    int  shopBuyingIndex = -1;
-    bool shopSelling     = false;
+    bool            shopMarkDefault = false;
+    ControlsGroupID shopGroup       = {};
+    int             shopBuyingIndex = -1;
+    bool            shopSelling     = false;
   };
 
   LAMBDA (void, componentUniversalCard, (ComponentUniversalCardData data)) {
@@ -5427,8 +5463,12 @@ void DoUI(bool draw) {
             BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
           }}) {
             // Buying item / weapon.
+            auto buyButtonId = CLAY_IDI("button_shop_buy", data.shopBuyingIndex);
+            if (data.shopMarkDefault)
+              markControlAsDefault(ControlsContext_SHOP, buyButtonId);
+
             auto bought = componentButton(
-              {.id = CLAY_IDI("button_shop_buy", data.shopBuyingIndex)},
+              {.id = buyButtonId, .group = data.shopGroup},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
                   BF_CLAY_SIZING_GROW_X,
@@ -6566,6 +6606,10 @@ void DoUI(bool draw) {
   }
   // Upgrades.
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
+    onControlsContextShow(ControlsContext_UPGRADES);
+    auto upgradesGroup             = MakeControlsGroup();
+    auto upgradesRerollButtonGroup = MakeControlsGroup();
+
     // Vertical columns with upgrades and stats;
     CLAY({
       .layout{
@@ -6687,12 +6731,17 @@ void DoUI(bool draw) {
               // Choose button.
               CLAY({.layout{BF_CLAY_SIZING_GROW_X, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}
               ) {
-                bool chosen = componentButton(
-                  {.id = CLAY_IDI("button_upgrades_choose", i)},
+                auto chooseButtonId = CLAY_IDI("button_upgrades_choose", i);
+                bool chosen         = componentButton(
+                  {.id = chooseButtonId, .group = upgradesGroup},
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                     BF_CLAY_TEXT_LOCALIZED(Loc_UI_CHOOSE, textColor);
                   }
                 );
+
+                if (i == 1)
+                  markControlAsDefault(ControlsContext_UPGRADES, chooseButtonId);
+
                 if (!draw && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + i)))
                   chosen = true;
                 if (chosen) {
@@ -6724,7 +6773,8 @@ void DoUI(bool draw) {
         const auto calculatedRerollPrice
           = ApplyStatRerollPrice(g.run.state.upgrades.rerolls.GetPrice());
         const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-        bool       rerolled  = componentButtonReroll(calculatedRerollPrice);
+        bool       rerolled
+          = componentButtonReroll(upgradesRerollButtonGroup, calculatedRerollPrice);
         if (!draw && IsKeyPressed(SDL_SCANCODE_R))
           rerolled = true;
         if (rerolled) {
@@ -6746,9 +6796,19 @@ void DoUI(bool draw) {
       // Stats.
       componentStats();
     }
+
+    ControlsGroupConnect(upgradesGroup, Direction_DOWN, upgradesRerollButtonGroup);
   }
   // Shop.
   else if (g.run.state.screen == ScreenType_SHOP) {  ///
+    onControlsContextShow(ControlsContext_SHOP);
+    auto toBuyGroup1   = MakeControlsGroup();
+    auto toBuyGroup2   = MakeControlsGroup();
+    auto rerollGroup   = MakeControlsGroup();
+    auto nextWaveGroup = MakeControlsGroup();
+    auto weaponsGroup  = MakeControlsGroup();
+    auto itemsGroup    = MakeControlsGroup();
+
     // Columns.
     CLAY({
       .layout{
@@ -6818,7 +6878,7 @@ void DoUI(bool draw) {
             = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
           const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
 
-          bool rerolled = componentButtonReroll(calculatedRerollPrice);
+          bool rerolled = componentButtonReroll(rerollGroup, calculatedRerollPrice);
           if (!draw && IsKeyPressed(SDL_SCANCODE_R))
             rerolled = true;
           if (rerolled) {
@@ -6855,6 +6915,8 @@ void DoUI(bool draw) {
               .affectedByGame  = true,
               .overrideTier    = v.tier,
               .setFixedHeight  = true,
+              .shopMarkDefault = (toPickIndex == 1),
+              .shopGroup       = (toPickIndex <= 1 ? toBuyGroup1 : toBuyGroup2),
               .shopBuyingIndex = toPickIndex,
             });
 
@@ -6874,7 +6936,7 @@ void DoUI(bool draw) {
             CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
 
             // Items.
-            componentItemsGrid({.itemsX = 10});
+            componentItemsGrid({.group = itemsGroup, .itemsX = 10});
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -6916,6 +6978,8 @@ void DoUI(bool draw) {
               CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
               )
               FOR_RANGE (int, y, 2) {
+                ControlsGroupNewRow(weaponsGroup);
+
                 CLAY({.layout{.childGap = GAP_SMALL}})
                 FOR_RANGE (int, x, 3) {
                   const int weaponIndex = y * WEAPONS_X + x;
@@ -6928,6 +6992,7 @@ void DoUI(bool draw) {
                     // Weapon.
                     const bool selectedWeapon = componentUniversalSlot({
                       .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
+                      .group  = weaponsGroup,
                       .weapon = weapon.type,
                       .tier   = weapon.tier,
                     });
@@ -6961,7 +7026,11 @@ void DoUI(bool draw) {
 
           // Advance to the next wave button.
           const bool nextWavePressed = componentButton(
-            {.id = CLAY_ID("button_shop_next_wave"), .growX = true},
+            {
+              .id    = CLAY_ID("button_shop_next_wave"),
+              .group = nextWaveGroup,
+              .growX = true,
+            },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_GO, textColor);
               BF_CLAY_TEXT(" (", textColor);
@@ -6979,6 +7048,20 @@ void DoUI(bool draw) {
         }
       }
     }
+
+    ControlsGroupConnect(toBuyGroup1, Direction_RIGHT, toBuyGroup2);
+    ControlsGroupConnect(toBuyGroup2, Direction_UP, rerollGroup);
+    ControlsGroupConnect(toBuyGroup1, Direction_UP, rerollGroup);
+    ControlsGroupConnect(itemsGroup, Direction_UP, toBuyGroup1);
+    ControlsGroupConnect(weaponsGroup, Direction_UP, toBuyGroup2);
+    ControlsGroupConnect(itemsGroup, Direction_UP, toBuyGroup2);
+    ControlsGroupConnect(weaponsGroup, Direction_UP, toBuyGroup1);
+    ControlsGroupConnect(weaponsGroup, Direction_RIGHT, nextWaveGroup);
+    ControlsGroupConnect(itemsGroup, Direction_RIGHT, weaponsGroup);
+    ControlsGroupConnect(itemsGroup, Direction_RIGHT, nextWaveGroup);
+    ControlsGroupConnect(toBuyGroup2, Direction_DOWN, nextWaveGroup);
+    ControlsGroupConnect(toBuyGroup1, Direction_DOWN, nextWaveGroup);
+    ControlsGroupConnect(rerollGroup, Direction_DOWN, nextWaveGroup);
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
@@ -7132,19 +7215,9 @@ void DoUI(bool draw) {
 
       // Achievements.
       if (g.meta.pausedShowingAchievements) {  ///
+        onControlsContextShow(ControlsContext_ACHIEVEMENTS);
         auto achievementsBackButtonGroup = MakeControlsGroup();
         auto achievementsGridGroup       = MakeControlsGroup();
-
-        ControlsGroupConnect(
-          achievementsBackButtonGroup, Direction_UP, achievementsGridGroup
-        );
-        ControlsGroupConnect(
-          achievementsGridGroup, Direction_UP, achievementsBackButtonGroup
-        );
-
-        shownAchievementsThisFrame = true;
-        if (!shownAchievementsPrevFrame)
-          g.ui.selectedElement = {};
 
         CLAY({.layout{
           .childGap = GAP_BIG,
@@ -7319,10 +7392,7 @@ void DoUI(bool draw) {
 
           const auto backButtonId = CLAY_ID("button_pause_achievements_back");
           ControlsGroupAdd(achievementsBackButtonGroup, backButtonId);
-          if (uiElementSwitchDirection && !g.ui.selectedElement.id)
-            g.ui.selectedElement = backButtonId;
-          if (!shownAchievementsPrevFrame && g.meta.playerUsesKeyboard)
-            g.ui.selectedElement = backButtonId;
+          markControlAsDefault(ControlsContext_ACHIEVEMENTS, backButtonId);
 
           // Back button.
           const bool back = componentButton(
@@ -7338,17 +7408,19 @@ void DoUI(bool draw) {
             g.meta.pausedAchievementsHoveredAchievementStep = 0;
           }
         }
+
+        ControlsGroupConnect(
+          achievementsBackButtonGroup, Direction_UP, achievementsGridGroup
+        );
+        ControlsGroupConnect(
+          achievementsGridGroup, Direction_UP, achievementsBackButtonGroup
+        );
       }
       // Pause.
       else {  ///
-        shownPauseThisFrame = true;
-        if (!shownPausePrevFrame)
-          g.ui.selectedElement = {};
-
+        onControlsContextShow(ControlsContext_PAUSE);
         auto pauseButtonsGroup = MakeControlsGroup();
         auto pauseWeaponsGroup = MakeControlsGroup();
-
-        ControlsGroupConnect(pauseButtonsGroup, Direction_RIGHT, pauseWeaponsGroup);
 
         // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
@@ -7373,9 +7445,8 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               const auto resumeButtonId = CLAY_ID("button_pause_resume");
+              markControlAsDefault(ControlsContext_PAUSE, resumeButtonId);
               if (!g.ui.selectedElement.id)
-                g.ui.selectedElement = resumeButtonId;
-              if (!shownPausePrevFrame && g.meta.playerUsesKeyboard)
                 g.ui.selectedElement = resumeButtonId;
 
               const bool resumed = componentButton(
@@ -7511,6 +7582,8 @@ void DoUI(bool draw) {
           // 3. Stats.
           componentStats();
         }
+
+        ControlsGroupConnect(pauseButtonsGroup, Direction_RIGHT, pauseWeaponsGroup);
       }
     }
   }
