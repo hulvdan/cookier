@@ -33,17 +33,31 @@ x pause button works good
 x touch: fix double press
 x preserving hovered element state
 
-* keyboard UI nav: pause
+* UI nav: pause: switch from buttons to weapons
+* UI nav: pause: switch from weapons to items
+* UI nav: pause: switch from items to weapons
+* UI nav: pause: switch from weapon to buttons
+* UI nav: pause: switch from items to buttons
+* UI nav: pause: switch from weapons to stats
+* UI nav: pause: switch from items to stats
+* UI nav: pause: switch from stats to weapons
+* UI nav: pause: switch from stats to items
+* UI nav: pause: switch from buttons to stats (in case no weapons and no items)
+* UI nav: pause: switch from stats to buttons (in case no weapons and no items)
+* UI nav: pause:
+* UI nav: pause:
+* UI nav: picked up item
+* UI nav: upgrades
+* UI nav: shop
+* UI nav: end
+* UI nav: achievements
+* UI nav: new run
+* UI nav:
+* UI nav:
+* UI nav:
+*
 * enemy that tanks 1-3 damage
-* keyboard UI nav: picked up item
-* keyboard UI nav: upgrades
-* keyboard UI nav: shop
-* keyboard UI nav: end
-* keyboard UI nav: achievements
-* keyboard UI nav: new run
-* keyboard UI nav:
-* keyboard UI nav:
-* keyboard UI nav:
+* engine: make `Arena` growing (by default it asserts)
 *
 * show controls above strips
 * bigger buttons (bigger button font)
