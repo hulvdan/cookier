@@ -31,9 +31,21 @@ x test on phone: can play
 - test on phone: untouching returns control to previous finger
 x pause button works good
 x touch: fix double press
+x preserving hovered element state
 
+* keyboard UI nav: pause
+* enemy that tanks 1-3 damage
+* keyboard UI nav: picked up item
+* keyboard UI nav: upgrades
+* keyboard UI nav: shop
+* keyboard UI nav: end
+* keyboard UI nav: achievements
+* keyboard UI nav: new run
+* keyboard UI nav:
+* keyboard UI nav:
+* keyboard UI nav:
+*
 * show controls above strips
-* can play with only a mouse
 * bigger buttons (bigger button font)
 * touch: pressing item again removes hover from it
 * touch:
@@ -52,12 +64,6 @@ x touch: fix double press
 * weapon groups (primitive, medical, etc.) + set bonuses
 * can take damage if dodged
 * fix: web release: why pressing P doesn't show pause UI?
-* keyboard UI nav: picked up item
-* keyboard UI nav: upgrades
-* keyboard UI nav: shop
-* keyboard UI nav: end
-* keyboard UI nav: pause
-* keyboard UI nav: new run
 * keyboard UI nav:
 * keyboard UI nav:
 * keyboard UI nav:
