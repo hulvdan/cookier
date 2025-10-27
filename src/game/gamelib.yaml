@@ -1061,17 +1061,17 @@ pickupables: # {  ###
 numbers: # {  ###
   - type: INVALID
   - type: DAMAGE
-    color: 0xefcb84ff
+    color: 0xedefe2ff
   - type: DAMAGE_CRIT
-    color: 0xdc9824ff
+    color: 0xefb248ff
   - type: DAMAGE_MOB
-    color: 0xff4444ff
+    color: 0xe63d45ff
   - type: DODGE
     color: 0x7a7576ff
   - type: PICKUPABLE
     color: 0x66a650ff
   - type: LEVEL_UP
-    color: 0x66a650ff
+    color: 0x75ca58ff
 # }
 
 stats: # {  ###
