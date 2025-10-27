@@ -4515,7 +4515,6 @@ void DoUI(bool draw) {
           BF_CLAY_IMAGE(
             {
               .texId = glib->ui_icon_refresh_texture_id(),
-              .scale = Vector2One() * 0.4f,
               .color = (canReroll ? WHITE : palGray),
             },
             [&]() BF_FORCE_INLINE_LAMBDA {
@@ -4560,10 +4559,7 @@ void DoUI(bool draw) {
       {.id = id, .group = group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
-          {
-            .texId = glib->ui_icon_sell_texture_id(),
-            .scale = Vector2One() * 0.2f,
-          },
+          {.texId = glib->ui_icon_sell_texture_id()},
           [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
@@ -5654,10 +5650,7 @@ void DoUI(bool draw) {
               combined = componentButton(
                 {.id = CLAY_ID("button_weapon_combine"), .group = groupWeaponDetails},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_IMAGE({
-                    .texId = glib->ui_icon_combine2_texture_id(),
-                    .scale = Vector2One() * 0.2f,
-                  });
+                  BF_CLAY_IMAGE({.texId = glib->ui_icon_combine_texture_id()});
                 }
               );
             }
@@ -5680,7 +5673,6 @@ void DoUI(bool draw) {
 
                 BF_CLAY_IMAGE({
                   .texId = glib->ui_icon_cancel_texture_id(),
-                  .scale = Vector2One() * 0.2f,
                   .color = (active ? WHITE : palGray),
                 });
               }
@@ -6103,10 +6095,8 @@ void DoUI(bool draw) {
   }
 
   // Gameplay.
-  if ((g.run.state.screen == ScreenType_GAMEPLAY)               //
-      || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION)  //
-      || (g.run.state.screen == ScreenType_PICKED_UP_ITEM)      //
-      || (g.run.state.screen == ScreenType_UPGRADES))
+  if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
+      || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
   {
     CLAY(  ///
       {
@@ -6750,24 +6740,27 @@ void DoUI(bool draw) {
     auto groupUpgrades = MakeControlsGroup();
     auto groupReroll   = MakeControlsGroup();
 
-    // Vertical columns with upgrades and stats;
     CLAY({
       .layout{
         BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
         .childGap = GAP_BIG,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
     }) {
+      // Level up label.
+      componentScreenName(Loc_UI_LEVEL_UP);
+
       // Upgrades.
       CLAY({.layout{
         .childGap = GAP_BIG,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
-        // Level up label.
-        componentScreenName(Loc_UI_LEVEL_UP);
-
         // Upgrades.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
           const auto fb_stats = glib->stats();
@@ -6934,9 +6927,6 @@ void DoUI(bool draw) {
           }
         }
       }
-
-      // Stats.
-      componentStats();
     }
 
     ControlsGroupConnect(groupUpgrades, Direction_DOWN, groupReroll);
@@ -7213,19 +7203,6 @@ void DoUI(bool draw) {
           }
         }
       }
-
-      // // Right column that contains stats and next wave button.
-      // CLAY({.layout{BF_CLAY_SIZING_GROW_Y}}) {
-      //   CLAY({.layout{
-      //     BF_CLAY_SIZING_GROW_Y,
-      //     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-      //   }}) {
-      //     // Stats.
-      //     componentStats();
-      //
-      //     BF_CLAY_SPACER_VERTICAL;
-      //   }
-      // }
     }
 
     ControlsGroupConnect(groupsToBuy[0], Direction_RIGHT, groupsToBuy[1]);

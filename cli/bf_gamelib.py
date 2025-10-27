@@ -676,7 +676,7 @@ def convert_gamelib_json_to_binary(
 def downscale_images(downscale_factors: list[int]) -> None:
     assert downscale_factors, downscale_factors
 
-    images_to_downscale = list((ART_DIR / "textures").rglob("*.png"))
+    images_to_downscale = list((ART_DIR / "textures").glob("*.png"))
 
     for factor in downscale_factors:
         assert factor >= 1, factor
@@ -834,7 +834,7 @@ def check_no_excessive_images_in_temp_art_dir(downscale_factors: list[int]) -> N
         ]
         art_filepaths = [
             filepath.relative_to(ART_DIR / "textures")
-            for filepath in (ART_DIR / "textures").rglob("*.png")
+            for filepath in (ART_DIR / "textures").glob("*.png")
         ]
 
         for temp_filepath in temp_filepaths:
@@ -1214,7 +1214,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                 "debug_name": f"d1/{filepath.stem}",
                 "size": Image.open(TEMP_ART_DIR / "d1" / filepath).size,
             }
-            for filepath in Path(TEMP_ART_DIR / "d1").rglob("*.png")
+            for filepath in Path(TEMP_ART_DIR / "d1").glob("*.png")
         ]
         textures.sort(key=partial(texture_cmp_key, factor=1))
         original_texture_sizes = [x["size"] for x in textures]

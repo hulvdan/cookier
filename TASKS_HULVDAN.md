@@ -43,8 +43,9 @@ x new run 3 screens
 x ui keyboard: picked up item
 x ui keyboard: new run
 x shop rework
+x clean level up screen
 
-* clean level up screen
+* fix: shop: weapons details to the left
 * show stats in shop
 * show stats in level up
 * fix end
