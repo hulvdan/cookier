@@ -37,20 +37,26 @@ x ui keyboard: pause: stats
 x ui keyboard: achievements
 x ui keyboard: upgrades
 x ui keyboard: shop
+x ref clicked -> activated
+x ref hovered -> hovered + (g.ui.selectedElement.id == XXX.id)
+x new run 3 screens
+x ui keyboard: picked up item
 
-* ui keyboard: picked up item
 * ui keyboard: end
 * ui keyboard: new run
+* ui keyboard: shop: SPACE / RETURN should work for weapons
 * ui keyboard: shop: don't add hidden weapons to group
 * ui keyboard: shop: when context menu is active, don't process shop context at all
 * ui keyboard: shop: change selected button after buying/recycling/combining
-* ui keyboard:
-* ui keyboard:
+* ui keyboard: after pressing WASD make default button focused
 * ui keyboard:
 * ui keyboard: shop: stats
 * ui keyboard: upgrades: stats
 * ui keyboard: picked up item: stats
 * ui keyboard: end: stats
+*
+*
+* уверены ли вы что хотите выйти
 *
 * enemy that tanks 1-3 damage
 * engine: make `Arena` growing (by default it should assert)
