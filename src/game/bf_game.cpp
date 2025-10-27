@@ -5562,7 +5562,7 @@ void DoUI(bool draw) {
                   FontBegin(&g.meta.fontPricesOutlined);
                   BF_CLAY_TEXT(
                     TextFormat("%d ", price),
-                    (price <= PLAYER_COINS ? palTextWhite : palTextRed)
+                    ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)
                   );
                   FontEnd();
                   BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
@@ -7168,7 +7168,9 @@ void DoUI(bool draw) {
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_IMAGE(
-                  {.texId = glib->ui_icon_go2_texture_id(), .scale = Vector2One() * 0.75f
+                  {
+                    .texId = glib->ui_icon_go2_texture_id(),
+                    .scale = Vector2One() * 376.0f / 450.0f,
                   },
                   [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({
