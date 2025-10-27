@@ -422,13 +422,18 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
                         translation.strip() or "<<NOT_TRANSLATED>>"
                     )
 
+    locale_caps_offset = -1
+
     l = len(loc_ids)
     for i in range(l):
         loc = loc_ids[i]
         if loc.startswith("UI_"):
+            if locale_caps_offset == -1:
+                locale_caps_offset = len(loc_ids) - i
             loc_ids.append("{}__CAPS".format(loc))
 
-    genenum(genline, "Loc", ["INVALID", *loc_ids])
+    genline("constexpr int LOCALE_CAPS_OFFSET = {};\n".format(locale_caps_offset))
+    genenum(genline, "Loc", ["INVALID", *loc_ids], add_count=True)
 
     for strings in loc_by_languages.values():
         l = len(strings)

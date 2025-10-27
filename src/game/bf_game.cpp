@@ -890,7 +890,7 @@ struct GameData {
     Font fontStats              = {};
     Font fontPrices             = {};
     Font fontItemCountsOutlined = {};
-    Font fontWaveCompletion     = {};
+    Font fontUIGiganticOutlined = {};
 
     LoadFontsResult loadedFonts = {};
 
@@ -3091,7 +3091,7 @@ void ReloadFontsIfNeeded() {  ///
       .outlineWidth    = 3,
       .outlineAdvance  = 1,
     },
-    // fontWaveCompletion.
+    // fontUIGiganticOutlined.
     {
       .filepath        = fontpath,
       .size            = 40,
@@ -4363,7 +4363,7 @@ void DoUI(bool draw) {
   const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
 
   constexpr int CARD_WIDTH          = 219;
-  constexpr int CARD_HEIGHT         = 320;
+  constexpr int CARD_HEIGHT         = 360;
   constexpr int UPGRADE_FRAME_WIDTH = 190;
   constexpr int ACHIEVEMENT_WIDTH   = CARD_WIDTH;
 
@@ -4376,6 +4376,8 @@ void DoUI(bool draw) {
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, Color color = palTextWhite)) {  ///
+    ASSERT((int)locale >= 0);
+    ASSERT((int)locale < Loc_COUNT);
     auto        string = localization_strings->Get(locale);
     Clay_String text{
       .isStaticallyAllocated = true,
@@ -4385,7 +4387,7 @@ void DoUI(bool draw) {
     BF_CLAY_TEXT(text, color);
   };
 
-  LAMBDA (void, componentOverlay, ()) {  ///
+  LAMBDA (void, componentOverlay, (auto innerLambda)) {  ///
     CLAY({
       .layout{
         .sizing{
@@ -4402,7 +4404,9 @@ void DoUI(bool draw) {
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
       BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
-    }) {}
+    }) {
+      innerLambda();
+    }
   };
 
   LAMBDA (bool, clicked, ()) {  ///
@@ -4500,22 +4504,85 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (bool, componentButtonReroll, (ControlsGroupID group, int price)) {  ///
+    ASSERT(price >= 0);
     return componentButton(
       {.id = CLAY_ID("button_shop_reroll"), .group = group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          BF_CLAY_TEXT_LOCALIZED(Loc_UI_REROLL, textColor);
+          BF_CLAY_IMAGE(
+            {.texId = glib->ui_icon_refresh_texture_id(), .scale = Vector2One() * 0.4f},
+            [&]() BF_FORCE_INLINE_LAMBDA {
+              if (price <= 0)
+                return;
 
-          ASSERT(price >= 0);
+              CLAY({
+                .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+                .floating{
+                  .zIndex = zIndex,
+                  .attachPoints{
+                    .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                    .parent  = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                  },
+                  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                  .attachTo           = CLAY_ATTACH_TO_PARENT,
+                },
+              }) {
+                FLOATING_BEAUTIFY;
 
-          if (price > 0) {
-            BF_CLAY_TEXT(" - ", textColor);
-            BF_CLAY_TEXT(
-              TextFormat("%d ", price), ((price <= PLAYER_COINS) ? textColor : palTextRed)
-            );
-            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
-          }
+                FontBegin(&g.meta.fontUIOutlined);
+                BF_CLAY_TEXT(
+                  TextFormat("%d", price),
+                  ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)
+                );
+                BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                FontEnd();
+              }
+            }
+          );
         }
+      }
+    );
+  };
+
+  LAMBDA (
+    bool,
+    componentButtonRecycle,
+    (Clay_ElementId id, ControlsGroupID group, int recyclePrice)
+  )
+  {  ///
+    return componentButton(
+      {.id = id, .group = group},
+      [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_IMAGE(
+          {
+            .texId = glib->ui_icon_sell_texture_id(),
+            .scale = Vector2One() * 0.2f,
+          },
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({
+              .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+              .floating{
+                .zIndex = zIndex,
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                },
+                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                .attachTo           = CLAY_ATTACH_TO_PARENT,
+              },
+            }) {
+              FLOATING_BEAUTIFY;
+
+              FontBegin(&g.meta.fontUIOutlined);
+              BF_CLAY_TEXT(TextFormat("%d", recyclePrice), palTextWhite);
+              BF_CLAY_IMAGE({
+                .texId = glib->ui_coin_texture_id(),
+                .scale = Vector2One() * 0.75f,
+              });
+              FontEnd();
+            }
+          }
+        );
       }
     );
   };
@@ -5070,6 +5137,8 @@ void DoUI(bool draw) {
     bool            shopSelling     = false;
   };
 
+  auto groupWeaponDetails = MakeControlsGroup();
+
   LAMBDA (void, componentUniversalCard, (ComponentUniversalCardData data)) {
     // Setup. {  ///
     const int atLeastOneIsSpecified
@@ -5554,8 +5623,9 @@ void DoUI(bool draw) {
 
         if (data.shopSelling) {  ///
           CLAY({.layout{
-            .childGap        = GAP_SMALL,
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            BF_CLAY_SIZING_GROW_X,
+            .childGap = GAP_SMALL,
+            BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER,
           }}) {
             int   canCombineWithIndex = -1;
             auto& weapon              = g.run.state.weapons[data.weaponIndexOrMinus1];
@@ -5576,9 +5646,12 @@ void DoUI(bool draw) {
             bool combined = false;
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
-                {.id = CLAY_ID("button_weapon_combine")},
+                {.id = CLAY_ID("button_weapon_combine"), .group = groupWeaponDetails},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_COMBINE, textColor);
+                  BF_CLAY_IMAGE({
+                    .texId = glib->ui_icon_combine2_texture_id(),
+                    .scale = Vector2One() * 0.2f,
+                  });
                 }
               );
             }
@@ -5587,19 +5660,23 @@ void DoUI(bool draw) {
               = ToRecyclePrice(GetWeaponPrice(weapon.type, weapon.tier));
 
             // Recycle button.
-            const bool recycled = componentButton(
-              {.id = CLAY_ID("button_weapon_recycle")},
-              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_RECYCLE, textColor);
-                BF_CLAY_TEXT(TextFormat(" (+%d)", recyclePrice), textColor);
-              }
+            const bool recycled = componentButtonRecycle(
+              CLAY_ID("button_weapon_recycle"), groupWeaponDetails, recyclePrice
             );
 
             // Cancel button.
             const bool cancelled = componentButton(
-              {.id = CLAY_ID("button_weapon_cancel")},
+              {.id = CLAY_ID("button_weapon_cancel"), .group = groupWeaponDetails},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL, textColor);
+                bool active = true;
+                if (data.weaponIndexOrMinus1 >= 0)
+                  active = g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1;
+
+                BF_CLAY_IMAGE({
+                  .texId = glib->ui_icon_cancel_texture_id(),
+                  .scale = Vector2One() * 0.2f,
+                  .color = (active ? WHITE : palGray),
+                });
               }
             );
 
@@ -5870,8 +5947,12 @@ void DoUI(bool draw) {
       }) {
         FLOATING_BEAUTIFY;
 
-        if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1))
-          componentOverlay();
+        if (weAreInShop && (g.run.shopSelectedWeaponIndex == weaponIndexOrMinus1)) {
+          componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
+            if (clicked())
+              g.run.shopSelectedWeaponIndex = -1;
+          });
+        }
 
         componentUniversalCard({
           .weapon              = type,
@@ -5978,6 +6059,12 @@ void DoUI(bool draw) {
         }
       }
     }
+  };
+
+  LAMBDA (void, componentScreenName, (Loc locale)) {  ///
+    FontBegin(&g.meta.fontUIGiganticOutlined);
+    BF_CLAY_TEXT_LOCALIZED((Loc)((int)locale + LOCALE_CAPS_OFFSET));
+    FontEnd();
   };
 
   // Game's version.
@@ -6122,7 +6209,11 @@ void DoUI(bool draw) {
               color = palGray;
 
             BF_CLAY_IMAGE(
-              {.texId = glib->ui_icon_settings_texture_id(), .color = color},
+              {
+                .texId = glib->ui_icon_pause2_texture_id(),
+                .scale = Vector2One() * 0.4f,
+                .color = color,
+              },
               [&]() BF_FORCE_INLINE_LAMBDA {
                 if (clicked() && canPause) {
                   g.meta.scheduledTogglePause = true;
@@ -6295,9 +6386,7 @@ void DoUI(bool draw) {
       auto& p = g.player;
 
       // "NEW RUN" label.
-      FontBegin(&g.meta.fontWaveCompletion);
-      BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS);
-      FontEnd();
+      componentScreenName(Loc_UI_NEW_RUN);
 
       CLAY({.layout{
         .childGap        = GAP_BIG,
@@ -6586,7 +6675,7 @@ void DoUI(bool draw) {
           const auto fb   = fb_items->Get(type);
 
           // "Item Found" label.
-          BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM_FOUND);
+          componentScreenName(Loc_UI_ITEM_FOUND);
 
           // Item.
           componentUniversalCard({
@@ -6596,25 +6685,27 @@ void DoUI(bool draw) {
           });
 
           // Take and Recycle buttons.
-          CLAY({.layout{.childGap = GAP_SMALL}}) {
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_X,
+            .childGap = GAP_SMALL,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
             auto       tookId = CLAY_ID("button_picked_up_item_take");
             const bool took   = componentButton(
               {.id = tookId, .group = group},
-              [&](bool hovered, Color textColor)
-                BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_TAKE, textColor); }
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({
+                    .texId = glib->ui_icon_take_texture_id(),
+                    .scale = Vector2One() * 0.2f,
+                });
+              }
             );
-            markControlAsDefault(ControlsContext_UPGRADES, tookId);
+            markControlAsDefault(ControlsContext_PICKED_UP_ITEM, tookId);
 
             const int recyclePrice = ToRecyclePrice(fb->price());
 
-            const bool recycled = componentButton(
-              {.id = CLAY_ID("button_picked_up_item_recycle"), .group = group},
-              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_RECYCLE, textColor);
-                  BF_CLAY_TEXT(TextFormat(" (+%d)", recyclePrice), textColor);
-                }
-              }
+            const bool recycled = componentButtonRecycle(
+              CLAY_ID("button_picked_up_item_recycle"), group, recyclePrice
             );
 
             if (took)
@@ -6650,8 +6741,8 @@ void DoUI(bool draw) {
   // Upgrades.
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
     onControlsContextShow(ControlsContext_UPGRADES);
-    auto upgradesGroup             = MakeControlsGroup();
-    auto upgradesRerollButtonGroup = MakeControlsGroup();
+    auto groupUpgrades = MakeControlsGroup();
+    auto groupReroll   = MakeControlsGroup();
 
     // Vertical columns with upgrades and stats;
     CLAY({
@@ -6669,7 +6760,7 @@ void DoUI(bool draw) {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
         // Level up label.
-        BF_CLAY_TEXT_LOCALIZED(Loc_UI_LEVEL_UP);
+        componentScreenName(Loc_UI_LEVEL_UP);
 
         // Upgrades.
         CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -6776,9 +6867,12 @@ void DoUI(bool draw) {
               ) {
                 auto chooseButtonId = CLAY_IDI("button_upgrades_choose", i);
                 bool chosen         = componentButton(
-                  {.id = chooseButtonId, .group = upgradesGroup},
+                  {.id = chooseButtonId, .group = groupUpgrades},
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_CHOOSE, textColor);
+                    BF_CLAY_IMAGE({
+                              .texId = glib->ui_icon_upgrade_texture_id(),
+                              .scale = Vector2One() * 0.2f,
+                    });
                   }
                 );
 
@@ -6816,8 +6910,7 @@ void DoUI(bool draw) {
         const auto calculatedRerollPrice
           = ApplyStatRerollPrice(g.run.state.upgrades.rerolls.GetPrice());
         const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-        bool       rerolled
-          = componentButtonReroll(upgradesRerollButtonGroup, calculatedRerollPrice);
+        bool       rerolled  = componentButtonReroll(groupReroll, calculatedRerollPrice);
         if (!draw && IsKeyPressed(SDL_SCANCODE_R))
           rerolled = true;
         if (rerolled) {
@@ -6840,17 +6933,17 @@ void DoUI(bool draw) {
       componentStats();
     }
 
-    ControlsGroupConnect(upgradesGroup, Direction_DOWN, upgradesRerollButtonGroup);
+    ControlsGroupConnect(groupUpgrades, Direction_DOWN, groupReroll);
   }
   // Shop.
   else if (g.run.state.screen == ScreenType_SHOP) {  ///
     onControlsContextShow(ControlsContext_SHOP);
-    auto toBuyGroup1   = MakeControlsGroup();
-    auto toBuyGroup2   = MakeControlsGroup();
-    auto rerollGroup   = MakeControlsGroup();
-    auto nextWaveGroup = MakeControlsGroup();
-    auto weaponsGroup  = MakeControlsGroup();
-    auto itemsGroup    = MakeControlsGroup();
+    auto groupToBuy1     = MakeControlsGroup();
+    auto groupToBuy2     = MakeControlsGroup();
+    auto groupReroll     = MakeControlsGroup();
+    auto groupGoNextWave = MakeControlsGroup();
+    auto groupWeapons    = MakeControlsGroup();
+    auto groupItems      = MakeControlsGroup();
 
     // Columns.
     CLAY({
@@ -6878,10 +6971,7 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           // Wave.
-          BF_CLAY_TEXT_LOCALIZED(Loc_UI_SHOP);
-          BF_CLAY_TEXT(" (");
-          BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE);
-          BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 1));
+          componentScreenName(Loc_UI_SHOP);
 
           BF_CLAY_SPACER_HORIZONTAL;
 
@@ -6906,7 +6996,11 @@ void DoUI(bool draw) {
               },
             }) {
               FLOATING_BEAUTIFY;
+
+              FontBegin(&g.meta.fontUIBig);
               BF_CLAY_TEXT(TextFormat("%d ", PLAYER_COINS));
+              FontEnd();
+
               BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
 
               if (ge.meta.debugEnabled && Clay_Hovered() && wheel)
@@ -6921,7 +7015,7 @@ void DoUI(bool draw) {
             = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
           const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
 
-          bool rerolled = componentButtonReroll(rerollGroup, calculatedRerollPrice);
+          bool rerolled = componentButtonReroll(groupReroll, calculatedRerollPrice);
           if (!draw && IsKeyPressed(SDL_SCANCODE_R))
             rerolled = true;
           if (rerolled) {
@@ -6959,7 +7053,7 @@ void DoUI(bool draw) {
               .overrideTier    = v.tier,
               .setFixedHeight  = true,
               .shopMarkDefault = (toPickIndex == 1),
-              .shopGroup       = (toPickIndex <= 1 ? toBuyGroup1 : toBuyGroup2),
+              .shopGroup       = (toPickIndex <= 1 ? groupToBuy1 : groupToBuy2),
               .shopBuyingIndex = toPickIndex,
             });
 
@@ -6974,12 +7068,12 @@ void DoUI(bool draw) {
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
           CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS__CAPS);
 
             CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
 
             // Items.
-            componentItemsGrid({.group = itemsGroup, .itemsX = 10});
+            componentItemsGrid({.group = groupItems, .itemsX = 8});
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -6994,13 +7088,14 @@ void DoUI(bool draw) {
               }
 
               BF_CLAY_TEXT_LOCALIZED(
-                Loc_UI_WEAPONS, (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
-              );
-
-              BF_CLAY_TEXT(
-                TextFormat(" (%d/%d)", weaponsCount, g.run.state.weapons.count),
+                Loc_UI_WEAPONS__CAPS,
                 (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
               );
+
+              // BF_CLAY_TEXT(
+              //   TextFormat(" (%d/%d)", weaponsCount, g.run.state.weapons.count),
+              //   (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
+              // );
             }
 
             CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
@@ -7021,7 +7116,7 @@ void DoUI(bool draw) {
               CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
               )
               FOR_RANGE (int, y, 2) {
-                ControlsGroupNewRow(weaponsGroup);
+                ControlsGroupNewRow(groupWeapons);
 
                 CLAY({.layout{.childGap = GAP_SMALL}})
                 FOR_RANGE (int, x, 3) {
@@ -7035,7 +7130,7 @@ void DoUI(bool draw) {
                     // Weapon.
                     const bool selectedWeapon = componentUniversalSlot({
                       .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
-                      .group  = weaponsGroup,
+                      .group  = groupWeapons,
                       .weapon = weapon.type,
                       .tier   = weapon.tier,
                     });
@@ -7053,6 +7148,60 @@ void DoUI(bool draw) {
               }
             }
           }
+
+          BF_CLAY_SPACER_HORIZONTAL;
+
+          // Advance to the next wave button.
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_Y,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_BOTTOM,
+          }}) {
+            const bool nextWavePressed = componentButton(
+              {
+                .id    = CLAY_ID("button_shop_next_wave"),
+                .group = groupGoNextWave,
+                .growX = true,
+              },
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE(
+                  {.texId = glib->ui_icon_go2_texture_id(), .scale = Vector2One() * 0.75f
+                  },
+                  [&]() BF_FORCE_INLINE_LAMBDA {
+                    CLAY({
+                      .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+                      .floating{
+                        .zIndex = zIndex,
+                        .attachPoints{
+                          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                        },
+                        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                        .attachTo           = CLAY_ATTACH_TO_PARENT,
+                      },
+                    }) {
+                      FLOATING_BEAUTIFY;
+                      FontBegin(&g.meta.fontUIGiganticOutlined);
+
+                      const int  nextWaveNumber = g.run.state.waveIndex + 2;
+                      const bool nextIsBoss     = (nextWaveNumber == TOTAL_WAVES);
+                      const auto color = (nextIsBoss ? palTextRed : palTextPaleYellow);
+
+                      BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), color);
+                      BF_CLAY_TEXT(TextFormat("/%d", TOTAL_WAVES), color);
+                      FontEnd();
+                    }
+                  }
+                );
+              }
+            );
+
+            if (nextWavePressed) {
+              g.run.scheduledNextWave = true;
+              PlaySound(Sound_UI_CLICK);
+              for (auto& v : g.run.state.shop.toPick)
+                v = {};
+            }
+          }
         }
       }
 
@@ -7066,45 +7215,23 @@ void DoUI(bool draw) {
           componentStats();
 
           BF_CLAY_SPACER_VERTICAL;
-
-          // Advance to the next wave button.
-          const bool nextWavePressed = componentButton(
-            {
-              .id    = CLAY_ID("button_shop_next_wave"),
-              .group = nextWaveGroup,
-              .growX = true,
-            },
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_GO, textColor);
-              BF_CLAY_TEXT(" (", textColor);
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, textColor);
-              BF_CLAY_TEXT(TextFormat(" %d)", g.run.state.waveIndex + 2), textColor);
-            }
-          );
-
-          if (nextWavePressed) {
-            g.run.scheduledNextWave = true;
-            PlaySound(Sound_UI_CLICK);
-            for (auto& v : g.run.state.shop.toPick)
-              v = {};
-          }
         }
       }
     }
 
-    ControlsGroupConnect(toBuyGroup1, Direction_RIGHT, toBuyGroup2);
-    ControlsGroupConnect(toBuyGroup2, Direction_UP, rerollGroup);
-    ControlsGroupConnect(toBuyGroup1, Direction_UP, rerollGroup);
-    ControlsGroupConnect(itemsGroup, Direction_UP, toBuyGroup1);
-    ControlsGroupConnect(weaponsGroup, Direction_UP, toBuyGroup2);
-    ControlsGroupConnect(itemsGroup, Direction_UP, toBuyGroup2);
-    ControlsGroupConnect(weaponsGroup, Direction_UP, toBuyGroup1);
-    ControlsGroupConnect(weaponsGroup, Direction_RIGHT, nextWaveGroup);
-    ControlsGroupConnect(itemsGroup, Direction_RIGHT, weaponsGroup);
-    ControlsGroupConnect(itemsGroup, Direction_RIGHT, nextWaveGroup);
-    ControlsGroupConnect(toBuyGroup2, Direction_DOWN, nextWaveGroup);
-    ControlsGroupConnect(toBuyGroup1, Direction_DOWN, nextWaveGroup);
-    ControlsGroupConnect(rerollGroup, Direction_DOWN, nextWaveGroup);
+    ControlsGroupConnect(groupToBuy1, Direction_RIGHT, groupToBuy2);
+    ControlsGroupConnect(groupToBuy2, Direction_UP, groupReroll);
+    ControlsGroupConnect(groupToBuy1, Direction_UP, groupReroll);
+    ControlsGroupConnect(groupItems, Direction_UP, groupToBuy1);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupToBuy2);
+    ControlsGroupConnect(groupItems, Direction_UP, groupToBuy2);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupToBuy1);
+    ControlsGroupConnect(groupWeapons, Direction_RIGHT, groupGoNextWave);
+    ControlsGroupConnect(groupItems, Direction_RIGHT, groupWeapons);
+    ControlsGroupConnect(groupItems, Direction_RIGHT, groupGoNextWave);
+    ControlsGroupConnect(groupToBuy2, Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupToBuy1, Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupReroll, Direction_DOWN, groupGoNextWave);
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
@@ -7128,7 +7255,7 @@ void DoUI(bool draw) {
         // Run Won / Lost.
         {
           const int locale = (g.run.state.won ? Loc_UI_WON : Loc_UI_LOST);
-          BF_CLAY_TEXT_LOCALIZED(locale);
+          componentScreenName((Loc)locale);
         }
 
         BF_CLAY_TEXT(". ");
@@ -7161,7 +7288,7 @@ void DoUI(bool draw) {
 
           if (weaponsCount > 0) {
             // Weapons label.
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS__CAPS);
 
             // Weapons.
             CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -7185,7 +7312,7 @@ void DoUI(bool draw) {
           }
 
           // Items label.
-          BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS__CAPS);
           // Items.
           componentItemsGrid({.itemsX = 10, .detailsBelow = 1});
         }
@@ -7287,7 +7414,7 @@ void DoUI(bool draw) {
           }
 
           // "Achievements" label.
-          FontBegin(&g.meta.fontWaveCompletion);
+          FontBegin(&g.meta.fontUIGiganticOutlined);
           CLAY({}) {
             BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS__CAPS);
 
@@ -7591,7 +7718,7 @@ void DoUI(bool draw) {
             }}) {
               if (weaponsCount > 0) {
                 // Weapons label.
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS__CAPS);
 
                 // Weapons.
                 CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -7616,7 +7743,7 @@ void DoUI(bool draw) {
               }
 
               // Items label.
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS__CAPS);
               // Items.
               componentItemsGrid({.group = pauseWeaponsGroup, .itemsX = 6});
             }
@@ -10886,7 +11013,7 @@ void GameDraw() {
             (f32)LOGICAL_RESOLUTION.x / 2.0f,
             (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
           },
-          .font       = &g.meta.fontWaveCompletion,
+          .font       = &g.meta.fontUIGiganticOutlined,
           .text       = text->c_str(),
           .bytesCount = bytesToShow,
         },

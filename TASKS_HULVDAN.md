@@ -41,9 +41,11 @@ x ref clicked -> activated
 x ref hovered -> hovered + (g.ui.selectedElement.id == XXX.id)
 x new run 3 screens
 x ui keyboard: picked up item
+x ui keyboard: new run
+x shop rework
 
+* fix end
 * ui keyboard: end
-* ui keyboard: new run
 * ui keyboard: shop: SPACE / RETURN should work for weapons
 * ui keyboard: shop: don't add hidden weapons to group
 * ui keyboard: shop: when context menu is active, don't process shop context at all

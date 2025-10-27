@@ -346,7 +346,19 @@ table GameLibrary {
     game_garden_texture_id: int;
     ui_controls_touch_base_texture_id: int;
     ui_controls_touch_handle_texture_id: int;
-    ui_icon_settings_texture_id: int;
+    ui_icon_back_texture_id: int;
+    ui_icon_combine2_texture_id: int;
+    ui_icon_go_texture_id: int;
+    ui_icon_go2_texture_id: int;
+    ui_icon_pause_texture_id: int;
+    ui_icon_pause2_texture_id: int;
+    ui_icon_cancel_texture_id: int;
+    ui_icon_sell_texture_id: int;
+    ui_icon_stats_texture_id: int;
+    ui_icon_refresh_texture_id: int;
+    ui_icon_upgrade_texture_id: int;
+    ui_icon_take_texture_id: int;
+    ui_icon_stopwatch2_texture_id: int;
     // AUTOMATIC_TEXTURE_BIND_END
 
     ui_controls_touch_handle_margin: int;
