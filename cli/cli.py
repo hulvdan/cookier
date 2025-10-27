@@ -31,6 +31,7 @@ from bf_lib import (
     hash32,
     hex_to_rgb,
     hex_to_rgb_floats,
+    log,
     rgb_floats_to_hex,
     run_command,
     timed_exit,
@@ -479,14 +480,17 @@ def lint():
 
 
 @command
+@timing
 def outline_images():
     src_dir = ART_DIR / "textures" / "to_outline"
-    for filepath in src_dir.rglob("*.png"):
+    files = list(src_dir.rglob("*.png"))
+    log.info("Outlining...")
+    for i, filepath in enumerate(files):
+        log.info("{}/{}: {}".format(i + 1, len(files), filepath.stem))
         img = Image.open(filepath)
-        out_img = outline(
-            image=img, stroke_size=20, color=(0, 0, 0, 255), is_shadow=False
-        )
+        out_img = outline(image=img, stroke_size=8, color=(0, 0, 0, 255), is_shadow=False)
         out_img.save(filepath.parent.parent / filepath.name)
+    log.info("Outlining... Success!")
 
 
 def main() -> None:
