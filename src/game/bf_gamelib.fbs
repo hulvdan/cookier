@@ -349,9 +349,8 @@ table GameLibrary {
     ui_icon_back_texture_id: int;
     ui_icon_combine_texture_id: int;
     ui_icon_go_texture_id: int;
-    ui_icon_go2_texture_id: int;
+    ui_icon_go_next_wave_texture_id: int;
     ui_icon_pause_texture_id: int;
-    ui_icon_pause2_texture_id: int;
     ui_icon_cancel_texture_id: int;
     ui_icon_sell_texture_id: int;
     ui_icon_stats_texture_id: int;

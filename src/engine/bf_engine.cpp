@@ -854,7 +854,7 @@ struct EngineData {
 
     bool ysdkLoaded       = false;
     bool windowIsInactive = false;
-    bool exitScheduled    = false;
+    bool quitScheduled    = false;
 
     bool debugEnabled = false;
 
@@ -3598,7 +3598,7 @@ SDL_AppResult EngineUpdate() {  ///
 
     GameFixedUpdate();
 
-    if (ge.meta.exitScheduled)
+    if (ge.meta.quitScheduled)
       return SDL_APP_SUCCESS;
     _ClearControlsCache();
 
