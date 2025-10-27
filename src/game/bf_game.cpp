@@ -4546,7 +4546,7 @@ void DoUI(bool draw) {
               }) {
                 FLOATING_BEAUTIFY;
 
-                FontBegin(&g.meta.fontUIOutlined);
+                FontBegin(&g.meta.fontUIBigOutlined);
                 BF_CLAY_TEXT(
                   TextFormat("%d", price), (canReroll ? palTextWhite : palTextRed)
                 );
@@ -4586,7 +4586,7 @@ void DoUI(bool draw) {
             }) {
               FLOATING_BEAUTIFY;
 
-              FontBegin(&g.meta.fontUIOutlined);
+              FontBegin(&g.meta.fontUIBigOutlined);
               BF_CLAY_TEXT(TextFormat("%d", recyclePrice), palTextWhite);
               BF_CLAY_IMAGE({
                 .texId = glib->ui_coin_texture_id(),
@@ -6297,40 +6297,42 @@ void DoUI(bool draw) {
           });
 
           // Pause button.
-          CLAY({
-            .floating{
-              .offset{GAP_BIG, 0},
-              .zIndex = zIndex,
-              .attachPoints{
-                .element = CLAY_ATTACH_POINT_LEFT_CENTER,
-                .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
+          if (!g.meta.playerUsesKeyboard) {
+            CLAY({
+              .floating{
+                .offset{GAP_BIG, 0},
+                .zIndex = zIndex,
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_LEFT_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
+                },
+                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                .attachTo           = CLAY_ATTACH_TO_PARENT,
               },
-              .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-              .attachTo           = CLAY_ATTACH_TO_PARENT,
-            },
-          }) {
-            FLOATING_BEAUTIFY;
+            }) {
+              FLOATING_BEAUTIFY;
 
-            const bool canPause
-              = (g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused;
+              const bool canPause
+                = (g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused;
 
-            auto color = WHITE;
-            if (canPause) {
-              if (Clay_Hovered())
-                color = palGreen;
-            }
-            else
-              color = palGray;
-
-            BF_CLAY_IMAGE(
-              {.texId = glib->ui_icon_pause_texture_id(), .color = color},
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                if (clicked() && canPause) {
-                  g.meta.scheduledTogglePause = true;
-                  PlaySound(Sound_UI_CLICK);
-                }
+              auto color = WHITE;
+              if (canPause) {
+                if (Clay_Hovered())
+                  color = palGreen;
               }
-            );
+              else
+                color = palGray;
+
+              BF_CLAY_IMAGE(
+                {.texId = glib->ui_icon_pause_texture_id(), .color = color},
+                [&]() BF_FORCE_INLINE_LAMBDA {
+                  if (clicked() && canPause) {
+                    g.meta.scheduledTogglePause = true;
+                    PlaySound(Sound_UI_CLICK);
+                  }
+                }
+              );
+            }
           }
         }
 
@@ -7085,35 +7087,36 @@ void DoUI(bool draw) {
 
           BF_CLAY_SPACER_HORIZONTAL;
 
-          // Coins.
-          componentPlayerCoins_floatingInTheCenter();
+          CLAY({.layout{.childGap = GAP_BIG}}) {
+            // Reroll button.
+            const auto calculatedRerollPrice
+              = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
+            const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
 
-          BF_CLAY_SPACER_HORIZONTAL;
-
-          // Reroll button.
-          const auto calculatedRerollPrice
-            = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
-          const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-
-          bool rerolled = componentButtonReroll(groupTopButtons, calculatedRerollPrice);
-          if (!draw && IsKeyPressed(SDL_SCANCODE_R))
-            rerolled = true;
-          if (rerolled) {
-            if (canReroll) {
-              PlaySound(Sound_UI_CLICK);
-              g.run.state.shop.rerolls.Roll();
-              RefillShopToPick();
-              RecalculateShopToPick();
-              Save();
+            bool rerolled = componentButtonReroll(groupTopButtons, calculatedRerollPrice);
+            if (!draw && IsKeyPressed(SDL_SCANCODE_R))
+              rerolled = true;
+            if (rerolled) {
+              if (canReroll) {
+                PlaySound(Sound_UI_CLICK);
+                g.run.state.shop.rerolls.Roll();
+                RefillShopToPick();
+                RecalculateShopToPick();
+                Save();
+              }
+              else {
+                g.ui.shopErrorGold = {};
+                g.ui.shopErrorGold.SetNow();
+                PlaySound(Sound_UI_ERROR);
+              }
             }
-            else {
-              g.ui.shopErrorGold = {};
-              g.ui.shopErrorGold.SetNow();
-              PlaySound(Sound_UI_ERROR);
-            }
+
+            // Stats.
+            componentButtonStats(groupTopButtons);
           }
 
-          componentButtonStats(groupTopButtons);
+          // Coins.
+          componentPlayerCoins_floatingInTheCenter();
         }
 
         BF_CLAY_SPACER_VERTICAL;
@@ -7253,7 +7256,7 @@ void DoUI(bool draw) {
                 BF_CLAY_IMAGE(
                   {
                     .texId = glib->ui_icon_go_next_wave_texture_id(),
-                    .color = (nextIsBoss ? palTextRed : palTextYellow),
+                    .color = (nextIsBoss ? palTextRed : WHITE),
                   },
                   [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({
@@ -7722,12 +7725,14 @@ void DoUI(bool draw) {
           markControlAsDefault(ControlsContext_ACHIEVEMENTS, backButtonId);
 
           // Back button.
+          FontBegin(&g.meta.fontUIBig);
           const bool back = componentButton(
             {.id = backButtonId},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, textColor);
             }
           );
+          FontEnd();
 
           if (back) {
             PlaySound(Sound_UI_CLICK);
@@ -7752,7 +7757,7 @@ void DoUI(bool draw) {
 
         // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
-          .childGap = GAP_BIG,
+          .childGap = GAP_BIG * 2,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           // 1. Wave + buttons.
@@ -7763,13 +7768,15 @@ void DoUI(bool draw) {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           }}) {
             CLAY({}) {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE);
-              BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, TRANSPARENT_BLACK);
+              BF_CLAY_TEXT(
+                TextFormat(" %d", g.run.state.waveIndex + 1), TRANSPARENT_BLACK
+              );
             }
 
             CLAY({.layout{
               BF_CLAY_SIZING_GROW_X,
-              .childGap        = GAP_SMALL,
+              .childGap        = GAP_BIG,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               FontBegin(&g.meta.fontUIBig);
@@ -7866,14 +7873,17 @@ void DoUI(bool draw) {
             }
           }
 
-          // 2. Weapons + items.
-          int weaponsCount = 0;
-          for (auto& weapon : g.run.state.weapons) {
-            if (weapon.type)
-              weaponsCount++;
-          }
+          CLAY({.layout{
+            .childGap = GAP_BIG,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            // 2. Weapons + items.
+            int weaponsCount = 0;
+            for (auto& weapon : g.run.state.weapons) {
+              if (weapon.type)
+                weaponsCount++;
+            }
 
-          if ((weaponsCount > 0) || (g.run.state.items.count > 0)) {
             CLAY({.layout{
               .childGap        = GAP_BIG,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -7913,10 +7923,10 @@ void DoUI(bool draw) {
               // Items.
               componentItemsGrid({.group = groupWeapons, .itemsX = 6});
             }
-          }
 
-          // 3. Stats.
-          componentStats();
+            // 3. Stats.
+            componentStats();
+          }
         }
 
         ControlsGroupConnect(groupButtons, Direction_RIGHT, groupWeapons);
@@ -11032,10 +11042,10 @@ void GameDraw() {
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
         .scale      = Vector2(1, 1) * (p * 2),
-        .font       = &g.meta.fontUIBigOutlined,
+        .font       = &g.meta.fontUIOutlined,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
-        .color      = Fade(ColorFromRGBA(fb->color()), fade),
+        .color      = Fade(ColorFromRGBA(fb->color()), EaseOutQuad(fade)),
       });
     }
 
