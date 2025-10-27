@@ -4294,6 +4294,7 @@ void DoUI(bool draw) {
   const Direction uiElementSwitchDirection = uiElementSwitchDirection_;
 
   LAMBDA (void, markControlAsDefault, (ControlsContext context, Clay_ElementId id)) {
+    ASSERT(controlsContexts[context].thisFrame);
     if (uiElementSwitchDirection && !g.ui.selectedElement.id)
       g.ui.selectedElement = id;
     if (!controlsContexts[context].prevFrame && g.meta.playerUsesKeyboard)
@@ -4406,6 +4407,15 @@ void DoUI(bool draw) {
 
   LAMBDA (bool, clicked, ()) {  ///
     return !draw && Clay_Hovered() && (IsTouchPressed(ge.meta._latestActiveTouchID));
+  };
+
+  LAMBDA (bool, activated, (Clay_ElementId id)) {  ///
+    if (Clay_Hovered() || (g.ui.selectedElement.id == id.id)) {
+      bool result = clicked();
+      result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
+      return result;
+    }
+    return false;
   };
 
   struct ComponentButtonData {  ///
@@ -4756,7 +4766,7 @@ void DoUI(bool draw) {
       [&]() BF_FORCE_INLINE_LAMBDA {
         if (data.canHover) {
           ButtonSFX(draw, data.id, Clay_Hovered());
-          if (clicked())
+          if (activated(data.id))
             result = true;
         }
 
@@ -5905,6 +5915,8 @@ void DoUI(bool draw) {
             BuildType      buildType      = {};
             ItemType       itemType       = {};
 
+            Clay_ElementId slotId{};
+
             if (t == 0) {
               BEAUTIFY_WIGGLING_DANGER_SCOPED(
                 g.ui.shopErrorBuild,
@@ -5913,16 +5925,18 @@ void DoUI(bool draw) {
                 ERROR_WIGGLING_TIMES
               );
 
+              slotId = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id    = CLAY_IDI("shop_player_item", t),
+                .id    = slotId,
                 .group = data.group,
                 .build = g.player.build,
               });
               buildType = g.player.build;
             }
             else if (t == 1) {
+              slotId = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id         = CLAY_IDI("shop_player_item", t),
+                .id         = slotId,
                 .group      = data.group,
                 .difficulty = g.player.difficulty,
               });
@@ -5930,8 +5944,9 @@ void DoUI(bool draw) {
             }
             else {
               auto& item = g.run.state.items[t - 2];
+              slotId     = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id    = CLAY_IDI("shop_player_item", t),
+                .id    = slotId,
                 .group = data.group,
                 .item  = item.type,
                 .count = item.count,
@@ -5951,7 +5966,7 @@ void DoUI(bool draw) {
               });
               if (ge.meta.debugEnabled && itemType) {
                 auto& item = g.run.state.items[t - 2];
-                if (clicked())
+                if (activated(slotId))
                   item.count++;
                 if (wheel && Clay_Hovered()) {
                   item.count += wheel;
@@ -6262,6 +6277,12 @@ void DoUI(bool draw) {
 
   // New run.
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
+    onControlsContextShow(ControlsContext_NEW_RUN);
+    auto groupDifficulties = MakeControlsGroup();
+    auto groupBuilds       = MakeControlsGroup();
+    auto groupWeapons      = MakeControlsGroup();
+    auto groupGo           = MakeControlsGroup();
+
     CLAY({
       .layout{
         BF_CLAY_SIZING_GROW_XY,
@@ -6316,8 +6337,10 @@ void DoUI(bool draw) {
               const bool selected = ((i + 1) == (int)p.difficulty);
 
               CLAY({}) {
+                auto slotId = CLAY_IDI("new_run_difficulty", i);
                 componentUniversalSlot({
-                  .id         = CLAY_IDI("new_run_difficulty", i),
+                  .id         = slotId,
+                  .group      = groupDifficulties,
                   .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
                   .hidden     = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                   .tier       = (isLocked ? 0 : (selected ? 6 : i)),
@@ -6325,13 +6348,13 @@ void DoUI(bool draw) {
                 });
 
                 if (!isLocked) {
-                  if (clicked()) {
+                  if (activated(slotId)) {
                     PlaySound(Sound_UI_CLICK);
                     p.difficulty = (DifficultyType)(i + 1);
                     Save();
                   }
 
-                  if (Clay_Hovered()) {
+                  if (Clay_Hovered() || (g.ui.selectedElement.id == slotId.id)) {
                     componentUniversalDetails({
                       .difficulty     = (DifficultyType)(i + 1),
                       .affectedByGame = false,
@@ -6375,6 +6398,8 @@ void DoUI(bool draw) {
             ),
           }) {
             FOR_RANGE (int, y, buildsY) {
+              ControlsGroupNewRow(groupBuilds);
+
               CLAY({.layout{.childGap = GAP_SMALL}}) {
                 FOR_RANGE (int, x, buildsX) {
                   const int t = y * buildsX + x;
@@ -6389,8 +6414,10 @@ void DoUI(bool draw) {
 
                     const int tier = GetBuildTier((BuildType)(t + 1));
 
+                    const auto slotId = CLAY_IDI("new_run_build", t);
                     componentUniversalSlot({
-                      .id       = CLAY_IDI("new_run_build", t),
+                      .id       = slotId,
+                      .group    = groupBuilds,
                       .build    = (BuildType)(isLocked ? 0 : t + 1),
                       .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                       .tier     = (isLocked ? 0 : (selected ? 6 : tier)),
@@ -6398,7 +6425,7 @@ void DoUI(bool draw) {
                     });
 
                     if (!isLocked) {
-                      if (clicked()) {
+                      if (activated(slotId)) {
                         PlaySound(Sound_UI_CLICK);
                         if (p.build != (BuildType)(t + 1)) {
                           p.build  = (BuildType)(t + 1);
@@ -6407,7 +6434,7 @@ void DoUI(bool draw) {
                         Save();
                       }
 
-                      if (Clay_Hovered()) {
+                      if (Clay_Hovered() || (g.ui.selectedElement.id == slotId.id)) {
                         componentUniversalDetails({
                           .build          = (BuildType)(t + 1),
                           .affectedByGame = false,
@@ -6456,6 +6483,8 @@ void DoUI(bool draw) {
             auto fb_buildWeapons = fb_builds->Get(p.build)->starting_weapon_types();
 
             FOR_RANGE (int, y, weaponsY) {
+              ControlsGroupNewRow(groupWeapons);
+
               CLAY({.layout{.childGap = GAP_SMALL}})
               FOR_RANGE (int, x, weaponsX) {
                 const int t = y * weaponsX + x;
@@ -6472,8 +6501,10 @@ void DoUI(bool draw) {
                 }
 
                 CLAY({}) {
+                  const auto slotId = CLAY_IDI("new_run_weapon", t);
                   componentUniversalSlot({
-                    .id = CLAY_IDI("new_run_weapon", t),
+                    .id    = slotId,
+                    .group = groupWeapons,
                     .weapon
                     = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) : 0),
                     .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
@@ -6482,14 +6513,16 @@ void DoUI(bool draw) {
                   });
 
                   // Hovering modal.
-                  if (exists && !isLocked && Clay_Hovered()) {
+                  if (exists && !isLocked
+                      && (Clay_Hovered() || (g.ui.selectedElement.id == slotId.id)))
+                  {
                     componentWeaponDetails(
                       (WeaponType)fb_buildWeapons->Get(t), -1, false, false, false
                     );
                   }
 
                   if (exists && !isLocked) {
-                    if (clicked()) {
+                    if (activated(slotId)) {
                       PlaySound(Sound_UI_CLICK);
                       p.weapon = (WeaponType)fb_buildWeapons->Get(t);
                       Save();
@@ -6506,7 +6539,7 @@ void DoUI(bool draw) {
       CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(200)}}}) {
         const bool canGo = p.difficulty && p.build && p.weapon;
         const bool go    = componentButton(
-          {.id = CLAY_ID("button_new_run_go"), .growX = true},
+          {.id = CLAY_ID("button_new_run_go"), .group = groupGo, .growX = true},
           [&](bool hovered, Color textColor)
             BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_GO, textColor); }
         );
@@ -6524,9 +6557,17 @@ void DoUI(bool draw) {
         }
       }
     }
+
+    ControlsGroupConnect(groupDifficulties, Direction_DOWN, groupBuilds);
+    ControlsGroupConnect(groupBuilds, Direction_DOWN, groupWeapons);
+    ControlsGroupConnect(groupWeapons, Direction_DOWN, groupGo);
+    ControlsGroupConnect(groupGo, Direction_DOWN, groupDifficulties);
   }
   // Picked up item.
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
+    onControlsContextShow(ControlsContext_PICKED_UP_ITEM);
+    auto group = MakeControlsGroup();
+
     CLAY({
       .layout{
         BF_CLAY_SIZING_GROW_XY,
@@ -6556,16 +6597,18 @@ void DoUI(bool draw) {
 
           // Take and Recycle buttons.
           CLAY({.layout{.childGap = GAP_SMALL}}) {
-            const bool took = componentButton(
-              {.id = CLAY_ID("button_picked_up_item_take")},
+            auto       tookId = CLAY_ID("button_picked_up_item_take");
+            const bool took   = componentButton(
+              {.id = tookId, .group = group},
               [&](bool hovered, Color textColor)
                 BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(Loc_UI_TAKE, textColor); }
             );
+            markControlAsDefault(ControlsContext_UPGRADES, tookId);
 
             const int recyclePrice = ToRecyclePrice(fb->price());
 
             const bool recycled = componentButton(
-              {.id = CLAY_ID("button_picked_up_item_recycle")},
+              {.id = CLAY_ID("button_picked_up_item_recycle"), .group = group},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
                   BF_CLAY_TEXT_LOCALIZED(Loc_UI_RECYCLE, textColor);
