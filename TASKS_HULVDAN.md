@@ -45,6 +45,9 @@ x ui keyboard: new run
 x shop rework
 x clean level up screen
 
+* level up show PLAYER_COINS
+* sparkles that highlight the weapons can be upgraded
+* outline with offset down
 * fix: shop: weapons details to the left
 * show stats in shop
 * show stats in level up
@@ -61,8 +64,9 @@ x clean level up screen
 * ui keyboard: picked up item: stats
 * ui keyboard: end: stats
 *
-*
-* уверены ли вы что хотите выйти
+* are you sure you want to quit?
+* are you sure you want to restart?
+* are you sure you want to start a new run?
 *
 * enemy that tanks 1-3 damage
 * engine: make `Arena` growing (by default it should assert)
