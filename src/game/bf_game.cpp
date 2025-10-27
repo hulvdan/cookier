@@ -6944,8 +6944,13 @@ void DoUI(bool draw) {
   // Shop.
   else if (g.run.state.screen == ScreenType_SHOP) {  ///
     onControlsContextShow(ControlsContext_SHOP);
-    auto groupToBuy1     = MakeControlsGroup();
-    auto groupToBuy2     = MakeControlsGroup();
+    ControlsGroupID groupsToBuy_[]{
+      MakeControlsGroup(),
+      MakeControlsGroup(),
+      MakeControlsGroup(),
+      MakeControlsGroup(),
+    };
+    VIEW_FROM_ARRAY_DANGER(groupsToBuy);
     auto groupReroll     = MakeControlsGroup();
     auto groupGoNextWave = MakeControlsGroup();
     auto groupWeapons    = MakeControlsGroup();
@@ -7045,6 +7050,7 @@ void DoUI(bool draw) {
         // 2. Items to buy.
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_X,
+          .childGap = GAP_BIG,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           int toPickIndex = -1;
@@ -7059,12 +7065,9 @@ void DoUI(bool draw) {
               .overrideTier    = v.tier,
               .setFixedHeight  = true,
               .shopMarkDefault = (toPickIndex == 1),
-              .shopGroup       = (toPickIndex <= 1 ? groupToBuy1 : groupToBuy2),
+              .shopGroup       = groupsToBuy[toPickIndex],
               .shopBuyingIndex = toPickIndex,
             });
-
-            if (toPickIndex < g.run.state.shop.toPick.count - 1)
-              BF_CLAY_SPACER_HORIZONTAL;
           }
         }
 
@@ -7079,7 +7082,7 @@ void DoUI(bool draw) {
             CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
 
             // Items.
-            componentItemsGrid({.group = groupItems, .itemsX = 8});
+            componentItemsGrid({.group = groupItems, .itemsX = 11});
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -7211,33 +7214,56 @@ void DoUI(bool draw) {
         }
       }
 
-      // Right column that contains stats and next wave button.
-      CLAY({.layout{BF_CLAY_SIZING_GROW_Y}}) {
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_Y,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }}) {
-          // Stats.
-          componentStats();
-
-          BF_CLAY_SPACER_VERTICAL;
-        }
-      }
+      // // Right column that contains stats and next wave button.
+      // CLAY({.layout{BF_CLAY_SIZING_GROW_Y}}) {
+      //   CLAY({.layout{
+      //     BF_CLAY_SIZING_GROW_Y,
+      //     .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      //   }}) {
+      //     // Stats.
+      //     componentStats();
+      //
+      //     BF_CLAY_SPACER_VERTICAL;
+      //   }
+      // }
     }
 
-    ControlsGroupConnect(groupToBuy1, Direction_RIGHT, groupToBuy2);
-    ControlsGroupConnect(groupToBuy2, Direction_UP, groupReroll);
-    ControlsGroupConnect(groupToBuy1, Direction_UP, groupReroll);
-    ControlsGroupConnect(groupItems, Direction_UP, groupToBuy1);
-    ControlsGroupConnect(groupWeapons, Direction_UP, groupToBuy2);
-    ControlsGroupConnect(groupItems, Direction_UP, groupToBuy2);
-    ControlsGroupConnect(groupWeapons, Direction_UP, groupToBuy1);
+    ControlsGroupConnect(groupsToBuy[0], Direction_RIGHT, groupsToBuy[1]);
+    ControlsGroupConnect(groupsToBuy[1], Direction_RIGHT, groupsToBuy[2]);
+    ControlsGroupConnect(groupsToBuy[2], Direction_RIGHT, groupsToBuy[3]);
+    ControlsGroupConnect(groupsToBuy[0], Direction_RIGHT, groupsToBuy[2]);
+    ControlsGroupConnect(groupsToBuy[1], Direction_RIGHT, groupsToBuy[3]);
+    ControlsGroupConnect(groupsToBuy[0], Direction_RIGHT, groupsToBuy[3]);
+
+    ControlsGroupConnect(groupsToBuy[3], Direction_UP, groupReroll);
+    ControlsGroupConnect(groupsToBuy[2], Direction_UP, groupReroll);
+    ControlsGroupConnect(groupsToBuy[1], Direction_UP, groupReroll);
+    ControlsGroupConnect(groupsToBuy[0], Direction_UP, groupReroll);
+
+    ControlsGroupConnect(groupsToBuy[3], Direction_RIGHT, groupsToBuy[0]);
+    ControlsGroupConnect(groupsToBuy[3], Direction_RIGHT, groupsToBuy[1]);
+    ControlsGroupConnect(groupsToBuy[3], Direction_RIGHT, groupsToBuy[2]);
+
+    ControlsGroupConnect(groupItems, Direction_UP, groupsToBuy[0]);
+    ControlsGroupConnect(groupItems, Direction_UP, groupsToBuy[1]);
+    ControlsGroupConnect(groupItems, Direction_UP, groupsToBuy[2]);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[3]);
+    ControlsGroupConnect(groupItems, Direction_UP, groupsToBuy[3]);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[2]);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[1]);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[0]);
+    ControlsGroupConnect(groupItems, Direction_UP, groupReroll);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupReroll);
     ControlsGroupConnect(groupWeapons, Direction_RIGHT, groupGoNextWave);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupWeapons);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupGoNextWave);
-    ControlsGroupConnect(groupToBuy2, Direction_DOWN, groupGoNextWave);
-    ControlsGroupConnect(groupToBuy1, Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupsToBuy[3], Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupsToBuy[2], Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupsToBuy[1], Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupsToBuy[0], Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupReroll, Direction_DOWN, groupGoNextWave);
+
+    ControlsGroupConnect(groupItems, Direction_LEFT, groupGoNextWave);
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
