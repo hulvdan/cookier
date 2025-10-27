@@ -888,7 +888,7 @@ struct GameData {
     Font fontUIOutlined         = {};
     Font fontUIBig              = {};
     Font fontStats              = {};
-    Font fontPrices             = {};
+    Font fontPricesOutlined     = {};
     Font fontItemCountsOutlined = {};
     Font fontUIGiganticOutlined = {};
 
@@ -3073,13 +3073,15 @@ void ReloadFontsIfNeeded() {  ///
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
     },
-    // fontPrices.
+    // fontPricesOutlined.
     {
       .filepath        = fontpath,
       .size            = 20,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = priceCodepoints,
       .codepointsCount = ARRAY_COUNT(priceCodepoints),
+      .outlineWidth    = 3,
+      .outlineAdvance  = 1,
     },
     // fontItemCountsOutlined.
     {
@@ -4509,8 +4511,13 @@ void DoUI(bool draw) {
       {.id = CLAY_ID("button_shop_reroll"), .group = group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+          const bool canReroll = (price <= PLAYER_COINS);
           BF_CLAY_IMAGE(
-            {.texId = glib->ui_icon_refresh_texture_id(), .scale = Vector2One() * 0.4f},
+            {
+              .texId = glib->ui_icon_refresh_texture_id(),
+              .scale = Vector2One() * 0.4f,
+              .color = (canReroll ? WHITE : palGray),
+            },
             [&]() BF_FORCE_INLINE_LAMBDA {
               if (price <= 0)
                 return;
@@ -4531,8 +4538,7 @@ void DoUI(bool draw) {
 
                 FontBegin(&g.meta.fontUIOutlined);
                 BF_CLAY_TEXT(
-                  TextFormat("%d", price),
-                  ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)
+                  TextFormat("%d", price), (canReroll ? palTextWhite : palTextRed)
                 );
                 BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
                 FontEnd();
@@ -5553,10 +5559,10 @@ void DoUI(bool draw) {
                   BF_CLAY_SIZING_GROW_X,
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                 }}) {
-                  FontBegin(&g.meta.fontPrices);
+                  FontBegin(&g.meta.fontPricesOutlined);
                   BF_CLAY_TEXT(
                     TextFormat("%d ", price),
-                    (price <= PLAYER_COINS ? textColor : palTextRed)
+                    (price <= PLAYER_COINS ? palTextWhite : palTextRed)
                   );
                   FontEnd();
                   BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
@@ -7065,7 +7071,7 @@ void DoUI(bool draw) {
         BF_CLAY_SPACER_VERTICAL;
 
         // 3. Player's items and weapons.
-        CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
+        CLAY({.layout{BF_CLAY_SIZING_GROW_X, .childGap = GAP_BIG}}) {
           CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS__CAPS);
@@ -7148,8 +7154,6 @@ void DoUI(bool draw) {
               }
             }
           }
-
-          BF_CLAY_SPACER_HORIZONTAL;
 
           // Advance to the next wave button.
           CLAY({.layout{
