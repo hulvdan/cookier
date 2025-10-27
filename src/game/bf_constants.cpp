@@ -213,7 +213,9 @@ constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);
   X(Red, 0xc02931ff)     \
   X(Bezhevy, 0xb59a66ff) \
   X(White, 0xedefe2ff)   \
-  X(Gray, 0x7a7576ff)
+  X(Gray, 0x7a7576ff)    \
+  X(Yellow, 0xdc9824ff)  \
+  X(PaleYellow, 0xefcb84ff)
 
 #define X(name_, value_) constexpr auto pal##name_ = ColorFromRGBA(value_);
 PAL_COLORS_TABLE;
