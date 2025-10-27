@@ -8,8 +8,10 @@ import bf_swatch
 import bf_swatch_aco
 import typer
 from bf_gamelib import do_generate
+from bf_image_outline import outline
 from bf_lib import (
     ALLOWED_BUILDS,
+    ART_DIR,
     BUTLER_PATH,
     CLANG_TIDY_PATH,
     CMAKE_TESTS_PATH,
@@ -35,6 +37,7 @@ from bf_lib import (
     timing,
     transform_color,
 )
+from PIL import Image
 
 P = ParamSpec("P")
 
@@ -473,6 +476,17 @@ def lint():
     do_cmake_ninja_files()
     do_compile_commands_json()
     do_lint()
+
+
+@command
+def outline_images():
+    src_dir = ART_DIR / "textures" / "to_outline"
+    for filepath in src_dir.rglob("*.png"):
+        img = Image.open(filepath)
+        out_img = outline(
+            image=img, stroke_size=20, color=(0, 0, 0, 255), is_shadow=False
+        )
+        out_img.save(filepath.parent.parent / filepath.name)
 
 
 def main() -> None:

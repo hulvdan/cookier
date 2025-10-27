@@ -36,13 +36,13 @@ def _cv2pil(cv_img):
 
 def outline(
     *,
-    image: Image,
+    image: Image.Image,
     stroke_size: int,
     color: tuple[int, int, int, int],
     is_shadow: bool,
     threshold: int = 0,
     blend_image_on_top: bool = True,
-) -> Image:
+) -> Image.Image:
     assert threshold >= 0
 
     img = np.asarray(image)
@@ -59,7 +59,7 @@ def outline(
         cv2.BORDER_CONSTANT,
         value=(0, 0, 0, 0),
     )
-    alpha = cv2.copyMakeBorder(
+    alpha = cv2.copyMakeBorder(  #  type: ignore  # noqa
         alpha, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=0
     )
     bigger_img = cv2.merge((bigger_img, alpha))
@@ -87,5 +87,5 @@ def outline(
     stroke = _cv2pil(stroke)
     if blend_image_on_top:
         bigger_img = _cv2pil(bigger_img)
-        stroke = Image.alpha_composite(stroke, bigger_img)
+        stroke = Image.alpha_composite(stroke, bigger_img)  # type: ignore  # noqa
     return stroke

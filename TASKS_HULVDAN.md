@@ -44,6 +44,9 @@ x ui keyboard: picked up item
 x ui keyboard: new run
 x shop rework
 
+* clean level up screen
+* show stats in shop
+* show stats in level up
 * fix end
 * ui keyboard: end
 * ui keyboard: shop: SPACE / RETURN should work for weapons
