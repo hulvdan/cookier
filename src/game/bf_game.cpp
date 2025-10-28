@@ -4391,6 +4391,7 @@ void DoUI(bool draw) {
     + GAP_SMALL                                       // Gap between name and description.
     + 2 * g.meta.fontStats.size / g.meta.fontUI._scaleToFit  // 2 lines of description.
     + GAP_FLEX;                                              // Gap between them.
+
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, Color color = palTextWhite)) {  ///
@@ -4454,14 +4455,23 @@ void DoUI(bool draw) {
     return false;
   };
 
+  LAMBDA (bool, didActivate, (SDL_Scancode key)) {  ///
+    if (_alreadyHandledActivation)
+      return false;
+    bool result = IsKeyPressed(key);
+    if (result)
+      _alreadyHandledActivation = true;
+    return result;
+  };
+
   struct ComponentButtonData {  ///
     Clay_ElementId     id                = {};
     ControlsGroupID    group             = {};
     bool               selected          = false;
     bool               growX             = false;
     u16                paddingHorizontal = GAP_BIG;
-    bool               enabled           = true;
     View<SDL_Scancode> keys              = {};
+    bool               enabled           = true;
   };
 
   LAMBDA (
@@ -4529,11 +4539,13 @@ void DoUI(bool draw) {
         ButtonSFX(draw, data.id, true);
 
       result |= clicked();
-      if (isSelected)
-        result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
+      if (isSelected) {
+        result |= didActivate(SDL_SCANCODE_SPACE);
+        result |= didActivate(SDL_SCANCODE_RETURN);
+      }
 
       for (auto k : data.keys)
-        result |= IsKeyPressed(k);
+        result |= didActivate(k);
     }
 
     return result;
@@ -4541,8 +4553,15 @@ void DoUI(bool draw) {
 
   LAMBDA (bool, componentButtonReroll, (ControlsGroupID group, int price)) {  ///
     ASSERT(price >= 0);
+
+    SDL_Scancode keys_[]{SDL_SCANCODE_R};
+    VIEW_FROM_ARRAY_DANGER(keys);
+
+    if ((g.run.shopSelectedWeaponIndex >= 0) || g.meta.showingStats.IsSet())
+      keys.count = 0;
+
     return componentButton(
-      {.id = CLAY_ID("button_shop_reroll"), .group = group},
+      {.id = CLAY_ID("button_shop_reroll"), .group = group, .keys = keys},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
           const bool canReroll = (price <= PLAYER_COINS);
@@ -5448,8 +5467,16 @@ void DoUI(bool draw) {
             if (data.shopMarkDefault)
               markControlAsDefault(ControlsContext_SHOP, buyButtonId);
 
+            SDL_Scancode keys_[]{
+              (SDL_Scancode)((int)SDL_SCANCODE_1 + data.shopBuyingIndex),
+            };
+            VIEW_FROM_ARRAY_DANGER(keys);
+
+            if ((g.run.shopSelectedWeaponIndex >= 0) || g.meta.showingStats.IsSet())
+              keys.count = 0;
+
             auto bought = componentButton(
-              {.id = buyButtonId, .group = data.shopGroup},
+              {.id = buyButtonId, .group = data.shopGroup, .keys = keys},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
                   BF_CLAY_SIZING_GROW_X,
@@ -5465,10 +5492,6 @@ void DoUI(bool draw) {
                 }
               }
             );
-            if (!draw
-                && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + data.shopBuyingIndex)
-                ))
-              bought = true;
 
             if (bought) {
               if (canBuy) {
@@ -5810,7 +5833,7 @@ void DoUI(bool draw) {
       if (data.weAreInShop && (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1))
       {
         // Pressing ESC closes modal.
-        if (IsKeyPressed(SDL_SCANCODE_ESCAPE))
+        if (didActivate(SDL_SCANCODE_ESCAPE))
           g.run.shopSelectedWeaponIndex = -1;
       }
 
@@ -5979,7 +6002,7 @@ void DoUI(bool draw) {
   };
 
   const f32 topRowHeight
-    = (f32)glib->original_texture_sizes()->Get(glib->ui_icon_stats_texture_id())->y()
+    = (f32)glib->original_texture_sizes()->Get(glib->ui_icon_stats2_texture_id())->y()
         * ASSETS_TO_LOGICAL_RATIO
       + 2 * GAP_SMALL;
 
@@ -6049,10 +6072,13 @@ void DoUI(bool draw) {
     SDL_Scancode keys_[]{SDL_SCANCODE_TAB};
     VIEW_FROM_ARRAY_DANGER(keys);
 
+    if (g.meta.showingStats.IsSet() || (g.run.shopSelectedWeaponIndex >= 0))
+      keys.count = 0;
+
     const bool clickedStats = componentButton(
       {.id = CLAY_ID("button_stats"), .group = group, .keys = keys},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_IMAGE({.texId = glib->ui_icon_stats_texture_id()});
+        BF_CLAY_IMAGE({.texId = glib->ui_icon_stats2_texture_id()});
       }
     );
 
@@ -6897,9 +6923,15 @@ void DoUI(bool draw) {
             // Choose button.
             CLAY({.layout{BF_CLAY_SIZING_GROW_X, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}
             ) {
+              SDL_Scancode keys_[]{(SDL_Scancode)((int)SDL_SCANCODE_1 + i)};
+              VIEW_FROM_ARRAY_DANGER(keys);
+
+              if (g.meta.showingStats.IsSet())
+                keys.count = 0;
+
               auto chooseButtonId = CLAY_IDI("button_upgrades_choose", i);
               bool chosen         = componentButton(
-                {.id = chooseButtonId, .group = groupUpgrades},
+                {.id = chooseButtonId, .group = groupUpgrades, .keys = keys},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texId = glib->ui_icon_upgrade_texture_id()});
                 }
@@ -6908,8 +6940,6 @@ void DoUI(bool draw) {
               if (i == 1)
                 markControlAsDefault(ControlsContext_UPGRADES, chooseButtonId);
 
-              if (!draw && IsKeyPressed((SDL_Scancode)((int)SDL_SCANCODE_1 + i)))
-                chosen = true;
               if (chosen) {
                 PlaySound(Sound_UI_CLICK);
 
@@ -6942,8 +6972,6 @@ void DoUI(bool draw) {
         = ApplyStatRerollPrice(g.run.state.upgrades.rerolls.GetPrice());
       const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
       bool       rerolled  = componentButtonReroll(groupReroll, calculatedRerollPrice);
-      if (!draw && IsKeyPressed(SDL_SCANCODE_R))
-        rerolled = true;
       if (rerolled) {
         if (canReroll) {
           PlaySound(Sound_UI_CLICK);
@@ -7016,8 +7044,6 @@ void DoUI(bool draw) {
             const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
 
             bool rerolled = componentButtonReroll(groupTopButtons, calculatedRerollPrice);
-            if (!draw && IsKeyPressed(SDL_SCANCODE_R))
-              rerolled = true;
             if (rerolled) {
               if (canReroll) {
                 PlaySound(Sound_UI_CLICK);
@@ -7164,11 +7190,18 @@ void DoUI(bool draw) {
             BF_CLAY_SIZING_GROW_Y,
             BF_CLAY_CHILD_ALIGNMENT_CENTER_BOTTOM,
           }}) {
+            SDL_Scancode keys_[]{SDL_SCANCODE_E};
+            VIEW_FROM_ARRAY_DANGER(keys);
+
+            if (g.meta.showingStats.IsSet() || (g.run.shopSelectedWeaponIndex >= 0))
+              keys.count = 0;
+
             const bool nextWavePressed = componentButton(
               {
                 .id    = CLAY_ID("button_shop_next_wave"),
                 .group = groupGoNextWave,
                 .growX = true,
+                .keys  = keys,
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 const int  nextWaveNumber = g.run.state.waveIndex + 2;
@@ -7257,6 +7290,7 @@ void DoUI(bool draw) {
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
     onControlsContextShow(ControlsContext_END);
+    auto groupTopButtons      = MakeControlsGroup();
     auto groupWeaponsAndItems = MakeControlsGroup();
     auto groupButtons         = MakeControlsGroup();
 
@@ -7287,6 +7321,10 @@ void DoUI(bool draw) {
             }
           }
         );
+
+        BF_CLAY_SPACER_HORIZONTAL;
+
+        componentButtonStats(groupTopButtons);
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -7400,8 +7438,9 @@ void DoUI(bool draw) {
       BF_CLAY_SPACER_VERTICAL;
     }
 
+    ControlsGroupConnect(groupTopButtons, Direction_DOWN, groupWeaponsAndItems);
     ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupButtons);
-    ControlsGroupConnect(groupButtons, Direction_DOWN, groupWeaponsAndItems);
+    ControlsGroupConnect(groupButtons, Direction_DOWN, groupTopButtons);
   }
   else if (g.run.state.screen == ScreenType_WAVE_END_ANIMATION) {
     // NOTE: Intentionally left blank.
@@ -7887,9 +7926,12 @@ void DoUI(bool draw) {
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_SPACER_HORIZONTAL;
 
+        SDL_Scancode keys_[]{SDL_SCANCODE_ESCAPE, SDL_SCANCODE_TAB};
+        VIEW_FROM_ARRAY_DANGER(keys);
+
         // Close button.
         closeStats |= componentButton(
-          {.id = CLAY_ID("stats_cancel"), .group = groupStats},
+          {.id = CLAY_ID("stats_cancel"), .group = groupStats, .keys = keys},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_IMAGE({.texId = glib->ui_icon_cancel_big_texture_id()});
           }
