@@ -154,12 +154,15 @@ Clay_Color ToClayColor(Color color) {
   }
 
 struct Beautify {
-  u16     alpha     = u16_max;
+  f32     alpha     = 1;
   Vector2 translate = {0, 0};
   Vector2 scale     = {1, 1};
 };
 
 #define BEAUTIFY(beautify_)                                                            \
+  ASSERT((beautify_).alpha >= 0);                                                      \
+  ASSERT((beautify_).alpha <= 1);                                                      \
+                                                                                       \
   CLAY({                                                                               \
     .custom{                                                                           \
       .customData = PushClayCustomData({                                               \
@@ -188,13 +191,13 @@ struct Beautify {
   if (cond) {                                                                        \
     FOR_RANGE (int, i, beautifiersCount) {                                           \
       auto& b = beautifiers[i];                                                      \
-      currentAlpha_ *= (f32)b.alpha / 65535.0f;                                      \
+      currentAlpha_ *= b.alpha;                                                      \
       currentTranslate_ += b.translate;                                              \
       currentScale_ *= b.scale;                                                      \
     }                                                                                \
   }                                                                                  \
   Beautify currentBeautify_{                                                         \
-    .alpha     = (u16)(currentAlpha_ * 65535.0f),                                    \
+    .alpha     = currentAlpha_,                                                      \
     .translate = currentTranslate_,                                                  \
     .scale     = currentScale_,                                                      \
   };                                                                                 \
@@ -244,7 +247,7 @@ enum ClayCustomElementType : u16 {
 
 struct ClayCustomData {
   ClayCustomElementType    type           = {};
-  u16                      alpha          = u16_max;
+  f32                      alpha          = 1;
   Vector2                  translate      = {0, 0};
   Vector2                  scale          = {1, 1};
   const BFGame::NineSlice* nineSlice      = nullptr;
@@ -904,12 +907,12 @@ struct GameData {
       // FrameGame      rightLastPressedAt = {};
     } touch;
 
-    bool      paused                                   = false;
-    bool      scheduledTogglePause                     = false;
-    bool      pausedShowingAchievements                = false;
-    int       pausedAchievementsHoveredAchievement     = 0;
-    int       pausedAchievementsHoveredAchievementStep = 0;
-    FrameGame showingStats                             = {};
+    bool        paused                                   = false;
+    bool        scheduledTogglePause                     = false;
+    bool        pausedShowingAchievements                = false;
+    int         pausedAchievementsHoveredAchievement     = 0;
+    int         pausedAchievementsHoveredAchievementStep = 0;
+    FrameVisual showingStats                             = {};
 
     bool        scheduledSave = false;
     FrameVisual lastSaveAt    = {};
@@ -4402,7 +4405,7 @@ void DoUI(bool draw) {
     BF_CLAY_TEXT(text, color);
   };
 
-  LAMBDA (void, componentOverlay, (auto innerLambda)) {  ///
+  LAMBDA (void, componentOverlay, (auto innerLambda, f32 fade = 1)) {  ///
     CLAY({
       .layout{
         .sizing{
@@ -4418,7 +4421,7 @@ void DoUI(bool draw) {
         },
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE * fade)),
     }) {
       innerLambda();
     }
@@ -4452,12 +4455,13 @@ void DoUI(bool draw) {
   };
 
   struct ComponentButtonData {  ///
-    Clay_ElementId  id                = {};
-    ControlsGroupID group             = {};
-    bool            selected          = false;
-    bool            growX             = false;
-    u16             paddingHorizontal = GAP_BIG;
-    bool            enabled           = true;
+    Clay_ElementId     id                = {};
+    ControlsGroupID    group             = {};
+    bool               selected          = false;
+    bool               growX             = false;
+    u16                paddingHorizontal = GAP_BIG;
+    bool               enabled           = true;
+    View<SDL_Scancode> keys              = {};
   };
 
   LAMBDA (
@@ -4527,6 +4531,9 @@ void DoUI(bool draw) {
       result |= clicked();
       if (isSelected)
         result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
+
+      for (auto k : data.keys)
+        result |= IsKeyPressed(k);
     }
 
     return result;
@@ -4656,120 +4663,6 @@ void DoUI(bool draw) {
       }
 
       BF_CLAY_IMAGE({.texId = texId, .color = color, .flash = flash}, innerLambda);
-    }
-  };
-
-  LAMBDA (void, componentStats, ()) {  ///
-    const int STATS_ENTRY_WIDTH = 240;
-
-    CLAY({
-      .layout{
-        .sizing{
-          .width = CLAY_SIZING_FIXED(
-            STATS_ENTRY_WIDTH * 2 + GAP_BIG + 2 * PADDING_NINE_SLICE_FRAME
-          ),
-        },
-        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-        .childGap        = GAP_BIG,
-        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-      },
-      BF_CLAY_CUSTOM_NINE_SLICE(
-        glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-      ),
-    }) {
-      // Stats label.
-      CLAY({.layout{
-        BF_CLAY_SIZING_GROW_X,
-        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-      }}) {
-        BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS__CAPS);
-      }
-
-      LAMBDA (
-        void, componentStatsEntry, (int iconTexId, int locale, int value, StatType stat)
-      )
-      {
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_X,
-          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
-        }}) {
-          // Increasing stat by clicking on it in debug mode.
-          if (stat && ge.meta.debugEnabled) {
-            if (clicked())
-              ChangeStat(stat, 1);
-            if (wheel && Clay_Hovered())
-              ChangeStat(stat, wheel);
-          }
-
-          const auto fb = fb_stats->Get(stat);
-
-          if (iconTexId) {
-            // Icon.
-            CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(20)}}}) {
-              CLAY({.floating{
-                .zIndex = zIndex,
-                .attachPoints{
-                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-                  .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-                },
-                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-                .attachTo           = CLAY_ATTACH_TO_PARENT,
-              }}) {
-                BF_CLAY_IMAGE({.texId = iconTexId});
-              }
-            }
-
-            BF_CLAY_TEXT(" ");
-          }
-
-          FontBegin(&g.meta.fontStats);
-
-          if (fb->is_percent())
-            BF_CLAY_TEXT("% ");
-          BF_CLAY_TEXT_LOCALIZED(locale);
-          BF_CLAY_SPACER_HORIZONTAL;
-          BF_CLAY_TEXT(" ");
-          BF_CLAY_TEXT(TextFormat("%d", value));
-
-          FontEnd();
-        }
-      };
-
-      // Stats.
-      CLAY({.layout{
-        BF_CLAY_SIZING_GROW_XY,
-        .childGap = GAP_BIG,
-      }}) {
-        FOR_RANGE (int, columnIndex, 2) {
-          CLAY({.layout{
-            BF_CLAY_SIZING_GROW_XY,
-            .childGap        = GAP_SMALL,
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-          }}) {
-            // Current level.
-            if (!columnIndex) {
-              CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(STATS_ENTRY_WIDTH)}}}) {
-                componentStatsEntry(
-                  glib->ui_shop_current_level_icon_texture_id(),
-                  Loc_UI_CURRENT_LEVEL,
-                  g.run.state.level,
-                  StatType_INVALID
-                );
-              }
-            }
-
-            FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
-              const auto type = (StatType)(i + 2);
-              const auto fb   = glib->stats()->Get(type);
-              if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
-                componentStatsEntry(
-                  fb->icon_texture_id(), fb->name_locale(), g.run.state.stats[type], type
-                );
-              }
-            }
-          }
-        }
-      }
     }
   };
 
@@ -6153,8 +6046,11 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (void, componentButtonStats, (ControlsGroupID group)) {  ///
+    SDL_Scancode keys_[]{SDL_SCANCODE_TAB};
+    VIEW_FROM_ARRAY_DANGER(keys);
+
     const bool clickedStats = componentButton(
-      {.id = CLAY_ID("button_stats"), .group = group},
+      {.id = CLAY_ID("button_stats"), .group = group, .keys = keys},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE({.texId = glib->ui_icon_stats_texture_id()});
       }
@@ -7395,21 +7291,6 @@ void DoUI(bool draw) {
 
       BF_CLAY_SPACER_VERTICAL;
 
-      // Stats.
-      CLAY({.floating{
-        .offset{PADDING_OUTER_HORIZONTAL, 0},
-        .zIndex = zIndex,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_LEFT_CENTER,
-          .parent  = CLAY_ATTACH_POINT_LEFT_CENTER,
-        },
-        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-        .attachTo           = CLAY_ATTACH_TO_PARENT,
-      }}) {
-        FLOATING_BEAUTIFY;
-        componentStats();
-      }
-
       // Main. Weapons, items.
       CLAY({.layout{
         .childGap = GAP_BIG,
@@ -7967,13 +7848,20 @@ void DoUI(bool draw) {
   auto groupStats = MakeControlsGroup();
 
   // Stats.
-  if (g.meta.showingStats.IsSet()) {
+  if (g.meta.showingStats.IsSet()) {  ///
     zIndex += 2;
 
-    componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-      if (clicked())
-        g.meta.showingStats = {};
-    });
+    bool closeStats = false;
+
+    const f32 p = MIN(1, g.meta.showingStats.Elapsed().Progress(ANIMATION_0_FRAMES));
+
+    componentOverlay(
+      [&]() BF_FORCE_INLINE_LAMBDA {
+        if (clicked())
+          closeStats |= true;
+      },
+      EaseOutQuad(p)
+    );
 
     CLAY({
       .layout{
@@ -7994,41 +7882,166 @@ void DoUI(bool draw) {
         .attachTo           = CLAY_ATTACH_TO_PARENT,
       },
     }) {
+      FLOATING_BEAUTIFY;
+
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_SPACER_HORIZONTAL;
 
         // Close button.
-        const bool cancelled = componentButton(
+        closeStats |= componentButton(
           {.id = CLAY_ID("stats_cancel"), .group = groupStats},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_IMAGE({.texId = glib->ui_icon_cancel_big_texture_id()});
           }
         );
-        if (cancelled)
-          g.meta.showingStats = {};
       });
 
-      // * fade in out overlay
-      // * sliding?
-      // * opening stats panel changes keyboard ui nav focus to close button
-
       BF_CLAY_SPACER_VERTICAL;
+
+      CLAY({})
       CLAY({
         .floating{
           .zIndex = zIndex,
           .attachPoints{
-            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+            .element = CLAY_ATTACH_POINT_RIGHT_CENTER,
+            .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
           },
           .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
           .attachTo           = CLAY_ATTACH_TO_PARENT,
         },
       }) {
-        componentStats();
+        FLOATING_BEAUTIFY;
+
+        Beautify b{.alpha = p, .translate{40 * EaseInQuad(1 - p), 0}};
+        BEAUTIFY(b);
+
+        const int STATS_ENTRY_WIDTH = 240;
+
+        CLAY({
+          .layout{
+            .sizing{
+              .width = CLAY_SIZING_FIXED(
+                STATS_ENTRY_WIDTH * 2 + GAP_BIG + 2 * PADDING_NINE_SLICE_FRAME
+              ),
+            },
+            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            .childGap        = GAP_BIG,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+          ),
+        }) {
+          // Stats label.
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_X,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS__CAPS);
+          }
+
+          LAMBDA (
+            void,
+            componentStatsEntry,
+            (int iconTexId, int locale, int value, StatType stat)
+          )
+          {
+            CLAY({.layout{
+              BF_CLAY_SIZING_GROW_X,
+              BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+            }}) {
+              // Increasing stat by clicking on it in debug mode.
+              if (stat && ge.meta.debugEnabled) {
+                if (clicked())
+                  ChangeStat(stat, 1);
+                if (wheel && Clay_Hovered())
+                  ChangeStat(stat, wheel);
+              }
+
+              const auto fb = fb_stats->Get(stat);
+
+              if (iconTexId) {
+                // Icon.
+                CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(20)}}}) {
+                  CLAY({.floating{
+                    .zIndex = zIndex,
+                    .attachPoints{
+                      .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                      .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+                    },
+                    .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                    .attachTo           = CLAY_ATTACH_TO_PARENT,
+                  }}) {
+                    FLOATING_BEAUTIFY;
+                    BF_CLAY_IMAGE({.texId = iconTexId});
+                  }
+                }
+
+                BF_CLAY_TEXT(" ");
+              }
+
+              FontBegin(&g.meta.fontStats);
+
+              if (fb->is_percent())
+                BF_CLAY_TEXT("% ");
+              BF_CLAY_TEXT_LOCALIZED(locale);
+              BF_CLAY_SPACER_HORIZONTAL;
+              BF_CLAY_TEXT(" ");
+              BF_CLAY_TEXT(TextFormat("%d", value));
+
+              FontEnd();
+            }
+          };
+
+          // Stats.
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_XY,
+            .childGap = GAP_BIG,
+          }}) {
+            FOR_RANGE (int, columnIndex, 2) {
+              CLAY({.layout{
+                BF_CLAY_SIZING_GROW_XY,
+                .childGap        = GAP_SMALL,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+              }}) {
+                // Current level.
+                if (!columnIndex) {
+                  CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(STATS_ENTRY_WIDTH)}}}
+                  ) {
+                    componentStatsEntry(
+                      glib->ui_shop_current_level_icon_texture_id(),
+                      Loc_UI_CURRENT_LEVEL,
+                      g.run.state.level,
+                      StatType_INVALID
+                    );
+                  }
+                }
+
+                FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
+                  const auto type = (StatType)(i + 2);
+                  const auto fb   = glib->stats()->Get(type);
+                  if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
+                    componentStatsEntry(
+                      fb->icon_texture_id(),
+                      fb->name_locale(),
+                      g.run.state.stats[type],
+                      type
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
       }
+
       BF_CLAY_SPACER_VERTICAL;
     }
+
     zIndex -= 2;
+
+    if (closeStats)
+      g.meta.showingStats = {};
   }
 
   // Just unlocked achievement.
@@ -8064,7 +8077,7 @@ void DoUI(bool draw) {
     }}) {
       FLOATING_BEAUTIFY;
 
-      Beautify b{.alpha = (u16)(alpha * (f32)u16_max), .translate{translate, 0}};
+      Beautify b{.alpha = alpha, .translate{translate, 0}};
       BEAUTIFY(b);
 
       auto fb      = fb_achievements->Get(x.type);
@@ -8282,7 +8295,7 @@ void DoUI(bool draw) {
         Vector2 beautifierScale{1, 1};
         FOR_RANGE (int, k, beautifiersCount) {
           auto& beautifier = beautifiers[k];
-          beautifierAlpha *= (f32)beautifier.alpha / (f32)u16_max;
+          beautifierAlpha *= beautifier.alpha;
           beautifierTranslate += beautifier.translate;
           beautifierScale *= beautifier.scale;
         }
