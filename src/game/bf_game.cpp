@@ -881,6 +881,26 @@ struct ControlsGroup {  ///
   ControlsGroup* prev = {};
 };
 
+enum ControlsContext {  ///
+  ControlsContext_INVALID,
+  ControlsContext_PAUSE,
+  ControlsContext_ACHIEVEMENTS,
+  ControlsContext_NEW_RUN,
+  ControlsContext_PICKED_UP_ITEM,
+  ControlsContext_UPGRADES,
+  ControlsContext_SHOP,
+  ControlsContext_END,
+  ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
+  ControlsContext_MODAL_STATS,
+  ControlsContext_COUNT,
+};
+
+const ControlsContext CONTROLS_CONTEXT_MODALS_[]{
+  ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
+  ControlsContext_MODAL_STATS,
+};
+VIEW_FROM_ARRAY_DANGER(CONTROLS_CONTEXT_MODALS);
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -1066,9 +1086,7 @@ struct GameData {
 
     FrameVisual newRunErrorAt = {};
 
-    FrameVisual upgradesErrorGold = {};
-
-    FrameVisual shopErrorGold    = {};
+    FrameVisual errorGold        = {};
     FrameVisual shopErrorWeapons = {};
     FrameVisual shopErrorBuild   = {};
 
@@ -1080,7 +1098,6 @@ struct GameData {
 
     f32 touchControlMaxLogicalOffset = {};
 
-    Clay_ElementId selectedElement     = {};
     ControlsGroup* controlsGroupsFirst = {};
     ControlsGroup* controlsGroupsLast  = {};
   } ui;
@@ -4260,6 +4277,27 @@ void RemoveImmediateWeaponEffects() {  ///
   }
 }
 
+#define SCOPED_CONTEXT(context_)                           \
+  const auto prevContext                 = currentContext; \
+  currentContext                         = (context_);     \
+  controlsContexts[(context_)].thisFrame = true;           \
+  if (!controlsContexts[(context_)].prevFrame)             \
+    controlsContexts[(context_)].selectedElement = {};     \
+  DEFER {                                                  \
+    currentContext = prevContext;                          \
+  };
+
+#define SCOPED_CONTEXT_IF(context_, enabled_)              \
+  const auto prevContext                 = currentContext; \
+  currentContext                         = (context_);     \
+  controlsContexts[(context_)].thisFrame = true;           \
+  controlsContexts[(context_)].disabled  = !(enabled_);    \
+  if (!controlsContexts[(context_)].prevFrame)             \
+    controlsContexts[(context_)].selectedElement = {};     \
+  DEFER {                                                  \
+    currentContext = prevContext;                          \
+  };
+
 // NOTE: Logic must be executed only when `draw` is false!
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
@@ -4271,20 +4309,13 @@ void DoUI(bool draw) {
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
-  enum ControlsContext {
-    ControlsContext_PAUSE,
-    ControlsContext_ACHIEVEMENTS,
-    ControlsContext_NEW_RUN,
-    ControlsContext_PICKED_UP_ITEM,
-    ControlsContext_UPGRADES,
-    ControlsContext_SHOP,
-    ControlsContext_END,
-    ControlsContext_COUNT,
-  };
+  ControlsContext currentContext{};
 
   static struct {
-    bool thisFrame = false;
-    bool prevFrame = false;
+    bool           thisFrame       = false;
+    bool           prevFrame       = false;
+    Clay_ElementId selectedElement = {};
+    bool           disabled        = false;
   } controlsContexts[ControlsContext_COUNT];
 
   DEFER {
@@ -4292,12 +4323,6 @@ void DoUI(bool draw) {
       x.prevFrame = x.thisFrame;
       x.thisFrame = false;
     }
-  };
-
-  LAMBDA (void, onControlsContextShow, (ControlsContext x)) {
-    controlsContexts[x].thisFrame = true;
-    if (!controlsContexts[x].prevFrame)
-      g.ui.selectedElement = {};
   };
 
   Direction uiElementSwitchDirection_ = Direction_NONE;
@@ -4311,12 +4336,16 @@ void DoUI(bool draw) {
     uiElementSwitchDirection_ = Direction_DOWN;
   const Direction uiElementSwitchDirection = uiElementSwitchDirection_;
 
-  LAMBDA (void, markControlAsDefault, (ControlsContext context, Clay_ElementId id)) {
-    ASSERT(controlsContexts[context].thisFrame);
-    if (uiElementSwitchDirection && !g.ui.selectedElement.id)
-      g.ui.selectedElement = id;
-    if (!controlsContexts[context].prevFrame && g.meta.playerUsesKeyboard)
-      g.ui.selectedElement = id;
+  LAMBDA (void, markControlAsDefault, (Clay_ElementId id)) {
+    ASSERT(currentContext);
+
+    auto& context = controlsContexts[currentContext];
+    ASSERT(context.thisFrame);
+
+    if (uiElementSwitchDirection && !context.selectedElement.id)
+      context.selectedElement = id;
+    if (!context.prevFrame && g.meta.playerUsesKeyboard)
+      context.selectedElement = id;
   };
 
   const auto fb_atlas_textures      = glib->atlas_textures();
@@ -4442,10 +4471,24 @@ void DoUI(bool draw) {
 
   bool _alreadyHandledActivation = false;
 
+  LAMBDA (bool, isCurrentContextActive, ()) {
+    if (CONTROLS_CONTEXT_MODALS.Contains(currentContext))
+      return true;
+
+    for (auto c : CONTROLS_CONTEXT_MODALS) {
+      const auto& context = controlsContexts[c];
+      if (!context.disabled && (context.prevFrame || context.thisFrame))
+        return false;
+    }
+
+    return true;
+  };
+
   LAMBDA (bool, activated, (Clay_ElementId id)) {  ///
     if (_alreadyHandledActivation)
       return false;
-    if (Clay_Hovered() || (g.ui.selectedElement.id == id.id)) {
+    if (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == id.id))
+    {
       bool result = clicked();
       result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
       if (result)
@@ -4470,8 +4513,8 @@ void DoUI(bool draw) {
     bool               selected          = false;
     bool               growX             = false;
     u16                paddingHorizontal = GAP_BIG;
+    u16                paddingVertical   = GAP_SMALL;
     View<SDL_Scancode> keys              = {};
-    bool               enabled           = true;
   };
 
   LAMBDA (
@@ -4481,6 +4524,8 @@ void DoUI(bool draw) {
      auto /* void (bool hovered, Color textColor) */ innerLambda)
   )
   {  ///
+    ASSERT(currentContext);
+
     ASSERT(data.id.id);
     bool result = false;
 
@@ -4491,8 +4536,10 @@ void DoUI(bool draw) {
     if (data.id.id && data.group)
       ControlsGroupAdd(data.group, data.id);
 
-    bool isSelected
-      = (g.ui.selectedElement.id && (g.ui.selectedElement.id == data.id.id));
+    auto& context = controlsContexts[currentContext];
+
+    auto& selectedElement = context.selectedElement;
+    bool  isSelected      = (selectedElement.id && (selectedElement.id == data.id.id));
 
     bool justSelected = false;
 
@@ -4503,26 +4550,26 @@ void DoUI(bool draw) {
           .padding{
             .left   = data.paddingHorizontal,
             .right  = data.paddingHorizontal,
-            .top    = GAP_SMALL,
-            .bottom = GAP_SMALL,
+            .top    = data.paddingVertical,
+            .bottom = data.paddingVertical,
           },
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
-          ((Clay_Hovered() && data.enabled || isSelected)
+          ((Clay_Hovered() || isSelected)
              ? palWhite
              : (data.selected ? TRANSPARENT_BLACK : slotColors[0])),
-          ((Clay_Hovered() && data.enabled || isSelected)
+          ((Clay_Hovered() || isSelected)
              ? TRANSPARENT_BLACK
              : (data.selected ? TRANSPARENT_BLACK : slotColors[1]))
         ),
       }) {
-        bool hovered = Clay_Hovered() && data.enabled;
+        bool hovered = Clay_Hovered();
         if (hovered) {
-          if (g.ui.selectedElement.id != data.id.id) {
-            g.ui.selectedElement = data.id;
-            justSelected         = true;
+          if (selectedElement.id != data.id.id) {
+            selectedElement = data.id;
+            justSelected    = true;
           }
           isSelected = true;
         }
@@ -4538,14 +4585,16 @@ void DoUI(bool draw) {
       if (justSelected)
         ButtonSFX(draw, data.id, true);
 
-      result |= clicked();
-      if (isSelected) {
-        result |= didActivate(SDL_SCANCODE_SPACE);
-        result |= didActivate(SDL_SCANCODE_RETURN);
-      }
+      if (isCurrentContextActive()) {
+        result |= clicked();
+        if (isSelected) {
+          result |= didActivate(SDL_SCANCODE_SPACE);
+          result |= didActivate(SDL_SCANCODE_RETURN);
+        }
 
-      for (auto k : data.keys)
-        result |= didActivate(k);
+        for (auto k : data.keys)
+          result |= didActivate(k);
+      }
     }
 
     return result;
@@ -4658,6 +4707,8 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (void, componentSlot, (ComponentSlotData data, auto innerLambda)) {  ///
+    ASSERT(currentContext);
+
     if (data.canHover)
       ASSERT(data.id.id);
     if (data.group)
@@ -4673,12 +4724,14 @@ void DoUI(bool draw) {
     if (!data.hidden) {
       auto color = slotColors[2 * data.tier];
       auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
-      if ((data.canHover && Clay_Hovered())
-          || (g.ui.selectedElement.id && (g.ui.selectedElement.id == data.id.id)))
-      {
-        g.ui.selectedElement = data.id;
-        color                = palWhite;
-        flash                = TRANSPARENT_BLACK;
+
+      const bool hovered = data.canHover && Clay_Hovered();
+
+      auto& selectedElement = controlsContexts[currentContext].selectedElement;
+      if (hovered || (selectedElement.id && (selectedElement.id == data.id.id))) {
+        selectedElement = data.id;
+        color           = palWhite;
+        flash           = TRANSPARENT_BLACK;
       }
 
       BF_CLAY_IMAGE({.texId = texId, .color = color, .flash = flash}, innerLambda);
@@ -4752,11 +4805,11 @@ void DoUI(bool draw) {
         .tier     = tier,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
-        if (data.canHover) {
-          ButtonSFX(draw, data.id, Clay_Hovered());
-          if (activated(data.id))
-            result = true;
-        }
+        // if (data.canHover) {
+        //   ButtonSFX(draw, data.id, Clay_Hovered());
+        //   if (activated(data.id))
+        //     result = true;
+        // }
 
         if (!onlyOneOrNone) {
           if (data.hidden == ComponentUniversalSlotHiddenType_SHOW_LOCK)
@@ -5465,7 +5518,7 @@ void DoUI(bool draw) {
             // Buying item / weapon.
             auto buyButtonId = CLAY_IDI("button_shop_buy", data.shopBuyingIndex);
             if (data.shopMarkDefault)
-              markControlAsDefault(ControlsContext_SHOP, buyButtonId);
+              markControlAsDefault(buyButtonId);
 
             SDL_Scancode keys_[]{
               (SDL_Scancode)((int)SDL_SCANCODE_1 + data.shopBuyingIndex),
@@ -5537,8 +5590,8 @@ void DoUI(bool draw) {
                   g.ui.shopErrorWeapons.SetNow();
                 }
                 else {
-                  g.ui.shopErrorGold = {};
-                  g.ui.shopErrorGold.SetNow();
+                  g.ui.errorGold = {};
+                  g.ui.errorGold.SetNow();
                 }
                 PlaySound(Sound_UI_ERROR);
               }
@@ -5547,6 +5600,9 @@ void DoUI(bool draw) {
         }
 
         if (data.shopSelling) {  ///
+          const bool activateContext = (g.run.shopSelectedWeaponIndex >= 0);
+          SCOPED_CONTEXT_IF(ControlsContext_MODAL_SHOP_WEAPON_DETAILS, activateContext);
+
           CLAY({.layout{
             BF_CLAY_SIZING_GROW_X,
             .childGap = GAP_SMALL,
@@ -5589,8 +5645,13 @@ void DoUI(bool draw) {
             });
 
             // Cancel button.
+            auto       cancelId  = CLAY_ID("button_weapon_cancel");
             const bool cancelled = componentButton(
-              {.id = CLAY_ID("button_weapon_cancel"), .group = groupWeaponDetails},
+              {
+                .id    = cancelId,
+                .group = groupWeaponDetails,
+                .keys  = KEYS_CANCEL,
+              },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 bool active = true;
                 if (data.weaponIndexOrMinus1 >= 0)
@@ -5602,6 +5663,7 @@ void DoUI(bool draw) {
                 });
               }
             );
+            markControlAsDefault(cancelId);
 
             if (combined) {
               ASSERT(canCombineWithIndex >= 0);
@@ -5830,13 +5892,6 @@ void DoUI(bool draw) {
     // Floating weapon details modal.
     // Gets shown upon hovering. Gets sticked upon clicking on weapon.
     if (Clay_Hovered() || (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1)) {
-      if (data.weAreInShop && (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1))
-      {
-        // Pressing ESC closes modal.
-        if (didActivate(SDL_SCANCODE_ESCAPE))
-          g.run.shopSelectedWeaponIndex = -1;
-      }
-
       f32                          offsetY{};
       Clay_FloatingAttachPointType attachElement{};
       Clay_FloatingAttachPointType attachParent{};
@@ -6002,7 +6057,7 @@ void DoUI(bool draw) {
   };
 
   const f32 topRowHeight
-    = (f32)glib->original_texture_sizes()->Get(glib->ui_icon_stats2_texture_id())->y()
+    = (f32)glib->original_texture_sizes()->Get(glib->ui_icon_stats_texture_id())->y()
         * ASSETS_TO_LOGICAL_RATIO
       + 2 * GAP_SMALL;
 
@@ -6040,7 +6095,7 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentPlayerCoins, ()) {  ///
     BEAUTIFY_WIGGLING_DANGER_SCOPED(
-      g.ui.shopErrorGold,
+      g.ui.errorGold,
       GOLD_WIGGLING_LOGICAL_AMPLITUDE,
       ERROR_WIGGLING_FRAMES,
       ERROR_WIGGLING_TIMES
@@ -6052,7 +6107,7 @@ void DoUI(bool draw) {
       auto color = GetFlashingColor(
         palTextWhite,
         palTextRed,
-        g.ui.shopErrorGold,
+        g.ui.errorGold,
         ERROR_WIGGLING_FRAMES,
         ERROR_GOLD_FLASHING_TIMES,
         ERROR_GOLD_FLASH_NOT_FLASH_RATIO,
@@ -6078,7 +6133,7 @@ void DoUI(bool draw) {
     const bool clickedStats = componentButton(
       {.id = CLAY_ID("button_stats"), .group = group, .keys = keys},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_IMAGE({.texId = glib->ui_icon_stats2_texture_id()});
+        BF_CLAY_IMAGE({.texId = glib->ui_icon_stats_texture_id()});
       }
     );
 
@@ -6286,7 +6341,7 @@ void DoUI(bool draw) {
 
         {
           BEAUTIFY_WIGGLING_DANGER_SCOPED(
-            g.ui.upgradesErrorGold,
+            g.ui.errorGold,
             GOLD_WIGGLING_LOGICAL_AMPLITUDE,
             ERROR_WIGGLING_FRAMES,
             ERROR_WIGGLING_TIMES
@@ -6407,7 +6462,8 @@ void DoUI(bool draw) {
 
   // New run.
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
-    onControlsContextShow(ControlsContext_NEW_RUN);
+    SCOPED_CONTEXT(ControlsContext_NEW_RUN);
+
     auto groupDifficulties = MakeControlsGroup();
     auto groupBuilds       = MakeControlsGroup();
     auto groupWeapons      = MakeControlsGroup();
@@ -6483,7 +6539,9 @@ void DoUI(bool draw) {
                     Save();
                   }
 
-                  if (Clay_Hovered() || (g.ui.selectedElement.id == slotId.id)) {
+                  if (Clay_Hovered()
+                      || (controlsContexts[currentContext].selectedElement.id == slotId.id))
+                  {
                     componentUniversalDetails({
                       .difficulty     = (DifficultyType)(i + 1),
                       .affectedByGame = false,
@@ -6563,7 +6621,8 @@ void DoUI(bool draw) {
                         Save();
                       }
 
-                      if (Clay_Hovered() || (g.ui.selectedElement.id == slotId.id)) {
+                      if (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotId.id))
+                      {
                         componentUniversalDetails({
                           .build          = (BuildType)(t + 1),
                           .affectedByGame = false,
@@ -6642,8 +6701,9 @@ void DoUI(bool draw) {
                   });
 
                   // Hovering modal.
-                  if (exists && !isLocked
-                      && (Clay_Hovered() || (g.ui.selectedElement.id == slotId.id)))
+                  if (exists        //
+                      && !isLocked  //
+                      && (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotId.id)))
                   {
                     componentWeaponDetails({
                       .type           = (WeaponType)fb_buildWeapons->Get(t),
@@ -6696,7 +6756,8 @@ void DoUI(bool draw) {
   }
   // Picked up item.
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
-    onControlsContextShow(ControlsContext_PICKED_UP_ITEM);
+    SCOPED_CONTEXT(ControlsContext_PICKED_UP_ITEM);
+
     auto group           = MakeControlsGroup();
     auto groupTopButtons = MakeControlsGroup();
 
@@ -6749,7 +6810,7 @@ void DoUI(bool draw) {
               BF_CLAY_IMAGE({.texId = glib->ui_icon_take_texture_id()});
             }
           );
-          markControlAsDefault(ControlsContext_PICKED_UP_ITEM, tookId);
+          markControlAsDefault(tookId);
 
           const int recyclePrice = ToRecyclePrice(fb->price());
 
@@ -6792,7 +6853,8 @@ void DoUI(bool draw) {
   }
   // Upgrades.
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
-    onControlsContextShow(ControlsContext_UPGRADES);
+    SCOPED_CONTEXT(ControlsContext_UPGRADES);
+
     auto groupStats    = MakeControlsGroup();
     auto groupUpgrades = MakeControlsGroup();
     auto groupReroll   = MakeControlsGroup();
@@ -6938,7 +7000,7 @@ void DoUI(bool draw) {
               );
 
               if (i == 1)
-                markControlAsDefault(ControlsContext_UPGRADES, chooseButtonId);
+                markControlAsDefault(chooseButtonId);
 
               if (chosen) {
                 PlaySound(Sound_UI_CLICK);
@@ -6981,8 +7043,8 @@ void DoUI(bool draw) {
           Save();
         }
         else {
-          g.ui.upgradesErrorGold = {};
-          g.ui.upgradesErrorGold.SetNow();
+          g.ui.errorGold = {};
+          g.ui.errorGold.SetNow();
           PlaySound(Sound_UI_ERROR);
         }
       }
@@ -6998,7 +7060,8 @@ void DoUI(bool draw) {
   }
   // Shop.
   else if (g.run.state.screen == ScreenType_SHOP) {  ///
-    onControlsContextShow(ControlsContext_SHOP);
+    SCOPED_CONTEXT(ControlsContext_SHOP);
+
     ControlsGroupID groupsToBuy_[]{
       MakeControlsGroup(),
       MakeControlsGroup(),
@@ -7053,8 +7116,8 @@ void DoUI(bool draw) {
                 Save();
               }
               else {
-                g.ui.shopErrorGold = {};
-                g.ui.shopErrorGold.SetNow();
+                g.ui.errorGold = {};
+                g.ui.errorGold.SetNow();
                 PlaySound(Sound_UI_ERROR);
               }
             }
@@ -7143,6 +7206,12 @@ void DoUI(bool draw) {
                 ERROR_WIGGLING_TIMES
               );
 
+              const auto slotSize
+                = ToVector2(
+                    glib->original_texture_sizes()->Get(glib->ui_item_slot_texture_id())
+                  )
+                  * ASSETS_TO_LOGICAL_RATIO;
+
               CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
               )
               FOR_RANGE (int, y, 2) {
@@ -7156,28 +7225,33 @@ void DoUI(bool draw) {
 
                   const auto& weapon = g.run.state.weapons[weaponIndex];
 
-                  CLAY({}) {
-                    // Weapon.
-                    const bool selectedWeapon = componentUniversalSlot({
-                      .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
-                      .group  = groupWeapons,
-                      .weapon = weapon.type,
-                      .tier   = weapon.tier,
-                    });
-
-                    if (selectedWeapon) {
-                      PlaySound(Sound_UI_CLICK);
-                      g.run.shopSelectedWeaponIndex = weaponIndex;
-                    }
-
-                    // Hovering modal.
+                  CLAY({.layout{.sizing{
+                    .width  = CLAY_SIZING_FIXED(slotSize.x),
+                    .height = CLAY_SIZING_FIXED(slotSize.y),
+                  }}}) {
                     if (weapon.type) {
-                      componentWeaponDetails({
-                        .type                = weapon.type,
-                        .weaponIndexOrMinus1 = weaponIndex,
-                        .weAreInShop         = true,
-                        .detailsToTheLeft    = true,
+                      // Weapon.
+                      const bool selectedWeapon = componentUniversalSlot({
+                        .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
+                        .group  = groupWeapons,
+                        .weapon = weapon.type,
+                        .tier   = weapon.tier,
                       });
+
+                      if (selectedWeapon) {
+                        PlaySound(Sound_UI_CLICK);
+                        g.run.shopSelectedWeaponIndex = weaponIndex;
+                      }
+
+                      // Hovering modal.
+                      if (weapon.type) {
+                        componentWeaponDetails({
+                          .type                = weapon.type,
+                          .weaponIndexOrMinus1 = weaponIndex,
+                          .weAreInShop         = true,
+                          .detailsToTheLeft    = true,
+                        });
+                      }
                     }
                   }
                 }
@@ -7289,7 +7363,8 @@ void DoUI(bool draw) {
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
-    onControlsContextShow(ControlsContext_END);
+    SCOPED_CONTEXT(ControlsContext_END);
+
     auto groupTopButtons      = MakeControlsGroup();
     auto groupWeaponsAndItems = MakeControlsGroup();
     auto groupButtons         = MakeControlsGroup();
@@ -7315,7 +7390,7 @@ void DoUI(bool draw) {
           [&]() BF_FORCE_INLINE_LAMBDA {
             if (!g.run.state.won) {
               // Wave.
-              BF_CLAY_TEXT(". ");
+              BF_CLAY_TEXT("       ");
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE__CAPS);
               BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
             }
@@ -7424,7 +7499,7 @@ void DoUI(bool draw) {
           }
         );
 
-        markControlAsDefault(ControlsContext_END, newRunId);
+        markControlAsDefault(newRunId);
 
         if (restarted)
           g.run.reload = true;
@@ -7476,9 +7551,10 @@ void DoUI(bool draw) {
 
       // Achievements.
       if (g.meta.pausedShowingAchievements) {  ///
-        onControlsContextShow(ControlsContext_ACHIEVEMENTS);
-        auto achievementsBackButtonGroup = MakeControlsGroup();
-        auto achievementsGridGroup       = MakeControlsGroup();
+        SCOPED_CONTEXT(ControlsContext_ACHIEVEMENTS);
+
+        const auto groupBackButton = MakeControlsGroup();
+        const auto groupGrid       = MakeControlsGroup();
 
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
@@ -7552,7 +7628,7 @@ void DoUI(bool draw) {
                 g.meta.pausedAchievementsHoveredAchievementStep = 0;
 
                 FOR_RANGE (int, y, achievementsY) {
-                  ControlsGroupNewRow(achievementsGridGroup);
+                  ControlsGroupNewRow(groupGrid);
 
                   CLAY({.layout{.childGap = GAP_SMALL}})
                   FOR_RANGE (int, x, achievementsX) {
@@ -7590,7 +7666,7 @@ void DoUI(bool draw) {
 
                       componentUniversalSlot({
                         .id       = id,
-                        .group    = achievementsGridGroup,
+                        .group    = groupGrid,
                         .build    = (BuildType)fb_step->unlocks_build_type(),
                         .item     = (ItemType)fb_step->unlocks_item_type(),
                         .weapon   = (WeaponType)fb_step->unlocks_weapon_type(),
@@ -7600,7 +7676,7 @@ void DoUI(bool draw) {
                       });
 
                       if ((canHover && Clay_Hovered())
-                          || (id.id == g.ui.selectedElement.id))
+                          || (id.id == controlsContexts[currentContext].selectedElement.id))
                       {
                         g.meta.pausedAchievementsHoveredAchievement = currentAchievement;
                         g.meta.pausedAchievementsHoveredAchievementStep = currentStep;
@@ -7655,19 +7731,17 @@ void DoUI(bool draw) {
             }
           }
 
-          const auto backButtonId = CLAY_ID("button_pause_achievements_back");
-          ControlsGroupAdd(achievementsBackButtonGroup, backButtonId);
-          markControlAsDefault(ControlsContext_ACHIEVEMENTS, backButtonId);
-
           // Back button.
+          const auto backButtonId = CLAY_ID("button_pause_achievements_back");
           FontBegin(&g.meta.fontUIBig);
           const bool back = componentButton(
-            {.id = backButtonId},
+            {.id = backButtonId, .group = groupBackButton, .keys = KEYS_CANCEL},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, textColor);
             }
           );
           FontEnd();
+          markControlAsDefault(backButtonId);
 
           if (back) {
             PlaySound(Sound_UI_CLICK);
@@ -7679,16 +7753,13 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_VERTICAL;
         }
 
-        ControlsGroupConnect(
-          achievementsBackButtonGroup, Direction_UP, achievementsGridGroup
-        );
-        ControlsGroupConnect(
-          achievementsGridGroup, Direction_UP, achievementsBackButtonGroup
-        );
+        ControlsGroupConnect(groupBackButton, Direction_UP, groupGrid);
+        ControlsGroupConnect(groupGrid, Direction_UP, groupBackButton);
       }
       // Pause.
       else {  ///
-        onControlsContextShow(ControlsContext_PAUSE);
+        SCOPED_CONTEXT(ControlsContext_PAUSE);
+
         auto groupButtons    = MakeControlsGroup();
         auto groupWeapons    = MakeControlsGroup();
         auto groupTopButtons = MakeControlsGroup();
@@ -7732,15 +7803,16 @@ void DoUI(bool draw) {
                 FontBegin(&g.meta.fontUIBig);
 
                 const auto resumeButtonId = CLAY_ID("button_pause_resume");
-                markControlAsDefault(ControlsContext_PAUSE, resumeButtonId);
-                if (!g.ui.selectedElement.id)
-                  g.ui.selectedElement = resumeButtonId;
+                markControlAsDefault(resumeButtonId);
+                if (!controlsContexts[currentContext].selectedElement.id)
+                  controlsContexts[currentContext].selectedElement = resumeButtonId;
 
                 const bool resumed = componentButton(
                   {
                     .id    = resumeButtonId,
                     .group = groupButtons,
                     .growX = true,
+                    .keys  = KEYS_PAUSE,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                     BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, textColor);
@@ -7888,6 +7960,8 @@ void DoUI(bool draw) {
 
   // Stats.
   if (g.meta.showingStats.IsSet()) {  ///
+    SCOPED_CONTEXT(ControlsContext_MODAL_STATS);
+
     zIndex += 2;
 
     bool closeStats = false;
@@ -7930,12 +8004,14 @@ void DoUI(bool draw) {
         VIEW_FROM_ARRAY_DANGER(keys);
 
         // Close button.
+        const auto cancelId = CLAY_ID("stats_cancel");
         closeStats |= componentButton(
-          {.id = CLAY_ID("stats_cancel"), .group = groupStats, .keys = keys},
+          {.id = cancelId, .group = groupStats, .keys = keys},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_IMAGE({.texId = glib->ui_icon_cancel_big_texture_id()});
           }
         );
+        markControlAsDefault(cancelId);
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -8196,10 +8272,34 @@ void DoUI(bool draw) {
     }
   }
 
+  ASSERT_FALSE(currentContext);
+
   // Control groups navigation.
   {
-    if (uiElementSwitchDirection) {  ///
-      auto toSelect = g.ui.selectedElement;
+    ControlsContext shownScreen{};
+    ControlsContext shownModal{};
+    for (int i = 1; i < ControlsContext_COUNT; i++) {
+      const auto& context = controlsContexts[i];
+      auto        c       = (ControlsContext)i;
+      if (context.thisFrame) {
+        if (CONTROLS_CONTEXT_MODALS.Contains(c))
+          shownModal = c;
+        else {
+          ASSERT_FALSE(shownScreen);
+          shownScreen = c;
+        }
+      }
+    }
+
+    if (shownModal)
+      ASSERT(shownScreen);
+
+    ControlsContext currentContext = shownModal;
+    if (!currentContext)
+      currentContext = shownScreen;
+
+    if (uiElementSwitchDirection && currentContext) {  ///
+      auto toSelect = controlsContexts[currentContext].selectedElement;
 
       auto group = g.ui.controlsGroupsFirst;
       while (group) {
@@ -8224,7 +8324,7 @@ void DoUI(bool draw) {
             ASSERT(elem->next != elem);
             ASSERT(elem->prev != elem);
 
-            if (elem->id.id == g.ui.selectedElement.id) {
+            if (elem->id.id == controlsContexts[currentContext].selectedElement.id) {
               if (uiElementSwitchDirection == Direction_RIGHT) {
                 if (elem->next)
                   toSelect = elem->next->id;
@@ -8286,8 +8386,8 @@ void DoUI(bool draw) {
         group = group->next;
       }
 
-      if (!draw && (g.ui.selectedElement.id != toSelect.id)) {
-        g.ui.selectedElement = toSelect;
+      if (!draw && (controlsContexts[currentContext].selectedElement.id != toSelect.id)) {
+        controlsContexts[currentContext].selectedElement = toSelect;
         PlaySound(Sound_UI_HOVER_SMALL);
       }
     }
@@ -9067,32 +9167,29 @@ void GameFixedUpdate() {
 
   PLAYER_CREATURE.controller.move = {};
 
-  // Handling ESC or P to toggle pause.
-  {  ///
-    if (g.run.state.screen == ScreenType_GAMEPLAY) {
-      if (IsKeyPressed(SDL_SCANCODE_P) && !g.meta.pausedShowingAchievements) {
-        g.meta.scheduledTogglePause = true;
-        PlaySound(Sound_UI_CLICK);
-      }
-
-      if (IsKeyPressed(SDL_SCANCODE_ESCAPE)) {
-        if (g.meta.pausedShowingAchievements)
-          g.meta.pausedShowingAchievements = false;
-        else
-          g.meta.scheduledTogglePause = true;
-        PlaySound(Sound_UI_CLICK);
-      }
-    }
-    else
-      g.meta.paused = false;
-  }
-
   // Handling toggle pause.
   if (g.meta.scheduledTogglePause) {  ///
     g.meta.scheduledTogglePause = false;
 
     g.meta.paused = !g.meta.paused;
     Save();
+  }
+
+  // Handling ESC or P to toggle pause.
+  {  ///
+    if (g.run.state.screen == ScreenType_GAMEPLAY) {
+      if (!g.meta.paused) {
+        for (auto c : KEYS_PAUSE) {
+          if (IsKeyPressed(c)) {
+            g.meta.scheduledTogglePause = true;
+            PlaySound(Sound_UI_CLICK);
+            break;
+          }
+        }
+      }
+    }
+    else
+      g.meta.paused = false;
   }
 
   const auto gameplayOrWaveEndScreen

@@ -54,28 +54,40 @@ x stats: closing stats by ESC or TAB
 x stats: fade in overlay
 x stats: can't open stats while weapon details is opened
 x end: show stats
+x ui keyboard: shop: SPACE / RETURN should work for weapons
+x ui keyboard: shop: don't add hidden weapons to group
+x ui keyboard: shop: when context menu is active, don't process shop context at all
 
+* ui keyboard: SPACE / RETURN should work in weapon details
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+* ui keyboard:
+*
+* shop: mark default: 2 3 4 1 reroll
+* ui keyboard: after pressing WASD make default button focused
+* ui keyboard: shop: change selected button after buying/recycling/combining
+* fix: new run: can't click on buttons
+* touch: releasing finger while showing details
+  -> details are sticked (or weapon details are shown up)
+* touch: selecting weapon details only when released touch.
+  if pressed and hovered - just showing it (like on pc - hovering)
+*
 * shop: selecting weapon -> set close as a default button
 * stats: opening stats panel changes keyboard ui nav focus to close button
 * sparkles that highlight the weapons can be upgraded
 * outline with offset down
 * fix: shop: weapons details to the left
-* fix end
-* ui keyboard: end
-* ui keyboard: shop: SPACE / RETURN should work for weapons
-* ui keyboard: shop: don't add hidden weapons to group
-* ui keyboard: shop: when context menu is active, don't process shop context at all
-* ui keyboard: shop: change selected button after buying/recycling/combining
-* ui keyboard: after pressing WASD make default button focused
-* ui keyboard:
-* ui keyboard: shop: stats
-* ui keyboard: upgrades: stats
-* ui keyboard: picked up item: stats
-* ui keyboard: end: stats
 *
-* are you sure you want to quit?
-* are you sure you want to restart?
-* are you sure you want to start a new run?
+* modal: are you sure you want to quit?
+* modal: are you sure you want to restart?
+* modal: are you sure you want to start a new run?
 *
 * enemy that tanks 1-3 damage
 * engine: make `Arena` growing (by default it should assert)
