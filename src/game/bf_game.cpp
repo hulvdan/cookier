@@ -904,11 +904,12 @@ struct GameData {
       // FrameGame      rightLastPressedAt = {};
     } touch;
 
-    bool paused                                   = false;
-    bool scheduledTogglePause                     = false;
-    bool pausedShowingAchievements                = false;
-    int  pausedAchievementsHoveredAchievement     = 0;
-    int  pausedAchievementsHoveredAchievementStep = 0;
+    bool      paused                                   = false;
+    bool      scheduledTogglePause                     = false;
+    bool      pausedShowingAchievements                = false;
+    int       pausedAchievementsHoveredAchievement     = 0;
+    int       pausedAchievementsHoveredAchievementStep = 0;
+    FrameGame showingStats                             = {};
 
     bool        scheduledSave = false;
     FrameVisual lastSaveAt    = {};
@@ -4423,14 +4424,28 @@ void DoUI(bool draw) {
     }
   };
 
+  bool _alreadyHandledClick = false;
+
   LAMBDA (bool, clicked, ()) {  ///
-    return !draw && Clay_Hovered() && (IsTouchPressed(ge.meta._latestActiveTouchID));
+    if (_alreadyHandledClick)
+      return false;
+    bool result
+      = !draw && Clay_Hovered() && (IsTouchPressed(ge.meta._latestActiveTouchID));
+    if (result)
+      _alreadyHandledClick = true;
+    return result;
   };
 
+  bool _alreadyHandledActivation = false;
+
   LAMBDA (bool, activated, (Clay_ElementId id)) {  ///
+    if (_alreadyHandledActivation)
+      return false;
     if (Clay_Hovered() || (g.ui.selectedElement.id == id.id)) {
       bool result = clicked();
       result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
+      if (result)
+        _alreadyHandledActivation = true;
       return result;
     }
     return false;
@@ -4645,9 +4660,15 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (void, componentStats, ()) {  ///
+    const int STATS_ENTRY_WIDTH = 240;
+
     CLAY({
       .layout{
-        .sizing{.width = CLAY_SIZING_FIXED(256)},
+        .sizing{
+          .width = CLAY_SIZING_FIXED(
+            STATS_ENTRY_WIDTH * 2 + GAP_BIG + 2 * PADDING_NINE_SLICE_FRAME
+          ),
+        },
         BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
         .childGap        = GAP_BIG,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -4665,44 +4686,46 @@ void DoUI(bool draw) {
       }
 
       // Primary / secondary buttons.
-      CLAY({.layout{
-        BF_CLAY_SIZING_GROW_X,
-        .childGap = GAP_SMALL,
-        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-      }}) {
-        FontBegin(&g.meta.fontStats);
+      if (0) {
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_X,
+          .childGap = GAP_SMALL,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
+          FontBegin(&g.meta.fontStats);
 
-        const bool clickedPrimary = componentButton(
-          {
-            .id                = CLAY_ID("button_stats_primary"),
-            .selected          = !g.run.showingSecondaryStats,
-            .paddingHorizontal = GAP_SMALL,
-          },
-          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_PRIMARY__CAPS, textColor);
+          const bool clickedPrimary = componentButton(
+            {
+              .id                = CLAY_ID("button_stats_primary"),
+              .selected          = !g.run.showingSecondaryStats,
+              .paddingHorizontal = GAP_SMALL,
+            },
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_PRIMARY__CAPS, textColor);
+            }
+          );
+
+          const bool clickedSecondary = componentButton(
+            {
+              .id                = CLAY_ID("button_stats_secondary"),
+              .selected          = g.run.showingSecondaryStats,
+              .paddingHorizontal = GAP_SMALL,
+            },
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_SECONDARY__CAPS, textColor);
+            }
+          );
+
+          FontEnd();
+
+          if (clickedPrimary && g.run.showingSecondaryStats) {
+            PlaySound(Sound_UI_CLICK);
+            g.run.showingSecondaryStats = false;
           }
-        );
-
-        const bool clickedSecondary = componentButton(
-          {
-            .id                = CLAY_ID("button_stats_secondary"),
-            .selected          = g.run.showingSecondaryStats,
-            .paddingHorizontal = GAP_SMALL,
-          },
-          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_SECONDARY__CAPS, textColor);
+          if (clickedSecondary && !g.run.showingSecondaryStats) {
+            PlaySound(Sound_UI_CLICK);
+            g.run.showingSecondaryStats = true;
           }
-        );
-
-        FontEnd();
-
-        if (clickedPrimary && g.run.showingSecondaryStats) {
-          PlaySound(Sound_UI_CLICK);
-          g.run.showingSecondaryStats = false;
-        }
-        if (clickedSecondary && !g.run.showingSecondaryStats) {
-          PlaySound(Sound_UI_CLICK);
-          g.run.showingSecondaryStats = true;
         }
       }
 
@@ -4756,29 +4779,39 @@ void DoUI(bool draw) {
         }
       };
 
-      // Current level.
-      if (!g.run.showingSecondaryStats) {
-        componentStatsEntry(
-          glib->ui_shop_current_level_icon_texture_id(),
-          Loc_UI_CURRENT_LEVEL,
-          g.run.state.level,
-          StatType_INVALID
-        );
-      }
-
       // Stats.
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_XY,
-        .childGap        = GAP_SMALL,
-        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-      }})
-      FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
-        const auto type = (StatType)(i + 2);
-        const auto fb   = glib->stats()->Get(type);
-        if (!fb->is_hidden() && (fb->is_secondary() == g.run.showingSecondaryStats)) {
-          componentStatsEntry(
-            fb->icon_texture_id(), fb->name_locale(), g.run.state.stats[type], type
-          );
+        .childGap = GAP_BIG,
+      }}) {
+        FOR_RANGE (int, columnIndex, 2) {
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_XY,
+            .childGap        = GAP_SMALL,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
+            // Current level.
+            if (!columnIndex) {
+              CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(STATS_ENTRY_WIDTH)}}}) {
+                componentStatsEntry(
+                  glib->ui_shop_current_level_icon_texture_id(),
+                  Loc_UI_CURRENT_LEVEL,
+                  g.run.state.level,
+                  StatType_INVALID
+                );
+              }
+            }
+
+            FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
+              const auto type = (StatType)(i + 2);
+              const auto fb   = glib->stats()->Get(type);
+              if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
+                componentStatsEntry(
+                  fb->icon_texture_id(), fb->name_locale(), g.run.state.stats[type], type
+                );
+              }
+            }
+          }
         }
       }
     }
@@ -6171,7 +6204,9 @@ void DoUI(bool draw) {
       }
     );
 
-    if (clickedStats) {
+    if (clickedStats && !g.meta.showingStats.IsSet()) {
+      PlaySound(Sound_UI_CLICK);
+      g.meta.showingStats.SetNow();
     }
   };
 
@@ -6214,7 +6249,7 @@ void DoUI(bool draw) {
           BF_CLAY_SIZING_GROW_XY,
           BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
             PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
-          )
+          ),
         },
         .floating{
           .zIndex             = zIndex,
@@ -6784,7 +6819,8 @@ void DoUI(bool draw) {
   // Picked up item.
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
     onControlsContextShow(ControlsContext_PICKED_UP_ITEM);
-    auto group = MakeControlsGroup();
+    auto group           = MakeControlsGroup();
+    auto groupTopButtons = MakeControlsGroup();
 
     CLAY({
       .layout{
@@ -6799,86 +6835,82 @@ void DoUI(bool draw) {
     }) {
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         componentPlayerCoins();
+        BF_CLAY_SPACER_HORIZONTAL;
+        componentButtonStats(groupTopButtons);
 
         componentScreenName_floatingInTheCenter(Loc_UI_ITEM_FOUND, []() {});
       });
 
       BF_CLAY_SPACER_VERTICAL;
 
-      // Columns (1) picked up item, (2) stats
+      // Picked up item.
       CLAY({.layout{
-        .childGap = GAP_BIG,
-        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .childGap        = GAP_SMALL,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
       }}) {
-        // Column 1. Picked up item.
-        CLAY({.layout{
-          .childGap        = GAP_SMALL,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }}) {
-          const auto type = g.run.state.pickedUpItem.toPick;
-          const auto fb   = fb_items->Get(type);
+        const auto type = g.run.state.pickedUpItem.toPick;
+        const auto fb   = fb_items->Get(type);
 
-          // Item.
-          componentUniversalCard({
-            .item           = type,
-            .affectedByGame = true,
-            .setFixedHeight = true,
+        // Item.
+        componentUniversalCard({
+          .item           = type,
+          .affectedByGame = true,
+          .setFixedHeight = true,
+        });
+
+        // Take and Recycle buttons.
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_X,
+          .childGap = GAP_BIG,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
+          auto       tookId = CLAY_ID("button_picked_up_item_take");
+          const bool took   = componentButton(
+            {.id = tookId, .group = group},
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({.texId = glib->ui_icon_take_texture_id()});
+            }
+          );
+          markControlAsDefault(ControlsContext_PICKED_UP_ITEM, tookId);
+
+          const int recyclePrice = ToRecyclePrice(fb->price());
+
+          const bool recycled = componentButtonRecycle({
+            .id    = CLAY_ID("button_picked_up_item_recycle"),
+            .group = group,
+            .price = recyclePrice,
           });
 
-          // Take and Recycle buttons.
-          CLAY({.layout{
-            BF_CLAY_SIZING_GROW_X,
-            .childGap = GAP_BIG,
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          }}) {
-            auto       tookId = CLAY_ID("button_picked_up_item_take");
-            const bool took   = componentButton(
-              {.id = tookId, .group = group},
-              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({.texId = glib->ui_icon_take_texture_id()});
-              }
-            );
-            markControlAsDefault(ControlsContext_PICKED_UP_ITEM, tookId);
+          if (took)
+            AddItem(g.run.state.pickedUpItem.toPick);
+          else if (recycled)
+            ChangeCoins(recyclePrice);
 
-            const int recyclePrice = ToRecyclePrice(fb->price());
+          if (took || recycled) {
+            PlaySound(Sound_UI_CLICK);
 
-            const bool recycled = componentButtonRecycle({
-              .id    = CLAY_ID("button_picked_up_item_recycle"),
-              .group = group,
-              .price = recyclePrice,
-            });
+            g.run.state.pickedUpItem = {};
 
-            if (took)
-              AddItem(g.run.state.pickedUpItem.toPick);
-            else if (recycled)
-              ChangeCoins(recyclePrice);
-
-            if (took || recycled) {
-              PlaySound(Sound_UI_CLICK);
-
-              g.run.state.pickedUpItem = {};
-
-              g.run.state.crates--;
-              if (g.run.state.crates) {
-                g.run.scheduledPickedUpItems      = true;
-                g.run.scheduledPickedUpItemsReset = true;
-              }
-              else {
-                g.run.scheduledUpgrades      = true;
-                g.run.scheduledUpgradesReset = true;
-              }
-
-              Save();
+            g.run.state.crates--;
+            if (g.run.state.crates) {
+              g.run.scheduledPickedUpItems      = true;
+              g.run.scheduledPickedUpItemsReset = true;
             }
+            else {
+              g.run.scheduledUpgrades      = true;
+              g.run.scheduledUpgradesReset = true;
+            }
+
+            Save();
           }
         }
-
-        // Column 2. Stats.
-        componentStats();
       }
 
       BF_CLAY_SPACER_VERTICAL;
     }
+
+    ControlsGroupConnect(groupTopButtons, Direction_DOWN, group);
+    ControlsGroupConnect(groupTopButtons, Direction_UP, group);
   }
   // Upgrades.
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
@@ -7543,21 +7575,16 @@ void DoUI(bool draw) {
   else
     INVALID_PATH;
 
-  // Window is inactive.
-  if (ge.meta.windowIsInactive) {  ///
-    CLAY({
-      .floating{
-        .zIndex   = zIndex,
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
-    }) {}
-  }
-
   // Pause / Achievements.
   if (g.meta.paused) {
     CLAY(  ///
       {
+        .layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+            PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          ),
+        },
         .floating{
           .zIndex = zIndex,
           .attachPoints{
@@ -7786,132 +7813,141 @@ void DoUI(bool draw) {
       // Pause.
       else {  ///
         onControlsContextShow(ControlsContext_PAUSE);
-        auto groupButtons = MakeControlsGroup();
-        auto groupWeapons = MakeControlsGroup();
+        auto groupButtons    = MakeControlsGroup();
+        auto groupWeapons    = MakeControlsGroup();
+        auto groupTopButtons = MakeControlsGroup();
 
-        // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
-          .childGap = GAP_BIG * 2,
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          BF_CLAY_SIZING_GROW_XY,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          // 1. Wave + buttons.
-          CLAY({.layout{
-            .sizing{.width = CLAY_SIZING_FIXED(400)},
-            .childGap = GAP_BIG,
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-          }}) {
-            CLAY({}) {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, TRANSPARENT_BLACK);
-              BF_CLAY_TEXT(
-                TextFormat(" %d", g.run.state.waveIndex + 1), TRANSPARENT_BLACK
-              );
-            }
+          componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_SPACER_HORIZONTAL;
+            componentButtonStats(groupTopButtons);
+          });
 
+          BF_CLAY_SPACER_VERTICAL;
+
+          // Columns. Wave + buttons, weapons + items, stats.
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_XY,
+            .childGap = GAP_BIG * 2,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          }}) {
+            // 1. Buttons.
             CLAY({.layout{
-              BF_CLAY_SIZING_GROW_X,
-              .childGap        = GAP_BIG,
+              .sizing{.width = CLAY_SIZING_FIXED(400)},
+              .childGap = GAP_BIG,
+              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
-              FontBegin(&g.meta.fontUIBig);
+              CLAY({}) {
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, TRANSPARENT_BLACK);
+                BF_CLAY_TEXT(
+                  TextFormat(" %d", g.run.state.waveIndex + 1), TRANSPARENT_BLACK
+                );
+              }
 
-              const auto resumeButtonId = CLAY_ID("button_pause_resume");
-              markControlAsDefault(ControlsContext_PAUSE, resumeButtonId);
-              if (!g.ui.selectedElement.id)
-                g.ui.selectedElement = resumeButtonId;
+              CLAY({.layout{
+                BF_CLAY_SIZING_GROW_X,
+                .childGap        = GAP_BIG,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+              }}) {
+                FontBegin(&g.meta.fontUIBig);
 
-              const bool resumed = componentButton(
-                {
-                  .id    = resumeButtonId,
-                  .group = groupButtons,
-                  .growX = true,
-                },
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, textColor);
-                }
-              );
+                const auto resumeButtonId = CLAY_ID("button_pause_resume");
+                markControlAsDefault(ControlsContext_PAUSE, resumeButtonId);
+                if (!g.ui.selectedElement.id)
+                  g.ui.selectedElement = resumeButtonId;
 
-              ControlsGroupNewRow(groupButtons);
+                const bool resumed = componentButton(
+                  {
+                    .id    = resumeButtonId,
+                    .group = groupButtons,
+                    .growX = true,
+                  },
+                  [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, textColor);
+                  }
+                );
 
-              const bool restarted = componentButton(
-                {
-                  .id    = CLAY_ID("button_pause_restart"),
-                  .group = groupButtons,
-                  .growX = true,
-                },
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, textColor);
-                }
-              );
+                ControlsGroupNewRow(groupButtons);
 
-              ControlsGroupNewRow(groupButtons);
+                const bool restarted = componentButton(
+                  {
+                    .id    = CLAY_ID("button_pause_restart"),
+                    .group = groupButtons,
+                    .growX = true,
+                  },
+                  [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, textColor);
+                  }
+                );
 
-              const bool newRun = componentButton(
-                {
-                  .id    = CLAY_ID("button_pause_new_run"),
-                  .group = groupButtons,
-                  .growX = true,
-                },
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, textColor);
-                }
-              );
+                ControlsGroupNewRow(groupButtons);
 
-              ControlsGroupNewRow(groupButtons);
+                const bool newRun = componentButton(
+                  {
+                    .id    = CLAY_ID("button_pause_new_run"),
+                    .group = groupButtons,
+                    .growX = true,
+                  },
+                  [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, textColor);
+                  }
+                );
 
-              const bool achievements = componentButton(
-                {
-                  .id    = CLAY_ID("button_pause_achievements"),
-                  .group = groupButtons,
-                  .growX = true,
-                },
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS__CAPS, textColor);
-                  int percent = GetAchievementsCompletedPercent();
-                  if (percent > 0)
-                    BF_CLAY_TEXT(TextFormat(" %d%%", percent), textColor);
-                }
-              );
+                ControlsGroupNewRow(groupButtons);
 
-              bool quit = false;
+                const bool achievements = componentButton(
+                  {
+                    .id    = CLAY_ID("button_pause_achievements"),
+                    .group = groupButtons,
+                    .growX = true,
+                  },
+                  [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS__CAPS, textColor);
+                    int percent = GetAchievementsCompletedPercent();
+                    if (percent > 0)
+                      BF_CLAY_TEXT(TextFormat(" %d%%", percent), textColor);
+                  }
+                );
+
+                bool quit = false;
 #if defined(SDL_PLATFORM_DESKTOP)
-              ControlsGroupNewRow(groupButtons);
+                ControlsGroupNewRow(groupButtons);
 
-              quit = componentButton(
-                {
-                  .id    = CLAY_ID("button_pause_quit"),
-                  .group = groupButtons,
-                  .growX = true,
-                },
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, textColor);
-                }
-              );
+                quit = componentButton(
+                  {
+                    .id    = CLAY_ID("button_pause_quit"),
+                    .group = groupButtons,
+                    .growX = true,
+                  },
+                  [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, textColor);
+                  }
+                );
 #endif
 
-              if (resumed)
-                g.meta.scheduledTogglePause = true;
-              if (restarted)
-                g.run.reload = true;
-              if (newRun)
-                g.run.scheduledNewRun = true;
-              if (achievements)
-                g.meta.pausedShowingAchievements = true;
-              if (quit)
-                ge.meta.quitScheduled = true;
+                if (resumed)
+                  g.meta.scheduledTogglePause = true;
+                if (restarted)
+                  g.run.reload = true;
+                if (newRun)
+                  g.run.scheduledNewRun = true;
+                if (achievements)
+                  g.meta.pausedShowingAchievements = true;
+                if (quit)
+                  ge.meta.quitScheduled = true;
 
-              if (resumed || restarted || newRun || achievements || quit)
-                PlaySound(Sound_UI_CLICK);
+                if (resumed || restarted || newRun || achievements || quit)
+                  PlaySound(Sound_UI_CLICK);
 
-              FontEnd();
+                FontEnd();
+              }
             }
-          }
 
-          CLAY({.layout{
-            .childGap = GAP_BIG,
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          }}) {
-            // 2. Weapons + items.
+            // Weapons + items.
             int weaponsCount = 0;
             for (auto& weapon : g.run.state.weapons) {
               if (weapon.type)
@@ -7957,15 +7993,86 @@ void DoUI(bool draw) {
               // Items.
               componentItemsGrid({.group = groupWeapons, .itemsX = 6});
             }
-
-            // 3. Stats.
-            componentStats();
           }
+
+          BF_CLAY_SPACER_VERTICAL;
         }
 
+        ControlsGroupConnect(groupTopButtons, Direction_DOWN, groupButtons);
+        ControlsGroupConnect(groupWeapons, Direction_UP, groupTopButtons);
+        ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTopButtons);
+        ControlsGroupConnect(groupButtons, Direction_UP, groupTopButtons);
+        ControlsGroupConnect(groupButtons, Direction_DOWN, groupTopButtons);
         ControlsGroupConnect(groupButtons, Direction_RIGHT, groupWeapons);
       }
     }
+  }
+
+  auto groupStats = MakeControlsGroup();
+
+  // Stats.
+  if (g.meta.showingStats.IsSet()) {
+    zIndex += 2;
+
+    componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
+      if (clicked())
+        g.meta.showingStats = {};
+    });
+
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
+        BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      },
+      .floating{
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+        .attachTo           = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_SPACER_HORIZONTAL;
+
+        // Close button.
+        const bool cancelled = componentButton(
+          {.id = CLAY_ID("stats_cancel"), .group = groupStats},
+          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_IMAGE({.texId = glib->ui_icon_cancel_big_texture_id()});
+          }
+        );
+        if (cancelled)
+          g.meta.showingStats = {};
+      });
+
+      // * fade in out overlay
+      // * sliding?
+      // * opening stats panel changes keyboard ui nav focus to close button
+
+      BF_CLAY_SPACER_VERTICAL;
+      CLAY({
+        .floating{
+          .zIndex = zIndex,
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+          },
+          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+          .attachTo           = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        componentStats();
+      }
+      BF_CLAY_SPACER_VERTICAL;
+    }
+    zIndex -= 2;
   }
 
   // Just unlocked achievement.
@@ -8079,100 +8186,115 @@ void DoUI(bool draw) {
   }
 
   // Control groups navigation.
-  if (uiElementSwitchDirection) {  ///
-    auto toSelect = g.ui.selectedElement;
+  {
+    if (uiElementSwitchDirection) {  ///
+      auto toSelect = g.ui.selectedElement;
 
-    auto group = g.ui.controlsGroupsFirst;
-    while (group) {
-      ASSERT(group->next != group);
-      ASSERT(group->prev != group);
+      auto group = g.ui.controlsGroupsFirst;
+      while (group) {
+        ASSERT(group->next != group);
+        ASSERT(group->prev != group);
 
-      auto dim = group->first;
+        auto dim = group->first;
 
-      int preferredDimIndex = -1;
-      while (dim) {
-        preferredDimIndex++;
+        int preferredDimIndex = -1;
+        while (dim) {
+          preferredDimIndex++;
 
-        ASSERT(dim->next != dim);
-        ASSERT(dim->prev != dim);
+          ASSERT(dim->next != dim);
+          ASSERT(dim->prev != dim);
 
-        auto elem = dim->first;
+          auto elem = dim->first;
 
-        int preferredElemIndex = -1;
-        while (elem) {
-          preferredElemIndex++;
+          int preferredElemIndex = -1;
+          while (elem) {
+            preferredElemIndex++;
 
-          ASSERT(elem->next != elem);
-          ASSERT(elem->prev != elem);
+            ASSERT(elem->next != elem);
+            ASSERT(elem->prev != elem);
 
-          if (elem->id.id == g.ui.selectedElement.id) {
-            if (uiElementSwitchDirection == Direction_RIGHT) {
-              if (elem->next)
-                toSelect = elem->next->id;
-              else {
-                auto to = group->connectionsPerDirection[(int)Direction_RIGHT - 1];
-                if (to) {
-                  auto gto = _GetControlsGroup(to);
-                  toSelect = gto->first->first->id;
+            if (elem->id.id == g.ui.selectedElement.id) {
+              if (uiElementSwitchDirection == Direction_RIGHT) {
+                if (elem->next)
+                  toSelect = elem->next->id;
+                else {
+                  auto to = group->connectionsPerDirection[(int)Direction_RIGHT - 1];
+                  if (to) {
+                    auto gto = _GetControlsGroup(to);
+                    toSelect = gto->first->first->id;
+                  }
                 }
               }
-            }
-            else if (uiElementSwitchDirection == Direction_LEFT) {
-              if (elem->prev)
-                toSelect = elem->prev->id;
-              else {
-                auto to = group->connectionsPerDirection[(int)Direction_LEFT - 1];
-                if (to) {
-                  auto gto = _GetControlsGroup(to);
-                  toSelect = gto->first->last->id;
+              else if (uiElementSwitchDirection == Direction_LEFT) {
+                if (elem->prev)
+                  toSelect = elem->prev->id;
+                else {
+                  auto to = group->connectionsPerDirection[(int)Direction_LEFT - 1];
+                  if (to) {
+                    auto gto = _GetControlsGroup(to);
+                    toSelect = gto->first->last->id;
+                  }
                 }
               }
-            }
-            else if (uiElementSwitchDirection == Direction_DOWN) {
-              if (dim->next && dim->next->first) {
-                toSelect
-                  = _GetPreferredControlsEntry(dim->next->first, preferredElemIndex)->id;
-              }
-              else {
-                auto to = group->connectionsPerDirection[(int)Direction_DOWN - 1];
-                if (to) {
-                  auto gto = _GetControlsGroup(to);
-                  toSelect = gto->first->first->id;
+              else if (uiElementSwitchDirection == Direction_DOWN) {
+                if (dim->next && dim->next->first) {
+                  toSelect
+                    = _GetPreferredControlsEntry(dim->next->first, preferredElemIndex)
+                        ->id;
+                }
+                else {
+                  auto to = group->connectionsPerDirection[(int)Direction_DOWN - 1];
+                  if (to) {
+                    auto gto = _GetControlsGroup(to);
+                    toSelect = gto->first->first->id;
+                  }
                 }
               }
-            }
-            else if (uiElementSwitchDirection == Direction_UP) {
-              if (dim->prev) {
-                toSelect
-                  = _GetPreferredControlsEntry(dim->prev->first, preferredElemIndex)->id;
-              }
-              else {
-                auto to = group->connectionsPerDirection[(int)Direction_UP - 1];
-                if (to) {
-                  auto gto = _GetControlsGroup(to);
-                  toSelect = gto->last->first->id;
+              else if (uiElementSwitchDirection == Direction_UP) {
+                if (dim->prev) {
+                  toSelect
+                    = _GetPreferredControlsEntry(dim->prev->first, preferredElemIndex)
+                        ->id;
+                }
+                else {
+                  auto to = group->connectionsPerDirection[(int)Direction_UP - 1];
+                  if (to) {
+                    auto gto = _GetControlsGroup(to);
+                    toSelect = gto->last->first->id;
+                  }
                 }
               }
+              else
+                INVALID_PATH;
             }
-            else
-              INVALID_PATH;
+
+            elem = elem->next;
           }
-
-          elem = elem->next;
+          dim = dim->next;
         }
-        dim = dim->next;
+        group = group->next;
       }
-      group = group->next;
+
+      if (!draw && (g.ui.selectedElement.id != toSelect.id)) {
+        g.ui.selectedElement = toSelect;
+        PlaySound(Sound_UI_HOVER_SMALL);
+      }
     }
 
-    if (!draw && (g.ui.selectedElement.id != toSelect.id)) {
-      g.ui.selectedElement = toSelect;
-      PlaySound(Sound_UI_HOVER_SMALL);
-    }
+    g.ui.controlsGroupsFirst = nullptr;
+    g.ui.controlsGroupsLast  = nullptr;
   }
 
-  g.ui.controlsGroupsFirst = nullptr;
-  g.ui.controlsGroupsLast  = nullptr;
+  // Window is inactive.
+  if (ge.meta.windowIsInactive) {  ///
+    CLAY({
+      .floating{
+        .zIndex   = zIndex,
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+    }) {}
+  }
 
   ASSERT_FALSE(g.ui.overriddenFont);
   auto drawCommands = Clay_EndLayout();

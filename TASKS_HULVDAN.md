@@ -44,13 +44,14 @@ x ui keyboard: picked up item
 x ui keyboard: new run
 x shop rework
 x clean level up screen
+x level up show PLAYER_COINS
+x stats show all stats at the same time big
 
-* level up show PLAYER_COINS
+* stats to the right
+* stats button works
 * sparkles that highlight the weapons can be upgraded
 * outline with offset down
 * fix: shop: weapons details to the left
-* show stats in shop
-* show stats in level up
 * fix end
 * ui keyboard: end
 * ui keyboard: shop: SPACE / RETURN should work for weapons
