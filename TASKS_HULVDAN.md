@@ -57,6 +57,7 @@ x end: show stats
 x ui keyboard: shop: SPACE / RETURN should work for weapons
 x ui keyboard: shop: don't add hidden weapons to group
 x ui keyboard: shop: when context menu is active, don't process shop context at all
+x fix: new run: can't click on buttons
 
 * ui keyboard: SPACE / RETURN should work in weapon details
 * ui keyboard:
@@ -73,7 +74,6 @@ x ui keyboard: shop: when context menu is active, don't process shop context at 
 * shop: mark default: 2 3 4 1 reroll
 * ui keyboard: after pressing WASD make default button focused
 * ui keyboard: shop: change selected button after buying/recycling/combining
-* fix: new run: can't click on buttons
 * touch: releasing finger while showing details
   -> details are sticked (or weapon details are shown up)
 * touch: selecting weapon details only when released touch.
