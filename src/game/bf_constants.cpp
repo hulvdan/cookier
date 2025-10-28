@@ -244,10 +244,59 @@ const Color textColorsPerTier_[]{
 };
 VIEW_FROM_ARRAY_DANGER(textColorsPerTier);
 
+constexpr f32 _PrecalcFlashingX(lframe dur, int times, f32 ratio) {
+  return (f32)(dur.value / (times * ratio + (times - 1) * (1 - ratio)));
+}
+
+Color GetFlashingColor(
+  Color  original,
+  Color  flashColor,
+  auto   frame,
+  lframe dur,
+  int    times,
+  f32    ratio,
+  f32    precalcX
+) {  ///
+  if (times <= 0)
+    return original;
+  if (!frame.IsSet())
+    return original;
+
+  const auto e_ = frame.Elapsed();
+
+  if (e_ < dur) {
+    auto e          = (f32)e_.value;
+    bool isFlashing = true;
+    FOR_RANGE (int, i, times * 2 - 1) {
+      if (isFlashing)
+        e -= precalcX * ratio;
+      else
+        e -= precalcX * (1 - ratio);
+
+      isFlashing = !isFlashing;
+      if (e < 0)
+        break;
+    }
+
+    if (!isFlashing)
+      return flashColor;
+  }
+
+  return original;
+}
+
 constexpr f32  GOLD_WIGGLING_LOGICAL_AMPLITUDE    = 10.0f;
 constexpr f32  WEAPONS_WIGGLING_LOGICAL_AMPLITUDE = 15.0f;
 constexpr auto ERROR_WIGGLING_FRAMES              = lframe::FromSeconds(0.3f);
 constexpr int  ERROR_WIGGLING_TIMES               = 4;
+
+constexpr f32 ERROR_GOLD_FLASHING_TIMES        = 1;
+constexpr f32 ERROR_GOLD_FLASH_NOT_FLASH_RATIO = 0.75f;
+constexpr f32 ERROR_GOLD_PRECALC_X             = _PrecalcFlashingX(
+  ERROR_WIGGLING_FRAMES,
+  ERROR_GOLD_FLASHING_TIMES,
+  ERROR_GOLD_FLASH_NOT_FLASH_RATIO
+);
 
 //
 // In case of:
@@ -261,10 +310,11 @@ constexpr int  ERROR_WIGGLING_TIMES               = 4;
 constexpr auto DAMAGED_FLASHING_FRAMES       = lframe::FromSeconds(0.15f);
 constexpr int  DAMAGED_FLASHING_TIMES        = 1;
 constexpr f32  DAMAGED_FLASH_NOT_FLASH_RATIO = 0.5f;
-constexpr f32  DAMAGED_FLASH_PRECALC_X
-  = (f32)DAMAGED_FLASHING_FRAMES.value
-    / (DAMAGED_FLASHING_TIMES * DAMAGED_FLASH_NOT_FLASH_RATIO //
-       + (DAMAGED_FLASHING_TIMES - 1) * (1 - DAMAGED_FLASH_NOT_FLASH_RATIO));
+constexpr f32  DAMAGED_FLASH_PRECALC_X       = _PrecalcFlashingX(
+  DAMAGED_FLASHING_FRAMES,
+  DAMAGED_FLASHING_TIMES,
+  DAMAGED_FLASH_NOT_FLASH_RATIO
+);
 
 constexpr auto ANIMATION_0_FRAMES = lframe::FromSeconds(0.2f);
 constexpr auto ANIMATION_1_FRAMES = lframe::FromSeconds(0.5f);
