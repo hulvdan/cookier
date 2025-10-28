@@ -4685,50 +4685,6 @@ void DoUI(bool draw) {
         BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS__CAPS);
       }
 
-      // Primary / secondary buttons.
-      if (0) {
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_X,
-          .childGap = GAP_SMALL,
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-        }}) {
-          FontBegin(&g.meta.fontStats);
-
-          const bool clickedPrimary = componentButton(
-            {
-              .id                = CLAY_ID("button_stats_primary"),
-              .selected          = !g.run.showingSecondaryStats,
-              .paddingHorizontal = GAP_SMALL,
-            },
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_PRIMARY__CAPS, textColor);
-            }
-          );
-
-          const bool clickedSecondary = componentButton(
-            {
-              .id                = CLAY_ID("button_stats_secondary"),
-              .selected          = g.run.showingSecondaryStats,
-              .paddingHorizontal = GAP_SMALL,
-            },
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_STATS_SECONDARY__CAPS, textColor);
-            }
-          );
-
-          FontEnd();
-
-          if (clickedPrimary && g.run.showingSecondaryStats) {
-            PlaySound(Sound_UI_CLICK);
-            g.run.showingSecondaryStats = false;
-          }
-          if (clickedSecondary && !g.run.showingSecondaryStats) {
-            PlaySound(Sound_UI_CLICK);
-            g.run.showingSecondaryStats = true;
-          }
-        }
-      }
-
       LAMBDA (
         void, componentStatsEntry, (int iconTexId, int locale, int value, StatType stat)
       )
