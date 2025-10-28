@@ -46,9 +46,16 @@ x shop rework
 x clean level up screen
 x level up show PLAYER_COINS
 x stats show all stats at the same time big
+x stats to the right
 
-* stats to the right
+* stats: sliding + alpha
+* stats: pressing TAB button
+* stats: button icon `<-|` so that it looks like TAB
+* stats: closing stats by ESC or TAB
+* stats: fade in out overlay
 * stats button works
+* stats: opening stats panel changes keyboard ui nav focus to close button
+* end: show stats
 * sparkles that highlight the weapons can be upgraded
 * outline with offset down
 * fix: shop: weapons details to the left
