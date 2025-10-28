@@ -4805,11 +4805,11 @@ void DoUI(bool draw) {
         .tier     = tier,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
-        // if (data.canHover) {
-        //   ButtonSFX(draw, data.id, Clay_Hovered());
-        //   if (activated(data.id))
-        //     result = true;
-        // }
+        if (data.canHover) {
+          ButtonSFX(draw, data.id, Clay_Hovered());
+          if (activated(data.id))
+            result = true;
+        }
 
         if (!onlyOneOrNone) {
           if (data.hidden == ComponentUniversalSlotHiddenType_SHOW_LOCK)
@@ -6522,8 +6522,8 @@ void DoUI(bool draw) {
               const bool selected = ((i + 1) == (int)p.difficulty);
 
               CLAY({}) {
-                auto slotId = CLAY_IDI("new_run_difficulty", i);
-                componentUniversalSlot({
+                const auto slotId            = CLAY_IDI("new_run_difficulty", i);
+                const bool clickedDifficulty = componentUniversalSlot({
                   .id         = slotId,
                   .group      = groupDifficulties,
                   .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
@@ -6533,7 +6533,7 @@ void DoUI(bool draw) {
                 });
 
                 if (!isLocked) {
-                  if (activated(slotId)) {
+                  if (clickedDifficulty) {
                     PlaySound(Sound_UI_CLICK);
                     p.difficulty = (DifficultyType)(i + 1);
                     Save();
@@ -6601,8 +6601,8 @@ void DoUI(bool draw) {
 
                     const int tier = GetBuildTier((BuildType)(t + 1));
 
-                    const auto slotId = CLAY_IDI("new_run_build", t);
-                    componentUniversalSlot({
+                    const auto slotId       = CLAY_IDI("new_run_build", t);
+                    const bool clickedBuild = componentUniversalSlot({
                       .id       = slotId,
                       .group    = groupBuilds,
                       .build    = (BuildType)(isLocked ? 0 : t + 1),
@@ -6612,7 +6612,7 @@ void DoUI(bool draw) {
                     });
 
                     if (!isLocked) {
-                      if (activated(slotId)) {
+                      if (clickedBuild) {
                         PlaySound(Sound_UI_CLICK);
                         if (p.build != (BuildType)(t + 1)) {
                           p.build  = (BuildType)(t + 1);
@@ -6689,8 +6689,8 @@ void DoUI(bool draw) {
                 }
 
                 CLAY({}) {
-                  const auto slotId = CLAY_IDI("new_run_weapon", t);
-                  componentUniversalSlot({
+                  const auto slotId        = CLAY_IDI("new_run_weapon", t);
+                  const bool clickedWeapon = componentUniversalSlot({
                     .id    = slotId,
                     .group = groupWeapons,
                     .weapon
@@ -6712,7 +6712,7 @@ void DoUI(bool draw) {
                   }
 
                   if (exists && !isLocked) {
-                    if (activated(slotId)) {
+                    if (clickedWeapon) {
                       PlaySound(Sound_UI_CLICK);
                       p.weapon = (WeaponType)fb_buildWeapons->Get(t);
                       Save();
