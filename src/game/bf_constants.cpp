@@ -290,7 +290,7 @@ constexpr f32  WEAPONS_WIGGLING_LOGICAL_AMPLITUDE = 15.0f;
 constexpr auto ERROR_WIGGLING_FRAMES              = lframe::FromSeconds(0.3f);
 constexpr int  ERROR_WIGGLING_TIMES               = 4;
 
-constexpr f32 ERROR_GOLD_FLASHING_TIMES        = 1;
+constexpr f32 ERROR_GOLD_FLASHING_TIMES        = 3;
 constexpr f32 ERROR_GOLD_FLASH_NOT_FLASH_RATIO = 0.75f;
 constexpr f32 ERROR_GOLD_PRECALC_X             = _PrecalcFlashingX(
   ERROR_WIGGLING_FRAMES,
