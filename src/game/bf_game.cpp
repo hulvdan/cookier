@@ -6666,6 +6666,7 @@ void DoUI(bool draw) {
 
       BF_CLAY_SPACER_VERTICAL;
 
+      // Selecting difficulty.
       if (g.ui.newRunStep == 0) {
         const bool isLocked
           = ((int)p.difficulty - 1) > p.achievements[AchievementType_DIFFICULTY].value;
@@ -6694,7 +6695,7 @@ void DoUI(bool draw) {
               = i_ > p.achievements[AchievementType_DIFFICULTY].value + 1;
             auto fb = fb_difficulties->Get(i);
 
-            const auto slotID = CLAY_IDI("new_run_entry", i);
+            const auto slotID = CLAY_IDI("new_run_difficulty", i);
 
             if (p.difficulty == i) {
               markControlAsDefault(slotID);
@@ -6703,7 +6704,6 @@ void DoUI(bool draw) {
             }
 
             const bool selected = (CURRENT_CONTEXT.focused.id == slotID.id);
-
             if (selected)
               p.difficulty = i;
 
@@ -6734,6 +6734,7 @@ void DoUI(bool draw) {
           }
         });
       }
+      // Selecting build.
       else if (g.ui.newRunStep == 1) {
         const bool isLocked = (bool)p.lockedBuilds[p.build].achievement;
 
@@ -6746,10 +6747,10 @@ void DoUI(bool draw) {
 
         BF_CLAY_SPACER_VERTICAL;
 
-        const int BUILDS_X = 8;
-        const int BUILDS_Y = CeilDivision((int)fb_builds->size() - 1, BUILDS_X);
-
         componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
+          const int BUILDS_X = 8;
+          const int BUILDS_Y = CeilDivision((int)fb_builds->size() - 1, BUILDS_X);
+
           FOR_RANGE (int, y, BUILDS_Y) {
             ControlsGroupNewRow(group);
 
@@ -6780,7 +6781,7 @@ void DoUI(bool draw) {
                 .group  = group,
                 .build  = (isLocked ? BuildType_INVALID : build),
                 .hidden = HiddenType_SHOW_LOCK,
-                .tier   = (isLocked ? 0 : GetBuildTier(build)),
+                .tier   = (isLocked ? 0 : -1),
               });
 
               if (isLocked && chosen) {
@@ -6803,6 +6804,7 @@ void DoUI(bool draw) {
           }
         });
       }
+      // Selecting weapon.
       else if (g.ui.newRunStep == 2) {
         const bool isLocked = (bool)p.lockedWeapons[p.weapon].achievement;
 
@@ -6815,10 +6817,10 @@ void DoUI(bool draw) {
 
         BF_CLAY_SPACER_VERTICAL;
 
-        const int WEAPONS_X = 8;
-        const int WEAPONS_Y = CeilDivision(MAX_BUILD_WEAPONS, WEAPONS_X);
-
         componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
+          const int WEAPONS_X = 8;
+          const int WEAPONS_Y = CeilDivision(MAX_BUILD_WEAPONS, WEAPONS_X);
+
           auto fb_buildWeapons = fb_builds->Get(p.build)->starting_weapon_types();
 
           FOR_RANGE (int, y, WEAPONS_Y) {
@@ -6828,25 +6830,30 @@ void DoUI(bool draw) {
             FOR_RANGE (int, x, WEAPONS_X) {
               const int t = y * WEAPONS_X + x;
 
-              const bool exists = fb_buildWeapons && (t < fb_buildWeapons->size());
+              if (t >= fb_buildWeapons->size())
+                break;
 
-              bool isLocked = false;
-
-              bool selected = false;
-              if (exists) {
-                const auto weaponType = (WeaponType)fb_buildWeapons->Get(t);
-                selected              = (p.weapon == weaponType);
-                isLocked              = p.lockedWeapons[weaponType];
-              }
+              const auto weapon   = (WeaponType)fb_buildWeapons->Get(t);
+              const bool isLocked = (bool)p.lockedWeapons[weapon].achievement;
 
               const auto slotID = CLAY_IDI("new_run_weapon", t);
+
+              if (p.weapon == weapon) {
+                markControlAsDefault(slotID);
+                if (CURRENT_CONTEXT.focused.id == 0)
+                  CURRENT_CONTEXT.focused = slotID;
+              }
+
+              const bool selected = (CURRENT_CONTEXT.focused.id == slotID.id);
+              if (selected)
+                p.weapon = weapon;
+
               const bool chosen = componentUniversalSlot({
                 .id     = slotID,
                 .group  = group,
-                .weapon = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) : 0),
+                .weapon = (WeaponType)(isLocked ? 0 : fb_buildWeapons->Get(t)),
                 .hidden = HiddenType_SHOW_LOCK,
-                .tier   = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
-                .canHover = exists && !isLocked,
+                .tier   = (isLocked ? 0 : -1),
               });
 
               if (isLocked && chosen) {
@@ -6856,8 +6863,10 @@ void DoUI(bool draw) {
               }
               else if (chosen) {
                 PlaySound(Sound_UI_CLICK);
-                p.weapon = (WeaponType)fb_buildWeapons->Get(t);
+                p.weapon = weapon;
                 Save();
+
+                ResetFocus(currentContext);
                 g.run.reload = true;
               }
             }
