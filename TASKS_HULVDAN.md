@@ -80,8 +80,10 @@ x new run: weapon: show them
 x new run: weapon: show weapon details
 x new run: weapon: if newly selected build doesn't
   have previously selected weapon -> reset weapon
+x new run: beautify sliding stuff
 
-* new run: beautify sliding stuff
+* new run: don't select immediately if not `playerUsesKeyboardOrController`
+*
 * new run: refactor MAKE LESS CODE
 *
 * ui nav: upgrades: going from upgrades to reroll and returning back
