@@ -78,9 +78,11 @@ x new run: back button: reacts to backspace / esc
 x new run: build: selecting build -> switching to weapons
 x new run: weapon: show them
 x new run: weapon: show weapon details
-
-* new run: weapon: if newly selected build doesn't
+x new run: weapon: if newly selected build doesn't
   have previously selected weapon -> reset weapon
+
+* ui nav: upgrades: going from upgrades to reroll and returning back
+  should set the same preferred index
 * new run: weapon:
 * new run: weapon:
 * new run: weapon:

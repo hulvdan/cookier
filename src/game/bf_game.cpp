@@ -5615,16 +5615,13 @@ void DoUI(bool draw) {
           };
         }
         // Locked info.
-        else {  ///
+        else if (data.lockInfo.achievement && (data.lockInfo.stepIndex >= 0)) {  ///
           CLAY({.layout{
             BF_CLAY_SIZING_GROW_XY,
             .childGap = GAP_SMALL,
             BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           }}) {
-            ASSERT(data.lockInfo.achievement);
-            ASSERT(data.lockInfo.stepIndex >= 0);
-
             BEAUTIFY_WIGGLING_DANGER_SCOPED(
               g.ui.newRunErrorLocked,
               WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
@@ -6791,10 +6788,25 @@ void DoUI(bool draw) {
               }
               else if (chosen) {
                 PlaySound(Sound_UI_CLICK);
-                if (p.build != build) {
-                  p.build  = build;
-                  p.weapon = {};
+
+                p.build = build;
+
+                WeaponType firstWeapon{};
+                bool       sameAsPreviousWeaponFound = false;
+
+                for (auto w : *fb->starting_weapon_types()) {
+                  if (!firstWeapon)
+                    firstWeapon = (WeaponType)w;
+
+                  if (p.weapon == w) {
+                    sameAsPreviousWeaponFound = true;
+                    break;
+                  }
                 }
+
+                if (!sameAsPreviousWeaponFound)
+                  p.weapon = firstWeapon;
+
                 Save();
 
                 ResetFocus(currentContext);
@@ -6867,7 +6879,8 @@ void DoUI(bool draw) {
                 Save();
 
                 ResetFocus(currentContext);
-                g.run.reload = true;
+                g.ui.newRunStep = 0;
+                g.run.reload    = true;
               }
             }
           }
