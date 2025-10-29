@@ -993,8 +993,8 @@ struct GameData {
       } upgrades;
 
       struct {
-        Array<ShopItem, 4> toPick = {};
-        Rerolls            rerolls;
+        Array<ShopItem, SHOP_SELLING_ITEMS> toPick = {};
+        Rerolls                             rerolls;
       } shop;
     } state = {};
 
@@ -7163,17 +7163,18 @@ void DoUI(bool draw) {
         }}) {
           int toPickIndex = -1;
 
-          const int defaultIndices_[]{1, 2, 3, 0};
+          const int defaultIndices_[SHOP_SELLING_ITEMS]{1, 2, 3, 0};
           VIEW_FROM_ARRAY_DANGER(defaultIndices);
-          const int selectNextIndices_[4][3]{{1, 2, 3}, {2, 0, 3}, {3, 1, 0}, {2, 1, 0}};
-          VIEW_FROM_ARRAY_DANGER(selectNextIndices);
+          const int selectNextIndices[SHOP_SELLING_ITEMS][3]{
+            {1, 2, 3}, {2, 0, 3}, {3, 1, 0}, {2, 1, 0}
+          };
 
           for (auto& x : g.run.state.shop.toPick) {
             toPickIndex++;
 
             Clay_ElementId changeToID = rerollID;
             FOR_RANGE (int, k, 3) {
-              auto changeToIndex = selectNextIndices[toPickIndex][k];
+              const int changeToIndex = selectNextIndices[toPickIndex][k];
               ASSERT(changeToIndex != toPickIndex);
               const auto& vv = g.run.state.shop.toPick[changeToIndex];
               if (vv.item || vv.weapon) {
