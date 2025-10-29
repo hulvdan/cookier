@@ -7086,12 +7086,9 @@ void DoUI(bool draw) {
   else if (g.run.state.screen == ScreenType_SHOP) {  ///
     SCOPED_CONTEXT(ControlsContext_SHOP);
 
-    ControlsGroupID groupsToBuy_[]{
-      MakeControlsGroup(),
-      MakeControlsGroup(),
-      MakeControlsGroup(),
-      MakeControlsGroup(),
-    };
+    ControlsGroupID groupsToBuy_[SHOP_SELLING_ITEMS]{};
+    for (auto& x : groupsToBuy_)
+      x = MakeControlsGroup();
     VIEW_FROM_ARRAY_DANGER(groupsToBuy);
     auto groupTopButtons = MakeControlsGroup();
     auto groupGoNextWave = MakeControlsGroup();
