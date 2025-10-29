@@ -6645,12 +6645,16 @@ void DoUI(bool draw) {
         componentScreenName_floatingInTheCenter(Loc_UI_NEW_RUN, []() {});
 
         if (g.ui.newRunStep > 0) {
+          SDL_Scancode keys_[]{SDL_SCANCODE_ESCAPE, SDL_SCANCODE_BACKSPACE};
+          VIEW_FROM_ARRAY_DANGER(keys);
+
           const bool backed = componentButton(
-            {.id = CLAY_ID("button_back"), .group = groupTop},
+            {.id = CLAY_ID("button_back"), .group = groupTop, .keys = keys},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_back_big_texture_id()});
             }
           );
+
           if (backed) {
             PlaySound(Sound_UI_CLICK);
             g.ui.newRunStep--;
@@ -6783,9 +6787,6 @@ void DoUI(bool draw) {
                 PlaySound(Sound_UI_ERROR);
                 g.ui.newRunErrorLocked = {};
                 g.ui.newRunErrorLocked.SetNow();
-
-                ResetFocus(currentContext);
-                g.ui.newRunStep++;
               }
               else if (chosen) {
                 PlaySound(Sound_UI_CLICK);
@@ -6794,6 +6795,9 @@ void DoUI(bool draw) {
                   p.weapon = {};
                 }
                 Save();
+
+                ResetFocus(currentContext);
+                g.ui.newRunStep++;
               }
             }
           }
