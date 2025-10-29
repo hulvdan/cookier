@@ -5140,13 +5140,16 @@ void DoUI(bool draw) {
     bool            shopSelling             = false;
     Clay_ElementId  shopFocusAfterBuying    = {};
     Clay_ElementId  shopFocusAfterRecycling = {};
-    Clay_ElementId  shopFocusAfterCombining = {};
   };
 
   auto groupWeaponDetails = MakeControlsGroup();
 
   LAMBDA (Clay_ElementId, getIDFromShopBuyingIndex, (int index)) {  ///
     return CLAY_IDI("button_shop_buy", index);
+  };
+
+  LAMBDA (Clay_ElementId, getIDFromShopPlayerWeaponIndex, (int i)) {  ///
+    return CLAY_IDI("shop_player_weapon", i);
   };
 
   LAMBDA (void, componentUniversalCard, (ComponentUniversalCardData data)) {
@@ -5720,8 +5723,16 @@ void DoUI(bool draw) {
               ApplyImmediateWeaponEffects();
               Save();
 
+              int focusIndex = data.weaponIndexOrMinus1;
+              if (canCombineWithIndex < data.weaponIndexOrMinus1) {
+                // Combined weapon to the left is removed -> our weapon moved left.
+                focusIndex--;
+              }
+
               ResetFocus(ControlsContext_SHOP);
-              ChangeFocus(ControlsContext_SHOP, data.shopFocusAfterCombining);
+              ChangeFocus(
+                ControlsContext_SHOP, getIDFromShopPlayerWeaponIndex(focusIndex)
+              );
             }
 
             if (recycled) {
@@ -5930,10 +5941,8 @@ void DoUI(bool draw) {
   LAMBDA (void, componentWeaponDetails, (ComponentWeaponDetailsData data)) {  ///
     ASSERT(data.type);
 
-    if (data.weAreInShop) {
-      ASSERT(data.shopFocusAfterCombining.id);
+    if (data.weAreInShop)
       ASSERT(data.shopFocusAfterRecycling.id);
-    }
 
     int tier = 0;
     if (data.weaponIndexOrMinus1 >= 0) {
@@ -6011,7 +6020,6 @@ void DoUI(bool draw) {
           .overrideTier            = tier,
           .shopSelling             = data.weAreInShop,
           .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
-          .shopFocusAfterCombining = data.shopFocusAfterCombining,
         });
       }
 
@@ -7295,10 +7303,6 @@ void DoUI(bool draw) {
                   weaponsCount++;
               }
 
-              LAMBDA (Clay_ElementId, getIDFromShopWeaponIndex, (int i)) {
-                return CLAY_IDI("shop_player_weapon", i);
-              };
-
               CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
               )
               FOR_RANGE (int, y, 2) {
@@ -7312,6 +7316,20 @@ void DoUI(bool draw) {
 
                   const auto& weapon = g.run.state.weapons[weaponIndex];
 
+                  int wouldCombineWith = -1;
+
+                  FOR_RANGE (int, combineIndex, g.run.state.weapons.count) {
+                    if (weaponIndex == combineIndex)
+                      continue;
+                    const auto& w = g.run.state.weapons[combineIndex];
+                    if (!w.type)
+                      break;
+                    if ((w.type == weapon.type) && (w.tier == weapon.tier)) {
+                      wouldCombineWith = combineIndex;
+                      break;
+                    }
+                  }
+
                   CLAY({.layout{.sizing{
                     .width  = CLAY_SIZING_FIXED(slotSize.x),
                     .height = CLAY_SIZING_FIXED(slotSize.y),
@@ -7321,7 +7339,7 @@ void DoUI(bool draw) {
                     if (weaponIndex >= weaponsCount - 1)
                       focusWeapon--;
                     Clay_ElementId focusAfterRecycling
-                      = getIDFromShopWeaponIndex(focusWeapon);
+                      = getIDFromShopPlayerWeaponIndex(focusWeapon);
                     if (focusWeapon < 0) {
                       focusAfterRecycling = rerollID;
                       for (auto i : DEFAULT_BUYING_INDICES) {
@@ -7333,11 +7351,9 @@ void DoUI(bool draw) {
                       }
                     }
 
-                    Clay_ElementId focusAfterCombining{};
-
                     // Weapon.
                     const bool selectedWeapon = componentUniversalSlot({
-                      .id     = getIDFromShopWeaponIndex(weaponIndex),
+                      .id     = getIDFromShopPlayerWeaponIndex(weaponIndex),
                       .group  = groupWeapons,
                       .weapon = weapon.type,
                       .tier   = weapon.tier,
@@ -7356,7 +7372,6 @@ void DoUI(bool draw) {
                         .weAreInShop             = true,
                         .detailsToTheLeft        = true,
                         .shopFocusAfterRecycling = focusAfterRecycling,
-                        .shopFocusAfterCombining = focusAfterCombining,
                       });
                     }
                   }
