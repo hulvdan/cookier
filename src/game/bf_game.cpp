@@ -6608,6 +6608,19 @@ void DoUI(bool draw) {
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         componentScreenName_floatingInTheCenter(Loc_UI_NEW_RUN, []() {});
+
+        if (g.ui.newRunStep > 0) {
+          const bool backed = componentButton(
+            {.id = CLAY_ID("button_back"), .group = groupTop},
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({.texID = glib->ui_icon_back_big_texture_id()});
+            }
+          );
+          if (backed) {
+            g.ui.newRunStep--;
+            ASSERT(g.ui.newRunStep >= 0);
+          }
+        }
       });
 
       BF_CLAY_SPACER_VERTICAL;
