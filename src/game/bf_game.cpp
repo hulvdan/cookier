@@ -4282,7 +4282,7 @@ void RemoveImmediateWeaponEffects() {  ///
   currentContext                         = (context_);     \
   controlsContexts[(context_)].thisFrame = true;           \
   if (!controlsContexts[(context_)].prevFrame)             \
-    controlsContexts[(context_)].selectedElement = {};     \
+    controlsContexts[(context_)].focused = {};             \
   DEFER {                                                  \
     currentContext = prevContext;                          \
   };
@@ -4293,7 +4293,7 @@ void RemoveImmediateWeaponEffects() {  ///
   controlsContexts[(context_)].thisFrame = true;           \
   controlsContexts[(context_)].disabled  = !(enabled_);    \
   if (!controlsContexts[(context_)].prevFrame)             \
-    controlsContexts[(context_)].selectedElement = {};     \
+    controlsContexts[(context_)].focused = {};             \
   DEFER {                                                  \
     currentContext = prevContext;                          \
   };
@@ -4314,10 +4314,10 @@ void DoUI(bool draw) {
   ControlsContext currentContext{};
 
   static struct {
-    bool           thisFrame       = false;
-    bool           prevFrame       = false;
-    Clay_ElementId selectedElement = {};
-    bool           disabled        = false;
+    bool           thisFrame = false;
+    bool           prevFrame = false;
+    Clay_ElementId focused   = {};
+    bool           disabled  = false;
   } controlsContexts[ControlsContext_COUNT];
 
   DEFER {
@@ -4344,14 +4344,14 @@ void DoUI(bool draw) {
     ASSERT(CURRENT_CONTEXT.thisFrame);
 
     if ((uiElementSwitchDirection || g.meta.playerUsesKeyboardOrController)
-        && !CURRENT_CONTEXT.selectedElement.id)
+        && !CURRENT_CONTEXT.focused.id)
     {
-      CURRENT_CONTEXT.selectedElement = id;
-      justFocusedDefaultControl       = true;
+      CURRENT_CONTEXT.focused   = id;
+      justFocusedDefaultControl = true;
     }
     if (!CURRENT_CONTEXT.prevFrame && g.meta.playerUsesKeyboardOrController
-        && !CURRENT_CONTEXT.selectedElement.id)
-      CURRENT_CONTEXT.selectedElement = id;
+        && !CURRENT_CONTEXT.focused.id)
+      CURRENT_CONTEXT.focused = id;
   };
 
   const auto fb_atlas_textures      = glib->atlas_textures();
@@ -4427,6 +4427,9 @@ void DoUI(bool draw) {
     + 2 * g.meta.fontStats.size / g.meta.fontUI._scaleToFit  // 2 lines of description.
     + GAP_FLEX;                                              // Gap between them.
 
+  const auto slotSize
+    = ToVector2(glib->original_texture_sizes()->Get(glib->ui_item_slot_texture_id()))
+      * ASSETS_TO_LOGICAL_RATIO;
   // }
 
   LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, Color color = palTextWhite)) {  ///
@@ -4493,8 +4496,7 @@ void DoUI(bool draw) {
   LAMBDA (bool, activated, (Clay_ElementId id)) {  ///
     if (_alreadyHandledActivation)
       return false;
-    if (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == id.id))
-    {
+    if (Clay_Hovered() || (controlsContexts[currentContext].focused.id == id.id)) {
       bool result = clicked();
       result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
       if (result)
@@ -4516,7 +4518,6 @@ void DoUI(bool draw) {
   struct ComponentButtonData {  ///
     Clay_ElementId     id                = {};
     ControlsGroupID    group             = {};
-    bool               selected          = false;
     bool               growX             = false;
     u16                paddingHorizontal = GAP_BIG;
     u16                paddingVertical   = GAP_SMALL;
@@ -4542,8 +4543,8 @@ void DoUI(bool draw) {
     if (data.id.id && data.group)
       ControlsGroupAdd(data.group, data.id);
 
-    auto& selectedElement = CURRENT_CONTEXT.selectedElement;
-    bool  isSelected      = (selectedElement.id && (selectedElement.id == data.id.id));
+    auto& focused    = CURRENT_CONTEXT.focused;
+    bool  isSelected = (focused.id && (focused.id == data.id.id));
 
     bool justSelected = false;
 
@@ -4561,19 +4562,15 @@ void DoUI(bool draw) {
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
-          ((Clay_Hovered() || isSelected)
-             ? palWhite
-             : (data.selected ? TRANSPARENT_BLACK : slotColors[0])),
-          ((Clay_Hovered() || isSelected)
-             ? TRANSPARENT_BLACK
-             : (data.selected ? TRANSPARENT_BLACK : slotColors[1]))
+          ((Clay_Hovered() || isSelected) ? palWhite : slotColors[0]),
+          ((Clay_Hovered() || isSelected) ? TRANSPARENT_BLACK : slotColors[1])
         ),
       }) {
         bool hovered = Clay_Hovered();
         if (hovered) {
-          if (selectedElement.id != data.id.id) {
-            selectedElement = data.id;
-            justSelected    = true;
+          if (focused.id != data.id.id) {
+            focused      = data.id;
+            justSelected = true;
           }
           isSelected = true;
         }
@@ -4733,11 +4730,11 @@ void DoUI(bool draw) {
 
       const bool hovered = data.canHover && Clay_Hovered();
 
-      auto& selectedElement = controlsContexts[currentContext].selectedElement;
-      if (hovered || (selectedElement.id && (selectedElement.id == data.id.id))) {
-        selectedElement = data.id;
-        color           = palWhite;
-        flash           = TRANSPARENT_BLACK;
+      auto& focused = controlsContexts[currentContext].focused;
+      if (hovered || (focused.id && (focused.id == data.id.id))) {
+        focused = data.id;
+        color   = palWhite;
+        flash   = TRANSPARENT_BLACK;
       }
 
       BF_CLAY_IMAGE({.texID = texID, .color = color, .flash = flash}, innerLambda);
@@ -4817,9 +4814,8 @@ void DoUI(bool draw) {
           if (isCurrentContextActive()) {
             result |= clicked();
 
-            const auto& selectedElement
-              = controlsContexts[currentContext].selectedElement;
-            if (selectedElement.id && (selectedElement.id == data.id.id)) {
+            const auto& focused = controlsContexts[currentContext].focused;
+            if (focused.id && (focused.id == data.id.id)) {
               result |= didActivate(SDL_SCANCODE_SPACE);
               result |= didActivate(SDL_SCANCODE_RETURN);
             }
@@ -5105,6 +5101,25 @@ void DoUI(bool draw) {
     }
   };
 
+  LAMBDA (void, ResetFocus, (ControlsContext c)) {  ///
+    controlsContexts[c].focused = {};
+  };
+
+  LAMBDA (void, ChangeFocus, (ControlsContext c, Clay_ElementId to)) {  ///
+    auto& context = controlsContexts[c];
+    if (g.meta.playerUsesKeyboardOrController && to.id)
+      context.focused = to;
+  };
+
+  LAMBDA (
+    void, ChangeFocusFrom, (ControlsContext c, Clay_ElementId from, Clay_ElementId to)
+  )
+  {  ///
+    auto& context = controlsContexts[c];
+    if ((context.focused.id == from.id) && g.meta.playerUsesKeyboardOrController && to.id)
+      context.focused = to;
+  };
+
   struct ComponentUniversalCardData {  ///
     DifficultyType difficulty = {};
     BuildType      build      = {};
@@ -5120,11 +5135,12 @@ void DoUI(bool draw) {
 
     bool setFixedHeight = false;
 
-    ControlsGroupID shopGroup                  = {};
-    int             shopBuyingIndex            = -1;
-    bool            shopSelling                = false;
-    Clay_ElementId  shopChangeToIDAfterBuying  = {};
-    Clay_ElementId  shopChangeToIDAfterSelling = {};
+    ControlsGroupID shopGroup               = {};
+    int             shopBuyingIndex         = -1;
+    bool            shopSelling             = false;
+    Clay_ElementId  shopFocusAfterBuying    = {};
+    Clay_ElementId  shopFocusAfterRecycling = {};
+    Clay_ElementId  shopFocusAfterCombining = {};
   };
 
   auto groupWeaponDetails = MakeControlsGroup();
@@ -5595,9 +5611,9 @@ void DoUI(bool draw) {
                 else
                   INVALID_PATH;
 
-                if ((CURRENT_CONTEXT.selectedElement.id == buyButtonID.id)
-                    && g.meta.playerUsesKeyboardOrController)
-                  CURRENT_CONTEXT.selectedElement = data.shopChangeToIDAfterBuying;
+                ChangeFocusFrom(
+                  ControlsContext_SHOP, buyButtonID, data.shopFocusAfterBuying
+                );
 
                 g.run.state.shop.toPick[data.shopBuyingIndex] = {};
                 Save();
@@ -5646,10 +5662,11 @@ void DoUI(bool draw) {
             }
 
             // Combine button.
-            bool combined = false;
+            bool combined  = false;
+            auto combineID = CLAY_ID("button_weapon_combine");
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
-                {.id = CLAY_ID("button_weapon_combine"), .group = groupWeaponDetails},
+                {.id = combineID, .group = groupWeaponDetails},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
                 }
@@ -5660,10 +5677,11 @@ void DoUI(bool draw) {
               = ToRecyclePrice(GetWeaponPrice(weapon.type, weapon.tier));
 
             // Recycle button.
-            const bool recycled = componentButtonRecycle({
-              .id    = CLAY_ID("button_weapon_recycle"),
-              .group = groupWeaponDetails,
-              .price = recyclePrice,
+            const auto weaponRecycleID = CLAY_ID("button_weapon_recycle");
+            const bool recycled        = componentButtonRecycle({
+                     .id    = weaponRecycleID,
+                     .group = groupWeaponDetails,
+                     .price = recyclePrice,
             });
 
             // Cancel button.
@@ -5701,14 +5719,22 @@ void DoUI(bool draw) {
               StableRemoveWeapon(canCombineWithIndex);
               ApplyImmediateWeaponEffects();
               Save();
+
+              ResetFocus(ControlsContext_SHOP);
+              ChangeFocus(ControlsContext_SHOP, data.shopFocusAfterCombining);
             }
+
             if (recycled) {
               ChangeCoins(recyclePrice);
               RemoveImmediateWeaponEffects();
               StableRemoveWeapon(data.weaponIndexOrMinus1);
               ApplyImmediateWeaponEffects();
               Save();
+
+              ResetFocus(ControlsContext_SHOP);
+              ChangeFocus(ControlsContext_SHOP, data.shopFocusAfterRecycling);
             }
+
             if (cancelled || recycled || combined) {
               PlaySound(Sound_UI_CLICK);
               g.run.shopSelectedWeaponIndex = -1;
@@ -5891,16 +5917,23 @@ void DoUI(bool draw) {
   };
 
   struct ComponentWeaponDetailsData {
-    WeaponType type                = {};
-    int        weaponIndexOrMinus1 = -1;
-    bool       weAreInShop         = false;
-    bool       detailsBelow        = false;
-    bool       detailsToTheLeft    = false;
-    bool       affectedByGame      = true;
+    WeaponType     type                    = {};
+    int            weaponIndexOrMinus1     = -1;
+    bool           weAreInShop             = false;
+    bool           detailsBelow            = false;
+    bool           detailsToTheLeft        = false;
+    bool           affectedByGame          = true;
+    Clay_ElementId shopFocusAfterRecycling = {};
+    Clay_ElementId shopFocusAfterCombining = {};
   };
 
   LAMBDA (void, componentWeaponDetails, (ComponentWeaponDetailsData data)) {  ///
     ASSERT(data.type);
+
+    if (data.weAreInShop) {
+      ASSERT(data.shopFocusAfterCombining.id);
+      ASSERT(data.shopFocusAfterRecycling.id);
+    }
 
     int tier = 0;
     if (data.weaponIndexOrMinus1 >= 0) {
@@ -5972,11 +6005,13 @@ void DoUI(bool draw) {
         }
 
         componentUniversalCard({
-          .weapon              = data.type,
-          .weaponIndexOrMinus1 = data.weaponIndexOrMinus1,
-          .affectedByGame      = data.affectedByGame,
-          .overrideTier        = tier,
-          .shopSelling         = data.weAreInShop,
+          .weapon                  = data.type,
+          .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
+          .affectedByGame          = data.affectedByGame,
+          .overrideTier            = tier,
+          .shopSelling             = data.weAreInShop,
+          .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
+          .shopFocusAfterCombining = data.shopFocusAfterCombining,
         });
       }
 
@@ -6566,7 +6601,7 @@ void DoUI(bool draw) {
                   }
 
                   if (Clay_Hovered()
-                      || (controlsContexts[currentContext].selectedElement.id == slotID.id))
+                      || (controlsContexts[currentContext].focused.id == slotID.id))
                   {
                     componentUniversalDetails({
                       .difficulty     = (DifficultyType)(i + 1),
@@ -6647,7 +6682,8 @@ void DoUI(bool draw) {
                         Save();
                       }
 
-                      if (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotID.id))
+                      if (Clay_Hovered()
+                          || (controlsContexts[currentContext].focused.id == slotID.id))
                       {
                         componentUniversalDetails({
                           .build          = (BuildType)(t + 1),
@@ -6729,7 +6765,7 @@ void DoUI(bool draw) {
                   // Hovering modal.
                   if (exists        //
                       && !isLocked  //
-                      && (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotID.id)))
+                      && (Clay_Hovered() || (controlsContexts[currentContext].focused.id == slotID.id)))
                   {
                     componentWeaponDetails({
                       .type           = (WeaponType)fb_buildWeapons->Get(t),
@@ -7162,8 +7198,6 @@ void DoUI(bool draw) {
         }}) {
           int toPickIndex = -1;
 
-          const int defaultIndices_[SHOP_SELLING_ITEMS]{1, 2, 3, 0};
-          VIEW_FROM_ARRAY_DANGER(defaultIndices);
           const int selectNextIndices[SHOP_SELLING_ITEMS][3]{
             {1, 2, 3}, {2, 0, 3}, {3, 1, 0}, {2, 1, 0}
           };
@@ -7183,19 +7217,19 @@ void DoUI(bool draw) {
             }
 
             componentUniversalCard({
-              .item                      = x.item,
-              .weapon                    = x.weapon,
-              .hideIfEmpty               = true,
-              .affectedByGame            = true,
-              .overrideTier              = x.tier,
-              .setFixedHeight            = true,
-              .shopGroup                 = groupsToBuy[toPickIndex],
-              .shopBuyingIndex           = toPickIndex,
-              .shopChangeToIDAfterBuying = changeToID,
+              .item                 = x.item,
+              .weapon               = x.weapon,
+              .hideIfEmpty          = true,
+              .affectedByGame       = true,
+              .overrideTier         = x.tier,
+              .setFixedHeight       = true,
+              .shopGroup            = groupsToBuy[toPickIndex],
+              .shopBuyingIndex      = toPickIndex,
+              .shopFocusAfterBuying = changeToID,
             });
           }
 
-          for (auto i : defaultIndices) {
+          for (auto i : DEFAULT_BUYING_INDICES) {
             const auto& x = g.run.state.shop.toPick[i];
             if (x.weapon || x.item)
               markControlAsDefault(getIDFromShopBuyingIndex(i));
@@ -7255,11 +7289,15 @@ void DoUI(bool draw) {
                 ERROR_WIGGLING_TIMES
               );
 
-              const auto slotSize
-                = ToVector2(
-                    glib->original_texture_sizes()->Get(glib->ui_item_slot_texture_id())
-                  )
-                  * ASSETS_TO_LOGICAL_RATIO;
+              int weaponsCount = 0;
+              for (auto& x : g.run.state.weapons) {
+                if (x.type)
+                  weaponsCount++;
+              }
+
+              LAMBDA (Clay_ElementId, getIDFromShopWeaponIndex, (int i)) {
+                return CLAY_IDI("shop_player_weapon", i);
+              };
 
               CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
               )
@@ -7277,30 +7315,49 @@ void DoUI(bool draw) {
                   CLAY({.layout{.sizing{
                     .width  = CLAY_SIZING_FIXED(slotSize.x),
                     .height = CLAY_SIZING_FIXED(slotSize.y),
-                  }}}) {
+                  }}})
+                  if (weapon.type) {
+                    int focusWeapon = weaponIndex;
+                    if (weaponIndex >= weaponsCount - 1)
+                      focusWeapon--;
+                    Clay_ElementId focusAfterRecycling
+                      = getIDFromShopWeaponIndex(focusWeapon);
+                    if (focusWeapon < 0) {
+                      focusAfterRecycling = rerollID;
+                      for (auto i : DEFAULT_BUYING_INDICES) {
+                        const auto& v = g.run.state.shop.toPick[i];
+                        if (v.item || v.weapon) {
+                          focusAfterRecycling = getIDFromShopBuyingIndex(i);
+                          break;
+                        }
+                      }
+                    }
+
+                    Clay_ElementId focusAfterCombining{};
+
+                    // Weapon.
+                    const bool selectedWeapon = componentUniversalSlot({
+                      .id     = getIDFromShopWeaponIndex(weaponIndex),
+                      .group  = groupWeapons,
+                      .weapon = weapon.type,
+                      .tier   = weapon.tier,
+                    });
+
+                    if (selectedWeapon) {
+                      PlaySound(Sound_UI_CLICK);
+                      g.run.shopSelectedWeaponIndex = weaponIndex;
+                    }
+
+                    // Hovering modal.
                     if (weapon.type) {
-                      // Weapon.
-                      const bool selectedWeapon = componentUniversalSlot({
-                        .id     = CLAY_IDI("shop_player_weapon", weaponIndex),
-                        .group  = groupWeapons,
-                        .weapon = weapon.type,
-                        .tier   = weapon.tier,
+                      componentWeaponDetails({
+                        .type                    = weapon.type,
+                        .weaponIndexOrMinus1     = weaponIndex,
+                        .weAreInShop             = true,
+                        .detailsToTheLeft        = true,
+                        .shopFocusAfterRecycling = focusAfterRecycling,
+                        .shopFocusAfterCombining = focusAfterCombining,
                       });
-
-                      if (selectedWeapon) {
-                        PlaySound(Sound_UI_CLICK);
-                        g.run.shopSelectedWeaponIndex = weaponIndex;
-                      }
-
-                      // Hovering modal.
-                      if (weapon.type) {
-                        componentWeaponDetails({
-                          .type                = weapon.type,
-                          .weaponIndexOrMinus1 = weaponIndex,
-                          .weAreInShop         = true,
-                          .detailsToTheLeft    = true,
-                        });
-                      }
                     }
                   }
                 }
@@ -7729,7 +7786,7 @@ void DoUI(bool draw) {
                       });
 
                       if ((canHover && Clay_Hovered())
-                          || (id.id == controlsContexts[currentContext].selectedElement.id))
+                          || (id.id == controlsContexts[currentContext].focused.id))
                       {
                         g.meta.pausedAchievementsHoveredAchievement = currentAchievement;
                         g.meta.pausedAchievementsHoveredAchievementStep = currentStep;
@@ -7857,8 +7914,8 @@ void DoUI(bool draw) {
 
                 const auto resumeButtonID = CLAY_ID("button_pause_resume");
                 markControlAsDefault(resumeButtonID);
-                if (!controlsContexts[currentContext].selectedElement.id)
-                  controlsContexts[currentContext].selectedElement = resumeButtonID;
+                if (!controlsContexts[currentContext].focused.id)
+                  controlsContexts[currentContext].focused = resumeButtonID;
 
                 const bool resumed = componentButton(
                   {
@@ -8335,7 +8392,7 @@ void DoUI(bool draw) {
       auto& context = controlsContexts[i];
 
       if (context.prevFrame && !context.thisFrame)
-        context.selectedElement = {};
+        context.focused = {};
 
       auto c = (ControlsContext)i;
       if (context.thisFrame) {
@@ -8356,7 +8413,7 @@ void DoUI(bool draw) {
       currentContext = shownScreen;
 
     if (uiElementSwitchDirection && currentContext && !justFocusedDefaultControl) {  ///
-      auto toSelect = controlsContexts[currentContext].selectedElement;
+      auto toSelect = controlsContexts[currentContext].focused;
 
       auto group = g.ui.controlsGroupsFirst;
       while (group) {
@@ -8381,7 +8438,7 @@ void DoUI(bool draw) {
             ASSERT(elem->next != elem);
             ASSERT(elem->prev != elem);
 
-            if (elem->id.id == controlsContexts[currentContext].selectedElement.id) {
+            if (elem->id.id == controlsContexts[currentContext].focused.id) {
               if (uiElementSwitchDirection == Direction_RIGHT) {
                 if (elem->next)
                   toSelect = elem->next->id;
@@ -8443,8 +8500,8 @@ void DoUI(bool draw) {
         group = group->next;
       }
 
-      if (!draw && (controlsContexts[currentContext].selectedElement.id != toSelect.id)) {
-        controlsContexts[currentContext].selectedElement = toSelect;
+      if (!draw && (controlsContexts[currentContext].focused.id != toSelect.id)) {
+        controlsContexts[currentContext].focused = toSelect;
         PlaySound(Sound_UI_HOVER_SMALL);
       }
     }
