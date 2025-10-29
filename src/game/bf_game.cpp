@@ -4732,8 +4732,6 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (void, componentSlot, (ComponentSlotData data, auto innerLambda)) {  ///
-    ASSERT(currentContext);
-
     if (data.canHover)
       ASSERT(data.id.id);
     if (data.group)
