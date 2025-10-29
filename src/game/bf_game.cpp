@@ -6804,66 +6804,65 @@ void DoUI(bool draw) {
         });
       }
       else if (g.ui.newRunStep == 2) {
-        // CLAY({
-        //   .layout{
-        //     BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-        //     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        //   },
-        //   BF_CLAY_CUSTOM_NINE_SLICE(
-        //     glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-        //   ),
-        // }) {
-        //   const int WEAPONS_X = 6;
-        //   const int WEAPONS_Y = CeilDivision(MAX_BUILD_WEAPONS, WEAPONS_X);
-        //
-        //   auto fb_buildWeapons =
-        //   fb_builds->Get(p.build)->starting_weapon_types();
-        //
-        //   FOR_RANGE (int, y, WEAPONS_Y) {
-        //     ControlsGroupNewRow(group);
-        //
-        //     CLAY({.layout{.childGap = GAP_SMALL}})
-        //     FOR_RANGE (int, x, WEAPONS_X) {
-        //       const int t = y * WEAPONS_X + x;
-        //
-        //       const bool exists = fb_buildWeapons && (t <
-        //       fb_buildWeapons->size());
-        //
-        //       bool isLocked = false;
-        //
-        //       bool selected = false;
-        //       if (exists) {
-        //         const auto weaponType = (WeaponType)fb_buildWeapons->Get(t);
-        //         selected              = (p.weapon == weaponType);
-        //         isLocked              = p.lockedWeapons[weaponType];
-        //       }
-        //
-        //       const auto slotID        = CLAY_IDI("new_run_weapon", t);
-        //       const bool chosen = componentUniversalSlot({
-        //         .id    = slotID,
-        //         .group = group,
-        //         .weapon = (WeaponType)(
-        //           !isLocked && exists ? fb_buildWeapons->Get(t) : 0
-        //         ),
-        //         .hidden   = HiddenType_SHOW_LOCK,
-        //         .tier = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
-        //         .canHover = exists && !isLocked,
-        //       });
-        //
-        //       if (isLocked && chosen) {
-        //         PlaySound(Sound_UI_ERROR);
-        //         g.ui.newRunErrorLocked      = {};
-        //         g.ui.newRunErrorLocked.SetNow();
-        //       }
-        //       else if (chosen) {
-        //         PlaySound(Sound_UI_CLICK);
-        //         p.weapon = (WeaponType)fb_buildWeapons->Get(t);
-        //         Save();
-        //         g.run.reload = true;
-        //       }
-        //     }
-        //   }
-        // }
+        const bool isLocked = (bool)p.lockedWeapons[p.weapon].achievement;
+
+        componentUniversalCard({
+          .weapon         = (isLocked ? WeaponType_INVALID : p.weapon),
+          .lockInfo       = p.lockedWeapons[p.weapon],
+          .overrideTier   = (isLocked ? 0 : -1),
+          .setFixedHeight = true,
+        });
+
+        BF_CLAY_SPACER_VERTICAL;
+
+        const int WEAPONS_X = 8;
+        const int WEAPONS_Y = CeilDivision(MAX_BUILD_WEAPONS, WEAPONS_X);
+
+        componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
+          auto fb_buildWeapons = fb_builds->Get(p.build)->starting_weapon_types();
+
+          FOR_RANGE (int, y, WEAPONS_Y) {
+            ControlsGroupNewRow(group);
+
+            CLAY({.layout{.childGap = GAP_SMALL}})
+            FOR_RANGE (int, x, WEAPONS_X) {
+              const int t = y * WEAPONS_X + x;
+
+              const bool exists = fb_buildWeapons && (t < fb_buildWeapons->size());
+
+              bool isLocked = false;
+
+              bool selected = false;
+              if (exists) {
+                const auto weaponType = (WeaponType)fb_buildWeapons->Get(t);
+                selected              = (p.weapon == weaponType);
+                isLocked              = p.lockedWeapons[weaponType];
+              }
+
+              const auto slotID = CLAY_IDI("new_run_weapon", t);
+              const bool chosen = componentUniversalSlot({
+                .id     = slotID,
+                .group  = group,
+                .weapon = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) : 0),
+                .hidden = HiddenType_SHOW_LOCK,
+                .tier   = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
+                .canHover = exists && !isLocked,
+              });
+
+              if (isLocked && chosen) {
+                PlaySound(Sound_UI_ERROR);
+                g.ui.newRunErrorLocked = {};
+                g.ui.newRunErrorLocked.SetNow();
+              }
+              else if (chosen) {
+                PlaySound(Sound_UI_CLICK);
+                p.weapon = (WeaponType)fb_buildWeapons->Get(t);
+                Save();
+                g.run.reload = true;
+              }
+            }
+          }
+        });
       }
       else
         INVALID_PATH;
@@ -8449,7 +8448,7 @@ void DoUI(bool draw) {
   ASSERT_FALSE(currentContext);
 
   // Control groups navigation.
-  {
+  {  ///
     ControlsContext shownScreen{};
     ControlsContext shownModal{};
     for (int i = 1; i < ControlsContext_COUNT; i++) {
@@ -8476,7 +8475,7 @@ void DoUI(bool draw) {
     if (!currentContext)
       currentContext = shownScreen;
 
-    if (uiElementSwitchDirection && currentContext && !justFocusedDefaultControl) {  ///
+    if (uiElementSwitchDirection && currentContext && !justFocusedDefaultControl) {
       auto toSelect = controlsContexts[currentContext].focused;
 
       auto group = g.ui.controlsGroupsFirst;
@@ -8585,13 +8584,12 @@ void DoUI(bool draw) {
     }) {}
   }
 
+  ASSERT(g.ui.clayZIndex == 0);
   ASSERT_FALSE(g.ui.overriddenFont);
   auto drawCommands = Clay_EndLayout();
 
-  ASSERT(g.ui.clayZIndex == 0);
-
   // Drawing UI.
-  if (draw) {
+  if (draw) {  ///
     ZoneScopedN("Drawing UI");
 
     auto& beautifiers      = g.ui.clayBeautifiers;
@@ -8606,8 +8604,6 @@ void DoUI(bool draw) {
       DrawGroup_SetSortY(0);
 
       FOR_RANGE (int, i, drawCommands.length) {
-        // Setup.
-        // {  ///
         auto& cmd = drawCommands.internalArray[i];
 
         auto    beautifierAlpha = 1.0f;
@@ -8626,14 +8622,13 @@ void DoUI(bool draw) {
 
         auto bb = cmd.boundingBox;
         bb.y    = LOGICAL_RESOLUTION.y - bb.y - bb.height;
-        // }
 
         if (!mode) {
           switch (cmd.commandType) {
           case CLAY_RENDER_COMMAND_TYPE_NONE:
             break;
 
-          case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {  ///
+          case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
             const auto& d = cmd.renderData.rectangle;
             DrawGroup_CommandRect({
               .pos{bb.x, bb.y},
@@ -8648,7 +8643,7 @@ void DoUI(bool draw) {
             });
           } break;
 
-          case CLAY_RENDER_COMMAND_TYPE_IMAGE: {  ///
+          case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
             const auto& d    = cmd.renderData.image;
             const auto& data = *(ClayImageData*)d.imageData;
             DrawGroup_CommandTexture({
@@ -8666,7 +8661,7 @@ void DoUI(bool draw) {
             });
           } break;
 
-          case CLAY_RENDER_COMMAND_TYPE_TEXT: {  ///
+          case CLAY_RENDER_COMMAND_TYPE_TEXT: {
             // TODO: uint16_t text.fontSize
             // TODO: letterSpacing
             // TODO: lineHeight
@@ -8688,7 +8683,7 @@ void DoUI(bool draw) {
             });
           } break;
 
-          case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {  ///
+          case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
             const auto& d    = cmd.renderData.custom;
             const auto& data = *(ClayCustomData*)d.customData;
 
@@ -8760,7 +8755,7 @@ void DoUI(bool draw) {
         }
         else {
           // UI elements' gizmos.
-          if (ge.meta.debugEnabled && bb.width && bb.height) {  ///
+          if (ge.meta.debugEnabled && bb.width && bb.height) {
             DrawGroup_CommandRectLines({
               .pos = Vector2(bb.x, bb.y) + Vector2(bb.width, bb.height) / 2.0f,
               .size{bb.width, bb.height},

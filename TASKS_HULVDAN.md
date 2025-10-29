@@ -77,8 +77,8 @@ x new run: build: show builds
 x new run: back button: reacts to backspace / esc
 x new run: build: selecting build -> switching to weapons
 
-* new run: weapon:
-* new run: weapon:
+* new run: weapon: show them
+* new run: weapon: show weapon details
 * new run: weapon:
 * new run: weapon:
 * new run: weapon:
