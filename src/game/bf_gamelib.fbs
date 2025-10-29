@@ -307,6 +307,7 @@ table AchievementStep {
 table Achievement {
     name_locale: int;
     description_locale: int;
+    hide_progress: bool;
     steps: [AchievementStep];
 }
 // GAME STUFF END

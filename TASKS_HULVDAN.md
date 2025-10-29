@@ -70,10 +70,10 @@ x ui keyboard: shop: combining changes focus
 x ui keyboard: reroll button down goes to next wave button if no items to buy is found
 x new run: difficulty: clicking locked wiggling error
 x new run: difficulty: clicking good -> switching to build selection
+x new run: difficulty: cards contain locked info
+x new run: difficulty: wiggling achievement requirements
 
 * new run: 3 steps (difficulty -> build -> weapon)
-* new run: difficulty: show locked
-* new run: difficulty:
 * new run: difficulty:
 * new run: difficulty:
 * new run: difficulty:

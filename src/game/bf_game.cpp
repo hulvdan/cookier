@@ -901,6 +901,11 @@ const ControlsContext CONTROLS_CONTEXT_MODALS_[]{
 };
 VIEW_FROM_ARRAY_DANGER(CONTROLS_CONTEXT_MODALS);
 
+struct LockInfo {
+  AchievementType achievement = {};
+  int             stepIndex   = -1;
+};
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -950,9 +955,9 @@ struct GameData {
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
 
-    Array<bool, BuildType_COUNT>  lockedBuilds  = {};
-    Array<bool, ItemType_COUNT>   lockedItems   = {};
-    Array<bool, WeaponType_COUNT> lockedWeapons = {};
+    Array<const BFGame::AchievementStep*, BuildType_COUNT>  lockedBuilds  = {};
+    Array<const BFGame::AchievementStep*, ItemType_COUNT>   lockedItems   = {};
+    Array<const BFGame::AchievementStep*, WeaponType_COUNT> lockedWeapons = {};
 
     int achievementStepsTotal     = 0;
     int achievementStepsCompleted = 0;
@@ -1605,11 +1610,11 @@ void OnWaveStarted() {  ///
 
 void AchievementStepSetLock(const BFGame::AchievementStep* fb_step, bool locked) {  ///
   if (fb_step->unlocks_build_type())
-    g.player.lockedBuilds[fb_step->unlocks_build_type()] = locked;
+    g.player.lockedBuilds[fb_step->unlocks_build_type()] = (locked ? fb_step : nullptr);
   if (fb_step->unlocks_item_type())
-    g.player.lockedItems[fb_step->unlocks_item_type()] = locked;
+    g.player.lockedItems[fb_step->unlocks_item_type()] = (locked ? fb_step : nullptr);
   if (fb_step->unlocks_weapon_type())
-    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = locked;
+    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = (locked ? fb_step : nullptr);
 
   if (locked)
     g.player.achievementStepsCompleted--;
@@ -4743,10 +4748,10 @@ void DoUI(bool draw) {
     }
   };
 
-  enum ComponentUniversalSlotHiddenType {  ///
-    ComponentUniversalSlotHiddenType_HIDE,
-    ComponentUniversalSlotHiddenType_SHOW_EMPTY_SLOT,
-    ComponentUniversalSlotHiddenType_SHOW_LOCK,
+  enum HiddenType {  ///
+    HiddenType_HIDE_IF_EMPTY,
+    HiddenType_SHOW_EMPTY_SLOT,
+    HiddenType_SHOW_LOCK,
   };
 
   struct ComponentUniversalSlotData {  ///
@@ -4758,7 +4763,7 @@ void DoUI(bool draw) {
     ItemType       item       = {};
     WeaponType     weapon     = {};
 
-    ComponentUniversalSlotHiddenType hidden = ComponentUniversalSlotHiddenType_HIDE;
+    HiddenType hidden = HiddenType_HIDE_IF_EMPTY;
 
     int  count    = 1;
     int  tier     = -1;
@@ -4802,10 +4807,9 @@ void DoUI(bool draw) {
 
     componentSlot(
       {
-        .id    = data.id,
-        .group = data.group,
-        .hidden
-        = (!onlyOneOrNone && (data.hidden == ComponentUniversalSlotHiddenType_HIDE)),
+        .id       = data.id,
+        .group    = data.group,
+        .hidden   = (!onlyOneOrNone && (data.hidden == HiddenType_HIDE_IF_EMPTY)),
         .canHover = data.canHover,
         .tier     = tier,
       },
@@ -4825,7 +4829,7 @@ void DoUI(bool draw) {
         }
 
         if (!onlyOneOrNone) {
-          if (data.hidden == ComponentUniversalSlotHiddenType_SHOW_LOCK)
+          if (data.hidden == HiddenType_SHOW_LOCK)
             texID = glib->ui_item_locked_texture_id();
           else
             return;
@@ -5122,6 +5126,53 @@ void DoUI(bool draw) {
       context.focused = to;
   };
 
+  LAMBDA (
+    void,
+    componentAchievementDescription,
+    (AchievementType type,
+     int             stepIndex,
+     bool            requiresPreviousToBeCompletedToShowDetails = true)
+  )
+  {  ///
+    ASSERT(type);
+    ASSERT(stepIndex >= 0);
+
+    const auto v = g.player.achievements[type].value;
+
+    auto fb              = fb_achievements->Get(type);
+    auto fb_step         = fb->steps()->Get(stepIndex);
+    auto fb_previousStep = ((stepIndex > 0) ? fb->steps()->Get(stepIndex - 1) : nullptr);
+
+    if (!requiresPreviousToBeCompletedToShowDetails
+        || (!fb_previousStep || (v >= fb_previousStep->value())))
+    {
+      FlexBegin(ACHIEVEMENT_WIDTH, 0);
+      if (type == AchievementType_DIFFICULTY) {
+        PlaceholdString(
+          "VALUE",
+          localization_strings->Get(fb_difficulties->Get(stepIndex + 1)->name_locale())
+            ->c_str()
+        );
+      }
+      else
+        PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
+
+      BF_CLAY_TEXT_BROKEN_LOCALIZED(fb->description_locale());
+
+      if (!fb->hide_progress()) {
+        int percent = MIN(100, v * 100 / fb_step->value());
+        if ((percent < 100) && (fb_step->value() > 1)) {
+          BF_CLAY_TEXT(" ");
+          BF_CLAY_TEXT(TextFormat("(%d / %d)", v, fb_step->value()), palTextBezhevy);
+        }
+      }
+
+      FlexEnd();
+    }
+    else
+      BF_CLAY_TEXT("???");
+  };
+
   struct ComponentUniversalCardData {  ///
     DifficultyType difficulty = {};
     BuildType      build      = {};
@@ -5131,9 +5182,10 @@ void DoUI(bool draw) {
     int count               = 1;
     int weaponIndexOrMinus1 = -1;
 
-    bool hideIfEmpty    = false;
-    bool affectedByGame = false;
-    int  overrideTier   = -1;
+    HiddenType hidden         = HiddenType_SHOW_EMPTY_SLOT;
+    LockInfo   lockInfo       = {};
+    bool       affectedByGame = false;
+    int        overrideTier   = -1;
 
     bool setFixedHeight = false;
 
@@ -5257,7 +5309,7 @@ void DoUI(bool draw) {
         = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
       }}}
     )
-    if (!data.hideIfEmpty || atLeastOneIsSpecified) {
+    if ((data.hidden != HiddenType_HIDE_IF_EMPTY) || atLeastOneIsSpecified) {
       CLAY(
         ///
         {
@@ -5280,6 +5332,7 @@ void DoUI(bool draw) {
             .build      = data.build,
             .item       = data.item,
             .weapon     = data.weapon,
+            .hidden     = data.hidden,
             .count      = data.count,
             .tier       = tier,
             .canHover   = false,
@@ -5297,7 +5350,7 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY, secondaryTextColor);
               FontEnd();
             }
-            if (data.build) {  ///
+            else if (data.build) {  ///
               BF_CLAY_TEXT_LOCALIZED(fb_build->name_locale(), textColorsPerTier[tier]);
               FontBegin(&g.meta.fontStats);
               const auto d = g.player.builds[data.build].maxDifficultyBeaten;
@@ -5311,7 +5364,7 @@ void DoUI(bool draw) {
                 BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD, secondaryTextColor);
               FontEnd();
             }
-            if (data.item) {  ///
+            else if (data.item) {  ///
               BF_CLAY_TEXT_LOCALIZED(fb_item->name_locale(), textColorsPerTier[tier]);
 
               FontBegin(&g.meta.fontStats);
@@ -5347,11 +5400,14 @@ void DoUI(bool draw) {
                 BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM, secondaryTextColor);
               FontEnd();
             }
-            if (data.weapon) {  ///
+            else if (data.weapon) {  ///
               BF_CLAY_TEXT_LOCALIZED(fb_weapon->name_locale(), textColorsPerTier[tier]);
               FontBegin(&g.meta.fontStats);
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPON, secondaryTextColor);
               FontEnd();
+            }
+            else {  ///
+              BF_CLAY_TEXT("???");
             }
           }
         }
@@ -5363,17 +5419,17 @@ void DoUI(bool draw) {
           componentEffectsExploded(fb_difficulty->effects(), 0, data.count, CARD_WIDTH);
         }
         // Build stats.
-        if (data.build) {  ///
+        else if (data.build) {  ///
           componentEffectsExploded(fb_build->effects(), 0, data.count, CARD_WIDTH);
         }
         // Item stats.
-        if (data.item) {  ///
+        else if (data.item) {  ///
           componentEffectsExploded(
             fb_items->Get(data.item)->effects(), 0, data.count, CARD_WIDTH
           );
         }
         // Weapon stats.
-        if (data.weapon) {  ///
+        else if (data.weapon) {  ///
           const auto fb = fb_weapons->Get(data.weapon);
 
           int tierOffset = 0;
@@ -5545,6 +5601,29 @@ void DoUI(bool draw) {
               }
             );
           };
+        }
+        // Locked info.
+        else {  ///
+          CLAY({.layout{
+            BF_CLAY_SIZING_GROW_XY,
+            .childGap = GAP_SMALL,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
+            ASSERT(data.lockInfo.achievement);
+            ASSERT(data.lockInfo.stepIndex >= 0);
+
+            BEAUTIFY_WIGGLING_DANGER_SCOPED(
+              g.ui.newRunErrorLocked,
+              WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+              ERROR_WIGGLING_FRAMES,
+              ERROR_WIGGLING_TIMES
+            );
+
+            componentAchievementDescription(
+              data.lockInfo.achievement, data.lockInfo.stepIndex, false
+            );
+          }
         }
 
         FontEnd();
@@ -5883,31 +5962,7 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           FontBegin(&g.meta.fontStats);
-
-          const auto v = g.player.achievements[type].value;
-
-          if (!fb_previousStep || (v >= fb_previousStep->value())) {
-            FlexBegin(ACHIEVEMENT_WIDTH, 0);
-            if (type == AchievementType_DIFFICULTY) {
-              PlaceholdString(
-                "VALUE",
-                localization_strings
-                  ->Get(fb_difficulties->Get(stepIndex + 1)->name_locale())
-                  ->c_str()
-              );
-            }
-            else
-              PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(fb->description_locale());
-            int percent = MIN(100, v * 100 / fb_step->value());
-            if ((percent < 100) && (fb_step->value() > 1)) {
-              BF_CLAY_TEXT(" ");
-              BF_CLAY_TEXT(TextFormat("(%d / %d)", v, fb_step->value()), palTextBezhevy);
-            }
-            FlexEnd();
-          }
-          else
-            BF_CLAY_TEXT("???");
+          componentAchievementDescription(type, stepIndex);
           FontEnd();
         }
       }
@@ -6562,10 +6617,14 @@ void DoUI(bool draw) {
                               > g.player.achievements[AchievementType_DIFFICULTY].value;
 
         componentUniversalCard({
-          .difficulty = g.player.difficulty,
+          .difficulty = (isLocked ? DifficultyType_INVALID : g.player.difficulty),
           // .build      =,
           // .item       =,
           // .weapon     =,
+          .lockInfo{
+            .achievement = AchievementType_DIFFICULTY,
+            .stepIndex   = (int)g.player.difficulty - 2,
+          },
           .overrideTier   = (isLocked ? 0 : -1),
           .setFixedHeight = true,
         });
@@ -6604,39 +6663,26 @@ void DoUI(bool draw) {
               if (selected)
                 p.difficulty = (DifficultyType)(i + 1);
 
-              {
-                auto frameError = g.ui.newRunErrorLocked;
-                if (g.ui.newRunErrorLockedIndex != i)
-                  frameError = {};
+              const bool chosen = componentUniversalSlot({
+                .id         = slotID,
+                .group      = group,
+                .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
+                .hidden     = HiddenType_SHOW_LOCK,
+                .tier       = (isLocked ? 0 : (selected ? 6 : i)),
+                .canHover   = true,
+              });
 
-                BEAUTIFY_WIGGLING_DANGER_SCOPED(
-                  frameError,
-                  WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
-                  ERROR_WIGGLING_FRAMES,
-                  ERROR_WIGGLING_TIMES
-                );
-
-                const bool chosen = componentUniversalSlot({
-                  .id         = slotID,
-                  .group      = group,
-                  .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
-                  .hidden     = ComponentUniversalSlotHiddenType_SHOW_LOCK,
-                  .tier       = (isLocked ? 0 : (selected ? 6 : i)),
-                  .canHover   = true,
-                });
-
-                if (isLocked && chosen) {
-                  PlaySound(Sound_UI_ERROR);
-                  g.ui.newRunErrorLockedIndex = i;
-                  g.ui.newRunErrorLocked      = {};
-                  g.ui.newRunErrorLocked.SetNow();
-                }
-                else if (chosen) {
-                  PlaySound(Sound_UI_CLICK);
-                  p.difficulty = (DifficultyType)(i + 1);
-                  Save();
-                  g.ui.newRunStep++;
-                }
+              if (isLocked && chosen) {
+                PlaySound(Sound_UI_ERROR);
+                g.ui.newRunErrorLockedIndex = i;
+                g.ui.newRunErrorLocked      = {};
+                g.ui.newRunErrorLocked.SetNow();
+              }
+              else if (chosen) {
+                PlaySound(Sound_UI_CLICK);
+                p.difficulty = (DifficultyType)(i + 1);
+                Save();
+                g.ui.newRunStep++;
               }
 
               if (i < (int)DifficultyType_COUNT - 2)
@@ -6695,7 +6741,7 @@ void DoUI(bool draw) {
           //                 .id       = slotID,
           //                 .group    = groupBuilds,
           //                 .build    = (BuildType)(isLocked ? 0 : t + 1),
-          //                 .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
+          //                 .hidden   = HiddenType_SHOW_LOCK,
           //                 .tier     = (isLocked ? 0 : (selected ? 6 : tier)),
           //                 .canHover = !isLocked,
           //               });
@@ -6788,7 +6834,7 @@ void DoUI(bool draw) {
           //               .group = groupWeapons,
           //               .weapon
           //               = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) :
-          //               0), .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
+          //               0), .hidden   = HiddenType_SHOW_LOCK,
           //               .tier = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
           //               .canHover = exists && !isLocked,
           //             });
@@ -6852,6 +6898,7 @@ void DoUI(bool draw) {
 
       ControlsGroupConnect(group, Direction_DOWN, groupTop);
       ControlsGroupConnect(groupTop, Direction_DOWN, group);
+      ControlsGroupConnect(group, Direction_RIGHT, group);
     }
   }
   // Picked up item.
@@ -7257,7 +7304,7 @@ void DoUI(bool draw) {
             componentUniversalCard({
               .item                 = x.item,
               .weapon               = x.weapon,
-              .hideIfEmpty          = true,
+              .hidden               = HiddenType_HIDE_IF_EMPTY,
               .affectedByGame       = true,
               .overrideTier         = x.tier,
               .setFixedHeight       = true,
@@ -7825,7 +7872,7 @@ void DoUI(bool draw) {
                         .build    = (BuildType)fb_step->unlocks_build_type(),
                         .item     = (ItemType)fb_step->unlocks_item_type(),
                         .weapon   = (WeaponType)fb_step->unlocks_weapon_type(),
-                        .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
+                        .hidden   = HiddenType_SHOW_LOCK,
                         .tier     = tier,
                         .canHover = canHover,
                       });
