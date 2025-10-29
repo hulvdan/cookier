@@ -76,10 +76,11 @@ x new run: build: back button
 x new run: build: show builds
 x new run: back button: reacts to backspace / esc
 x new run: build: selecting build -> switching to weapons
+x new run: weapon: show them
+x new run: weapon: show weapon details
 
-* new run: weapon: show them
-* new run: weapon: show weapon details
-* new run: weapon:
+* new run: weapon: if newly selected build doesn't
+  have previously selected weapon -> reset weapon
 * new run: weapon:
 * new run: weapon:
 * new run: weapon:
