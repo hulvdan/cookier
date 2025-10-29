@@ -81,8 +81,20 @@ x new run: weapon: show weapon details
 x new run: weapon: if newly selected build doesn't
   have previously selected weapon -> reset weapon
 x new run: beautify sliding stuff
+- new run: don't select immediately if not `playerUsesKeyboardOrController`
 
-* new run: don't select immediately if not `playerUsesKeyboardOrController`
+* new run: TOUCH: don't proceed to the next stage upon clicking.
+  proceed after slot was selected in the first place
+*
+* new run:
+* new run:
+* new run:
+*
+* modal: are you sure you want to quit?
+* modal: are you sure you want to restart?
+* modal: are you sure you want to start a new run?
+*
+* fix getting achievement
 *
 * new run: refactor MAKE LESS CODE
 *
@@ -99,10 +111,6 @@ x new run: beautify sliding stuff
 * sparkles that highlight the weapons can be upgraded
 * outline with offset down
 * fix: shop: weapons details to the left
-*
-* modal: are you sure you want to quit?
-* modal: are you sure you want to restart?
-* modal: are you sure you want to start a new run?
 *
 * enemy that tanks 1-3 damage
 * engine: make `Arena` growing (by default it should assert)
