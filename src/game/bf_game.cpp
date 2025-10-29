@@ -901,7 +901,7 @@ const ControlsContext CONTROLS_CONTEXT_MODALS_[]{
 };
 VIEW_FROM_ARRAY_DANGER(CONTROLS_CONTEXT_MODALS);
 
-struct LockInfo {
+struct LockInfo {  ///
   AchievementType achievement = {};
   int             stepIndex   = -1;
 };
@@ -955,9 +955,9 @@ struct GameData {
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
 
-    Array<const BFGame::AchievementStep*, BuildType_COUNT>  lockedBuilds  = {};
-    Array<const BFGame::AchievementStep*, ItemType_COUNT>   lockedItems   = {};
-    Array<const BFGame::AchievementStep*, WeaponType_COUNT> lockedWeapons = {};
+    Array<LockInfo, BuildType_COUNT>  lockedBuilds  = {};
+    Array<LockInfo, ItemType_COUNT>   lockedItems   = {};
+    Array<LockInfo, WeaponType_COUNT> lockedWeapons = {};
 
     int achievementStepsTotal     = 0;
     int achievementStepsCompleted = 0;
@@ -1091,11 +1091,10 @@ struct GameData {
     Array<UIButtonState, 128> buttonStates               = {};
     int                       buttonStatesCount          = 0;
 
-    int         newRunErrorLockedIndex = 0;
-    FrameVisual newRunErrorLocked      = {};
-    FrameVisual errorGold              = {};
-    FrameVisual shopErrorWeapons       = {};
-    FrameVisual shopErrorBuild         = {};
+    FrameVisual newRunErrorLocked = {};
+    FrameVisual errorGold         = {};
+    FrameVisual shopErrorWeapons  = {};
+    FrameVisual shopErrorBuild    = {};
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
 
@@ -1608,13 +1607,24 @@ void OnWaveStarted() {  ///
   }
 }
 
-void AchievementStepSetLock(const BFGame::AchievementStep* fb_step, bool locked) {  ///
+void AchievementStepSetLock(
+  AchievementType                achievement,
+  int                            stepIndex,
+  const BFGame::AchievementStep* fb_step,
+  bool                           locked
+) {  ///
+  ASSERT(glib->achievements()->Get(achievement)->steps()->Get(stepIndex) == fb_step);
+
+  LockInfo lock{};
+  if (locked)
+    lock = {.achievement = achievement, .stepIndex = stepIndex};
+
   if (fb_step->unlocks_build_type())
-    g.player.lockedBuilds[fb_step->unlocks_build_type()] = (locked ? fb_step : nullptr);
+    g.player.lockedBuilds[fb_step->unlocks_build_type()] = lock;
   if (fb_step->unlocks_item_type())
-    g.player.lockedItems[fb_step->unlocks_item_type()] = (locked ? fb_step : nullptr);
+    g.player.lockedItems[fb_step->unlocks_item_type()] = lock;
   if (fb_step->unlocks_weapon_type())
-    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = (locked ? fb_step : nullptr);
+    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = lock;
 
   if (locked)
     g.player.achievementStepsCompleted--;
@@ -1634,7 +1644,7 @@ void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue)
   for (auto fb_step : *fb_steps) {
     stepIndex++;
     if ((oldValue < fb_step->value()) && (fb_step->value() <= newValue)) {
-      AchievementStepSetLock(fb_step, false);
+      AchievementStepSetLock(type, stepIndex, fb_step, false);
       *g.ui.justUnlockedAchievements.Add() = {.type = type, .stepIndex = stepIndex};
     }
   }
@@ -2782,7 +2792,7 @@ ItemType GenerateRandomItem() {  ///
         currentItemCount++;
     }
 
-    if (g.player.lockedItems[type])
+    if (g.player.lockedItems[type].achievement)
       continue;
     auto fb = fb_items->Get(type);
     if (!fb->deprecated())
@@ -3432,9 +3442,11 @@ void GameInitAfterLoading() {  ///
       g.player.achievementStepsTotal += fb_steps->size();
       g.player.achievementStepsCompleted += fb_steps->size();
 
+      int stepIndex = -1;
       for (auto fb_step : *fb_steps) {
+        stepIndex++;
         if (fb_step->value() > x.value)
-          AchievementStepSetLock(fb_step, true);
+          AchievementStepSetLock((AchievementType)i, stepIndex, fb_step, true);
       }
     }
 
@@ -3891,7 +3903,7 @@ void RefillShopToPick() {  ///
     else {
       while (!x.weapon) {
         auto w = (WeaponType)(GRAND.Rand() % fb_weapons->size());
-        if (g.player.lockedWeapons[w])
+        if (g.player.lockedWeapons[w].achievement)
           continue;
         x.weapon      = w;
         const auto fb = fb_weapons->Get(x.weapon);
@@ -6599,6 +6611,7 @@ void DoUI(bool draw) {
           .height
           = CLAY_SIZING_FIXED(2 * slotSize.y + GAP_SMALL + 2 * PADDING_NINE_SLICE_FRAME),
         },
+        .childGap = GAP_SMALL,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }})
       CLAY({
@@ -6639,8 +6652,10 @@ void DoUI(bool draw) {
             }
           );
           if (backed) {
+            PlaySound(Sound_UI_CLICK);
             g.ui.newRunStep--;
             ASSERT(g.ui.newRunStep >= 0);
+            ResetFocus(currentContext);
           }
         }
       });
@@ -6648,17 +6663,14 @@ void DoUI(bool draw) {
       BF_CLAY_SPACER_VERTICAL;
 
       if (g.ui.newRunStep == 0) {
-        const bool isLocked = ((int)p.difficulty - 1)
-                              > g.player.achievements[AchievementType_DIFFICULTY].value;
+        const bool isLocked
+          = ((int)p.difficulty - 1) > p.achievements[AchievementType_DIFFICULTY].value;
 
         componentUniversalCard({
-          .difficulty = (isLocked ? DifficultyType_INVALID : g.player.difficulty),
-          // .build      =,
-          // .item       =,
-          // .weapon     =,
+          .difficulty = (isLocked ? DifficultyType_INVALID : p.difficulty),
           .lockInfo{
             .achievement = AchievementType_DIFFICULTY,
-            .stepIndex   = (int)g.player.difficulty - 2,
+            .stepIndex   = (int)p.difficulty - 2,
           },
           .overrideTier   = (isLocked ? 0 : -1),
           .setFixedHeight = true,
@@ -6666,16 +6678,19 @@ void DoUI(bool draw) {
 
         BF_CLAY_SPACER_VERTICAL;
 
+        LAMBDA (void, newRunEntry, ()) {
+        };
+
         componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({})
           for (int i_ = (int)DifficultyType_D0; i_ < DifficultyType_COUNT; i_++) {
             const auto i = (DifficultyType)i_;
 
             const bool isLocked
-              = i_ > g.player.achievements[AchievementType_DIFFICULTY].value + 1;
+              = i_ > p.achievements[AchievementType_DIFFICULTY].value + 1;
             auto fb = fb_difficulties->Get(i);
 
-            const auto slotID = CLAY_IDI("new_run_difficulty", i);
+            const auto slotID = CLAY_IDI("new_run_entry", i);
 
             if (p.difficulty == i) {
               markControlAsDefault(slotID);
@@ -6693,20 +6708,20 @@ void DoUI(bool draw) {
               .group      = group,
               .difficulty = (DifficultyType)(isLocked ? 0 : i),
               .hidden     = HiddenType_SHOW_LOCK,
-              .tier       = (isLocked ? 0 : (selected ? 6 : (int)i - 1)),
-              .canHover   = true,
+              .tier       = (isLocked ? 0 : (int)i - 1),
             });
 
             if (isLocked && chosen) {
               PlaySound(Sound_UI_ERROR);
-              g.ui.newRunErrorLockedIndex = i;
-              g.ui.newRunErrorLocked      = {};
+              g.ui.newRunErrorLocked = {};
               g.ui.newRunErrorLocked.SetNow();
             }
             else if (chosen) {
               PlaySound(Sound_UI_CLICK);
               p.difficulty = i;
               Save();
+
+              ResetFocus(currentContext);
               g.ui.newRunStep++;
             }
 
@@ -6716,56 +6731,73 @@ void DoUI(bool draw) {
         });
       }
       else if (g.ui.newRunStep == 1) {
+        const bool isLocked = (bool)p.lockedBuilds[p.build].achievement;
+
+        componentUniversalCard({
+          .build          = (isLocked ? BuildType_INVALID : p.build),
+          .lockInfo       = p.lockedBuilds[p.build],
+          .overrideTier   = (isLocked ? 0 : -1),
+          .setFixedHeight = true,
+        });
+
+        BF_CLAY_SPACER_VERTICAL;
+
         const int BUILDS_X = 8;
         const int BUILDS_Y = CeilDivision((int)fb_builds->size() - 1, BUILDS_X);
 
-        // CLAY({
-        //   .layout{
-        //     BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-        //     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        //   },
-        //   BF_CLAY_CUSTOM_NINE_SLICE(
-        //     glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-        //   ),
-        // })
-        // FOR_RANGE (int, y, BUILDS_Y) {
-        //   ControlsGroupNewRow(groupBuilds);
-        //
-        //   CLAY({.layout{.childGap = GAP_SMALL}})
-        //   FOR_RANGE (int, x, BUILDS_X) {
-        //     const int t = y * BUILDS_X + x;
-        //     if (t >= fb_builds->size() - 1)
-        //       break;
-        //
-        //     const bool selected = ((int)p.build == (t + 1));
-        //
-        //     auto       fb       = fb_builds->Get(t + 1);
-        //     const bool isLocked = g.player.lockedBuilds[t + 1];
-        //
-        //     const int tier = GetBuildTier((BuildType)(t + 1));
-        //
-        //     const auto slotID       = CLAY_IDI("new_run_build", t);
-        //     const bool chosen = componentUniversalSlot({
-        //       .id       = slotID,
-        //       .group    = groupBuilds,
-        //       .build    = (BuildType)(isLocked ? 0 : t + 1),
-        //       .hidden   = HiddenType_SHOW_LOCK,
-        //       .tier     = (isLocked ? 0 : (selected ? 6 : tier)),
-        //       .canHover = !isLocked,
-        //     });
-        //
-        //     if (!isLocked) {
-        //       if (chosen) {
-        //         PlaySound(Sound_UI_CLICK);
-        //         if (p.build != (BuildType)(t + 1)) {
-        //           p.build  = (BuildType)(t + 1);
-        //           p.weapon = {};
-        //         }
-        //         Save();
-        //       }
-        //     }
-        //   }
-        // }
+        componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
+          FOR_RANGE (int, y, BUILDS_Y) {
+            ControlsGroupNewRow(group);
+
+            CLAY({.layout{.childGap = GAP_SMALL}})
+            FOR_RANGE (int, x, BUILDS_X) {
+              const int t = y * BUILDS_X + x;
+              if (t >= fb_builds->size() - 1)
+                break;
+
+              const auto build    = (BuildType)(t + 1);
+              auto       fb       = fb_builds->Get(build);
+              const bool isLocked = p.lockedBuilds[build].achievement;
+
+              const auto slotID = CLAY_IDI("new_run_build", t);
+
+              if (p.build == build) {
+                markControlAsDefault(slotID);
+                if (CURRENT_CONTEXT.focused.id == 0)
+                  CURRENT_CONTEXT.focused = slotID;
+              }
+
+              const bool selected = (CURRENT_CONTEXT.focused.id == slotID.id);
+              if (selected)
+                p.build = build;
+
+              const bool chosen = componentUniversalSlot({
+                .id     = slotID,
+                .group  = group,
+                .build  = (isLocked ? BuildType_INVALID : build),
+                .hidden = HiddenType_SHOW_LOCK,
+                .tier   = (isLocked ? 0 : GetBuildTier(build)),
+              });
+
+              if (isLocked && chosen) {
+                PlaySound(Sound_UI_ERROR);
+                g.ui.newRunErrorLocked = {};
+                g.ui.newRunErrorLocked.SetNow();
+
+                ResetFocus(currentContext);
+                g.ui.newRunStep++;
+              }
+              else if (chosen) {
+                PlaySound(Sound_UI_CLICK);
+                if (p.build != build) {
+                  p.build  = build;
+                  p.weapon = {};
+                }
+                Save();
+              }
+            }
+          }
+        });
       }
       else if (g.ui.newRunStep == 2) {
         // CLAY({
@@ -6784,7 +6816,7 @@ void DoUI(bool draw) {
         //   fb_builds->Get(p.build)->starting_weapon_types();
         //
         //   FOR_RANGE (int, y, WEAPONS_Y) {
-        //     ControlsGroupNewRow(groupWeapons);
+        //     ControlsGroupNewRow(group);
         //
         //     CLAY({.layout{.childGap = GAP_SMALL}})
         //     FOR_RANGE (int, x, WEAPONS_X) {
@@ -6799,13 +6831,13 @@ void DoUI(bool draw) {
         //       if (exists) {
         //         const auto weaponType = (WeaponType)fb_buildWeapons->Get(t);
         //         selected              = (p.weapon == weaponType);
-        //         isLocked              = g.player.lockedWeapons[weaponType];
+        //         isLocked              = p.lockedWeapons[weaponType];
         //       }
         //
         //       const auto slotID        = CLAY_IDI("new_run_weapon", t);
         //       const bool chosen = componentUniversalSlot({
         //         .id    = slotID,
-        //         .group = groupWeapons,
+        //         .group = group,
         //         .weapon = (WeaponType)(
         //           !isLocked && exists ? fb_buildWeapons->Get(t) : 0
         //         ),
@@ -6816,7 +6848,6 @@ void DoUI(bool draw) {
         //
         //       if (isLocked && chosen) {
         //         PlaySound(Sound_UI_ERROR);
-        //         g.ui.newRunErrorLockedIndex = i;
         //         g.ui.newRunErrorLocked      = {};
         //         g.ui.newRunErrorLocked.SetNow();
         //       }
