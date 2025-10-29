@@ -74,8 +74,9 @@ x new run: difficulty: cards contain locked info
 x new run: difficulty: wiggling achievement requirements
 x new run: build: back button
 x new run: build: show builds
+x new run: back button: reacts to backspace / esc
+x new run: build: selecting build -> switching to weapons
 
-* new run: build: selecting build -> switching to weapons
 * new run: build:
 * new run: build:
 * new run: build:
