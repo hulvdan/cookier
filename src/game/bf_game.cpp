@@ -3425,7 +3425,7 @@ void GameInit() {
   g.meta.previousMousePos = GetMouseScreenPos();
 }
 
-void GameInitAfterLoading() {  ///
+void GameInitAfterLoading() {
   // Recalculating unlocked builds, items and weapons based off achievements.
   {  ///
     g.player.achievementStepsTotal     = 0;
@@ -4018,7 +4018,7 @@ void EffectSpawnProjectilesOnHit(
   const Creature& creature,
   int             weaponIndex,
   f32             critDamageMultiplier
-) {
+) {  ///
   ASSERT(weaponIndex >= 0);
 
   IterateOverEffects(
