@@ -6593,6 +6593,28 @@ void DoUI(bool draw) {
     auto groupTop = MakeControlsGroup();
     auto group    = MakeControlsGroup();
 
+    LAMBDA (void, componentNewRunSelections, (auto innerLambda)) {
+      CLAY({.layout{
+        .sizing{
+          .height
+          = CLAY_SIZING_FIXED(2 * slotSize.y + GAP_SMALL + 2 * PADDING_NINE_SLICE_FRAME),
+        },
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+      }})
+      CLAY({
+        .layout{
+          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+          .childGap        = GAP_SMALL,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+        ),
+      }) {
+        innerLambda();
+      }
+    };
+
     CLAY({
       .layout{
         BF_CLAY_SIZING_GROW_XY,
@@ -6644,24 +6666,18 @@ void DoUI(bool draw) {
 
         BF_CLAY_SPACER_VERTICAL;
 
-        CLAY({
-          .layout{
-            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-          },
-          BF_CLAY_CUSTOM_NINE_SLICE(
-            glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-          ),
-        }) {
+        componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({})
-          FOR_RANGE (int, i, (int)DifficultyType_COUNT - 1) {
+          for (int i_ = (int)DifficultyType_D0; i_ < DifficultyType_COUNT; i_++) {
+            const auto i = (DifficultyType)i_;
+
             const bool isLocked
-              = i > g.player.achievements[AchievementType_DIFFICULTY].value;
-            auto fb = fb_difficulties->Get(i + 1);
+              = i_ > g.player.achievements[AchievementType_DIFFICULTY].value + 1;
+            auto fb = fb_difficulties->Get(i);
 
             const auto slotID = CLAY_IDI("new_run_difficulty", i);
 
-            if (p.difficulty == (DifficultyType)(i + 1)) {
+            if (p.difficulty == i) {
               markControlAsDefault(slotID);
               if (CURRENT_CONTEXT.focused.id == 0)
                 CURRENT_CONTEXT.focused = slotID;
@@ -6670,14 +6686,14 @@ void DoUI(bool draw) {
             const bool selected = (CURRENT_CONTEXT.focused.id == slotID.id);
 
             if (selected)
-              p.difficulty = (DifficultyType)(i + 1);
+              p.difficulty = i;
 
             const bool chosen = componentUniversalSlot({
               .id         = slotID,
               .group      = group,
-              .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
+              .difficulty = (DifficultyType)(isLocked ? 0 : i),
               .hidden     = HiddenType_SHOW_LOCK,
-              .tier       = (isLocked ? 0 : (selected ? 6 : i)),
+              .tier       = (isLocked ? 0 : (selected ? 6 : (int)i - 1)),
               .canHover   = true,
             });
 
@@ -6689,15 +6705,15 @@ void DoUI(bool draw) {
             }
             else if (chosen) {
               PlaySound(Sound_UI_CLICK);
-              p.difficulty = (DifficultyType)(i + 1);
+              p.difficulty = i;
               Save();
               g.ui.newRunStep++;
             }
 
-            if (i < (int)DifficultyType_COUNT - 2)
+            if (i < (int)DifficultyType_COUNT - 1)
               CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
           }
-        }
+        });
       }
       else if (g.ui.newRunStep == 1) {
         const int BUILDS_X = 8;
