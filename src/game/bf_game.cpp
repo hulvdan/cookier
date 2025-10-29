@@ -937,9 +937,9 @@ struct GameData {
     bool        scheduledSave = false;
     FrameVisual lastSaveAt    = {};
 
-    bool    playerUsesKeyboard      = false;
-    Vector2 previousMousePos        = {};
-    f32     pauseButtonFadeProgress = 1;
+    bool    playerUsesKeyboardOrController = false;
+    Vector2 previousMousePos               = {};
+    f32     pauseButtonFadeProgress        = 1;
   } meta;
 
   struct {  ///
@@ -4343,13 +4343,13 @@ void DoUI(bool draw) {
   LAMBDA (void, markControlAsDefault, (Clay_ElementId id)) {
     ASSERT(CURRENT_CONTEXT.thisFrame);
 
-    if ((uiElementSwitchDirection || g.meta.playerUsesKeyboard)
+    if ((uiElementSwitchDirection || g.meta.playerUsesKeyboardOrController)
         && !CURRENT_CONTEXT.selectedElement.id)
     {
       CURRENT_CONTEXT.selectedElement = id;
       justFocusedDefaultControl       = true;
     }
-    if (!CURRENT_CONTEXT.prevFrame && g.meta.playerUsesKeyboard
+    if (!CURRENT_CONTEXT.prevFrame && g.meta.playerUsesKeyboardOrController
         && !CURRENT_CONTEXT.selectedElement.id)
       CURRENT_CONTEXT.selectedElement = id;
   };
@@ -4375,7 +4375,7 @@ void DoUI(bool draw) {
       pos    = ScreenPosToLogical(d.screenPos);
     }
 
-    if (g.meta.playerUsesKeyboard)
+    if (g.meta.playerUsesKeyboardOrController)
       Clay_SetPointerState({-1, -1}, false);
     else
       Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
@@ -5120,10 +5120,11 @@ void DoUI(bool draw) {
 
     bool setFixedHeight = false;
 
-    ControlsGroupID shopGroup                 = {};
-    int             shopBuyingIndex           = -1;
-    bool            shopSelling               = false;
-    Clay_ElementId  shopChangeToIDAfterBuying = {};
+    ControlsGroupID shopGroup                  = {};
+    int             shopBuyingIndex            = -1;
+    bool            shopSelling                = false;
+    Clay_ElementId  shopChangeToIDAfterBuying  = {};
+    Clay_ElementId  shopChangeToIDAfterSelling = {};
   };
 
   auto groupWeaponDetails = MakeControlsGroup();
@@ -5588,14 +5589,15 @@ void DoUI(bool draw) {
 
                     ApplyImmediateWeaponEffects();
                   }
-
-                  if (CURRENT_CONTEXT.selectedElement.id == buyButtonID.id)
-                    CURRENT_CONTEXT.selectedElement = data.shopChangeToIDAfterBuying;
                 }
                 else if (data.item)
                   AddItem(data.item);
                 else
                   INVALID_PATH;
+
+                if ((CURRENT_CONTEXT.selectedElement.id == buyButtonID.id)
+                    && g.meta.playerUsesKeyboardOrController)
+                  CURRENT_CONTEXT.selectedElement = data.shopChangeToIDAfterBuying;
 
                 g.run.state.shop.toPick[data.shopBuyingIndex] = {};
                 Save();
@@ -7407,6 +7409,10 @@ void DoUI(bool draw) {
     ControlsGroupConnect(groupTopButtons, Direction_RIGHT, groupTopButtons);
 
     ControlsGroupConnect(groupItems, Direction_LEFT, groupGoNextWave);
+
+    ControlsGroupConnect(groupTopButtons, Direction_UP, groupGoNextWave);
+    ControlsGroupConnect(groupItems, Direction_DOWN, groupTopButtons);
+    ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTopButtons);
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
@@ -8901,12 +8907,14 @@ void GameFixedUpdate() {
 
   for (bool buttonIsDown : ge.meta._keyboardState) {
     if (buttonIsDown)
-      g.meta.playerUsesKeyboard = true;
+      g.meta.playerUsesKeyboardOrController = true;
   }
   // }
 
   g.meta.pauseButtonFadeProgress = MoveTowards(
-    g.meta.pauseButtonFadeProgress, (g.meta.playerUsesKeyboard ? 0 : 1), FIXED_DT * 2
+    g.meta.pauseButtonFadeProgress,
+    (g.meta.playerUsesKeyboardOrController ? 0 : 1),
+    FIXED_DT * 2
   );
 
   // Save.
@@ -8945,7 +8953,7 @@ void GameFixedUpdate() {
 
   // Show / hide cursor.
   {  ///
-    if (g.meta.playerUsesKeyboard)
+    if (g.meta.playerUsesKeyboardOrController)
       SDL_HideCursor();
     else
       SDL_ShowCursor();
@@ -9249,8 +9257,8 @@ void GameFixedUpdate() {
 
   auto mousePos = GetMouseScreenPos();
   if ((mousePos != g.meta.previousMousePos) || (GetTouchIDs().count > 0)) {
-    g.meta.playerUsesKeyboard = false;
-    g.meta.previousMousePos   = mousePos;
+    g.meta.playerUsesKeyboardOrController = false;
+    g.meta.previousMousePos               = mousePos;
   }
 
   // Updating gameplay.
@@ -9274,8 +9282,8 @@ void GameFixedUpdate() {
         }
 
         for (auto id : GetTouchIDs()) {
-          g.meta.playerUsesKeyboard = false;
-          auto touch                = GetTouchData(id);
+          g.meta.playerUsesKeyboardOrController = false;
+          auto touch                            = GetTouchData(id);
 
           if (touch.userData == u64_max)
             continue;
