@@ -77,10 +77,6 @@ x new run: build: show builds
 x new run: back button: reacts to backspace / esc
 x new run: build: selecting build -> switching to weapons
 
-* new run: build:
-* new run: build:
-* new run: build:
-* new run: build:
 * new run: weapon:
 * new run: weapon:
 * new run: weapon:
@@ -88,14 +84,11 @@ x new run: build: selecting build -> switching to weapons
 * new run: weapon:
 * new run: weapon:
 * new run: weapon:
-* ui keyboard: new run markControlAsDefault
-* ui keyboard:
-* ui keyboard:
-* ui keyboard:
-* ui keyboard:
+*
+* new run: beautify sliding stuff
+* new run: refactor MAKE LESS CODE
 *
 *
-* ui keyboard: shop: change selected button after buying/recycling/combining
 * touch: releasing finger while showing details
   -> details are sticked (or weapon details are shown up)
 * touch: selecting weapon details only when released touch.
