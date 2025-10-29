@@ -72,10 +72,10 @@ x new run: difficulty: clicking locked wiggling error
 x new run: difficulty: clicking good -> switching to build selection
 x new run: difficulty: cards contain locked info
 x new run: difficulty: wiggling achievement requirements
+x new run: build: back button
 
-* new run: 3 steps (difficulty -> build -> weapon)
-* new run: build: back button
 * new run: build: show builds
+* new run: 3 steps (difficulty -> build -> weapon)
 * new run: build:
 * new run: build:
 * new run: build:
