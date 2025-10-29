@@ -1418,6 +1418,7 @@ builds: # {  ###
 achievements: # {  ###
   - type: INVALID
   - type: DIFFICULTY
+    hide_progress: true
     steps:
       - value: 1
         unlocks_build_type: WIZARD
