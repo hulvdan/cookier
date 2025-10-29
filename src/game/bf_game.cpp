@@ -226,7 +226,7 @@ struct Beautify {
   BEAUTIFY(b);
 
 struct ClayImageData {
-  int     texId          = {};
+  int     texID          = {};
   Vector2 scale          = {1, 1};
   Margins sourceMargins  = {0, 0};
   Color   color          = WHITE;
@@ -359,7 +359,7 @@ struct ShapeUserData {  ///
     };
   }
 
-  int GetCreatureId() const {
+  int GetCreatureID() const {
     ASSERT(type == ShapeUserDataType_CREATURE);
     return _value;
   }
@@ -408,7 +408,7 @@ struct ShapeUserData {  ///
 };
 
 struct Body {  ///
-  int      createdId = {};
+  int      createdID = {};
   b2BodyId id        = {};
 };
 
@@ -462,7 +462,7 @@ struct Weapon {  ///
   int        thisWaveDamage                     = 0;
   f32        lastCollisionCheckShootingProgress = 0;
 
-  Array<int, WEAPON_MAX_PIERCE> piercedCreatureIds = {};
+  Array<int, WEAPON_MAX_PIERCE> piercedCreatureIDs = {};
   int                           piercedCount       = 0;
 
   int thisWaveKilledEnemies = 0;
@@ -618,14 +618,14 @@ struct Projectile {  ///
   int                               effectCritBounce          = {};
   int                               bounce                    = {};
   FrameGame                         createdAt                 = {};
-  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIds        = {};
+  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIDs        = {};
   int                               damagedCount              = {};
   int                               piercedCount              = 0;
   int                               bouncedCount              = 0;
   f32                               knockbackMeters           = {};
   f32                               range                     = {};
   f32                               travelledDistance         = 0;
-  int                               anchorCreatureId          = {};
+  int                               anchorCreatureID          = {};
   bool                              dontSpawnProjectilesOnHit = false;
 };
 
@@ -641,8 +641,8 @@ struct MakeProjectileData {  ///
   f32            knockbackMeters           = {};
   int            pierce                    = {};
   int            bounce                    = {};
-  int            anchorCreatureId          = {};
-  int            alreadyDamagedCreatureId  = 0;
+  int            anchorCreatureID          = {};
+  int            alreadyDamagedCreatureID  = 0;
   bool           dontSpawnProjectilesOnHit = false;
 };
 
@@ -751,7 +751,7 @@ struct Placeholder {  ///
     } brokenLocale;
 
     struct {
-      int texId;
+      int texID;
     } image;
   } _u;
 
@@ -1024,7 +1024,7 @@ struct GameData {
     };
 
     b2WorldId world          = {};
-    int       nextCreatureId = 1;
+    int       nextCreatureID = 1;
 
     Array<ThisWaveMob, CreatureType_COUNT> thisWaveMobs      = {};
     int                                    thisWaveMobsCount = 0;
@@ -1043,7 +1043,7 @@ struct GameData {
 
     FrameGame waveStartedAt = {};
 
-    int bossCreatureId = 0;
+    int bossCreatureID = 0;
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -1134,11 +1134,11 @@ _GetPreferredControlsDimension(ControlsDimension* first, int preferredIndex) {  
 }
 
 ControlsGroupID MakeControlsGroup() {  ///
-  static ControlsGroupID nextId = 1;
+  static ControlsGroupID nextID = 1;
 
   auto p = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsGroup);
   *p     = {
-        .id   = nextId++,
+        .id   = nextID++,
         .prev = g.ui.controlsGroupsLast,
   };
 
@@ -1151,8 +1151,8 @@ ControlsGroupID MakeControlsGroup() {  ///
   return p->id;
 }
 
-void ControlsGroupNewRow(ControlsGroupID groupId) {  ///
-  auto group = _GetControlsGroup(groupId);
+void ControlsGroupNewRow(ControlsGroupID groupID) {  ///
+  auto group = _GetControlsGroup(groupID);
   if (!group || (group->last && !group->last->first))
     return;
 
@@ -1168,16 +1168,16 @@ void ControlsGroupNewRow(ControlsGroupID groupId) {  ///
   group->last = dim;
 }
 
-void ControlsGroupAdd(ControlsGroupID groupId, Clay_ElementId id) {  ///
+void ControlsGroupAdd(ControlsGroupID groupID, Clay_ElementId id) {  ///
   ASSERT(id.id);
 
-  auto group = _GetControlsGroup(groupId);
+  auto group = _GetControlsGroup(groupID);
   if (!group)
     return;
 
   auto dim = group->last;
   if (!dim) {
-    ControlsGroupNewRow(groupId);
+    ControlsGroupNewRow(groupID);
     dim = group->last;
   }
 
@@ -1591,7 +1591,7 @@ void OnWaveStarted() {  ///
   g.run.waveStartedAt = {};
   g.run.waveStartedAt.SetNow();
 
-  g.run.bossCreatureId = 0;
+  g.run.bossCreatureID = 0;
 
   RecalculateThisWaveMobs();
 
@@ -2087,18 +2087,18 @@ void PlaceholdBrokenLocale(
   PlaceholdGroupEnd();
 }
 
-void PlaceholdImage(int texId) {  ///
+void PlaceholdImage(int texID) {  ///
   ASSERT(g.uiFlex.pgroupsLastIsActive);
   _AddPlaceholder({
     .type = PlaceholderType_IMAGE,
-    ._u{.image{.texId = texId}},
+    ._u{.image{.texID = texID}},
   });
 }
 
 // `placeholder` must be statically allocated or live in trashArena.
-void PlaceholdImage(const char* placeholder, int texId) {  ///
+void PlaceholdImage(const char* placeholder, int texID) {  ///
   PlaceholdGroupBegin(placeholder);
-  PlaceholdImage(texId);
+  PlaceholdImage(texID);
   PlaceholdGroupEnd();
 }
 
@@ -2256,8 +2256,8 @@ void BF_CLAY_IMAGE(
   auto          innerLambda,
   bool          _resetPlaceholders = true
 ) {  ///
-  const auto texture      = glib->atlas_textures()->Get(data.texId);
-  const auto originalSize = glib->original_texture_sizes()->Get(data.texId);
+  const auto texture      = glib->atlas_textures()->Get(data.texID);
+  const auto originalSize = glib->original_texture_sizes()->Get(data.texID);
 
   f32 w = (f32)originalSize->x() * data.scale.x * ASSETS_TO_LOGICAL_RATIO;
   f32 h = (f32)originalSize->y() * data.scale.y * ASSETS_TO_LOGICAL_RATIO;
@@ -2310,11 +2310,11 @@ void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
 
 // NOTE: This overload DOESN'T SAVE string to trash arena.
 void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
-  u16 fontId = 0;
+  u16 fontID = 0;
   if (g.ui.overriddenFont)
-    fontId = (UINT_FROM_PTR(g.ui.overriddenFont) - UINT_FROM_PTR(&g.meta.fontUI))
+    fontID = (UINT_FROM_PTR(g.ui.overriddenFont) - UINT_FROM_PTR(&g.meta.fontUI))
              / sizeof(Font);
-  ASSERT(fontId >= 0);
+  ASSERT(fontID >= 0);
 
   if (g.uiFlex.active) {
     Clay_StringSlice s{
@@ -2322,7 +2322,7 @@ void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
       .chars     = string.chars,
       .baseChars = string.chars,
     };
-    Clay_TextElementConfig cfg{.fontId = fontId};
+    Clay_TextElementConfig cfg{.fontId = fontID};
     auto                   dim = MeasureText(s, &cfg, nullptr);
 
     // In flex space shouldn't break the line.
@@ -2339,7 +2339,7 @@ void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
     string,
     CLAY_TEXT_CONFIG({
       .textColor = ToClayColor(color),
-      .fontId    = fontId,
+      .fontId    = fontID,
     })
   );
 }
@@ -2440,7 +2440,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED(
 void DestroyBody(Body* body) {  ///
   b2DestroyBody(body->id);
   for (auto& shape : g.run.bodyShapes) {
-    if (shape.body.createdId == body->createdId)
+    if (shape.body.createdID == body->createdID)
       shape.active = false;
   }
 }
@@ -2502,9 +2502,9 @@ MakeBodyResult MakeBody(Vector2 pos, MakeBodyData data) {  ///
 
   shapeDef.density = data.density;
 
-  static int     lastCreatedId = 0;
+  static int     lastCreatedID = 0;
   MakeBodyResult result{
-    .body{.createdId = ++lastCreatedId, .id = body},
+    .body{.createdID = ++lastCreatedID, .id = body},
     .shapeDef = shapeDef,
   };
 
@@ -2612,10 +2612,10 @@ int MakeCreature(MakeCreatureData data) {  ///
     health = Round((f32)health * mobHpScale);
   }
 
-  const auto creatureId = g.run.nextCreatureId++;
+  const auto creatureID = g.run.nextCreatureID++;
 
   Creature creature{
-    .id        = creatureId,
+    .id        = creatureID,
     .type      = data.type,
     .health    = health,
     .maxHealth = health,
@@ -2626,7 +2626,7 @@ int MakeCreature(MakeCreatureData data) {  ///
            .hurtboxRadius = hurtboxRadius,
            .bodyData{
              .type     = BodyType_CREATURE,
-             .userData = ShapeUserData::Creature(creatureId),
+             .userData = ShapeUserData::Creature(creatureID),
              .isPlayer = (data.type == CreatureType_PLAYER),
       },
     }),
@@ -2671,7 +2671,7 @@ int MakeCreature(MakeCreatureData data) {  ///
 
 void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
-  if (data.anchorCreatureId)
+  if (data.anchorCreatureID)
     ASSERT(data.dir == Vector2Zero());
   else
     ASSERT(data.dir != Vector2Zero());
@@ -3979,7 +3979,7 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
   return fb->range_meters() + bonusRange;
 }
 
-int TryGetCreatureIndexById(int id) {  ///
+int TryGetCreatureIndexByID(int id) {  ///
   int i = -1;
   for (const auto& creature : g.run.creatures) {
     i++;
@@ -3989,8 +3989,8 @@ int TryGetCreatureIndexById(int id) {  ///
   return -1;
 }
 
-int GetCreatureIndexById(int id) {  ///
-  int index = TryGetCreatureIndexById(id);
+int GetCreatureIndexByID(int id) {  ///
+  int index = TryGetCreatureIndexByID(id);
   ASSERT(index >= 0);
   return index;
 }
@@ -4022,7 +4022,7 @@ void EffectSpawnProjectilesOnHit(
             .range                     = fb_effect->projectile_range_meters(),
             .damage                    = damage,
             .critDamageMultiplier      = critDamageMultiplier,
-            .alreadyDamagedCreatureId  = creature.id,
+            .alreadyDamagedCreatureID  = creature.id,
             .dontSpawnProjectilesOnHit = true,
           });
         }
@@ -4030,13 +4030,13 @@ void EffectSpawnProjectilesOnHit(
   );
 }
 
-bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
+bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
   auto& weapon = g.run.state.weapons[*weaponIndex];
 
   const bool continueCollisions = true;
-  const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeId));
+  const auto userData = ShapeUserData::FromPointer(b2Shape_GetUserData(shapeID));
 
-  const auto  creatureIndex = GetCreatureIndexById(userData.GetCreatureId());
+  const auto  creatureIndex = GetCreatureIndexByID(userData.GetCreatureID());
   const auto& creature      = g.run.creatures[creatureIndex];
 
   ASSERT(creature.type);
@@ -4047,11 +4047,11 @@ bool OnWeaponCollided(b2ShapeId shapeId, int* const weaponIndex) {  ///
 
   const auto fb = glib->weapons()->Get(weapon.type);
 
-  if (ArrayContains(weapon.piercedCreatureIds.base, weapon.piercedCount, creature.id))
+  if (ArrayContains(weapon.piercedCreatureIDs.base, weapon.piercedCount, creature.id))
     return continueCollisions;
 
-  if (weapon.piercedCount < weapon.piercedCreatureIds.count) {
-    weapon.piercedCreatureIds[weapon.piercedCount++] = creature.id;
+  if (weapon.piercedCount < weapon.piercedCreatureIDs.count) {
+    weapon.piercedCreatureIDs[weapon.piercedCount++] = creature.id;
 
     const bool hit = TryApplyDamage({
       .creatureIndex   = creatureIndex,
@@ -4082,8 +4082,8 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   const auto e            = weapon.startedShootingAt.Elapsed();
   const auto shootingDur  = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
   auto       p            = MIN(1, e.Progress(shootingDur) * 2);
-  const auto texId        = fb->texture_ids()->Get(0);
-  const auto colliderSize = (f32)glib->original_texture_sizes()->Get(texId)->x()
+  const auto texID        = fb->texture_ids()->Get(0);
+  const auto colliderSize = (f32)glib->original_texture_sizes()->Get(texID)->x()
                             * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
   p = EaseInOutQuad(p);
@@ -4160,7 +4160,7 @@ void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  //
 void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
   const auto& d = placeholder->image();
 
-  auto fb = glib->original_texture_sizes()->Get(d.texId);
+  auto fb = glib->original_texture_sizes()->Get(d.texID);
 
   f32 h              = (f32)g.meta.fontUI.size;
   f32 fontScaleToFit = g.meta.fontUI._scaleToFit;
@@ -4172,7 +4172,7 @@ void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
   f32 scale = h / ((f32)fb->y() * ASSETS_TO_LOGICAL_RATIO);
   BF_CLAY_IMAGE(
     {
-      .texId = d.texId,
+      .texID = d.texID,
       .scale{scale, scale},
       .overriddenSize{0, h / fontScaleToFit},
     },
@@ -4298,6 +4298,8 @@ void RemoveImmediateWeaponEffects() {  ///
     currentContext = prevContext;                          \
   };
 
+#define CURRENT_CONTEXT (controlsContexts[currentContext])
+
 // NOTE: Logic must be executed only when `draw` is false!
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
@@ -4336,16 +4338,20 @@ void DoUI(bool draw) {
     uiElementSwitchDirection_ = Direction_DOWN;
   const Direction uiElementSwitchDirection = uiElementSwitchDirection_;
 
+  bool justFocusedDefaultControl = false;
+
   LAMBDA (void, markControlAsDefault, (Clay_ElementId id)) {
-    ASSERT(currentContext);
+    ASSERT(CURRENT_CONTEXT.thisFrame);
 
-    auto& context = controlsContexts[currentContext];
-    ASSERT(context.thisFrame);
-
-    if (uiElementSwitchDirection && !context.selectedElement.id)
-      context.selectedElement = id;
-    if (!context.prevFrame && g.meta.playerUsesKeyboard)
-      context.selectedElement = id;
+    if ((uiElementSwitchDirection || g.meta.playerUsesKeyboard)
+        && !CURRENT_CONTEXT.selectedElement.id)
+    {
+      CURRENT_CONTEXT.selectedElement = id;
+      justFocusedDefaultControl       = true;
+    }
+    if (!CURRENT_CONTEXT.prevFrame && g.meta.playerUsesKeyboard
+        && !CURRENT_CONTEXT.selectedElement.id)
+      CURRENT_CONTEXT.selectedElement = id;
   };
 
   const auto fb_atlas_textures      = glib->atlas_textures();
@@ -4471,7 +4477,7 @@ void DoUI(bool draw) {
 
   bool _alreadyHandledActivation = false;
 
-  LAMBDA (bool, isCurrentContextActive, ()) {
+  LAMBDA (bool, isCurrentContextActive, ()) {  ///
     if (CONTROLS_CONTEXT_MODALS.Contains(currentContext))
       return true;
 
@@ -4536,9 +4542,7 @@ void DoUI(bool draw) {
     if (data.id.id && data.group)
       ControlsGroupAdd(data.group, data.id);
 
-    auto& context = controlsContexts[currentContext];
-
-    auto& selectedElement = context.selectedElement;
+    auto& selectedElement = CURRENT_CONTEXT.selectedElement;
     bool  isSelected      = (selectedElement.id && (selectedElement.id == data.id.id));
 
     bool justSelected = false;
@@ -4600,6 +4604,8 @@ void DoUI(bool draw) {
     return result;
   };
 
+  const auto rerollID = CLAY_ID("button_reroll");
+
   LAMBDA (bool, componentButtonReroll, (ControlsGroupID group, int price)) {  ///
     ASSERT(price >= 0);
 
@@ -4610,13 +4616,13 @@ void DoUI(bool draw) {
       keys.count = 0;
 
     return componentButton(
-      {.id = CLAY_ID("button_shop_reroll"), .group = group, .keys = keys},
+      {.id = rerollID, .group = group, .keys = keys},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
           const bool canReroll = (price <= PLAYER_COINS);
           BF_CLAY_IMAGE(
             {
-              .texId = glib->ui_icon_refresh_texture_id(),
+              .texID = glib->ui_icon_refresh_texture_id(),
               .color = (canReroll ? WHITE : palGray),
             },
             [&]() BF_FORCE_INLINE_LAMBDA {
@@ -4641,7 +4647,7 @@ void DoUI(bool draw) {
                 BF_CLAY_TEXT(
                   TextFormat("%d", price), (canReroll ? palTextWhite : palTextRed)
                 );
-                BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
                 FontEnd();
               }
             }
@@ -4663,13 +4669,13 @@ void DoUI(bool draw) {
     ASSERT(data.group);
     ASSERT(data.id.id);
 
-    const int texId
+    const int texID
       = (data.big ? glib->ui_icon_sell_big_texture_id() : glib->ui_icon_sell_texture_id());
 
     return componentButton(
       {.id = data.id, .group = data.group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_IMAGE({.texId = texId}, [&]() BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_IMAGE({.texID = texID}, [&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({
             .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
             .floating{
@@ -4687,7 +4693,7 @@ void DoUI(bool draw) {
             FontBegin(&g.meta.fontUIBigOutlined);
             BF_CLAY_TEXT(TextFormat("%d", data.price), palTextWhite);
             BF_CLAY_IMAGE({
-              .texId = glib->ui_coin_texture_id(),
+              .texID = glib->ui_coin_texture_id(),
               .scale = Vector2One() * 0.75f,
             });
             FontEnd();
@@ -4714,8 +4720,8 @@ void DoUI(bool draw) {
     if (data.group)
       ControlsGroupAdd(data.group, data.id);
 
-    const int texId        = glib->ui_item_slot_texture_id();
-    auto      originalSize = original_texture_sizes->Get(texId);
+    const int texID        = glib->ui_item_slot_texture_id();
+    auto      originalSize = original_texture_sizes->Get(texID);
 
     CLAY({.layout{.sizing{
       .width  = CLAY_SIZING_FIXED((f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO),
@@ -4734,7 +4740,7 @@ void DoUI(bool draw) {
         flash           = TRANSPARENT_BLACK;
       }
 
-      BF_CLAY_IMAGE({.texId = texId, .color = color, .flash = flash}, innerLambda);
+      BF_CLAY_IMAGE({.texID = texID, .color = color, .flash = flash}, innerLambda);
     }
   };
 
@@ -4770,24 +4776,24 @@ void DoUI(bool draw) {
                               + (int)(data.item != 0) + (int)(data.weapon != 0);
     ASSERT(onlyOneOrNone <= 1);
 
-    int texId = 0;
+    int texID = 0;
     int tier  = 0;
     if (data.difficulty) {
-      texId = fb_difficulties->Get(data.difficulty)->texture_id();
+      texID = fb_difficulties->Get(data.difficulty)->texture_id();
       tier  = (int)data.difficulty - 1;
     }
     if (data.build) {
-      texId = fb_builds->Get(data.build)->texture_id();
+      texID = fb_builds->Get(data.build)->texture_id();
       tier  = GetBuildTier(data.build);
     }
     if (data.item) {
       auto fbx = fb_items->Get(data.item);
-      texId    = fbx->texture_id();
+      texID    = fbx->texture_id();
       tier     = fbx->tier();
     }
     if (data.weapon) {
       auto fbx = fb_weapons->Get(data.weapon);
-      texId    = fbx->icon_texture_id();
+      texID    = fbx->icon_texture_id();
       tier     = fbx->min_tier_index();
     }
     if (data.tier >= 0)
@@ -4807,19 +4813,28 @@ void DoUI(bool draw) {
       [&]() BF_FORCE_INLINE_LAMBDA {
         if (data.canHover) {
           ButtonSFX(draw, data.id, Clay_Hovered());
-          if (activated(data.id))
-            result = true;
+
+          if (isCurrentContextActive()) {
+            result |= clicked();
+
+            const auto& selectedElement
+              = controlsContexts[currentContext].selectedElement;
+            if (selectedElement.id && (selectedElement.id == data.id.id)) {
+              result |= didActivate(SDL_SCANCODE_SPACE);
+              result |= didActivate(SDL_SCANCODE_RETURN);
+            }
+          }
         }
 
         if (!onlyOneOrNone) {
           if (data.hidden == ComponentUniversalSlotHiddenType_SHOW_LOCK)
-            texId = glib->ui_item_locked_texture_id();
+            texID = glib->ui_item_locked_texture_id();
           else
             return;
         }
 
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          BF_CLAY_IMAGE({.texId = texId});
+          BF_CLAY_IMAGE({.texID = texID});
 
           // Showing count if there are multiple of the same item.
           if (data.count > 1) {
@@ -4885,7 +4900,7 @@ void DoUI(bool draw) {
           const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
 
           // if (fb_stat->icon_texture_id())
-          //   BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+          //   BF_CLAY_IMAGE({.texID = fb_stat->icon_texture_id()});
 
           PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
 
@@ -5105,13 +5120,17 @@ void DoUI(bool draw) {
 
     bool setFixedHeight = false;
 
-    bool            shopMarkDefault = false;
-    ControlsGroupID shopGroup       = {};
-    int             shopBuyingIndex = -1;
-    bool            shopSelling     = false;
+    ControlsGroupID shopGroup                 = {};
+    int             shopBuyingIndex           = -1;
+    bool            shopSelling               = false;
+    Clay_ElementId  shopChangeToIDAfterBuying = {};
   };
 
   auto groupWeaponDetails = MakeControlsGroup();
+
+  LAMBDA (Clay_ElementId, getIDFromShopBuyingIndex, (int index)) {  ///
+    return CLAY_IDI("button_shop_buy", index);
+  };
 
   LAMBDA (void, componentUniversalCard, (ComponentUniversalCardData data)) {
     // Setup. {  ///
@@ -5387,7 +5406,7 @@ void DoUI(bool draw) {
                     "+%d%%",
                     fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
                   ));
-                  BF_CLAY_IMAGE({.texId = fb_stat->icon_texture_id()});
+                  BF_CLAY_IMAGE({.texID = fb_stat->icon_texture_id()});
                   if (scalingIndex < fb_scalings->size() - 1)
                     BF_CLAY_TEXT(" + ");
                 }
@@ -5516,9 +5535,7 @@ void DoUI(bool draw) {
             BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
           }}) {
             // Buying item / weapon.
-            auto buyButtonId = CLAY_IDI("button_shop_buy", data.shopBuyingIndex);
-            if (data.shopMarkDefault)
-              markControlAsDefault(buyButtonId);
+            const auto buyButtonID = getIDFromShopBuyingIndex(data.shopBuyingIndex);
 
             SDL_Scancode keys_[]{
               (SDL_Scancode)((int)SDL_SCANCODE_1 + data.shopBuyingIndex),
@@ -5529,7 +5546,7 @@ void DoUI(bool draw) {
               keys.count = 0;
 
             auto bought = componentButton(
-              {.id = buyButtonId, .group = data.shopGroup, .keys = keys},
+              {.id = buyButtonID, .group = data.shopGroup, .keys = keys},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
                   BF_CLAY_SIZING_GROW_X,
@@ -5541,7 +5558,7 @@ void DoUI(bool draw) {
                     ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)
                   );
                   FontEnd();
-                  BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+                  BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
                 }
               }
             );
@@ -5571,6 +5588,9 @@ void DoUI(bool draw) {
 
                     ApplyImmediateWeaponEffects();
                   }
+
+                  if (CURRENT_CONTEXT.selectedElement.id == buyButtonID.id)
+                    CURRENT_CONTEXT.selectedElement = data.shopChangeToIDAfterBuying;
                 }
                 else if (data.item)
                   AddItem(data.item);
@@ -5629,7 +5649,7 @@ void DoUI(bool draw) {
               combined = componentButton(
                 {.id = CLAY_ID("button_weapon_combine"), .group = groupWeaponDetails},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_IMAGE({.texId = glib->ui_icon_combine_texture_id()});
+                  BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
                 }
               );
             }
@@ -5645,10 +5665,10 @@ void DoUI(bool draw) {
             });
 
             // Cancel button.
-            auto       cancelId  = CLAY_ID("button_weapon_cancel");
+            auto       cancelID  = CLAY_ID("button_weapon_cancel");
             const bool cancelled = componentButton(
               {
-                .id    = cancelId,
+                .id    = cancelID,
                 .group = groupWeaponDetails,
                 .keys  = KEYS_CANCEL,
               },
@@ -5658,12 +5678,12 @@ void DoUI(bool draw) {
                   active = g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1;
 
                 BF_CLAY_IMAGE({
-                  .texId = glib->ui_icon_cancel_texture_id(),
+                  .texID = glib->ui_icon_cancel_texture_id(),
                   .color = (active ? WHITE : palGray),
                 });
               }
             );
-            markControlAsDefault(cancelId);
+            markControlAsDefault(cancelID);
 
             if (combined) {
               ASSERT(canCombineWithIndex >= 0);
@@ -5963,9 +5983,10 @@ void DoUI(bool draw) {
   };
 
   struct ComponentItemsGridData {  ///
-    ControlsGroupID group        = {};
-    int             itemsX       = {};
-    bool            detailsBelow = false;
+    ControlsGroupID group              = {};
+    int             itemsX             = {};
+    bool            detailsBelow       = false;
+    bool            markFirstAsDefault = false;
   };
 
   LAMBDA (void, componentItemsGrid, (ComponentItemsGridData data)) {  ///
@@ -5991,7 +6012,7 @@ void DoUI(bool draw) {
             BuildType      buildType      = {};
             ItemType       itemType       = {};
 
-            Clay_ElementId slotId{};
+            Clay_ElementId slotID{};
 
             if (t == 0) {
               BEAUTIFY_WIGGLING_DANGER_SCOPED(
@@ -6001,18 +6022,18 @@ void DoUI(bool draw) {
                 ERROR_WIGGLING_TIMES
               );
 
-              slotId = CLAY_IDI("shop_player_item", t);
+              slotID = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id    = slotId,
+                .id    = slotID,
                 .group = data.group,
                 .build = g.player.build,
               });
               buildType = g.player.build;
             }
             else if (t == 1) {
-              slotId = CLAY_IDI("shop_player_item", t);
+              slotID = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id         = slotId,
+                .id         = slotID,
                 .group      = data.group,
                 .difficulty = g.player.difficulty,
               });
@@ -6020,9 +6041,9 @@ void DoUI(bool draw) {
             }
             else {
               auto& item = g.run.state.items[t - 2];
-              slotId     = CLAY_IDI("shop_player_item", t);
+              slotID     = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id    = slotId,
+                .id    = slotID,
                 .group = data.group,
                 .item  = item.type,
                 .count = item.count,
@@ -6030,6 +6051,9 @@ void DoUI(bool draw) {
               itemType  = item.type;
               itemCount = item.count;
             }
+
+            if (data.markFirstAsDefault && (t == 0))
+              markControlAsDefault(slotID);
 
             if (Clay_Hovered()) {
               componentUniversalDetails({
@@ -6042,7 +6066,7 @@ void DoUI(bool draw) {
               });
               if (ge.meta.debugEnabled && itemType) {
                 auto& item = g.run.state.items[t - 2];
-                if (activated(slotId))
+                if (activated(slotID))
                   item.count++;
                 if (wheel && Clay_Hovered()) {
                   item.count += wheel;
@@ -6102,7 +6126,7 @@ void DoUI(bool draw) {
     );
 
     CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-      BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+      BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
 
       auto color = GetFlashingColor(
         palTextWhite,
@@ -6133,7 +6157,7 @@ void DoUI(bool draw) {
     const bool clickedStats = componentButton(
       {.id = CLAY_ID("button_stats"), .group = group, .keys = keys},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_IMAGE({.texId = glib->ui_icon_stats_texture_id()});
+        BF_CLAY_IMAGE({.texID = glib->ui_icon_stats_texture_id()});
       }
     );
 
@@ -6223,7 +6247,7 @@ void DoUI(bool draw) {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           // Health bar.
-          BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_IMAGE({.texID = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .floating{
                 .zIndex = zIndex,
@@ -6239,7 +6263,7 @@ void DoUI(bool draw) {
               const auto health = MAX(0, PLAYER_CREATURE.health);
 
               BF_CLAY_IMAGE({
-                .texId = texs->Get(1),
+                .texID = texs->Get(1),
                 .sourceMargins{
                   .right = Clamp01(1.0f - (f32)health / (f32)PLAYER_CREATURE.maxHealth)
                 },
@@ -6265,7 +6289,7 @@ void DoUI(bool draw) {
           });
 
           // XP.
-          BF_CLAY_IMAGE({.texId = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_IMAGE({.texID = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .floating{
                 .zIndex = zIndex,
@@ -6278,7 +6302,7 @@ void DoUI(bool draw) {
             }) {
               FLOATING_BEAUTIFY;
               BF_CLAY_IMAGE({
-                .texId = texs->Get(1),
+                .texID = texs->Get(1),
                 .sourceMargins{
                   .right
                   = 1 - (f32)g.run.state.xp / (f32)GetNextLevelXp(g.run.state.level)
@@ -6326,7 +6350,7 @@ void DoUI(bool draw) {
 
             BF_CLAY_IMAGE(
               {
-                .texId = glib->ui_icon_pause_texture_id(),
+                .texID = glib->ui_icon_pause_texture_id(),
                 .color = Fade(color, EaseOutQuad(g.meta.pauseButtonFadeProgress)),
               },
               [&]() BF_FORCE_INLINE_LAMBDA {
@@ -6351,7 +6375,7 @@ void DoUI(bool draw) {
             .childGap = GAP_SMALL,
             BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
           }}) {
-            BF_CLAY_IMAGE({.texId = glib->ui_coin_texture_id()});
+            BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
             BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
           }
         }
@@ -6364,7 +6388,7 @@ void DoUI(bool draw) {
           const auto id   = CLAY_ID("notPickedUpCoinsVisual");
           CLAY({.id = id}) {
             BF_CLAY_IMAGE({
-              .texId = glib->ui_coin_x2_texture_id(),
+              .texID = glib->ui_coin_x2_texture_id(),
               .color = Fade(WHITE, fade),
             });
           }
@@ -6410,7 +6434,7 @@ void DoUI(bool draw) {
         }
 
         BF_CLAY_IMAGE(
-          {.texId = glib->ui_icon_stopwatch2_texture_id()},
+          {.texID = glib->ui_icon_stopwatch2_texture_id()},
           [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{
               BF_CLAY_SIZING_GROW_XY,
@@ -6453,7 +6477,7 @@ void DoUI(bool draw) {
 
         FOR_RANGE (int, i, g.run.state.crates) {
           const auto fb = fb_pickupables->Get(PickupableType_CRATE);
-          BF_CLAY_IMAGE({.texId = fb->texture_id()});
+          BF_CLAY_IMAGE({.texID = fb->texture_id()});
         }
       }
       // }
@@ -6522,9 +6546,9 @@ void DoUI(bool draw) {
               const bool selected = ((i + 1) == (int)p.difficulty);
 
               CLAY({}) {
-                const auto slotId            = CLAY_IDI("new_run_difficulty", i);
+                const auto slotID            = CLAY_IDI("new_run_difficulty", i);
                 const bool clickedDifficulty = componentUniversalSlot({
-                  .id         = slotId,
+                  .id         = slotID,
                   .group      = groupDifficulties,
                   .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
                   .hidden     = ComponentUniversalSlotHiddenType_SHOW_LOCK,
@@ -6540,7 +6564,7 @@ void DoUI(bool draw) {
                   }
 
                   if (Clay_Hovered()
-                      || (controlsContexts[currentContext].selectedElement.id == slotId.id))
+                      || (controlsContexts[currentContext].selectedElement.id == slotID.id))
                   {
                     componentUniversalDetails({
                       .difficulty     = (DifficultyType)(i + 1),
@@ -6601,9 +6625,9 @@ void DoUI(bool draw) {
 
                     const int tier = GetBuildTier((BuildType)(t + 1));
 
-                    const auto slotId       = CLAY_IDI("new_run_build", t);
+                    const auto slotID       = CLAY_IDI("new_run_build", t);
                     const bool clickedBuild = componentUniversalSlot({
-                      .id       = slotId,
+                      .id       = slotID,
                       .group    = groupBuilds,
                       .build    = (BuildType)(isLocked ? 0 : t + 1),
                       .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
@@ -6621,7 +6645,7 @@ void DoUI(bool draw) {
                         Save();
                       }
 
-                      if (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotId.id))
+                      if (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotID.id))
                       {
                         componentUniversalDetails({
                           .build          = (BuildType)(t + 1),
@@ -6689,9 +6713,9 @@ void DoUI(bool draw) {
                 }
 
                 CLAY({}) {
-                  const auto slotId        = CLAY_IDI("new_run_weapon", t);
+                  const auto slotID        = CLAY_IDI("new_run_weapon", t);
                   const bool clickedWeapon = componentUniversalSlot({
-                    .id    = slotId,
+                    .id    = slotID,
                     .group = groupWeapons,
                     .weapon
                     = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) : 0),
@@ -6703,7 +6727,7 @@ void DoUI(bool draw) {
                   // Hovering modal.
                   if (exists        //
                       && !isLocked  //
-                      && (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotId.id)))
+                      && (Clay_Hovered() || (controlsContexts[currentContext].selectedElement.id == slotID.id)))
                   {
                     componentWeaponDetails({
                       .type           = (WeaponType)fb_buildWeapons->Get(t),
@@ -6803,14 +6827,14 @@ void DoUI(bool draw) {
           .childGap = GAP_BIG,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
-          auto       tookId = CLAY_ID("button_picked_up_item_take");
+          auto       tookID = CLAY_ID("button_picked_up_item_take");
           const bool took   = componentButton(
-            {.id = tookId, .group = group},
+            {.id = tookID, .group = group},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_IMAGE({.texId = glib->ui_icon_take_texture_id()});
+              BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
             }
           );
-          markControlAsDefault(tookId);
+          markControlAsDefault(tookID);
 
           const int recyclePrice = ToRecyclePrice(fb->price());
 
@@ -6915,7 +6939,7 @@ void DoUI(bool draw) {
                     BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                   },
                 }) {
-                  BF_CLAY_IMAGE({.texId = fb->upgrade_texture_id()});
+                  BF_CLAY_IMAGE({.texID = fb->upgrade_texture_id()});
                 }
               });
 
@@ -6961,7 +6985,7 @@ void DoUI(bool draw) {
               }) {
                 BF_CLAY_TEXT(TextFormat("+%d", amount), palTextGreen);
 
-                BF_CLAY_IMAGE({.texId = fb->icon_texture_id()});
+                BF_CLAY_IMAGE({.texID = fb->icon_texture_id()});
 
                 if (fb->is_percent())
                   BF_CLAY_TEXT("%");
@@ -6991,16 +7015,16 @@ void DoUI(bool draw) {
               if (g.meta.showingStats.IsSet())
                 keys.count = 0;
 
-              auto chooseButtonId = CLAY_IDI("button_upgrades_choose", i);
+              auto chooseButtonID = CLAY_IDI("button_upgrades_choose", i);
               bool chosen         = componentButton(
-                {.id = chooseButtonId, .group = groupUpgrades, .keys = keys},
+                {.id = chooseButtonID, .group = groupUpgrades, .keys = keys},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_IMAGE({.texId = glib->ui_icon_upgrade_texture_id()});
+                  BF_CLAY_IMAGE({.texID = glib->ui_icon_upgrade_texture_id()});
                 }
               );
 
               if (i == 1)
-                markControlAsDefault(chooseButtonId);
+                markControlAsDefault(chooseButtonID);
 
               if (chosen) {
                 PlaySound(Sound_UI_CLICK);
@@ -7138,21 +7162,46 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           int toPickIndex = -1;
-          for (auto& v : g.run.state.shop.toPick) {
+
+          const int defaultIndices_[]{1, 2, 3, 0};
+          VIEW_FROM_ARRAY_DANGER(defaultIndices);
+          const int selectNextIndices_[4][3]{{1, 2, 3}, {2, 0, 3}, {3, 1, 0}, {2, 1, 0}};
+          VIEW_FROM_ARRAY_DANGER(selectNextIndices);
+
+          for (auto& x : g.run.state.shop.toPick) {
             toPickIndex++;
 
+            Clay_ElementId changeToID = rerollID;
+            FOR_RANGE (int, k, 3) {
+              auto changeToIndex = selectNextIndices[toPickIndex][k];
+              ASSERT(changeToIndex != toPickIndex);
+              const auto& vv = g.run.state.shop.toPick[changeToIndex];
+              if (vv.item || vv.weapon) {
+                changeToID = getIDFromShopBuyingIndex(changeToIndex);
+                break;
+              }
+            }
+
             componentUniversalCard({
-              .item            = v.item,
-              .weapon          = v.weapon,
-              .hideIfEmpty     = true,
-              .affectedByGame  = true,
-              .overrideTier    = v.tier,
-              .setFixedHeight  = true,
-              .shopMarkDefault = (toPickIndex == 1),
-              .shopGroup       = groupsToBuy[toPickIndex],
-              .shopBuyingIndex = toPickIndex,
+              .item                      = x.item,
+              .weapon                    = x.weapon,
+              .hideIfEmpty               = true,
+              .affectedByGame            = true,
+              .overrideTier              = x.tier,
+              .setFixedHeight            = true,
+              .shopGroup                 = groupsToBuy[toPickIndex],
+              .shopBuyingIndex           = toPickIndex,
+              .shopChangeToIDAfterBuying = changeToID,
             });
           }
+
+          for (auto i : defaultIndices) {
+            const auto& x = g.run.state.shop.toPick[i];
+            if (x.weapon || x.item)
+              markControlAsDefault(getIDFromShopBuyingIndex(i));
+          }
+
+          markControlAsDefault(rerollID);
         }
 
         BF_CLAY_SPACER_VERTICAL;
@@ -7283,7 +7332,7 @@ void DoUI(bool draw) {
 
                 BF_CLAY_IMAGE(
                   {
-                    .texId = glib->ui_icon_go_next_wave_texture_id(),
+                    .texID = glib->ui_icon_go_next_wave_texture_id(),
                     .color = (nextIsBoss ? palTextRed : WHITE),
                   },
                   [&]() BF_FORCE_INLINE_LAMBDA {
@@ -7315,8 +7364,8 @@ void DoUI(bool draw) {
             if (nextWavePressed) {
               g.run.scheduledNextWave = true;
               PlaySound(Sound_UI_CLICK);
-              for (auto& v : g.run.state.shop.toPick)
-                v = {};
+              for (auto& x : g.run.state.shop.toPick)
+                x = {};
             }
           }
         }
@@ -7490,16 +7539,16 @@ void DoUI(bool draw) {
           );
         }
 
-        const auto newRunId = CLAY_ID("button_end_new_run");
+        const auto newRunID = CLAY_ID("button_end_new_run");
 
         const bool newRun = componentButton(
-          {.id = newRunId, .group = groupButtons},
+          {.id = newRunID, .group = groupButtons},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, textColor);
           }
         );
 
-        markControlAsDefault(newRunId);
+        markControlAsDefault(newRunID);
 
         if (restarted)
           g.run.reload = true;
@@ -7649,11 +7698,11 @@ void DoUI(bool draw) {
                     bool canHover = true;
 
                     CLAY({}) {
-                      int texId = 0;
+                      int texID = 0;
                       int tier  = 0;
 
                       if (isLocked) {
-                        texId = glib->ui_item_locked_texture_id();
+                        texID = glib->ui_item_locked_texture_id();
                         if (workingOnIt)
                           tier = 1;
                       }
@@ -7732,16 +7781,16 @@ void DoUI(bool draw) {
           }
 
           // Back button.
-          const auto backButtonId = CLAY_ID("button_pause_achievements_back");
+          const auto backButtonID = CLAY_ID("button_pause_achievements_back");
           FontBegin(&g.meta.fontUIBig);
           const bool back = componentButton(
-            {.id = backButtonId, .group = groupBackButton, .keys = KEYS_CANCEL},
+            {.id = backButtonID, .group = groupBackButton, .keys = KEYS_CANCEL},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, textColor);
             }
           );
           FontEnd();
-          markControlAsDefault(backButtonId);
+          markControlAsDefault(backButtonID);
 
           if (back) {
             PlaySound(Sound_UI_CLICK);
@@ -7802,14 +7851,14 @@ void DoUI(bool draw) {
               }}) {
                 FontBegin(&g.meta.fontUIBig);
 
-                const auto resumeButtonId = CLAY_ID("button_pause_resume");
-                markControlAsDefault(resumeButtonId);
+                const auto resumeButtonID = CLAY_ID("button_pause_resume");
+                markControlAsDefault(resumeButtonID);
                 if (!controlsContexts[currentContext].selectedElement.id)
-                  controlsContexts[currentContext].selectedElement = resumeButtonId;
+                  controlsContexts[currentContext].selectedElement = resumeButtonID;
 
                 const bool resumed = componentButton(
                   {
-                    .id    = resumeButtonId,
+                    .id    = resumeButtonID,
                     .group = groupButtons,
                     .growX = true,
                     .keys  = KEYS_PAUSE,
@@ -8004,14 +8053,14 @@ void DoUI(bool draw) {
         VIEW_FROM_ARRAY_DANGER(keys);
 
         // Close button.
-        const auto cancelId = CLAY_ID("stats_cancel");
+        const auto cancelID = CLAY_ID("stats_cancel");
         closeStats |= componentButton(
-          {.id = cancelId, .group = groupStats, .keys = keys},
+          {.id = cancelID, .group = groupStats, .keys = keys},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_IMAGE({.texId = glib->ui_icon_cancel_big_texture_id()});
+            BF_CLAY_IMAGE({.texID = glib->ui_icon_cancel_big_texture_id()});
           }
         );
-        markControlAsDefault(cancelId);
+        markControlAsDefault(cancelID);
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -8061,7 +8110,7 @@ void DoUI(bool draw) {
           LAMBDA (
             void,
             componentStatsEntry,
-            (int iconTexId, int locale, int value, StatType stat)
+            (int iconTexID, int locale, int value, StatType stat)
           )
           {
             CLAY({.layout{
@@ -8078,7 +8127,7 @@ void DoUI(bool draw) {
 
               const auto fb = fb_stats->Get(stat);
 
-              if (iconTexId) {
+              if (iconTexID) {
                 // Icon.
                 CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(20)}}}) {
                   CLAY({.floating{
@@ -8091,7 +8140,7 @@ void DoUI(bool draw) {
                     .attachTo           = CLAY_ATTACH_TO_PARENT,
                   }}) {
                     FLOATING_BEAUTIFY;
-                    BF_CLAY_IMAGE({.texId = iconTexId});
+                    BF_CLAY_IMAGE({.texID = iconTexID});
                   }
                 }
 
@@ -8201,7 +8250,7 @@ void DoUI(bool draw) {
       auto fb      = fb_achievements->Get(x.type);
       auto fb_step = fb->steps()->Get(x.stepIndex);
 
-      LAMBDA (void, componentAchievementReward, (int texId, int tier)) {
+      LAMBDA (void, componentAchievementReward, (int texID, int tier)) {
         f32 fadeLock       = 1;
         f32 fadeItem       = 0;
         f32 flashWhiteLock = 0;
@@ -8233,7 +8282,7 @@ void DoUI(bool draw) {
             }}) {
               componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_IMAGE({
-                  .texId = glib->ui_item_locked_texture_id(),
+                  .texID = glib->ui_item_locked_texture_id(),
                   .color = Fade(WHITE, Clamp01(fadeLock)),
                   .flash = Fade(WHITE, Clamp01(flashWhiteLock)),
                 });
@@ -8241,7 +8290,7 @@ void DoUI(bool draw) {
 
               componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_IMAGE({
-                  .texId = texId,
+                  .texID = texID,
                   .color = Fade(WHITE, Clamp01(fadeItem)),
                   .flash = Fade(WHITE, Clamp01(flashWhiteItem)),
                 });
@@ -8279,8 +8328,12 @@ void DoUI(bool draw) {
     ControlsContext shownScreen{};
     ControlsContext shownModal{};
     for (int i = 1; i < ControlsContext_COUNT; i++) {
-      const auto& context = controlsContexts[i];
-      auto        c       = (ControlsContext)i;
+      auto& context = controlsContexts[i];
+
+      if (context.prevFrame && !context.thisFrame)
+        context.selectedElement = {};
+
+      auto c = (ControlsContext)i;
       if (context.thisFrame) {
         if (CONTROLS_CONTEXT_MODALS.Contains(c))
           shownModal = c;
@@ -8298,7 +8351,7 @@ void DoUI(bool draw) {
     if (!currentContext)
       currentContext = shownScreen;
 
-    if (uiElementSwitchDirection && currentContext) {  ///
+    if (uiElementSwitchDirection && currentContext && !justFocusedDefaultControl) {  ///
       auto toSelect = controlsContexts[currentContext].selectedElement;
 
       auto group = g.ui.controlsGroupsFirst;
@@ -8474,7 +8527,7 @@ void DoUI(bool draw) {
             const auto& d    = cmd.renderData.image;
             const auto& data = *(ClayImageData*)d.imageData;
             DrawGroup_CommandTexture({
-              .texId = data.texId,
+              .texID = data.texID,
               .pos{bb.x + bb.width / 2, bb.y + bb.height / 2},
               .scale         = data.scale,
               .sourceMargins = data.sourceMargins,
@@ -8532,7 +8585,7 @@ void DoUI(bool draw) {
               const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
               const auto fb              = data.nineSlice;
               DrawGroup_CommandTextureNineSlice({
-                .texId = data.nineSlice->texture_id(),
+                .texID = data.nineSlice->texture_id(),
                 .pos{bb.x, bb.y},
                 .anchor{},
                 .color{
@@ -8901,7 +8954,7 @@ void GameFixedUpdate() {
   }
 
   // Cheats.
-  if (ge.meta.debugEnabled) {
+  if (ge.meta.debugEnabled || BF_DEBUG) {
     // F5 - add 10 coins.
     if (IsKeyPressed(SDL_SCANCODE_F5)) {  ///
       if (IsKeyDown(SDL_SCANCODE_LSHIFT))
@@ -9484,7 +9537,7 @@ void GameFixedUpdate() {
                 .range                = MOB_BOSS_PROJECTILE_RANGE_METERS,
                 .damage               = GetMobDamage(creature.type),
                 .critDamageMultiplier = fb->crit_damage_multiplier(),
-                .anchorCreatureId     = creature.id,
+                .anchorCreatureID     = creature.id,
               });
             }
 
@@ -9675,14 +9728,14 @@ void GameFixedUpdate() {
                 if (((e + 1) % interval.value) != 0)
                   return;
 
-                PreSpawn v{
+                PreSpawn x{
                   .type           = PreSpawnType_LANDMINE,
                   .pos            = creaturesWorldSpawnBounds.GetRandomPosInside(),
                   .damage         = EFFECT_Y_INT,
                   .damageScalings = fb_effect->damage_scalings(),
                 };
-                v.createdAt.SetNow();
-                *g.run.preSpawns.Add() = v;
+                x.createdAt.SetNow();
+                *g.run.preSpawns.Add() = x;
               }
           );
 
@@ -9698,12 +9751,12 @@ void GameFixedUpdate() {
                   return;
 
                 FOR_RANGE (int, i, times) {
-                  PreSpawn v{
+                  PreSpawn x{
                     .type = PreSpawnType_GARDEN,
                     .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
                   };
-                  v.createdAt.SetNow();
-                  *g.run.preSpawns.Add() = v;
+                  x.createdAt.SetNow();
+                  *g.run.preSpawns.Add() = x;
                 }
               }
           );
@@ -9722,42 +9775,42 @@ void GameFixedUpdate() {
         const int total = g.run.preSpawns.count;
         int       off   = 0;
         FOR_RANGE (int, i, total) {
-          auto& v = g.run.preSpawns[i - off];
+          auto& x = g.run.preSpawns[i - off];
 
-          ASSERT(v.type);
-          if (v.type == PreSpawnType_CREATURE)
-            ASSERT(v.typeCreature);
+          ASSERT(x.type);
+          if (x.type == PreSpawnType_CREATURE)
+            ASSERT(x.typeCreature);
 
           const bool shouldSpawn
-            = v.createdAt.IsSet() && (v.createdAt.Elapsed() >= SPAWN_FRAMES);
+            = x.createdAt.IsSet() && (x.createdAt.Elapsed() >= SPAWN_FRAMES);
           if (!shouldSpawn)
             continue;
 
-          switch (v.type) {
+          switch (x.type) {
           case PreSpawnType_CREATURE: {
-            auto fb       = fb_creatures->Get(v.typeCreature);
+            auto fb       = fb_creatures->Get(x.typeCreature);
             bool canSpawn = true;
             if (fb->hostility_type() == HostilityType_MOB) {
-              if (Vector2DistanceSqr(v.pos, PLAYER_CREATURE.pos) <= SQR(
+              if (Vector2DistanceSqr(x.pos, PLAYER_CREATURE.pos) <= SQR(
                     CREATURE_COLLIDER_RADIUS
                     * (fb_creatures->Get(CreatureType_PLAYER)->collider_scale() + fb->collider_scale())
                   ))
                 canSpawn = false;
             }
             if (canSpawn)
-              MakeCreature({.type = v.typeCreature, .pos = v.pos});
+              MakeCreature({.type = x.typeCreature, .pos = x.pos});
           } break;
 
           case PreSpawnType_LANDMINE: {
             MakeLandmine({
-              .pos            = v.pos,
-              .damage         = v.damage,
-              .damageScalings = v.damageScalings,
+              .pos            = x.pos,
+              .damage         = x.damage,
+              .damageScalings = x.damageScalings,
             });
           } break;
 
           case PreSpawnType_GARDEN: {
-            MakeGarden({.pos = v.pos});
+            MakeGarden({.pos = x.pos});
           } break;
 
           default:
@@ -9770,11 +9823,11 @@ void GameFixedUpdate() {
       }
 
       // Spawning boss during the last wave.
-      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossCreatureId) {  ///
+      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossCreatureID) {  ///
         const auto worldCenter = (Vector2)WORLD_SIZE / 2.0f;
         const auto dir       = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, worldCenter);
         const auto bossPos   = worldCenter + dir * BOSS_SPAWN_OFFSET_METERS;
-        g.run.bossCreatureId = MakeCreature({.type = CreatureType_BOSS, .pos = bossPos});
+        g.run.bossCreatureID = MakeCreature({.type = CreatureType_BOSS, .pos = bossPos});
       }
 
       // Mobs contact-damage player.
@@ -9935,8 +9988,8 @@ void GameFixedUpdate() {
           bool canBurn = true;
           auto resists = fb_other->resists_ailment_types();
           if (resists) {
-            for (auto v : *resists) {
-              if (v == AilmentType_BURN) {
+            for (auto x : *resists) {
+              if (x == AilmentType_BURN) {
                 canBurn = false;
                 break;
               }
@@ -10211,9 +10264,9 @@ void GameFixedUpdate() {
             {
               weapon.lastCollisionCheckShootingProgress = p;
 
-              const auto texId = fb->texture_ids()->Get(0);
+              const auto texID = fb->texture_ids()->Get(0);
               Vector2    colliderSize{
-                (f32)glib->original_texture_sizes()->Get(texId)->x(),
+                (f32)glib->original_texture_sizes()->Get(texID)->x(),
                 (f32)fb->melee_collider_height_px(),
               };
               colliderSize *= ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
@@ -10274,14 +10327,14 @@ void GameFixedUpdate() {
           .bounce                    = data.bounce,
           .knockbackMeters           = data.knockbackMeters,
           .range                     = data.range,
-          .anchorCreatureId          = data.anchorCreatureId,
+          .anchorCreatureID          = data.anchorCreatureID,
           .dontSpawnProjectilesOnHit = data.dontSpawnProjectilesOnHit,
         };
         projectile.createdAt.SetNow();
 
-        if (data.alreadyDamagedCreatureId) {
-          projectile.damagedCreatureIds[projectile.damagedCount++]
-            = data.alreadyDamagedCreatureId;
+        if (data.alreadyDamagedCreatureID) {
+          projectile.damagedCreatureIDs[projectile.damagedCount++]
+            = data.alreadyDamagedCreatureID;
         }
 
         *g.run.projectiles.Add() = projectile;
@@ -10314,9 +10367,9 @@ void GameFixedUpdate() {
         const auto fb       = fb_projectiles->Get(projectile.type);
         const auto distance = FIXED_DT * fb->speed();
         projectile.travelledDistance += distance;
-        if (projectile.anchorCreatureId) {
+        if (projectile.anchorCreatureID) {
           for (auto& creature : g.run.creatures) {
-            if (creature.id == projectile.anchorCreatureId) {
+            if (creature.id == projectile.anchorCreatureID) {
               const auto e = ge.meta.frameGame % MOB_BOSS_PROJECTILES_CIRCLE_FRAMES.value;
               const auto dir = Vector2Rotate(
                 {1, 0}, -2 * PI32 * e / MOB_BOSS_PROJECTILES_CIRCLE_FRAMES.value
@@ -10368,7 +10421,7 @@ void GameFixedUpdate() {
 
           // Not damaging already damaged creatures.
           if (ArrayContains(
-                projectile.damagedCreatureIds.base, projectile.damagedCount, creature.id
+                projectile.damagedCreatureIDs.base, projectile.damagedCount, creature.id
               ))
             continue;
 
@@ -10475,13 +10528,13 @@ void GameFixedUpdate() {
 
               bool canBounce = projectile.bouncedCount < maxBounce;
               bool canPierce = projectile.piercedCount < maxPierce;
-              if (projectile.damagedCount >= projectile.damagedCreatureIds.count) {
+              if (projectile.damagedCount >= projectile.damagedCreatureIDs.count) {
                 canBounce = false;
                 canPierce = false;
               }
 
               if (canBounce) {
-                projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
+                projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
                 projectile.bouncedCount++;
                 projectile.travelledDistance = 0;
 
@@ -10494,7 +10547,7 @@ void GameFixedUpdate() {
                   if (c->diedAt.IsSet())
                     continue;
                   if (ArrayContains(
-                        projectile.damagedCreatureIds.base, projectile.damagedCount, c->id
+                        projectile.damagedCreatureIDs.base, projectile.damagedCount, c->id
                       ))
                     continue;
 
@@ -10535,7 +10588,7 @@ void GameFixedUpdate() {
                   projectile.dir = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
               }
               else if (canPierce) {
-                projectile.damagedCreatureIds[projectile.damagedCount++] = creature.id;
+                projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
                 projectile.piercedCount++;
               }
               else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
@@ -10973,7 +11026,7 @@ void GameDraw() {
 
   // Drawing prespawns.
   {  ///
-    const auto texId = glib->game_decal_pre_spawn_texture_id();
+    const auto texID = glib->game_decal_pre_spawn_texture_id();
 
     DrawGroup_Begin(DrawZ_FLOOR_DECALS);
     DrawGroup_SetSortY(0);
@@ -11003,7 +11056,7 @@ void GameDraw() {
       }
 
       DrawGroup_CommandTexture({
-        .texId = texId,
+        .texID = texID,
         .pos   = spawn.pos,
         .color = ColorFromRGBA(color),
       });
@@ -11026,9 +11079,9 @@ void GameDraw() {
     if (creature.diedAt.IsSet())
       fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
 
-    int texId = 0;
+    int texID = 0;
     if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
-      texId = GetTextureIdByProgress(
+      texID = GetTextureIdByProgress(
         fb->move_texture_ids(),
         creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
       );
@@ -11039,7 +11092,7 @@ void GameDraw() {
         const auto idleDuration = lframe::Unscaled(fb->idle_seconds() * FIXED_FPS);
         p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
       }
-      texId = GetTextureIdByProgress(fb->idle_texture_ids(), p);
+      texID = GetTextureIdByProgress(fb->idle_texture_ids(), p);
     }
 
     Vector2 scale{1, 1};
@@ -11092,7 +11145,7 @@ void GameDraw() {
 
     DrawGroup_OneShotTexture(
       {
-        .texId = texId,
+        .texID = texID,
         .pos   = creature.pos,
         .scale = scale,
         .color = Fade(color, fade),
@@ -11103,18 +11156,18 @@ void GameDraw() {
 
     {
       f32 scale = 1;
-      int texId = glib->shadow_texture_ids()->Get(0);
+      int texID = glib->shadow_texture_ids()->Get(0);
       for (auto t : *glib->shadow_texture_ids()) {
         const f32 sx = glib->original_texture_sizes()->Get(t)->x()
                        * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
 
-        if (!texId) {
-          texId = t;
+        if (!texID) {
+          texID = t;
           scale = CREATURE_COLLIDER_RADIUS * 2 / sx;
         }
 
         if (sx >= CREATURE_COLLIDER_RADIUS * 2) {
-          texId = t;
+          texID = t;
           scale = CREATURE_COLLIDER_RADIUS * 2 / sx;
         }
         else
@@ -11122,7 +11175,7 @@ void GameDraw() {
       }
       DrawGroup_OneShotTexture(
         {
-          .texId = texId,
+          .texID = texID,
           .pos   = creature.pos + Vector2(0, fb->shadow_offset_y()),
           .scale = Vector2One() * scale,
           .color = Fade(WHITE, fade * 0.33f),
@@ -11180,7 +11233,7 @@ void GameDraw() {
 
         DrawGroup_OneShotTexture(
           {
-            .texId    = fb->texture_ids()->Get(0),
+            .texID    = fb->texture_ids()->Get(0),
             .rotation = rotation,
             .pos      = pos,
             .scale    = scale,
@@ -11194,16 +11247,16 @@ void GameDraw() {
 
   // Drawing landmines.
   {  ///
-    const auto texId = glib->game_landmine_texture_id();
-    for (const auto& v : g.run.landmines)
-      DrawGroup_OneShotTexture({.texId = texId, .pos = v.pos}, DrawZ_LANDMINES);
+    const auto texID = glib->game_landmine_texture_id();
+    for (const auto& x : g.run.landmines)
+      DrawGroup_OneShotTexture({.texID = texID, .pos = x.pos}, DrawZ_LANDMINES);
   }
 
   // Drawing gardens.
   {  ///
-    const auto texId = glib->game_garden_texture_id();
-    for (const auto& v : g.run.gardens)
-      DrawGroup_OneShotTexture({.texId = texId, .pos = v.pos}, DrawZ_DEFAULT);
+    const auto texID = glib->game_garden_texture_id();
+    for (const auto& x : g.run.gardens)
+      DrawGroup_OneShotTexture({.texID = texID, .pos = x.pos}, DrawZ_DEFAULT);
   }
 
   // Drawing boss hp bar.
@@ -11219,7 +11272,7 @@ void GameDraw() {
       if (i)
         rightMargin = Clamp01(1 - (f32)creature.health / (f32)creature.maxHealth);
       DrawGroup_CommandTexture({
-        .texId = texs->Get(i),
+        .texID = texs->Get(i),
         .pos   = creature.pos - Vector2(0, 1),
         .sourceMargins{.right = rightMargin},
         .color = (i ? palRed : palWhite),
@@ -11242,7 +11295,7 @@ void GameDraw() {
 
     DrawGroup_OneShotTexture(
       {
-        .texId    = fb->texture_ids()->Get(0),
+        .texID    = fb->texture_ids()->Get(0),
         .rotation = rotation,
         .pos      = projectile.pos,
         .scale    = scale,
@@ -11323,7 +11376,7 @@ void GameDraw() {
       const auto dur = lframe::FromSeconds(fb->duration_seconds());
       const auto p   = Clamp01(particle.createdAt.Elapsed().Progress(dur));
       DrawGroup_CommandTexture({
-        .texId = fb->texture_ids()->Get(0),
+        .texID = fb->texture_ids()->Get(0),
         .pos   = particle.pos,
         .scale = Vector2One() * particle.scale,
         .color = Fade(WHITE, EaseOutQuad(1 - p)),
@@ -11397,7 +11450,7 @@ void GameDraw() {
 
     DrawGroup_OneShotTexture(
       {
-        .texId = fb->texture_id(),
+        .texID = fb->texture_id(),
         .pos   = pos,
         .color = Fade(WHITE, fade),
       },
@@ -11477,13 +11530,13 @@ void GameDraw() {
 
       const struct {
         Vector2 pos   = {};
-        int     texId = {};
+        int     texID = {};
       } data[]{
-        {.pos = startPos, .texId = glib->ui_controls_touch_base_texture_id()},
-        {.pos = endPos, .texId = glib->ui_controls_touch_handle_texture_id()},
+        {.pos = startPos, .texID = glib->ui_controls_touch_base_texture_id()},
+        {.pos = endPos, .texID = glib->ui_controls_touch_handle_texture_id()},
       };
       for (auto& d : data) {
-        DrawGroup_CommandTexture({.texId = d.texId, .pos = d.pos});
+        DrawGroup_CommandTexture({.texID = d.texID, .pos = d.pos});
       }
     }
 

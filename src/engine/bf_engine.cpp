@@ -654,7 +654,7 @@ struct Margins {
 };
 
 struct DrawTextureData {
-  int     texId         = -1;
+  int     texID         = -1;
   f32     rotation      = {};
   Vector2 pos           = {};
   Vector2 anchor        = Vector2Half();
@@ -667,7 +667,7 @@ struct DrawTextureData {
 };
 
 struct DrawTextureNineSliceData {
-  int     texId            = -1;
+  int     texID            = -1;
   f32     rotation         = {};
   Vector2 pos              = {};
   Vector2 anchor           = Vector2Half();
@@ -1064,7 +1064,7 @@ BF_FORCE_INLINE void DrawGroup_CommandTexture(
     return;
 
   if (setSortY == DrawCommandSetSortY_SET_BASELINE) {
-    auto tex    = glib->atlas_textures()->Get(data.texId);
+    auto tex    = glib->atlas_textures()->Get(data.texID);
     auto height = (f32)tex->size_y();
     auto off    = glib->atlas_downscale_factor() * ASSETS_TO_LOGICAL_RATIO * data.scale.y
                * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
@@ -1093,7 +1093,7 @@ BF_FORCE_INLINE void DrawGroup_CommandTextureNineSlice(
     return;
 
   if (setSortY == DrawCommandSetSortY_SET_BASELINE) {
-    auto tex    = glib->atlas_textures()->Get(data.texId);
+    auto tex    = glib->atlas_textures()->Get(data.texID);
     auto height = (f32)tex->size_y();
     auto off    = glib->atlas_downscale_factor() * ASSETS_TO_LOGICAL_RATIO * data.scale.y
                * ((f32)tex->baseline() - (f32)tex->size_y() * data.anchor.y);
@@ -1527,9 +1527,9 @@ void FlushDrawCommands() {
           }
           else {
             const auto& data = command.DataTexture();
-            ASSERT(data.texId >= 0);
+            ASSERT(data.texID >= 0);
 
-            const auto tex = glib->atlas_textures()->Get(data.texId);
+            const auto tex = glib->atlas_textures()->Get(data.texID);
 
             const Rect sourceRec{
               .pos{
@@ -1688,9 +1688,9 @@ void FlushDrawCommands() {
           }
           else {
             const auto& data = command.DataTextureNineSlice();
-            ASSERT(data.texId >= 0);
+            ASSERT(data.texID >= 0);
 
-            const auto tex = glib->atlas_textures()->Get(data.texId);
+            const auto tex = glib->atlas_textures()->Get(data.texID);
 
             Rect destRec{
               .pos{
@@ -3331,7 +3331,7 @@ int GetMouseWheel() {  ///
 void EngineApplyVignette() {  ///
   DrawGroup_OneShotTexture(
     {
-      .texId = glib->vignette_texture_id(),
+      .texID = glib->vignette_texture_id(),
       .pos   = LOGICAL_RESOLUTION / 2,
       .scale{4.01f, 4.01f},
       .color = (BF_DEBUG_VIGNETTE_AND_STRIPS ? RED : ge.settings.backgroundColor),
