@@ -67,9 +67,9 @@ x ui keyboard: shop buying weapon/item changes focus to another weapon/item
   or reroll button in case everything is sold
 x ui keyboard: shop: recycling changes focus
 x ui keyboard: shop: combining changes focus
+x ui keyboard: reroll button down goes to next wave button if no items to buy is found
 
-* ui keyboard: reroll button down goes to next wave button if no items to buy is found
-* ui keyboard:
+* ui keyboard: new run markControlAsDefault
 * ui keyboard:
 * ui keyboard:
 * ui keyboard:
