@@ -68,9 +68,30 @@ x ui keyboard: shop buying weapon/item changes focus to another weapon/item
 x ui keyboard: shop: recycling changes focus
 x ui keyboard: shop: combining changes focus
 x ui keyboard: reroll button down goes to next wave button if no items to buy is found
+x new run: difficulty: clicking locked wiggling error
+x new run: difficulty: clicking good -> switching to build selection
 
+* new run: 3 steps (difficulty -> build -> weapon)
+* new run: difficulty: show locked
+* new run: difficulty:
+* new run: difficulty:
+* new run: difficulty:
+* new run: difficulty:
+* new run: build: back button
+* new run: build:
+* new run: build:
+* new run: build:
+* new run: build:
+* new run: build:
+* new run: build:
+* new run: weapon:
+* new run: weapon:
+* new run: weapon:
+* new run: weapon:
+* new run: weapon:
+* new run: weapon:
+* new run: weapon:
 * ui keyboard: new run markControlAsDefault
-* ui keyboard:
 * ui keyboard:
 * ui keyboard:
 * ui keyboard:

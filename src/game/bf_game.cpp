@@ -1078,17 +1078,19 @@ struct GameData {
     bool              pgroupsLastIsActive = false;
   } uiFlex;
 
-  struct UI {  ///
+  struct UI {            ///
+    int newRunStep = 0;  // 0 - difficulty, 1 - build, 2 - starting weapon.
+
     Vector2                   notPickedUpCoinsLogicalPos = {};
     const Font*               overriddenFont             = {};
     Array<UIButtonState, 128> buttonStates               = {};
     int                       buttonStatesCount          = 0;
 
-    FrameVisual newRunErrorAt = {};
-
-    FrameVisual errorGold        = {};
-    FrameVisual shopErrorWeapons = {};
-    FrameVisual shopErrorBuild   = {};
+    int         newRunErrorLockedIndex = 0;
+    FrameVisual newRunErrorLocked      = {};
+    FrameVisual errorGold              = {};
+    FrameVisual shopErrorWeapons       = {};
+    FrameVisual shopErrorBuild         = {};
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
 
@@ -6533,15 +6535,15 @@ void DoUI(bool draw) {
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
     SCOPED_CONTEXT(ControlsContext_NEW_RUN);
 
-    auto groupDifficulties = MakeControlsGroup();
-    auto groupBuilds       = MakeControlsGroup();
-    auto groupWeapons      = MakeControlsGroup();
-    auto groupGo           = MakeControlsGroup();
+    auto groupTop = MakeControlsGroup();
+    auto group    = MakeControlsGroup();
 
     CLAY({
       .layout{
         BF_CLAY_SIZING_GROW_XY,
-        .childGap = GAP_BIG * 2,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
@@ -6553,27 +6555,27 @@ void DoUI(bool draw) {
         componentScreenName_floatingInTheCenter(Loc_UI_NEW_RUN, []() {});
       });
 
-      CLAY({.layout{
-        .childGap        = GAP_BIG,
-        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-      }}) {
-        // Difficulties.
-        FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY__CAPS);
-        FontEnd();
+      BF_CLAY_SPACER_VERTICAL;
 
-        CLAY({}) {
-          FrameVisual errorAt{};
-          if (!p.difficulty)
-            errorAt = g.ui.newRunErrorAt;
+      if (g.ui.newRunStep == 0) {
+        const bool isLocked = ((int)p.difficulty - 1)
+                              > g.player.achievements[AchievementType_DIFFICULTY].value;
 
-          BEAUTIFY_WIGGLING_DANGER_SCOPED(
-            errorAt,
-            WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
-            ERROR_WIGGLING_FRAMES,
-            ERROR_WIGGLING_TIMES
-          );
+        componentUniversalCard({
+          .difficulty = g.player.difficulty,
+          // .build      =,
+          // .item       =,
+          // .weapon     =,
+          .overrideTier   = (isLocked ? 0 : -1),
+          .setFixedHeight = true,
+        });
 
+        BF_CLAY_SPACER_VERTICAL;
+
+        CLAY({.layout{
+          .childGap        = GAP_BIG,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
           CLAY({
             .layout{
               BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
@@ -6583,253 +6585,281 @@ void DoUI(bool draw) {
               glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
             ),
           }) {
-            CLAY({.layout{.childGap = GAP_SMALL}})
+            CLAY({})
             FOR_RANGE (int, i, (int)DifficultyType_COUNT - 1) {
-              auto isLocked = i > g.player.achievements[AchievementType_DIFFICULTY].value;
-              auto fb       = fb_difficulties->Get(i + 1);
+              const bool isLocked
+                = i > g.player.achievements[AchievementType_DIFFICULTY].value;
+              auto fb = fb_difficulties->Get(i + 1);
 
-              const bool selected = ((i + 1) == (int)p.difficulty);
+              const auto slotID = CLAY_IDI("new_run_difficulty", i);
 
-              CLAY({}) {
-                const auto slotID            = CLAY_IDI("new_run_difficulty", i);
-                const bool clickedDifficulty = componentUniversalSlot({
+              if (p.difficulty == (DifficultyType)(i + 1)) {
+                markControlAsDefault(slotID);
+                if (CURRENT_CONTEXT.focused.id == 0)
+                  CURRENT_CONTEXT.focused = slotID;
+              }
+
+              const bool selected = (CURRENT_CONTEXT.focused.id == slotID.id);
+
+              if (selected)
+                p.difficulty = (DifficultyType)(i + 1);
+
+              {
+                auto frameError = g.ui.newRunErrorLocked;
+                if (g.ui.newRunErrorLockedIndex != i)
+                  frameError = {};
+
+                BEAUTIFY_WIGGLING_DANGER_SCOPED(
+                  frameError,
+                  WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+                  ERROR_WIGGLING_FRAMES,
+                  ERROR_WIGGLING_TIMES
+                );
+
+                const bool chosen = componentUniversalSlot({
                   .id         = slotID,
-                  .group      = groupDifficulties,
+                  .group      = group,
                   .difficulty = (DifficultyType)(isLocked ? 0 : i + 1),
                   .hidden     = ComponentUniversalSlotHiddenType_SHOW_LOCK,
                   .tier       = (isLocked ? 0 : (selected ? 6 : i)),
-                  .canHover   = !isLocked,
+                  .canHover   = true,
                 });
 
-                if (!isLocked) {
-                  if (clickedDifficulty) {
-                    PlaySound(Sound_UI_CLICK);
-                    p.difficulty = (DifficultyType)(i + 1);
-                    Save();
-                  }
-
-                  if (Clay_Hovered()
-                      || (controlsContexts[currentContext].focused.id == slotID.id))
-                  {
-                    componentUniversalDetails({
-                      .difficulty     = (DifficultyType)(i + 1),
-                      .affectedByGame = false,
-                      .detailsRight   = 1,
-                      .detailsBelow   = 1,
-                    });
-                  }
+                if (isLocked && chosen) {
+                  PlaySound(Sound_UI_ERROR);
+                  g.ui.newRunErrorLockedIndex = i;
+                  g.ui.newRunErrorLocked      = {};
+                  g.ui.newRunErrorLocked.SetNow();
+                }
+                else if (chosen) {
+                  PlaySound(Sound_UI_CLICK);
+                  p.difficulty = (DifficultyType)(i + 1);
+                  Save();
+                  g.ui.newRunStep++;
                 }
               }
+
+              if (i < (int)DifficultyType_COUNT - 2)
+                CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
             }
           }
-        }
 
-        // Builds.
-        FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD__CAPS);
-        FontEnd();
-
-        auto buildsX = 6;
-        auto buildsY = CeilDivision((int)fb_builds->size() - 1, buildsX);
-
-        CLAY({}) {
-          FrameVisual errorAt{};
-          if (!p.build)
-            errorAt = g.ui.newRunErrorAt;
-
-          BEAUTIFY_WIGGLING_DANGER_SCOPED(
-            errorAt,
-            WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
-            ERROR_WIGGLING_FRAMES,
-            ERROR_WIGGLING_TIMES
-          );
-
-          CLAY({
-            .layout{
-              BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            },
-            BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-            ),
-          }) {
-            FOR_RANGE (int, y, buildsY) {
-              ControlsGroupNewRow(groupBuilds);
-
-              CLAY({.layout{.childGap = GAP_SMALL}}) {
-                FOR_RANGE (int, x, buildsX) {
-                  const int t = y * buildsX + x;
-                  if (t >= fb_builds->size() - 1)
-                    break;
-
-                  const bool selected = ((int)p.build == (t + 1));
-
-                  CLAY({}) {
-                    auto       fb       = fb_builds->Get(t + 1);
-                    const bool isLocked = g.player.lockedBuilds[t + 1];
-
-                    const int tier = GetBuildTier((BuildType)(t + 1));
-
-                    const auto slotID       = CLAY_IDI("new_run_build", t);
-                    const bool clickedBuild = componentUniversalSlot({
-                      .id       = slotID,
-                      .group    = groupBuilds,
-                      .build    = (BuildType)(isLocked ? 0 : t + 1),
-                      .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
-                      .tier     = (isLocked ? 0 : (selected ? 6 : tier)),
-                      .canHover = !isLocked,
-                    });
-
-                    if (!isLocked) {
-                      if (clickedBuild) {
-                        PlaySound(Sound_UI_CLICK);
-                        if (p.build != (BuildType)(t + 1)) {
-                          p.build  = (BuildType)(t + 1);
-                          p.weapon = {};
-                        }
-                        Save();
-                      }
-
-                      if (Clay_Hovered()
-                          || (controlsContexts[currentContext].focused.id == slotID.id))
-                      {
-                        componentUniversalDetails({
-                          .build          = (BuildType)(t + 1),
-                          .affectedByGame = false,
-                          .overrideTier   = tier,
-                          .detailsRight   = 1,
-                          .detailsBelow   = 1,
-                        });
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        // Starting weapons.
-        FontBegin(&g.meta.fontUIBig);
-        BF_CLAY_TEXT_LOCALIZED(Loc_UI_STARTING_WEAPON__CAPS);
-        FontEnd();
-
-        CLAY({}) {
-          FrameVisual errorAt{};
-          if (!p.weapon)
-            errorAt = g.ui.newRunErrorAt;
-
-          BEAUTIFY_WIGGLING_DANGER_SCOPED(
-            errorAt,
-            WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
-            ERROR_WIGGLING_FRAMES,
-            ERROR_WIGGLING_TIMES
-          );
-
-          CLAY({
-            .layout{
-              BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            },
-            BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-            ),
-          }) {
-            const int weaponsX = 6;
-            const int weaponsY = CeilDivision(MAX_BUILD_WEAPONS, weaponsX);
-
-            auto fb_buildWeapons = fb_builds->Get(p.build)->starting_weapon_types();
-
-            FOR_RANGE (int, y, weaponsY) {
-              ControlsGroupNewRow(groupWeapons);
-
-              CLAY({.layout{.childGap = GAP_SMALL}})
-              FOR_RANGE (int, x, weaponsX) {
-                const int t = y * weaponsX + x;
-
-                const bool exists = fb_buildWeapons && (t < fb_buildWeapons->size());
-
-                bool isLocked = false;
-
-                bool selected = false;
-                if (exists) {
-                  const auto weaponType = (WeaponType)fb_buildWeapons->Get(t);
-                  selected              = (p.weapon == weaponType);
-                  isLocked              = g.player.lockedWeapons[weaponType];
-                }
-
-                CLAY({}) {
-                  const auto slotID        = CLAY_IDI("new_run_weapon", t);
-                  const bool clickedWeapon = componentUniversalSlot({
-                    .id    = slotID,
-                    .group = groupWeapons,
-                    .weapon
-                    = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) : 0),
-                    .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
-                    .tier     = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
-                    .canHover = exists && !isLocked,
-                  });
-
-                  // Hovering modal.
-                  if (exists        //
-                      && !isLocked  //
-                      && (Clay_Hovered() || (controlsContexts[currentContext].focused.id == slotID.id)))
-                  {
-                    componentWeaponDetails({
-                      .type           = (WeaponType)fb_buildWeapons->Get(t),
-                      .affectedByGame = false,
-                    });
-                  }
-
-                  if (exists && !isLocked) {
-                    if (clickedWeapon) {
-                      PlaySound(Sound_UI_CLICK);
-                      p.weapon = (WeaponType)fb_buildWeapons->Get(t);
-                      Save();
-                    }
-                  }
-                }
-              }
-            }
-          }
+          //   // Builds.
+          //   FontBegin(&g.meta.fontUIBig);
+          //   BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD__CAPS);
+          //   FontEnd();
+          //
+          //   auto buildsX = 6;
+          //   auto buildsY = CeilDivision((int)fb_builds->size() - 1, buildsX);
+          //
+          //   CLAY({}) {
+          //     FrameVisual errorAt{};
+          //     if (!p.build)
+          //       errorAt = g.ui.newRunErrorAt;
+          //
+          //     BEAUTIFY_WIGGLING_DANGER_SCOPED(
+          //       errorAt,
+          //       WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+          //       ERROR_WIGGLING_FRAMES,
+          //       ERROR_WIGGLING_TIMES
+          //     );
+          //
+          //     CLAY({
+          //       .layout{
+          //         BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+          //         .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          //       },
+          //       BF_CLAY_CUSTOM_NINE_SLICE(
+          //         glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+          //       ),
+          //     }) {
+          //       FOR_RANGE (int, y, buildsY) {
+          //         ControlsGroupNewRow(groupBuilds);
+          //
+          //         CLAY({.layout{.childGap = GAP_SMALL}}) {
+          //           FOR_RANGE (int, x, buildsX) {
+          //             const int t = y * buildsX + x;
+          //             if (t >= fb_builds->size() - 1)
+          //               break;
+          //
+          //             const bool selected = ((int)p.build == (t + 1));
+          //
+          //             CLAY({}) {
+          //               auto       fb       = fb_builds->Get(t + 1);
+          //               const bool isLocked = g.player.lockedBuilds[t + 1];
+          //
+          //               const int tier = GetBuildTier((BuildType)(t + 1));
+          //
+          //               const auto slotID       = CLAY_IDI("new_run_build", t);
+          //               const bool clickedBuild = componentUniversalSlot({
+          //                 .id       = slotID,
+          //                 .group    = groupBuilds,
+          //                 .build    = (BuildType)(isLocked ? 0 : t + 1),
+          //                 .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
+          //                 .tier     = (isLocked ? 0 : (selected ? 6 : tier)),
+          //                 .canHover = !isLocked,
+          //               });
+          //
+          //               if (!isLocked) {
+          //                 if (clickedBuild) {
+          //                   PlaySound(Sound_UI_CLICK);
+          //                   if (p.build != (BuildType)(t + 1)) {
+          //                     p.build  = (BuildType)(t + 1);
+          //                     p.weapon = {};
+          //                   }
+          //                   Save();
+          //                 }
+          //
+          //                 if (Clay_Hovered()
+          //                     || (controlsContexts[currentContext].focused.id ==
+          //                     slotID.id))
+          //                 {
+          //                   componentUniversalDetails({
+          //                     .build          = (BuildType)(t + 1),
+          //                     .affectedByGame = false,
+          //                     .overrideTier   = tier,
+          //                     .detailsRight   = 1,
+          //                     .detailsBelow   = 1,
+          //                   });
+          //                 }
+          //               }
+          //             }
+          //           }
+          //         }
+          //       }
+          //     }
+          //   }
+          //
+          //   // Starting weapons.
+          //   FontBegin(&g.meta.fontUIBig);
+          //   BF_CLAY_TEXT_LOCALIZED(Loc_UI_STARTING_WEAPON__CAPS);
+          //   FontEnd();
+          //
+          //   CLAY({}) {
+          //     FrameVisual errorAt{};
+          //     if (!p.weapon)
+          //       errorAt = g.ui.newRunErrorAt;
+          //
+          //     BEAUTIFY_WIGGLING_DANGER_SCOPED(
+          //       errorAt,
+          //       WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+          //       ERROR_WIGGLING_FRAMES,
+          //       ERROR_WIGGLING_TIMES
+          //     );
+          //
+          //     CLAY({
+          //       .layout{
+          //         BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+          //         .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          //       },
+          //       BF_CLAY_CUSTOM_NINE_SLICE(
+          //         glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
+          //       ),
+          //     }) {
+          //       const int weaponsX = 6;
+          //       const int weaponsY = CeilDivision(MAX_BUILD_WEAPONS, weaponsX);
+          //
+          //       auto fb_buildWeapons =
+          //       fb_builds->Get(p.build)->starting_weapon_types();
+          //
+          //       FOR_RANGE (int, y, weaponsY) {
+          //         ControlsGroupNewRow(groupWeapons);
+          //
+          //         CLAY({.layout{.childGap = GAP_SMALL}})
+          //         FOR_RANGE (int, x, weaponsX) {
+          //           const int t = y * weaponsX + x;
+          //
+          //           const bool exists = fb_buildWeapons && (t <
+          //           fb_buildWeapons->size());
+          //
+          //           bool isLocked = false;
+          //
+          //           bool selected = false;
+          //           if (exists) {
+          //             const auto weaponType = (WeaponType)fb_buildWeapons->Get(t);
+          //             selected              = (p.weapon == weaponType);
+          //             isLocked              = g.player.lockedWeapons[weaponType];
+          //           }
+          //
+          //           CLAY({}) {
+          //             const auto slotID        = CLAY_IDI("new_run_weapon", t);
+          //             const bool clickedWeapon = componentUniversalSlot({
+          //               .id    = slotID,
+          //               .group = groupWeapons,
+          //               .weapon
+          //               = (WeaponType)(!isLocked && exists ? fb_buildWeapons->Get(t) :
+          //               0), .hidden   = ComponentUniversalSlotHiddenType_SHOW_LOCK,
+          //               .tier = (!exists || isLocked ? 0 : (selected ? 6 : 0)),
+          //               .canHover = exists && !isLocked,
+          //             });
+          //
+          //             // Hovering modal.
+          //             if (exists        //
+          //                 && !isLocked  //
+          //                 && (Clay_Hovered() ||
+          //                 (controlsContexts[currentContext].focused.id == slotID.id)))
+          //             {
+          //               componentWeaponDetails({
+          //                 .type           = (WeaponType)fb_buildWeapons->Get(t),
+          //                 .affectedByGame = false,
+          //               });
+          //             }
+          //
+          //             if (exists && !isLocked) {
+          //               if (clickedWeapon) {
+          //                 PlaySound(Sound_UI_CLICK);
+          //                 p.weapon = (WeaponType)fb_buildWeapons->Get(t);
+          //                 Save();
+          //               }
+          //             }
+          //           }
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
+          //
+          // // Go.
+          // CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(200)}}}) {
+          //   const bool canGo = p.difficulty && p.build && p.weapon;
+          //   const bool go    = componentButton(
+          //     {.id = CLAY_ID("button_new_run_go"), .group = groupGo, .growX = true},
+          //     [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+          //       BF_CLAY_TEXT_LOCALIZED(Loc_UI_START_A_NEW_RUN__CAPS, textColor);
+          //     }
+          //   );
+          //
+          //   if (go) {
+          //     if (canGo) {
+          //       PlaySound(Sound_UI_CLICK);
+          //       g.run.reload = true;
+          //     }
+          //     else {
+          //       PlaySound(Sound_UI_ERROR);
+          //       g.ui.newRunErrorAt = {};
+          //       g.ui.newRunErrorAt.SetNow();
+          //     }
+          //   }
+          // }
         }
       }
-
-      // Go.
-      CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(200)}}}) {
-        const bool canGo = p.difficulty && p.build && p.weapon;
-        const bool go    = componentButton(
-          {.id = CLAY_ID("button_new_run_go"), .group = groupGo, .growX = true},
-          [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_START_A_NEW_RUN__CAPS, textColor);
-          }
-        );
-
-        if (go) {
-          if (canGo) {
-            PlaySound(Sound_UI_CLICK);
-            g.run.reload = true;
-          }
-          else {
-            PlaySound(Sound_UI_ERROR);
-            g.ui.newRunErrorAt = {};
-            g.ui.newRunErrorAt.SetNow();
-          }
-        }
+      else if (g.ui.newRunStep == 1) {
       }
+      else if (g.ui.newRunStep == 2) {
+      }
+      else
+        INVALID_PATH;
+
+      ControlsGroupConnect(group, Direction_DOWN, groupTop);
+      ControlsGroupConnect(groupTop, Direction_DOWN, group);
     }
-
-    ControlsGroupConnect(groupDifficulties, Direction_DOWN, groupBuilds);
-    ControlsGroupConnect(groupBuilds, Direction_DOWN, groupWeapons);
-    ControlsGroupConnect(groupWeapons, Direction_DOWN, groupGo);
-    ControlsGroupConnect(groupGo, Direction_DOWN, groupDifficulties);
   }
   // Picked up item.
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
     SCOPED_CONTEXT(ControlsContext_PICKED_UP_ITEM);
 
-    auto group           = MakeControlsGroup();
-    auto groupTopButtons = MakeControlsGroup();
+    auto group    = MakeControlsGroup();
+    auto groupTop = MakeControlsGroup();
 
     CLAY({
       .layout{
@@ -6845,7 +6875,7 @@ void DoUI(bool draw) {
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
-        componentButtonStats(groupTopButtons);
+        componentButtonStats(groupTop);
 
         componentScreenName_floatingInTheCenter(Loc_UI_ITEM_FOUND, []() {});
       });
@@ -6918,8 +6948,8 @@ void DoUI(bool draw) {
       BF_CLAY_SPACER_VERTICAL;
     }
 
-    ControlsGroupConnect(groupTopButtons, Direction_DOWN, group);
-    ControlsGroupConnect(groupTopButtons, Direction_UP, group);
+    ControlsGroupConnect(groupTop, Direction_DOWN, group);
+    ControlsGroupConnect(groupTop, Direction_UP, group);
   }
   // Upgrades.
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
@@ -7136,7 +7166,7 @@ void DoUI(bool draw) {
     for (auto& x : groupsToBuy_)
       x = MakeControlsGroup();
     VIEW_FROM_ARRAY_DANGER(groupsToBuy);
-    auto groupTopButtons = MakeControlsGroup();
+    auto groupTop        = MakeControlsGroup();
     auto groupGoNextWave = MakeControlsGroup();
     auto groupWeapons    = MakeControlsGroup();
     auto groupItems      = MakeControlsGroup();
@@ -7173,7 +7203,7 @@ void DoUI(bool draw) {
               = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
             const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
 
-            bool rerolled = componentButtonReroll(groupTopButtons, calculatedRerollPrice);
+            bool rerolled = componentButtonReroll(groupTop, calculatedRerollPrice);
             if (rerolled) {
               if (canReroll) {
                 PlaySound(Sound_UI_CLICK);
@@ -7190,7 +7220,7 @@ void DoUI(bool draw) {
             }
 
             // Stats.
-            componentButtonStats(groupTopButtons);
+            componentButtonStats(groupTop);
           }
 
           componentScreenName_floatingInTheCenter(Loc_UI_SHOP, []() {});
@@ -7451,10 +7481,10 @@ void DoUI(bool draw) {
     ControlsGroupConnect(groupsToBuy[1], Direction_RIGHT, groupsToBuy[3]);
     ControlsGroupConnect(groupsToBuy[0], Direction_RIGHT, groupsToBuy[3]);
 
-    ControlsGroupConnect(groupsToBuy[3], Direction_UP, groupTopButtons);
-    ControlsGroupConnect(groupsToBuy[2], Direction_UP, groupTopButtons);
-    ControlsGroupConnect(groupsToBuy[1], Direction_UP, groupTopButtons);
-    ControlsGroupConnect(groupsToBuy[0], Direction_UP, groupTopButtons);
+    ControlsGroupConnect(groupsToBuy[3], Direction_UP, groupTop);
+    ControlsGroupConnect(groupsToBuy[2], Direction_UP, groupTop);
+    ControlsGroupConnect(groupsToBuy[1], Direction_UP, groupTop);
+    ControlsGroupConnect(groupsToBuy[0], Direction_UP, groupTop);
 
     ControlsGroupConnect(groupsToBuy[3], Direction_RIGHT, groupsToBuy[0]);
     ControlsGroupConnect(groupsToBuy[3], Direction_RIGHT, groupsToBuy[1]);
@@ -7468,9 +7498,9 @@ void DoUI(bool draw) {
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[2]);
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[1]);
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[0]);
-    ControlsGroupConnect(groupTopButtons, Direction_DOWN, groupGoNextWave);
-    ControlsGroupConnect(groupWeapons, Direction_UP, groupTopButtons);
-    ControlsGroupConnect(groupItems, Direction_UP, groupTopButtons);
+    ControlsGroupConnect(groupTop, Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupTop);
+    ControlsGroupConnect(groupItems, Direction_UP, groupTop);
     ControlsGroupConnect(groupWeapons, Direction_RIGHT, groupGoNextWave);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupWeapons);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupGoNextWave);
@@ -7478,19 +7508,19 @@ void DoUI(bool draw) {
     ControlsGroupConnect(groupsToBuy[2], Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupsToBuy[1], Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupsToBuy[0], Direction_DOWN, groupGoNextWave);
-    ControlsGroupConnect(groupTopButtons, Direction_RIGHT, groupTopButtons);
+    ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
 
     ControlsGroupConnect(groupItems, Direction_LEFT, groupGoNextWave);
 
-    ControlsGroupConnect(groupTopButtons, Direction_UP, groupGoNextWave);
-    ControlsGroupConnect(groupItems, Direction_DOWN, groupTopButtons);
-    ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTopButtons);
+    ControlsGroupConnect(groupTop, Direction_UP, groupGoNextWave);
+    ControlsGroupConnect(groupItems, Direction_DOWN, groupTop);
+    ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTop);
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
     SCOPED_CONTEXT(ControlsContext_END);
 
-    auto groupTopButtons      = MakeControlsGroup();
+    auto groupTop             = MakeControlsGroup();
     auto groupWeaponsAndItems = MakeControlsGroup();
     auto groupButtons         = MakeControlsGroup();
 
@@ -7524,7 +7554,7 @@ void DoUI(bool draw) {
 
         BF_CLAY_SPACER_HORIZONTAL;
 
-        componentButtonStats(groupTopButtons);
+        componentButtonStats(groupTop);
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -7638,9 +7668,9 @@ void DoUI(bool draw) {
       BF_CLAY_SPACER_VERTICAL;
     }
 
-    ControlsGroupConnect(groupTopButtons, Direction_DOWN, groupWeaponsAndItems);
+    ControlsGroupConnect(groupTop, Direction_DOWN, groupWeaponsAndItems);
     ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupButtons);
-    ControlsGroupConnect(groupButtons, Direction_DOWN, groupTopButtons);
+    ControlsGroupConnect(groupButtons, Direction_DOWN, groupTop);
   }
   else if (g.run.state.screen == ScreenType_WAVE_END_ANIMATION) {
     // NOTE: Intentionally left blank.
@@ -7885,9 +7915,9 @@ void DoUI(bool draw) {
       else {  ///
         SCOPED_CONTEXT(ControlsContext_PAUSE);
 
-        auto groupButtons    = MakeControlsGroup();
-        auto groupWeapons    = MakeControlsGroup();
-        auto groupTopButtons = MakeControlsGroup();
+        auto groupButtons = MakeControlsGroup();
+        auto groupWeapons = MakeControlsGroup();
+        auto groupTop     = MakeControlsGroup();
 
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
@@ -7895,7 +7925,7 @@ void DoUI(bool draw) {
         }}) {
           componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_SPACER_HORIZONTAL;
-            componentButtonStats(groupTopButtons);
+            componentButtonStats(groupTop);
           });
 
           BF_CLAY_SPACER_VERTICAL;
@@ -8071,11 +8101,11 @@ void DoUI(bool draw) {
           BF_CLAY_SPACER_VERTICAL;
         }
 
-        ControlsGroupConnect(groupTopButtons, Direction_DOWN, groupButtons);
-        ControlsGroupConnect(groupWeapons, Direction_UP, groupTopButtons);
-        ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTopButtons);
-        ControlsGroupConnect(groupButtons, Direction_UP, groupTopButtons);
-        ControlsGroupConnect(groupButtons, Direction_DOWN, groupTopButtons);
+        ControlsGroupConnect(groupTop, Direction_DOWN, groupButtons);
+        ControlsGroupConnect(groupWeapons, Direction_UP, groupTop);
+        ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTop);
+        ControlsGroupConnect(groupButtons, Direction_UP, groupTop);
+        ControlsGroupConnect(groupButtons, Direction_DOWN, groupTop);
         ControlsGroupConnect(groupButtons, Direction_RIGHT, groupWeapons);
       }
     }
