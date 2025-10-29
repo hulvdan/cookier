@@ -7468,8 +7468,9 @@ void DoUI(bool draw) {
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[2]);
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[1]);
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[0]);
-    ControlsGroupConnect(groupItems, Direction_UP, groupTopButtons);
+    ControlsGroupConnect(groupTopButtons, Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupWeapons, Direction_UP, groupTopButtons);
+    ControlsGroupConnect(groupItems, Direction_UP, groupTopButtons);
     ControlsGroupConnect(groupWeapons, Direction_RIGHT, groupGoNextWave);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupWeapons);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupGoNextWave);
@@ -7477,7 +7478,6 @@ void DoUI(bool draw) {
     ControlsGroupConnect(groupsToBuy[2], Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupsToBuy[1], Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupsToBuy[0], Direction_DOWN, groupGoNextWave);
-    ControlsGroupConnect(groupTopButtons, Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupTopButtons, Direction_RIGHT, groupTopButtons);
 
     ControlsGroupConnect(groupItems, Direction_LEFT, groupGoNextWave);
