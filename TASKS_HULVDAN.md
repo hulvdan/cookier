@@ -74,11 +74,8 @@ x new run: difficulty: cards contain locked info
 x new run: difficulty: wiggling achievement requirements
 
 * new run: 3 steps (difficulty -> build -> weapon)
-* new run: difficulty:
-* new run: difficulty:
-* new run: difficulty:
 * new run: build: back button
-* new run: build:
+* new run: build: show builds
 * new run: build:
 * new run: build:
 * new run: build:
