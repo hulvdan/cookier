@@ -1091,10 +1091,13 @@ struct GameData {
     Array<UIButtonState, 128> buttonStates               = {};
     int                       buttonStatesCount          = 0;
 
-    FrameVisual newRunErrorLocked = {};
-    FrameVisual errorGold         = {};
-    FrameVisual shopErrorWeapons  = {};
-    FrameVisual shopErrorBuild    = {};
+    FrameVisual newRunErrorLocked          = {};
+    FrameVisual newRunSelectedDifficultyAt = {};
+    FrameVisual newRunSelectedBuildAt      = {};
+
+    FrameVisual errorGold        = {};
+    FrameVisual shopErrorWeapons = {};
+    FrameVisual shopErrorBuild   = {};
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
 
@@ -6657,32 +6660,108 @@ void DoUI(bool draw) {
             g.ui.newRunStep--;
             ASSERT(g.ui.newRunStep >= 0);
             ResetFocus(currentContext);
+
+            if (g.ui.newRunStep == 0)
+              g.ui.newRunSelectedDifficultyAt = {};
+            if (g.ui.newRunStep == 1)
+              g.ui.newRunSelectedBuildAt = {};
           }
         }
       });
 
       BF_CLAY_SPACER_VERTICAL;
 
-      // Selecting difficulty.
-      if (g.ui.newRunStep == 0) {
-        const bool isLocked
-          = ((int)p.difficulty - 1) > p.achievements[AchievementType_DIFFICULTY].value;
+      const bool difficultyIsLocked
+        = ((int)p.difficulty - 1) > p.achievements[AchievementType_DIFFICULTY].value;
+      const bool buildIsLocked  = (bool)p.lockedBuilds[p.build].achievement;
+      const bool weaponIsLocked = (bool)p.lockedWeapons[p.weapon].achievement;
 
-        componentUniversalCard({
-          .difficulty = (isLocked ? DifficultyType_INVALID : p.difficulty),
-          .lockInfo{
-            .achievement = AchievementType_DIFFICULTY,
-            .stepIndex   = (int)p.difficulty - 2,
-          },
-          .overrideTier   = (isLocked ? 0 : -1),
-          .setFixedHeight = true,
-        });
+      CLAY({.layout{BF_CLAY_SIZING_GROW_Y}}) {
+        LAMBDA (
+          void,
+          floatingInCenter,
+          (DifficultyType difficulty,
+           BuildType      build,
+           WeaponType     weapon,
+           LockInfo       lockInfo,
+           int            overrideTier)
+        )
+        {
+          ASSERT((int)((bool)difficulty) + (int)((bool)build) + (int)((bool)weapon) <= 1);
+          CLAY({.floating{
+            .zIndex = zIndex,
+            .attachPoints{
+              .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+              .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+            },
+            .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+            .attachTo           = CLAY_ATTACH_TO_PARENT,
+          }}) {
+            FLOATING_BEAUTIFY;
 
-        BF_CLAY_SPACER_VERTICAL;
-
-        LAMBDA (void, newRunEntry, ()) {
+            componentUniversalCard({
+              .difficulty     = difficulty,
+              .build          = build,
+              .weapon         = weapon,
+              .lockInfo       = lockInfo,
+              .overrideTier   = overrideTier,
+              .setFixedHeight = true,
+            });
+          }
         };
 
+#define BEAUTIFY_TRANSLATE_SCOPED(startedAt_, amplitude_, duration_) \
+  f32 translateP = 0;                                                \
+  if (startedAt_.IsSet())                                            \
+    translateP = MIN(1, (startedAt_).Elapsed().Progress(duration_)); \
+  Beautify b{.translate{EaseOutQuad(translateP) * (amplitude_), 0}}; \
+  BEAUTIFY(b);
+
+        const f32 translateAmplitude
+          = CARD_WIDTH + GAP_BIG * 2 + 2 * PADDING_NINE_SLICE_FRAME;
+
+        {
+          BEAUTIFY_TRANSLATE_SCOPED(
+            g.ui.newRunSelectedDifficultyAt, -translateAmplitude, ANIMATION_0_FRAMES
+          );
+          floatingInCenter(
+            (difficultyIsLocked ? DifficultyType_INVALID : p.difficulty),
+            {},
+            {},
+            {.achievement = AchievementType_DIFFICULTY, .stepIndex = (int)p.difficulty - 2
+            },
+            (difficultyIsLocked ? 0 : -1)
+          );
+        }
+
+        if (g.ui.newRunStep >= 1) {
+          BEAUTIFY_TRANSLATE_SCOPED(
+            g.ui.newRunSelectedBuildAt, translateAmplitude, ANIMATION_0_FRAMES
+          );
+          floatingInCenter(
+            {},
+            (buildIsLocked ? BuildType_INVALID : p.build),
+            {},
+            p.lockedBuilds[p.build],
+            (buildIsLocked ? 0 : -1)
+          );
+        }
+
+        if (g.ui.newRunStep >= 2) {
+          floatingInCenter(
+            {},
+            {},
+            (weaponIsLocked ? WeaponType_INVALID : p.weapon),
+            p.lockedWeapons[p.weapon],
+            (weaponIsLocked ? 0 : -1)
+          );
+        }
+      }
+
+      BF_CLAY_SPACER_VERTICAL;
+
+      // Selecting difficulty.
+      if (g.ui.newRunStep == 0) {
         componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
           CLAY({})
           for (int i_ = (int)DifficultyType_D0; i_ < DifficultyType_COUNT; i_++) {
@@ -6724,6 +6803,9 @@ void DoUI(bool draw) {
 
               ResetFocus(currentContext);
               g.ui.newRunStep++;
+
+              g.ui.newRunSelectedDifficultyAt = {};
+              g.ui.newRunSelectedDifficultyAt.SetNow();
             }
 
             if (i < (int)DifficultyType_COUNT - 1)
@@ -6733,17 +6815,6 @@ void DoUI(bool draw) {
       }
       // Selecting build.
       else if (g.ui.newRunStep == 1) {
-        const bool isLocked = (bool)p.lockedBuilds[p.build].achievement;
-
-        componentUniversalCard({
-          .build          = (isLocked ? BuildType_INVALID : p.build),
-          .lockInfo       = p.lockedBuilds[p.build],
-          .overrideTier   = (isLocked ? 0 : -1),
-          .setFixedHeight = true,
-        });
-
-        BF_CLAY_SPACER_VERTICAL;
-
         componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
           const int BUILDS_X = 8;
           const int BUILDS_Y = CeilDivision((int)fb_builds->size() - 1, BUILDS_X);
@@ -6811,6 +6882,9 @@ void DoUI(bool draw) {
 
                 ResetFocus(currentContext);
                 g.ui.newRunStep++;
+
+                g.ui.newRunSelectedBuildAt = {};
+                g.ui.newRunSelectedBuildAt.SetNow();
               }
             }
           }
@@ -6818,17 +6892,6 @@ void DoUI(bool draw) {
       }
       // Selecting weapon.
       else if (g.ui.newRunStep == 2) {
-        const bool isLocked = (bool)p.lockedWeapons[p.weapon].achievement;
-
-        componentUniversalCard({
-          .weapon         = (isLocked ? WeaponType_INVALID : p.weapon),
-          .lockInfo       = p.lockedWeapons[p.weapon],
-          .overrideTier   = (isLocked ? 0 : -1),
-          .setFixedHeight = true,
-        });
-
-        BF_CLAY_SPACER_VERTICAL;
-
         componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
           const int WEAPONS_X = 8;
           const int WEAPONS_Y = CeilDivision(MAX_BUILD_WEAPONS, WEAPONS_X);
@@ -6879,8 +6942,10 @@ void DoUI(bool draw) {
                 Save();
 
                 ResetFocus(currentContext);
-                g.ui.newRunStep = 0;
-                g.run.reload    = true;
+                g.ui.newRunStep                 = 0;
+                g.ui.newRunSelectedDifficultyAt = {};
+                g.ui.newRunSelectedBuildAt      = {};
+                g.run.reload                    = true;
               }
             }
           }
