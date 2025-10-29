@@ -60,12 +60,14 @@ x ui keyboard: shop: when context menu is active, don't process shop context at 
 x fix: new run: can't click on buttons
 x ui keyboard: SPACE / RETURN should work in weapon details
 x ui keyboard: shop: mark default: 2 3 4 1 reroll
-
-* ui keyboard:
+x ui keyboard:
   after pressing any keyboard button make default button focused
   if there's no currently active key
-* ui keyboard:
-* ui keyboard:
+x ui keyboard: shop buying weapon/item changes focus to another weapon/item
+  or reroll button in case everything is sold
+x ui keyboard: shop: recycling changes focus
+
+* ui keyboard: shop: combining changes focus
 * ui keyboard:
 * ui keyboard:
 * ui keyboard:
