@@ -2414,20 +2414,6 @@ void _ClearControlsCache() {  ///
     }
   }
 
-  // Setting `ge.meta._latestActiveTouchID`.
-  {
-    ge.meta._latestActiveTouchID = {};
-    int highestNumber            = 0;
-    FOR_RANGE (int, i, ge.meta._touches.count) {
-      const auto& t = ge.meta._touches[i];
-      if (highestNumber < t.data.number) {
-        highestNumber                  = t.data.number;
-        ge.meta._latestActiveTouchID   = ge.meta._touchIDs[i];
-        ge.meta._mouseOrLatestTouchPos = t.data.screenPos;
-      }
-    }
-  }
-
   for (auto& t : ge.meta._touches)
     t.state &= ~_TouchDataState_PRESSED;
 
@@ -3645,6 +3631,20 @@ SDL_AppResult EngineUpdate() {  ///
 
     // Controls. Mouse.
     ge.meta._mouseState = SDL_GetMouseState(nullptr, nullptr);
+
+    // Setting `ge.meta._latestActiveTouchID`.
+    {
+      ge.meta._latestActiveTouchID = {};
+      int highestNumber            = 0;
+      FOR_RANGE (int, i, ge.meta._touches.count) {
+        const auto& t = ge.meta._touches[i];
+        if (highestNumber < t.data.number) {
+          highestNumber                  = t.data.number;
+          ge.meta._latestActiveTouchID   = ge.meta._touchIDs[i];
+          ge.meta._mouseOrLatestTouchPos = t.data.screenPos;
+        }
+      }
+    }
 
     GameFixedUpdate();
 
