@@ -15,17 +15,8 @@ x shop: mouse: hovering shows details
 x shop: mouse: unhovering hides them
 x fix setting `_mouseOrLatestTouchPos` to latest touch pos BEFORE game update
 x touch: pressing on slot (item / weapon) shows details
+x touch: pressing again - hides them
 
-* touch: pressing again - hides them
-* touch: fix:
-  WRONG BEHAVIOR:
-  0 - ensure you have >=2 weapons
-  1 - select item
-  2 - click on weapon
-  3 - click on sell
-  EXPECTED: weapon was sold
-  ACTUAL: (1) selected the next weapon if clicked on not last one
-          (2) details were closed in case of last weapon
 * touch: make it not possible to "activate" weapon in shop
   but buttons should work
 * touch: hide cancel button in weapon details

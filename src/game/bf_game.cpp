@@ -1049,7 +1049,7 @@ struct GameData {
 
     int bossCreatureID = 0;
 
-    bool stickedSlotDetails = false;
+    bool hideSlotDetails = false;
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -4553,33 +4553,19 @@ void DoUI(bool draw) {
     if (draw)
       return;
 
-    // if (Clay_Hovered()                              //
-    //     && (ge.events.last == LastEventType_TOUCH)  //
-    //     && (!g.run.stickedSlotDetails))
-    // {
-    //   PlaySound(Sound_UI_CLICK);
-    //   g.run.stickedSlotDetails = true;
-    // }
-
-    // if (touched()) {
-    //   PlaySound(Sound_UI_CLICK);
-    //   g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
-    // }
-
     if (CURRENT_CONTEXT.focused.id != slotID.id)
       return;
 
     if (uiElementSwitchDirectionPrevFrame)
-      g.run.stickedSlotDetails = true;
-    else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_ESCAPE)
-             && g.run.stickedSlotDetails)
+      g.run.hideSlotDetails = false;
+    else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_ESCAPE) && !g.run.hideSlotDetails)
     {
       PlaySound(Sound_UI_CLICK);
-      g.run.stickedSlotDetails = false;
+      g.run.hideSlotDetails = true;
     }
     else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_SPACE)) {
       PlaySound(Sound_UI_CLICK);
-      g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
+      g.run.hideSlotDetails = !g.run.hideSlotDetails;
     }
   };
 
@@ -4801,17 +4787,21 @@ void DoUI(bool draw) {
       auto& focused = controlsContexts[currentContext].focused;
 
       if (hovered) {
+        if (touched(false)) {
+          PlaySound(Sound_UI_CLICK);
+          g.run.hideSlotDetails = !g.run.hideSlotDetails;
+        }
+
         if (focused.id != data.id.id) {
           focused = data.id;
+
+          g.run.hideSlotDetails = false;
 
           // Making it not possible to simultaneously (1) select and (2) activate slot
           // upon reacting to single touch press event.
           _alreadyHandledClickOrTouch = true;
           _alreadyHandledActivation   = true;
         }
-        // else if (touched(false)) {
-        //   g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
-        // }
       }
 
       if (focused.id && (focused.id == data.id.id)) {
@@ -4893,7 +4883,6 @@ void DoUI(bool draw) {
           ButtonSFX(draw, data.id, Clay_Hovered());
 
           if (isCurrentContextActive()) {
-            // auto t = touched(false);
             result |= clickOrTouchPressed();
 
             const auto& focused = controlsContexts[currentContext].focused;
@@ -6037,8 +6026,8 @@ void DoUI(bool draw) {
       = (data.weaponIndexOrMinus1 >= 0)
         && (g.run.shopActivatedModalWeaponIndex == data.weaponIndexOrMinus1);
 
-    if (hovered                                                                    //
-        || g.run.stickedSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id)  //
+    if ((hovered && !g.run.hideSlotDetails)                                        //
+        || (!g.run.hideSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id))  //
         || isSelected)
     {
       f32                          offsetY{};
@@ -6121,7 +6110,7 @@ void DoUI(bool draw) {
     if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
         && !hovered                                 //
         && ge.events.thisFrame.Mouse())
-      g.run.stickedSlotDetails = false;
+      g.run.hideSlotDetails = false;
   };
 
   struct ComponentItemsGridData {  ///
