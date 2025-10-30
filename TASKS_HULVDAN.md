@@ -1,7 +1,7 @@
 WORKING SINCE 2025-09-07
 
-* new run: TOUCH: don't proceed to the next stage upon clicking.
-  proceed after slot was selected in the first place
+* new run: TOUCH: don't proceed to the next stage upon clicking
+  if slot wasn't selected in the first place
 *
 * new run:
 * new run:
