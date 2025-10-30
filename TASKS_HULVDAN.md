@@ -6,9 +6,23 @@ x shop: keyboard: when slot is selected item show details
 x ref: componentWeaponsGrid
 x inline componentUniversalDetails
 x ref: merge `componentWeaponDetails` with `componentUniversalDetails`
-
-* ui: activate weapon details context after pressing SPACE
+x ui: activate weapon details context after pressing SPACE
   also show overlay below it
+x shop: keyboard: when slot is selected weapon show details
+x shop: keyboard: when details are shown, pressing ESC hides them
+x shop: keyboard: when details are not shown, pressing SCAPE shows them
+x shop: mouse: hovering shows details
+x shop: mouse: unhovering hides them
+
+* touch: pressing on slot (item / weapon) shows details
+* touch: pressing again - hides them
+* touch: make it not possible to "activate" weapon in shop
+  but buttons should work
+* touch: hide cancel button in weapon details
+* touch:
+* touch:
+* touch:
+* touch:
 * ui:
 * ui:
 * ui:
@@ -17,22 +31,6 @@ x ref: merge `componentWeaponDetails` with `componentUniversalDetails`
 * ui:
 *
 * ref extract same fields from `ComponentUniversalCardData` and `GridEntryDetailsData`
-* shop: keyboard: when slot is selected weapon show details
-* shop: keyboard: when details are shown, pressing ESC hides them
-* shop: keyboard: when details are not shown, pressing SCAPE shows them
-* shop: touch: pressing on slot (item / weapon) shows details
-* shop: touch: pressing again - hides them
-* shop: mouse: hovering shows details
-* shop: mouse: unhovering hides them
-* shop:
-* shop:
-* shop:
-* shop:
-*
-* touch on item -> select it + show details
-  touch again -> deselect (details hide automatically)
-* touch on weapon -> select it + show details
-  touch again -> deselect (details hide automatically)
 *
 * new run:
 * new run:
