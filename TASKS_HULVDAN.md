@@ -13,7 +13,7 @@ x shop: keyboard: when details are shown, pressing ESC hides them
 x shop: keyboard: when details are not shown, pressing SCAPE shows them
 x shop: mouse: hovering shows details
 x shop: mouse: unhovering hides them
-x fix setting _mouseOrLatestTouchPos to latest touch pos BEFORE game update
+x fix setting `_mouseOrLatestTouchPos` to latest touch pos BEFORE game update
 x touch: pressing on slot (item / weapon) shows details
 
 * touch: pressing again - hides them
