@@ -4526,10 +4526,16 @@ void DoUI(bool draw) {
     return true;
   };
 
+  LAMBDA (bool, IsKeyPressedInCurrentContext, (SDL_Scancode key)) {  ///
+    if (!isCurrentContextActive())
+      return false;
+    return IsKeyPressed(key);
+  };
+
   LAMBDA (bool, didActivate, (SDL_Scancode key)) {  ///
     if (_alreadyHandledActivation)
       return false;
-    bool result = IsKeyPressed(key);
+    bool result = IsKeyPressedInCurrentContext(key);
     if (result)
       _alreadyHandledActivation = true;
     return result;
@@ -6177,19 +6183,21 @@ void DoUI(bool draw) {
             if (!draw && (CURRENT_CONTEXT.focused.id == slotID.id)) {
               if (uiElementSwitchDirectionPrevFrame)
                 g.run.shopShowingSlotDetails = true;
-              else if (IsKeyPressed(SDL_SCANCODE_ESCAPE) && g.run.shopShowingSlotDetails)
+              else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_ESCAPE)
+                       && g.run.shopShowingSlotDetails)
               {
                 PlaySound(Sound_UI_CLICK);
                 g.run.shopShowingSlotDetails = false;
               }
-              else if (IsKeyPressed(SDL_SCANCODE_SPACE) && !g.run.shopShowingSlotDetails)
-              {
+              else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_SPACE)) {
                 PlaySound(Sound_UI_CLICK);
-                g.run.shopShowingSlotDetails = true;
+                g.run.shopShowingSlotDetails = !g.run.shopShowingSlotDetails;
               }
             }
 
-            if (Clay_Hovered()
+            const bool hovered = Clay_Hovered();
+
+            if (hovered
                 || g.run.shopShowingSlotDetails
                      && (CURRENT_CONTEXT.focused.id == slotID.id))
             {
@@ -6204,12 +6212,17 @@ void DoUI(bool draw) {
 
               if (ge.meta.debugEnabled && itemType) {
                 auto& item = g.run.state.items[t - 2];
-                if (wheel && Clay_Hovered()) {
+                if (wheel) {
                   item.count += wheel;
                   item.count = MAX(1, item.count);
                 }
               }
             }
+
+            if ((CURRENT_CONTEXT.focused.id == slotID.id)  //
+                && !hovered                                //
+                && ge.thisFrameEvents.Mouse())
+              g.run.shopShowingSlotDetails = false;
           }
         }
       }
@@ -8244,7 +8257,7 @@ void DoUI(bool draw) {
   if (g.meta.showingStats.IsSet()) {  ///
     SCOPED_CONTEXT(ControlsContext_MODAL_STATS);
 
-    zIndex += 2;
+    zIndex += 4;
 
     bool closeStats = false;
 
@@ -8438,10 +8451,12 @@ void DoUI(bool draw) {
       BF_CLAY_SPACER_VERTICAL;
     }
 
-    zIndex -= 2;
+    zIndex -= 4;
 
-    if (closeStats)
+    if (closeStats) {
+      PlaySound(Sound_UI_CLICK);
       g.meta.showingStats = {};
+    }
   }
 
   // Just unlocked achievement.

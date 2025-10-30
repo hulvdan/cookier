@@ -802,6 +802,32 @@ enum SavedataLoadingType {
   SavedataLoadingType_FISNIHED,
 };
 
+struct _ReceivedEvents {  ///
+  bool mousePressed  = false;
+  bool mouseReleased = false;
+  bool mouseWheeled  = false;
+  bool mouseMoved    = false;
+
+  bool touchPressed  = false;
+  bool touchReleased = false;
+  bool touchMoved    = false;
+
+  bool keyPressed  = false;
+  bool keyReleased = false;
+
+  bool Mouse() const {
+    return mousePressed || mouseReleased || mouseWheeled || mouseMoved;
+  }
+
+  bool Touch() const {
+    return touchPressed || touchReleased || touchMoved;
+  }
+
+  bool Key() const {
+    return keyPressed || keyReleased;
+  }
+};
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -871,7 +897,11 @@ struct EngineData {
     int jsLoadedSavedata = 0;
 
     bool _drawing = false;
+
   } meta;
+
+  _ReceivedEvents prevFrameEvents = {};
+  _ReceivedEvents thisFrameEvents = {};
 
   struct Settings {
     Color     backgroundColor = BLACK;
@@ -2390,6 +2420,9 @@ void _ClearControlsCache() {  ///
 
   for (auto& t : ge.meta._touches)
     t.state &= ~_TouchDataState_PRESSED;
+
+  ge.prevFrameEvents = ge.thisFrameEvents;
+  ge.thisFrameEvents = {};
 }
 
 bool IsTouchPressed(TouchID id) {  ///

@@ -414,10 +414,14 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     }
 
     ge.meta._keyboardStatePressed[event->key.scancode] = true;
+
+    ge.thisFrameEvents.keyPressed = true;
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
     ge.meta._keyboardStateReleased[event->key.scancode] = true;
+
+    ge.thisFrameEvents.keyReleased = true;
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN: {  ///
@@ -439,6 +443,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       if ((b > 0) && (b < 32))
         MARK_BIT(&ge.meta._mouseStatePressed, b - 1);
     }
+
+    ge.thisFrameEvents.mousePressed = true;
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
@@ -461,6 +467,15 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       if ((b > 0) && (b < 32))
         MARK_BIT(&ge.meta._mouseStateReleased, b - 1);
     }
+
+    ge.thisFrameEvents.mouseReleased = true;
+  } break;
+
+  case SDL_EVENT_MOUSE_WHEEL: {  ///
+    const auto& e       = event->wheel;
+    ge.meta._mouseWheel = MIN(1, MAX(-1, (e.direction ? -1 : 1) * e.integer_y));
+
+    ge.thisFrameEvents.mouseWheeled = true;
   } break;
 
   case SDL_EVENT_MOUSE_MOTION: {  ///
@@ -472,6 +487,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
         ._screenDelta{e.xrel, -e.yrel},
       });
     }
+
+    ge.thisFrameEvents.mouseMoved = true;
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
@@ -481,6 +498,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ._number    = nextTouchNumber++,
       ._screenPos = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
     });
+
+    ge.thisFrameEvents.touchPressed = true;
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
@@ -489,6 +508,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ._id{._touchID = e.touchID, ._fingerID = e.fingerID},
       ._screenPos = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
     });
+
+    ge.thisFrameEvents.touchReleased = true;
   } break;
 
   case SDL_EVENT_FINGER_MOTION: {  ///
@@ -498,11 +519,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ._screenPos   = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
       ._screenDelta = Vector2{e.dx, -e.dy} * (Vector2)ge.meta.screenSize,
     });
-  } break;
 
-  case SDL_EVENT_MOUSE_WHEEL: {  ///
-    const auto& e       = event->wheel;
-    ge.meta._mouseWheel = MIN(1, MAX(-1, (e.direction ? -1 : 1) * e.integer_y));
+    ge.thisFrameEvents.touchMoved = true;
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///
