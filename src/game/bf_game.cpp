@@ -5880,100 +5880,6 @@ void DoUI(bool draw) {
     }
   };
 
-  struct ComponentUniversalDetailsData {  ///
-    ControlsGroupID group = {};
-
-    DifficultyType difficulty = {};
-    BuildType      build      = {};
-    ItemType       item       = {};
-    WeaponType     weapon     = {};
-
-    int  count          = 1;
-    bool affectedByGame = true;
-    int  overrideTier   = -1;
-
-    bool           weAreInShop             = false;
-    Clay_ElementId shopFocusAfterRecycling = {};
-
-    int detailsRight = -1;
-    int detailsBelow = -1;
-  };
-
-  LAMBDA (void, componentUniversalDetails, (ComponentUniversalDetailsData data)) {  ///
-    ASSERT(data.count > 0);
-    int s = (int)(data.difficulty > 0)  //
-            + (int)(data.build > 0)     //
-            + (int)(data.item > 0)      //
-            + (int)(data.weapon > 0);
-    ASSERT(s > 0);
-
-    f32                          offsetY{};
-    Clay_FloatingAttachPointType attachElement{};
-    Clay_FloatingAttachPointType attachParent{};
-
-    ASSERT(data.detailsRight >= 0);
-    ASSERT(data.detailsRight <= 1);
-    ASSERT(data.detailsBelow >= 0);
-    ASSERT(data.detailsBelow <= 1);
-
-    if (data.detailsBelow) {
-      offsetY = GAP_SMALL;
-
-      if (data.detailsRight) {
-        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-      }
-      else {
-        attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
-        attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
-      }
-    }
-    else {
-      offsetY = -GAP_SMALL;
-
-      if (data.detailsRight) {
-        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
-      }
-      else {
-        attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
-        attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
-      }
-    }
-
-    zIndex += 2;
-
-    CLAY({
-      .layout{
-        .sizing{
-          CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME), CLAY_SIZING_FIT(0)
-        },
-      },
-      .floating{
-        .offset{0, offsetY},
-        .zIndex = zIndex,
-        .attachPoints{.element = attachElement, .parent = attachParent},
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-    }) {
-      FLOATING_BEAUTIFY;
-
-      componentUniversalCard({
-        .difficulty              = data.difficulty,
-        .build                   = data.build,
-        .item                    = data.item,
-        .weapon                  = data.weapon,
-        .count                   = data.count,
-        .affectedByGame          = data.affectedByGame,
-        .overrideTier            = data.overrideTier,
-        .shopSelling             = data.weAreInShop,
-        .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
-      });
-    }
-
-    zIndex -= 2;
-  };
-
   LAMBDA (void, componentAchievement, (AchievementType type, int stepIndex)) {  ///
     auto fb      = fb_achievements->Get(type);
     auto fb_step = (type ? fb->steps()->Get(stepIndex) : nullptr);
@@ -6109,8 +6015,10 @@ void DoUI(bool draw) {
     ItemType       item       = {};
     WeaponType     weapon     = {};
 
-    int count               = 1;
-    int weaponIndexOrMinus1 = -1;
+    int  count               = 1;
+    int  weaponIndexOrMinus1 = -1;
+    bool affectedByGame      = false;
+    int  overrideTier        = -1;
 
     bool           weAreInShop             = false;
     Clay_ElementId shopFocusAfterRecycling = {};
@@ -6138,18 +6046,73 @@ void DoUI(bool draw) {
 
     if (hovered || g.run.showingSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id))
     {
-      componentUniversalDetails({
-        .difficulty              = data.difficulty,
-        .build                   = data.build,
-        .item                    = data.item,
-        .weapon                  = data.weapon,
-        .count                   = data.count,
-        .weAreInShop             = data.weAreInShop,
-        .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
-        .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
-        .detailsRight            = data.detailsRight,
-        .detailsBelow            = data.detailsBelow,
-      });
+      f32                          offsetY{};
+      Clay_FloatingAttachPointType attachElement{};
+      Clay_FloatingAttachPointType attachParent{};
+
+      ASSERT(data.detailsRight >= 0);
+      ASSERT(data.detailsRight <= 1);
+      ASSERT(data.detailsBelow >= 0);
+      ASSERT(data.detailsBelow <= 1);
+
+      if (data.detailsBelow) {
+        offsetY = GAP_SMALL;
+
+        if (data.detailsRight) {
+          attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+          attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+        }
+        else {
+          attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
+          attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+        }
+      }
+      else {
+        offsetY = -GAP_SMALL;
+
+        if (data.detailsRight) {
+          attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+          attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+        }
+        else {
+          attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+          attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
+        }
+      }
+
+      zIndex += 2;
+
+      CLAY({
+        .layout{
+          .sizing{
+            CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+            CLAY_SIZING_FIT(0)
+          },
+        },
+        .floating{
+          .offset{0, offsetY},
+          .zIndex = zIndex,
+          .attachPoints{.element = attachElement, .parent = attachParent},
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        componentUniversalCard(ComponentUniversalCardData{
+          .difficulty              = data.difficulty,
+          .build                   = data.build,
+          .item                    = data.item,
+          .weapon                  = data.weapon,
+          .count                   = data.count,
+          .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
+          .affectedByGame          = data.affectedByGame,
+          .overrideTier            = data.overrideTier,
+          .shopSelling             = data.weAreInShop,
+          .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
+        });
+      }
+
+      zIndex -= 2;
     }
 
     if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
