@@ -1,5 +1,5 @@
 vim.defer_fn(function()
-    vim.keymap.set("n", "<space>n", ":e./TASKS_HULVDAN.md<CR>", { remap = false, silent = true })
+    vim.keymap.set("n", "<space>n", ":e./TASKS_HULVDAN.txt<CR>", { remap = false, silent = true })
     vim.fn.execute("e src/game/bf_game.cpp")
     vim.api.nvim_input([[<space>n<C-j><C-j>]])
     vim.defer_fn(function()
