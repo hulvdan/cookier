@@ -1,7 +1,12 @@
 WORKING SINCE 2025-09-07
 
-* new run: TOUCH: don't proceed to the next stage upon clicking
+x new run: TOUCH: don't proceed to the next stage upon clicking
   if slot wasn't selected in the first place
+
+  * touch on item -> select it + show details
+    touch again -> deselect (details hide automatically)
+  * touch on weapon -> select it + show details
+    touch again -> deselect (details hide automatically)
 *
 * new run:
 * new run:
