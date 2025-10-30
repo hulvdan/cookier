@@ -4515,19 +4515,6 @@ void DoUI(bool draw) {
     return true;
   };
 
-  LAMBDA (bool, activated, (Clay_ElementId id)) {  ///
-    if (_alreadyHandledActivation)
-      return false;
-    if (Clay_Hovered() || (controlsContexts[currentContext].focused.id == id.id)) {
-      bool result = clicked();
-      result |= IsKeyPressed(SDL_SCANCODE_SPACE) || IsKeyPressed(SDL_SCANCODE_RETURN);
-      if (result)
-        _alreadyHandledActivation = true;
-      return result;
-    }
-    return false;
-  };
-
   LAMBDA (bool, didActivate, (SDL_Scancode key)) {  ///
     if (_alreadyHandledActivation)
       return false;
@@ -4751,10 +4738,19 @@ void DoUI(bool draw) {
       const bool hovered = data.canHover && Clay_Hovered();
 
       auto& focused = controlsContexts[currentContext].focused;
-      if (hovered || (focused.id && (focused.id == data.id.id))) {
+
+      if (hovered && (focused.id != data.id.id)) {
         focused = data.id;
-        color   = palWhite;
-        flash   = TRANSPARENT_BLACK;
+
+        // Making it not possible to simultaneously (1) select and (2) activate slot
+        // upon reacting to single touch press event.
+        _alreadyHandledClick      = true;
+        _alreadyHandledActivation = true;
+      }
+
+      if (focused.id && (focused.id == data.id.id)) {
+        color = palWhite;
+        flash = TRANSPARENT_BLACK;
       }
 
       BF_CLAY_IMAGE({.texID = texID, .color = color, .flash = flash}, innerLambda);
@@ -6178,8 +6174,6 @@ void DoUI(bool draw) {
               });
               if (ge.meta.debugEnabled && itemType) {
                 auto& item = g.run.state.items[t - 2];
-                if (activated(slotID))
-                  item.count++;
                 if (wheel && Clay_Hovered()) {
                   item.count += wheel;
                   item.count = MAX(1, item.count);
