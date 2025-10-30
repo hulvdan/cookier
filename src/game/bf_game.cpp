@@ -5242,7 +5242,7 @@ void DoUI(bool draw) {
     Clay_ElementId  shopFocusAfterRecycling = {};
   };
 
-  auto groupWeaponDetails = MakeControlsGroup();
+  const auto groupSlotDetails = MakeControlsGroup();
 
   LAMBDA (Clay_ElementId, getIDFromShopBuyingIndex, (int index)) {  ///
     return CLAY_IDI("button_shop_buy", index);
@@ -5793,7 +5793,7 @@ void DoUI(bool draw) {
             auto combineID = CLAY_ID("button_weapon_combine");
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
-                {.id = combineID, .group = groupWeaponDetails},
+                {.id = combineID, .group = groupSlotDetails},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
                 }
@@ -5807,7 +5807,7 @@ void DoUI(bool draw) {
             const auto weaponRecycleID = CLAY_ID("button_weapon_recycle");
             const bool recycled        = componentButtonRecycle({
                      .id    = weaponRecycleID,
-                     .group = groupWeaponDetails,
+                     .group = groupSlotDetails,
                      .price = recyclePrice,
             });
 
@@ -5816,7 +5816,7 @@ void DoUI(bool draw) {
             const bool cancelled = componentButton(
               {
                 .id    = cancelID,
-                .group = groupWeaponDetails,
+                .group = groupSlotDetails,
                 .keys  = KEYS_CANCEL,
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
@@ -6006,19 +6006,19 @@ void DoUI(bool draw) {
     });
   };
 
-  struct GridEntryDetailsWhenHoveredData {  ///
-    Clay_ElementId  id    = {};
-    ControlsGroupID group = {};
+  struct GridEntryDetailsData {  ///
+    Clay_ElementId id = {};
 
     DifficultyType difficulty = {};
     BuildType      build      = {};
     ItemType       item       = {};
     WeaponType     weapon     = {};
 
-    int  count               = 1;
-    int  weaponIndexOrMinus1 = -1;
-    bool affectedByGame      = false;
-    int  overrideTier        = -1;
+    int count               = 1;
+    int weaponIndexOrMinus1 = -1;
+
+    bool affectedByGame = false;
+    int  overrideTier   = -1;
 
     bool           weAreInShop             = false;
     Clay_ElementId shopFocusAfterRecycling = {};
@@ -6027,8 +6027,7 @@ void DoUI(bool draw) {
     int detailsBelow = -1;
   };
 
-  LAMBDA (void, gridEntryDetailsWhenHovered, (GridEntryDetailsWhenHoveredData data))
-  {  ///
+  LAMBDA (void, gridEntryDetails, (GridEntryDetailsData data)) {  ///
     ASSERT(
       (int)((bool)data.difficulty) + (int)((bool)data.build) + (int)((bool)data.item)
         + (int)((bool)data.weapon)
@@ -6201,9 +6200,8 @@ void DoUI(bool draw) {
             if (data.markFirstAsDefault && (t == 0))
               markControlAsDefault(slotID);
 
-            gridEntryDetailsWhenHovered({
+            gridEntryDetails({
               .id             = slotID,
-              .group          = data.group,
               .difficulty     = difficultyType,
               .build          = buildType,
               .item           = itemType,
@@ -6302,9 +6300,8 @@ void DoUI(bool draw) {
 
           // Hovering modal.
           if (weapon.type) {
-            gridEntryDetailsWhenHovered({
+            gridEntryDetails({
               .id                      = slotID,
-              .group                   = data.group,
               .weapon                  = weapon.type,
               .count                   = 1,
               .weaponIndexOrMinus1     = weaponIndex,

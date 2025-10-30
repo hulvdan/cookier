@@ -5,8 +5,18 @@ x new run: TOUCH: don't proceed to the next stage upon clicking
 x shop: keyboard: when slot is selected item show details
 x ref: componentWeaponsGrid
 x inline componentUniversalDetails
+x ref: merge `componentWeaponDetails` with `componentUniversalDetails`
 
-* ref: merge componentWeaponDetails with componentUniversalDetails
+* ui: activate weapon details context after pressing SPACE
+  also show overlay below it
+* ui:
+* ui:
+* ui:
+* ui:
+* ui:
+* ui:
+*
+* ref extract same fields from `ComponentUniversalCardData` and `GridEntryDetailsData`
 * shop: keyboard: when slot is selected weapon show details
 * shop: keyboard: when details are shown, pressing ESC hides them
 * shop: keyboard: when details are not shown, pressing SCAPE shows them
