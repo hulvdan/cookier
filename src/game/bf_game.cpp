@@ -942,9 +942,8 @@ struct GameData {
     bool        scheduledSave = false;
     FrameVisual lastSaveAt    = {};
 
-    bool    playerUsesKeyboardOrController = false;
-    Vector2 previousMousePos               = {};
-    f32     pauseButtonFadeProgress        = 1;
+    bool playerUsesKeyboardOrController = false;
+    f32  pauseButtonFadeProgress        = 1;
   } meta;
 
   struct {  ///
@@ -3170,7 +3169,7 @@ void GameInit() {
   ZoneScoped;
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-  SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");
+  SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
   // Checking gamelib.
   if (BF_ENABLE_ASSERTS) {  ///
@@ -3426,8 +3425,6 @@ void GameInit() {
   }
 
   RunInit();
-
-  g.meta.previousMousePos = GetMouseScreenPos();
 }
 
 void GameInitAfterLoading() {
@@ -4400,17 +4397,12 @@ void DoUI(bool draw) {
   const auto fb_effectConditions    = glib->effect_conditions();
 
   if (!draw) {
-    // Updating clay touch/mouse pos.
-    auto pos = ScreenPosToLogical(GetMouseScreenPos());
-    if (ge.meta._latestActiveTouchID != InvalidTouchID) {
-      auto d = GetTouchData(ge.meta._latestActiveTouchID);
-      pos    = ScreenPosToLogical(d.screenPos);
-    }
-
     if (g.meta.playerUsesKeyboardOrController)
       Clay_SetPointerState({-1, -1}, false);
-    else
+    else {
+      auto pos = ScreenPosToLogical(GetMouseOrLatestTouchScreenPos());
       Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
+    }
   }
 
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
@@ -4498,15 +4490,32 @@ void DoUI(bool draw) {
     }
   };
 
-  bool _alreadyHandledClick = false;
+  bool _alreadyHandledClickOrTouch = false;
 
-  LAMBDA (bool, clicked, ()) {  ///
-    if (_alreadyHandledClick)
+  LAMBDA (bool, touched, (bool preventDispatch = true)) {  ///
+    if (draw)
       return false;
-    bool result
-      = !draw && Clay_Hovered() && (IsTouchPressed(ge.meta._latestActiveTouchID));
+    if (_alreadyHandledClickOrTouch)
+      return false;
+    const bool result = !draw              //
+                        && Clay_Hovered()  //
+                        && IsTouchPressed(ge.meta._latestActiveTouchID);
+    if (result && preventDispatch)
+      _alreadyHandledClickOrTouch = true;
+    return result;
+  };
+
+  LAMBDA (bool, clickedOrTouched, ()) {  ///
+    if (draw)
+      return false;
+    if (_alreadyHandledClickOrTouch)
+      return false;
+    const bool result
+      = !draw              //
+        && Clay_Hovered()  //
+        && (IsMousePressed(L) || IsTouchPressed(ge.meta._latestActiveTouchID));
     if (result)
-      _alreadyHandledClick = true;
+      _alreadyHandledClickOrTouch = true;
     return result;
   };
 
@@ -4532,6 +4541,8 @@ void DoUI(bool draw) {
   };
 
   LAMBDA (bool, didActivate, (SDL_Scancode key)) {  ///
+    if (draw)
+      return false;
     if (_alreadyHandledActivation)
       return false;
     bool result = IsKeyPressedInCurrentContext(key);
@@ -4540,9 +4551,22 @@ void DoUI(bool draw) {
     return result;
   };
 
-  LAMBDA (void, processShowingOrNotShowingOfSlotDetails, (Clay_ElementId slotID)) {  ///
+  LAMBDA (void, processShowingOrNotShowingSlotDetails, (Clay_ElementId slotID)) {  ///
     if (draw)
       return;
+
+    // if (Clay_Hovered()                              //
+    //     && (ge.events.last == LastEventType_TOUCH)  //
+    //     && (!g.run.stickedSlotDetails))
+    // {
+    //   PlaySound(Sound_UI_CLICK);
+    //   g.run.stickedSlotDetails = true;
+    // }
+    // else if (touched()) {
+    //   PlaySound(Sound_UI_CLICK);
+    //   g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
+    // }
+
     if (CURRENT_CONTEXT.focused.id != slotID.id)
       return;
 
@@ -4632,7 +4656,7 @@ void DoUI(bool draw) {
         ButtonSFX(draw, data.id, true);
 
       if (isCurrentContextActive()) {
-        result |= clicked();
+        result |= clickedOrTouched();
         if (isSelected) {
           result |= didActivate(SDL_SCANCODE_SPACE);
           result |= didActivate(SDL_SCANCODE_RETURN);
@@ -4775,13 +4799,18 @@ void DoUI(bool draw) {
 
       auto& focused = controlsContexts[currentContext].focused;
 
-      if (hovered && (focused.id != data.id.id)) {
-        focused = data.id;
+      if (hovered) {
+        if (focused.id != data.id.id) {
+          focused = data.id;
 
-        // Making it not possible to simultaneously (1) select and (2) activate slot
-        // upon reacting to single touch press event.
-        _alreadyHandledClick      = true;
-        _alreadyHandledActivation = true;
+          // Making it not possible to simultaneously (1) select and (2) activate slot
+          // upon reacting to single touch press event.
+          _alreadyHandledClickOrTouch = true;
+          _alreadyHandledActivation   = true;
+        }
+        else if (touched(false)) {
+          g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
+        }
       }
 
       if (focused.id && (focused.id == data.id.id)) {
@@ -4863,7 +4892,8 @@ void DoUI(bool draw) {
           ButtonSFX(draw, data.id, Clay_Hovered());
 
           if (isCurrentContextActive()) {
-            result |= clicked();
+            auto t = touched(false);
+            result |= clickedOrTouched();
 
             const auto& focused = controlsContexts[currentContext].focused;
             if (focused.id && (focused.id == data.id.id)) {
@@ -5766,9 +5796,6 @@ void DoUI(bool draw) {
         }
 
         if (data.shopSelling && data.weapon) {  ///
-          // ControlsContext detailsContext = ControlsContext_INVALID;
-          // if (data.shopDetailsContextIsActive)
-          //   detailsContext = ControlsContext_MODAL_SHOP_WEAPON_DETAILS;
           SCOPED_CONTEXT_IF(
             ControlsContext_MODAL_SHOP_WEAPON_DETAILS, data.shopDetailsContextIsActive
           );
@@ -6002,7 +6029,7 @@ void DoUI(bool draw) {
     ASSERT(data.detailsBelow >= 0);
     ASSERT(data.detailsBelow <= 1);
 
-    processShowingOrNotShowingOfSlotDetails(data.id);
+    processShowingOrNotShowingSlotDetails(data.id);
 
     const bool hovered = Clay_Hovered();
 
@@ -6068,7 +6095,7 @@ void DoUI(bool draw) {
 
         if (isSelected) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-            if (clicked())
+            if (clickedOrTouched())
               g.run.shopSelectedWeaponIndex = -1;
           });
         }
@@ -6093,7 +6120,7 @@ void DoUI(bool draw) {
 
     if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
         && !hovered                                 //
-        && ge.thisFrameEvents.Mouse())
+        && ge.events.thisFrame.Mouse())
       g.run.stickedSlotDetails = false;
   };
 
@@ -6260,7 +6287,7 @@ void DoUI(bool draw) {
 
           const auto slotID = getIDFromPlayerWeaponIndex(weaponIndex);
 
-          processShowingOrNotShowingOfSlotDetails(slotID);
+          processShowingOrNotShowingSlotDetails(slotID);
 
           // Weapon.
           const bool selectedWeapon = componentUniversalSlot({
@@ -6404,6 +6431,9 @@ void DoUI(bool draw) {
 
       if (showVersion)
         BF_CLAY_TEXT(g_gameVersion);
+
+      if (IsEmulatingMobile())
+        BF_CLAY_TEXT("[EMULATING MOBILE]");
     }
 
     FontEnd();
@@ -6567,7 +6597,7 @@ void DoUI(bool draw) {
                 .color = Fade(color, EaseOutQuad(g.meta.pauseButtonFadeProgress)),
               },
               [&]() BF_FORCE_INLINE_LAMBDA {
-                if (clicked() && canPause) {
+                if (clickedOrTouched() && canPause) {
                   g.meta.scheduledTogglePause = true;
                   PlaySound(Sound_UI_CLICK);
                 }
@@ -8229,7 +8259,7 @@ void DoUI(bool draw) {
 
     componentOverlay(
       [&]() BF_FORCE_INLINE_LAMBDA {
-        if (clicked())
+        if (clickedOrTouched())
           closeStats |= true;
       },
       EaseOutQuad(p)
@@ -8329,7 +8359,7 @@ void DoUI(bool draw) {
             }}) {
               // Increasing stat by clicking on it in debug mode.
               if (stat && ge.meta.debugEnabled) {
-                if (clicked())
+                if (clickedOrTouched())
                   ChangeStat(stat, 1);
                 if (wheel && Clay_Hovered())
                   ChangeStat(stat, wheel);
@@ -9162,7 +9192,7 @@ void GameFixedUpdate() {
 
   // Show / hide cursor.
   {  ///
-    if (g.meta.playerUsesKeyboardOrController)
+    if (g.meta.playerUsesKeyboardOrController && !IsEmulatingMobile())
       SDL_HideCursor();
     else
       SDL_ShowCursor();
@@ -9464,11 +9494,9 @@ void GameFixedUpdate() {
     = (g.run.state.screen == ScreenType_GAMEPLAY)
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION);
 
-  auto mousePos = GetMouseScreenPos();
-  if ((mousePos != g.meta.previousMousePos) || (GetTouchIDs().count > 0)) {
+  if ((ge.events.last != LastEventType_KEY)
+      && (ge.events.last != LastEventType_CONTROLLER))
     g.meta.playerUsesKeyboardOrController = false;
-    g.meta.previousMousePos               = mousePos;
-  }
 
   // Updating gameplay.
   if (!ge.meta.windowIsInactive && !g.meta.paused && gameplayOrWaveEndScreen) {
