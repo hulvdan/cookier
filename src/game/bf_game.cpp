@@ -6127,6 +6127,7 @@ void DoUI(bool draw) {
     int             detailsRight       = -1;
     int             detailsBelow       = -1;
     bool            markFirstAsDefault = false;
+    bool            affectedByGame     = true;
   };
 
   LAMBDA (void, componentItemsGrid, (ComponentItemsGridData data)) {  ///
@@ -6201,14 +6202,15 @@ void DoUI(bool draw) {
               markControlAsDefault(slotID);
 
             gridEntryDetailsWhenHovered({
-              .id           = slotID,
-              .group        = data.group,
-              .difficulty   = difficultyType,
-              .build        = buildType,
-              .item         = itemType,
-              .count        = itemCount,
-              .detailsRight = data.detailsRight,
-              .detailsBelow = data.detailsBelow,
+              .id             = slotID,
+              .group          = data.group,
+              .difficulty     = difficultyType,
+              .build          = buildType,
+              .item           = itemType,
+              .count          = itemCount,
+              .affectedByGame = data.affectedByGame,
+              .detailsRight   = data.detailsRight,
+              .detailsBelow   = data.detailsBelow,
             });
           }
         }
@@ -6217,11 +6219,12 @@ void DoUI(bool draw) {
   };
 
   struct ComponentWeaponsGridData {  ///
-    ControlsGroupID group        = {};
-    int             weaponsX     = {};
-    bool            detailsRight = 1;
-    bool            detailsBelow = 0;
-    bool            weAreInShop  = false;
+    ControlsGroupID group          = {};
+    int             weaponsX       = {};
+    bool            detailsRight   = 1;
+    bool            detailsBelow   = 0;
+    bool            affectedByGame = true;
+    bool            weAreInShop    = false;
   };
 
   LAMBDA (void, componentWeaponsGrid, (ComponentWeaponsGridData data)) {  ///
