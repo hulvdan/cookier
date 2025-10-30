@@ -1002,7 +1002,7 @@ struct GameData {
       } shop;
     } state = {};
 
-    int shopSelectedWeaponIndex = -1;
+    int shopActivatedModalWeaponIndex = -1;
 
     Arena arena = {};
 
@@ -2875,7 +2875,7 @@ int GetWeaponPrice(WeaponType type, int tier) {  ///
   return Round((f32)fb->max_price() * PRICE_SCALINGS_PER_TIER[tier]);
 }
 
-int ToRecyclePrice(int price) {
+int ToRecyclePrice(int price) {  ///
   int percent = 0;
   IterateOverEffects(
     EffectConditionType_X__PERCENT_MORE_COINS_FROM_RECYCLING,
@@ -4492,29 +4492,27 @@ void DoUI(bool draw) {
 
   bool _alreadyHandledClickOrTouch = false;
 
-  LAMBDA (bool, touched, (bool preventDispatch = true)) {  ///
+  LAMBDA (bool, touched, (bool preventFutureDispatch = true)) {  ///
     if (draw)
       return false;
     if (_alreadyHandledClickOrTouch)
       return false;
-    const bool result = !draw              //
-                        && Clay_Hovered()  //
+    const bool result = Clay_Hovered()  //
                         && IsTouchPressed(ge.meta._latestActiveTouchID);
-    if (result && preventDispatch)
+    if (result && preventFutureDispatch)
       _alreadyHandledClickOrTouch = true;
     return result;
   };
 
-  LAMBDA (bool, clickedOrTouched, ()) {  ///
+  LAMBDA (bool, clickOrTouchPressed, (bool preventFutureDispatch = true)) {  ///
     if (draw)
       return false;
     if (_alreadyHandledClickOrTouch)
       return false;
     const bool result
-      = !draw              //
-        && Clay_Hovered()  //
+      = Clay_Hovered()  //
         && (IsMousePressed(L) || IsTouchPressed(ge.meta._latestActiveTouchID));
-    if (result)
+    if (result && preventFutureDispatch)
       _alreadyHandledClickOrTouch = true;
     return result;
   };
@@ -4562,7 +4560,8 @@ void DoUI(bool draw) {
     //   PlaySound(Sound_UI_CLICK);
     //   g.run.stickedSlotDetails = true;
     // }
-    // else if (touched()) {
+
+    // if (touched()) {
     //   PlaySound(Sound_UI_CLICK);
     //   g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
     // }
@@ -4644,7 +4643,10 @@ void DoUI(bool draw) {
           isSelected = true;
         }
 
-        CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
           innerLambda(
             (hovered || isSelected),
             ((hovered || isSelected) ? palTextBlack : palTextWhite)
@@ -4656,12 +4658,11 @@ void DoUI(bool draw) {
         ButtonSFX(draw, data.id, true);
 
       if (isCurrentContextActive()) {
-        result |= clickedOrTouched();
+        result |= clickOrTouchPressed();
         if (isSelected) {
           result |= didActivate(SDL_SCANCODE_SPACE);
           result |= didActivate(SDL_SCANCODE_RETURN);
         }
-
         for (auto k : data.keys)
           result |= didActivate(k);
       }
@@ -4678,7 +4679,7 @@ void DoUI(bool draw) {
     SDL_Scancode keys_[]{SDL_SCANCODE_R};
     VIEW_FROM_ARRAY_DANGER(keys);
 
-    if ((g.run.shopSelectedWeaponIndex >= 0) || g.meta.showingStats.IsSet())
+    if ((g.run.shopActivatedModalWeaponIndex >= 0) || g.meta.showingStats.IsSet())
       keys.count = 0;
 
     return componentButton(
@@ -4808,9 +4809,9 @@ void DoUI(bool draw) {
           _alreadyHandledClickOrTouch = true;
           _alreadyHandledActivation   = true;
         }
-        else if (touched(false)) {
-          g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
-        }
+        // else if (touched(false)) {
+        //   g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
+        // }
       }
 
       if (focused.id && (focused.id == data.id.id)) {
@@ -4892,8 +4893,8 @@ void DoUI(bool draw) {
           ButtonSFX(draw, data.id, Clay_Hovered());
 
           if (isCurrentContextActive()) {
-            auto t = touched(false);
-            result |= clickedOrTouched();
+            // auto t = touched(false);
+            result |= clickOrTouchPressed();
 
             const auto& focused = controlsContexts[currentContext].focused;
             if (focused.id && (focused.id == data.id.id)) {
@@ -5717,7 +5718,7 @@ void DoUI(bool draw) {
             };
             VIEW_FROM_ARRAY_DANGER(keys);
 
-            if ((g.run.shopSelectedWeaponIndex >= 0) || g.meta.showingStats.IsSet())
+            if ((g.run.shopActivatedModalWeaponIndex >= 0) || g.meta.showingStats.IsSet())
               keys.count = 0;
 
             auto bought = componentButton(
@@ -5854,7 +5855,8 @@ void DoUI(bool draw) {
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 bool active = true;
                 if (data.weaponIndexOrMinus1 >= 0)
-                  active = g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1;
+                  active
+                    = g.run.shopActivatedModalWeaponIndex == data.weaponIndexOrMinus1;
 
                 BF_CLAY_IMAGE({
                   .texID = glib->ui_icon_cancel_texture_id(),
@@ -5902,7 +5904,7 @@ void DoUI(bool draw) {
 
             if (cancelled || recycled || combined) {
               PlaySound(Sound_UI_CLICK);
-              g.run.shopSelectedWeaponIndex = -1;
+              g.run.shopActivatedModalWeaponIndex = -1;
             }
           }
         }
@@ -6029,13 +6031,11 @@ void DoUI(bool draw) {
     ASSERT(data.detailsBelow >= 0);
     ASSERT(data.detailsBelow <= 1);
 
-    processShowingOrNotShowingSlotDetails(data.id);
-
     const bool hovered = Clay_Hovered();
 
     const bool isSelected
       = (data.weaponIndexOrMinus1 >= 0)
-        && (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1);
+        && (g.run.shopActivatedModalWeaponIndex == data.weaponIndexOrMinus1);
 
     if (hovered                                                                    //
         || g.run.stickedSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id)  //
@@ -6095,8 +6095,8 @@ void DoUI(bool draw) {
 
         if (isSelected) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-            if (clickedOrTouched())
-              g.run.shopSelectedWeaponIndex = -1;
+            if (clickOrTouchPressed())
+              g.run.shopActivatedModalWeaponIndex = -1;
           });
         }
 
@@ -6204,6 +6204,8 @@ void DoUI(bool draw) {
             if (data.markFirstAsDefault && (t == 0))
               markControlAsDefault(slotID);
 
+            processShowingOrNotShowingSlotDetails(slotID);
+
             gridEntryDetails({
               .id             = slotID,
               .difficulty     = difficultyType,
@@ -6287,8 +6289,6 @@ void DoUI(bool draw) {
 
           const auto slotID = getIDFromPlayerWeaponIndex(weaponIndex);
 
-          processShowingOrNotShowingSlotDetails(slotID);
-
           // Weapon.
           const bool selectedWeapon = componentUniversalSlot({
             .id     = slotID,
@@ -6299,11 +6299,13 @@ void DoUI(bool draw) {
 
           if (selectedWeapon) {
             PlaySound(Sound_UI_CLICK);
-            g.run.shopSelectedWeaponIndex = weaponIndex;
+            g.run.shopActivatedModalWeaponIndex = weaponIndex;
           }
 
           // Hovering modal.
           if (weapon.type) {
+            processShowingOrNotShowingSlotDetails(slotID);
+
             gridEntryDetails({
               .id                      = slotID,
               .weapon                  = weapon.type,
@@ -6391,7 +6393,7 @@ void DoUI(bool draw) {
     SDL_Scancode keys_[]{SDL_SCANCODE_TAB};
     VIEW_FROM_ARRAY_DANGER(keys);
 
-    if (g.meta.showingStats.IsSet() || (g.run.shopSelectedWeaponIndex >= 0))
+    if (g.meta.showingStats.IsSet() || (g.run.shopActivatedModalWeaponIndex >= 0))
       keys.count = 0;
 
     const bool clickedStats = componentButton(
@@ -6597,7 +6599,7 @@ void DoUI(bool draw) {
                 .color = Fade(color, EaseOutQuad(g.meta.pauseButtonFadeProgress)),
               },
               [&]() BF_FORCE_INLINE_LAMBDA {
-                if (clickedOrTouched() && canPause) {
+                if (clickOrTouchPressed() && canPause) {
                   g.meta.scheduledTogglePause = true;
                   PlaySound(Sound_UI_CLICK);
                 }
@@ -7580,7 +7582,7 @@ void DoUI(bool draw) {
             SDL_Scancode keys_[]{SDL_SCANCODE_E};
             VIEW_FROM_ARRAY_DANGER(keys);
 
-            if (g.meta.showingStats.IsSet() || (g.run.shopSelectedWeaponIndex >= 0))
+            if (g.meta.showingStats.IsSet() || (g.run.shopActivatedModalWeaponIndex >= 0))
               keys.count = 0;
 
             const bool nextWavePressed = componentButton(
@@ -8259,7 +8261,7 @@ void DoUI(bool draw) {
 
     componentOverlay(
       [&]() BF_FORCE_INLINE_LAMBDA {
-        if (clickedOrTouched())
+        if (clickOrTouchPressed())
           closeStats |= true;
       },
       EaseOutQuad(p)
@@ -8359,7 +8361,7 @@ void DoUI(bool draw) {
             }}) {
               // Increasing stat by clicking on it in debug mode.
               if (stat && ge.meta.debugEnabled) {
-                if (clickedOrTouched())
+                if (clickOrTouchPressed())
                   ChangeStat(stat, 1);
                 if (wheel && Clay_Hovered())
                   ChangeStat(stat, wheel);
@@ -9150,6 +9152,16 @@ void GameFixedUpdate() {
   }
   // }
 
+  // `g.meta.playerUsesKeyboardOrController`.
+  {  ///
+    if ((ge.events.last == LastEventType_KEY)
+        || (ge.events.last == LastEventType_CONTROLLER))
+      g.meta.playerUsesKeyboardOrController = true;
+    else if ((ge.events.last != LastEventType_KEY)
+             && (ge.events.last != LastEventType_CONTROLLER))
+      g.meta.playerUsesKeyboardOrController = false;
+  }
+
   g.meta.pauseButtonFadeProgress = MoveTowards(
     g.meta.pauseButtonFadeProgress,
     (g.meta.playerUsesKeyboardOrController ? 0 : 1),
@@ -9493,10 +9505,6 @@ void GameFixedUpdate() {
   const auto gameplayOrWaveEndScreen
     = (g.run.state.screen == ScreenType_GAMEPLAY)
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION);
-
-  if ((ge.events.last != LastEventType_KEY)
-      && (ge.events.last != LastEventType_CONTROLLER))
-    g.meta.playerUsesKeyboardOrController = false;
 
   // Updating gameplay.
   if (!ge.meta.windowIsInactive && !g.meta.paused && gameplayOrWaveEndScreen) {

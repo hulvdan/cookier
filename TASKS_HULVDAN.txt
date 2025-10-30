@@ -29,7 +29,7 @@ x touch: pressing on slot (item / weapon) shows details
 * touch: make it not possible to "activate" weapon in shop
   but buttons should work
 * touch: hide cancel button in weapon details
-* touch:
+* touch: show slots as "selected" only when `stickedSlotDetails` is true
 * touch:
 * touch:
 * touch:
