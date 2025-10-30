@@ -415,15 +415,15 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
 
     ge.meta._keyboardStatePressed[event->key.scancode] = true;
 
-    ge.thisFrameEvents.keyPressed = true;
-    ge.lastEventType              = LastEventType_KEY;
+    ge.events.thisFrame.keyPressed = true;
+    ge.events.last                 = LastEventType_KEY;
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
     ge.meta._keyboardStateReleased[event->key.scancode] = true;
 
-    ge.thisFrameEvents.keyReleased = true;
-    ge.lastEventType               = LastEventType_KEY;
+    ge.events.thisFrame.keyReleased = true;
+    ge.events.last                  = LastEventType_KEY;
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN: {  ///
@@ -432,7 +432,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     ASSERT(b > 0);
     ASSERT(b < 32);
 
-    if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
+    if (IsEmulatingMobile()) {
       // Emulating touch controls.
       emulatedTouchIsDown = true;
       _OnTouchDown({
@@ -440,14 +440,19 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
         ._number = nextTouchNumber++,
         ._screenPos{e.x, ge.meta.screenSize.y - e.y},
       });
+
+      ge.events.thisFrame.touchPressed = true;
+      ge.events.last                   = LastEventType_TOUCH;
     }
     else {
       if ((b > 0) && (b < 32))
         MARK_BIT(&ge.meta._mouseStatePressed, b - 1);
-    }
 
-    ge.thisFrameEvents.mousePressed = true;
-    ge.lastEventType                = LastEventType_MOUSE;
+      ge.events.thisFrame.mousePressed = true;
+      ge.events.last                   = LastEventType_MOUSE;
+
+      ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
+    }
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
@@ -456,57 +461,73 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     ASSERT(b > 0);
     ASSERT(b < 32);
 
-    if (BF_DEBUG && (ge.meta.device == DeviceType_MOBILE)) {
+    if (IsEmulatingMobile()) {
       // Emulating touch controls.
       emulatedTouchIsDown = false;
       _OnTouchUp({
         ._id = emulatedTouchID,
         ._screenPos{e.x, ge.meta.screenSize.y - e.y},
       });
+
+      ge.events.thisFrame.touchReleased = true;
+      ge.events.last                    = LastEventType_TOUCH;
     }
     else {
       ASSERT(b > 0);
       ASSERT(b < 32);
       if ((b > 0) && (b < 32))
         MARK_BIT(&ge.meta._mouseStateReleased, b - 1);
-    }
 
-    ge.thisFrameEvents.mouseReleased = true;
-    ge.lastEventType                 = LastEventType_MOUSE;
+      ge.events.thisFrame.mouseReleased = true;
+      ge.events.last                    = LastEventType_MOUSE;
+
+      ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
+    }
   } break;
 
   case SDL_EVENT_MOUSE_WHEEL: {  ///
     const auto& e       = event->wheel;
     ge.meta._mouseWheel = MIN(1, MAX(-1, (e.direction ? -1 : 1) * e.integer_y));
 
-    ge.thisFrameEvents.mouseWheeled = true;
-    ge.lastEventType                = LastEventType_MOUSE;
+    ge.events.thisFrame.mouseWheeled = true;
+    ge.events.last                   = LastEventType_MOUSE;
   } break;
 
   case SDL_EVENT_MOUSE_MOTION: {  ///
-    if (emulatedTouchIsDown) {
-      const auto& e = event->motion;
-      _OnTouchMoved({
-        ._id = emulatedTouchID,
-        ._screenPos{e.x, ge.meta.screenSize.y - e.y},
-        ._screenDelta{e.xrel, -e.yrel},
-      });
-    }
+    const auto& e = event->motion;
 
-    ge.thisFrameEvents.mouseMoved = true;
-    ge.lastEventType              = LastEventType_MOUSE;
+    if (IsEmulatingMobile()) {
+      // Emulating touch controls.
+      if (emulatedTouchIsDown) {
+        _OnTouchMoved({
+          ._id = emulatedTouchID,
+          ._screenPos{e.x, ge.meta.screenSize.y - e.y},
+          ._screenDelta{e.xrel, -e.yrel},
+        });
+
+        ge.events.thisFrame.touchMoved = true;
+        ge.events.last                 = LastEventType_TOUCH;
+      }
+    }
+    else {
+      ge.events.thisFrame.mouseMoved = true;
+      ge.events.last                 = LastEventType_MOUSE;
+
+      ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
+    }
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
     const auto& e = event->tfinger;
+
     _OnTouchDown({
       ._id{._touchID = e.touchID, ._fingerID = e.fingerID},
       ._number    = nextTouchNumber++,
       ._screenPos = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
     });
 
-    ge.thisFrameEvents.touchPressed = true;
-    ge.lastEventType                = LastEventType_TOUCH;
+    ge.events.thisFrame.touchPressed = true;
+    ge.events.last                   = LastEventType_TOUCH;
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
@@ -516,8 +537,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ._screenPos = Vector2{e.x, 1 - e.y} * (Vector2)ge.meta.screenSize,
     });
 
-    ge.thisFrameEvents.touchReleased = true;
-    ge.lastEventType                 = LastEventType_TOUCH;
+    ge.events.thisFrame.touchReleased = true;
+    ge.events.last                    = LastEventType_TOUCH;
   } break;
 
   case SDL_EVENT_FINGER_MOTION: {  ///
@@ -528,8 +549,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ._screenDelta = Vector2{e.dx, -e.dy} * (Vector2)ge.meta.screenSize,
     });
 
-    ge.thisFrameEvents.touchMoved = true;
-    ge.lastEventType              = LastEventType_TOUCH;
+    ge.events.thisFrame.touchMoved = true;
+    ge.events.last                 = LastEventType_TOUCH;
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///

@@ -639,9 +639,8 @@ struct TouchData {
 
 enum _TouchDataState : u32 {
   _TouchDataState_DOWN     = 1 << 0,
-  _TouchDataState_PREV     = 1 << 1,
-  _TouchDataState_PRESSED  = 1 << 2,
-  _TouchDataState_RELEASED = 1 << 3,
+  _TouchDataState_PRESSED  = 1 << 1,
+  _TouchDataState_RELEASED = 1 << 2,
 };
 
 struct _TouchData {
@@ -807,6 +806,7 @@ enum LastEventType {
   LastEventType_TOUCH,
   LastEventType_MOUSE,
   LastEventType_KEY,
+  LastEventType_CONTROLLER,
 };
 
 struct _ReceivedEvents {  ///
@@ -855,11 +855,11 @@ struct EngineData {
     bool*            _keyboardStatePressed  = {};
     bool*            _keyboardStateReleased = {};
 
-    u32     _mouseState         = {};
-    u32     _mouseStatePressed  = {};
-    u32     _mouseStateReleased = {};
-    Vector2 _mousePos           = {};
-    int     _mouseWheel         = {};
+    u32     _mouseState            = {};
+    u32     _mouseStatePressed     = {};
+    u32     _mouseStateReleased    = {};
+    Vector2 _mouseOrLatestTouchPos = {};
+    int     _mouseWheel            = {};
 
     Vector<TouchID>    _touchIDs            = {};
     Vector<_TouchData> _touches             = {};
@@ -904,12 +904,13 @@ struct EngineData {
     int jsLoadedSavedata = 0;
 
     bool _drawing = false;
-
   } meta;
 
-  _ReceivedEvents prevFrameEvents = {};
-  _ReceivedEvents thisFrameEvents = {};
-  LastEventType   lastEventType   = {};
+  struct {
+    _ReceivedEvents prevFrame = {};
+    _ReceivedEvents thisFrame = {};
+    LastEventType   last      = {};
+  } events;
 
   struct Settings {
     Color     backgroundColor = BLACK;
@@ -2420,8 +2421,9 @@ void _ClearControlsCache() {  ///
     FOR_RANGE (int, i, ge.meta._touches.count) {
       const auto& t = ge.meta._touches[i];
       if (highestNumber < t.data.number) {
-        highestNumber                = t.data.number;
-        ge.meta._latestActiveTouchID = ge.meta._touchIDs[i];
+        highestNumber                  = t.data.number;
+        ge.meta._latestActiveTouchID   = ge.meta._touchIDs[i];
+        ge.meta._mouseOrLatestTouchPos = t.data.screenPos;
       }
     }
   }
@@ -2429,8 +2431,8 @@ void _ClearControlsCache() {  ///
   for (auto& t : ge.meta._touches)
     t.state &= ~_TouchDataState_PRESSED;
 
-  ge.prevFrameEvents = ge.thisFrameEvents;
-  ge.thisFrameEvents = {};
+  ge.events.prevFrame = ge.events.thisFrame;
+  ge.events.thisFrame = {};
 }
 
 bool IsTouchPressed(TouchID id) {  ///
@@ -3369,8 +3371,8 @@ void SetTouchUserData(TouchID id, u64 userData) {  ///
   INVALID_PATH;  // Not found.
 }
 
-Vector2 GetMouseScreenPos() {  ///
-  return ge.meta._mousePos;
+Vector2 GetMouseOrLatestTouchScreenPos() {  ///
+  return ge.meta._mouseOrLatestTouchPos;
 }
 
 int GetMouseWheel() {  ///
@@ -3642,8 +3644,7 @@ SDL_AppResult EngineUpdate() {  ///
     SDL_PumpEvents();
 
     // Controls. Mouse.
-    ge.meta._mouseState = SDL_GetMouseState(&ge.meta._mousePos.x, &ge.meta._mousePos.y);
-    ge.meta._mousePos.y = ge.meta.screenSize.y - ge.meta._mousePos.y;
+    ge.meta._mouseState = SDL_GetMouseState(nullptr, nullptr);
 
     GameFixedUpdate();
 
@@ -3930,6 +3931,10 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
 
   ASSERT(ge.meta.loading == SavedataLoadingType_JUST_FISNIHED);
   return ge.meta.loading;
+}
+
+bool IsEmulatingMobile() {
+  return BF_DEBUG && (ge.meta.device == DeviceType_MOBILE);
 }
 
 ///
