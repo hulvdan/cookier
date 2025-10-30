@@ -416,12 +416,14 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     ge.meta._keyboardStatePressed[event->key.scancode] = true;
 
     ge.thisFrameEvents.keyPressed = true;
+    ge.lastEventType              = LastEventType_KEY;
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
     ge.meta._keyboardStateReleased[event->key.scancode] = true;
 
     ge.thisFrameEvents.keyReleased = true;
+    ge.lastEventType               = LastEventType_KEY;
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN: {  ///
@@ -445,6 +447,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     }
 
     ge.thisFrameEvents.mousePressed = true;
+    ge.lastEventType                = LastEventType_MOUSE;
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
@@ -469,6 +472,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     }
 
     ge.thisFrameEvents.mouseReleased = true;
+    ge.lastEventType                 = LastEventType_MOUSE;
   } break;
 
   case SDL_EVENT_MOUSE_WHEEL: {  ///
@@ -476,6 +480,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     ge.meta._mouseWheel = MIN(1, MAX(-1, (e.direction ? -1 : 1) * e.integer_y));
 
     ge.thisFrameEvents.mouseWheeled = true;
+    ge.lastEventType                = LastEventType_MOUSE;
   } break;
 
   case SDL_EVENT_MOUSE_MOTION: {  ///
@@ -489,6 +494,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     }
 
     ge.thisFrameEvents.mouseMoved = true;
+    ge.lastEventType              = LastEventType_MOUSE;
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
@@ -500,6 +506,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     });
 
     ge.thisFrameEvents.touchPressed = true;
+    ge.lastEventType                = LastEventType_TOUCH;
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
@@ -510,6 +517,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     });
 
     ge.thisFrameEvents.touchReleased = true;
+    ge.lastEventType                 = LastEventType_TOUCH;
   } break;
 
   case SDL_EVENT_FINGER_MOTION: {  ///
@@ -521,6 +529,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     });
 
     ge.thisFrameEvents.touchMoved = true;
+    ge.lastEventType              = LastEventType_TOUCH;
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///
