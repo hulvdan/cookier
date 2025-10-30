@@ -1050,7 +1050,7 @@ struct GameData {
 
     int bossCreatureID = 0;
 
-    bool shopShowingSlotDetails = false;
+    bool showingSlotDetails = false;
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -4541,6 +4541,26 @@ void DoUI(bool draw) {
     return result;
   };
 
+  LAMBDA (void, processShowingOrNotShowingOfSlotDetails, (Clay_ElementId slotID)) {  ///
+    if (draw)
+      return;
+    if (CURRENT_CONTEXT.focused.id != slotID.id)
+      return;
+
+    if (uiElementSwitchDirectionPrevFrame)
+      g.run.showingSlotDetails = true;
+    else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_ESCAPE)
+             && g.run.showingSlotDetails)
+    {
+      PlaySound(Sound_UI_CLICK);
+      g.run.showingSlotDetails = false;
+    }
+    else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_SPACE)) {
+      PlaySound(Sound_UI_CLICK);
+      g.run.showingSlotDetails = !g.run.showingSlotDetails;
+    }
+  };
+
   struct ComponentButtonData {  ///
     Clay_ElementId     id                = {};
     ControlsGroupID    group             = {};
@@ -5861,36 +5881,61 @@ void DoUI(bool draw) {
   };
 
   struct ComponentUniversalDetailsData {  ///
+    ControlsGroupID group = {};
+
     DifficultyType difficulty = {};
     BuildType      build      = {};
     ItemType       item       = {};
+    WeaponType     weapon     = {};
 
     int  count          = 1;
     bool affectedByGame = true;
     int  overrideTier   = -1;
 
-    bool detailsRight = {};
-    bool detailsBelow = {};
+    int detailsRight = -1;
+    int detailsBelow = -1;
   };
 
   LAMBDA (void, componentUniversalDetails, (ComponentUniversalDetailsData data)) {  ///
     ASSERT(data.count > 0);
-    int s = (int)(data.difficulty > 0) + (int)(data.build > 0) + (int)(data.item > 0);
+    int s = (int)(data.difficulty > 0)  //
+            + (int)(data.build > 0)     //
+            + (int)(data.item > 0)      //
+            + (int)(data.weapon > 0);
     ASSERT(s > 0);
 
     f32                          offsetY{};
     Clay_FloatingAttachPointType attachElement{};
     Clay_FloatingAttachPointType attachParent{};
 
+    ASSERT(data.detailsRight >= 0);
+    ASSERT(data.detailsRight <= 1);
+    ASSERT(data.detailsBelow >= 0);
+    ASSERT(data.detailsBelow <= 1);
+
     if (data.detailsBelow) {
-      offsetY       = GAP_SMALL;
-      attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
-      attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      offsetY = GAP_SMALL;
+
+      if (data.detailsRight) {
+        attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+      }
+      else {
+        attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
+        attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+      }
     }
     else {
-      offsetY       = -GAP_SMALL;
-      attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-      attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+      offsetY = -GAP_SMALL;
+
+      if (data.detailsRight) {
+        attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
+      }
+      else {
+        attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
+        attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
+      }
     }
 
     zIndex += 2;
@@ -5914,6 +5959,7 @@ void DoUI(bool draw) {
         .difficulty     = data.difficulty,
         .build          = data.build,
         .item           = data.item,
+        .weapon         = data.weapon,
         .count          = data.count,
         .affectedByGame = data.affectedByGame,
         .overrideTier   = data.overrideTier,
@@ -6007,12 +6053,12 @@ void DoUI(bool draw) {
     }
   };
 
-  struct ComponentWeaponDetailsData {
+  struct ComponentWeaponDetailsData {  ///
     WeaponType     type                    = {};
     int            weaponIndexOrMinus1     = -1;
     bool           weAreInShop             = false;
     bool           detailsBelow            = false;
-    bool           detailsToTheLeft        = false;
+    bool           detailsRight            = false;
     bool           affectedByGame          = true;
     Clay_ElementId shopFocusAfterRecycling = {};
     Clay_ElementId shopFocusAfterCombining = {};
@@ -6043,7 +6089,7 @@ void DoUI(bool draw) {
       if (data.detailsBelow) {
         offsetY = GAP_SMALL;
 
-        if (data.detailsToTheLeft) {
+        if (data.detailsRight) {
           attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
           attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
         }
@@ -6055,7 +6101,7 @@ void DoUI(bool draw) {
       else {
         offsetY = -GAP_SMALL;
 
-        if (data.detailsToTheLeft) {
+        if (data.detailsRight) {
           attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
           attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
         }
@@ -6107,16 +6153,72 @@ void DoUI(bool draw) {
     }
   };
 
+  struct GridEntryDetailsWhenHoveredData {  ///
+    Clay_ElementId  id    = {};
+    ControlsGroupID group = {};
+
+    DifficultyType difficulty = {};
+    BuildType      build      = {};
+    ItemType       item       = {};
+    WeaponType     weapon     = {};
+
+    int count        = 1;
+    int detailsRight = -1;
+    int detailsBelow = -1;
+  };
+
+  LAMBDA (void, gridEntryDetailsWhenHovered, (GridEntryDetailsWhenHoveredData data))
+  {  ///
+    ASSERT(
+      (int)((bool)data.difficulty) + (int)((bool)data.build) + (int)((bool)data.item)
+        + (int)((bool)data.weapon)
+      == 1
+    );
+
+    ASSERT(data.detailsRight >= 0);
+    ASSERT(data.detailsRight <= 1);
+    ASSERT(data.detailsBelow >= 0);
+    ASSERT(data.detailsBelow <= 1);
+
+    processShowingOrNotShowingOfSlotDetails(data.id);
+
+    const bool hovered = Clay_Hovered();
+
+    if (hovered || g.run.showingSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id))
+    {
+      componentUniversalDetails({
+        .difficulty   = data.difficulty,
+        .build        = data.build,
+        .item         = data.item,
+        .weapon       = data.weapon,
+        .count        = data.count,
+        .detailsRight = data.detailsRight,
+        .detailsBelow = data.detailsBelow,
+      });
+    }
+
+    if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
+        && !hovered                                 //
+        && ge.thisFrameEvents.Mouse())
+      g.run.showingSlotDetails = false;
+  };
+
   struct ComponentItemsGridData {  ///
     ControlsGroupID group              = {};
     int             itemsX             = {};
-    bool            detailsBelow       = false;
+    int             detailsRight       = -1;
+    int             detailsBelow       = -1;
     bool            markFirstAsDefault = false;
   };
 
   LAMBDA (void, componentItemsGrid, (ComponentItemsGridData data)) {  ///
     ASSERT(data.group);
     ASSERT(data.itemsX > 0);
+
+    ASSERT(data.detailsRight >= 0);
+    ASSERT(data.detailsRight <= 1);
+    ASSERT(data.detailsBelow >= 0);
+    ASSERT(data.detailsBelow <= 1);
 
     CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
       const int ITEMS_X = data.itemsX;
@@ -6180,49 +6282,121 @@ void DoUI(bool draw) {
             if (data.markFirstAsDefault && (t == 0))
               markControlAsDefault(slotID);
 
-            if (!draw && (CURRENT_CONTEXT.focused.id == slotID.id)) {
-              if (uiElementSwitchDirectionPrevFrame)
-                g.run.shopShowingSlotDetails = true;
-              else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_ESCAPE)
-                       && g.run.shopShowingSlotDetails)
-              {
-                PlaySound(Sound_UI_CLICK);
-                g.run.shopShowingSlotDetails = false;
-              }
-              else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_SPACE)) {
-                PlaySound(Sound_UI_CLICK);
-                g.run.shopShowingSlotDetails = !g.run.shopShowingSlotDetails;
+            gridEntryDetailsWhenHovered({
+              .id           = slotID,
+              .group        = data.group,
+              .difficulty   = difficultyType,
+              .build        = buildType,
+              .item         = itemType,
+              .count        = itemCount,
+              .detailsRight = data.detailsRight,
+              .detailsBelow = data.detailsBelow,
+            });
+          }
+        }
+      }
+    }
+  };
+
+  struct ComponentWeaponsGridData {  ///
+    ControlsGroupID group        = {};
+    int             weaponsX     = {};
+    bool            detailsRight = 1;
+    bool            detailsBelow = 0;
+  };
+
+  LAMBDA (void, componentWeaponsGrid, (ComponentWeaponsGridData data)) {  ///
+    ASSERT(data.weaponsX > 0);
+    const int WEAPONS_Y = CeilDivision(g.run.state.weapons.count, data.weaponsX);
+
+    int weaponsCount = 0;
+    for (auto& x : g.run.state.weapons) {
+      if (x.type)
+        weaponsCount++;
+    }
+
+    CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+    FOR_RANGE (int, y, WEAPONS_Y) {
+      ControlsGroupNewRow(data.group);
+
+      CLAY({.layout{.childGap = GAP_SMALL}})
+      FOR_RANGE (int, x, data.weaponsX) {
+        const int weaponIndex = y * data.weaponsX + x;
+        if (weaponIndex >= g.run.state.weapons.count)
+          break;
+
+        const auto& weapon = g.run.state.weapons[weaponIndex];
+
+        int wouldCombineWith = -1;
+
+        FOR_RANGE (int, combineIndex, g.run.state.weapons.count) {
+          if (weaponIndex == combineIndex)
+            continue;
+          const auto& w = g.run.state.weapons[combineIndex];
+          if (!w.type)
+            break;
+          if ((w.type == weapon.type) && (w.tier == weapon.tier)) {
+            wouldCombineWith = combineIndex;
+            break;
+          }
+        }
+
+        CLAY({.layout{.sizing{
+          .width  = CLAY_SIZING_FIXED(slotSize.x),
+          .height = CLAY_SIZING_FIXED(slotSize.y),
+        }}})
+        if (weapon.type) {
+          int focusWeapon = weaponIndex;
+          if (weaponIndex >= weaponsCount - 1)
+            focusWeapon--;
+          Clay_ElementId focusAfterRecycling
+            = getIDFromShopPlayerWeaponIndex(focusWeapon);
+          if (focusWeapon < 0) {
+            focusAfterRecycling = rerollID;
+            for (auto i : DEFAULT_BUYING_INDICES) {
+              const auto& v = g.run.state.shop.toPick[i];
+              if (v.item || v.weapon) {
+                focusAfterRecycling = getIDFromShopBuyingIndex(i);
+                break;
               }
             }
+          }
 
-            const bool hovered = Clay_Hovered();
+          const auto slotID = getIDFromShopPlayerWeaponIndex(weaponIndex);
 
-            if (hovered
-                || g.run.shopShowingSlotDetails
-                     && (CURRENT_CONTEXT.focused.id == slotID.id))
-            {
-              componentUniversalDetails({
-                .difficulty   = difficultyType,
-                .build        = buildType,
-                .item         = itemType,
-                .count        = itemCount,
-                .detailsRight = 1,
-                .detailsBelow = data.detailsBelow,
-              });
+          processShowingOrNotShowingOfSlotDetails(slotID);
 
-              if (ge.meta.debugEnabled && itemType) {
-                auto& item = g.run.state.items[t - 2];
-                if (wheel) {
-                  item.count += wheel;
-                  item.count = MAX(1, item.count);
-                }
-              }
-            }
+          // Weapon.
+          const bool selectedWeapon = componentUniversalSlot({
+            .id     = slotID,
+            .group  = data.group,
+            .weapon = weapon.type,
+            .tier   = weapon.tier,
+          });
 
-            if ((CURRENT_CONTEXT.focused.id == slotID.id)  //
-                && !hovered                                //
-                && ge.thisFrameEvents.Mouse())
-              g.run.shopShowingSlotDetails = false;
+          if (selectedWeapon) {
+            PlaySound(Sound_UI_CLICK);
+            g.run.shopSelectedWeaponIndex = weaponIndex;
+          }
+
+          // Hovering modal.
+          if (weapon.type) {
+            gridEntryDetailsWhenHovered({
+              .id           = slotID,
+              .group        = data.group,
+              .weapon       = weapon.type,
+              .count        = 1,
+              .detailsRight = data.detailsRight,
+              .detailsBelow = data.detailsBelow,
+            });
+
+            // componentWeaponDetails({
+            //   .type                    = weapon.type,
+            //   .weaponIndexOrMinus1     = weaponIndex,
+            //   .weAreInShop             = true,
+            //   .detailsRight        = true,
+            //   .shopFocusAfterRecycling = focusAfterRecycling,
+            // });
           }
         }
       }
@@ -7427,7 +7601,12 @@ void DoUI(bool draw) {
             CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
 
             // Items.
-            componentItemsGrid({.group = groupItems, .itemsX = 11});
+            componentItemsGrid({
+              .group        = groupItems,
+              .itemsX       = 11,
+              .detailsRight = 1,
+              .detailsBelow = 0,
+            });
           }
 
           BF_CLAY_SPACER_HORIZONTAL;
@@ -7455,11 +7634,7 @@ void DoUI(bool draw) {
             CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
 
             // Weapons.
-            constexpr int WEAPONS_X = 3;
-            constexpr int WEAPONS_Y = 2;
-            static_assert(WEAPONS_X * WEAPONS_Y == g.run.state.weapons.count);
-
-            {
+            CLAY({}) {
               BEAUTIFY_WIGGLING_DANGER_SCOPED(
                 g.ui.shopErrorWeapons,
                 WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
@@ -7467,86 +7642,12 @@ void DoUI(bool draw) {
                 ERROR_WIGGLING_TIMES
               );
 
-              int weaponsCount = 0;
-              for (auto& x : g.run.state.weapons) {
-                if (x.type)
-                  weaponsCount++;
-              }
-
-              CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}
-              )
-              FOR_RANGE (int, y, 2) {
-                ControlsGroupNewRow(groupWeapons);
-
-                CLAY({.layout{.childGap = GAP_SMALL}})
-                FOR_RANGE (int, x, 3) {
-                  const int weaponIndex = y * WEAPONS_X + x;
-                  if (weaponIndex >= g.run.state.weapons.count)
-                    break;
-
-                  const auto& weapon = g.run.state.weapons[weaponIndex];
-
-                  int wouldCombineWith = -1;
-
-                  FOR_RANGE (int, combineIndex, g.run.state.weapons.count) {
-                    if (weaponIndex == combineIndex)
-                      continue;
-                    const auto& w = g.run.state.weapons[combineIndex];
-                    if (!w.type)
-                      break;
-                    if ((w.type == weapon.type) && (w.tier == weapon.tier)) {
-                      wouldCombineWith = combineIndex;
-                      break;
-                    }
-                  }
-
-                  CLAY({.layout{.sizing{
-                    .width  = CLAY_SIZING_FIXED(slotSize.x),
-                    .height = CLAY_SIZING_FIXED(slotSize.y),
-                  }}})
-                  if (weapon.type) {
-                    int focusWeapon = weaponIndex;
-                    if (weaponIndex >= weaponsCount - 1)
-                      focusWeapon--;
-                    Clay_ElementId focusAfterRecycling
-                      = getIDFromShopPlayerWeaponIndex(focusWeapon);
-                    if (focusWeapon < 0) {
-                      focusAfterRecycling = rerollID;
-                      for (auto i : DEFAULT_BUYING_INDICES) {
-                        const auto& v = g.run.state.shop.toPick[i];
-                        if (v.item || v.weapon) {
-                          focusAfterRecycling = getIDFromShopBuyingIndex(i);
-                          break;
-                        }
-                      }
-                    }
-
-                    // Weapon.
-                    const bool selectedWeapon = componentUniversalSlot({
-                      .id     = getIDFromShopPlayerWeaponIndex(weaponIndex),
-                      .group  = groupWeapons,
-                      .weapon = weapon.type,
-                      .tier   = weapon.tier,
-                    });
-
-                    if (selectedWeapon) {
-                      PlaySound(Sound_UI_CLICK);
-                      g.run.shopSelectedWeaponIndex = weaponIndex;
-                    }
-
-                    // Hovering modal.
-                    if (weapon.type) {
-                      componentWeaponDetails({
-                        .type                    = weapon.type,
-                        .weaponIndexOrMinus1     = weaponIndex,
-                        .weAreInShop             = true,
-                        .detailsToTheLeft        = true,
-                        .shopFocusAfterRecycling = focusAfterRecycling,
-                      });
-                    }
-                  }
-                }
-              }
+              componentWeaponsGrid({
+                .group        = groupWeapons,
+                .weaponsX     = 3,
+                .detailsRight = 0,
+                .detailsBelow = 0,
+              });
             }
           }
 
@@ -7725,29 +7826,12 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS__CAPS);
 
               // Weapons.
-              CLAY({.layout{.childGap = GAP_SMALL}}) {
-                int weaponIndex = -1;
-                for (auto& weapon : g.run.state.weapons) {
-                  weaponIndex++;
-                  if (weapon.type) {
-                    CLAY({}) {
-                      // Weapon.
-                      componentUniversalSlot({
-                        .id     = CLAY_IDI("end_player_weapon", weaponIndex),
-                        .group  = groupWeaponsAndItems,
-                        .weapon = weapon.type,
-                        .tier   = weapon.tier,
-                      });
-                      // Hovering modal.
-                      componentWeaponDetails({
-                        .type                = weapon.type,
-                        .weaponIndexOrMinus1 = weaponIndex,
-                        .detailsBelow        = true,
-                      });
-                    }
-                  }
-                }
-              }
+              componentWeaponsGrid({
+                .group        = groupWeaponsAndItems,
+                .weaponsX     = 8,
+                .detailsRight = 1,
+                .detailsBelow = 1,
+              });
             }
           }
 
@@ -7761,6 +7845,7 @@ void DoUI(bool draw) {
             componentItemsGrid({
               .group        = groupWeaponsAndItems,
               .itemsX       = 8,
+              .detailsRight = 1,
               .detailsBelow = 1,
             });
           }
@@ -8055,9 +8140,9 @@ void DoUI(bool draw) {
       else {  ///
         SCOPED_CONTEXT(ControlsContext_PAUSE);
 
-        auto groupButtons = MakeControlsGroup();
-        auto groupWeapons = MakeControlsGroup();
-        auto groupTop     = MakeControlsGroup();
+        auto groupButtons         = MakeControlsGroup();
+        auto groupWeaponsAndItems = MakeControlsGroup();
+        auto groupTop             = MakeControlsGroup();
 
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
@@ -8206,35 +8291,17 @@ void DoUI(bool draw) {
                 BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPONS__CAPS);
 
                 // Weapons.
-                CLAY({.layout{.childGap = GAP_SMALL}}) {
-                  int weaponIndex = -1;
-                  for (auto& weapon : g.run.state.weapons) {
-                    weaponIndex++;
-                    if (weapon.type) {
-                      CLAY({}) {
-                        // Weapon.
-                        componentUniversalSlot({
-                          .id     = CLAY_IDI("pause_player_weapon", weaponIndex),
-                          .group  = groupWeapons,
-                          .weapon = weapon.type,
-                          .tier   = weapon.tier,
-                        });
-                        // Hovering modal.
-                        componentWeaponDetails({
-                          .type                = weapon.type,
-                          .weaponIndexOrMinus1 = weaponIndex,
-                          .detailsBelow        = true,
-                        });
-                      }
-                    }
-                  }
-                }
+                componentWeaponsGrid({
+                  .group        = groupWeaponsAndItems,
+                  .weaponsX     = 6,
+                  .detailsBelow = 1,
+                });
               }
 
               // Items label.
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS__CAPS);
               // Items.
-              componentItemsGrid({.group = groupWeapons, .itemsX = 6});
+              componentItemsGrid({.group = groupWeaponsAndItems, .itemsX = 6});
             }
           }
 
@@ -8242,11 +8309,11 @@ void DoUI(bool draw) {
         }
 
         ControlsGroupConnect(groupTop, Direction_DOWN, groupButtons);
-        ControlsGroupConnect(groupWeapons, Direction_UP, groupTop);
-        ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTop);
+        ControlsGroupConnect(groupWeaponsAndItems, Direction_UP, groupTop);
+        ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupTop);
         ControlsGroupConnect(groupButtons, Direction_UP, groupTop);
         ControlsGroupConnect(groupButtons, Direction_DOWN, groupTop);
-        ControlsGroupConnect(groupButtons, Direction_RIGHT, groupWeapons);
+        ControlsGroupConnect(groupButtons, Direction_RIGHT, groupWeaponsAndItems);
       }
     }
   }
