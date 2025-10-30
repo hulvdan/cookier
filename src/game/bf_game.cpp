@@ -5242,7 +5242,7 @@ void DoUI(bool draw) {
     Clay_ElementId  shopFocusAfterRecycling = {};
   };
 
-  const auto groupSlotDetails = MakeControlsGroup();
+  const auto groupDetails = MakeControlsGroup();
 
   LAMBDA (Clay_ElementId, getIDFromShopBuyingIndex, (int index)) {  ///
     return CLAY_IDI("button_shop_buy", index);
@@ -5793,7 +5793,7 @@ void DoUI(bool draw) {
             auto combineID = CLAY_ID("button_weapon_combine");
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
-                {.id = combineID, .group = groupSlotDetails},
+                {.id = combineID, .group = groupDetails},
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
                 }
@@ -5807,7 +5807,7 @@ void DoUI(bool draw) {
             const auto weaponRecycleID = CLAY_ID("button_weapon_recycle");
             const bool recycled        = componentButtonRecycle({
                      .id    = weaponRecycleID,
-                     .group = groupSlotDetails,
+                     .group = groupDetails,
                      .price = recyclePrice,
             });
 
@@ -5816,7 +5816,7 @@ void DoUI(bool draw) {
             const bool cancelled = componentButton(
               {
                 .id    = cancelID,
-                .group = groupSlotDetails,
+                .group = groupDetails,
                 .keys  = KEYS_CANCEL,
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
