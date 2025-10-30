@@ -5996,7 +5996,7 @@ void DoUI(bool draw) {
       });
     }
 
-    componentUniversalCard({
+    componentUniversalCard(ComponentUniversalCardData{
       .weapon                  = data.type,
       .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
       .affectedByGame          = data.affectedByGame,
@@ -6821,7 +6821,7 @@ void DoUI(bool draw) {
           }}) {
             FLOATING_BEAUTIFY;
 
-            componentUniversalCard({
+            componentUniversalCard(ComponentUniversalCardData{
               .difficulty     = difficulty,
               .build          = build,
               .weapon         = weapon,
@@ -7118,7 +7118,7 @@ void DoUI(bool draw) {
         const auto fb   = fb_items->Get(type);
 
         // Item.
-        componentUniversalCard({
+        componentUniversalCard(ComponentUniversalCardData{
           .item           = type,
           .affectedByGame = true,
           .setFixedHeight = true,
@@ -7481,7 +7481,7 @@ void DoUI(bool draw) {
               }
             }
 
-            componentUniversalCard({
+            componentUniversalCard(ComponentUniversalCardData{
               .item                 = x.item,
               .weapon               = x.weapon,
               .hidden               = HiddenType_HIDE_IF_EMPTY,
@@ -8013,7 +8013,7 @@ void DoUI(bool draw) {
               );
 
               // Achievement's reward.
-              componentUniversalCard({
+              componentUniversalCard(ComponentUniversalCardData{
                 .build
                 = (BuildType)(fb_step && !isLocked ? fb_step->unlocks_build_type() : 0),
                 .item
