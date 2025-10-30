@@ -5969,48 +5969,6 @@ void DoUI(bool draw) {
     }
   };
 
-  struct ComponentWeaponDetailsData {  ///
-    WeaponType     type                    = {};
-    int            weaponIndexOrMinus1     = -1;
-    bool           detailsBelow            = false;
-    bool           detailsRight            = false;
-    bool           affectedByGame          = true;
-    bool           weAreInShop             = false;
-    Clay_ElementId shopFocusAfterRecycling = {};
-  };
-
-  LAMBDA (void, componentWeaponDetails, (ComponentWeaponDetailsData data)) {  ///
-    ASSERT(data.type);
-
-    if (data.weAreInShop)
-      ASSERT(data.shopFocusAfterRecycling.id);
-
-    int tier = 0;
-    if (data.weaponIndexOrMinus1 >= 0) {
-      auto& weapon = g.run.state.weapons[data.weaponIndexOrMinus1];
-      ASSERT(data.type == weapon.type);
-      tier = weapon.tier;
-    }
-    else
-      tier = fb_weapons->Get(data.type)->min_tier_index();
-
-    if (data.weAreInShop && (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1)) {
-      componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-        if (clicked())
-          g.run.shopSelectedWeaponIndex = -1;
-      });
-    }
-
-    componentUniversalCard(ComponentUniversalCardData{
-      .weapon                  = data.type,
-      .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
-      .affectedByGame          = data.affectedByGame,
-      .overrideTier            = tier,
-      .shopSelling             = data.weAreInShop,
-      .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
-    });
-  };
-
   struct GridEntryDetailsData {  ///
     Clay_ElementId id = {};
 
