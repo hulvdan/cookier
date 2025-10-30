@@ -11,8 +11,6 @@ WORKING SINCE 2025-09-07
 * modal: are you sure you want to restart?
 * modal: are you sure you want to start a new run?
 *
-* fix getting achievement
-*
 * new run: refactor MAKE LESS CODE
 *
 * ui nav: upgrades: going from upgrades to reroll and returning back
