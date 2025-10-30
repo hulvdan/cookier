@@ -874,7 +874,7 @@ struct ControlsGroup {  ///
   ControlsDimension* first = {};
   ControlsDimension* last  = {};
 
-  // NOTE: Use direction-1 to index.
+  // NOTE: Use `(int)direction - 1` to index.
   ControlsGroupID connectionsPerDirection[4] = {};
 
   ControlsGroup* next = {};
@@ -4302,24 +4302,25 @@ void RemoveImmediateWeaponEffects() {  ///
 }
 
 #define SCOPED_CONTEXT(context_)                           \
-  const auto prevContext                 = currentContext; \
+  const auto _prevContext                = currentContext; \
   currentContext                         = (context_);     \
   controlsContexts[(context_)].thisFrame = true;           \
   if (!controlsContexts[(context_)].prevFrame)             \
     controlsContexts[(context_)].focused = {};             \
   DEFER {                                                  \
-    currentContext = prevContext;                          \
+    currentContext = _prevContext;                         \
   };
 
-#define SCOPED_CONTEXT_IF(context_, enabled_)              \
-  const auto prevContext                 = currentContext; \
-  currentContext                         = (context_);     \
-  controlsContexts[(context_)].thisFrame = true;           \
-  controlsContexts[(context_)].disabled  = !(enabled_);    \
-  if (!controlsContexts[(context_)].prevFrame)             \
-    controlsContexts[(context_)].focused = {};             \
-  DEFER {                                                  \
-    currentContext = prevContext;                          \
+#define SCOPED_CONTEXT_IF(context_, enabled_)          \
+  const auto _prevContext = currentContext;            \
+  currentContext          = (context_);                \
+  if (enabled_)                                        \
+    controlsContexts[(context_)].thisFrame = true;     \
+  controlsContexts[(context_)].disabled = !(enabled_); \
+  if (!controlsContexts[(context_)].prevFrame)         \
+    controlsContexts[(context_)].focused = {};         \
+  DEFER {                                              \
+    currentContext = _prevContext;                     \
   };
 
 #define CURRENT_CONTEXT (controlsContexts[currentContext])
@@ -4344,13 +4345,6 @@ void DoUI(bool draw) {
     bool           disabled  = false;
   } controlsContexts[ControlsContext_COUNT];
 
-  DEFER {
-    for (auto& x : controlsContexts) {
-      x.prevFrame = x.thisFrame;
-      x.thisFrame = false;
-    }
-  };
-
   static Direction uiElementSwitchDirectionPrevFrame = Direction_NONE;
 
   Direction uiElementSwitchDirection_ = Direction_NONE;
@@ -4374,16 +4368,21 @@ void DoUI(bool draw) {
   bool justFocusedDefaultControl = false;
 
   LAMBDA (void, markControlAsDefault, (Clay_ElementId id)) {
-    ASSERT(CURRENT_CONTEXT.thisFrame);
+    const bool allowed = (CURRENT_CONTEXT.thisFrame || CURRENT_CONTEXT.disabled);
+    ASSERT(allowed);
 
     if ((uiElementSwitchDirection || g.meta.playerUsesKeyboardOrController)
-        && !CURRENT_CONTEXT.focused.id)
+        && !CURRENT_CONTEXT.focused.id  //
+        && !CURRENT_CONTEXT.disabled)
     {
       CURRENT_CONTEXT.focused   = id;
       justFocusedDefaultControl = true;
     }
-    if (!CURRENT_CONTEXT.prevFrame && g.meta.playerUsesKeyboardOrController
-        && !CURRENT_CONTEXT.focused.id)
+
+    if (!CURRENT_CONTEXT.prevFrame                //
+        && g.meta.playerUsesKeyboardOrController  //
+        && !CURRENT_CONTEXT.focused.id            //
+        && !CURRENT_CONTEXT.disabled)
       CURRENT_CONTEXT.focused = id;
   };
 
@@ -5244,6 +5243,7 @@ void DoUI(bool draw) {
   };
 
   const auto groupDetails = MakeControlsGroup();
+  ControlsGroupConnect(groupDetails, Direction_RIGHT, groupDetails);
 
   LAMBDA (Clay_ElementId, getIDFromShopBuyingIndex, (int index)) {  ///
     return CLAY_IDI("button_shop_buy", index);
@@ -6048,15 +6048,14 @@ void DoUI(bool draw) {
 
     const bool hovered = Clay_Hovered();
 
-    const bool isSelected = (g.run.shopSelectedWeaponIndex == weaponIndex);
+    const bool isSelected
+      = (data.weaponIndexOrMinus1 >= 0)
+        && (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1);
 
     if (hovered                                                                    //
         || g.run.stickedSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id)  //
         || isSelected)
     {
-      if (isSelected)
-        TODO_OVERLAY;
-
       f32                          offsetY{};
       Clay_FloatingAttachPointType attachElement{};
       Clay_FloatingAttachPointType attachParent{};
@@ -6108,6 +6107,13 @@ void DoUI(bool draw) {
         },
       }) {
         FLOATING_BEAUTIFY;
+
+        if (isSelected) {
+          componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
+            if (clicked())
+              g.run.shopSelectedWeaponIndex = -1;
+          });
+        }
 
         componentUniversalCard(ComponentUniversalCardData{
           .difficulty                 = data.difficulty,
@@ -8575,15 +8581,20 @@ void DoUI(bool draw) {
       if (context.prevFrame && !context.thisFrame)
         context.focused = {};
 
-      auto c = (ControlsContext)i;
-      if (context.thisFrame) {
-        if (CONTROLS_CONTEXT_MODALS.Contains(c))
-          shownModal = c;
-        else {
-          ASSERT_FALSE(shownScreen);
-          shownScreen = c;
+      if (!context.disabled) {
+        auto c = (ControlsContext)i;
+        if (context.thisFrame) {
+          if (CONTROLS_CONTEXT_MODALS.Contains(c))
+            shownModal = c;
+          else {
+            ASSERT_FALSE(shownScreen);
+            shownScreen = c;
+          }
         }
       }
+
+      context.prevFrame = context.thisFrame;
+      context.thisFrame = false;
     }
 
     if (shownModal)
