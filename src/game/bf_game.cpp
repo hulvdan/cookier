@@ -8227,6 +8227,7 @@ void DoUI(bool draw) {
                 componentWeaponsGrid({
                   .group        = groupWeaponsAndItems,
                   .weaponsX     = 6,
+                  .detailsRight = 0,
                   .detailsBelow = 1,
                 });
               }
@@ -8234,7 +8235,12 @@ void DoUI(bool draw) {
               // Items label.
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS__CAPS);
               // Items.
-              componentItemsGrid({.group = groupWeaponsAndItems, .itemsX = 6});
+              componentItemsGrid({
+                .group        = groupWeaponsAndItems,
+                .itemsX       = 6,
+                .detailsRight = 0,
+                .detailsBelow = 0,
+              });
             }
           }
 
