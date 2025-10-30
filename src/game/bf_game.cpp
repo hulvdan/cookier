@@ -8227,7 +8227,7 @@ void DoUI(bool draw) {
                 componentWeaponsGrid({
                   .group        = groupWeaponsAndItems,
                   .weaponsX     = 6,
-                  .detailsRight = 0,
+                  .detailsRight = 1,
                   .detailsBelow = 1,
                 });
               }
@@ -8238,7 +8238,7 @@ void DoUI(bool draw) {
               componentItemsGrid({
                 .group        = groupWeaponsAndItems,
                 .itemsX       = 6,
-                .detailsRight = 0,
+                .detailsRight = 1,
                 .detailsBelow = 0,
               });
             }
