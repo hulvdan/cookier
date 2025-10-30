@@ -1050,7 +1050,7 @@ struct GameData {
 
     int bossCreatureID = 0;
 
-    bool showingSlotDetails = false;
+    bool stickedSlotDetails = false;
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -4548,16 +4548,16 @@ void DoUI(bool draw) {
       return;
 
     if (uiElementSwitchDirectionPrevFrame)
-      g.run.showingSlotDetails = true;
+      g.run.stickedSlotDetails = true;
     else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_ESCAPE)
-             && g.run.showingSlotDetails)
+             && g.run.stickedSlotDetails)
     {
       PlaySound(Sound_UI_CLICK);
-      g.run.showingSlotDetails = false;
+      g.run.stickedSlotDetails = false;
     }
     else if (IsKeyPressedInCurrentContext(SDL_SCANCODE_SPACE)) {
       PlaySound(Sound_UI_CLICK);
-      g.run.showingSlotDetails = !g.run.showingSlotDetails;
+      g.run.stickedSlotDetails = !g.run.stickedSlotDetails;
     }
   };
 
@@ -5235,11 +5235,12 @@ void DoUI(bool draw) {
 
     bool setFixedHeight = false;
 
-    ControlsGroupID shopGroup               = {};
-    int             shopBuyingIndex         = -1;
-    bool            shopSelling             = false;
-    Clay_ElementId  shopFocusAfterBuying    = {};
-    Clay_ElementId  shopFocusAfterRecycling = {};
+    ControlsGroupID shopGroup                  = {};
+    int             shopBuyingIndex            = -1;
+    bool            shopDetailsContextIsActive = false;
+    bool            shopSelling                = false;
+    Clay_ElementId  shopFocusAfterBuying       = {};
+    Clay_ElementId  shopFocusAfterRecycling    = {};
   };
 
   const auto groupDetails = MakeControlsGroup();
@@ -5765,8 +5766,12 @@ void DoUI(bool draw) {
         }
 
         if (data.shopSelling && data.weapon) {  ///
-          const bool activateContext = (g.run.shopSelectedWeaponIndex >= 0);
-          SCOPED_CONTEXT_IF(ControlsContext_MODAL_SHOP_WEAPON_DETAILS, activateContext);
+          // ControlsContext detailsContext = ControlsContext_INVALID;
+          // if (data.shopDetailsContextIsActive)
+          //   detailsContext = ControlsContext_MODAL_SHOP_WEAPON_DETAILS;
+          SCOPED_CONTEXT_IF(
+            ControlsContext_MODAL_SHOP_WEAPON_DETAILS, data.shopDetailsContextIsActive
+          );
 
           CLAY({.layout{
             BF_CLAY_SIZING_GROW_X,
@@ -6043,8 +6048,15 @@ void DoUI(bool draw) {
 
     const bool hovered = Clay_Hovered();
 
-    if (hovered || g.run.showingSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id))
+    const bool isSelected = (g.run.shopSelectedWeaponIndex == weaponIndex);
+
+    if (hovered                                                                    //
+        || g.run.stickedSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id)  //
+        || isSelected)
     {
+      if (isSelected)
+        TODO_OVERLAY;
+
       f32                          offsetY{};
       Clay_FloatingAttachPointType attachElement{};
       Clay_FloatingAttachPointType attachParent{};
@@ -6098,16 +6110,17 @@ void DoUI(bool draw) {
         FLOATING_BEAUTIFY;
 
         componentUniversalCard(ComponentUniversalCardData{
-          .difficulty              = data.difficulty,
-          .build                   = data.build,
-          .item                    = data.item,
-          .weapon                  = data.weapon,
-          .count                   = data.count,
-          .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
-          .affectedByGame          = data.affectedByGame,
-          .overrideTier            = data.overrideTier,
-          .shopSelling             = data.weAreInShop,
-          .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
+          .difficulty                 = data.difficulty,
+          .build                      = data.build,
+          .item                       = data.item,
+          .weapon                     = data.weapon,
+          .count                      = data.count,
+          .weaponIndexOrMinus1        = data.weaponIndexOrMinus1,
+          .affectedByGame             = data.affectedByGame,
+          .overrideTier               = data.overrideTier,
+          .shopDetailsContextIsActive = isSelected,
+          .shopSelling                = data.weAreInShop,
+          .shopFocusAfterRecycling    = data.shopFocusAfterRecycling,
         });
       }
 
@@ -6117,7 +6130,7 @@ void DoUI(bool draw) {
     if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
         && !hovered                                 //
         && ge.thisFrameEvents.Mouse())
-      g.run.showingSlotDetails = false;
+      g.run.stickedSlotDetails = false;
   };
 
   struct ComponentItemsGridData {  ///
