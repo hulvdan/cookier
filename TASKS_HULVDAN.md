@@ -3,10 +3,22 @@ WORKING SINCE 2025-09-07
 x new run: TOUCH: don't proceed to the next stage upon clicking
   if slot wasn't selected in the first place
 
-  * touch on item -> select it + show details
-    touch again -> deselect (details hide automatically)
-  * touch on weapon -> select it + show details
-    touch again -> deselect (details hide automatically)
+* shop: keyboard: when slot is selected (item / weapon) show details
+* shop: keyboard: when details are shown, pressing ESC hides them
+* shop: keyboard: when details are not shown, pressing SCAPE shows them
+* shop: touch: pressing on slot (item / weapon) shows details
+* shop: touch: pressing again - hides them
+* shop: mouse: hovering shows details
+* shop: mouse: unhovering hides them
+* shop:
+* shop:
+* shop:
+* shop:
+*
+* touch on item -> select it + show details
+  touch again -> deselect (details hide automatically)
+* touch on weapon -> select it + show details
+  touch again -> deselect (details hide automatically)
 *
 * new run:
 * new run:

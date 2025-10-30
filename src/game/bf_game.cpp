@@ -1050,6 +1050,8 @@ struct GameData {
 
     int bossCreatureID = 0;
 
+    bool shopShowingSlotDetails = false;
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -4349,16 +4351,25 @@ void DoUI(bool draw) {
     }
   };
 
+  static Direction uiElementSwitchDirectionPrevFrame = Direction_NONE;
+
   Direction uiElementSwitchDirection_ = Direction_NONE;
-  if (IsKeyPressed(SDL_SCANCODE_D) || IsKeyPressed(SDL_SCANCODE_RIGHT))
-    uiElementSwitchDirection_ = Direction_RIGHT;
-  if (IsKeyPressed(SDL_SCANCODE_W) || IsKeyPressed(SDL_SCANCODE_UP))
-    uiElementSwitchDirection_ = Direction_UP;
-  if (IsKeyPressed(SDL_SCANCODE_A) || IsKeyPressed(SDL_SCANCODE_LEFT))
-    uiElementSwitchDirection_ = Direction_LEFT;
-  if (IsKeyPressed(SDL_SCANCODE_S) || IsKeyPressed(SDL_SCANCODE_DOWN))
-    uiElementSwitchDirection_ = Direction_DOWN;
+  if (!draw) {
+    if (IsKeyPressed(SDL_SCANCODE_D) || IsKeyPressed(SDL_SCANCODE_RIGHT))
+      uiElementSwitchDirection_ = Direction_RIGHT;
+    if (IsKeyPressed(SDL_SCANCODE_W) || IsKeyPressed(SDL_SCANCODE_UP))
+      uiElementSwitchDirection_ = Direction_UP;
+    if (IsKeyPressed(SDL_SCANCODE_A) || IsKeyPressed(SDL_SCANCODE_LEFT))
+      uiElementSwitchDirection_ = Direction_LEFT;
+    if (IsKeyPressed(SDL_SCANCODE_S) || IsKeyPressed(SDL_SCANCODE_DOWN))
+      uiElementSwitchDirection_ = Direction_DOWN;
+  }
   const Direction uiElementSwitchDirection = uiElementSwitchDirection_;
+
+  DEFER {
+    if (!draw)
+      uiElementSwitchDirectionPrevFrame = uiElementSwitchDirection;
+  };
 
   bool justFocusedDefaultControl = false;
 
@@ -6163,7 +6174,25 @@ void DoUI(bool draw) {
             if (data.markFirstAsDefault && (t == 0))
               markControlAsDefault(slotID);
 
-            if (Clay_Hovered()) {
+            if (!draw && (CURRENT_CONTEXT.focused.id == slotID.id)) {
+              if (uiElementSwitchDirectionPrevFrame)
+                g.run.shopShowingSlotDetails = true;
+              else if (IsKeyPressed(SDL_SCANCODE_ESCAPE) && g.run.shopShowingSlotDetails)
+              {
+                PlaySound(Sound_UI_CLICK);
+                g.run.shopShowingSlotDetails = false;
+              }
+              else if (IsKeyPressed(SDL_SCANCODE_SPACE) && !g.run.shopShowingSlotDetails)
+              {
+                PlaySound(Sound_UI_CLICK);
+                g.run.shopShowingSlotDetails = true;
+              }
+            }
+
+            if (Clay_Hovered()
+                || g.run.shopShowingSlotDetails
+                     && (CURRENT_CONTEXT.focused.id == slotID.id))
+            {
               componentUniversalDetails({
                 .difficulty   = difficultyType,
                 .build        = buildType,
@@ -6172,6 +6201,7 @@ void DoUI(bool draw) {
                 .detailsRight = 1,
                 .detailsBelow = data.detailsBelow,
               });
+
               if (ge.meta.debugEnabled && itemType) {
                 auto& item = g.run.state.items[t - 2];
                 if (wheel && Clay_Hovered()) {
@@ -8527,7 +8557,7 @@ void DoUI(bool draw) {
   ASSERT_FALSE(currentContext);
 
   // Control groups navigation.
-  {  ///
+  if (!draw) {  ///
     ControlsContext shownScreen{};
     ControlsContext shownModal{};
     for (int i = 1; i < ControlsContext_COUNT; i++) {

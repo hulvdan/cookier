@@ -869,6 +869,8 @@ struct EngineData {
 
     // 0 - not loaded yet, 1 - savedata is empty (null), 2 - got savedata.
     int jsLoadedSavedata = 0;
+
+    bool _drawing = false;
   } meta;
 
   struct Settings {
@@ -951,6 +953,8 @@ void GameReady() {  ///
 }
 
 ma_sound* PlaySound(Sound sound) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   auto& params = g_sounds[sound];
 
   auto  variation = GRAND.Rand() % params.variations;
@@ -980,11 +984,15 @@ ma_sound* PlaySound(Sound sound) {  ///
 }
 
 void StopSound(ma_sound* sound) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   if (sound)
     ma_sound_stop(sound);
 }
 
 BF_FORCE_INLINE void DrawGroup_Begin(DrawZ z) {  ///
+  ASSERT(ge.meta._drawing);
+
   ASSERT(ge.draw.currentGroupIndex == -1);
   ge.draw.currentGroupIndex = ge.draw.groups.count;
   *ge.draw.groups.Add()     = {.z = z, .commandsStartIndex = ge.draw.commands.count};
@@ -1035,7 +1043,7 @@ void _ApplyCurrentCamera(Vector2* point, f32* size, bool isTexture = false) {  /
   }
 }
 
-enum DrawCommandSetSortY {
+enum DrawCommandSetSortY {  ///
   DrawCommandSetSortY_DO_NOTHING,
   DrawCommandSetSortY_SET_BASELINE,
 };
@@ -1107,10 +1115,10 @@ BF_FORCE_INLINE void DrawGroup_CommandTextureNineSlice(
   };
 }
 
-BF_FORCE_INLINE void DrawGroup_CommandCircle(  ///
+BF_FORCE_INLINE void DrawGroup_CommandCircle(
   DrawCircleData      data,
   DrawCommandSetSortY setSortY = DrawCommandSetSortY_DO_NOTHING
-) {
+) {  ///
   ASSERT(data.radius >= 0);
   if (data.radius <= 0)
     return;
@@ -3618,8 +3626,10 @@ SDL_AppResult EngineUpdate() {  ///
   // TODO: record / replay inputs.
   // TODO: mb IsKeyPressed and other functions should also raise.
   ge.meta.logicRand._raise = true;
+  ge.meta._drawing         = true;
   ge.draw.flushedThisFrame = false;
   GameDraw();
+  ge.meta._drawing         = false;
   ge.meta.logicRand._raise = false;
 
   return SDL_APP_CONTINUE;
