@@ -802,6 +802,13 @@ enum SavedataLoadingType {
   SavedataLoadingType_FISNIHED,
 };
 
+enum LastEventType {
+  LastEventType_NOT_SET,
+  LastEventType_TOUCH,
+  LastEventType_MOUSE,
+  LastEventType_KEY,
+};
+
 struct _ReceivedEvents {  ///
   bool mousePressed  = false;
   bool mouseReleased = false;
@@ -902,6 +909,7 @@ struct EngineData {
 
   _ReceivedEvents prevFrameEvents = {};
   _ReceivedEvents thisFrameEvents = {};
+  LastEventType   lastEventType   = {};
 
   struct Settings {
     Color     backgroundColor = BLACK;
