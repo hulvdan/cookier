@@ -5,6 +5,7 @@ x new run: TOUCH: don't proceed to the next stage upon clicking
 x shop: keyboard: when slot is selected item show details
 x ref: componentWeaponsGrid
 
+* inline componentUniversalDetails
 * ref: merge componentWeaponDetails with componentUniversalDetails
 * shop: keyboard: when slot is selected weapon show details
 * shop: keyboard: when details are shown, pressing ESC hides them

@@ -5248,8 +5248,8 @@ void DoUI(bool draw) {
     return CLAY_IDI("button_shop_buy", index);
   };
 
-  LAMBDA (Clay_ElementId, getIDFromShopPlayerWeaponIndex, (int i)) {  ///
-    return CLAY_IDI("shop_player_weapon", i);
+  LAMBDA (Clay_ElementId, getIDFromPlayerWeaponIndex, (int i)) {  ///
+    return CLAY_IDI("player_weapon", i);
   };
 
   LAMBDA (void, componentUniversalCard, (ComponentUniversalCardData data)) {
@@ -5764,7 +5764,7 @@ void DoUI(bool draw) {
           }
         }
 
-        if (data.shopSelling) {  ///
+        if (data.shopSelling && data.weapon) {  ///
           const bool activateContext = (g.run.shopSelectedWeaponIndex >= 0);
           SCOPED_CONTEXT_IF(ControlsContext_MODAL_SHOP_WEAPON_DETAILS, activateContext);
 
@@ -5854,9 +5854,7 @@ void DoUI(bool draw) {
               }
 
               ResetFocus(ControlsContext_SHOP);
-              ChangeFocus(
-                ControlsContext_SHOP, getIDFromShopPlayerWeaponIndex(focusIndex)
-              );
+              ChangeFocus(ControlsContext_SHOP, getIDFromPlayerWeaponIndex(focusIndex));
             }
 
             if (recycled) {
@@ -5876,6 +5874,8 @@ void DoUI(bool draw) {
             }
           }
         }
+        else if (data.shopSelling)
+          INVALID_PATH;
       }
     }
   };
@@ -5891,6 +5891,9 @@ void DoUI(bool draw) {
     int  count          = 1;
     bool affectedByGame = true;
     int  overrideTier   = -1;
+
+    bool           weAreInShop             = false;
+    Clay_ElementId shopFocusAfterRecycling = {};
 
     int detailsRight = -1;
     int detailsBelow = -1;
@@ -5956,13 +5959,15 @@ void DoUI(bool draw) {
       FLOATING_BEAUTIFY;
 
       componentUniversalCard({
-        .difficulty     = data.difficulty,
-        .build          = data.build,
-        .item           = data.item,
-        .weapon         = data.weapon,
-        .count          = data.count,
-        .affectedByGame = data.affectedByGame,
-        .overrideTier   = data.overrideTier,
+        .difficulty              = data.difficulty,
+        .build                   = data.build,
+        .item                    = data.item,
+        .weapon                  = data.weapon,
+        .count                   = data.count,
+        .affectedByGame          = data.affectedByGame,
+        .overrideTier            = data.overrideTier,
+        .shopSelling             = data.weAreInShop,
+        .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
       });
     }
 
@@ -6056,12 +6061,11 @@ void DoUI(bool draw) {
   struct ComponentWeaponDetailsData {  ///
     WeaponType     type                    = {};
     int            weaponIndexOrMinus1     = -1;
-    bool           weAreInShop             = false;
     bool           detailsBelow            = false;
     bool           detailsRight            = false;
     bool           affectedByGame          = true;
+    bool           weAreInShop             = false;
     Clay_ElementId shopFocusAfterRecycling = {};
-    Clay_ElementId shopFocusAfterCombining = {};
   };
 
   LAMBDA (void, componentWeaponDetails, (ComponentWeaponDetailsData data)) {  ///
@@ -6079,78 +6083,21 @@ void DoUI(bool draw) {
     else
       tier = fb_weapons->Get(data.type)->min_tier_index();
 
-    // Floating weapon details modal.
-    // Gets shown upon hovering. Gets sticked upon clicking on weapon.
-    if (Clay_Hovered() || (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1)) {
-      f32                          offsetY{};
-      Clay_FloatingAttachPointType attachElement{};
-      Clay_FloatingAttachPointType attachParent{};
-
-      if (data.detailsBelow) {
-        offsetY = GAP_SMALL;
-
-        if (data.detailsRight) {
-          attachElement = CLAY_ATTACH_POINT_RIGHT_TOP;
-          attachParent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
-        }
-        else {
-          attachElement = CLAY_ATTACH_POINT_LEFT_TOP;
-          attachParent  = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-        }
-      }
-      else {
-        offsetY = -GAP_SMALL;
-
-        if (data.detailsRight) {
-          attachElement = CLAY_ATTACH_POINT_RIGHT_BOTTOM;
-          attachParent  = CLAY_ATTACH_POINT_RIGHT_TOP;
-        }
-        else {
-          attachElement = CLAY_ATTACH_POINT_LEFT_BOTTOM;
-          attachParent  = CLAY_ATTACH_POINT_LEFT_TOP;
-        }
-      }
-
-      zIndex += 2;
-
-      CLAY({
-        .layout{
-          .sizing{
-            CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-            CLAY_SIZING_FIT(0)
-          },
-        },
-        .floating{
-          .offset{0, offsetY},
-          .zIndex = zIndex,
-          .attachPoints{.element = attachElement, .parent = attachParent},
-          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE,
-          .attachTo           = CLAY_ATTACH_TO_PARENT,
-        },
-      }) {
-        FLOATING_BEAUTIFY;
-
-        if (data.weAreInShop
-            && (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1))
-        {
-          componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-            if (clicked())
-              g.run.shopSelectedWeaponIndex = -1;
-          });
-        }
-
-        componentUniversalCard({
-          .weapon                  = data.type,
-          .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
-          .affectedByGame          = data.affectedByGame,
-          .overrideTier            = tier,
-          .shopSelling             = data.weAreInShop,
-          .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
-        });
-      }
-
-      zIndex -= 2;
+    if (data.weAreInShop && (g.run.shopSelectedWeaponIndex == data.weaponIndexOrMinus1)) {
+      componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
+        if (clicked())
+          g.run.shopSelectedWeaponIndex = -1;
+      });
     }
+
+    componentUniversalCard({
+      .weapon                  = data.type,
+      .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
+      .affectedByGame          = data.affectedByGame,
+      .overrideTier            = tier,
+      .shopSelling             = data.weAreInShop,
+      .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
+    });
   };
 
   struct GridEntryDetailsWhenHoveredData {  ///
@@ -6162,7 +6109,12 @@ void DoUI(bool draw) {
     ItemType       item       = {};
     WeaponType     weapon     = {};
 
-    int count        = 1;
+    int count               = 1;
+    int weaponIndexOrMinus1 = -1;
+
+    bool           weAreInShop             = false;
+    Clay_ElementId shopFocusAfterRecycling = {};
+
     int detailsRight = -1;
     int detailsBelow = -1;
   };
@@ -6187,13 +6139,16 @@ void DoUI(bool draw) {
     if (hovered || g.run.showingSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id))
     {
       componentUniversalDetails({
-        .difficulty   = data.difficulty,
-        .build        = data.build,
-        .item         = data.item,
-        .weapon       = data.weapon,
-        .count        = data.count,
-        .detailsRight = data.detailsRight,
-        .detailsBelow = data.detailsBelow,
+        .difficulty              = data.difficulty,
+        .build                   = data.build,
+        .item                    = data.item,
+        .weapon                  = data.weapon,
+        .count                   = data.count,
+        .weAreInShop             = data.weAreInShop,
+        .weaponIndexOrMinus1     = data.weaponIndexOrMinus1,
+        .shopFocusAfterRecycling = data.shopFocusAfterRecycling,
+        .detailsRight            = data.detailsRight,
+        .detailsBelow            = data.detailsBelow,
       });
     }
 
@@ -6303,6 +6258,7 @@ void DoUI(bool draw) {
     int             weaponsX     = {};
     bool            detailsRight = 1;
     bool            detailsBelow = 0;
+    bool            weAreInShop  = false;
   };
 
   LAMBDA (void, componentWeaponsGrid, (ComponentWeaponsGridData data)) {  ///
@@ -6349,8 +6305,7 @@ void DoUI(bool draw) {
           int focusWeapon = weaponIndex;
           if (weaponIndex >= weaponsCount - 1)
             focusWeapon--;
-          Clay_ElementId focusAfterRecycling
-            = getIDFromShopPlayerWeaponIndex(focusWeapon);
+          Clay_ElementId focusAfterRecycling = getIDFromPlayerWeaponIndex(focusWeapon);
           if (focusWeapon < 0) {
             focusAfterRecycling = rerollID;
             for (auto i : DEFAULT_BUYING_INDICES) {
@@ -6362,7 +6317,7 @@ void DoUI(bool draw) {
             }
           }
 
-          const auto slotID = getIDFromShopPlayerWeaponIndex(weaponIndex);
+          const auto slotID = getIDFromPlayerWeaponIndex(weaponIndex);
 
           processShowingOrNotShowingOfSlotDetails(slotID);
 
@@ -6382,21 +6337,16 @@ void DoUI(bool draw) {
           // Hovering modal.
           if (weapon.type) {
             gridEntryDetailsWhenHovered({
-              .id           = slotID,
-              .group        = data.group,
-              .weapon       = weapon.type,
-              .count        = 1,
-              .detailsRight = data.detailsRight,
-              .detailsBelow = data.detailsBelow,
+              .id                      = slotID,
+              .group                   = data.group,
+              .weapon                  = weapon.type,
+              .count                   = 1,
+              .weaponIndexOrMinus1     = weaponIndex,
+              .weAreInShop             = data.weAreInShop,
+              .shopFocusAfterRecycling = focusAfterRecycling,
+              .detailsRight            = data.detailsRight,
+              .detailsBelow            = data.detailsBelow,
             });
-
-            // componentWeaponDetails({
-            //   .type                    = weapon.type,
-            //   .weaponIndexOrMinus1     = weaponIndex,
-            //   .weAreInShop             = true,
-            //   .detailsRight        = true,
-            //   .shopFocusAfterRecycling = focusAfterRecycling,
-            // });
           }
         }
       }
@@ -7647,6 +7597,7 @@ void DoUI(bool draw) {
                 .weaponsX     = 3,
                 .detailsRight = 0,
                 .detailsBelow = 0,
+                .weAreInShop  = 1,
               });
             }
           }
