@@ -341,6 +341,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
         pos.y -= d / 2;
       }
 
+      ge.meta._drawing = true;
+
       // Background.
       DrawGroup_Begin(DrawZ_SCREEN_BACKGROUND);
       DrawGroup_SetSortY(0);
@@ -368,6 +370,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
         }
         DrawGroup_End();
       }
+
+      ge.meta._drawing = false;
     }
 
     result = EngineUpdate();
