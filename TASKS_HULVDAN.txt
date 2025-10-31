@@ -27,9 +27,9 @@ x touch: new run: after difficulty selection -> don't react to this touch positi
 x touch: new run: pressing back button
   HIGHLIGHTS previously selected stuff as SELECTED
 x .txt indent 2
-
-* touch: details: use PASSTHROUGH when touch is down but not pressed
+x touch: details: use PASSTHROUGH when touch is down but not pressed
   so that moving finger in weapons / items can select other
+
 * ui:
 * ui:
 * ui:

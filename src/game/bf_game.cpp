@@ -6160,6 +6160,14 @@ void DoUI(bool draw) {
 
       zIndex += 2;
 
+      auto pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE;
+      if (!draw) {
+        if ((ge.meta._latestActiveTouchID != InvalidTouchID)
+            && IsTouchDown(ge.meta._latestActiveTouchID)
+            && !IsTouchPressed(ge.meta._latestActiveTouchID))
+          pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH;
+      }
+
       CLAY({
         .layout{
           .sizing{
@@ -6171,7 +6179,8 @@ void DoUI(bool draw) {
           .offset{0, offsetY},
           .zIndex = zIndex,
           .attachPoints{.element = attachElement, .parent = attachParent},
-          .attachTo = CLAY_ATTACH_TO_PARENT,
+          .pointerCaptureMode = pointerCaptureMode,
+          .attachTo           = CLAY_ATTACH_TO_PARENT,
         },
       }) {
         FLOATING_BEAUTIFY;
