@@ -38,30 +38,13 @@ x modal: quit: good design: empty spaces
 x modal: restart + new run
 x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 
-* ui nav: upgrades: going from upgrades to reroll and returning back
-  should set the same preferred index
-*
-* touch: releasing finger while showing details
-  -> details are sticked (or weapon details are shown up)
-* touch: selecting weapon details only when released touch.
-  if pressed and hovered - just showing it (like on pc - hovering)
-*
-* shop: selecting weapon -> set close as a default button
-* stats: opening stats panel changes keyboard ui nav focus to close button
 * sparkles that highlight the weapons can be upgraded
 * outline with offset down
-* fix: shop: weapons details to the left
 *
 * enemy that tanks 1-3 damage
-* engine: make `Arena` growing (by default it should assert)
 *
 * show controls above strips
-* bigger buttons (bigger button font)
-* touch: pressing item again removes hover from it
-* touch:
-* mobile: sounds don't work
 * mobile: looks like framebuffer didn't scale
-* touch: pause button during gameplay
 * structures in a circle around center
 * на русском апгрейд "рукопашный урон" хреново смотрится
   мб "рукопашная"?
@@ -69,25 +52,17 @@ x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
 *
 *
-*
 * implement all weapon/item/build/difficulty effects
 * weapon groups (primitive, medical, etc.) + set bonuses
 * can take damage if dodged
-* fix: web release: why pressing P doesn't show pause UI?
-* ach screen: animate unlocked weapon tiers (different damages / scalings)
 * fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
 * save load: more tests!
-* new run: showing selected difficulty/build/weapon name
-* new run: button selection needs to be rewoked for PC
-* new run: go button big green or rework in steps
 * new run: build icons
-* localization sorting
 * mob with crate: guaranteed cooldown?
 * hp bar black outline
 * luck = подкова
 * multiple level ups icons in the top right corner (like picked up crates)
-* draw UI? writing code gets tiring
 * turrel: show damage in item
 * landmine: show damage in item
 * landmine: show spawn rate "Gets spawned every %.1f seconds"
@@ -248,3 +223,8 @@ LATER:
 * new run: refactor MAKE LESS CODE
 * modal: quit: pressing cross doesn't close window but shows confirmation modal
   look at `SDL_EVENT_QUIT` !!!
+* ui nav: upgrades: going from upgrades to reroll and returning back
+  should set the same preferred index
+* engine: make `Arena` growing (by default it should assert)
+* ach screen: animate unlocked weapon tiers (different damages / scalings)
+* localization sorting
