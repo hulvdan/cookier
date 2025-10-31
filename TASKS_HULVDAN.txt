@@ -23,9 +23,13 @@ x touch: make it not possible to "activate" weapon in shop
 x touch: hide cancel button in weapon details
 x touch: show slots as "selected" only when `stickedSlotDetails` is true
 x touch: when touching outside of slot -> hide details
+x touch: new run: after difficulty selection -> don't react to this touch position
 
-* touch: new run: after difficulty selection -> don't react to this touch position
-* touch:
+* touch: new run: pressing back button
+  HIGHLIGHTS previously selected stuff as SELECTED
+* .txt indent 2
+* touch: details: use PASSTHROUGH when touch is down but not pressed
+  so that moving finger in weapons / items can select other
 * ui:
 * ui:
 * ui:
