@@ -4715,6 +4715,7 @@ void DoUI(bool draw) {
     ControlsGroupID group = {};
     int             price = {};
     bool            big   = false;
+    Color           color = WHITE;
   };
 
   LAMBDA (bool, componentButtonRecycle, (ComponentButtonRecycleData data)) {  ///
@@ -4728,30 +4729,33 @@ void DoUI(bool draw) {
     return componentButton(
       {.id = data.id, .group = data.group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_IMAGE({.texID = texID}, [&]() BF_FORCE_INLINE_LAMBDA {
-          CLAY({
-            .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
-            .floating{
-              .zIndex = zIndex,
-              .attachPoints{
-                .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-                .parent  = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+        BF_CLAY_IMAGE(
+          {.texID = texID, .color = data.color},
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            CLAY({
+              .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+              .floating{
+                .zIndex = zIndex,
+                .attachPoints{
+                  .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+                  .parent  = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                },
+                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                .attachTo           = CLAY_ATTACH_TO_PARENT,
               },
-              .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-              .attachTo           = CLAY_ATTACH_TO_PARENT,
-            },
-          }) {
-            FLOATING_BEAUTIFY;
+            }) {
+              FLOATING_BEAUTIFY;
 
-            FontBegin(&g.meta.fontUIBigOutlined);
-            BF_CLAY_TEXT(TextFormat("%d", data.price), palTextWhite);
-            BF_CLAY_IMAGE({
-              .texID = glib->ui_coin_texture_id(),
-              .scale = Vector2One() * 0.75f,
-            });
-            FontEnd();
+              FontBegin(&g.meta.fontUIBigOutlined);
+              BF_CLAY_TEXT(TextFormat("%d", data.price), palTextWhite);
+              BF_CLAY_IMAGE({
+                .texID = glib->ui_coin_texture_id(),
+                .scale = Vector2One() * 0.75f,
+              });
+              FontEnd();
+            }
           }
-        });
+        );
       }
     );
   };
@@ -5793,10 +5797,14 @@ void DoUI(bool draw) {
             ControlsContext_MODAL_SHOP_WEAPON_DETAILS, data.shopDetailsContextIsActive
           );
 
+          auto alignX = CLAY_ALIGN_X_RIGHT;
+          if (ge.events.last == LastEventType_TOUCH)
+            alignX = CLAY_ALIGN_X_CENTER;
+
           CLAY({.layout{
             BF_CLAY_SIZING_GROW_X,
             .childGap = GAP_SMALL,
-            BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER,
+            .childAlignment{.x = alignX, .y = CLAY_ALIGN_Y_CENTER},
           }}) {
             int   canCombineWithIndex = -1;
             auto& weapon              = g.run.state.weapons[data.weaponIndexOrMinus1];
@@ -5837,26 +5845,22 @@ void DoUI(bool draw) {
             });
 
             // Cancel button.
-            auto       cancelID  = CLAY_ID("button_weapon_cancel");
-            const bool cancelled = componentButton(
-              {
-                .id    = cancelID,
-                .group = groupDetails,
-                .keys  = KEYS_CANCEL,
-              },
-              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                bool active = true;
-                if (data.weaponIndexOrMinus1 >= 0)
-                  active
-                    = g.run.shopActivatedModalWeaponIndex == data.weaponIndexOrMinus1;
+            auto cancelID  = CLAY_ID("button_weapon_cancel");
+            bool cancelled = false;
 
-                BF_CLAY_IMAGE({
-                  .texID = glib->ui_icon_cancel_texture_id(),
-                  .color = (active ? WHITE : palGray),
-                });
-              }
-            );
-            markControlAsDefault(cancelID);
+            if (ge.events.last != LastEventType_TOUCH) {
+              cancelled = componentButton(
+                {
+                  .id    = cancelID,
+                  .group = groupDetails,
+                  .keys  = KEYS_CANCEL,
+                },
+                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_IMAGE({.texID = glib->ui_icon_cancel_texture_id()});
+                }
+              );
+              markControlAsDefault(cancelID);
+            }
 
             if (combined) {
               ASSERT(canCombineWithIndex >= 0);

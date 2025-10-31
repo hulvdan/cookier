@@ -20,8 +20,8 @@ x mouse: hiding details if not hovered
 x fix: showing multiple details during the same frame
 x touch: make it not possible to "activate" weapon in shop
   but buttons should work
+x touch: hide cancel button in weapon details
 
-* touch: hide cancel button in weapon details
 * touch: show slots as "selected" only when `stickedSlotDetails` is true
 * touch:
 * touch:
