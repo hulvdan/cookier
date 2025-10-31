@@ -32,18 +32,11 @@ x touch: details: use PASSTHROUGH when touch is down but not pressed
 x modal: quit: disable mouse grab
 x modal: quit: pressing cancel sound
 x modal: quit: pressing quit closes win
+x modal: quit: good design: frame
+x modal: quit: good design: font size
+x modal: quit: good design: empty spaces
 
-* modal: quit: good design: frame
-* modal: quit: good design: font size
-* modal: quit: good design: empty spaces
-* modal: quit:
-* modal: quit:
-* modal: quit:
-* modal: quit:
-* modal: quit:
-* modal: quit:
-* modal: are you sure you want to restart?
-* modal: are you sure you want to start a new run?
+* modal: restart + new run
 *
 * fix: disable ability to press SPACE in pause to ACTIVATE weapon
 *

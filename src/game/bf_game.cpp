@@ -8298,11 +8298,11 @@ void DoUI(bool draw) {
         }
 
         ControlsGroupConnect(groupTop, Direction_DOWN, groupButtons);
-        ControlsGroupConnect(groupWeaponsAndItems, Direction_UP, groupTop);
-        ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupTop);
         ControlsGroupConnect(groupButtons, Direction_UP, groupTop);
         ControlsGroupConnect(groupButtons, Direction_DOWN, groupTop);
         ControlsGroupConnect(groupButtons, Direction_RIGHT, groupWeaponsAndItems);
+        ControlsGroupConnect(groupWeaponsAndItems, Direction_UP, groupTop);
+        ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupTop);
       }
     }
   }
@@ -8524,26 +8524,29 @@ void DoUI(bool draw) {
     auto confirmID = CLAY_IDI("confirm_confirm", (int)ControlsContext_MODAL_CONFIRM_QUIT);
     auto cancelID  = CLAY_IDI("confirm_cancel", (int)ControlsContext_MODAL_CONFIRM_QUIT);
 
-    CLAY({
-      .floating{
-        .zIndex = zIndex,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-        },
-        .attachTo = CLAY_ATTACH_TO_PARENT,
+    CLAY({.floating{
+      .zIndex = zIndex,
+      .attachPoints{
+        .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+        .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
       },
-      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
-    }) {
+      .attachTo = CLAY_ATTACH_TO_PARENT,
+    }}) {
       FLOATING_BEAUTIFY;
+
+      FontBegin(&g.meta.fontUIBig);
 
       CLAY({
         .layout{
-          .sizing{.height = CLAY_SIZING_FIXED(20)},
+          .sizing{
+            .width  = CLAY_SIZING_FIXED(450),
+            .height = CLAY_SIZING_FIXED(160),
+          },
           BF_CLAY_PADDING_ALL(PADDING_FRAME),
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
+        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
       }) {
         componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
           if (clickOrTouchPressed())
@@ -8556,38 +8559,24 @@ void DoUI(bool draw) {
 
         BF_CLAY_SPACER_VERTICAL;
 
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_X,
-          .childGap = GAP_BIG,
-        }}) {
-          BF_CLAY_SPACER_HORIZONTAL;
-
+        CLAY({}) {
           const bool quit = componentButton(
-            {
-              .id    = confirmID,
-              .group = group,
-            },
+            {.id = confirmID, .group = group},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, textColor);
             }
           );
 
-          BF_CLAY_SPACER_HORIZONTAL;
+          CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
 
           const bool cancelled = componentButton(
-            {
-              .id    = cancelID,
-              .group = group,
-              .keys  = KEYS_CANCEL,
-            },
+            {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, textColor);
             }
           );
 
           markControlAsDefault(cancelID);
-
-          BF_CLAY_SPACER_HORIZONTAL;
 
           if (quit)
             ge.meta.quitScheduled = true;
@@ -8598,6 +8587,8 @@ void DoUI(bool draw) {
           }
         }
       }
+
+      FontEnd();
     }
 
     zIndex -= 6;
