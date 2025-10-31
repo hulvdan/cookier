@@ -18,9 +18,9 @@ x touch: pressing on slot (item / weapon) shows details
 x touch: pressing again - hides them
 x mouse: hiding details if not hovered
 x fix: showing multiple details during the same frame
-
-* touch: make it not possible to "activate" weapon in shop
+x touch: make it not possible to "activate" weapon in shop
   but buttons should work
+
 * touch: hide cancel button in weapon details
 * touch: show slots as "selected" only when `stickedSlotDetails` is true
 * touch:
@@ -32,6 +32,9 @@ x fix: showing multiple details during the same frame
 * ui:
 * ui:
 * ui:
+*
+* launch: emulate mobile by default (RECORD/REPLAY system would obsolete this)
+* launch: set fixed 2s wave duration for focusing
 *
 * ref extract same fields from `ComponentUniversalCardData` and `GridEntryDetailsData`
 *
