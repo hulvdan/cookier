@@ -37,8 +37,10 @@ x modal: quit: good design: font size
 x modal: quit: good design: empty spaces
 x modal: restart + new run
 x fix: disable ability to press SPACE in pause to ACTIVATE weapon
+x prioritization
+- green resume button
 
-* prioritization
+* fix: hovered details tier + affectedByGame
 * fix: mouse can move character
 * end screen green buttons
 * создать 50 тестовых предметов
