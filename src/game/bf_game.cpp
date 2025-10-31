@@ -6402,7 +6402,7 @@ void DoUI(bool draw) {
             .showsDetails = true,
           });
 
-          if (selectedWeapon && !ge.events.thisFrame.Touch()) {
+          if (data.weAreInShop && selectedWeapon && !ge.events.thisFrame.Touch()) {
             PlaySound(Sound_UI_CLICK);
             g.run.shopActivatedModalWeaponIndex = weaponIndex;
           }
