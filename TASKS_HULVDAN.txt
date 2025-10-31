@@ -40,9 +40,9 @@ x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 x prioritization
 - green resume button
 x fix: hovered details tier + affectedByGame
+- end screen green buttons
+x fix: mouse can move character
 
-* fix: mouse can move character
-* end screen green buttons
 * создать 50 тестовых предметов
 * скроллинг предметов
 * поставить переводчики / словари
@@ -292,3 +292,4 @@ LATER:
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * localization sorting
 * mobile: looks like framebuffer didn't scale
+* моргание таймера красным в последние 3 секунды

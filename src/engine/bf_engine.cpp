@@ -3385,7 +3385,7 @@ void SetTouchUserData(TouchID id, u64 userData) {  ///
   INVALID_PATH;  // Not found.
 }
 
-Vector2 GetMousePos() {  ///
+Vector2 GetMouseScreenPos() {  ///
   return ge.meta._mousePos;
 }
 
