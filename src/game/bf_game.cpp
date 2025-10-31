@@ -6311,7 +6311,7 @@ void DoUI(bool draw) {
 
             processShowingOrNotShowingSlotDetails(slotID);
 
-            gridEntryDetails({
+            gridEntryDetails(GridEntryDetailsData{
               .id             = slotID,
               .difficulty     = difficultyType,
               .build          = buildType,
@@ -6412,11 +6412,13 @@ void DoUI(bool draw) {
           if (weapon.type) {
             processShowingOrNotShowingSlotDetails(slotID);
 
-            gridEntryDetails({
+            gridEntryDetails(GridEntryDetailsData{
               .id                      = slotID,
               .weapon                  = weapon.type,
               .count                   = 1,
               .weaponIndexOrMinus1     = weaponIndex,
+              .affectedByGame          = data.affectedByGame,
+              .overrideTier            = weapon.tier,
               .weAreInShop             = data.weAreInShop,
               .shopFocusAfterRecycling = focusAfterRecycling,
               .detailsRight            = data.detailsRight,
