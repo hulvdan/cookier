@@ -40,6 +40,7 @@ x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 
 * prioritization
 * fix: mouse can move character
+* end screen green buttons
 * создать 50 тестовых предметов
 * скроллинг предметов
 * поставить переводчики / словари
@@ -53,16 +54,19 @@ x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 * красивая анимация перекидывания монет с поля в stash
 * норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
 * shadow under modal
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
+* fix: just unlocked achievement above every modal (ZIndexType int)
+  (achievement in shop gets shown below stats)
+* engine: font scale -> damage numbers squashing
+* show controls before starting the first wave
+  (show circle around center of the map -> player has to go away from it)
+* wave complete animation: try making text bigger
+* wave complete animation: increase speed of letters
+* wave complete animation: fade in / fade out
+* GRAY LOOKS LIKE SHIT
+* beautify error wiggling flash red?
+* glowing around coins
+* mouse: disable hover sound for stats cancel button?
+* change «next wave» button icon
 *
 *
 *
@@ -92,7 +96,6 @@ x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 * implement all weapon/item/build/difficulty effects
 * weapon groups (primitive, medical, etc.) + set bonuses
 * can take damage if dodged
-* fix: shop: disable keyboard R1234 while weapon modal is opened
 * fix multiple one-by-one sliding achievements translation
 * save load: more tests!
 * new run: build icons
