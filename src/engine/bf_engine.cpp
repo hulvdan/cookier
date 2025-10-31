@@ -30,6 +30,10 @@ constexpr Vector2 Vector2One() {  ///
   return Vector2{1, 1};
 }
 
+constexpr Vector2 Vector2Inf() {  ///
+  return Vector2{f32_inf, f32_inf};
+}
+
 f32 Vector2Length(Vector2 v) {  ///
   return glm::length(v);
 }
