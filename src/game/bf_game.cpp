@@ -937,12 +937,12 @@ struct GameData {
 
     bool godMode = false;
 
-    struct Touch {
-      Array<Vector2, 2> logicalPos = {};  // started, target.
-      Array<Vector2, 1> dir        = {};
-      Array<TouchID, 1> touchIDs   = {};
-      // FrameGame      rightLastPressedAt = {};
-    } touch;
+    struct {
+      bool    controlling   = false;
+      Vector2 startPos      = {};
+      Vector2 targetPos     = {};
+      Vector2 calculatedDir = {};
+    } stickControl;
 
     bool        paused                                   = false;
     bool        scheduledTogglePause                     = false;
@@ -4429,7 +4429,7 @@ void DoUI(bool draw) {
     if (g.meta.playerUsesKeyboardOrController)
       Clay_SetPointerState({f32_inf, f32_inf}, false);
     else {
-      auto pos = ScreenPosToLogical(GetMousePos());
+      auto pos = ScreenPosToLogical(GetMouseScreenPos());
 
       if (ge.events.last == LastEventType_TOUCH) {
         pos = Vector2Inf();
@@ -9370,11 +9370,6 @@ void GameFixedUpdate() {
   const auto fb_difficulties   = glib->difficulties();
   const auto fb_achievements   = glib->achievements();
   const auto fb_builds         = glib->builds();
-
-  for (bool buttonIsDown : ge.meta._keyboardState) {
-    if (buttonIsDown)
-      g.meta.playerUsesKeyboardOrController = true;
-  }
   // }
 
   // `g.meta.playerUsesKeyboardOrController`.
@@ -9382,8 +9377,7 @@ void GameFixedUpdate() {
     if ((ge.events.last == LastEventType_KEY)
         || (ge.events.last == LastEventType_CONTROLLER))
       g.meta.playerUsesKeyboardOrController = true;
-    else if ((ge.events.last != LastEventType_KEY)
-             && (ge.events.last != LastEventType_CONTROLLER))
+    else
       g.meta.playerUsesKeyboardOrController = false;
   }
 
@@ -9423,9 +9417,6 @@ void GameFixedUpdate() {
 
     Save();
   }
-
-  if ((g.run.state.screen != ScreenType_GAMEPLAY) || g.meta.paused)
-    g.meta.touch.touchIDs[0] = InvalidTouchID;
 
   // Show / hide cursor.
   {  ///
@@ -9743,71 +9734,38 @@ void GameFixedUpdate() {
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
-      // Touch controls.
+      // Stick controls.
       {  ///
-        auto& t = g.meta.touch;
-        for (auto& id : t.touchIDs) {
-          if (!IsTouchDown(id))
-            id = {};
+        auto& c = g.meta.stickControl;
+
+        if (IsMousePressed(L)) {
+          c.controlling = true;
+          c.startPos    = ScreenPosToLogical(GetMouseScreenPos());
+          c.targetPos   = c.startPos;
         }
+        else if (IsMouseDown(L)) {
+          c.targetPos = ScreenPosToLogical(GetMouseScreenPos());
+        }
+        else if (ge.meta._latestActiveTouchID != InvalidTouchID) {
+          const auto td = GetTouchData(ge.meta._latestActiveTouchID);
 
-        for (auto id : GetTouchIDs()) {
-          g.meta.playerUsesKeyboardOrController = false;
-          auto touch                            = GetTouchData(id);
-
-          if (touch.userData == u64_max)
-            continue;
-
-          if (IsTouchPressed(id)) {
-            auto touchIndex = 0;
-            auto pos        = ScreenPosToLogical(touch.screenPos);
-
-            if (t.touchIDs[touchIndex] == InvalidTouchID) {
-              t.touchIDs[touchIndex]       = id;
-              t.logicalPos[touchIndex * 2] = pos;
-              touch.userData               = (u64)touchIndex;
-              SetTouchUserData(id, (u64)touchIndex);
-
-              // if (touchIndex == 1) {
-              //   if (t.rightLastPressedAt.IsSet()
-              //       && (t.rightLastPressedAt.Elapsed() <= TOUCH_DOUBLE_TAP_FRAMES))
-              //   {
-              //     PLAYER_CREATURE.controller.bomb = true;
-              //     t.rightLastPressedAt            = {};
-              //   }
-              //   else {
-              //     t.rightLastPressedAt = {};
-              //     t.rightLastPressedAt.SetNow();
-              //   }
-              // }
-            }
-            else {
-              SetTouchUserData(id, u64_max);
-              continue;
-            }
+          if (IsTouchPressed(ge.meta._latestActiveTouchID)) {
+            c.controlling = true;
+            c.startPos    = ScreenPosToLogical(td.screenPos);
           }
 
-          auto index                  = (int)touch.userData;
-          t.logicalPos[index * 2 + 1] = ScreenPosToLogical(touch.screenPos);
-
-          break;
+          c.targetPos = ScreenPosToLogical(td.screenPos);
         }
+        else if (!IsMouseDown(L))
+          c.controlling = false;
 
-        FOR_RANGE (int, i, 1) {
-          if (t.touchIDs[i] == InvalidTouchID)
-            continue;
-
-          auto startPos  = t.logicalPos[i * 2];
-          auto targetPos = t.logicalPos[i * 2 + 1];
-          t.dir[i]       = Vector2Zero();
-          if (startPos != targetPos) {
-            t.dir[i]
-              = Vector2Normalize(targetPos - startPos)
+        if (c.controlling && (c.startPos != c.targetPos)) {
+          c.calculatedDir
+              = Vector2Normalize(c.targetPos - c.startPos)
                 * (MIN(
-                  g.ui.touchControlMaxLogicalOffset, Vector2Distance(startPos, targetPos)
+                  g.ui.touchControlMaxLogicalOffset, Vector2Distance(c.startPos, c.targetPos)
                 )
                 / g.ui.touchControlMaxLogicalOffset);
-          }
         }
       }
 
@@ -9832,8 +9790,8 @@ void GameFixedUpdate() {
         {  ///
           Vector2 move{};
 
-          if (g.meta.touch.touchIDs[0] != InvalidTouchID)
-            move = g.meta.touch.dir[0];
+          if (g.meta.stickControl.controlling)
+            move = g.meta.stickControl.calculatedDir;
           else {
             if (IsKeyDown(SDL_SCANCODE_D) || IsKeyDown(SDL_SCANCODE_RIGHT))
               move.x += 1;
@@ -11989,31 +11947,29 @@ void GameDraw() {
   }
 
   // Drawing touch controls.
-  if ((g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused) {  ///
-    auto& t = g.meta.touch;
-
+  if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
+      && !g.meta.paused                            //
+      && g.meta.stickControl.controlling)
+  {  ///
     DrawGroup_Begin(DrawZ_TOUCH_CONTROLS);
     DrawGroup_SetSortY(0);
 
-    FOR_RANGE (int, i, 1) {
-      if (t.touchIDs[i] == InvalidTouchID)
-        continue;
+    const auto& c = g.meta.stickControl;
 
-      const auto startPos = t.logicalPos[i * 2];
-      auto       endPos   = t.logicalPos[i * 2 + 1];
-      if (startPos != endPos)
-        endPos = startPos + t.dir[i] * g.ui.touchControlMaxLogicalOffset;
+    const auto startPos  = c.startPos;
+    auto       targetPos = c.targetPos;
+    if (startPos != targetPos)
+      targetPos = startPos + c.calculatedDir * g.ui.touchControlMaxLogicalOffset;
 
-      const struct {
-        Vector2 pos   = {};
-        int     texID = {};
-      } data[]{
-        {.pos = startPos, .texID = glib->ui_controls_touch_base_texture_id()},
-        {.pos = endPos, .texID = glib->ui_controls_touch_handle_texture_id()},
-      };
-      for (auto& d : data) {
-        DrawGroup_CommandTexture({.texID = d.texID, .pos = d.pos});
-      }
+    const struct {
+      Vector2 pos   = {};
+      int     texID = {};
+    } data[]{
+      {.pos = startPos, .texID = glib->ui_controls_touch_base_texture_id()},
+      {.pos = targetPos, .texID = glib->ui_controls_touch_handle_texture_id()},
+    };
+    for (auto& d : data) {
+      DrawGroup_CommandTexture({.texID = d.texID, .pos = d.pos});
     }
 
     DrawGroup_End();
