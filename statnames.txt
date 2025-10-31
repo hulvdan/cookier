@@ -7,7 +7,7 @@ STAT_DAMAGE;                         Урон;                                  
 STAT_DAMAGE_MELEE;                   Рукопашный Урон;                                   Melee Damage;
 STAT_DAMAGE_RANGED;                  Дальний Урон;                                      Ranged Damage;
 STAT_DAMAGE_ELEMENTAL;               Природный Урон;                                    Elemental Damage;
-STAT_ATTACK_SPEED;                   Ловкость/Скорость Атаки;                           Attack Speed . Agility . Dexterity;
+STAT_ATTACK_SPEED;                   Скорость Атаки;                           Attack Speed . Agility . Dexterity;
 STAT_CRIT_CHANCE;                    Шанс Крита/Меткость;                               Crit Chance . TODO;
 STAT_ENGINEERING;                    Ремесло;                                           Engineering . TODO;
 STAT_RANGE;                          Дальность . досягаемость;                          Range;
