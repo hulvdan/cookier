@@ -452,6 +452,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ge.events.last                   = LastEventType_MOUSE;
 
       ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
+      ge.meta._mousePos              = {e.x, ge.meta.screenSize.y - e.y};
     }
   } break;
 
@@ -482,6 +483,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ge.events.last                    = LastEventType_MOUSE;
 
       ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
+      ge.meta._mousePos              = {e.x, ge.meta.screenSize.y - e.y};
     }
   } break;
 
@@ -514,6 +516,7 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ge.events.last                 = LastEventType_MOUSE;
 
       ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
+      ge.meta._mousePos              = {e.x, ge.meta.screenSize.y - e.y};
     }
   } break;
 

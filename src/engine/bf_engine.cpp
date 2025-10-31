@@ -858,7 +858,9 @@ struct EngineData {
     u32     _mouseState            = {};
     u32     _mouseStatePressed     = {};
     u32     _mouseStateReleased    = {};
+    Vector2 _mousePos              = {};
     Vector2 _mouseOrLatestTouchPos = {};
+    Vector2 _latestTouchPos        = {};
     int     _mouseWheel            = {};
 
     Vector<TouchID>    _touchIDs            = {};
@@ -3357,8 +3359,16 @@ void SetTouchUserData(TouchID id, u64 userData) {  ///
   INVALID_PATH;  // Not found.
 }
 
+Vector2 GetMousePos() {  ///
+  return ge.meta._mousePos;
+}
+
 Vector2 GetMouseOrLatestTouchScreenPos() {  ///
   return ge.meta._mouseOrLatestTouchPos;
+}
+
+Vector2 GetLatestTouchScreenPos() {  ///
+  return ge.meta._latestTouchPos;
 }
 
 int GetMouseWheel() {  ///
@@ -3635,6 +3645,7 @@ SDL_AppResult EngineUpdate() {  ///
     // Setting `ge.meta._latestActiveTouchID`.
     {
       ge.meta._latestActiveTouchID = {};
+      ge.meta._latestTouchPos      = {-1, -1};
       int highestNumber            = 0;
       FOR_RANGE (int, i, ge.meta._touches.count) {
         const auto& t = ge.meta._touches[i];
@@ -3642,6 +3653,7 @@ SDL_AppResult EngineUpdate() {  ///
           highestNumber                  = t.data.number;
           ge.meta._latestActiveTouchID   = ge.meta._touchIDs[i];
           ge.meta._mouseOrLatestTouchPos = t.data.screenPos;
+          ge.meta._latestTouchPos        = t.data.screenPos;
         }
       }
     }
