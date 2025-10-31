@@ -4396,12 +4396,14 @@ void DoUI(bool draw) {
   const auto fb_builds              = glib->builds();
   const auto fb_effectConditions    = glib->effect_conditions();
 
-  static int disallowTouchNumber = {};
+  static int _disallowTouchNumber = {};
 
   LAMBDA (void, disallowTouch, ()) {
     ASSERT_FALSE(draw);
-    ASSERT(ge.meta._latestActiveTouchID != InvalidTouchID);
-    disallowTouchNumber = GetTouchData(ge.meta._latestActiveTouchID).number;
+    if (GetTouchIDs().count) {
+      ASSERT(ge.meta._latestActiveTouchID != InvalidTouchID);
+      _disallowTouchNumber = GetTouchData(ge.meta._latestActiveTouchID).number;
+    }
   };
 
   if (!draw) {
@@ -4415,7 +4417,7 @@ void DoUI(bool draw) {
 
         if (ge.meta._latestActiveTouchID != InvalidTouchID) {
           const auto td = GetTouchData(ge.meta._latestActiveTouchID);
-          if (disallowTouchNumber != td.number)
+          if (_disallowTouchNumber != td.number)
             pos = ScreenPosToLogical(td.screenPos);
         }
       }
@@ -4793,14 +4795,15 @@ void DoUI(bool draw) {
   };
 
   struct ComponentSlotData {  ///
-    Clay_ElementId  id             = {};
-    ControlsGroupID group          = {};
-    bool            hidden         = {};
-    bool            canHover       = {};
-    int             tier           = {};
-    f32             flashWhite     = 0;
-    bool            showsDetails   = false;
-    bool            disallowsTouch = false;
+    Clay_ElementId  id                      = {};
+    ControlsGroupID group                   = {};
+    bool            hidden                  = {};
+    bool            canHover                = {};
+    int             tier                    = {};
+    f32             flashWhite              = 0;
+    bool            showsDetails            = false;
+    bool            disallowsTouch          = false;
+    bool            touchPreservesSelection = false;
   };
 
   bool touchedInsideSlot = false;
@@ -4866,7 +4869,10 @@ void DoUI(bool draw) {
       if (ge.events.last == LastEventType_TOUCH)
         showAsSelected = !g.run.hideSlotDetails;
 
-      if (focused.id && (focused.id == data.id.id) && showAsSelected) {
+      if (focused.id                     //
+          && (focused.id == data.id.id)  //
+          && (showAsSelected || data.touchPreservesSelection))
+      {
         color = palWhite;
         flash = TRANSPARENT_BLACK;
       }
@@ -4908,8 +4914,9 @@ void DoUI(bool draw) {
     int  tier     = -1;
     bool canHover = true;
 
-    bool showsDetails   = false;
-    bool disallowsTouch = false;
+    bool showsDetails            = false;
+    bool disallowsTouch          = false;
+    bool touchPreservesSelection = false;
   };
 
   LAMBDA (bool, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
@@ -4956,6 +4963,7 @@ void DoUI(bool draw) {
         .tier           = tier,
         .showsDetails   = data.showsDetails,
         .disallowsTouch = data.disallowsTouch,
+        .touchPreservesSelection = data.touchPreservesSelection,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
         if (data.canHover) {
@@ -6994,12 +7002,13 @@ void DoUI(bool draw) {
               p.difficulty = i;
 
             const bool chosen = componentUniversalSlot({
-              .id             = slotID,
-              .group          = group,
-              .difficulty     = (DifficultyType)(isLocked ? 0 : i),
-              .hidden         = HiddenType_SHOW_LOCK,
-              .tier           = (isLocked ? 0 : (int)i - 1),
-              .disallowsTouch = true,
+              .id                      = slotID,
+              .group                   = group,
+              .difficulty              = (DifficultyType)(isLocked ? 0 : i),
+              .hidden                  = HiddenType_SHOW_LOCK,
+              .tier                    = (isLocked ? 0 : (int)i - 1),
+              .disallowsTouch          = true,
+              .touchPreservesSelection = true,
             });
 
             if (isLocked && chosen) {
@@ -7056,12 +7065,13 @@ void DoUI(bool draw) {
                 p.build = build;
 
               const bool chosen = componentUniversalSlot({
-                .id             = slotID,
-                .group          = group,
-                .build          = (isLocked ? BuildType_INVALID : build),
-                .hidden         = HiddenType_SHOW_LOCK,
-                .tier           = (isLocked ? 0 : -1),
-                .disallowsTouch = true,
+                .id                      = slotID,
+                .group                   = group,
+                .build                   = (isLocked ? BuildType_INVALID : build),
+                .hidden                  = HiddenType_SHOW_LOCK,
+                .tier                    = (isLocked ? 0 : -1),
+                .disallowsTouch          = true,
+                .touchPreservesSelection = true,
               });
 
               if (isLocked && chosen) {
@@ -7142,6 +7152,7 @@ void DoUI(bool draw) {
                 .hidden         = HiddenType_SHOW_LOCK,
                 .tier           = (isLocked ? 0 : -1),
                 .disallowsTouch = true,
+                .touchPreservesSelection = true,
               });
 
               if (isLocked && chosen) {
