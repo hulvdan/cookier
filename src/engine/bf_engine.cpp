@@ -1432,6 +1432,7 @@ TEST_CASE ("ScaleToCover") {  ///
 void FlushDrawCommands() {
   ZoneScoped;
 
+  ASSERT(ge.meta._drawing);
   ASSERT_FALSE(ge.draw.flushedThisFrame);
   ge.draw.flushedThisFrame = true;
 
@@ -2348,6 +2349,8 @@ void FlushDrawCommands() {
 }
 
 void _OnTouchDown(_TouchEvent touch) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   for (auto id : ge.meta._touchIDs)
     ASSERT(id != touch._id);
 
@@ -2366,6 +2369,8 @@ void _OnTouchDown(_TouchEvent touch) {  ///
 }
 
 void _OnTouchUp(_TouchEvent touch) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   auto found = false;
   // Marking as released. It will be removed on calling `_ClearControlsCache`.
   FOR_RANGE (int, i, ge.meta._touches.count) {
@@ -2383,6 +2388,8 @@ void _OnTouchUp(_TouchEvent touch) {  ///
 }
 
 void _OnTouchMoved(_TouchEvent touch) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   auto found = false;
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == touch._id) {
@@ -2428,8 +2435,11 @@ void _ClearControlsCache() {  ///
 }
 
 bool IsTouchPressed(TouchID id) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   if (id == InvalidTouchID)
     return false;
+
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
@@ -2441,8 +2451,11 @@ bool IsTouchPressed(TouchID id) {  ///
 }
 
 bool IsTouchReleased(TouchID id) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   if (id == InvalidTouchID)
     return false;
+
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
@@ -2454,6 +2467,8 @@ bool IsTouchReleased(TouchID id) {  ///
 }
 
 bool IsTouchDown(TouchID id) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   FOR_RANGE (int, i, ge.meta._touches.count) {
     if (ge.meta._touchIDs[i] == id) {
       auto& t = ge.meta._touches[i];
@@ -3320,14 +3335,20 @@ void EngineOnFrameStart() {
 }
 
 bool IsKeyDown(SDL_Scancode key) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   return ge.meta._keyboardState[key];
 }
 
 bool IsKeyPressed(SDL_Scancode key) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   return ge.meta._keyboardStatePressed[key];
 }
 
 bool IsKeyReleased(SDL_Scancode key) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   return ge.meta._keyboardStateReleased[key];
 }
 
@@ -3376,6 +3397,8 @@ Vector2 GetLatestTouchScreenPos() {  ///
 }
 
 int GetMouseWheel() {  ///
+  ASSERT_FALSE(ge.meta._drawing);
+
   return ge.meta._mouseWheel;
 }
 

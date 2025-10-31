@@ -4399,6 +4399,7 @@ void DoUI(bool draw) {
   static int disallowTouchNumber = {};
 
   LAMBDA (void, disallowTouch, ()) {
+    ASSERT_FALSE(draw);
     ASSERT(ge.meta._latestActiveTouchID != InvalidTouchID);
     disallowTouchNumber = GetTouchData(ge.meta._latestActiveTouchID).number;
   };
@@ -4440,11 +4441,14 @@ void DoUI(bool draw) {
   constexpr u16 PADDING_OUTER_VERTICAL   = 10;
   constexpr u16 PADDING_OUTER_HORIZONTAL = 12;
 
-  int _wheel = GetMouseWheel();
-  if (IsKeyDown(SDL_SCANCODE_LSHIFT))
-    _wheel *= 10;
-  if (draw)
-    _wheel = 0;
+  int _wheel = 0;
+  if (!draw) {
+    _wheel = GetMouseWheel();
+    if (IsKeyDown(SDL_SCANCODE_LSHIFT))
+      _wheel *= 10;
+    if (draw)
+      _wheel = 0;
+  }
   const int wheel = _wheel;
 
   auto& zIndex = g.ui.clayZIndex;
