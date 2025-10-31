@@ -38,13 +38,13 @@ x modal: quit: good design: empty spaces
 x modal: restart + new run
 x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 
+* prioritization
+*
 * sparkles that highlight the weapons can be upgraded
 * outline with offset down
 *
 * enemy that tanks 1-3 damage
 *
-* show controls above strips
-* mobile: looks like framebuffer didn't scale
 * structures in a circle around center
 * на русском апгрейд "рукопашный урон" хреново смотрится
   мб "рукопашная"?
@@ -228,3 +228,4 @@ LATER:
 * engine: make `Arena` growing (by default it should assert)
 * ach screen: animate unlocked weapon tiers (different damages / scalings)
 * localization sorting
+* mobile: looks like framebuffer didn't scale
