@@ -135,14 +135,14 @@ Clay_Color ToClayColor(Color color) {
     .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_BOTTOM \
   }
 
-#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, color_, flash_) \
-  .custom {                                                             \
-    .customData = PushClayCustomData({                                  \
-      .type           = ClayCustomElementType_NINE_SLICE,               \
-      .nineSlice      = (gamelibNineSlicePtr_),                         \
-      .nineSliceColor = (color_),                                       \
-      .nineSliceFlash = (flash_),                                       \
-    }),                                                                 \
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_) \
+  .custom {                                                    \
+    .customData = PushClayCustomData({                         \
+      .type           = ClayCustomElementType_NINE_SLICE,      \
+      .nineSlice      = (gamelibNineSlicePtr_),                \
+      .nineSliceColor = slotColors[(tier_) * 2],               \
+      .nineSliceFlash = slotColors[(tier_) * 2 + 1],           \
+    }),                                                        \
   }
 
 #define BF_CLAY_CUSTOM_OVERLAY(color)                \
@@ -892,12 +892,18 @@ enum ControlsContext {  ///
   ControlsContext_END,
   ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
   ControlsContext_MODAL_STATS,
+  ControlsContext_MODAL_CONFIRM_RESTART,
+  ControlsContext_MODAL_CONFIRM_NEW_RUN,
+  ControlsContext_MODAL_CONFIRM_QUIT,
   ControlsContext_COUNT,
 };
 
 const ControlsContext CONTROLS_CONTEXT_MODALS_[]{
   ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
   ControlsContext_MODAL_STATS,
+  ControlsContext_MODAL_CONFIRM_RESTART,
+  ControlsContext_MODAL_CONFIRM_NEW_RUN,
+  ControlsContext_MODAL_CONFIRM_QUIT,
 };
 VIEW_FROM_ARRAY_DANGER(CONTROLS_CONTEXT_MODALS);
 
@@ -3168,6 +3174,10 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+  SDL_SetWindowMouseGrab(window, true);
+#endif
+
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
@@ -4439,7 +4449,7 @@ void DoUI(bool draw) {
   constexpr u16 GAP_FLEX                 = 2;
   constexpr u16 GAP_SMALL                = 8;
   constexpr u16 GAP_BIG                  = 20;
-  constexpr u16 PADDING_NINE_SLICE_FRAME = 12;
+  constexpr u16 PADDING_FRAME            = 12;
   constexpr u16 PADDING_OUTER_VERTICAL   = 10;
   constexpr u16 PADDING_OUTER_HORIZONTAL = 12;
 
@@ -4643,10 +4653,7 @@ void DoUI(bool draw) {
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
-          ((Clay_Hovered() || isSelected) && canShowAsSelected ? palWhite : slotColors[0]
-          ),
-          ((Clay_Hovered() || isSelected) && canShowAsSelected ? TRANSPARENT_BLACK
-                                                               : slotColors[1])
+          (((Clay_Hovered() || isSelected) && canShowAsSelected) ? 6 : 0)
         ),
       }) {
         bool hovered = Clay_Hovered();
@@ -5458,7 +5465,7 @@ void DoUI(bool draw) {
 
     CLAY(  ///
       {.layout{.sizing{
-        .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+        .width = CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_FRAME),
         .height
         = (data.setFixedHeight ? CLAY_SIZING_FIXED(CARD_HEIGHT) : CLAY_SIZING_FIT(0)),
       }}}
@@ -5469,13 +5476,11 @@ void DoUI(bool draw) {
         {
           .layout{
             BF_CLAY_SIZING_GROW_XY,
-            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            BF_CLAY_PADDING_ALL(PADDING_FRAME),
             .childGap        = GAP_SMALL,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
-          BF_CLAY_CUSTOM_NINE_SLICE(
-            glib->ui_frame_nine_slice(), slotColors[2 * tier], slotColors[2 * tier + 1]
-          ),
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
         }
       ) {
         // Icon, name.
@@ -6008,16 +6013,14 @@ void DoUI(bool draw) {
     CLAY({
       .layout{
         .sizing{
-          .width  = CLAY_SIZING_FIXED(ACHIEVEMENT_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-          .height = CLAY_SIZING_FIXED(ACHIEVEMENT_HEIGHT + 2 * PADDING_NINE_SLICE_FRAME),
+          .width  = CLAY_SIZING_FIXED(ACHIEVEMENT_WIDTH + 2 * PADDING_FRAME),
+          .height = CLAY_SIZING_FIXED(ACHIEVEMENT_HEIGHT + 2 * PADDING_FRAME),
         },
-        BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+        BF_CLAY_PADDING_ALL(PADDING_FRAME),
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_NINE_SLICE(
-        glib->ui_frame_nine_slice(), slotColors[tier * 2], slotColors[tier * 2 + 1]
-      ),
+      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
     }) {
       auto fb_previousStep
         = (type && (stepIndex > 0) ? fb->steps()->Get(stepIndex - 1) : nullptr);
@@ -6170,10 +6173,7 @@ void DoUI(bool draw) {
 
       CLAY({
         .layout{
-          .sizing{
-            CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
-            CLAY_SIZING_FIT(0)
-          },
+          .sizing{CLAY_SIZING_FIXED(CARD_WIDTH + 2 * PADDING_FRAME), CLAY_SIZING_FIT(0)},
         },
         .floating{
           .offset{0, offsetY},
@@ -6505,38 +6505,6 @@ void DoUI(bool draw) {
     }
   };
 
-  // Game's version.
-  {  ///
-    bool showVersion = ge.meta.debugEnabled;
-#if BF_SHOW_VERSION
-    showVersion = true;
-#endif
-
-    FontBegin(&g.meta.fontUIOutlined);
-
-    CLAY({
-      .floating{
-        .offset{PADDING_OUTER_HORIZONTAL, -PADDING_OUTER_VERTICAL},
-        .zIndex = zIndex,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
-          .parent  = CLAY_ATTACH_POINT_LEFT_BOTTOM,
-        },
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-    }) {
-      FLOATING_BEAUTIFY;
-
-      if (showVersion)
-        BF_CLAY_TEXT(g_gameVersion);
-
-      if (IsEmulatingMobile())
-        BF_CLAY_TEXT("[EMULATING MOBILE]");
-    }
-
-    FontEnd();
-  }
-
   // Gameplay.
   if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
@@ -6835,21 +6803,18 @@ void DoUI(bool draw) {
     LAMBDA (void, componentNewRunSelections, (auto innerLambda)) {
       CLAY({.layout{
         .sizing{
-          .height
-          = CLAY_SIZING_FIXED(2 * slotSize.y + GAP_SMALL + 2 * PADDING_NINE_SLICE_FRAME),
+          .height = CLAY_SIZING_FIXED(2 * slotSize.y + GAP_SMALL + 2 * PADDING_FRAME),
         },
         .childGap = GAP_SMALL,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }})
       CLAY({
         .layout{
-          BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+          BF_CLAY_PADDING_ALL(PADDING_FRAME),
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-        ),
+        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
       }) {
         innerLambda();
       }
@@ -6944,8 +6909,7 @@ void DoUI(bool draw) {
   Beautify b{.translate{EaseOutQuad(translateP) * (amplitude_), 0}}; \
   BEAUTIFY(b);
 
-        const f32 translateAmplitude
-          = CARD_WIDTH + GAP_BIG * 2 + 2 * PADDING_NINE_SLICE_FRAME;
+        const f32 translateAmplitude = CARD_WIDTH + GAP_BIG * 2 + 2 * PADDING_FRAME;
 
         {
           BEAUTIFY_TRANSLATE_SCOPED(
@@ -7330,19 +7294,15 @@ void DoUI(bool draw) {
           CLAY({
             .layout{
               .sizing{
-                CLAY_SIZING_FIXED(UPGRADE_FRAME_WIDTH + 2 * PADDING_NINE_SLICE_FRAME),
+                CLAY_SIZING_FIXED(UPGRADE_FRAME_WIDTH + 2 * PADDING_FRAME),
                 CLAY_SIZING_FIT(245),
               },
-              BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+              BF_CLAY_PADDING_ALL(PADDING_FRAME),
               .childGap = GAP_SMALL,
               // BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
-            BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(),
-              slotColors[2 * upgrade.tier],
-              slotColors[2 * upgrade.tier + 1]
-            ),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), upgrade.tier),
           }) {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
               // Slot with upgrade's image.
@@ -8021,13 +7981,11 @@ void DoUI(bool draw) {
             }}) {
               CLAY({
                 .layout{
-                  BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+                  BF_CLAY_PADDING_ALL(PADDING_FRAME),
                   .childGap        = GAP_SMALL,
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
-                BF_CLAY_CUSTOM_NINE_SLICE(
-                  glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-                ),
+                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
               }) {
                 g.meta.pausedAchievementsHoveredAchievement     = 0;
                 g.meta.pausedAchievementsHoveredAchievementStep = 0;
@@ -8291,7 +8249,7 @@ void DoUI(bool draw) {
                 if (achievements)
                   g.meta.pausedShowingAchievements = true;
                 if (quit)
-                  ge.meta.quitScheduled = true;
+                  ge.meta.quitRequested = true;
 
                 if (resumed || restarted || newRun || achievements || quit)
                   PlaySound(Sound_UI_CLICK);
@@ -8361,6 +8319,7 @@ void DoUI(bool draw) {
 
     const f32 p = MIN(1, g.meta.showingStats.Elapsed().Progress(ANIMATION_0_FRAMES));
 
+    // TODO: move inside component below? AND CHANGE `pointerCaptureMode`.
     componentOverlay(
       [&]() BF_FORCE_INLINE_LAMBDA {
         if (clickOrTouchPressed())
@@ -8431,17 +8390,14 @@ void DoUI(bool draw) {
         CLAY({
           .layout{
             .sizing{
-              .width = CLAY_SIZING_FIXED(
-                STATS_ENTRY_WIDTH * 2 + GAP_BIG + 2 * PADDING_NINE_SLICE_FRAME
-              ),
+              .width
+              = CLAY_SIZING_FIXED(STATS_ENTRY_WIDTH * 2 + GAP_BIG + 2 * PADDING_FRAME),
             },
-            BF_CLAY_PADDING_ALL(PADDING_NINE_SLICE_FRAME),
+            BF_CLAY_PADDING_ALL(PADDING_FRAME),
             .childGap        = GAP_BIG,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
-          BF_CLAY_CUSTOM_NINE_SLICE(
-            glib->ui_frame_nine_slice(), slotColors[0], slotColors[1]
-          ),
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
         }) {
           // Stats label.
           CLAY({.layout{
@@ -8555,6 +8511,98 @@ void DoUI(bool draw) {
       PlaySound(Sound_UI_CLICK);
       g.meta.showingStats = {};
     }
+  }
+
+  // "Are you sure" modals.
+  if (ge.meta.quitRequested) {  ///
+    auto group = MakeControlsGroup();
+
+    SCOPED_CONTEXT(ControlsContext_MODAL_CONFIRM_QUIT);
+
+    zIndex += 6;
+
+    auto confirmID = CLAY_IDI("confirm_confirm", (int)ControlsContext_MODAL_CONFIRM_QUIT);
+    auto cancelID  = CLAY_IDI("confirm_cancel", (int)ControlsContext_MODAL_CONFIRM_QUIT);
+
+    CLAY({
+      .floating{
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+    }) {
+      FLOATING_BEAUTIFY;
+
+      CLAY({
+        .layout{
+          .sizing{.height = CLAY_SIZING_FIXED(20)},
+          BF_CLAY_PADDING_ALL(PADDING_FRAME),
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
+      }) {
+        componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
+          if (clickOrTouchPressed())
+            ge.meta.quitRequested = false;
+        });
+
+        BF_CLAY_SPACER_VERTICAL;
+
+        BF_CLAY_TEXT_LOCALIZED(Loc_UI_ARE_YOU_SURE__CAPS);
+
+        BF_CLAY_SPACER_VERTICAL;
+
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_X,
+          .childGap = GAP_BIG,
+        }}) {
+          BF_CLAY_SPACER_HORIZONTAL;
+
+          const bool quit = componentButton(
+            {
+              .id    = confirmID,
+              .group = group,
+            },
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, textColor);
+            }
+          );
+
+          BF_CLAY_SPACER_HORIZONTAL;
+
+          const bool cancelled = componentButton(
+            {
+              .id    = cancelID,
+              .group = group,
+              .keys  = KEYS_CANCEL,
+            },
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, textColor);
+            }
+          );
+
+          markControlAsDefault(cancelID);
+
+          BF_CLAY_SPACER_HORIZONTAL;
+
+          if (quit)
+            ge.meta.quitScheduled = true;
+
+          if (cancelled) {
+            PlaySound(Sound_UI_CLICK);
+            ge.meta.quitRequested = false;
+          }
+        }
+      }
+    }
+
+    zIndex -= 6;
+
+    ControlsGroupConnect(group, Direction_RIGHT, group);
   }
 
   // Just unlocked achievement.
@@ -8809,6 +8857,38 @@ void DoUI(bool draw) {
       },
       BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
     }) {}
+  }
+
+  // Game's version.
+  {  ///
+    bool showVersion = ge.meta.debugEnabled;
+#if BF_SHOW_VERSION
+    showVersion = true;
+#endif
+
+    FontBegin(&g.meta.fontUIOutlined);
+
+    CLAY({
+      .floating{
+        .offset{PADDING_OUTER_HORIZONTAL, -PADDING_OUTER_VERTICAL},
+        .zIndex = i16_max,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
+          .parent  = CLAY_ATTACH_POINT_LEFT_BOTTOM,
+        },
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+
+      if (showVersion)
+        BF_CLAY_TEXT(g_gameVersion);
+
+      if (IsEmulatingMobile())
+        BF_CLAY_TEXT("[EMULATING MOBILE]");
+    }
+
+    FontEnd();
   }
 
   ASSERT(g.ui.clayZIndex == 0);

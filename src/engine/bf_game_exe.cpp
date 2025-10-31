@@ -220,8 +220,6 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
       return SDL_APP_FAILURE;
     }
     g_appstate.window = window;
-
-    SDL_SetWindowMouseGrab(window, true);
   }
 
   {
@@ -392,8 +390,11 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
 
   switch (event->type) {
   case SDL_EVENT_QUIT:
-  case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
     return SDL_APP_SUCCESS;
+
+  case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+    ge.meta.quitRequested = true;
+  } break;
 
   case SDL_EVENT_WINDOW_RESIZED: {  ///
     auto window = SDL_GetWindowFromID(event->window.windowID);

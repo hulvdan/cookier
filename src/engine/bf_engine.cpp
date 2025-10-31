@@ -893,6 +893,7 @@ struct EngineData {
 
     bool ysdkLoaded       = false;
     bool windowIsInactive = false;
+    bool quitRequested    = false;
     bool quitScheduled    = false;
 
     bool debugEnabled = false;

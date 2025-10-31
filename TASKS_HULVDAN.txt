@@ -29,12 +29,23 @@ x touch: new run: pressing back button
 x .txt indent 2
 x touch: details: use PASSTHROUGH when touch is down but not pressed
   so that moving finger in weapons / items can select other
+x modal: quit: disable mouse grab
+x modal: quit: pressing cancel sound
+x modal: quit: pressing quit closes win
 
-* modal: are you sure you want to quit?
+* modal: quit: good design: frame
+* modal: quit: good design: font size
+* modal: quit: good design: empty spaces
+* modal: quit:
+* modal: quit:
+* modal: quit:
+* modal: quit:
+* modal: quit:
+* modal: quit:
 * modal: are you sure you want to restart?
 * modal: are you sure you want to start a new run?
 *
-* new run: refactor MAKE LESS CODE
+* fix: disable ability to press SPACE in pause to ACTIVATE weapon
 *
 * ui nav: upgrades: going from upgrades to reroll and returning back
   should set the same preferred index
@@ -243,3 +254,6 @@ LATER:
 * launch: emulate mobile by default (RECORD/REPLAY system would obsolete this)
 * launch: set fixed 2s wave duration for focusing
 * ref extract same fields from `ComponentUniversalCardData` and `GridEntryDetailsData`
+* new run: refactor MAKE LESS CODE
+* modal: quit: pressing cross doesn't close window but shows confirmation modal
+  look at `SDL_EVENT_QUIT` !!!
