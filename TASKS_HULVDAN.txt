@@ -36,9 +36,8 @@ x modal: quit: good design: frame
 x modal: quit: good design: font size
 x modal: quit: good design: empty spaces
 x modal: restart + new run
+x fix: disable ability to press SPACE in pause to ACTIVATE weapon
 
-* fix: disable ability to press SPACE in pause to ACTIVATE weapon
-*
 * ui nav: upgrades: going from upgrades to reroll and returning back
   should set the same preferred index
 *
