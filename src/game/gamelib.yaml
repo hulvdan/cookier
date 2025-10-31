@@ -93,35 +93,30 @@ ui_health_boss_texture_ids:
   - ui_health_boss_top
 ui_modal_fade: 0.75
 ui_item_slot_colors:
-  # Tier 0 (default, hovered, disabled)
+  # Tier 0.
   - 0x3a3a41ff # Colors. Gray.
-  - 0 # Flashes.
+  - 0 # Flash.
   # Tier 1.
   - 0x01455dff # Colors. Blue.
-  - 0 # Flashes.
+  - 0 # Flash.
   # Tier 2.
   - 0x6d2047ff # Colors. Purple.
-  - 0 # Flashes.
+  - 0 # Flash.
   # Tier 3.
   - 0xb8560fff # Colors. Orange.
-  - 0 # Flashes.
+  - 0 # Flash.
   # Tier 4.
   - 0xc02931ff # Colors. Red.
-  - 0 # Flashes.
+  - 0 # Flash.
   # Tier 5.
   - 0x82dcd7ff # Colors. Pearl.
-  - 0 # Flashes.
+  - 0 # Flash.
   # Tier 6.
   - 0xedefe2ff # Colors. White.
-  - 0 # Flashes.
-ui_button_colors:
-  - 0x2c5e3bff # default color
-  - 0x609c4fff # hovered color
-  - 0x56546eff # disabled color
-  - 0 # default flash
-  - 0 # hovered flash
-  - 0 # disabled flash
-ui_item_big_frame_color: 0x1d1b24
+  - 0 # Flash.
+  # Tier 7.
+  - 0x66a650ff # Colors. Green.
+  - 0 # Flash.
 ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
 ui_frame_nine_slice:
   texture_id: ui_frame_2

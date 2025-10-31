@@ -4620,6 +4620,7 @@ void DoUI(bool draw) {
     u16                paddingHorizontal = GAP_BIG;
     u16                paddingVertical   = GAP_SMALL;
     View<SDL_Scancode> keys              = {};
+    int                tier              = 0;
   };
 
   LAMBDA (
@@ -4662,7 +4663,7 @@ void DoUI(bool draw) {
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
-          (((Clay_Hovered() || isSelected) && canShowAsSelected) ? 6 : 0)
+          (((Clay_Hovered() || isSelected) && canShowAsSelected) ? 6 : data.tier)
         ),
       }) {
         bool hovered = Clay_Hovered();
@@ -7662,6 +7663,7 @@ void DoUI(bool draw) {
                 .group = groupGoNextWave,
                 .growX = true,
                 .keys  = keys,
+                .tier  = 7,
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 const int  nextWaveNumber = g.run.state.waveIndex + 2;

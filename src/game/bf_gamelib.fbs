@@ -327,8 +327,6 @@ table GameLibrary {
     ui_health_boss_texture_ids: [int] (required);
     ui_modal_fade: float;
     ui_item_slot_colors: [uint] (required);
-    ui_button_colors: [uint] (required);
-    ui_item_big_frame_color: uint;
     ui_shop_current_level_icon_texture_id: int;
     ui_frame_nine_slice: NineSlice;
     ui_button_nine_slice: NineSlice;
