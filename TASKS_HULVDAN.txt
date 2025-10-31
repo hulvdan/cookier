@@ -30,22 +30,6 @@ x .txt indent 2
 x touch: details: use PASSTHROUGH when touch is down but not pressed
   so that moving finger in weapons / items can select other
 
-* ui:
-* ui:
-* ui:
-* ui:
-* ui:
-* ui:
-*
-* launch: emulate mobile by default (RECORD/REPLAY system would obsolete this)
-* launch: set fixed 2s wave duration for focusing
-*
-* ref extract same fields from `ComponentUniversalCardData` and `GridEntryDetailsData`
-*
-* new run:
-* new run:
-* new run:
-*
 * modal: are you sure you want to quit?
 * modal: are you sure you want to restart?
 * modal: are you sure you want to start a new run?
@@ -256,3 +240,6 @@ LATER:
 * REWORK_ME_WEAPON_EFFECT_CHANCE_OF_EXPLOSION
 * weapon groups
 * fix: yandex: build not drawing
+* launch: emulate mobile by default (RECORD/REPLAY system would obsolete this)
+* launch: set fixed 2s wave duration for focusing
+* ref extract same fields from `ComponentUniversalCardData` and `GridEntryDetailsData`
