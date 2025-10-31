@@ -7650,7 +7650,7 @@ void DoUI(bool draw) {
             BF_CLAY_SIZING_GROW_Y,
             BF_CLAY_CHILD_ALIGNMENT_CENTER_BOTTOM,
           }}) {
-            SDL_Scancode keys_[]{SDL_SCANCODE_E};
+            SDL_Scancode keys_[]{SDL_SCANCODE_E, SDL_SCANCODE_END};
             VIEW_FROM_ARRAY_DANGER(keys);
 
             if (g.meta.showingStats.IsSet() || (g.run.shopActivatedModalWeaponIndex >= 0))
