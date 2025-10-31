@@ -35,9 +35,8 @@ x modal: quit: pressing quit closes win
 x modal: quit: good design: frame
 x modal: quit: good design: font size
 x modal: quit: good design: empty spaces
+x modal: restart + new run
 
-* modal: restart + new run
-*
 * fix: disable ability to press SPACE in pause to ACTIVATE weapon
 *
 * ui nav: upgrades: going from upgrades to reroll and returning back

@@ -912,6 +912,12 @@ struct LockInfo {  ///
   int             stepIndex   = -1;
 };
 
+enum ConfirmModalResultType {  ///
+  ConfirmModalResultType_NONE,
+  ConfirmModalResultType_CANCELLED,
+  ConfirmModalResultType_CONFIRMED,
+};
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -950,6 +956,9 @@ struct GameData {
 
     bool playerUsesKeyboardOrController = false;
     f32  pauseButtonFadeProgress        = 1;
+
+    bool confirmingRestart = false;
+    bool confirmingNewRun  = false;
   } meta;
 
   struct {  ///
@@ -8243,9 +8252,9 @@ void DoUI(bool draw) {
                 if (resumed)
                   g.meta.scheduledTogglePause = true;
                 if (restarted)
-                  g.run.reload = true;
+                  g.meta.confirmingRestart = true;
                 if (newRun)
-                  g.run.scheduledNewRun = true;
+                  g.meta.confirmingNewRun = true;
                 if (achievements)
                   g.meta.pausedShowingAchievements = true;
                 if (quit)
@@ -8513,87 +8522,126 @@ void DoUI(bool draw) {
     }
   }
 
-  // "Are you sure" modals.
-  if (ge.meta.quitRequested) {  ///
-    auto group = MakeControlsGroup();
+  // "Quit" / "Restart" / "New Run" confirmation modals.
+  {  ///
+    LAMBDA (
+      ConfirmModalResultType,
+      confirmationModal,
+      (bool* requested, bool* setToTrueOnConfirm, ControlsContext c, Loc locale)
+    )
+    {
+      if (!(*requested))
+        return ConfirmModalResultType_NONE;
 
-    SCOPED_CONTEXT(ControlsContext_MODAL_CONFIRM_QUIT);
+      auto group = MakeControlsGroup();
 
-    zIndex += 6;
+      SCOPED_CONTEXT(c);
 
-    auto confirmID = CLAY_IDI("confirm_confirm", (int)ControlsContext_MODAL_CONFIRM_QUIT);
-    auto cancelID  = CLAY_IDI("confirm_cancel", (int)ControlsContext_MODAL_CONFIRM_QUIT);
+      zIndex += 6;
 
-    CLAY({.floating{
-      .zIndex = zIndex,
-      .attachPoints{
-        .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-        .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-      },
-      .attachTo = CLAY_ATTACH_TO_PARENT,
-    }}) {
-      FLOATING_BEAUTIFY;
+      auto confirmID = CLAY_IDI("confirm_confirm", (int)c);
+      auto cancelID  = CLAY_IDI("confirm_cancel", (int)c);
 
-      FontBegin(&g.meta.fontUIBig);
+      ConfirmModalResultType result{};
 
-      CLAY({
-        .layout{
-          .sizing{
-            .width  = CLAY_SIZING_FIXED(450),
-            .height = CLAY_SIZING_FIXED(160),
-          },
-          BF_CLAY_PADDING_ALL(PADDING_FRAME),
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      CLAY({.floating{
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
         },
-        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
-      }) {
-        componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-          if (clickOrTouchPressed())
-            ge.meta.quitRequested = false;
-        });
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      }}) {
+        FLOATING_BEAUTIFY;
 
-        BF_CLAY_SPACER_VERTICAL;
+        FontBegin(&g.meta.fontUIBig);
 
-        BF_CLAY_TEXT_LOCALIZED(Loc_UI_ARE_YOU_SURE__CAPS);
+        CLAY({
+          .layout{
+            .sizing{
+              .width  = CLAY_SIZING_FIXED(450),
+              .height = CLAY_SIZING_FIXED(160),
+            },
+            BF_CLAY_PADDING_ALL(PADDING_FRAME),
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          },
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+        }) {
+          componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
+            if (clickOrTouchPressed())
+              result = ConfirmModalResultType_CONFIRMED;
+          });
 
-        BF_CLAY_SPACER_VERTICAL;
+          BF_CLAY_SPACER_VERTICAL;
 
-        CLAY({}) {
-          const bool quit = componentButton(
-            {.id = confirmID, .group = group},
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, textColor);
+          BF_CLAY_TEXT_LOCALIZED(Loc_UI_ARE_YOU_SURE__CAPS);
+
+          BF_CLAY_SPACER_VERTICAL;
+
+          CLAY({}) {
+            const bool quit = componentButton(
+              {.id = confirmID, .group = group},
+              [&](bool hovered, Color textColor)
+                BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(locale, textColor); }
+            );
+
+            CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
+
+            const bool cancelled = componentButton(
+              {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, textColor);
+              }
+            );
+
+            markControlAsDefault(cancelID);
+
+            if (quit)
+              result = ConfirmModalResultType_CONFIRMED;
+
+            if (cancelled) {
+              PlaySound(Sound_UI_CLICK);
+              result = ConfirmModalResultType_CANCELLED;
             }
-          );
-
-          CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
-
-          const bool cancelled = componentButton(
-            {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, textColor);
-            }
-          );
-
-          markControlAsDefault(cancelID);
-
-          if (quit)
-            ge.meta.quitScheduled = true;
-
-          if (cancelled) {
-            PlaySound(Sound_UI_CLICK);
-            ge.meta.quitRequested = false;
           }
         }
+
+        FontEnd();
       }
 
-      FontEnd();
-    }
+      zIndex -= 6;
 
-    zIndex -= 6;
+      ControlsGroupConnect(group, Direction_RIGHT, group);
 
-    ControlsGroupConnect(group, Direction_RIGHT, group);
+      if ((result == ConfirmModalResultType_CONFIRMED) && setToTrueOnConfirm)
+        *setToTrueOnConfirm = true;
+      if (result)
+        *requested = false;
+
+      return result;
+    };
+
+    confirmationModal(
+      &ge.meta.quitRequested,
+      &ge.meta.quitScheduled,
+      ControlsContext_MODAL_CONFIRM_QUIT,
+      Loc_UI_QUIT__CAPS
+    );
+
+    confirmationModal(
+      &g.meta.confirmingRestart,
+      &g.run.reload,
+      ControlsContext_MODAL_CONFIRM_RESTART,
+      Loc_UI_RESTART__CAPS
+    );
+
+    confirmationModal(
+      &g.meta.confirmingNewRun,
+      &g.run.scheduledNewRun,
+      ControlsContext_MODAL_CONFIRM_NEW_RUN,
+      Loc_UI_NEW_RUN__CAPS
+    );
   }
 
   // Just unlocked achievement.
