@@ -4787,6 +4787,9 @@ void DoUI(bool draw) {
       auto& focused = controlsContexts[currentContext].focused;
 
       if (hovered) {
+        if (ge.events.thisFrame.Mouse())
+          g.run.hideSlotDetails = false;
+
         if (touched(false)) {
           PlaySound(Sound_UI_CLICK);
           g.run.hideSlotDetails = !g.run.hideSlotDetails;
@@ -6008,6 +6011,8 @@ void DoUI(bool draw) {
     int detailsBelow = -1;
   };
 
+  bool _shownDetailsThisFrame = false;
+
   LAMBDA (void, gridEntryDetails, (GridEntryDetailsData data)) {  ///
     ASSERT(
       (int)((bool)data.difficulty) + (int)((bool)data.build) + (int)((bool)data.item)
@@ -6020,6 +6025,9 @@ void DoUI(bool draw) {
     ASSERT(data.detailsBelow >= 0);
     ASSERT(data.detailsBelow <= 1);
 
+    if (_shownDetailsThisFrame)
+      return;
+
     const bool hovered = Clay_Hovered();
 
     const bool isSelected
@@ -6030,6 +6038,8 @@ void DoUI(bool draw) {
         || (!g.run.hideSlotDetails && (CURRENT_CONTEXT.focused.id == data.id.id))  //
         || isSelected)
     {
+      _shownDetailsThisFrame = true;
+
       f32                          offsetY{};
       Clay_FloatingAttachPointType attachElement{};
       Clay_FloatingAttachPointType attachParent{};
@@ -6110,7 +6120,7 @@ void DoUI(bool draw) {
     if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
         && !hovered                                 //
         && ge.events.thisFrame.Mouse())
-      g.run.hideSlotDetails = false;
+      g.run.hideSlotDetails = true;
   };
 
   struct ComponentItemsGridData {  ///

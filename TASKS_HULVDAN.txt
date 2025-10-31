@@ -16,6 +16,8 @@ x shop: mouse: unhovering hides them
 x fix setting `_mouseOrLatestTouchPos` to latest touch pos BEFORE game update
 x touch: pressing on slot (item / weapon) shows details
 x touch: pressing again - hides them
+x mouse: hiding details if not hovered
+x fix: showing multiple details during the same frame
 
 * touch: make it not possible to "activate" weapon in shop
   but buttons should work
