@@ -78,11 +78,11 @@ x fix: mouse can move character
 * prod: particles: ходьба
 * prod: MUSIC
 * prod: SFX
-* prod:
-* prod:
-* prod:
-* prod:
-* prod:
+* prod: игровое поле
+* prod: мобы
+* prod: сакутиновая отправка event-ов аналитики
+* prod: аналитика
+* prod: другое управление мышью?
 * prod:
 *
 * RELEASED!
