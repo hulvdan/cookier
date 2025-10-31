@@ -6296,7 +6296,7 @@ void DoUI(bool draw) {
             .tier   = weapon.tier,
           });
 
-          if (selectedWeapon) {
+          if (selectedWeapon && !ge.events.thisFrame.Touch()) {
             PlaySound(Sound_UI_CLICK);
             g.run.shopActivatedModalWeaponIndex = weaponIndex;
           }
