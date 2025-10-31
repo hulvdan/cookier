@@ -4401,7 +4401,10 @@ void DoUI(bool draw) {
       Clay_SetPointerState({-1, -1}, false);
     else {
       auto pos = ScreenPosToLogical(GetMouseOrLatestTouchScreenPos());
-      Clay_SetPointerState({pos.x, LOGICAL_RESOLUTION.y - pos.y}, false);
+      pos      = {pos.x, LOGICAL_RESOLUTION.y - pos.y};
+      if ((ge.events.last == LastEventType_TOUCH) && !GetTouchIDs().count)
+        pos = {-1, -1};
+      Clay_SetPointerState({pos.x, pos.y}, false);
     }
   }
 
@@ -4602,6 +4605,8 @@ void DoUI(bool draw) {
 
     bool justSelected = false;
 
+    const bool canShowAsSelected = (ge.events.last != LastEventType_TOUCH);
+
     CLAY({.id = data.id, .layout{.sizing{sizing}}}) {
       CLAY({
         .layout{
@@ -4616,12 +4621,16 @@ void DoUI(bool draw) {
         },
         BF_CLAY_CUSTOM_NINE_SLICE(
           glib->ui_button_nine_slice(),
-          ((Clay_Hovered() || isSelected) ? palWhite : slotColors[0]),
-          ((Clay_Hovered() || isSelected) ? TRANSPARENT_BLACK : slotColors[1])
+          ((Clay_Hovered() || isSelected) && canShowAsSelected ? palWhite : slotColors[0]
+          ),
+          ((Clay_Hovered() || isSelected) && canShowAsSelected ? TRANSPARENT_BLACK
+                                                               : slotColors[1])
         ),
       }) {
         bool hovered = Clay_Hovered();
-        if (hovered) {
+
+        // MOUSE can focus buttons.
+        if (hovered && (ge.events.last != LastEventType_TOUCH)) {
           if (focused.id != data.id.id) {
             focused      = data.id;
             justSelected = true;
@@ -4634,8 +4643,8 @@ void DoUI(bool draw) {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           innerLambda(
-            (hovered || isSelected),
-            ((hovered || isSelected) ? palTextBlack : palTextWhite)
+            (hovered || isSelected) && canShowAsSelected,
+            ((hovered || isSelected) && canShowAsSelected ? palTextBlack : palTextWhite)
           );
         }
       }
@@ -4761,13 +4770,16 @@ void DoUI(bool draw) {
   };
 
   struct ComponentSlotData {  ///
-    Clay_ElementId  id         = {};
-    ControlsGroupID group      = {};
-    bool            hidden     = {};
-    bool            canHover   = {};
-    int             tier       = {};
-    f32             flashWhite = 0;
+    Clay_ElementId  id           = {};
+    ControlsGroupID group        = {};
+    bool            hidden       = {};
+    bool            canHover     = {};
+    int             tier         = {};
+    f32             flashWhite   = 0;
+    bool            showsDetails = false;
   };
+
+  bool touchedInsideSlot = false;
 
   LAMBDA (void, componentSlot, (ComponentSlotData data, auto innerLambda)) {  ///
     if (data.canHover)
@@ -4794,15 +4806,28 @@ void DoUI(bool draw) {
         if (ge.events.thisFrame.Mouse())
           g.run.hideSlotDetails = false;
 
-        if (touched(false)) {
+        bool justTouched = touched(false);
+        if (justTouched)
+          touchedInsideSlot = true;
+        bool justHidDetailsViaTouch = false;
+
+        if (justTouched && data.showsDetails) {
           PlaySound(Sound_UI_CLICK);
-          g.run.hideSlotDetails = !g.run.hideSlotDetails;
+
+          if (data.showsDetails)
+            g.run.hideSlotDetails = !g.run.hideSlotDetails;
+
+          if (!g.run.hideSlotDetails && !data.showsDetails) {
+            focused                = {};
+            justHidDetailsViaTouch = true;
+          }
         }
 
         if (focused.id != data.id.id) {
-          focused = data.id;
-
-          g.run.hideSlotDetails = false;
+          if (!justHidDetailsViaTouch) {
+            focused               = data.id;
+            g.run.hideSlotDetails = false;
+          }
 
           // Making it not possible to simultaneously (1) select and (2) activate slot
           // upon reacting to single touch press event.
@@ -4811,12 +4836,28 @@ void DoUI(bool draw) {
         }
       }
 
-      if (focused.id && (focused.id == data.id.id)) {
+      bool showAsSelected = true;
+      if (ge.events.last == LastEventType_TOUCH)
+        showAsSelected = !g.run.hideSlotDetails;
+
+      if (focused.id && (focused.id == data.id.id) && showAsSelected) {
         color = palWhite;
         flash = TRANSPARENT_BLACK;
       }
 
       BF_CLAY_IMAGE({.texID = texID, .color = color, .flash = flash}, innerLambda);
+    }
+  };
+
+  // Closing slot details if touched outside of it.
+  DEFER {                                                ///
+    if (!draw                                            //
+        && IsTouchPressed(ge.meta._latestActiveTouchID)  //
+        && !touchedInsideSlot                            //
+        && !g.run.hideSlotDetails)
+    {
+      PlaySound(Sound_UI_CLICK);
+      g.run.hideSlotDetails = true;
     }
   };
 
@@ -4840,6 +4881,8 @@ void DoUI(bool draw) {
     int  count    = 1;
     int  tier     = -1;
     bool canHover = true;
+
+    bool showsDetails = false;
   };
 
   LAMBDA (bool, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
@@ -4879,11 +4922,12 @@ void DoUI(bool draw) {
 
     componentSlot(
       {
-        .id       = data.id,
-        .group    = data.group,
-        .hidden   = (!onlyOneOrNone && (data.hidden == HiddenType_HIDE_IF_EMPTY)),
-        .canHover = data.canHover,
-        .tier     = tier,
+        .id           = data.id,
+        .group        = data.group,
+        .hidden       = (!onlyOneOrNone && (data.hidden == HiddenType_HIDE_IF_EMPTY)),
+        .canHover     = data.canHover,
+        .tier         = tier,
+        .showsDetails = data.showsDetails,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
         if (data.canHover) {
@@ -6176,18 +6220,20 @@ void DoUI(bool draw) {
 
               slotID = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id    = slotID,
-                .group = data.group,
-                .build = g.player.build,
+                .id           = slotID,
+                .group        = data.group,
+                .build        = g.player.build,
+                .showsDetails = true,
               });
               buildType = g.player.build;
             }
             else if (t == 1) {
               slotID = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id         = slotID,
-                .group      = data.group,
-                .difficulty = g.player.difficulty,
+                .id           = slotID,
+                .group        = data.group,
+                .difficulty   = g.player.difficulty,
+                .showsDetails = true,
               });
               difficultyType = g.player.difficulty;
             }
@@ -6195,10 +6241,11 @@ void DoUI(bool draw) {
               auto& item = g.run.state.items[t - 2];
               slotID     = CLAY_IDI("shop_player_item", t);
               componentUniversalSlot({
-                .id    = slotID,
-                .group = data.group,
-                .item  = item.type,
-                .count = item.count,
+                .id           = slotID,
+                .group        = data.group,
+                .item         = item.type,
+                .count        = item.count,
+                .showsDetails = true,
               });
               itemType  = item.type;
               itemCount = item.count;
@@ -6294,10 +6341,11 @@ void DoUI(bool draw) {
 
           // Weapon.
           const bool selectedWeapon = componentUniversalSlot({
-            .id     = slotID,
-            .group  = data.group,
-            .weapon = weapon.type,
-            .tier   = weapon.tier,
+            .id           = slotID,
+            .group        = data.group,
+            .weapon       = weapon.type,
+            .tier         = weapon.tier,
+            .showsDetails = true,
           });
 
           if (selectedWeapon && !ge.events.thisFrame.Touch()) {

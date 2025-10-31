@@ -21,10 +21,10 @@ x fix: showing multiple details during the same frame
 x touch: make it not possible to "activate" weapon in shop
   but buttons should work
 x touch: hide cancel button in weapon details
+x touch: show slots as "selected" only when `stickedSlotDetails` is true
+x touch: when touching outside of slot -> hide details
 
-* touch: show slots as "selected" only when `stickedSlotDetails` is true
-* touch:
-* touch:
+* touch: new run: after difficulty selection -> don't react to this touch position
 * touch:
 * ui:
 * ui:
