@@ -12006,13 +12006,15 @@ void GameDraw() {
         0, 1, e.value, DAMAGE_NUMBERS_FRAMES.value, DAMAGE_NUMBERS_FADE_FRAMES.value
       ));
 
+      auto color = Fade(ColorFromRGBA(fb->color()), EaseOutQuad(fade));
+
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
-        .scale      = Vector2One() * EaseBounceSmall(p),
+        .scale      = Vector2One() * Lerp(1.5f, 1, EaseOutQuad(MIN(1, p * 2))),
         .font       = &g.meta.fontUIOutlined,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
-        .color      = Fade(ColorFromRGBA(fb->color()), EaseOutQuad(fade)),
+        .color      = color,
       });
     }
 

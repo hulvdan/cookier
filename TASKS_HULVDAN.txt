@@ -58,8 +58,8 @@ x wave complete animation: increase speed of letters
 x wave complete animation: fade out
 x engine: text scale
 x fix: engine: text initial anchored pos
+x damage numbers squashing
 
-* damage numbers squashing
 * описание самой мелкой сложности
 * change «next wave» button icon
 * финализировать названия статов
