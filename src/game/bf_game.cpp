@@ -6235,6 +6235,7 @@ void DoUI(bool draw) {
 
   struct ComponentItemsGridData {  ///
     ControlsGroupID group              = {};
+    ControlsGroupID groupArrows        = {};
     int             itemsX             = {};
     int             itemsMaxY          = {};
     int*            scroll             = {};
@@ -6246,6 +6247,7 @@ void DoUI(bool draw) {
 
   LAMBDA (void, componentItemsGrid, (ComponentItemsGridData data)) {  ///
     ASSERT(data.group);
+    ASSERT(data.groupArrows);
     ASSERT(data.itemsX > 0);
     ASSERT(data.itemsMaxY > 0);
     ASSERT(data.scroll);
@@ -6256,25 +6258,33 @@ void DoUI(bool draw) {
     ASSERT(data.detailsBelow <= 1);
 
     CLAY({.layout{.childGap = GAP_SMALL}}) {
-      const int ITEMS_X = data.itemsX;
-      int       ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
+      const int ITEMS_X   = data.itemsX;
+      const int totalRows = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
 
-      const int maxScroll = MAX(0, ITEMS_Y - data.itemsMaxY);
-
-      const bool showScrollButtons = (ITEMS_Y > data.itemsMaxY);
-      ITEMS_Y                      = MIN(ITEMS_Y, data.itemsMaxY);
+      // const int maxScroll = MAX(0, ITEMS_Y - data.itemsMaxY);
+      const int totalPages
+        = CeilDivision(g.run.state.items.count + 2, ITEMS_X * data.itemsMaxY);
+      const int maxScroll = totalPages - 1;
 
       CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
-        FOR_RANGE (int, y, MIN(ITEMS_Y, data.itemsMaxY)) {
+        FOR_RANGE (int, y, data.itemsMaxY) {
           ControlsGroupNewRow(data.group);
+
+          bool shouldBreak = false;
 
           CLAY({.layout{.childGap = GAP_SMALL}})
           FOR_RANGE (int, x, ITEMS_X) {
-            const int t = (y + (*data.scroll)) * ITEMS_X + x;
-            if (t >= g.run.state.items.count + 2)
+            const int t = (y + (*data.scroll) * data.itemsMaxY) * ITEMS_X + x;
+            if ((t >= g.run.state.items.count + 2) && !maxScroll) {
+              shouldBreak = true;
               break;
+            }
 
-            CLAY({}) {
+            CLAY({.layout{.sizing{
+              .width  = CLAY_SIZING_FIXED(slotSize.x),
+              .height = CLAY_SIZING_FIXED(slotSize.y),
+            }}})
+            if (t < g.run.state.items.count + 2) {
               int            itemCount      = 1;
               DifficultyType difficultyType = {};
               BuildType      buildType      = {};
@@ -6310,7 +6320,7 @@ void DoUI(bool draw) {
                 difficultyType = g.player.difficulty;
               }
               else {
-                auto& item = g.run.state.items[t - 2];
+                auto& item = g.run.state.items[g.run.state.items.count - (t - 2) - 1];
                 slotID     = CLAY_IDI("shop_player_item", t);
                 componentUniversalSlot({
                   .id           = slotID,
@@ -6340,67 +6350,70 @@ void DoUI(bool draw) {
               });
             }
           }
+
+          if (shouldBreak)
+            break;
         }
       }
 
-      if (showScrollButtons) {
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_Y,
-          .childGap        = GAP_SMALL,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }}) {
-          const auto moveUpID   = CLAY_ID("items_move_up");
-          const auto moveDownID = CLAY_ID("items_move_down");
+      CLAY({.layout{
+        BF_CLAY_SIZING_GROW_Y,
+        .childGap        = GAP_SMALL,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
+        const auto moveUpID   = CLAY_ID("items_move_up");
+        const auto moveDownID = CLAY_ID("items_move_down");
 
-          bool movedUp = false;
-          if (*data.scroll > 0) {
-            movedUp = componentButton(
-              {
-                .id                = moveUpID,
-                .growY             = true,
-                .paddingHorizontal = GAP_SMALL,
-                .keys              = KEYS_MOVE_UP,
-              },
-              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({.texID = glib->ui_icon_up_texture_id()});
-              }
-            );
-          }
-          else
-            BF_CLAY_SPACER_VERTICAL;
-
-          bool movedDown = false;
-          if (*data.scroll < maxScroll) {
-            movedDown = componentButton(
-              {
-                .id                = moveDownID,
-                .growY             = true,
-                .paddingHorizontal = GAP_SMALL,
-                .keys              = KEYS_MOVE_DOWN,
-              },
-              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({.texID = glib->ui_icon_down_texture_id()});
-              }
-            );
-          }
-          else
-            BF_CLAY_SPACER_VERTICAL;
-
-          if (movedUp) {
-            *data.scroll = MAX(*data.scroll - 1, 0);
-            if (*data.scroll == 0)
-              ChangeFocusFrom(currentContext, moveUpID, moveDownID);
-          }
-
-          if (movedDown) {
-            *data.scroll = MIN(*data.scroll + 1, maxScroll);
-            if (*data.scroll == maxScroll)
-              ChangeFocusFrom(currentContext, moveDownID, moveUpID);
-          }
-
-          if (movedUp || movedDown)
-            PlaySound(Sound_UI_CLICK);
+        bool movedUp = false;
+        if (*data.scroll > 0) {
+          movedUp = componentButton(
+            {
+              .id                = moveUpID,
+              .group             = data.groupArrows,
+              .growY             = true,
+              .paddingHorizontal = GAP_SMALL,
+              .keys              = KEYS_MOVE_UP,
+            },
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({.texID = glib->ui_icon_up_texture_id()});
+            }
+          );
         }
+        else
+          BF_CLAY_SPACER_VERTICAL;
+
+        bool movedDown = false;
+        if (*data.scroll < maxScroll) {
+          movedDown = componentButton(
+            {
+              .id                = moveDownID,
+              .group             = data.groupArrows,
+              .growY             = true,
+              .paddingHorizontal = GAP_SMALL,
+              .keys              = KEYS_MOVE_DOWN,
+            },
+            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({.texID = glib->ui_icon_down_texture_id()});
+            }
+          );
+        }
+        else
+          BF_CLAY_SPACER_VERTICAL;
+
+        if (movedUp) {
+          *data.scroll = MAX(*data.scroll - 1, 0);
+          if (*data.scroll == 0)
+            ChangeFocusFrom(currentContext, moveUpID, moveDownID);
+        }
+
+        if (movedDown) {
+          *data.scroll = MIN(*data.scroll + 1, maxScroll);
+          if (*data.scroll == maxScroll)
+            ChangeFocusFrom(currentContext, moveDownID, moveUpID);
+        }
+
+        if (movedUp || movedDown)
+          PlaySound(Sound_UI_CLICK);
       }
     }
   };
@@ -7558,6 +7571,7 @@ void DoUI(bool draw) {
     auto groupGoNextWave = MakeControlsGroup();
     auto groupWeapons    = MakeControlsGroup();
     auto groupItems      = MakeControlsGroup();
+    auto groupItemArrows = MakeControlsGroup();
 
     // Columns.
     CLAY({
@@ -7677,6 +7691,7 @@ void DoUI(bool draw) {
             // Items.
             componentItemsGrid({
               .group        = groupItems,
+              .groupArrows  = groupItemArrows,
               .itemsX       = 11,
               .itemsMaxY    = 2,
               .scroll       = &g.run.itemsScrollShop,
@@ -7821,6 +7836,8 @@ void DoUI(bool draw) {
     ControlsGroupConnect(groupWeapons, Direction_UP, groupTop);
     ControlsGroupConnect(groupItems, Direction_UP, groupTop);
     ControlsGroupConnect(groupWeapons, Direction_RIGHT, groupGoNextWave);
+    ControlsGroupConnect(groupItems, Direction_RIGHT, groupItemArrows);
+    ControlsGroupConnect(groupItemArrows, Direction_RIGHT, groupWeapons);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupWeapons);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupGoNextWave);
     ControlsGroupConnect(groupsToBuy[3], Direction_DOWN, groupGoNextWave);
@@ -7841,6 +7858,7 @@ void DoUI(bool draw) {
 
     auto groupTop             = MakeControlsGroup();
     auto groupWeaponsAndItems = MakeControlsGroup();
+    auto groupItemArrows      = MakeControlsGroup();
     auto groupButtons         = MakeControlsGroup();
 
     CLAY({
@@ -7922,6 +7940,7 @@ void DoUI(bool draw) {
             // Items.
             componentItemsGrid({
               .group        = groupWeaponsAndItems,
+              .groupArrows  = groupItemArrows,
               .itemsX       = 8,
               .itemsMaxY    = 4,
               .scroll       = &g.run.itemsScrollEnd,
@@ -7975,6 +7994,8 @@ void DoUI(bool draw) {
 
     ControlsGroupConnect(groupTop, Direction_DOWN, groupWeaponsAndItems);
     ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupButtons);
+    ControlsGroupConnect(groupWeaponsAndItems, Direction_RIGHT, groupItemArrows);
+    ControlsGroupConnect(groupItemArrows, Direction_RIGHT, groupWeaponsAndItems);
     ControlsGroupConnect(groupButtons, Direction_DOWN, groupTop);
   }
   else if (g.run.state.screen == ScreenType_WAVE_END_ANIMATION) {
@@ -8220,6 +8241,7 @@ void DoUI(bool draw) {
 
         auto groupButtons         = MakeControlsGroup();
         auto groupWeaponsAndItems = MakeControlsGroup();
+        auto groupItemArrows      = MakeControlsGroup();
         auto groupTop             = MakeControlsGroup();
 
         CLAY({.layout{
@@ -8382,6 +8404,7 @@ void DoUI(bool draw) {
               // Items.
               componentItemsGrid({
                 .group        = groupWeaponsAndItems,
+                .groupArrows  = groupItemArrows,
                 .itemsX       = 6,
                 .itemsMaxY    = 6,
                 .scroll       = &g.run.itemsScrollPause,
@@ -8400,6 +8423,8 @@ void DoUI(bool draw) {
         ControlsGroupConnect(groupButtons, Direction_RIGHT, groupWeaponsAndItems);
         ControlsGroupConnect(groupWeaponsAndItems, Direction_UP, groupTop);
         ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupTop);
+        ControlsGroupConnect(groupWeaponsAndItems, Direction_RIGHT, groupItemArrows);
+        ControlsGroupConnect(groupItemArrows, Direction_RIGHT, groupWeaponsAndItems);
       }
     }
   }
