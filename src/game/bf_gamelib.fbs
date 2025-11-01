@@ -216,7 +216,7 @@ table Item {
     texture_id: int;
     tier: int;
     price: int;
-    count_cap: int;
+    limit: int;
     deprecated: bool = true;
     effects: [Effect];
 }
