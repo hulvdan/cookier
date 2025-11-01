@@ -2816,9 +2816,9 @@ ItemType GenerateRandomItem() {  ///
     auto fb = fb_items->Get(type);
     if (!fb->deprecated())
       continue;
-    if (fb->count_cap() <= 0)
+    if (fb->limit() <= 0)
       break;
-    if (fb->count_cap() > currentItemCount)
+    if (fb->limit() > currentItemCount)
       break;
   }
   return type;
@@ -5537,8 +5537,8 @@ void DoUI(bool draw) {
               BF_CLAY_TEXT_LOCALIZED(fb_item->name_locale(), textColorsPerTier[tier]);
 
               FontBegin(&g.meta.fontStats);
-              if (fb_item->count_cap() > 0) {
-                if (fb_item->count_cap() > 1) {
+              if (fb_item->limit() > 0) {
+                if (fb_item->limit() > 1) {
                   CLAY({}) {
                     BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, secondaryTextColor);
 
@@ -5551,13 +5551,13 @@ void DoUI(bool draw) {
                         }
                       }
                       BF_CLAY_TEXT(
-                        TextFormat(" (%d/%d)", currentCount, fb_item->count_cap()),
+                        TextFormat(" (%d/%d)", currentCount, fb_item->limit()),
                         secondaryTextColor
                       );
                     }
                     else {
                       BF_CLAY_TEXT(
-                        TextFormat(" (%d)", fb_item->count_cap()), secondaryTextColor
+                        TextFormat(" (%d)", fb_item->limit()), secondaryTextColor
                       );
                     }
                   }
