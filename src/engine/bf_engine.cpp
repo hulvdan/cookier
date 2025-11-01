@@ -2087,11 +2087,6 @@ void FlushDrawCommands() {
 
             auto pos = LogicalPosToScreen(data.pos);
 
-            // origin.y -= font->size * data.anchor.y;
-
-            pos.y -= font->size;
-            // pos.y -= font->size * (1 + data.anchor.y / 2.0f);
-
             const auto SSS = logicalToScreenScale / font->_scaleToFit;
 
             // Processing `anchor`.
@@ -2127,7 +2122,6 @@ void FlushDrawCommands() {
                     font->atlasTexture.size.y,
                     glyphIndex,
                     &lineWidth,
-                    // &data.pos.y,
                     &y_,
                     &q,
                     1  // 1=opengl & d3d10+,0=d3d9
@@ -2136,9 +2130,9 @@ void FlushDrawCommands() {
               );
               pos.x -= maxLineWidth * data.anchor.x * SSS;
               pos.y
-                += (f32)height
+                -= (f32)height
                    * ((f32)font->size * font->FIXME_sizeScale + 2 * (f32)font->outlineWidth)
-                   * SSS * data.anchor.y;
+                   * SSS * data.anchor.y / 2.0f;
             }
 
             auto y = ge.meta.screenSize.y - pos.y;

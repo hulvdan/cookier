@@ -9201,7 +9201,8 @@ void DoUI(bool draw) {
             // TODO: uint16_t text.fontSize
             // TODO: letterSpacing
             // TODO: lineHeight
-            auto& d = cmd.renderData.text;
+            auto& d    = cmd.renderData.text;
+            auto  font = &g.meta.fontUI + d.fontId;
 
             Color c{
               (u8)d.textColor.r,
@@ -9210,9 +9211,9 @@ void DoUI(bool draw) {
               (u8)((f32)d.textColor.a * beautifierAlpha),
             };
             DrawGroup_CommandText({
-              .pos{bb.x, bb.y + bb.height},
+              .pos{bb.x, bb.y},
               .anchor{},
-              .font       = &g.meta.fontUI + d.fontId,
+              .font       = font,
               .text       = d.stringContents.chars,
               .bytesCount = d.stringContents.length,
               .color      = c,
@@ -12007,7 +12008,7 @@ void GameDraw() {
 
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
-        .scale      = Vector2(1, 1) * (p * 2),
+        .scale      = Vector2One() * EaseBounceSmall(p),
         .font       = &g.meta.fontUIOutlined,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
@@ -12136,7 +12137,9 @@ void GameDraw() {
     int charsToShow
       = MIN(totalChars, Ceil((f32)totalChars * EaseOutQuad(MIN(1, p / (5 / 16.0f)))));
 
-    f32 fade = Clamp01(Remap(p, 0.7f, 0.9f, 1, 0));
+    f32 scale = Lerp(1, 7, EaseInCubic(Clamp01(Unlerp(p, 0.7f, 0.9f))))
+                * EaseBounceSmall(Clamp01(Unlerp(p, 0, 0.3f)));
+    f32 fade = EaseOutQuad(Clamp01(Remap(p, 0.7f, 0.9f, 1, 0)));
 
     IterateOverCodepoints(
       text->c_str(),
@@ -12157,6 +12160,7 @@ void GameDraw() {
             (f32)LOGICAL_RESOLUTION.x / 2.0f,
             (f32)LOGICAL_RESOLUTION.y / 2.0f,
           },
+          .scale      = Vector2One() * scale,
           .font       = &g.meta.fontUIGiganticOutlined,
           .text       = text->c_str(),
           .bytesCount = bytesToShow,
