@@ -124,6 +124,16 @@ ui_frame_nine_slice:
   right: 48
   top: 48
   bottom: 48
+ui_frame_shadow_nine_slice:
+  texture_id: ui_frame_shadow120
+  left: 142
+  right: 142
+  top: 142
+  bottom: 142
+  outer_left: 60
+  outer_right: 60
+  outer_top: 60
+  outer_bottom: 60
 ui_button_nine_slice:
   texture_id: ui_button_2
   left: 32

@@ -19,6 +19,10 @@ table NineSlice {
     right: int;
     top: int;
     bottom: int;
+    outer_left: int;
+    outer_right: int;
+    outer_top: int;
+    outer_bottom: int;
 }
 
 table StringDatum {
@@ -329,6 +333,7 @@ table GameLibrary {
     ui_item_slot_colors: [uint] (required);
     ui_shop_current_level_icon_texture_id: int;
     ui_frame_nine_slice: NineSlice;
+    ui_frame_shadow_nine_slice: NineSlice;
     ui_button_nine_slice: NineSlice;
 
     shadow_texture_ids: [int];
