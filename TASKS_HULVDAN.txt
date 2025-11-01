@@ -43,8 +43,8 @@ x fix: hovered details tier + affectedByGame
 - end screen green buttons
 x fix: mouse can move character
 - ловкость -> скорость атаки
+x создать 50 тестовых предметов
 
-* создать 50 тестовых предметов
 * скроллинг предметов
 * поставить переводчики / словари
 * финализировать названия статов
