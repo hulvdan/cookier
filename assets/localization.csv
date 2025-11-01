@@ -30,7 +30,7 @@ UI_START_A_NEW_RUN;Начать;Start;
 UI_GO;Продолжить;Go;
 UI_WON;Забег Пройден;Run Completed;
 UI_LOST;Забег Провален;Run Lost;
-UI_WAVE_WON;Волна Зачищена!;Wave Won!;
+UI_WAVE_WON;Волна Зачищена!;Wave Completed!;
 UI_WAVE_LOST;Забег Провален!;Run Lost!;
 UI_RESUME;Продолжить;Resume;
 UI_RESTART;Начать Заново;Restart;

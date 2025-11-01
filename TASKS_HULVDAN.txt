@@ -53,11 +53,11 @@ x items scrolling: при получении того же предмета,
 x поставить переводчики / словари
 x shadow under modal
 x scroll: mouse wheel triggers item arrows
+x wave complete animation: CENTER
+x wave complete animation: increase speed of letters
+x wave complete animation: fade out
 
-* wave complete animation: CENTER
 * wave complete animation: try making text bigger
-* wave complete animation: increase speed of letters
-* wave complete animation: fade in / fade out
 * описание самой мелкой сложности
 * change «next wave» button icon
 * финализировать названия статов

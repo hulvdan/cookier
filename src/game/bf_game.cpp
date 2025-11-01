@@ -12133,8 +12133,10 @@ void GameDraw() {
     );
     int bytesToShow = 0;
 
-    p               = InOutLerp(0, 1, p, 1, 0.33f);
-    int charsToShow = MIN(totalChars, Ceil((f32)totalChars * p));
+    int charsToShow
+      = MIN(totalChars, Ceil((f32)totalChars * EaseOutQuad(MIN(1, p / (5 / 16.0f)))));
+
+    f32 fade = Clamp01(Remap(p, 0.7f, 0.9f, 1, 0));
 
     IterateOverCodepoints(
       text->c_str(),
@@ -12153,11 +12155,12 @@ void GameDraw() {
         {
           .pos{
             (f32)LOGICAL_RESOLUTION.x / 2.0f,
-            (f32)LOGICAL_RESOLUTION.y * 3.0f / 4.0f,
+            (f32)LOGICAL_RESOLUTION.y / 2.0f,
           },
           .font       = &g.meta.fontUIGiganticOutlined,
           .text       = text->c_str(),
           .bytesCount = bytesToShow,
+          .color      = Fade(WHITE, fade),
         },
         DrawZ_UI
       );
