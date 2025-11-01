@@ -361,6 +361,8 @@ table GameLibrary {
     ui_icon_take_big_texture_id: int;
     ui_icon_take_texture_id: int;
     ui_icon_stopwatch2_texture_id: int;
+    ui_icon_up_texture_id: int;
+    ui_icon_down_texture_id: int;
     // AUTOMATIC_TEXTURE_BIND_END
 
     ui_controls_touch_handle_margin: int;
