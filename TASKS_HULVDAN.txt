@@ -44,8 +44,10 @@ x fix: hovered details tier + affectedByGame
 x fix: mouse can move character
 - ловкость -> скорость атаки
 x создать 50 тестовых предметов
+x скроллинг предметов
 
-* скроллинг предметов
+* items scrolling: control group
+* items scrolling:
 * поставить переводчики / словари
 * финализировать названия статов
 * описания статов

@@ -1066,6 +1066,10 @@ struct GameData {
 
     bool hideSlotDetails = false;
 
+    int itemsScrollPause = 0;
+    int itemsScrollShop  = 0;
+    int itemsScrollEnd   = 0;
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -4617,6 +4621,7 @@ void DoUI(bool draw) {
     Clay_ElementId     id                = {};
     ControlsGroupID    group             = {};
     bool               growX             = false;
+    bool               growY             = false;
     u16                paddingHorizontal = GAP_BIG;
     u16                paddingVertical   = GAP_SMALL;
     View<SDL_Scancode> keys              = {};
@@ -4638,6 +4643,8 @@ void DoUI(bool draw) {
     Clay_Sizing sizing{};
     if (data.growX)
       sizing.width = CLAY_SIZING_GROW(0);
+    if (data.growY)
+      sizing.height = CLAY_SIZING_GROW(0);
 
     if (data.id.id && data.group)
       ControlsGroupAdd(data.group, data.id);
@@ -6229,6 +6236,8 @@ void DoUI(bool draw) {
   struct ComponentItemsGridData {  ///
     ControlsGroupID group              = {};
     int             itemsX             = {};
+    int             itemsMaxY          = {};
+    int*            scroll             = {};
     int             detailsRight       = -1;
     int             detailsBelow       = -1;
     bool            markFirstAsDefault = false;
@@ -6238,90 +6247,159 @@ void DoUI(bool draw) {
   LAMBDA (void, componentItemsGrid, (ComponentItemsGridData data)) {  ///
     ASSERT(data.group);
     ASSERT(data.itemsX > 0);
+    ASSERT(data.itemsMaxY > 0);
+    ASSERT(data.scroll);
 
     ASSERT(data.detailsRight >= 0);
     ASSERT(data.detailsRight <= 1);
     ASSERT(data.detailsBelow >= 0);
     ASSERT(data.detailsBelow <= 1);
 
-    CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+    CLAY({.layout{.childGap = GAP_SMALL}}) {
       const int ITEMS_X = data.itemsX;
-      const int ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
+      int       ITEMS_Y = CeilDivision(g.run.state.items.count + 2, ITEMS_X);
 
-      FOR_RANGE (int, y, ITEMS_Y) {
-        ControlsGroupNewRow(data.group);
+      const int maxScroll = MAX(0, ITEMS_Y - data.itemsMaxY);
 
-        CLAY({.layout{.childGap = GAP_SMALL}})
-        FOR_RANGE (int, x, ITEMS_X) {
-          const int t = y * ITEMS_X + x;
-          if (t >= g.run.state.items.count + 2)
-            break;
+      const bool showScrollButtons = (ITEMS_Y > data.itemsMaxY);
+      ITEMS_Y                      = MIN(ITEMS_Y, data.itemsMaxY);
 
-          CLAY({}) {
-            int            itemCount      = 1;
-            DifficultyType difficultyType = {};
-            BuildType      buildType      = {};
-            ItemType       itemType       = {};
+      CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+        FOR_RANGE (int, y, MIN(ITEMS_Y, data.itemsMaxY)) {
+          ControlsGroupNewRow(data.group);
 
-            Clay_ElementId slotID{};
+          CLAY({.layout{.childGap = GAP_SMALL}})
+          FOR_RANGE (int, x, ITEMS_X) {
+            const int t = (y + (*data.scroll)) * ITEMS_X + x;
+            if (t >= g.run.state.items.count + 2)
+              break;
 
-            if (t == 0) {
-              BEAUTIFY_WIGGLING_DANGER_SCOPED(
-                g.ui.shopErrorBuild,
-                WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
-                ERROR_WIGGLING_FRAMES,
-                ERROR_WIGGLING_TIMES
-              );
+            CLAY({}) {
+              int            itemCount      = 1;
+              DifficultyType difficultyType = {};
+              BuildType      buildType      = {};
+              ItemType       itemType       = {};
 
-              slotID = CLAY_IDI("shop_player_item", t);
-              componentUniversalSlot({
-                .id           = slotID,
-                .group        = data.group,
-                .build        = g.player.build,
-                .showsDetails = true,
+              Clay_ElementId slotID{};
+
+              if (t == 0) {
+                BEAUTIFY_WIGGLING_DANGER_SCOPED(
+                  g.ui.shopErrorBuild,
+                  WEAPONS_WIGGLING_LOGICAL_AMPLITUDE,
+                  ERROR_WIGGLING_FRAMES,
+                  ERROR_WIGGLING_TIMES
+                );
+
+                slotID = CLAY_IDI("shop_player_item", t);
+                componentUniversalSlot({
+                  .id           = slotID,
+                  .group        = data.group,
+                  .build        = g.player.build,
+                  .showsDetails = true,
+                });
+                buildType = g.player.build;
+              }
+              else if (t == 1) {
+                slotID = CLAY_IDI("shop_player_item", t);
+                componentUniversalSlot({
+                  .id           = slotID,
+                  .group        = data.group,
+                  .difficulty   = g.player.difficulty,
+                  .showsDetails = true,
+                });
+                difficultyType = g.player.difficulty;
+              }
+              else {
+                auto& item = g.run.state.items[t - 2];
+                slotID     = CLAY_IDI("shop_player_item", t);
+                componentUniversalSlot({
+                  .id           = slotID,
+                  .group        = data.group,
+                  .item         = item.type,
+                  .count        = item.count,
+                  .showsDetails = true,
+                });
+                itemType  = item.type;
+                itemCount = item.count;
+              }
+
+              if (data.markFirstAsDefault && (t == 0))
+                markControlAsDefault(slotID);
+
+              processShowingOrNotShowingSlotDetails(slotID);
+
+              gridEntryDetails(GridEntryDetailsData{
+                .id             = slotID,
+                .difficulty     = difficultyType,
+                .build          = buildType,
+                .item           = itemType,
+                .count          = itemCount,
+                .affectedByGame = data.affectedByGame,
+                .detailsRight   = data.detailsRight,
+                .detailsBelow   = data.detailsBelow,
               });
-              buildType = g.player.build;
             }
-            else if (t == 1) {
-              slotID = CLAY_IDI("shop_player_item", t);
-              componentUniversalSlot({
-                .id           = slotID,
-                .group        = data.group,
-                .difficulty   = g.player.difficulty,
-                .showsDetails = true,
-              });
-              difficultyType = g.player.difficulty;
-            }
-            else {
-              auto& item = g.run.state.items[t - 2];
-              slotID     = CLAY_IDI("shop_player_item", t);
-              componentUniversalSlot({
-                .id           = slotID,
-                .group        = data.group,
-                .item         = item.type,
-                .count        = item.count,
-                .showsDetails = true,
-              });
-              itemType  = item.type;
-              itemCount = item.count;
-            }
-
-            if (data.markFirstAsDefault && (t == 0))
-              markControlAsDefault(slotID);
-
-            processShowingOrNotShowingSlotDetails(slotID);
-
-            gridEntryDetails(GridEntryDetailsData{
-              .id             = slotID,
-              .difficulty     = difficultyType,
-              .build          = buildType,
-              .item           = itemType,
-              .count          = itemCount,
-              .affectedByGame = data.affectedByGame,
-              .detailsRight   = data.detailsRight,
-              .detailsBelow   = data.detailsBelow,
-            });
           }
+        }
+      }
+
+      if (showScrollButtons) {
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_Y,
+          .childGap        = GAP_SMALL,
+          .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        }}) {
+          const auto moveUpID   = CLAY_ID("items_move_up");
+          const auto moveDownID = CLAY_ID("items_move_down");
+
+          bool movedUp = false;
+          if (*data.scroll > 0) {
+            movedUp = componentButton(
+              {
+                .id                = moveUpID,
+                .growY             = true,
+                .paddingHorizontal = GAP_SMALL,
+                .keys              = KEYS_MOVE_UP,
+              },
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({.texID = glib->ui_icon_up_texture_id()});
+              }
+            );
+          }
+          else
+            BF_CLAY_SPACER_VERTICAL;
+
+          bool movedDown = false;
+          if (*data.scroll < maxScroll) {
+            movedDown = componentButton(
+              {
+                .id                = moveDownID,
+                .growY             = true,
+                .paddingHorizontal = GAP_SMALL,
+                .keys              = KEYS_MOVE_DOWN,
+              },
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({.texID = glib->ui_icon_down_texture_id()});
+              }
+            );
+          }
+          else
+            BF_CLAY_SPACER_VERTICAL;
+
+          if (movedUp) {
+            *data.scroll = MAX(*data.scroll - 1, 0);
+            if (*data.scroll == 0)
+              ChangeFocusFrom(currentContext, moveUpID, moveDownID);
+          }
+
+          if (movedDown) {
+            *data.scroll = MIN(*data.scroll + 1, maxScroll);
+            if (*data.scroll == maxScroll)
+              ChangeFocusFrom(currentContext, moveDownID, moveUpID);
+          }
+
+          if (movedUp || movedDown)
+            PlaySound(Sound_UI_CLICK);
         }
       }
     }
@@ -7590,16 +7668,18 @@ void DoUI(bool draw) {
 
         // 3. Player's items and weapons.
         CLAY({.layout{BF_CLAY_SIZING_GROW_X, .childGap = GAP_BIG}}) {
-          CLAY({.layout{.layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+          CLAY({.layout{
+            .childGap        = GAP_SMALL,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
             // Items label.
             BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEMS__CAPS);
-
-            CLAY({.layout{.sizing{.height = CLAY_SIZING_FIXED(GAP_SMALL)}}}) {}
-
             // Items.
             componentItemsGrid({
               .group        = groupItems,
               .itemsX       = 11,
+              .itemsMaxY    = 2,
+              .scroll       = &g.run.itemsScrollShop,
               .detailsRight = 1,
               .detailsBelow = 0,
             });
@@ -7843,8 +7923,10 @@ void DoUI(bool draw) {
             componentItemsGrid({
               .group        = groupWeaponsAndItems,
               .itemsX       = 8,
+              .itemsMaxY    = 4,
+              .scroll       = &g.run.itemsScrollEnd,
               .detailsRight = 1,
-              .detailsBelow = 1,
+              .detailsBelow = 0,
             });
           }
         }
@@ -8301,6 +8383,8 @@ void DoUI(bool draw) {
               componentItemsGrid({
                 .group        = groupWeaponsAndItems,
                 .itemsX       = 6,
+                .itemsMaxY    = 6,
+                .scroll       = &g.run.itemsScrollPause,
                 .detailsRight = 1,
                 .detailsBelow = 0,
               });
