@@ -135,22 +135,28 @@ Clay_Color ToClayColor(Color color) {
     .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_BOTTOM \
   }
 
-#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_) \
-  .custom {                                                    \
-    .customData = PushClayCustomData({                         \
-      .type           = ClayCustomElementType_NINE_SLICE,      \
-      .nineSlice      = (gamelibNineSlicePtr_),                \
-      .nineSliceColor = slotColors[(tier_) * 2],               \
-      .nineSliceFlash = slotColors[(tier_) * 2 + 1],           \
-    }),                                                        \
+#define BF_CLAY_CUSTOM_BEGIN \
+  .custom {                  \
+    .customData = PushClayCustomData(
+
+#define BF_CLAY_CUSTOM_END ) \
   }
 
-#define BF_CLAY_CUSTOM_OVERLAY(color)                \
-  .custom {                                          \
-    .customData = PushClayCustomData({               \
-      .type         = ClayCustomElementType_OVERLAY, \
-      .overlayColor = (color),                       \
-    }),                                              \
+#define BF_CLAY_CUSTOM_SHADOW(gamelibNineSlicePtr_, enabled_) \
+  .shadow {                                                   \
+    .set = (enabled_), .nineSlice = (gamelibNineSlicePtr_),   \
+  }
+
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_) \
+  .nineSlice {                                                 \
+    .set = true, .nineSlice = (gamelibNineSlicePtr_),          \
+    .nineSliceColor = slotColors[(tier_) * 2],                 \
+    .nineSliceFlash = slotColors[(tier_) * 2 + 1],             \
+  }
+
+#define BF_CLAY_CUSTOM_OVERLAY(color_) \
+  .overlay {                           \
+    .set = true, .color = (color_)     \
   }
 
 struct Beautify {
@@ -159,60 +165,54 @@ struct Beautify {
   Vector2 scale     = {1, 1};
 };
 
-#define BEAUTIFY(beautify_)                                                            \
-  ASSERT((beautify_).alpha >= 0);                                                      \
-  ASSERT((beautify_).alpha <= 1);                                                      \
-                                                                                       \
-  CLAY({                                                                               \
-    .custom{                                                                           \
-      .customData = PushClayCustomData({                                               \
-        .type      = ClayCustomElementType_BEAUTIFIER_START,                           \
-        .alpha     = (beautify_).alpha,                                                \
-        .translate = (beautify_).translate,                                            \
-        .scale     = (beautify_).scale,                                                \
-      }),                                                                              \
-    },                                                                                 \
-  }) {}                                                                                \
-  beautifiers[beautifiersCount++] = (beautify_);                                       \
-                                                                                       \
-  DEFER {                                                                              \
-    CLAY({.custom{                                                                     \
-      .customData = PushClayCustomData({.type = ClayCustomElementType_BEAUTIFIER_END}) \
-    }}) {}                                                                             \
-    beautifiersCount--;                                                                \
+#define BEAUTIFY(beautify_)                                                         \
+  ASSERT((beautify_).alpha >= 0);                                                   \
+  ASSERT((beautify_).alpha <= 1);                                                   \
+                                                                                    \
+  CLAY({                                                                            \
+    BF_CLAY_CUSTOM_BEGIN{                                                           \
+      .beautifierStart{                                                             \
+        .set       = true,                                                          \
+        .alpha     = (beautify_).alpha,                                             \
+        .translate = (beautify_).translate,                                         \
+        .scale     = (beautify_).scale,                                             \
+      },                                                                            \
+    } BF_CLAY_CUSTOM_END,                                                           \
+  }) {}                                                                             \
+  beautifiers[beautifiersCount++] = (beautify_);                                    \
+                                                                                    \
+  DEFER {                                                                           \
+    CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierEnd{.set = true}} BF_CLAY_CUSTOM_END}) {} \
+    beautifiersCount--;                                                             \
   };
 
 #define FLOATING_BEAUTIFY FLOATING_BEAUTIFY_CONDITIONAL(true)
 
-#define FLOATING_BEAUTIFY_CONDITIONAL(cond)                                          \
-  f32     currentAlpha_ = 1;                                                         \
-  Vector2 currentTranslate_{0, 0};                                                   \
-  Vector2 currentScale_{1, 1};                                                       \
-  if (cond) {                                                                        \
-    FOR_RANGE (int, i, beautifiersCount) {                                           \
-      auto& b = beautifiers[i];                                                      \
-      currentAlpha_ *= b.alpha;                                                      \
-      currentTranslate_ += b.translate;                                              \
-      currentScale_ *= b.scale;                                                      \
-    }                                                                                \
-  }                                                                                  \
-  Beautify currentBeautify_{                                                         \
-    .alpha     = currentAlpha_,                                                      \
-    .translate = currentTranslate_,                                                  \
-    .scale     = currentScale_,                                                      \
-  };                                                                                 \
-                                                                                     \
-  CLAY({.custom{                                                                     \
-    .customData = PushClayCustomData({                                               \
-      .type      = ClayCustomElementType_BEAUTIFIER_START,                           \
-      .alpha     = currentBeautify_.alpha,                                           \
-      .translate = currentBeautify_.translate,                                       \
-      .scale     = currentBeautify_.scale,                                           \
-    })                                                                               \
-  }}) {}                                                                             \
-  DEFER{CLAY({.custom{                                                               \
-    .customData = PushClayCustomData({.type = ClayCustomElementType_BEAUTIFIER_END}) \
-  }}){}};
+#define FLOATING_BEAUTIFY_CONDITIONAL(cond)    \
+  f32     currentAlpha_ = 1;                   \
+  Vector2 currentTranslate_{0, 0};             \
+  Vector2 currentScale_{1, 1};                 \
+  if (cond) {                                  \
+    FOR_RANGE (int, i, beautifiersCount) {     \
+      auto& b = beautifiers[i];                \
+      currentAlpha_ *= b.alpha;                \
+      currentTranslate_ += b.translate;        \
+      currentScale_ *= b.scale;                \
+    }                                          \
+  }                                            \
+  Beautify currentBeautify_{                   \
+    .alpha     = currentAlpha_,                \
+    .translate = currentTranslate_,            \
+    .scale     = currentScale_,                \
+  };                                           \
+                                               \
+  CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierStart{ \
+    .set       = true,                         \
+    .alpha     = currentBeautify_.alpha,       \
+    .translate = currentBeautify_.translate,   \
+    .scale     = currentBeautify_.scale,       \
+  }} BF_CLAY_CUSTOM_END}) {}                   \
+  DEFER{CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierEnd{.set = true}} BF_CLAY_CUSTOM_END}){}};
 
 #define BEAUTIFY_WIGGLING_DANGER_SCOPED(value_, amplitude_, frames_, times_)         \
   f32 _wigglingP = 0;                                                                \
@@ -237,23 +237,34 @@ struct ClayImageData {
   // ImageFitType fitType   = {};
 };
 
-enum ClayCustomElementType : u16 {
-  ClayCustomElementType_INVALID,
-  ClayCustomElementType_BEAUTIFIER_START,
-  ClayCustomElementType_BEAUTIFIER_END,
-  ClayCustomElementType_NINE_SLICE,
-  ClayCustomElementType_OVERLAY,
-};
-
 struct ClayCustomData {
-  ClayCustomElementType    type           = {};
-  f32                      alpha          = 1;
-  Vector2                  translate      = {0, 0};
-  Vector2                  scale          = {1, 1};
-  const BFGame::NineSlice* nineSlice      = nullptr;
-  Color                    nineSliceColor = WHITE;
-  Color                    nineSliceFlash = TRANSPARENT_BLACK;
-  Color                    overlayColor   = MAGENTA;
+  struct {
+    bool    set       = false;
+    f32     alpha     = 1;
+    Vector2 translate = {0, 0};
+    Vector2 scale     = {1, 1};
+  } beautifierStart = {};
+
+  struct {
+    bool set = false;
+  } beautifierEnd = {};
+
+  struct {
+    bool  set   = false;
+    Color color = MAGENTA;
+  } overlay = {};
+
+  struct {
+    bool                     set       = false;
+    const BFGame::NineSlice* nineSlice = nullptr;
+  } shadow = {};
+
+  struct {
+    bool                     set            = false;
+    const BFGame::NineSlice* nineSlice      = nullptr;
+    Color                    nineSliceColor = WHITE;
+    Color                    nineSliceFlash = TRANSPARENT_BLACK;
+  } nineSlice = {};
 };
 
 // ============================================================ }
@@ -4477,6 +4488,7 @@ void DoUI(bool draw) {
   constexpr u16 GAP_SMALL                = 8;
   constexpr u16 GAP_BIG                  = 20;
   constexpr u16 PADDING_FRAME            = 12;
+  constexpr u16 PADDING_FRAME_SHADOW     = 94 * ASSETS_TO_LOGICAL_RATIO;
   constexpr u16 PADDING_OUTER_VERTICAL   = 10;
   constexpr u16 PADDING_OUTER_HORIZONTAL = 12;
 
@@ -4546,7 +4558,10 @@ void DoUI(bool draw) {
         },
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE * fade)),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE * fade)
+        ),
+      } BF_CLAY_CUSTOM_END,
     }) {
       innerLambda();
     }
@@ -4682,10 +4697,12 @@ void DoUI(bool draw) {
           },
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         },
-        BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_button_nine_slice(),
-          (((Clay_Hovered() || isSelected) && canShowAsSelected) ? 6 : data.tier)
-        ),
+        BF_CLAY_CUSTOM_BEGIN{
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_button_nine_slice(),
+            (((Clay_Hovered() || isSelected) && canShowAsSelected) ? 6 : data.tier)
+          ),
+        } BF_CLAY_CUSTOM_END,
       }) {
         bool hovered = Clay_Hovered();
 
@@ -5385,6 +5402,7 @@ void DoUI(bool draw) {
     bool            shopSelling                = false;
     Clay_ElementId  shopFocusAfterBuying       = {};
     Clay_ElementId  shopFocusAfterRecycling    = {};
+    bool            shadow                     = false;
   };
 
   const auto groupDetails = MakeControlsGroup();
@@ -5511,7 +5529,10 @@ void DoUI(bool draw) {
             .childGap        = GAP_SMALL,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
+          BF_CLAY_CUSTOM_BEGIN{
+            BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_nine_slice(), data.shadow),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
+          } BF_CLAY_CUSTOM_END,
         }
       ) {
         // Icon, name.
@@ -6051,7 +6072,9 @@ void DoUI(bool draw) {
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
+      } BF_CLAY_CUSTOM_END,
     }) {
       auto fb_previousStep
         = (type && (stepIndex > 0) ? fb->steps()->Get(stepIndex - 1) : nullptr);
@@ -6235,6 +6258,7 @@ void DoUI(bool draw) {
           .shopDetailsContextIsActive = isSelected,
           .shopSelling                = data.weAreInShop,
           .shopFocusAfterRecycling    = data.shopFocusAfterRecycling,
+          .shadow                     = true,
         });
       }
 
@@ -6932,7 +6956,9 @@ void DoUI(bool draw) {
           .childGap        = GAP_SMALL,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
-        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+        BF_CLAY_CUSTOM_BEGIN{
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+        } BF_CLAY_CUSTOM_END,
       }) {
         innerLambda();
       }
@@ -6947,7 +6973,9 @@ void DoUI(bool draw) {
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      } BF_CLAY_CUSTOM_END,
     }) {
       auto& p = g.player;
 
@@ -7290,7 +7318,9 @@ void DoUI(bool draw) {
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      } BF_CLAY_CUSTOM_END,
     }) {
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         componentPlayerCoins();
@@ -7389,7 +7419,9 @@ void DoUI(bool draw) {
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      } BF_CLAY_CUSTOM_END,
     }) {
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         componentPlayerCoins();
@@ -7420,7 +7452,9 @@ void DoUI(bool draw) {
               // BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), upgrade.tier),
+            BF_CLAY_CUSTOM_BEGIN{
+              BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), upgrade.tier),
+            } BF_CLAY_CUSTOM_END,
           }) {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
               // Slot with upgrade's image.
@@ -7597,7 +7631,9 @@ void DoUI(bool draw) {
         ),
         .childGap = GAP_BIG,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      } BF_CLAY_CUSTOM_END,
     }) {
       // Left column that contains:
       // 1. wave, coins, reroll.
@@ -7886,7 +7922,9 @@ void DoUI(bool draw) {
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      } BF_CLAY_CUSTOM_END,
     }) {
       // Header. Run Won / Lost, Wave.
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
@@ -8040,7 +8078,9 @@ void DoUI(bool draw) {
           },
           .attachTo = CLAY_ATTACH_TO_PARENT,
         },
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        BF_CLAY_CUSTOM_BEGIN{
+          BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        } BF_CLAY_CUSTOM_END,
       }
     ) {
       FLOATING_BEAUTIFY;
@@ -8116,7 +8156,9 @@ void DoUI(bool draw) {
                   .childGap        = GAP_SMALL,
                   .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
-                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+                BF_CLAY_CUSTOM_BEGIN{
+                  BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+                } BF_CLAY_CUSTOM_END,
               }) {
                 g.meta.pausedAchievementsHoveredAchievement     = 0;
                 g.meta.pausedAchievementsHoveredAchievementStep = 0;
@@ -8534,7 +8576,9 @@ void DoUI(bool draw) {
             .childGap        = GAP_BIG,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+          BF_CLAY_CUSTOM_BEGIN{
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+          } BF_CLAY_CUSTOM_END,
         }) {
           // Stats label.
           CLAY({.layout{
@@ -8694,7 +8738,9 @@ void DoUI(bool draw) {
             BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+          BF_CLAY_CUSTOM_BEGIN{
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+          } BF_CLAY_CUSTOM_END,
         }) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
             if (clickOrTouchPressed())
@@ -9022,7 +9068,9 @@ void DoUI(bool draw) {
         .zIndex   = zIndex,
         .attachTo = CLAY_ATTACH_TO_PARENT,
       },
-      BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      } BF_CLAY_CUSTOM_END,
     }) {}
   }
 
@@ -9161,45 +9209,25 @@ void DoUI(bool draw) {
             const auto& d    = cmd.renderData.custom;
             const auto& data = *(ClayCustomData*)d.customData;
 
-            switch (data.type) {
-            case ClayCustomElementType_BEAUTIFIER_START: {
+            if (data.beautifierStart.set) {
+              ASSERT_FALSE(data.beautifierEnd.set);
+              const auto& d                   = data.beautifierStart;
               beautifiers[beautifiersCount++] = {
-                .alpha     = data.alpha,
-                .translate = data.translate,
-                .scale     = data.scale,
+                .alpha     = d.alpha,
+                .translate = d.translate,
+                .scale     = d.scale,
               };
-            } break;
+            }
 
-            case ClayCustomElementType_BEAUTIFIER_END: {
+            if (data.beautifierEnd.set) {
+              ASSERT_FALSE(data.beautifierStart.set);
               ASSERT(beautifiersCount > 0);
               beautifiersCount--;
-            } break;
+            }
 
-            case ClayCustomElementType_NINE_SLICE: {
-              const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
-              const auto fb              = data.nineSlice;
-              DrawGroup_CommandTextureNineSlice({
-                .texID = data.nineSlice->texture_id(),
-                .pos{bb.x, bb.y},
-                .anchor{},
-                .color{
-                  data.nineSliceColor.r,
-                  data.nineSliceColor.g,
-                  data.nineSliceColor.b,
-                  (u8)((f32)data.nineSliceColor.a * beautifierAlpha)
-                },
-                .flash = data.nineSliceFlash,
-                .nineSliceMargins{
-                  (f32)fb->left() / downscaleFactor,
-                  (f32)fb->right() / downscaleFactor,
-                  (f32)fb->top() / downscaleFactor,
-                  (f32)fb->bottom() / downscaleFactor,
-                },
-                .nineSliceSize{(f32)bb.width, (f32)bb.height},
-              });
-            } break;
+            if (data.overlay.set) {
+              const auto& d = data.overlay;
 
-            case ClayCustomElementType_OVERLAY: {
               Vector2 size = (Vector2)LOGICAL_RESOLUTION;
               Vector2 pos{};
               if (ge.meta.screenToLogicalRatio > 1) {
@@ -9217,12 +9245,64 @@ void DoUI(bool draw) {
                 .pos  = pos,
                 .size = size,
                 .anchor{},
-                .color = data.overlayColor,
+                .color = d.color,
               });
-            } break;
+            }
 
-            default:
-              INVALID_PATH;
+            if (data.shadow.set) {
+              const auto& d = data.shadow;
+
+              const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
+              const auto fb              = d.nineSlice;
+
+              DrawGroup_CommandTextureNineSlice({
+                .texID = fb->texture_id(),
+                .pos{
+                  bb.x - (f32)fb->outer_left() / downscaleFactor,
+                  bb.y - (f32)fb->outer_bottom() / downscaleFactor,
+                },
+                .anchor{},
+                .color{0, 0, 0, (u8)(255.0f * beautifierAlpha / 2.0f)},
+                .nineSliceMargins{
+                  (f32)fb->left() / downscaleFactor,
+                  (f32)fb->right() / downscaleFactor,
+                  (f32)fb->top() / downscaleFactor,
+                  (f32)fb->bottom() / downscaleFactor,
+                },
+                .nineSliceSize{
+                  (f32)bb.width
+                    + (f32)(fb->outer_left() + fb->outer_right()) / downscaleFactor,
+                  (f32)bb.height
+                    + (f32)(fb->outer_top() + fb->outer_bottom()) / downscaleFactor,
+                },
+              });
+            }
+
+            if (data.nineSlice.set) {
+              const auto& d = data.nineSlice;
+
+              const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
+              const auto fb              = d.nineSlice;
+
+              DrawGroup_CommandTextureNineSlice({
+                .texID = fb->texture_id(),
+                .pos{bb.x, bb.y},
+                .anchor{},
+                .color{
+                  d.nineSliceColor.r,
+                  d.nineSliceColor.g,
+                  d.nineSliceColor.b,
+                  (u8)((f32)d.nineSliceColor.a * beautifierAlpha)
+                },
+                .flash = d.nineSliceFlash,
+                .nineSliceMargins{
+                  (f32)fb->left() / downscaleFactor,
+                  (f32)fb->right() / downscaleFactor,
+                  (f32)fb->top() / downscaleFactor,
+                  (f32)fb->bottom() / downscaleFactor,
+                },
+                .nineSliceSize{(f32)bb.width, (f32)bb.height},
+              });
             }
           } break;
           }

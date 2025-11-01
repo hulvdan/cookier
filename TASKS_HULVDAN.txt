@@ -50,25 +50,25 @@ x items scrolling: control group
 x items scrolling: отбить стрелки вправо
 x items scrolling: при получении того же предмета,
   закидывать его в конец массива предметов
+x поставить переводчики / словари
+x shadow under modal
 
-* items scrolling:
-* поставить переводчики / словари
+* mouse wheel triggers item arrows
+* описание самой мелкой сложности
+* wave complete animation: try making text bigger
+* wave complete animation: increase speed of letters
+* wave complete animation: fade in / fade out
+* change «next wave» button icon
 * финализировать названия статов
 * описания статов
 * покраснение экрана при получении большого урона / когда мало хп
-* описание самой мелкой сложности
 * норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
-* shadow under modal
 * fix: just unlocked achievement above every modal (ZIndexType int)
   (achievement in shop gets shown below stats)
 * engine: font scale -> damage numbers squashing
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
-* wave complete animation: try making text bigger
-* wave complete animation: increase speed of letters
-* wave complete animation: fade in / fade out
 * glowing around coins
-* change «next wave» button icon
 *
 * prod: оружия
 * prod: предметы
