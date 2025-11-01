@@ -2911,17 +2911,31 @@ int GetNextLevelXp(int currentLevel) {  ///
 }
 
 void AddItem(ItemType type) {  ///
-  bool increasedExistingItemCount = false;
-  for (auto& item : g.run.state.items) {
+  auto& items = g.run.state.items;
+
+  int increasedExistingItemCount = -1;
+
+  int itemIndex = -1;
+  for (auto& item : items) {
+    itemIndex++;
     if (item.type == type) {
       item.count++;
-      increasedExistingItemCount = true;
+      increasedExistingItemCount = itemIndex;
       break;
     }
   }
-  if (!increasedExistingItemCount) {
+
+  if (increasedExistingItemCount >= 0) {
+    // Moving increased-count-item to the end.
+    if (increasedExistingItemCount < items.count - 1) {
+      auto t = items[increasedExistingItemCount];
+      items.RemoveAt(increasedExistingItemCount);
+      *items.Add() = t;
+    }
+  }
+  else {
     Item item{.type = type, .count = 1};
-    *g.run.state.items.Add() = item;
+    *items.Add() = item;
   }
 
   IterateOverItemEffects(
@@ -6378,6 +6392,7 @@ void DoUI(bool draw) {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_up_texture_id()});
             }
           );
+          ControlsGroupNewRow(data.groupArrows);
         }
         else
           BF_CLAY_SPACER_VERTICAL;
