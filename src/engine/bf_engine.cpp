@@ -720,11 +720,8 @@ struct Font {
 };
 
 struct DrawTextData {
-  Vector2 pos = {};
-
-  // TODO: implement.
-  Vector2 scale = {1, 1};
-
+  Vector2     pos        = {};
+  Vector2     scale      = {1, 1};
   Vector2     anchor     = Vector2Half();
   const Font* font       = {};
   const char* text       = {};
@@ -1069,9 +1066,11 @@ void _ApplyCurrentCamera(Vector2* point, Vector2* size, bool isTexture = false) 
     *point -= ge.meta._currentCamera->pos;
     *point *= ge.meta._currentCamera->zoom;
     *point += (Vector2)LOGICAL_RESOLUTION / 2.0f;
-    *size *= ge.meta._currentCamera->zoom;
-    if (isTexture)
-      *size *= ge.meta._currentCamera->texturesScale;
+    if (size) {
+      *size *= ge.meta._currentCamera->zoom;
+      if (isTexture)
+        *size *= ge.meta._currentCamera->texturesScale;
+    }
   }
 }
 
@@ -1083,9 +1082,11 @@ void _ApplyCurrentCamera(Vector2* point, f32* size, bool isTexture = false) {  /
     *point -= ge.meta._currentCamera->pos;
     *point *= ge.meta._currentCamera->zoom;
     *point += (Vector2)LOGICAL_RESOLUTION / 2.0f;
-    *size *= ge.meta._currentCamera->zoom;
-    if (isTexture)
-      *size *= ge.meta._currentCamera->texturesScale;
+    if (size) {
+      *size *= ge.meta._currentCamera->zoom;
+      if (isTexture)
+        *size *= ge.meta._currentCamera->texturesScale;
+    }
   }
 }
 
@@ -1232,10 +1233,10 @@ BF_FORCE_INLINE void DrawGroup_CommandRectLines(DrawRectData data) {  ///
 }
 
 BF_FORCE_INLINE void DrawGroup_CommandText(DrawTextData data) {  ///
-  if ((data.scale.x == 0) || (data.scale.y == 0))
+  if (FloatEquals(data.scale.x, 0) || FloatEquals(data.scale.y, 0))
     return;
 
-  _ApplyCurrentCamera(&data.pos, &data.scale);
+  _ApplyCurrentCamera(&data.pos, (f32*)nullptr);
 
   ge.draw.groups[ge.draw.currentGroupIndex].commandsCount++;
   *ge.draw.commands.Add() = {
@@ -2085,7 +2086,11 @@ void FlushDrawCommands() {
             const auto& font = data.font;
 
             auto pos = LogicalPosToScreen(data.pos);
+
+            // origin.y -= font->size * data.anchor.y;
+
             pos.y -= font->size;
+            // pos.y -= font->size * (1 + data.anchor.y / 2.0f);
 
             const auto SSS = logicalToScreenScale / font->_scaleToFit;
 
@@ -2129,7 +2134,7 @@ void FlushDrawCommands() {
                   );
                 }
               );
-              pos.x -= maxWidth * data.anchor.x * SSS;
+              pos.x -= maxLineWidth * data.anchor.x * SSS;
               pos.y
                 += (f32)height
                    * ((f32)font->size * font->FIXME_sizeScale + 2 * (f32)font->outlineWidth)
@@ -2193,6 +2198,15 @@ void FlushDrawCommands() {
                   q.y0      = pos0.y;
                   q.x1      = pos1.x;
                   q.y1      = pos1.y;
+                }
+
+                {
+                  q.x0 = q.x0 + (q.x0 - data.pos.x) * (data.scale.x - 1);
+                  q.x1 = q.x1 + (q.x1 - data.pos.x) * (data.scale.x - 1);
+                  q.y0
+                    += (q.y0 - (LOGICAL_RESOLUTION.y - data.pos.y)) * (data.scale.y - 1);
+                  q.y1
+                    += (q.y1 - (LOGICAL_RESOLUTION.y - data.pos.y)) * (data.scale.y - 1);
                 }
 
                 const f32 sx0 = q.s0;
