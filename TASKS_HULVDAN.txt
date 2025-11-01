@@ -45,8 +45,12 @@ x fix: mouse can move character
 - ловкость -> скорость атаки
 x создать 50 тестовых предметов
 x скроллинг предметов
+x items scrolling: by pages (not by rows)
+x items scrolling: control group
+x items scrolling: отбить стрелки вправо
 
-* items scrolling: control group
+* items scrolling: при получении того же предмета,
+  закидывать его в конец массива предметов
 * items scrolling:
 * поставить переводчики / словари
 * финализировать названия статов
