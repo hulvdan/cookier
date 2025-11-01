@@ -57,7 +57,6 @@ x wave complete animation: CENTER
 x wave complete animation: increase speed of letters
 x wave complete animation: fade out
 
-* wave complete animation: try making text bigger
 * описание самой мелкой сложности
 * change «next wave» button icon
 * финализировать названия статов
@@ -301,3 +300,4 @@ LATER:
 * mobile: looks like framebuffer didn't scale
 * моргание таймера красным в последние 3 секунды
 * scroll: keyboard: up / down buttons can consume `uiElementSwitchDirection`
+* wave complete animation: try making text bigger
