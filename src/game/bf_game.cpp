@@ -4392,18 +4392,17 @@ void DoUI(bool draw) {
 
   static Direction uiElementSwitchDirectionPrevFrame = Direction_NONE;
 
-  Direction uiElementSwitchDirection_ = Direction_NONE;
+  Direction uiElementSwitchDirection = Direction_NONE;
   if (!draw) {
     if (IsKeyPressed(SDL_SCANCODE_D) || IsKeyPressed(SDL_SCANCODE_RIGHT))
-      uiElementSwitchDirection_ = Direction_RIGHT;
+      uiElementSwitchDirection = Direction_RIGHT;
     if (IsKeyPressed(SDL_SCANCODE_W) || IsKeyPressed(SDL_SCANCODE_UP))
-      uiElementSwitchDirection_ = Direction_UP;
+      uiElementSwitchDirection = Direction_UP;
     if (IsKeyPressed(SDL_SCANCODE_A) || IsKeyPressed(SDL_SCANCODE_LEFT))
-      uiElementSwitchDirection_ = Direction_LEFT;
+      uiElementSwitchDirection = Direction_LEFT;
     if (IsKeyPressed(SDL_SCANCODE_S) || IsKeyPressed(SDL_SCANCODE_DOWN))
-      uiElementSwitchDirection_ = Direction_DOWN;
+      uiElementSwitchDirection = Direction_DOWN;
   }
-  const Direction uiElementSwitchDirection = uiElementSwitchDirection_;
 
   DEFER {
     if (!draw)
@@ -6418,6 +6417,11 @@ void DoUI(bool draw) {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_up_texture_id()});
             }
           );
+          // TODO: Keyboard items scrolling.
+          // if (uiElementSwitchDirection == Direction_UP) {
+          //   uiElementSwitchDirection = Direction_NONE;
+          //   movedUp                  = true;
+          // }
           ControlsGroupNewRow(data.groupArrows);
         }
         else {
@@ -6438,6 +6442,11 @@ void DoUI(bool draw) {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_down_texture_id()});
             }
           );
+          // TODO: Keyboard items scrolling.
+          // if (uiElementSwitchDirection == Direction_DOWN) {
+          //   uiElementSwitchDirection = Direction_NONE;
+          //   movedDown                = true;
+          // }
         }
         else {
           movedDown = false;
