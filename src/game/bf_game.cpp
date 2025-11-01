@@ -6394,6 +6394,9 @@ void DoUI(bool draw) {
         }
       }
 
+      bool movedUp   = (Clay_Hovered() && (wheel > 0));
+      bool movedDown = (Clay_Hovered() && (wheel < 0));
+
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_Y,
         .childGap        = GAP_SMALL,
@@ -6402,9 +6405,8 @@ void DoUI(bool draw) {
         const auto moveUpID   = CLAY_ID("items_move_up");
         const auto moveDownID = CLAY_ID("items_move_down");
 
-        bool movedUp = false;
         if (*data.scroll > 0) {
-          movedUp = componentButton(
+          movedUp |= componentButton(
             {
               .id                = moveUpID,
               .group             = data.groupArrows,
@@ -6418,12 +6420,13 @@ void DoUI(bool draw) {
           );
           ControlsGroupNewRow(data.groupArrows);
         }
-        else
+        else {
+          movedUp = false;
           BF_CLAY_SPACER_VERTICAL;
+        }
 
-        bool movedDown = false;
         if (*data.scroll < maxScroll) {
-          movedDown = componentButton(
+          movedDown |= componentButton(
             {
               .id                = moveDownID,
               .group             = data.groupArrows,
@@ -6436,8 +6439,10 @@ void DoUI(bool draw) {
             }
           );
         }
-        else
+        else {
+          movedDown = false;
           BF_CLAY_SPACER_VERTICAL;
+        }
 
         if (movedUp) {
           *data.scroll = MAX(*data.scroll - 1, 0);
