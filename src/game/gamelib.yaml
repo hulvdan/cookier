@@ -595,6 +595,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 1
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 1
@@ -602,6 +603,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 2
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 2
@@ -609,6 +611,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 3
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 3
@@ -616,6 +619,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 4
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 4
@@ -623,6 +627,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 5
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 5
@@ -630,6 +635,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 6
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 6
@@ -637,6 +643,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 7
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 7
@@ -644,6 +651,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 8
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 8
@@ -651,6 +659,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 9
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 9
@@ -658,6 +667,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 10
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 10
@@ -665,6 +675,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 11
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 11
@@ -672,6 +683,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 12
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 12
@@ -679,6 +691,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 13
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 13
@@ -686,6 +699,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 14
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 14
@@ -693,6 +707,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 15
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 15
@@ -700,6 +715,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 16
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 16
@@ -707,6 +723,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 17
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 17
@@ -714,6 +731,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 18
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 18
@@ -721,6 +739,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 19
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 19
@@ -728,6 +747,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 20
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 20
@@ -735,6 +755,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 21
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 21
@@ -742,6 +763,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 22
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 22
@@ -749,6 +771,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 23
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 23
@@ -756,6 +779,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 24
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 24
@@ -763,6 +787,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 25
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 25
@@ -770,6 +795,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 26
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 26
@@ -777,6 +803,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 27
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 27
@@ -784,6 +811,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 28
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 28
@@ -791,6 +819,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 29
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 29
@@ -798,6 +827,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 30
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 30
@@ -805,6 +835,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 31
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 31
@@ -812,6 +843,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 32
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 32
@@ -819,6 +851,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 33
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 33
@@ -826,6 +859,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 34
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 34
@@ -833,6 +867,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 35
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 35
@@ -840,6 +875,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 36
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 36
@@ -847,6 +883,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 37
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 37
@@ -854,6 +891,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 38
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 38
@@ -861,6 +899,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 39
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 39
@@ -868,6 +907,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 40
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 40
@@ -875,6 +915,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 41
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 41
@@ -882,6 +923,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 42
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 42
@@ -889,6 +931,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 43
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 43
@@ -896,6 +939,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 44
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 44
@@ -903,6 +947,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 45
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 45
@@ -910,6 +955,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 46
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 46
@@ -917,6 +963,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 47
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 47
@@ -924,6 +971,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 48
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 48
@@ -931,6 +979,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 49
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 49
@@ -938,6 +987,7 @@ items: # {  ###
     texture_id: ui_item_todo
     tier: 0
     price: 50
+    limit: 1
     effects:
       - stat_type: DAMAGE
         value: 50
