@@ -2091,20 +2091,20 @@ void FlushDrawCommands() {
 
             // Processing `anchor`.
             {
-              f32 width    = 0;
-              f32 maxWidth = 0;
-              int height   = 1;
+              f32 lineWidth    = 0;
+              f32 maxLineWidth = 0;
+              int height       = 1;
               IterateOverCodepoints(
                 data.text,
                 data.bytesCount,
                 [&](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
                   if (!codepoint) {
-                    maxWidth = MAX(maxWidth, width);
+                    maxLineWidth = MAX(maxLineWidth, lineWidth);
                     return;
                   }
                   if (codepoint == (u32)'\n') {
-                    maxWidth = MAX(maxWidth, width);
-                    width    = 0;
+                    maxLineWidth = MAX(maxLineWidth, lineWidth);
+                    lineWidth    = 0;
                     height++;
                     return;
                   }
@@ -2121,7 +2121,7 @@ void FlushDrawCommands() {
                     font->atlasTexture.size.x,
                     font->atlasTexture.size.y,
                     glyphIndex,
-                    &width,
+                    &lineWidth,
                     // &data.pos.y,
                     &y_,
                     &q,
