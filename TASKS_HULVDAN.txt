@@ -70,7 +70,10 @@ x bigger initial scale of damage numbers?
 x just added coins / stashed coins BOUNCE
 x on-floor-coins sprites
 x on-floor-coins glow
+x оставить только 3 сложности
 
+* fix achievement "stand still for 10 seconds" (newline shit)
+*
 * better expolosion particles
 * fix pressing PAGEUP / PAGEDOWN change focus!
 *
@@ -79,7 +82,6 @@ x on-floor-coins glow
 * prod: particles: нанесение урона
 * prod: particles: ходьба
 *
-* оставить только 3 сложности
 * описание самой мелкой сложности
 * change «next wave» button icon
 * финализировать названия статов
