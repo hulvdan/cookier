@@ -226,12 +226,14 @@ struct Beautify {
   BEAUTIFY(b);
 
 struct ClayImageData {
-  int     texID          = {};
-  Vector2 scale          = {1, 1};
-  Margins sourceMargins  = {0, 0};
-  Color   color          = WHITE;
-  Color   flash          = TRANSPARENT_BLACK;
-  Vector2 overriddenSize = {};  // Values must be > 0 to override.
+  int     texID         = {};
+  Vector2 scale         = {1, 1};
+  Margins sourceMargins = {0, 0};
+  Color   color         = WHITE;
+  Color   flash         = TRANSPARENT_BLACK;
+
+  bool    dontCareAboutScaleWhenCalculatingSize = false;
+  Vector2 overriddenSize                        = {};  // Values must be > 0 to override.
 
   // f32   scale     = {};
   // ImageFitType fitType   = {};
@@ -1168,6 +1170,9 @@ struct GameData {
 
     ControlsGroup* controlsGroupsFirst = {};
     ControlsGroup* controlsGroupsLast  = {};
+
+    FrameVisual changedCoinsAt            = {};
+    FrameVisual changedNotPickedUpCoinsAt = {};
   } ui;
 } g = {};
 
@@ -2020,6 +2025,11 @@ void ApplyAilment(
 }
 
 void ChangeCoins(int amount) {  ///
+  if (amount) {
+    g.ui.changedCoinsAt = {};
+    g.ui.changedCoinsAt.SetNow();
+  }
+
   if (amount > 0)
     AchievementAdd(AchievementType_COINS, amount);
 
@@ -2928,11 +2938,21 @@ void BF_CLAY_IMAGE(
   auto          innerLambda,
   bool          _resetPlaceholders = true
 ) {  ///
+  if (!Vector2Equals(data.overriddenSize, Vector2Zero()))
+    ASSERT_FALSE(data.dontCareAboutScaleWhenCalculatingSize);
+  if (data.dontCareAboutScaleWhenCalculatingSize)
+    ASSERT(Vector2Equals(data.overriddenSize, Vector2Zero()));
+
   const auto texture      = glib->atlas_textures()->Get(data.texID);
   const auto originalSize = glib->original_texture_sizes()->Get(data.texID);
 
-  f32 w = (f32)originalSize->x() * data.scale.x * ASSETS_TO_LOGICAL_RATIO;
-  f32 h = (f32)originalSize->y() * data.scale.y * ASSETS_TO_LOGICAL_RATIO;
+  f32 w = (f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO;
+  f32 h = (f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO;
+
+  if (!data.dontCareAboutScaleWhenCalculatingSize) {
+    w *= data.scale.x;
+    h *= data.scale.y;
+  }
 
   ASSERT(data.overriddenSize.x >= 0);
   ASSERT(data.overriddenSize.y >= 0);
@@ -4189,7 +4209,7 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
 }
 
 void Rerolls::Roll() {  ///
-  PLAYER_COINS -= ApplyStatRerollPrice(GetPrice());
+  ChangeCoins(-ApplyStatRerollPrice(GetPrice()));
   ASSERT(PLAYER_COINS >= 0);
   if (rerolledFreeTimes < g.run.state.stats[StatType_FREE_REROLLS])
     rerolledFreeTimes++;
@@ -4630,6 +4650,21 @@ void RemoveImmediateWeaponEffects() {  ///
   };
 
 #define CURRENT_CONTEXT (controlsContexts[currentContext])
+
+f32 ScaleDamageNumbersByProgress(f32 p) {  ///
+  return Lerp(5 / 2.0f, 1, EaseOutQuad(MIN(1, p * 3)));
+}
+
+f32 GetScaleOfCoins(const FrameVisual& changedAt) {  ///
+  f32 scale = 1.0f;
+  if (changedAt.IsSet()) {
+    const f32 s = ScaleDamageNumbersByProgress(
+      MIN(1, changedAt.Elapsed().Progress(DAMAGE_NUMBERS_FRAMES))
+    );
+    scale += (s - 1) / 3.5f;
+  }
+  return scale;
+}
 
 // NOTE: Logic must be executed only when `draw` is false!
 // e.g. updating mouse position, processing `clicked()`,
@@ -7089,6 +7124,7 @@ void DoUI(bool draw) {
           }
         }
 
+        // Coins.
         {
           BEAUTIFY_WIGGLING_DANGER_SCOPED(
             g.ui.errorGold,
@@ -7101,11 +7137,16 @@ void DoUI(bool draw) {
             .childGap = GAP_SMALL,
             BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
           }}) {
-            BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
+            BF_CLAY_IMAGE({
+              .texID = glib->ui_coin_texture_id(),
+              .scale = Vector2One() * GetScaleOfCoins(g.ui.changedCoinsAt),
+              .dontCareAboutScaleWhenCalculatingSize = true,
+            });
             BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
           }
         }
 
+        // Not picked up coins.
         CLAY({.layout{
           .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
@@ -7115,7 +7156,9 @@ void DoUI(bool draw) {
           CLAY({.id = id}) {
             BF_CLAY_IMAGE({
               .texID = glib->ui_coin_x2_texture_id(),
+              .scale = Vector2One() * GetScaleOfCoins(g.ui.changedNotPickedUpCoinsAt),
               .color = Fade(WHITE, fade),
+              .dontCareAboutScaleWhenCalculatingSize = true,
             });
           }
           const auto d = Clay_GetElementData(id);
@@ -11685,7 +11728,11 @@ void GameFixedUpdate() {
                  && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
         {
           const auto& d = pickupable.DataCoin();
+
           g.run.state.notPickedUpCoinsVisual += d.amount;
+          g.ui.changedNotPickedUpCoinsAt = {};
+          g.ui.changedNotPickedUpCoinsAt.SetNow();
+
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
         }
@@ -12143,7 +12190,7 @@ void GameDraw() {
 
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
-        .scale      = Vector2One() * Lerp(5 / 2.0f, 1, EaseOutQuad(MIN(1, p * 3))),
+        .scale      = Vector2One() * ScaleDamageNumbersByProgress(p),
         .font       = &g.meta.fontUIBigOutlined,
         .text       = buffer,
         .bytesCount = (int)bytesCount,

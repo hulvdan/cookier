@@ -67,6 +67,7 @@ x particles: поднятие монетки
 x particles: duration variation
 x particles: нанесение / получение урона
 x bigger initial scale of damage numbers?
+x just added coins / stashed coins BOUNCE
 
 * coin particles glow
 *
