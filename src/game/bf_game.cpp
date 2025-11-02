@@ -2993,8 +2993,15 @@ void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
   BF_CLAY_IMAGE(data, [] {}, _resetPlaceholders);
 }
 
+struct ClayTextOptions {
+  Color color = palTextWhite;
+
+  // Others: CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_WRAP_NONE.
+  Clay_TextElementConfigWrapMode wrapMode = CLAY_TEXT_WRAP_WORDS;
+};
+
 // NOTE: This overload DOESN'T SAVE string to trash arena.
-void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
+void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
   u16 fontID = 0;
   if (g.ui.overriddenFont)
     fontID = (UINT_FROM_PTR(g.ui.overriddenFont) - UINT_FROM_PTR(&g.meta.fontUI))
@@ -3007,8 +3014,11 @@ void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
       .chars     = string.chars,
       .baseChars = string.chars,
     };
-    Clay_TextElementConfig cfg{.fontId = fontID};
-    auto                   dim = MeasureText(s, &cfg, nullptr);
+    Clay_TextElementConfig cfg{
+      .fontId   = fontID,
+      .wrapMode = opts.wrapMode,
+    };
+    auto dim = MeasureText(s, &cfg, nullptr);
 
     // In flex space shouldn't break the line.
     // It's only other elements (which need more width) break the line.
@@ -3023,27 +3033,28 @@ void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
   CLAY_TEXT(
     string,
     CLAY_TEXT_CONFIG({
-      .textColor = ToClayColor(color),
+      .textColor = ToClayColor(opts.color),
       .fontId    = fontID,
+      .wrapMode  = opts.wrapMode,
     })
   );
 }
 
 // NOTE: This overload SAVES string to trash arena.
-void BF_CLAY_TEXT(const char* text, Color color = palTextWhite) {  ///
+void BF_CLAY_TEXT(const char* text, ClayTextOptions opts = {}) {  ///
   int         len           = 0;
   const char* allocatedText = PushTextToArena(&g.meta.trashArena, text, &len);
   Clay_String string{
     .length = (i32)len,
     .chars  = allocatedText,
   };
-  BF_CLAY_TEXT(string, color);
+  BF_CLAY_TEXT(string, opts);
 }
 
 void BF_CLAY_TEXT_BROKEN_LOCALIZED(
-  int   locale_,
-  Color color              = palTextWhite,
-  bool  _resetPlaceholders = true
+  int             locale_,
+  ClayTextOptions opts               = {},
+  bool            _resetPlaceholders = true
 ) {                                  ///
   const auto locale = (Loc)locale_;  // NOTE: For debug.
 
@@ -3081,7 +3092,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED(
       for (auto string : *group->strings()) {
         if (string->type() == BrokenStringDatumType_SPACE) {
           Clay_String text{.isStaticallyAllocated = true, .length = 1, .chars = " "};
-          BF_CLAY_TEXT(text, color);
+          BF_CLAY_TEXT(text, opts);
           continue;
         }
 
@@ -3112,7 +3123,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED(
             .length                = (i32)string->string()->size(),
             .chars                 = string->string()->c_str(),
           };
-          BF_CLAY_TEXT(text, color);
+          BF_CLAY_TEXT(text, opts);
         }
       }
     }
@@ -4116,7 +4127,7 @@ void GameInit() {
   RunInit();
 }
 
-void GameInitAfterLoading() {
+void GameInitAfterLoadingSavedata() {
   // Recalculating unlocked builds, items and weapons based off achievements.
   {  ///
     g.player.achievementStepsTotal     = 0;
@@ -4492,12 +4503,12 @@ bool CanSpawnMoreCreatures() {  ///
 
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
   const auto& string = placeholder->string();
-  BF_CLAY_TEXT(string.value, string.color);
+  BF_CLAY_TEXT(string.value, {.color = string.color});
 }
 
 void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
   const auto& d = placeholder->brokenLocale();
-  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, d.color, false);
+  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, {.color = d.color}, false);
 }
 
 void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
@@ -4818,7 +4829,7 @@ void DoUI(bool draw) {
       * ASSETS_TO_LOGICAL_RATIO;
   // }
 
-  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, Color color = palTextWhite)) {  ///
+  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, ClayTextOptions opts = {})) {  ///
     ASSERT((int)locale >= 0);
     ASSERT((int)locale < Loc_COUNT);
     auto        string = localization_strings->Get(locale);
@@ -4827,7 +4838,7 @@ void DoUI(bool draw) {
       .length                = (i32)string->size(),
       .chars                 = string->c_str(),
     };
-    BF_CLAY_TEXT(text, color);
+    BF_CLAY_TEXT(text, opts);
   };
 
   LAMBDA (void, componentOverlay, (auto innerLambda, f32 fade = 1)) {  ///
@@ -5075,7 +5086,8 @@ void DoUI(bool draw) {
 
                 FontBegin(&g.meta.fontUIBigOutlined);
                 BF_CLAY_TEXT(
-                  TextFormat("%d", price), (canReroll ? palTextWhite : palTextRed)
+                  TextFormat("%d", price),
+                  {.color = (canReroll ? palTextWhite : palTextRed)}
                 );
                 BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
                 FontEnd();
@@ -5124,7 +5136,7 @@ void DoUI(bool draw) {
               FLOATING_BEAUTIFY;
 
               FontBegin(&g.meta.fontUIBigOutlined);
-              BF_CLAY_TEXT(TextFormat("%d", data.price), palTextWhite);
+              BF_CLAY_TEXT(TextFormat("%d", data.price), {.color = palTextWhite});
               BF_CLAY_IMAGE({
                 .texID = glib->ui_coin_texture_id(),
                 .scale = Vector2One() * 0.75f,
@@ -5385,12 +5397,12 @@ void DoUI(bool draw) {
           // auto color = secondaryTextColor;
           auto color = palTextWhite;
           if (fb_effect->only_this_weapon())
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, color);
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, {.color = color});
           if (fb_effect->only_other_weapons())
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_OTHER_WEAPONS, color);
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_OTHER_WEAPONS, {.color = color});
           if (fb_effect->all_weapons())
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ALL_WEAPONS, color);
-          BF_CLAY_TEXT(": ", color);
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ALL_WEAPONS, {.color = color});
+          BF_CLAY_TEXT(": ", {.color = color});
         }
 
         if (fb_effect->stat_type()) {
@@ -5658,7 +5670,13 @@ void DoUI(bool draw) {
         int percent = MIN(100, v * 100 / fb_step->value());
         if ((percent < 100) && (fb_step->value() > 1)) {
           BF_CLAY_TEXT(" ");
-          BF_CLAY_TEXT(TextFormat("(%d / %d)", v, fb_step->value()), palTextBezhevy);
+          BF_CLAY_TEXT(
+            TextFormat("(%d / %d)", v, fb_step->value()),
+            {
+              .color    = palTextBezhevy,
+              .wrapMode = CLAY_TEXT_WRAP_NONE,
+            }
+          );
         }
       }
 
@@ -5842,35 +5860,41 @@ void DoUI(bool draw) {
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             if (data.difficulty) {  ///
               BF_CLAY_TEXT_LOCALIZED(
-                fb_difficulty->name_locale(), textColorsPerTier[tier]
+                fb_difficulty->name_locale(), {.color = textColorsPerTier[tier]}
               );
 
               FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY, secondaryTextColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY, {.color = secondaryTextColor});
               FontEnd();
             }
             else if (data.build) {  ///
-              BF_CLAY_TEXT_LOCALIZED(fb_build->name_locale(), textColorsPerTier[tier]);
+              BF_CLAY_TEXT_LOCALIZED(
+                fb_build->name_locale(), {.color = textColorsPerTier[tier]}
+              );
               FontBegin(&g.meta.fontStats);
               const auto d = g.player.builds[data.build].maxDifficultyBeaten;
               if (d > 0) {
                 CLAY({}) {
                   auto dd = fb_difficulties->Get(d);
-                  BF_CLAY_TEXT_LOCALIZED(dd->name_locale(), secondaryTextColor);
+                  BF_CLAY_TEXT_LOCALIZED(
+                    dd->name_locale(), {.color = secondaryTextColor}
+                  );
                 }
               }
               else
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD, secondaryTextColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD, {.color = secondaryTextColor});
               FontEnd();
             }
             else if (data.item) {  ///
-              BF_CLAY_TEXT_LOCALIZED(fb_item->name_locale(), textColorsPerTier[tier]);
+              BF_CLAY_TEXT_LOCALIZED(
+                fb_item->name_locale(), {.color = textColorsPerTier[tier]}
+              );
 
               FontBegin(&g.meta.fontStats);
               if (fb_item->limit() > 0) {
                 if (fb_item->limit() > 1) {
                   CLAY({}) {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, secondaryTextColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, {.color = secondaryTextColor});
 
                     if (data.affectedByGame) {
                       int currentCount = 0;
@@ -5882,27 +5906,30 @@ void DoUI(bool draw) {
                       }
                       BF_CLAY_TEXT(
                         TextFormat(" (%d/%d)", currentCount, fb_item->limit()),
-                        secondaryTextColor
+                        {.color = secondaryTextColor}
                       );
                     }
                     else {
                       BF_CLAY_TEXT(
-                        TextFormat(" (%d)", fb_item->limit()), secondaryTextColor
+                        TextFormat(" (%d)", fb_item->limit()),
+                        {.color = secondaryTextColor}
                       );
                     }
                   }
                 }
                 else
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_UNIQUE, secondaryTextColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_UNIQUE, {.color = secondaryTextColor});
               }
               else
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM, secondaryTextColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM, {.color = secondaryTextColor});
               FontEnd();
             }
             else if (data.weapon) {  ///
-              BF_CLAY_TEXT_LOCALIZED(fb_weapon->name_locale(), textColorsPerTier[tier]);
+              BF_CLAY_TEXT_LOCALIZED(
+                fb_weapon->name_locale(), {.color = textColorsPerTier[tier]}
+              );
               FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPON, secondaryTextColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPON, {.color = secondaryTextColor});
               FontEnd();
             }
             else {  ///
@@ -5951,8 +5978,8 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               FlexBegin(CARD_WIDTH, 0);
-              BF_CLAY_TEXT_BROKEN_LOCALIZED(labelLocale, secondaryTextColor);
-              BF_CLAY_TEXT(": ", secondaryTextColor);
+              BF_CLAY_TEXT_BROKEN_LOCALIZED(labelLocale, {.color = secondaryTextColor});
+              BF_CLAY_TEXT(": ", {.color = secondaryTextColor});
               innerLambda();
               FlexEnd();
             }
@@ -5966,11 +5993,13 @@ void DoUI(bool draw) {
               if (data.affectedByGame) {
                 const int actualDamage
                   = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
-                BF_CLAY_TEXT(TextFormat("%d", actualDamage), palTextGreen);
-                BF_CLAY_TEXT(TextFormat(" (%d)", baseDamage), secondaryTextColor);
+                BF_CLAY_TEXT(TextFormat("%d", actualDamage), {.color = palTextGreen});
+                BF_CLAY_TEXT(
+                  TextFormat(" (%d)", baseDamage), {.color = secondaryTextColor}
+                );
               }
               else
-                BF_CLAY_TEXT(TextFormat("%d", baseDamage), palTextGreen);
+                BF_CLAY_TEXT(TextFormat("%d", baseDamage), {.color = palTextGreen});
 
               // Scalings.
               const auto fb_scalings = fb->damage_scalings();
@@ -6018,7 +6047,7 @@ void DoUI(bool draw) {
             else
               cooldownFrames = lframe::Unscaled(cooldownFrames_);
             const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
-            BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palTextGreen);
+            BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), {.color = palTextGreen});
           });
 
           // Knockback.
@@ -6081,7 +6110,7 @@ void DoUI(bool draw) {
                       "%s%%",
                       StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
                     ),
-                    palTextGreen
+                    {.color = palTextGreen}
                   );
                 }
               );
@@ -6096,7 +6125,7 @@ void DoUI(bool draw) {
             componentWeaponStatEntry(
               Loc_UI_THIS_WAVE_DAMAGE,
               [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palTextWhite);
+                BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), {.color = palTextWhite});
               }
             );
           };
@@ -6152,7 +6181,7 @@ void DoUI(bool draw) {
                   FontBegin(&g.meta.fontPricesOutlined);
                   BF_CLAY_TEXT(
                     TextFormat("%d ", price),
-                    ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)
+                    {.color = ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)}
                   );
                   FontEnd();
                   BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
@@ -6373,17 +6402,17 @@ void DoUI(bool draw) {
 
         if (type) {
           if (g.player.achievements[type].value >= fb_step->value()) {
-            BF_CLAY_TEXT_LOCALIZED(fb->name_locale(), nameColor);
+            BF_CLAY_TEXT_LOCALIZED(fb->name_locale(), {.color = nameColor});
             static const char* romanNumbers_[]{
               "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
               "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
             };
             VIEW_FROM_ARRAY_DANGER(romanNumbers);
-            BF_CLAY_TEXT(" ", nameColor);
-            BF_CLAY_TEXT(romanNumbers[stepIndex + 1], nameColor);
+            BF_CLAY_TEXT(" ", {.color = nameColor});
+            BF_CLAY_TEXT(romanNumbers[stepIndex + 1], {.color = nameColor});
           }
           else
-            BF_CLAY_TEXT("???", nameColor);
+            BF_CLAY_TEXT("???", {.color = nameColor});
         }
       }
 
@@ -6922,7 +6951,7 @@ void DoUI(bool draw) {
       );
 
       FontBegin(&g.meta.fontUIBig);
-      BF_CLAY_TEXT(TextFormat(" %d", PLAYER_COINS), color);
+      BF_CLAY_TEXT(TextFormat(" %d", PLAYER_COINS), {.color = color});
       FontEnd();
 
       if (ge.meta.debugEnabled && Clay_Hovered() && wheel)
@@ -7162,7 +7191,8 @@ void DoUI(bool draw) {
           }
 
           BF_CLAY_TEXT(
-            TextFormat("%d", g.run.state.notPickedUpCoinsVisual), Fade(palTextWhite, fade)
+            TextFormat("%d", g.run.state.notPickedUpCoinsVisual),
+            {.color = Fade(palTextWhite, fade)}
           );
         }
       }
@@ -7787,12 +7817,14 @@ void DoUI(bool draw) {
               }}) {
                 // Name.
                 BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                  fb->upgrade_name_locale(), textColorsPerTier[upgrade.tier]
+                  fb->upgrade_name_locale(), {.color = textColorsPerTier[upgrade.tier]}
                 );
 
                 // "Upgrade" label.
                 FontBegin(&g.meta.fontStats);
-                BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_UPGRADE, secondaryTextColor);
+                BF_CLAY_TEXT_BROKEN_LOCALIZED(
+                  Loc_UI_UPGRADE, {.color = secondaryTextColor}
+                );
                 FontEnd();
               }
             }
@@ -7821,7 +7853,7 @@ void DoUI(bool draw) {
                 .id = id,
                 .layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
               }) {
-                BF_CLAY_TEXT(TextFormat("+%d", amount), palTextGreen);
+                BF_CLAY_TEXT(TextFormat("+%d", amount), {.color = palTextGreen});
 
                 BF_CLAY_IMAGE({.texID = fb->icon_texture_id()});
 
@@ -8076,7 +8108,7 @@ void DoUI(bool draw) {
 
               BF_CLAY_TEXT_LOCALIZED(
                 Loc_UI_WEAPONS__CAPS,
-                (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
+                {.color = (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)}
               );
 
               // BF_CLAY_TEXT(
@@ -8151,8 +8183,8 @@ void DoUI(bool draw) {
                       FontBegin(&g.meta.fontUINextWave);
 
                       auto color = (nextIsBoss ? palTextRed : palTextPaleYellow);
-                      BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), color);
-                      BF_CLAY_TEXT(TextFormat("/%d", TOTAL_WAVES), color);
+                      BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), {.color = color});
+                      BF_CLAY_TEXT(TextFormat("/%d", TOTAL_WAVES), {.color = color});
                       FontEnd();
                     }
                   }
@@ -8329,7 +8361,7 @@ void DoUI(bool draw) {
           restarted = componentButton(
             {.id = CLAY_ID("button_end_restart"), .group = groupButtons},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, textColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, {.color = textColor});
             }
           );
         }
@@ -8339,7 +8371,7 @@ void DoUI(bool draw) {
         const bool newRun = componentButton(
           {.id = newRunID, .group = groupButtons},
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, textColor);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, {.color = textColor});
           }
         );
 
@@ -8440,7 +8472,7 @@ void DoUI(bool draw) {
                   auto color = palTextBezhevy;
                   if (percent >= 100)
                     color = palTextGreen;
-                  BF_CLAY_TEXT(TextFormat(" %d%%", percent), color);
+                  BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = color});
                 }
               }
             );
@@ -8585,7 +8617,7 @@ void DoUI(bool draw) {
           const bool back = componentButton(
             {.id = backButtonID, .group = groupBackButton, .keys = KEYS_CANCEL},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, textColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, {.color = textColor});
             }
           );
           FontEnd();
@@ -8638,9 +8670,10 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               CLAY({}) {
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, TRANSPARENT_BLACK);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, {.color = TRANSPARENT_BLACK});
                 BF_CLAY_TEXT(
-                  TextFormat(" %d", g.run.state.waveIndex + 1), TRANSPARENT_BLACK
+                  TextFormat(" %d", g.run.state.waveIndex + 1),
+                  {.color = TRANSPARENT_BLACK}
                 );
               }
 
@@ -8664,7 +8697,7 @@ void DoUI(bool draw) {
                     .keys  = KEYS_PAUSE,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, {.color = textColor});
                   }
                 );
 
@@ -8677,7 +8710,7 @@ void DoUI(bool draw) {
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, {.color = textColor});
                   }
                 );
 
@@ -8690,7 +8723,7 @@ void DoUI(bool draw) {
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, {.color = textColor});
                   }
                 );
 
@@ -8703,10 +8736,12 @@ void DoUI(bool draw) {
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(
+                      Loc_UI_ACHIEVEMENTS__CAPS, {.color = textColor}
+                    );
                     int percent = GetAchievementsCompletedPercent();
                     if (percent > 0)
-                      BF_CLAY_TEXT(TextFormat(" %d%%", percent), textColor);
+                      BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = textColor});
                   }
                 );
 
@@ -8721,7 +8756,7 @@ void DoUI(bool draw) {
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, {.color = textColor});
                   }
                 );
 #endif
@@ -9068,8 +9103,9 @@ void DoUI(bool draw) {
           CLAY({}) {
             const bool quit = componentButton(
               {.id = confirmID, .group = group},
-              [&](bool hovered, Color textColor)
-                BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(locale, textColor); }
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
+              }
             );
 
             CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
@@ -9077,7 +9113,7 @@ void DoUI(bool draw) {
             const bool cancelled = componentButton(
               {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, textColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, {.color = textColor});
               }
             );
 
@@ -9736,7 +9772,7 @@ void GameFixedUpdate() {
   {  ///
     auto loaded = LoadSaveDataOnce(&g.meta.trashArena);
     if (loaded == SavedataLoadingType_JUST_FISNIHED) {
-      GameInitAfterLoading();
+      GameInitAfterLoadingSavedata();
       GameReady();
     }
     else if (loaded != SavedataLoadingType_FISNIHED)

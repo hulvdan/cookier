@@ -71,8 +71,9 @@ x just added coins / stashed coins BOUNCE
 x on-floor-coins sprites
 x on-floor-coins glow
 x оставить только 3 сложности
+x fix achievement "stand still for 10 seconds" (newline shit)
 
-* fix achievement "stand still for 10 seconds" (newline shit)
+* fix sometimes asserts after choosing upgrade upon entering shop
 *
 * better expolosion particles
 * fix pressing PAGEUP / PAGEDOWN change focus!
