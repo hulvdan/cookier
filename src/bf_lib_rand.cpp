@@ -28,6 +28,11 @@ struct Random {
     return (f32)((f64)Rand() / (f64)((u64)u32_max + 1));
   }
 
+  // [-1; 1)
+  f32 FRand11() {  ///
+    return FRand() * 2 - 1;
+  }
+
   // [0; 2 * PI32)
   f32 Angle() {  ///
     return FRand() * 2 * PI32;

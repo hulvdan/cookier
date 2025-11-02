@@ -934,6 +934,28 @@ enum ConfirmModalResultType {  ///
   ConfirmModalResultType_CONFIRMED,
 };
 
+struct MakeParticlesData {  ///
+  ParticleType type = {};
+
+  int count = 1;
+
+  Vector2 pos = {};
+
+  f32 velocity          = 0;
+  f32 velocityVariation = 0;
+
+  f32 velocityAngle          = 0;
+  f32 velocityAngleVariation = 0;
+
+  f32 initialOffset          = 0;
+  f32 initialOffsetVariation = 0;
+
+  f32 scale          = 1;
+  f32 scaleVariation = 0;
+
+  f32 rotationSpeedVariation = PI32;
+};
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -2254,6 +2276,56 @@ f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  
   return lifesteal;
 }
 
+void MakeParticles(MakeParticlesData data) {  ///
+  ASSERT(data.type);
+
+  ASSERT(data.velocityAngleVariation >= 0);
+  ASSERT(data.velocityAngleVariation <= PI32);
+
+  ASSERT(data.count >= 0);
+
+  auto fb = glib->particles()->Get(data.type);
+
+  if (data.count > 0)
+    g.run.particles.Reserve(g.run.particles.count + data.count);
+
+  FOR_RANGE (int, particleIndex, data.count) {
+    const auto variation = (u16)(GRAND.Rand() % fb->variations()->size());
+
+    const f32 vel   = data.velocity + data.velocityVariation * GRAND.FRand11();
+    const f32 angle = data.velocityAngle + data.velocityAngleVariation * GRAND.FRand11();
+
+    const f32 initialOffset
+      = data.initialOffset + data.initialOffsetVariation * GRAND.FRand11();
+
+    const f32 rotation = GRAND.Angle();
+
+    f32 rotationSpeed = data.rotationSpeedVariation * GRAND.FRand11();
+
+    const f32 scale = data.scale + data.scaleVariation * GRAND.FRand11();
+
+    const f32 durationSeconds
+      = fb->duration_seconds() + fb->duration_variation() * GRAND.FRand11();
+
+    ASSERT(durationSeconds > 0);
+    if (durationSeconds <= 0)
+      continue;
+
+    Particle p{
+      .type          = data.type,
+      .variation     = variation,
+      .pos           = data.pos + Vector2Rotate({initialOffset, 0}, angle),
+      .velocity      = Vector2Rotate({vel, 0}, angle),
+      .rotation      = rotation,
+      .rotationSpeed = rotationSpeed,
+      .scale         = scale,
+      .duration      = lframe::FromSeconds(durationSeconds),
+    };
+    p.createdAt.SetNow();
+    *g.run.particles.Add() = p;
+  }
+}
+
 void MakePickupable(MakePickupableData data);
 
 bool TryApplyDamage(TryApplyDamageData data) {  ///
@@ -2536,6 +2608,29 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     creature.body.id, ToB2Vec2(data.directionOrZero * data.knockbackMeters), true
   );
 
+  // Making blood particles.
+  if (!creature.killedBecauseOfTheEndOfTheWave) {
+    f32 velocityAngle          = 0;
+    f32 velocityAngleVariation = PI32;
+    if (!Vector2Equals(data.directionOrZero, Vector2Zero())) {
+      velocityAngle          = Vector2Angle(data.directionOrZero),
+      velocityAngleVariation = PI32 / 6;
+    }
+
+    MakeParticles({
+      .type                   = ParticleType_BLOOD,
+      .count                  = GRAND.RandInt(3, 6),
+      .pos                    = creature.pos,
+      .velocity               = 8 * (3 / 2.0f),
+      .velocityVariation      = 3.0f,
+      .velocityAngle          = velocityAngle,
+      .velocityAngleVariation = velocityAngleVariation,
+      .initialOffset          = 0.2f,
+      .initialOffsetVariation = 0.1f,
+      .scaleVariation         = 0.1f,
+    });
+  }
+
   if (!g.run.justDamagedCreatures.Contains(data.creatureIndex))
     *g.run.justDamagedCreatures.Add() = data.creatureIndex;
 
@@ -2543,45 +2638,6 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     Save();
 
   return true;
-}
-
-struct MakeParticleData {  ///
-  ParticleType type     = {};
-  Vector2      pos      = {};
-  Vector2      velocity = {};
-  f32          scale    = 1;
-  // f32          rotationSpeed = 0;
-};
-
-void MakeParticle(MakeParticleData data) {  ///
-  ASSERT(data.type);
-
-  auto fb = glib->particles()->Get(data.type);
-
-  const f32  rotation  = GRAND.Angle();
-  const auto variation = (u16)(GRAND.Rand() % fb->variations()->size());
-
-  const f32 durationSeconds
-    = fb->duration_seconds() + fb->duration_variation() * (GRAND.FRand() * 2 - 1);
-
-  ASSERT(durationSeconds > 0);
-  if (durationSeconds <= 0)
-    return;
-
-  const f32 rotationSpeed = Lerp(-PI32, PI32, GRAND.FRand());
-
-  Particle p{
-    .type          = data.type,
-    .variation     = variation,
-    .pos           = data.pos,
-    .velocity      = data.velocity,
-    .rotation      = rotation,
-    .rotationSpeed = rotationSpeed,
-    .scale         = data.scale,
-    .duration      = lframe::FromSeconds(durationSeconds),
-  };
-  p.createdAt.SetNow();
-  *g.run.particles.Add() = p;
 }
 
 void Pickup(Pickupable* pickupable_) {  ///
@@ -2698,17 +2754,18 @@ void Pickup(Pickupable* pickupable_) {  ///
     if (GRAND.FRand() < healChance)
       HealPlayer();
 
-    int particlesToSpawn = GRAND.RandInt(3, 6);
-    FOR_RANGE (int, particleIndex, particlesToSpawn) {
-      const f32 vel           = Lerp(3.5f, 4.5f, GRAND.FRand());
-      const f32 angle         = GRAND.Angle();
-      const f32 initialOffset = Lerp(0.15f, 0.3f, GRAND.FRand());
-      MakeParticle({
-        .type = ParticleType_COIN,
-        .pos  = PLAYER_CREATURE.pos + Vector2Rotate({initialOffset, 0}, GRAND.Angle()),
-        .velocity = Vector2Rotate({vel, 0}, angle),
-      });
-    }
+    MakeParticles({
+      .type                   = ParticleType_COIN,
+      .count                  = GRAND.RandInt(3, 6),
+      .pos                    = PLAYER_CREATURE.pos,
+      .velocity               = 4.0f,
+      .velocityVariation      = 0.5f,
+      .velocityAngle          = 0,
+      .velocityAngleVariation = PI32,
+      .initialOffset          = 0.25f,
+      .initialOffsetVariation = 0.1f,
+      .scaleVariation         = 0.1f,
+    });
   } break;
 
   case PickupableType_CONSUMABLE: {
@@ -3995,9 +4052,17 @@ void GameInit() {
 
     for (auto fb : *glib->weapons()) {
       // NOTE: For debug.
-      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      const auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
       if (fb->shoots_itself())
         ASSERT(fb->projectile_type());
+    }
+
+    int particleIndex = -1;
+    for (auto fb : *glib->particles()) {
+      particleIndex++;
+      // NOTE: For debug.
+      const auto particleType = (ParticleType)particleIndex;
+      ASSERT(fb->duration_seconds() >= fb->duration_variation());
     }
   }
 
@@ -9603,8 +9668,9 @@ void MakeAOE(
     });
   }
 
-  MakeParticle({
+  MakeParticles({
     .type  = ParticleType_EXPLOSION,
+    .count = 1,
     .pos   = pos,
     .scale = sizeMultiplier,
   });

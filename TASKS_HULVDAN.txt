@@ -65,15 +65,12 @@ x tweaked font sizes
 x fix: EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
 x particles: поднятие монетки
 x particles: duration variation
+x particles: нанесение / получение урона
 
-* particles: нанесение урона:
-* particles: нанесение урона:
-* particles: нанесение урона:
-* particles: нанесение урона:
-* particles: получение урона:
-* particles: получение урона:
-* particles: получение урона:
-* particles: получение урона:
+* bigger initial scale of damage numbers?
+*
+* coin particles glow
+*
 * prod: particles: поднятие монетки
 * prod: particles: получение урона
 * prod: particles: нанесение урона

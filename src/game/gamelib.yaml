@@ -1458,17 +1458,34 @@ particles: # {  ###
     color: 0xf3bc5eff
     variations:
       - texture_ids:
-          - game_particle_1_1
+          - game_particle_3_1
       - texture_ids:
-          - game_particle_1_2
+          - game_particle_3_2
       - texture_ids:
-          - game_particle_1_3
+          - game_particle_3_3
       - texture_ids:
-          - game_particle_1_4
+          - game_particle_3_4
       - texture_ids:
-          - game_particle_1_5
+          - game_particle_3_5
       - texture_ids:
-          - game_particle_1_6
+          - game_particle_3_6
+  - type: BLOOD
+    duration_seconds: 0.3
+    duration_variation: 0.15
+    color: 0xc02931ff
+    variations:
+      - texture_ids:
+          - game_particle_4_1
+      - texture_ids:
+          - game_particle_4_2
+      - texture_ids:
+          - game_particle_4_3
+      - texture_ids:
+          - game_particle_4_4
+      - texture_ids:
+          - game_particle_4_5
+          # - texture_ids:
+          #     - game_particle_4_6
 # }
 
 pickupables: # {  ###
