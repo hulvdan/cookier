@@ -63,7 +63,19 @@ x fix web
 x fix reset stickControl on wave start
 x tweaked font sizes
 x fix: EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
+x particles: поднятие монетки
 
+* particles: duration variation
+* particles:
+* particles:
+* particles:
+* particles:
+* particles:
+* prod: particles: поднятие монетки
+* prod: particles: получение урона
+* prod: particles: нанесение урона
+* prod: particles: ходьба
+*
 * оставить только 3 сложности
 * описание самой мелкой сложности
 * change «next wave» button icon
@@ -85,10 +97,6 @@ x fix: EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
 * prod: рандом в ugprade-ах
 * prod: рандом в picked up item-ах
 * prod: босс
-* prod: particles: поднятие монетки
-* prod: particles: получение урона
-* prod: particles: нанесение урона
-* prod: particles: ходьба
 * prod: MUSIC
 * prod: SFX
 * prod: игровое поле
