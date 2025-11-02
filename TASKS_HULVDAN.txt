@@ -66,10 +66,11 @@ x fix: EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
 x particles: поднятие монетки
 x particles: duration variation
 x particles: нанесение / получение урона
+x bigger initial scale of damage numbers?
 
-* bigger initial scale of damage numbers?
-*
 * coin particles glow
+*
+* fix pressing PAGEUP / PAGEDOWN change focus!
 *
 * prod: particles: поднятие монетки
 * prod: particles: получение урона

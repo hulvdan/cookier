@@ -12143,7 +12143,7 @@ void GameDraw() {
 
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
-        .scale      = Vector2One() * Lerp(1.5f, 1, EaseOutQuad(MIN(1, p * 2))),
+        .scale      = Vector2One() * Lerp(5 / 2.0f, 1, EaseOutQuad(MIN(1, p * 3))),
         .font       = &g.meta.fontUIBigOutlined,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
