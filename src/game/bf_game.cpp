@@ -955,7 +955,7 @@ struct MakeParticlesData {  ///
   f32 initialOffsetVariation = 0;
 
   f32 scale          = 1;
-  f32 scaleVariation = 0;
+  f32 scaleVariation = 0.2f;
 
   f32 rotationSpeedVariation = PI32;
 };
@@ -2639,7 +2639,6 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       .velocityAngleVariation = velocityAngleVariation,
       .initialOffset          = 0.2f,
       .initialOffsetVariation = 0.1f,
-      .scaleVariation         = 0.1f,
     });
   }
 
@@ -9709,10 +9708,11 @@ void MakeAOE(
   }
 
   MakeParticles({
-    .type  = ParticleType_EXPLOSION,
-    .count = 1,
-    .pos   = pos,
-    .scale = sizeMultiplier,
+    .type           = ParticleType_EXPLOSION,
+    .count          = 1,
+    .pos            = pos,
+    .scale          = sizeMultiplier,
+    .scaleVariation = 0,
   });
 }
 
@@ -11732,7 +11732,6 @@ void GameFixedUpdate() {
               .velocityAngleVariation = PI32,
               .initialOffset          = 0.25f,
               .initialOffsetVariation = 0.1f,
-              .scaleVariation         = 0.1f,
             });
           }
 
@@ -12321,7 +12320,7 @@ void GameDraw() {
           .pos      = pos,
           .color    = Fade(palYellow, fade / 6),
         },
-        DrawCommandSetSortY_SET_BASELINE
+        DrawCommandSetSortY_DO_NOTHING
       );
     }
 
@@ -12331,7 +12330,7 @@ void GameDraw() {
         .pos   = pos,
         .color = Fade(WHITE, fade),
       },
-      (isCoin ? DrawCommandSetSortY_DO_NOTHING : DrawCommandSetSortY_SET_BASELINE)
+      DrawCommandSetSortY_SET_BASELINE
     );
 
     DrawGroup_End();
