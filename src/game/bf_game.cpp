@@ -6729,7 +6729,8 @@ void DoUI(bool draw) {
               .group             = data.groupArrows,
               .growY             = true,
               .paddingHorizontal = GAP_SMALL,
-              .keys              = KEYS_MOVE_UP,
+              // FIXME: make item slot focused (if item was focues previously).
+              // .keys              = KEYS_MOVE_UP,
             },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_up_texture_id()});
@@ -6754,7 +6755,8 @@ void DoUI(bool draw) {
               .group             = data.groupArrows,
               .growY             = true,
               .paddingHorizontal = GAP_SMALL,
-              .keys              = KEYS_MOVE_DOWN,
+              // FIXME: make item slot focused (if item was focues previously).
+              // .keys              = KEYS_MOVE_DOWN,
             },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_down_texture_id()});
