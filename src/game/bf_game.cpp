@@ -3212,10 +3212,6 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-  SDL_SetWindowMouseGrab(window, true);
-#endif
-
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
