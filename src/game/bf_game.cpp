@@ -2156,6 +2156,521 @@ void PlaceholdImage(const char* placeholder, int texID) {  ///
   PlaceholdGroupEnd();
 }
 
+void MakeNumber(MakeNumberData data) {  ///
+  ASSERT(data.type);
+  Number number{
+    .type  = data.type,
+    .value = data.value,
+    .pos   = data.pos,
+  };
+  number.createdAt.SetNow();
+  *g.run.numbers.Add() = number;
+}
+
+int GetNextLevelXp(int currentLevel) {  ///
+  return SQR(currentLevel + 3);
+}
+
+void AddXP(f32 xp) {  ///
+  if (xp > 0)
+    xp *= (f32)(MAX(1, g.run.state.stats[StatType_XP_GAIN] + 100)) / 100.0f;
+
+  g.run.state.xp += xp;
+  g.run.state.xp = MAX(0, g.run.state.xp);
+
+  // Handling level up.
+
+  auto nextLevelXp = GetNextLevelXp(g.run.state.level);
+
+  int addedLevels = 0;
+
+  while (g.run.state.xp >= nextLevelXp) {
+    addedLevels++;
+    g.run.state.xp -= nextLevelXp;
+    g.run.state.level++;
+    nextLevelXp = GetNextLevelXp(g.run.state.level);
+
+    MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
+
+    // Increasing random stat that has `upgrade_values`.
+    while (1) {
+      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
+      const auto fb   = glib->stats()->Get(stat);
+      const auto vals = fb->upgrade_values();
+      if (!vals)
+        continue;
+      ChangeStat(stat, vals->Get(0));
+      break;
+    }
+  }
+
+  if (addedLevels > 0) {
+    IterateOverEffects(
+      EffectConditionType_STAT__UPON_LEVEL_UP,
+      -1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          ApplyStatEffect(fb_effect, tierOffset, times * addedLevels);
+        }
+    );
+  }
+
+  Save();
+}
+
+void HealPlayer(int amount = 1) {  ///
+  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+    PLAYER_CREATURE.health
+      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+  }
+  Save();
+}
+
+struct TryApplyDamageData {  ///
+  int              creatureIndex                      = {};
+  int              damage                             = {};
+  Vector2          directionOrZero                    = {0, 0};
+  f32              knockbackMeters                    = 0;
+  CreatureType     damagerCreatureType                = CreatureType_INVALID;
+  f32              critDamageMultiplier               = 1;
+  int              indexOfWeaponThatDidDamageOrMinus1 = -1;
+  ApplyAilmentData ailment                            = {};
+  f32              ailmentChance                      = 0;
+  bool*            outWasCrit                         = nullptr;
+  bool*            outJustKilled                      = nullptr;
+};
+
+f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  ///
+  f32 lifesteal = 0;
+  if (affectedByGame)
+    lifesteal += (f32)g.run.state.stats[StatType_LIFE_STEAL] / 100.0f;
+  if (typeOrInvalid)
+    lifesteal += glib->weapons()->Get(typeOrInvalid)->life_steal_percent() / 100.0f;
+  return lifesteal;
+}
+
+void MakePickupable(MakePickupableData data);
+
+bool TryApplyDamage(TryApplyDamageData data) {  ///
+  if (data.outWasCrit)
+    *data.outWasCrit = false;
+  if (data.outJustKilled)
+    *data.outJustKilled = false;
+
+  ASSERT(data.creatureIndex >= 0);
+  ASSERT(data.damage >= 0);
+  if (data.damage != int_max) {
+    auto t = GRAND.Rand() % 7;
+    if ((t == 0) || (t == 1))
+      data.damage += 1;
+    else if (t == 2)
+      data.damage -= 1;
+  }
+
+  data.damage = MAX(1, data.damage);
+
+  if (data.directionOrZero != Vector2Zero())
+    ASSERT(FloatEquals(Vector2Length(data.directionOrZero), 1));
+
+  // Player can't take damage when finishing wave.
+  if (!data.creatureIndex && g.run.scheduledWaveCompleted.IsSet())
+    return false;
+
+  auto& creature = g.run.creatures[data.creatureIndex];
+  if (creature.health <= 0)
+    return false;
+
+  const auto fb = glib->creatures()->Get(creature.type);
+
+  creature.aggroed = fb->can_aggro();
+
+  if (data.damage == int_max) {
+    creature.killedBecauseOfTheEndOfTheWave = true;
+    creature.health                         = 0;
+    if (data.outJustKilled)
+      *data.outJustKilled = true;
+  }
+  else if (!creature.killedBecauseOfTheEndOfTheWave) {
+    bool isCrit = false;
+
+    if (data.creatureIndex) {
+      f32 critChance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
+
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+        IterateOverEffects(
+          EffectConditionType_EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if ((w->thisWaveUseCount % EFFECT_X_INT) == 0)
+                critChance += (f32)(EFFECT_Y_INT * times) / 100.0f;
+            }
+        );
+      }
+
+      if (fb->is_boss()) {
+        data.damage += Round(
+          (f32)data.damage * (f32)g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES]
+          / 100.0f
+        );
+      }
+
+      IterateOverEffects(
+        EffectConditionType_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES,
+        data.indexOfWeaponThatDidDamageOrMinus1,
+        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA {
+            int percent = EFFECT_X_INT * times;
+            if (fb->is_boss())
+              percent = EFFECT_Y_INT * times;
+            data.damage += Round(creature.health * (f32)percent / 100.0f);
+          }
+      );
+
+      if (creature.ailments[AilmentType_BURN - 1].startedAt.IsSet()) {
+        IterateOverEffects(
+          EffectConditionType_HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA { critChance += (f32)(EFFECT_X_INT * times); }
+        );
+      }
+
+      {
+        const f32 hpPercent = (f32)creature.health / (f32)creature.maxHealth;
+
+        IterateOverEffects(
+          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              auto requiredPercent = EFFECT_Y_INT;
+              if (hpPercent * 100 >= requiredPercent) {
+                data.damage
+                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
+              }
+            }
+        );
+
+        IterateOverEffects(
+          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              auto requiredPercent = EFFECT_Y_INT;
+              if (hpPercent * 100 <= requiredPercent) {
+                data.damage
+                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
+              }
+            }
+        );
+      }
+
+      isCrit = GRAND.FRand() < critChance;
+      if (isCrit)
+        data.damage += Round((f32)data.damage * data.critDamageMultiplier);
+
+      data.damage = MAX(1, data.damage);
+
+      auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
+      if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
+        MakeNumber({
+          .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
+          .value = data.damage,
+          .pos   = creature.pos,
+        });
+      }
+    }
+    else {
+      // Can't hurt player if he was recently damaged.
+      if (creature.lastDamagedAt.IsSet()
+          && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
+        return false;
+
+      // Dodge.
+      if (GRAND.FRand() < MIN(
+            (f32)MAX_DODGE_PERCENT / 100.0f,
+            (f32)g.run.state.stats[StatType_DODGE] / 100.0f
+          ))
+      {
+        MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
+
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING,
+          -1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                HealPlayer(EFFECT_Y_INT * times);
+            }
+        );
+
+        // TODO: lastInvincibilityTriggeredAt?
+        creature.lastDamagedAt = {};
+        creature.lastDamagedAt.SetNow();
+        return false;
+      }
+
+      // Applying player's armor.
+      auto armor = (f32)g.run.state.stats[StatType_ARMOR];
+      if (armor > 0)
+        data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
+      else if (armor < 0)
+        data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
+      data.damage = MAX(1, data.damage);
+
+      MakeNumber({
+        .type  = NumberType_DAMAGE_MOB,
+        .value = data.damage,
+        .pos   = creature.pos,
+      });
+    }
+
+    if (data.outWasCrit)
+      *data.outWasCrit = isCrit;
+
+    // Player lifesteals.
+    if (data.damagerCreatureType == CreatureType_PLAYER) {
+      auto weaponType = WeaponType_INVALID;
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
+        weaponType = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
+
+      if (GRAND.FRand() < GetLifestealChance(weaponType)) {
+        bool canLifesteal = true;
+        if (g.run.playerLastLifestealAt.IsSet()
+            && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
+          canLifesteal = false;
+
+        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
+          PLAYER_CREATURE.health
+            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+          g.run.playerLastLifestealAt = {};
+          g.run.playerLastLifestealAt.SetNow();
+        }
+      }
+    }
+
+    creature.health -= data.damage;
+
+    int effectDroppedCoins = 0;
+
+    if (creature.health <= 0) {
+      if (data.outJustKilled)
+        *data.outJustKilled = true;
+
+      if (isCrit) {
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                effectDroppedCoins += EFFECT_Y_INT * times;
+            }
+        );
+      }
+    }
+
+    IterateOverEffects(
+      EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
+      data.indexOfWeaponThatDidDamageOrMinus1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          if (GRAND.FRand() < (f32)EFFECT_Y_INT / 100.0f)
+            effectDroppedCoins += EFFECT_X_INT * times;
+        }
+    );
+
+    if (effectDroppedCoins > 0) {
+      MakePickupable({
+        .type        = PickupableType_COIN,
+        .pos         = creature.pos,
+        .coin_amount = effectDroppedCoins,
+      });
+    }
+
+    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
+        += data.damage;
+    }
+
+    bool ailmentCanBeApplied = true;
+    auto resists             = fb->resists_ailment_types();
+    if (resists) {
+      for (auto v : *resists) {
+        if (v == data.ailment.type) {
+          ailmentCanBeApplied = false;
+          break;
+        }
+      }
+    }
+
+    if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance))
+    {
+      auto damage = data.ailment.value;
+      if (data.damagerCreatureType == CreatureType_PLAYER)
+        damage += g.run.state.stats[StatType_DAMAGE_ELEMENTAL];
+
+      if ((data.ailment.value == 0) || (damage > 0)) {
+        data.ailment.value = damage;
+        ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
+      }
+    }
+  }
+
+  creature.lastDamagedAt = {};
+  creature.lastDamagedAt.SetNow();
+  creature.lastDamagedFlashAt = {};
+  creature.lastDamagedFlashAt.SetNow();
+  creature.lastDamagedWeaponIndex = data.indexOfWeaponThatDidDamageOrMinus1;
+
+  data.knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
+  data.knockbackMeters *= 1.0f - fb->knockback_resistance();
+
+  b2Body_ApplyLinearImpulseToCenter(
+    creature.body.id, ToB2Vec2(data.directionOrZero * data.knockbackMeters), true
+  );
+
+  if (!g.run.justDamagedCreatures.Contains(data.creatureIndex))
+    *g.run.justDamagedCreatures.Add() = data.creatureIndex;
+
+  if (!data.creatureIndex)
+    Save();
+
+  return true;
+}
+
+void Pickup(Pickupable* pickupable_) {  ///
+  auto& pickupable = *pickupable_;
+
+  pickupable.pickedUpAt.SetNow();
+
+  auto fb_creatures = glib->creatures();
+
+  const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
+          if (fb_effect->pickupable_type() != pickupable.type)
+            return;
+
+          FOR_RANGE (int, i, 5) {
+            auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
+            const auto& creature      = g.run.creatures[creatureIndex];
+
+            if (creature.diedAt.IsSet())
+              continue;
+
+            auto fb = fb_creatures->Get(creature.type);
+            if (fb->hostility_type() == HostilityType_FRIENDLY)
+              continue;
+
+            int damage = EFFECT_Y_INT * times;
+            damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
+            damage = ApplyPlayerStatDamageMultiplier(damage);
+
+            f32 critDamageMultiplier = 1.5f;
+            if (w) {
+              critDamageMultiplier
+                = glib->weapons()->Get(w->type)->crit_damage_multiplier();
+            }
+
+            TryApplyDamage({
+              .creatureIndex                      = (int)creatureIndex,
+              .damage                             = damage,
+              .damagerCreatureType                = CreatureType_PLAYER,
+              .critDamageMultiplier               = critDamageMultiplier,
+              .indexOfWeaponThatDidDamageOrMinus1 = wi,
+            });
+
+            break;
+          }
+        }
+      }
+  );
+
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
+          if (fb_effect->pickupable_type() == pickupable.type)
+            HealPlayer(EFFECT_Y_INT * times);
+        }
+      }
+  );
+
+  IterateOverEffects(
+    EffectConditionType_X__COINS_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->pickupable_type() == pickupable.type) {
+          const int amount = times * EFFECT_X_INT;
+          ChangeCoins(amount);
+        }
+      }
+  );
+
+  switch (pickupable.type) {
+  case PickupableType_COIN: {
+    const auto& data    = pickupable.DataCoin();
+    int         amount  = data.amount;
+    int         xNumber = 1;
+
+    if (g.run.state.notPickedUpCoins > 0) {
+      int toAdd = amount;
+      if (toAdd > g.run.state.notPickedUpCoins)
+        toAdd = g.run.state.notPickedUpCoins;
+
+      g.run.state.notPickedUpCoins -= toAdd;
+      g.run.state.notPickedUpCoinsVisual -= toAdd;
+      amount += toAdd;
+      xNumber *= 2;
+    }
+
+    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+    {
+      amount *= 2;
+      xNumber *= 2;
+    }
+
+    if (xNumber > 1) {
+      MakeNumber({
+        .type  = NumberType_PICKUPABLE,
+        .value = xNumber,
+        .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+      });
+    }
+
+    ChangeCoins(amount);
+    AddXP((f32)amount);
+
+    auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
+    if (GRAND.FRand() < healChance)
+      HealPlayer();
+  } break;
+
+  case PickupableType_CONSUMABLE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+  } break;
+
+  case PickupableType_CRATE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+    g.run.state.crates++;
+  } break;
+
+  default:
+    INVALID_PATH;
+  }
+}
+
 void MakePickupable(MakePickupableData data) {  ///
   ASSERT(data.coin_amount >= 0);
   ASSERT(data.type);
@@ -2194,10 +2709,11 @@ void MakePickupable(MakePickupableData data) {  ///
           chanceToInstaPickup += (f32)(EFFECT_X_INT * times) / 100.0f;
       }
   );
-  if (GRAND.FRand() < chanceToInstaPickup)
-    pickupable.pickedUpAt.SetNow();
 
   *g.run.pickupables.Add() = pickupable;
+
+  if (GRAND.FRand() < chanceToInstaPickup)
+    Pickup(g.run.pickupables.base + g.run.pickupables.count - 1);
 }
 
 template <typename T>
@@ -2230,17 +2746,6 @@ void CheckCollisionsRect(
     (bool (*)(b2ShapeId, void*))onCollided,
     context
   );
-}
-
-void MakeNumber(MakeNumberData data) {  ///
-  ASSERT(data.type);
-  Number number{
-    .type  = data.type,
-    .value = data.value,
-    .pos   = data.pos,
-  };
-  number.createdAt.SetNow();
-  *g.run.numbers.Add() = number;
 }
 
 static BF_FORCE_INLINE Clay_Dimensions MeasureText(
@@ -2920,10 +3425,6 @@ int ToRecyclePrice(int price) {  ///
   return Ceil((f32)price * scale);
 }
 
-int GetNextLevelXp(int currentLevel) {  ///
-  return SQR(currentLevel + 3);
-}
-
 void AddItem(ItemType type) {  ///
   auto& items = g.run.state.items;
 
@@ -3518,326 +4019,6 @@ constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
   return lframe::Unscaled((i64)((f32)FIXED_FPS / regenPerSecond));
 }
 
-f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  ///
-  f32 lifesteal = 0;
-  if (affectedByGame)
-    lifesteal += (f32)g.run.state.stats[StatType_LIFE_STEAL] / 100.0f;
-  if (typeOrInvalid)
-    lifesteal += glib->weapons()->Get(typeOrInvalid)->life_steal_percent() / 100.0f;
-  return lifesteal;
-}
-
-struct TryApplyDamageData {  ///
-  int              creatureIndex                      = {};
-  int              damage                             = {};
-  Vector2          directionOrZero                    = {0, 0};
-  f32              knockbackMeters                    = 0;
-  CreatureType     damagerCreatureType                = CreatureType_INVALID;
-  f32              critDamageMultiplier               = 1;
-  int              indexOfWeaponThatDidDamageOrMinus1 = -1;
-  ApplyAilmentData ailment                            = {};
-  f32              ailmentChance                      = 0;
-  bool*            outWasCrit                         = nullptr;
-  bool*            outJustKilled                      = nullptr;
-};
-
-void HealPlayer(int amount = 1) {  ///
-  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
-    PLAYER_CREATURE.health
-      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
-  }
-  Save();
-}
-
-bool TryApplyDamage(TryApplyDamageData data) {  ///
-  if (data.outWasCrit)
-    *data.outWasCrit = false;
-  if (data.outJustKilled)
-    *data.outJustKilled = false;
-
-  ASSERT(data.creatureIndex >= 0);
-  ASSERT(data.damage >= 0);
-  if (data.damage != int_max) {
-    auto t = GRAND.Rand() % 7;
-    if ((t == 0) || (t == 1))
-      data.damage += 1;
-    else if (t == 2)
-      data.damage -= 1;
-  }
-
-  data.damage = MAX(1, data.damage);
-
-  if (data.directionOrZero != Vector2Zero())
-    ASSERT(FloatEquals(Vector2Length(data.directionOrZero), 1));
-
-  // Player can't take damage when finishing wave.
-  if (!data.creatureIndex && g.run.scheduledWaveCompleted.IsSet())
-    return false;
-
-  auto& creature = g.run.creatures[data.creatureIndex];
-  if (creature.health <= 0)
-    return false;
-
-  const auto fb = glib->creatures()->Get(creature.type);
-
-  creature.aggroed = fb->can_aggro();
-
-  if (data.damage == int_max) {
-    creature.killedBecauseOfTheEndOfTheWave = true;
-    creature.health                         = 0;
-    if (data.outJustKilled)
-      *data.outJustKilled = true;
-  }
-  else if (!creature.killedBecauseOfTheEndOfTheWave) {
-    bool isCrit = false;
-
-    if (data.creatureIndex) {
-      f32 critChance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
-
-      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
-        IterateOverEffects(
-          EffectConditionType_EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              if ((w->thisWaveUseCount % EFFECT_X_INT) == 0)
-                critChance += (f32)(EFFECT_Y_INT * times) / 100.0f;
-            }
-        );
-      }
-
-      if (fb->is_boss()) {
-        data.damage += Round(
-          (f32)data.damage * (f32)g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES]
-          / 100.0f
-        );
-      }
-
-      IterateOverEffects(
-        EffectConditionType_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES,
-        data.indexOfWeaponThatDidDamageOrMinus1,
-        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-          BF_FORCE_INLINE_LAMBDA {
-            int percent = EFFECT_X_INT * times;
-            if (fb->is_boss())
-              percent = EFFECT_Y_INT * times;
-            data.damage += Round(creature.health * (f32)percent / 100.0f);
-          }
-      );
-
-      if (creature.ailments[AilmentType_BURN - 1].startedAt.IsSet()) {
-        IterateOverEffects(
-          EffectConditionType_HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA { critChance += (f32)(EFFECT_X_INT * times); }
-        );
-      }
-
-      {
-        const f32 hpPercent = (f32)creature.health / (f32)creature.maxHealth;
-
-        IterateOverEffects(
-          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              auto requiredPercent = EFFECT_Y_INT;
-              if (hpPercent * 100 >= requiredPercent) {
-                data.damage
-                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
-              }
-            }
-        );
-
-        IterateOverEffects(
-          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              auto requiredPercent = EFFECT_Y_INT;
-              if (hpPercent * 100 <= requiredPercent) {
-                data.damage
-                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
-              }
-            }
-        );
-      }
-
-      isCrit = GRAND.FRand() < critChance;
-      if (isCrit)
-        data.damage += Round((f32)data.damage * data.critDamageMultiplier);
-
-      data.damage = MAX(1, data.damage);
-
-      auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
-      if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
-        MakeNumber({
-          .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
-          .value = data.damage,
-          .pos   = creature.pos,
-        });
-      }
-    }
-    else {
-      // Can't hurt player if he was recently damaged.
-      if (creature.lastDamagedAt.IsSet()
-          && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
-        return false;
-
-      // Dodge.
-      if (GRAND.FRand() < MIN(
-            (f32)MAX_DODGE_PERCENT / 100.0f,
-            (f32)g.run.state.stats[StatType_DODGE] / 100.0f
-          ))
-      {
-        MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
-
-        IterateOverEffects(
-          EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING,
-          -1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
-                HealPlayer(EFFECT_Y_INT * times);
-            }
-        );
-
-        // TODO: lastInvincibilityTriggeredAt?
-        creature.lastDamagedAt = {};
-        creature.lastDamagedAt.SetNow();
-        return false;
-      }
-
-      // Applying player's armor.
-      auto armor = (f32)g.run.state.stats[StatType_ARMOR];
-      if (armor > 0)
-        data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
-      else if (armor < 0)
-        data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
-      data.damage = MAX(1, data.damage);
-
-      MakeNumber({
-        .type  = NumberType_DAMAGE_MOB,
-        .value = data.damage,
-        .pos   = creature.pos,
-      });
-    }
-
-    if (data.outWasCrit)
-      *data.outWasCrit = isCrit;
-
-    // Player lifesteals.
-    if (data.damagerCreatureType == CreatureType_PLAYER) {
-      auto weaponType = WeaponType_INVALID;
-      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-        weaponType = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
-
-      if (GRAND.FRand() < GetLifestealChance(weaponType)) {
-        bool canLifesteal = true;
-        if (g.run.playerLastLifestealAt.IsSet()
-            && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
-          canLifesteal = false;
-
-        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
-          PLAYER_CREATURE.health
-            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-          g.run.playerLastLifestealAt = {};
-          g.run.playerLastLifestealAt.SetNow();
-        }
-      }
-    }
-
-    creature.health -= data.damage;
-
-    int effectDroppedCoins = 0;
-
-    if (creature.health <= 0) {
-      if (data.outJustKilled)
-        *data.outJustKilled = true;
-
-      if (isCrit) {
-        IterateOverEffects(
-          EffectConditionType_X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
-                effectDroppedCoins += EFFECT_Y_INT * times;
-            }
-        );
-      }
-    }
-
-    IterateOverEffects(
-      EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
-      data.indexOfWeaponThatDidDamageOrMinus1,
-      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-        BF_FORCE_INLINE_LAMBDA {
-          if (GRAND.FRand() < (f32)EFFECT_Y_INT / 100.0f)
-            effectDroppedCoins += EFFECT_X_INT * times;
-        }
-    );
-
-    if (effectDroppedCoins > 0) {
-      MakePickupable({
-        .type        = PickupableType_COIN,
-        .pos         = creature.pos,
-        .coin_amount = effectDroppedCoins,
-      });
-    }
-
-    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
-      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
-        += data.damage;
-    }
-
-    bool ailmentCanBeApplied = true;
-    auto resists             = fb->resists_ailment_types();
-    if (resists) {
-      for (auto v : *resists) {
-        if (v == data.ailment.type) {
-          ailmentCanBeApplied = false;
-          break;
-        }
-      }
-    }
-
-    if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance))
-    {
-      auto damage = data.ailment.value;
-      if (data.damagerCreatureType == CreatureType_PLAYER)
-        damage += g.run.state.stats[StatType_DAMAGE_ELEMENTAL];
-
-      if ((data.ailment.value == 0) || (damage > 0)) {
-        data.ailment.value = damage;
-        ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
-      }
-    }
-  }
-
-  creature.lastDamagedAt = {};
-  creature.lastDamagedAt.SetNow();
-  creature.lastDamagedFlashAt = {};
-  creature.lastDamagedFlashAt.SetNow();
-  creature.lastDamagedWeaponIndex = data.indexOfWeaponThatDidDamageOrMinus1;
-
-  data.knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
-  data.knockbackMeters *= 1.0f - fb->knockback_resistance();
-
-  b2Body_ApplyLinearImpulseToCenter(
-    creature.body.id, ToB2Vec2(data.directionOrZero * data.knockbackMeters), true
-  );
-
-  if (!g.run.justDamagedCreatures.Contains(data.creatureIndex))
-    *g.run.justDamagedCreatures.Add() = data.creatureIndex;
-
-  if (!data.creatureIndex)
-    Save();
-
-  return true;
-}
-
 void RunReset() {  ///
   ZoneScoped;
 
@@ -4167,53 +4348,6 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   const auto movedDistance  = p * movingDistance;
 
   return PLAYER_CREATURE.pos + weapon.targetDir * movedDistance;
-}
-
-void AddXP(f32 xp) {  ///
-  if (xp > 0)
-    xp *= (f32)(MAX(1, g.run.state.stats[StatType_XP_GAIN] + 100)) / 100.0f;
-
-  g.run.state.xp += xp;
-  g.run.state.xp = MAX(0, g.run.state.xp);
-
-  // Handling level up.
-
-  auto nextLevelXp = GetNextLevelXp(g.run.state.level);
-
-  int addedLevels = 0;
-
-  while (g.run.state.xp >= nextLevelXp) {
-    addedLevels++;
-    g.run.state.xp -= nextLevelXp;
-    g.run.state.level++;
-    nextLevelXp = GetNextLevelXp(g.run.state.level);
-
-    MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
-
-    // Increasing random stat that has `upgrade_values`.
-    while (1) {
-      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
-      const auto fb   = glib->stats()->Get(stat);
-      const auto vals = fb->upgrade_values();
-      if (!vals)
-        continue;
-      ChangeStat(stat, vals->Get(0));
-      break;
-    }
-  }
-
-  if (addedLevels > 0) {
-    IterateOverEffects(
-      EffectConditionType_STAT__UPON_LEVEL_UP,
-      -1,
-      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-        BF_FORCE_INLINE_LAMBDA {
-          ApplyStatEffect(fb_effect, tierOffset, times * addedLevels);
-        }
-    );
-  }
-
-  Save();
 }
 
 bool CanSpawnMoreCreatures() {  ///
@@ -9430,137 +9564,6 @@ int GetMobDamage(CreatureType type) {  ///
            fb->contact_damage_increase_per_wave()
            * (f32)(g.run.state.waveIndex + 1 - fb->appearing_wave_number())
          );
-}
-
-void Pickup(Pickupable* pickupable_) {  ///
-  auto& pickupable = *pickupable_;
-
-  pickupable.pickedUpAt.SetNow();
-
-  auto fb_creatures = glib->creatures();
-
-  const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
-  IterateOverEffects(
-    EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
-    -1,
-    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA {
-        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
-          if (fb_effect->pickupable_type() != pickupable.type)
-            return;
-
-          FOR_RANGE (int, i, 5) {
-            auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
-            const auto& creature      = g.run.creatures[creatureIndex];
-
-            if (creature.diedAt.IsSet())
-              continue;
-
-            auto fb = fb_creatures->Get(creature.type);
-            if (fb->hostility_type() == HostilityType_FRIENDLY)
-              continue;
-
-            int damage = EFFECT_Y_INT * times;
-            damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
-            damage = ApplyPlayerStatDamageMultiplier(damage);
-
-            f32 critDamageMultiplier = 1.5f;
-            if (w) {
-              critDamageMultiplier
-                = glib->weapons()->Get(w->type)->crit_damage_multiplier();
-            }
-
-            TryApplyDamage({
-              .creatureIndex                      = (int)creatureIndex,
-              .damage                             = damage,
-              .damagerCreatureType                = CreatureType_PLAYER,
-              .critDamageMultiplier               = critDamageMultiplier,
-              .indexOfWeaponThatDidDamageOrMinus1 = wi,
-            });
-
-            break;
-          }
-        }
-      }
-  );
-
-  IterateOverEffects(
-    EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE,
-    -1,
-    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA {
-        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
-          if (fb_effect->pickupable_type() == pickupable.type)
-            HealPlayer(EFFECT_Y_INT * times);
-        }
-      }
-  );
-
-  IterateOverEffects(
-    EffectConditionType_X__COINS_UPON__PICKUPABLE,
-    -1,
-    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA {
-        if (fb_effect->pickupable_type() == pickupable.type) {
-          const int amount = times * EFFECT_X_INT;
-          ChangeCoins(amount);
-        }
-      }
-  );
-
-  switch (pickupable.type) {
-  case PickupableType_COIN: {
-    const auto& data    = pickupable.DataCoin();
-    int         amount  = data.amount;
-    int         xNumber = 1;
-
-    if (g.run.state.notPickedUpCoins > 0) {
-      int toAdd = amount;
-      if (toAdd > g.run.state.notPickedUpCoins)
-        toAdd = g.run.state.notPickedUpCoins;
-
-      g.run.state.notPickedUpCoins -= toAdd;
-      g.run.state.notPickedUpCoinsVisual -= toAdd;
-      amount += toAdd;
-      xNumber *= 2;
-    }
-
-    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-    {
-      amount *= 2;
-      xNumber *= 2;
-    }
-
-    if (xNumber > 1) {
-      MakeNumber({
-        .type  = NumberType_PICKUPABLE,
-        .value = xNumber,
-        .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
-      });
-    }
-
-    ChangeCoins(amount);
-    AddXP((f32)amount);
-
-    auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
-    if (GRAND.FRand() < healChance)
-      HealPlayer();
-  } break;
-
-  case PickupableType_CONSUMABLE: {
-    if (consumableOrCrateHeal > 0)
-      HealPlayer(consumableOrCrateHeal);
-  } break;
-
-  case PickupableType_CRATE: {
-    if (consumableOrCrateHeal > 0)
-      HealPlayer(consumableOrCrateHeal);
-    g.run.state.crates++;
-  } break;
-
-  default:
-    INVALID_PATH;
-  }
 }
 
 void GameFixedUpdate() {

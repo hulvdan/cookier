@@ -62,8 +62,9 @@ x damage numbers squashing
 x fix web
 x fix reset stickControl on wave start
 x tweaked font sizes
+x fix: EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
 
-* fix: instant attraction of dropped cookien -> INCREASE COIN!!!
+* оставить только 3 сложности
 * описание самой мелкой сложности
 * change «next wave» button icon
 * финализировать названия статов
