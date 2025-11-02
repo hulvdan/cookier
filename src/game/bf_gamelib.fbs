@@ -275,6 +275,7 @@ table ParticleVariation {
 
 table Particle {
     duration_seconds: float;
+    duration_variation: float;
     color: uint = 0xffffffff;
     variations: [ParticleVariation];
 }
