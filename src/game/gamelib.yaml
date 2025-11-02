@@ -1449,8 +1449,25 @@ particles: # {  ###
   - type: INVALID
   - type: EXPLOSION
     duration_seconds: 0.4
-    texture_ids:
-      - game_particle_explosion_1
+    variations:
+      - texture_ids:
+          - game_particle_explosion_1
+  - type: COIN
+    duration_seconds: 0.4
+    color: 0xf3bc5eff
+    variations:
+      - texture_ids:
+          - game_particle_1_1
+      - texture_ids:
+          - game_particle_1_2
+      - texture_ids:
+          - game_particle_1_3
+      - texture_ids:
+          - game_particle_1_4
+      - texture_ids:
+          - game_particle_1_5
+      - texture_ids:
+          - game_particle_1_6
 # }
 
 pickupables: # {  ###

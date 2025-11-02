@@ -269,9 +269,14 @@ table Projectile {
     texture_ids: [int];
 }
 
+table ParticleVariation {
+    texture_ids: [int];
+}
+
 table Particle {
     duration_seconds: float;
-    texture_ids: [int];
+    color: uint = 0xffffffff;
+    variations: [ParticleVariation];
 }
 
 table Pickupable {

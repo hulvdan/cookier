@@ -297,7 +297,7 @@ Vector2Int ToVector2Int(const BFGame::Pos* value) {  ///
 
 Vector2 Vector2DirectionOrRandom(Vector2 from, Vector2 to) {  ///
   if (from == to)
-    return Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
+    return Vector2Rotate({1, 0}, GRAND.Angle());
   return Vector2Normalize(to - from);
 }
 
@@ -791,10 +791,14 @@ struct PlaceholderGroup {
 };
 
 struct Particle {  ///
-  ParticleType type      = {};
-  Vector2      pos       = {};
-  f32          scale     = 1;
-  FrameGame    createdAt = {};
+  ParticleType type          = {};
+  u16          variation     = {};
+  Vector2      pos           = {};
+  Vector2      velocity      = {};
+  f32          rotation      = {};
+  f32          rotationSpeed = 0;
+  f32          scale         = 1;
+  FrameGame    createdAt     = {};
 };
 
 int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
@@ -2540,6 +2544,36 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   return true;
 }
 
+struct MakeParticleData {  ///
+  ParticleType type     = {};
+  Vector2      pos      = {};
+  Vector2      velocity = {};
+  f32          scale    = 1;
+  // f32          rotationSpeed = 0;
+};
+
+void MakeParticle(MakeParticleData data) {  ///
+  ASSERT(data.type);
+
+  const f32  rotation = GRAND.Angle();
+  const auto variation
+    = (u16)(GRAND.Rand() % glib->particles()->Get(data.type)->variations()->size());
+
+  const f32 rotationSpeed = Lerp(-PI32, PI32, GRAND.FRand());
+
+  Particle p{
+    .type          = data.type,
+    .variation     = variation,
+    .pos           = data.pos,
+    .velocity      = data.velocity,
+    .rotation      = rotation,
+    .rotationSpeed = rotationSpeed,
+    .scale         = data.scale,
+  };
+  p.createdAt.SetNow();
+  *g.run.particles.Add() = p;
+}
+
 void Pickup(Pickupable* pickupable_) {  ///
   auto& pickupable = *pickupable_;
 
@@ -2653,6 +2687,18 @@ void Pickup(Pickupable* pickupable_) {  ///
     auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
     if (GRAND.FRand() < healChance)
       HealPlayer();
+
+    int particlesToSpawn = GRAND.RandInt(7, 12);
+    FOR_RANGE (int, particleIndex, particlesToSpawn) {
+      const f32 vel           = Lerp(3.5f, 4.5f, GRAND.FRand());
+      const f32 angle         = GRAND.Angle();
+      const f32 initialOffset = Lerp(0.15f, 0.3f, GRAND.FRand());
+      MakeParticle({
+        .type = ParticleType_COIN,
+        .pos  = PLAYER_CREATURE.pos + Vector2Rotate({initialOffset, 0}, GRAND.Angle()),
+        .velocity = Vector2Rotate({vel, 0}, angle),
+      });
+    }
   } break;
 
   case PickupableType_CONSUMABLE: {
@@ -3194,14 +3240,14 @@ int MakeCreature(MakeCreatureData data) {  ///
   creature.idleStartedAt.SetNow();
 
   if ((fb->aggro_distance() != f32_inf) || !fb->can_aggro()) {
-    creature.controller.move = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
+    creature.controller.move = Vector2Rotate({1, 0}, GRAND.Angle());
     creature.speedModifier *= fb->not_aggroed_speed() / fb->speed();
   }
 
   switch (creature.type) {
   case CreatureType_TURREL: {
     creature.DataTurrel() = {
-      .aimDirection = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
+      .aimDirection = Vector2Rotate({1, 0}, GRAND.Angle()),
     };
   } break;
 
@@ -4274,7 +4320,7 @@ void EffectSpawnProjectilesOnHit(
             .ownerCreatureType         = CreatureType_PLAYER,
             .weaponIndexOrMinus1       = weaponIndex,
             .pos                       = creature.pos,
-            .dir                       = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
+            .dir                       = Vector2Rotate({1, 0}, GRAND.Angle()),
             .range                     = fb_effect->projectile_range_meters(),
             .damage                    = damage,
             .critDamageMultiplier      = critDamageMultiplier,
@@ -9509,13 +9555,6 @@ void MakeAOE(
 ) {  ///
   const f32 sizeMultiplier = GetExplosionSizeMultiplier();
 
-  Particle p{
-    .type  = ParticleType_EXPLOSION,
-    .pos   = pos,
-    .scale = sizeMultiplier,
-  };
-  p.createdAt.SetNow();
-
   const auto fb_damager = glib->creatures()->Get(damager);
 
   int creatureIndex = -1;
@@ -9553,7 +9592,12 @@ void MakeAOE(
       .indexOfWeaponThatDidDamageOrMinus1 = weaponIndexOrMinus1,
     });
   }
-  *g.run.particles.Add() = p;
+
+  MakeParticle({
+    .type  = ParticleType_EXPLOSION,
+    .pos   = pos,
+    .scale = sizeMultiplier,
+  });
 }
 
 int GetMobDamage(CreatureType type) {  ///
@@ -10331,7 +10375,7 @@ void GameFixedUpdate() {
               const f32 off = Lerp(
                 fb->spawn_group_radius_min(), fb->spawn_group_radius_max(), GRAND.FRand()
               );
-              p = posToSpawn + Vector2Rotate({off, 0}, 2 * PI32 * GRAND.FRand());
+              p = posToSpawn + Vector2Rotate({off, 0}, GRAND.Angle());
             } while (!creaturesWorldSpawnBounds.ContainsInside(p));
             PreSpawn spawn{.type = PreSpawnType_CREATURE, .typeCreature = type, .pos = p};
             spawn.createdAt.SetNow();
@@ -11245,7 +11289,7 @@ void GameFixedUpdate() {
                   projectile.dir
                     = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
                 else
-                  projectile.dir = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
+                  projectile.dir = Vector2Rotate({1, 0}, GRAND.Angle());
               }
               else if (canPierce) {
                 projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
@@ -11341,7 +11385,7 @@ void GameFixedUpdate() {
               GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX,
               GRAND.FRand()
             );
-            pos = garden.pos + Vector2Rotate({off, 0}, 2 * PI32 * GRAND.FRand());
+            pos = garden.pos + Vector2Rotate({off, 0}, GRAND.Angle());
           } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
           MakePickupable({
@@ -11421,7 +11465,7 @@ void GameFixedUpdate() {
                             ),
                             0
                           ),
-                          GRAND.FRand() * 2.0f * PI32
+                          GRAND.Angle()
                         );
                 } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
@@ -11570,6 +11614,12 @@ void GameFixedUpdate() {
           off++;
         }
       }
+    }
+
+    // Updating particles.
+    for (auto& p : g.run.particles) {  ///
+      p.pos += p.velocity * FIXED_DT;
+      p.rotation += p.rotationSpeed * FIXED_DT;
     }
 
     // Removing old particles.
@@ -12038,10 +12088,11 @@ void GameDraw() {
       const auto dur = lframe::FromSeconds(fb->duration_seconds());
       const auto p   = Clamp01(particle.createdAt.Elapsed().Progress(dur));
       DrawGroup_CommandTexture({
-        .texID = fb->texture_ids()->Get(0),
-        .pos   = particle.pos,
-        .scale = Vector2One() * particle.scale,
-        .color = Fade(WHITE, EaseOutQuad(1 - p)),
+        .texID    = fb->variations()->Get(particle.variation)->texture_ids()->Get(0),
+        .rotation = particle.rotation,
+        .pos      = particle.pos,
+        .scale    = Vector2One() * particle.scale,
+        .color    = Fade(ColorFromRGBA(fb->color()), EaseOutQuad(1 - p)),
       });
     }
     DrawGroup_End();
