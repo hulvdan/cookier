@@ -1454,6 +1454,7 @@ particles: # {  ###
           - game_particle_explosion_1
   - type: COIN
     duration_seconds: 0.4
+    duration_variation: 0.15
     color: 0xf3bc5eff
     variations:
       - texture_ids:

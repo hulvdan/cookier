@@ -798,6 +798,7 @@ struct Particle {  ///
   f32          rotation      = {};
   f32          rotationSpeed = 0;
   f32          scale         = 1;
+  lframe       duration      = {};
   FrameGame    createdAt     = {};
 };
 
@@ -2555,9 +2556,17 @@ struct MakeParticleData {  ///
 void MakeParticle(MakeParticleData data) {  ///
   ASSERT(data.type);
 
-  const f32  rotation = GRAND.Angle();
-  const auto variation
-    = (u16)(GRAND.Rand() % glib->particles()->Get(data.type)->variations()->size());
+  auto fb = glib->particles()->Get(data.type);
+
+  const f32  rotation  = GRAND.Angle();
+  const auto variation = (u16)(GRAND.Rand() % fb->variations()->size());
+
+  const f32 durationSeconds
+    = fb->duration_seconds() + fb->duration_variation() * (GRAND.FRand() * 2 - 1);
+
+  ASSERT(durationSeconds > 0);
+  if (durationSeconds <= 0)
+    return;
 
   const f32 rotationSpeed = Lerp(-PI32, PI32, GRAND.FRand());
 
@@ -2569,6 +2578,7 @@ void MakeParticle(MakeParticleData data) {  ///
     .rotation      = rotation,
     .rotationSpeed = rotationSpeed,
     .scale         = data.scale,
+    .duration      = lframe::FromSeconds(durationSeconds),
   };
   p.createdAt.SetNow();
   *g.run.particles.Add() = p;
@@ -2688,7 +2698,7 @@ void Pickup(Pickupable* pickupable_) {  ///
     if (GRAND.FRand() < healChance)
       HealPlayer();
 
-    int particlesToSpawn = GRAND.RandInt(7, 12);
+    int particlesToSpawn = GRAND.RandInt(3, 6);
     FOR_RANGE (int, particleIndex, particlesToSpawn) {
       const f32 vel           = Lerp(3.5f, 4.5f, GRAND.FRand());
       const f32 angle         = GRAND.Angle();
@@ -11631,7 +11641,7 @@ void GameFixedUpdate() {
       FOR_RANGE (int, i, total) {
         const auto& particle = g.run.particles[i - off];
         const auto  fb       = fb_particles->Get(particle.type);
-        if (particle.createdAt.Elapsed() >= lframe::FromSeconds(fb->duration_seconds())) {
+        if (particle.createdAt.Elapsed() >= particle.duration) {
           g.run.particles.UnstableRemoveAt(i - off);
           off++;
         }
@@ -12084,9 +12094,8 @@ void GameDraw() {
     DrawGroup_SetSortY(0);
     for (const auto& particle : g.run.particles) {
       ASSERT(particle.type);
-      const auto fb  = fb_particles->Get(particle.type);
-      const auto dur = lframe::FromSeconds(fb->duration_seconds());
-      const auto p   = Clamp01(particle.createdAt.Elapsed().Progress(dur));
+      const auto fb = fb_particles->Get(particle.type);
+      const auto p  = Clamp01(particle.createdAt.Elapsed().Progress(particle.duration));
       DrawGroup_CommandTexture({
         .texID    = fb->variations()->Get(particle.variation)->texture_ids()->Get(0),
         .rotation = particle.rotation,
