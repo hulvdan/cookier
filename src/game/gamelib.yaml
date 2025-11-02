@@ -1491,11 +1491,18 @@ particles: # {  ###
 pickupables: # {  ###
   - type: INVALID
   - type: COIN
-    texture_id: game_pickupable_coin
+    variation_texture_ids:
+      - game_pickupable_coin_1
+      - game_pickupable_coin_2
+      - game_pickupable_coin_3
+      - game_pickupable_coin_4
+      - game_pickupable_coin_5
   - type: CONSUMABLE
-    texture_id: game_pickupable_consumable
+    variation_texture_ids:
+      - game_pickupable_consumable
   - type: CRATE
-    texture_id: game_pickupable_crate
+    variation_texture_ids:
+      - game_pickupable_crate
 # }
 
 numbers: # {  ###

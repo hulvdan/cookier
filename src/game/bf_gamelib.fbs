@@ -282,7 +282,7 @@ table Particle {
 
 table Pickupable {
     name_locale: int;
-    texture_id: int;
+    variation_texture_ids: [int];
 }
 
 table Number {
@@ -345,15 +345,12 @@ table GameLibrary {
     shadow_texture_ids: [int];
 
     // AUTOMATIC_TEXTURE_BIND_START
-    ui_item_slot_texture_id: int;
     vignette_texture_id: int;
+    ui_item_slot_texture_id: int;
     ui_coin_texture_id: int;
     ui_coin_x2_texture_id: int;
     ui_item_locked_texture_id: int;
     ui_item_question_texture_id: int;
-    game_decal_pre_spawn_texture_id: int;
-    game_landmine_texture_id: int;
-    game_garden_texture_id: int;
     ui_controls_touch_base_texture_id: int;
     ui_controls_touch_handle_texture_id: int;
     ui_icon_back_big_texture_id: int;
@@ -374,6 +371,10 @@ table GameLibrary {
     ui_icon_stopwatch2_texture_id: int;
     ui_icon_up_texture_id: int;
     ui_icon_down_texture_id: int;
+    game_decal_pre_spawn_texture_id: int;
+    game_landmine_texture_id: int;
+    game_garden_texture_id: int;
+    game_coin_glow_texture_id: int;
     // AUTOMATIC_TEXTURE_BIND_END
 
     ui_controls_touch_handle_margin: int;
