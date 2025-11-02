@@ -943,6 +943,7 @@ struct GameData {
     Font fontPricesOutlined     = {};
     Font fontItemCountsOutlined = {};
     Font fontUIGiganticOutlined = {};
+    Font fontUINextWave         = {};
 
     LoadFontsResult loadedFonts = {};
 
@@ -1617,6 +1618,8 @@ void RecalculateThisWaveMobs() {  ///
 }
 
 void OnWaveStarted() {  ///
+  g.meta.stickControl = {};
+
   g.run.state.upgrades.rerolls = {};
   g.run.state.previousCoins    = g.run.state.stats[StatType_COINS];
 
@@ -3119,11 +3122,8 @@ void ReloadFontsIfNeeded() {  ///
   }
 
   static auto fontpath = "resources/arialnb.ttf";
-  static int  priceCodepoints[]{
-    ' ', '+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-  };
-  static int itemCountCodepoints[]{
-    ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x'
+  static int  numberCodepoints[]{
+    ' ', '+', '-', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x'
   };
 
   static LoadFontData loadFontData_[]{
@@ -3176,8 +3176,8 @@ void ReloadFontsIfNeeded() {  ///
       .filepath        = fontpath,
       .size            = 20,
       .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = priceCodepoints,
-      .codepointsCount = ARRAY_COUNT(priceCodepoints),
+      .codepoints      = numberCodepoints,
+      .codepointsCount = ARRAY_COUNT(numberCodepoints),
       .outlineWidth    = 3,
       .outlineAdvance  = 1,
     },
@@ -3186,18 +3186,28 @@ void ReloadFontsIfNeeded() {  ///
       .filepath        = fontpath,
       .size            = 20,
       .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = itemCountCodepoints,
-      .codepointsCount = ARRAY_COUNT(itemCountCodepoints),
+      .codepoints      = numberCodepoints,
+      .codepointsCount = ARRAY_COUNT(numberCodepoints),
       .outlineWidth    = 3,
       .outlineAdvance  = 1,
     },
     // fontUIGiganticOutlined.
     {
       .filepath        = fontpath,
-      .size            = 40,
+      .size            = 40 * 5 / 4,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
+      .outlineWidth    = 4,
+      .outlineAdvance  = 0,
+    },
+    // fontUINextWave.
+    {
+      .filepath        = fontpath,
+      .size            = 40,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = numberCodepoints,
+      .codepointsCount = ARRAY_COUNT(numberCodepoints),
       .outlineWidth    = 3,
       .outlineAdvance  = 0,
     },
@@ -6910,9 +6920,7 @@ void DoUI(bool draw) {
               if (g.run.state.screen != ScreenType_GAMEPLAY)
                 remainingSeconds = 0;
 
-              // FontBegin(&g.meta.fontPricesOutlined);
               BF_CLAY_TEXT(TextFormat("%d", remainingSeconds));
-              // FontEnd();
             }
           }
         );
@@ -7846,7 +7854,7 @@ void DoUI(bool draw) {
                       },
                     }) {
                       FLOATING_BEAUTIFY;
-                      FontBegin(&g.meta.fontUIGiganticOutlined);
+                      FontBegin(&g.meta.fontUINextWave);
 
                       auto color = (nextIsBoss ? palTextRed : palTextPaleYellow);
                       BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), color);
@@ -12007,7 +12015,7 @@ void GameDraw() {
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
         .scale      = Vector2One() * Lerp(1.5f, 1, EaseOutQuad(MIN(1, p * 2))),
-        .font       = &g.meta.fontUIOutlined,
+        .font       = &g.meta.fontUIBigOutlined,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
         .color      = color,

@@ -60,7 +60,10 @@ x engine: text scale
 x fix: engine: text initial anchored pos
 x damage numbers squashing
 x fix web
+x fix reset stickControl on wave start
+x tweaked font sizes
 
+* fix: instant attraction of dropped cookien -> INCREASE COIN!!!
 * описание самой мелкой сложности
 * change «next wave» button icon
 * финализировать названия статов
