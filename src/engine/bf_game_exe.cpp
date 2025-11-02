@@ -222,6 +222,10 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
     g_appstate.window = window;
   }
 
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+  SDL_SetWindowMouseGrab(window, true);
+#endif
+
   {
     ZoneScopedN("bgfx. Initializing bgfx");
     bgfx::PlatformData pd{};

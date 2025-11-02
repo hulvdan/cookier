@@ -59,6 +59,7 @@ x wave complete animation: fade out
 x engine: text scale
 x fix: engine: text initial anchored pos
 x damage numbers squashing
+x fix web
 
 * описание самой мелкой сложности
 * change «next wave» button icon
