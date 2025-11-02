@@ -68,9 +68,9 @@ x particles: duration variation
 x particles: нанесение / получение урона
 x bigger initial scale of damage numbers?
 x just added coins / stashed coins BOUNCE
+x on-floor-coins sprites
+x on-floor-coins glow
 
-* coin particles glow
-*
 * fix pressing PAGEUP / PAGEDOWN change focus!
 *
 * prod: particles: поднятие монетки

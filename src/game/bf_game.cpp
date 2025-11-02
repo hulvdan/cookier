@@ -674,7 +674,9 @@ struct MakePickupableData {  ///
 
 struct Pickupable {  ///
   PickupableType type            = {};
+  u8             variation       = {};
   Vector2        pos             = {};
+  f32            rotation        = 0;
   FrameGame      createdAt       = {};
   FrameGame      pickedUpAt      = {};
   FrameVisual    startedFlyingAt = {};
@@ -2764,18 +2766,6 @@ void Pickup(Pickupable* pickupable_) {  ///
     if (GRAND.FRand() < healChance)
       HealPlayer();
 
-    MakeParticles({
-      .type                   = ParticleType_COIN,
-      .count                  = GRAND.RandInt(3, 6),
-      .pos                    = PLAYER_CREATURE.pos,
-      .velocity               = 4.0f,
-      .velocityVariation      = 0.5f,
-      .velocityAngle          = 0,
-      .velocityAngleVariation = PI32,
-      .initialOffset          = 0.25f,
-      .initialOffsetVariation = 0.1f,
-      .scaleVariation         = 0.1f,
-    });
   } break;
 
   case PickupableType_CONSUMABLE: {
@@ -2798,9 +2788,13 @@ void MakePickupable(MakePickupableData data) {  ///
   ASSERT(data.coin_amount >= 0);
   ASSERT(data.type);
 
+  auto fb = glib->pickupables()->Get(data.type);
+
   Pickupable pickupable{
-    .type = data.type,
-    .pos  = data.pos,
+    .type      = data.type,
+    .variation = (u8)(GRAND.Rand() % fb->variation_texture_ids()->size()),
+    .pos       = data.pos,
+    .rotation  = PI32 / 12 * GRAND.FRand11(),
   };
 
   switch (data.type) {
@@ -7244,7 +7238,10 @@ void DoUI(bool draw) {
 
         FOR_RANGE (int, i, g.run.state.crates) {
           const auto fb = fb_pickupables->Get(PickupableType_CRATE);
-          BF_CLAY_IMAGE({.texID = fb->texture_id()});
+          BF_CLAY_IMAGE({
+            .texID
+            = fb->variation_texture_ids()->Get(i % fb->variation_texture_ids()->size()),
+          });
         }
       }
       // }
@@ -10772,15 +10769,15 @@ void GameFixedUpdate() {
       );
     }
 
-    // Picked up pickupables fly towards player.
-    for (auto& pickupable : g.run.pickupables) {  ///
-      ZoneScopedN("Picked up pickupables fly towards player.");
-
-      if (pickupable.pickedUpAt.IsSet()) {
-        pickupable.pos
-          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
-      }
-    }
+    // // Picked up pickupables fly towards player.
+    // for (auto& pickupable : g.run.pickupables) {  ///
+    //   ZoneScopedN("Picked up pickupables fly towards player.");
+    //
+    //   if (pickupable.pickedUpAt.IsSet()) {
+    //     pickupable.pos
+    //       = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
+    //   }
+    // }
 
     // Burning spread.
     {  ///
@@ -11718,11 +11715,28 @@ void GameFixedUpdate() {
       int        off   = 0;
       FOR_RANGE (int, i, total) {
         const auto& pickupable = g.run.pickupables[i - off];
+
+        bool needsRemoving = false;
+
         if (pickupable.pickedUpAt.IsSet()
             && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
         {
-          g.run.pickupables.UnstableRemoveAt(i - off);
-          off++;
+          if (pickupable.type == PickupableType_COIN) {
+            MakeParticles({
+              .type                   = ParticleType_COIN,
+              .count                  = GRAND.RandInt(3, 6),
+              .pos                    = PLAYER_CREATURE.pos,
+              .velocity               = 4.0f,
+              .velocityVariation      = 0.5f,
+              .velocityAngle          = 0,
+              .velocityAngleVariation = PI32,
+              .initialOffset          = 0.25f,
+              .initialOffsetVariation = 0.1f,
+              .scaleVariation         = 0.1f,
+            });
+          }
+
+          needsRemoving = true;
         }
         else if (pickupable.startedFlyingAt.IsSet()
                  && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
@@ -11733,6 +11747,10 @@ void GameFixedUpdate() {
           g.ui.changedNotPickedUpCoinsAt = {};
           g.ui.changedNotPickedUpCoinsAt.SetNow();
 
+          needsRemoving = true;
+        }
+
+        if (needsRemoving) {
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
         }
@@ -12267,13 +12285,21 @@ void GameDraw() {
       const auto e = pickupable.createdAt.Elapsed();
       fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
     }
+
+    auto pos = pickupable.pos;
+
     if (pickupable.pickedUpAt.IsSet()) {
-      const auto e = pickupable.pickedUpAt.Elapsed();
-      fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
+      const auto p
+        = MIN(1, pickupable.pickedUpAt.Elapsed().Progress(PICKUPABLE_FADE_FRAMES));
+
+      fade *= Clamp01(1 - p);
+
+      pos = Vector2Lerp(pickupable.pos, PLAYER_CREATURE.pos, EaseInQuad(p));
     }
+
     fade = EaseOutCubic(fade);
 
-    auto pos = WorldToLogical(pickupable.pos, &g.run.camera);
+    pos = WorldToLogical(pos, &g.run.camera);
     if (pickupable.startedFlyingAt.IsSet()) {
       auto p
         = pickupable.startedFlyingAt.Elapsed().Progress(WAVE_COMPLETED_COINS_FLYING_FRAMES
@@ -12283,14 +12309,32 @@ void GameDraw() {
       pos = Vector2Lerp(pos, g.ui.notPickedUpCoinsLogicalPos, p);
     }
 
-    DrawGroup_OneShotTexture(
+    DrawGroup_Begin(DrawZ_PICKUPABLES);
+
+    const bool isCoin = (pickupable.type == PickupableType_COIN);
+
+    if (isCoin) {
+      DrawGroup_CommandTexture(
+        {
+          .texID    = glib->game_coin_glow_texture_id(),
+          .rotation = pickupable.rotation,
+          .pos      = pos,
+          .color    = Fade(palYellow, fade / 6),
+        },
+        DrawCommandSetSortY_SET_BASELINE
+      );
+    }
+
+    DrawGroup_CommandTexture(
       {
-        .texID = fb->texture_id(),
+        .texID = fb->variation_texture_ids()->Get(pickupable.variation),
         .pos   = pos,
         .color = Fade(WHITE, fade),
       },
-      DrawZ_PICKUPABLES
+      (isCoin ? DrawCommandSetSortY_DO_NOTHING : DrawCommandSetSortY_SET_BASELINE)
     );
+
+    DrawGroup_End();
   }
 
   // Drawing wave completion animation.
