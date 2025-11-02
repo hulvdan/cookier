@@ -76,7 +76,6 @@ x fix achievement "stand still for 10 seconds" (newline shit)
 * fix sometimes asserts after choosing upgrade upon entering shop
 *
 * better expolosion particles
-* fix pressing PAGEUP / PAGEDOWN change focus!
 *
 * prod: particles: поднятие монетки
 * prod: particles: получение урона
@@ -114,6 +113,7 @@ x fix achievement "stand still for 10 seconds" (newline shit)
 *
 * RELEASED!
 =======================
+* fix pressing PAGEUP / PAGEDOWN change focus!
 * в паузу можно выйти на любом экране
 * красивая анимация перекидывания монет с поля в stash
 * mouse: disable hover sound for stats cancel button?
