@@ -17,6 +17,7 @@ draw_z: # {  ###
   - WEAPONS_5
   - WEAPONS_6
   - DAMAGE_NUMBERS
+  - DANGER_HP_LEVEL_VIGNETTE
   - VIGNETTE
   - SCREEN_FADE
   - UI

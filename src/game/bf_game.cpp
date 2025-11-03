@@ -1114,6 +1114,8 @@ struct GameData {
     int itemsScrollShop  = 0;
     int itemsScrollEnd   = 0;
 
+    f32 dangerHPLevelOverlayValue = 0;
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -2542,6 +2544,11 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           g.run.playerLastLifestealAt.SetNow();
         }
       }
+    }
+
+    if (!data.creatureIndex) {
+      g.run.dangerHPLevelOverlayValue
+        += (f32)MIN(data.damage, creature.health) / (f32)creature.health;
     }
 
     creature.health -= data.damage;
@@ -11926,6 +11933,9 @@ void GameFixedUpdate() {
       g.ui.justUnlockedAchievements.RemoveAt(0);
   }
 
+  g.run.dangerHPLevelOverlayValue
+    = MoveTowardsF(g.run.dangerHPLevelOverlayValue, 0, FIXED_DT / 3);
+
   ge.meta.frameVisual++;
 }
 
@@ -12438,6 +12448,19 @@ void GameDraw() {
     );
 
     DrawGroup_End();
+  }
+
+  // Drawing danger hp level vignette.
+  if (g.run.dangerHPLevelOverlayValue > 0) {  ///
+    DrawGroup_OneShotTexture(
+      {
+        .texID = glib->ui_vignette_danger_hp_level_texture_id(),
+        .pos   = (Vector2)LOGICAL_RESOLUTION / 2.0f,
+        .scale = Vector2One() * 4.001f,
+        .color = Fade(palRed, MIN(1, g.run.dangerHPLevelOverlayValue)),
+      },
+      DrawZ_DANGER_HP_LEVEL_VIGNETTE
+    );
   }
 
   // Drawing wave completion animation.
