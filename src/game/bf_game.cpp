@@ -482,11 +482,14 @@ struct Weapon {  ///
   int thisWaveUseCount      = 0;
 
   FrameGame lastShotAt = {};
+
+  FrameVisual uiBouncedAt = {};
 };
 
 struct Item {  ///
-  ItemType type  = {};
-  int      count = {};
+  ItemType    type        = {};
+  int         count       = {};
+  FrameVisual uiBouncedAt = {};
 };
 
 struct CreatureController {  ///
@@ -3590,6 +3593,9 @@ void AddItem(ItemType type) {  ///
   }
 
   if (increasedExistingItemCount >= 0) {
+    items[increasedExistingItemCount].uiBouncedAt = {};
+    items[increasedExistingItemCount].uiBouncedAt.SetNow();
+
     // Moving increased-count-item to the end.
     if (increasedExistingItemCount < items.count - 1) {
       auto t = items[increasedExistingItemCount];
@@ -3599,6 +3605,7 @@ void AddItem(ItemType type) {  ///
   }
   else {
     Item item{.type = type, .count = 1};
+    item.uiBouncedAt.SetNow();
     *items.Add() = item;
   }
 
@@ -5200,6 +5207,7 @@ void DoUI() {
     bool            showsDetails            = false;
     bool            disallowsTouch          = false;
     bool            touchPreservesSelection = false;
+    FrameVisual     uiBouncedAt             = {};
   };
 
   bool touchedInsideSlot = false;
@@ -5220,6 +5228,13 @@ void DoUI() {
     if (!data.hidden) {
       auto color = slotColors[2 * data.tier];
       auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
+
+      if (data.uiBouncedAt.IsSet()) {
+        f32 p = data.uiBouncedAt.Elapsed().Progress(ANIMATION_2_FRAMES);
+        p     = EaseOutQuad(MIN(1, p));
+        color = ColorLerp(palWhite, color, p);
+        flash = ColorLerp(palWhite, flash, p);
+      }
 
       const bool hovered = data.canHover && Clay_Hovered();
 
@@ -5313,6 +5328,8 @@ void DoUI() {
     bool showsDetails            = false;
     bool disallowsTouch          = false;
     bool touchPreservesSelection = false;
+
+    FrameVisual uiBouncedAt = {};
   };
 
   LAMBDA (bool, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
@@ -5360,6 +5377,7 @@ void DoUI() {
         .showsDetails   = data.showsDetails,
         .disallowsTouch = data.disallowsTouch,
         .touchPreservesSelection = data.touchPreservesSelection,
+        .uiBouncedAt             = data.uiBouncedAt,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
         if (data.canHover) {
@@ -5384,7 +5402,11 @@ void DoUI() {
         }
 
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          BF_CLAY_IMAGE({.texID = texID});
+          BF_CLAY_IMAGE({
+            .texID = texID,
+            .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
+            .dontCareAboutScaleWhenCalculatingSize = true,
+          });
 
           // Showing count if there are multiple of the same item.
           if (data.count > 1) {
@@ -6249,6 +6271,9 @@ void DoUI() {
                     RemoveImmediateWeaponEffects();
                     weapon.tier += 1;
                     ApplyImmediateWeaponEffects();
+
+                    weapon.uiBouncedAt = {};
+                    weapon.uiBouncedAt.SetNow();
                   }
                   else {
                     RemoveImmediateWeaponEffects();
@@ -6258,6 +6283,9 @@ void DoUI() {
                     weapon.tier = tier;
 
                     ApplyImmediateWeaponEffects();
+
+                    weapon.uiBouncedAt = {};
+                    weapon.uiBouncedAt.SetNow();
                   }
                 }
                 else if (data.item)
@@ -6734,6 +6762,7 @@ void DoUI() {
                   .item         = item.type,
                   .count        = item.count,
                   .showsDetails = true,
+                  .uiBouncedAt  = item.uiBouncedAt,
                 });
                 itemType  = item.type;
                 itemCount = item.count;
@@ -6916,6 +6945,7 @@ void DoUI() {
             .weapon       = weapon.type,
             .tier         = weapon.tier,
             .showsDetails = true,
+            .uiBouncedAt  = weapon.uiBouncedAt,
           });
 
           if (data.weAreInShop && selectedWeapon && !ge.events.thisFrame.Touch()) {
