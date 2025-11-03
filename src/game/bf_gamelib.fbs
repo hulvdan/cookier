@@ -109,7 +109,7 @@ table Creature {
 
     speed: float;
     not_aggroed_speed: float = 1;
-    speed_variation: float;
+    speed_plus_minus: float;
     hostility_type: int = 1;
     knockback_resistance: float;
     consumable_drop_chance: float = 0.007;
@@ -275,7 +275,7 @@ table ParticleVariation {
 
 table Particle {
     duration_seconds: float;
-    duration_variation: float;
+    duration_plus_minus: float;
     color: uint = 0xffffffff;
     variations: [ParticleVariation];
 }
