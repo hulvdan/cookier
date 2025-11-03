@@ -92,6 +92,8 @@ x better take icon
 x fix: confirm modals: componentTextButton
 x shop: added item/weapon bounce + flash
 
+* reroll flashing (upgrades, shop)
+* take flashing (upgrades, picked up item)
 * prod sfx: steps
 * prod sfx: player hurt
 * prod sfx: mob hurt
