@@ -76,6 +76,8 @@ x fix: почему-то отображаются 4 сложности
 x fix: sometimes asserts after choosing upgrade upon entering shop
 x better explosion
 x описание самой мелкой сложности
+x green resume (PAUSE) + new run / restart (END) buttons
+x GRAY LOOKS LIKE SHIT
 
 * prod: particles: ходьба
 *
@@ -117,7 +119,6 @@ x описание самой мелкой сложности
 * красивая анимация перекидывания монет с поля в stash
 * mouse: disable hover sound for stats cancel button?
 * beautify error wiggling flash red?
-* GRAY LOOKS LIKE SHIT
 *
 *
 *
