@@ -88,6 +88,7 @@ x tweak run lost label on end screen
 x YOU DIED
 x cheats: can decrease wave + crash-proofed
 x clarity: покраснение экрана при получении большого урона / когда мало хп
+x better take icon
 
 * финализировать названия статов
 * описания статов

@@ -5147,7 +5147,6 @@ void DoUI() {
     Clay_ElementId  id    = {};
     ControlsGroupID group = {};
     int             price = {};
-    bool            big   = false;
     Color           color = WHITE;
     int             tier  = 0;
   };
@@ -5157,14 +5156,11 @@ void DoUI() {
     ASSERT(data.group);
     ASSERT(data.id.id);
 
-    const int texID
-      = (data.big ? glib->ui_icon_sell_big_texture_id() : glib->ui_icon_sell_texture_id());
-
     return componentButton(
       {.id = data.id, .group = data.group, .tier = data.tier},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
-          {.texID = texID, .color = data.color},
+          {.texID = glib->ui_icon_sell_texture_id(), .color = data.color},
           [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
@@ -7952,7 +7948,7 @@ void DoUI() {
                           .tier  = upgrade.tier,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_IMAGE({.texID = glib->ui_icon_upgrade_texture_id()});
+                  BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
                 }
               );
 
