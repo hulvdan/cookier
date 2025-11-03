@@ -79,6 +79,7 @@ x описание самой мелкой сложности
 x green resume (PAUSE) + new run / restart (END) buttons
 x GRAY LOOKS LIKE SHIT
 x more contrast ui frame
+x fix: just unlocked achievement in shop must be shown above stats
 
 * prod: particles: ходьба
 *
@@ -87,11 +88,8 @@ x more contrast ui frame
 * описания статов
 * покраснение экрана при получении большого урона / когда мало хп
 * норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
-* fix: just unlocked achievement above every modal (ZIndexType int)
-  (achievement in shop gets shown below stats)
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
-* glowing around coins
 *
 * prod: оружия
 * prod: предметы

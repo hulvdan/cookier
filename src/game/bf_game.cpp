@@ -4685,6 +4685,13 @@ f32 GetScaleOfCoins(const FrameVisual& changedAt) {  ///
 void DoUI() {
   ZoneScoped;
 
+  enum UIZIndexOffset {  ///
+    UIZIndexOffset_HOVER_DETAILS              = 2,
+    UIZIndexOffset_STATS                      = 4,
+    UIZIndexOffset_CONFIRM_MODAL              = 6,
+    UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS = 8,
+  };
+
   // Setup.
   // {  ///
   TEMP_USAGE(&g.meta.trashArena);
@@ -6574,7 +6581,7 @@ void DoUI() {
         }
       }
 
-      zIndex += 2;
+      zIndex += UIZIndexOffset_HOVER_DETAILS;
 
       auto pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE;
       if (!draw) {
@@ -6621,7 +6628,7 @@ void DoUI() {
         });
       }
 
-      zIndex -= 2;
+      zIndex -= UIZIndexOffset_HOVER_DETAILS;
     }
 
     if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
@@ -8892,7 +8899,7 @@ void DoUI() {
   if (g.meta.showingStats.IsSet()) {  ///
     SCOPED_CONTEXT(ControlsContext_MODAL_STATS);
 
-    zIndex += 4;
+    zIndex += UIZIndexOffset_STATS;
 
     bool closeStats = false;
 
@@ -9086,7 +9093,7 @@ void DoUI() {
       BF_CLAY_SPACER_VERTICAL;
     }
 
-    zIndex -= 4;
+    zIndex -= UIZIndexOffset_STATS;
 
     if (closeStats) {
       PlaySound(Sound_UI_CLICK);
@@ -9109,7 +9116,7 @@ void DoUI() {
 
       SCOPED_CONTEXT(c);
 
-      zIndex += 6;
+      zIndex += UIZIndexOffset_CONFIRM_MODAL;
 
       auto confirmID = CLAY_IDI("confirm_confirm", (int)c);
       auto cancelID  = CLAY_IDI("confirm_cancel", (int)c);
@@ -9185,7 +9192,7 @@ void DoUI() {
         FontEnd();
       }
 
-      zIndex -= 6;
+      zIndex -= UIZIndexOffset_CONFIRM_MODAL;
 
       ControlsGroupConnect(group, Direction_RIGHT, group);
 
@@ -9239,6 +9246,8 @@ void DoUI() {
                 .Progress(ACHIEVEMENT_OUT_FRAMES);
       alpha = Clamp01(1 - EaseOutQuad(p));
     }
+
+    zIndex += UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS;
 
     CLAY({.floating{
       .offset{-GAP_SMALL, GAP_SMALL},
@@ -9327,6 +9336,8 @@ void DoUI() {
         componentAchievement(x.type, x.stepIndex);
       }
     }
+
+    zIndex -= UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS;
   }
 
   ASSERT_FALSE(currentContext);
