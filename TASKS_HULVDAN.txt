@@ -75,13 +75,10 @@ x fix achievement "stand still for 10 seconds" (newline shit)
 x fix: почему-то отображаются 4 сложности
 x fix: sometimes asserts after choosing upgrade upon entering shop
 x better explosion
+x описание самой мелкой сложности
 
-* prod: particles: поднятие монетки
-* prod: particles: получение урона
-* prod: particles: нанесение урона
 * prod: particles: ходьба
 *
-* описание самой мелкой сложности
 * change «next wave» button icon
 * финализировать названия статов
 * описания статов
@@ -112,6 +109,9 @@ x better explosion
 *
 * RELEASED!
 =======================
+* prod: particles: поднятие монетки
+* prod: particles: получение урона
+* prod: particles: нанесение урона
 * fix pressing PAGEUP / PAGEDOWN change focus!
 * в паузу можно выйти на любом экране
 * красивая анимация перекидывания монет с поля в stash

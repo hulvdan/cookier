@@ -391,6 +391,7 @@ effect_condition_variables: # {  ###
 
 effect_conditions: # {  ###
   - type: DEFAULT_GET__STAT
+  - type: SMALLEST_DIFFICULTY
   - type: STAT__EVERY__X__KILLED_ENEMIES
   - type: END_OF_THE_WAVE_GET__STAT
   - type: START_OF_THE_WAVE_GET__STAT
@@ -1765,6 +1766,8 @@ difficulties: # {  ###
   - type: INVALID
   - type: D0
     texture_id: ui_difficulty_0
+    effects:
+      - effectcondition_type: SMALLEST_DIFFICULTY
   - type: D1
     texture_id: ui_difficulty_1
     effects:
