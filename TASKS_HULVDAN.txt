@@ -83,10 +83,9 @@ x fix: just unlocked achievement in shop must be shown above stats
 x fix: touch: stick controls
 - 20 тестовых оружий
 x removed test items
+x changed "next wave" button icon + good colors
+x tweak run lost label on end screen
 
-* prod: particles: ходьба
-*
-* change «next wave» button icon
 * финализировать названия статов
 * описания статов
 * покраснение экрана при получении большого урона / когда мало хп
@@ -113,9 +112,11 @@ x removed test items
 *
 * RELEASED!
 =======================
-* prod: particles: поднятие монетки
-* prod: particles: получение урона
-* prod: particles: нанесение урона
+* particles: ходьба
+* prod: better particles: ходьба
+* prod: better particles: поднятие монетки
+* prod: better particles: получение урона
+* prod: better particles: нанесение урона
 * fix pressing PAGEUP / PAGEDOWN change focus!
 * в паузу можно выйти на любом экране
 * красивая анимация перекидывания монет с поля в stash
