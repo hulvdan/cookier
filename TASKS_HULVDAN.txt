@@ -81,6 +81,8 @@ x GRAY LOOKS LIKE SHIT
 x more contrast ui frame
 x fix: just unlocked achievement in shop must be shown above stats
 x fix: touch: stick controls
+- 20 тестовых оружий
+x removed test items
 
 * prod: particles: ходьба
 *
