@@ -946,18 +946,19 @@ struct MakeParticlesData {  ///
   Vector2 pos = {};
 
   f32 velocity          = 0;
-  f32 velocityVariation = 0;
+  f32 velocityPlusMinus = 0;
 
   f32 velocityAngle          = 0;
-  f32 velocityAngleVariation = 0;
+  f32 velocityAnglePlusMinus = 0;
 
-  f32 initialOffset          = 0;
-  f32 initialOffsetVariation = 0;
+  f32               initialOffset          = 0;
+  f32               initialOffsetPlusMinus = 0;
+  Easing_function_t initialOffsetEasing    = EaseLinear;
 
   f32 scale          = 1;
-  f32 scaleVariation = 0.2f;
+  f32 scalePlusMinus = 0.2f;
 
-  f32 rotationSpeedVariation = PI32;
+  f32 rotationSpeedPlusMinus = PI32;
 };
 
 struct GameData {
@@ -2291,8 +2292,8 @@ f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  
 void MakeParticles(MakeParticlesData data) {  ///
   ASSERT(data.type);
 
-  ASSERT(data.velocityAngleVariation >= 0);
-  ASSERT(data.velocityAngleVariation <= PI32);
+  ASSERT(data.velocityAnglePlusMinus >= 0);
+  ASSERT(data.velocityAnglePlusMinus <= PI32);
 
   ASSERT(data.count >= 0);
 
@@ -2304,20 +2305,24 @@ void MakeParticles(MakeParticlesData data) {  ///
   FOR_RANGE (int, particleIndex, data.count) {
     const auto variation = (u16)(GRAND.Rand() % fb->variations()->size());
 
-    const f32 vel   = data.velocity + data.velocityVariation * GRAND.FRand11();
-    const f32 angle = data.velocityAngle + data.velocityAngleVariation * GRAND.FRand11();
+    const f32 vel   = data.velocity + data.velocityPlusMinus * GRAND.FRand11();
+    const f32 angle = data.velocityAngle + data.velocityAnglePlusMinus * GRAND.FRand11();
 
-    const f32 initialOffset
-      = data.initialOffset + data.initialOffsetVariation * GRAND.FRand11();
+    const f32 initialOffset = data.initialOffset
+                              + Lerp(
+                                -data.initialOffsetPlusMinus,
+                                data.initialOffsetPlusMinus,
+                                data.initialOffsetEasing(GRAND.FRand())
+                              );
 
     const f32 rotation = GRAND.Angle();
 
-    f32 rotationSpeed = data.rotationSpeedVariation * GRAND.FRand11();
+    f32 rotationSpeed = data.rotationSpeedPlusMinus * GRAND.FRand11();
 
-    const f32 scale = data.scale + data.scaleVariation * GRAND.FRand11();
+    const f32 scale = data.scale + data.scalePlusMinus * GRAND.FRand11();
 
     const f32 durationSeconds
-      = fb->duration_seconds() + fb->duration_variation() * GRAND.FRand11();
+      = fb->duration_seconds() + fb->duration_plus_minus() * GRAND.FRand11();
 
     ASSERT(durationSeconds > 0);
     if (durationSeconds <= 0)
@@ -2623,10 +2628,10 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   // Making blood particles.
   if (!creature.killedBecauseOfTheEndOfTheWave) {
     f32 velocityAngle          = 0;
-    f32 velocityAngleVariation = PI32;
+    f32 velocityAnglePlusMinus = PI32;
     if (!Vector2Equals(data.directionOrZero, Vector2Zero())) {
       velocityAngle          = Vector2Angle(data.directionOrZero),
-      velocityAngleVariation = PI32 / 6;
+      velocityAnglePlusMinus = PI32 / 6;
     }
 
     MakeParticles({
@@ -2634,11 +2639,11 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       .count                  = GRAND.RandInt(3, 6),
       .pos                    = creature.pos,
       .velocity               = 8 * (3 / 2.0f),
-      .velocityVariation      = 3.0f,
+      .velocityPlusMinus      = 3.0f,
       .velocityAngle          = velocityAngle,
-      .velocityAngleVariation = velocityAngleVariation,
+      .velocityAnglePlusMinus = velocityAnglePlusMinus,
       .initialOffset          = 0.2f,
-      .initialOffsetVariation = 0.1f,
+      .initialOffsetPlusMinus = 0.1f,
     });
   }
 
@@ -3326,7 +3331,7 @@ int MakeCreature(MakeCreatureData data) {  ///
              .isPlayer = (data.type == CreatureType_PLAYER),
       },
     }),
-    .speed     = fb->speed() + Lerp(-1.0f, 1.0f, GRAND.FRand()) * fb->speed_variation(),
+    .speed     = fb->speed() + Lerp(-1.0f, 1.0f, GRAND.FRand()) * fb->speed_plus_minus(),
   };
   creature.idleStartedAt.SetNow();
 
@@ -4086,7 +4091,7 @@ void GameInit() {
       particleIndex++;
       // NOTE: For debug.
       const auto particleType = (ParticleType)particleIndex;
-      ASSERT(fb->duration_seconds() >= fb->duration_variation());
+      ASSERT(fb->duration_seconds() >= fb->duration_plus_minus());
     }
   }
 
@@ -9756,11 +9761,16 @@ void MakeAOE(
   }
 
   MakeParticles({
-    .type           = ParticleType_EXPLOSION,
-    .count          = 1,
-    .pos            = pos,
-    .scale          = sizeMultiplier,
-    .scaleVariation = 0,
+    .type                   = ParticleType_EXPLOSION,
+    .count                  = Ceil(SQR(baseRadius + 1) * sizeMultiplier * 3),
+    .pos                    = pos,
+    .velocity               = 0.4f,
+    .velocityAnglePlusMinus = PI32,
+    .initialOffset          = baseRadius * sizeMultiplier / 2.0f,
+    .initialOffsetPlusMinus = baseRadius * sizeMultiplier / 2.0f,
+    .initialOffsetEasing    = EaseOutQuart,
+    .scale                  = 1.3f,
+    .scalePlusMinus         = 0.15f,
   });
 }
 
@@ -9940,10 +9950,10 @@ void GameFixedUpdate() {
 
         pickupable.startedFlyingAt.SetNow();
 
-        const auto durVariation = WAVE_COMPLETED_FRAMES.value
+        const auto durPlusMinus = WAVE_COMPLETED_FRAMES.value
                                   - WAVE_COMPLETED_COINS_FLYING_FRAMES.value
                                   - WAVE_COMPLETED_COINS_FLYING_FRAMES_RIGHT.value;
-        pickupable.startedFlyingAt._value += (i64)(GRAND.FRand() * (f32)durVariation);
+        pickupable.startedFlyingAt._value += (i64)(GRAND.FRand() * (f32)durPlusMinus);
       }
     }
 
@@ -11775,11 +11785,11 @@ void GameFixedUpdate() {
               .count                  = GRAND.RandInt(3, 6),
               .pos                    = PLAYER_CREATURE.pos,
               .velocity               = 4.0f,
-              .velocityVariation      = 0.5f,
+              .velocityPlusMinus      = 0.5f,
               .velocityAngle          = 0,
-              .velocityAngleVariation = PI32,
+              .velocityAnglePlusMinus = PI32,
               .initialOffset          = 0.25f,
-              .initialOffsetVariation = 0.1f,
+              .initialOffsetPlusMinus = 0.1f,
             });
           }
 
