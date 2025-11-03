@@ -3660,7 +3660,7 @@ SDL_AppResult EngineUpdate() {  ///
   if (IsKeyDown(SDL_SCANCODE_F1) && IsKeyPressed(SDL_SCANCODE_F2))
     ge.meta.debugEnabled = !ge.meta.debugEnabled;
 
-  if (ge.meta.debugEnabled) {
+  if (ge.meta.debugEnabled || BF_DEBUG) {
     if (IsKeyPressed(SDL_SCANCODE_F3))
       IncrementSetZeroOn(&ge.meta.localization, 2);
 
