@@ -1767,13 +1767,13 @@ difficulties: # {  ###
         value: 12
       - stat_type: ENEMY_SPEED
         value: 20
-  - type: D3
-    texture_id: ui_difficulty_3
-    effects:
-      - stat_type: ENEMY_HP_SCALE
-        value: 25
-      - stat_type: ENEMY_SPEED
-        value: 20
+        # - type: D3
+        #   texture_id: ui_difficulty_3
+        #   effects:
+        #     - stat_type: ENEMY_HP_SCALE
+        #       value: 25
+        #     - stat_type: ENEMY_SPEED
+        #       value: 20
         # - type: D4
         #   enabled: false
         #   texture_id: ui_difficulty_4
