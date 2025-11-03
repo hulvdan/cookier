@@ -5750,7 +5750,6 @@ void DoUI() {
   };
 
   const auto groupDetails = MakeControlsGroup();
-  ControlsGroupConnect(groupDetails, Direction_RIGHT, groupDetails);
 
   LAMBDA (Clay_ElementId, getIDFromShopBuyingIndex, (int index)) {  ///
     return CLAY_IDI("button_shop_buy", index);
@@ -8206,23 +8205,20 @@ void DoUI() {
             if (g.meta.showingStats.IsSet() || (g.run.shopActivatedModalWeaponIndex >= 0))
               keys.count = 0;
 
+            const int  nextWaveNumber = g.run.state.waveIndex + 2;
+            const bool nextIsBoss     = (nextWaveNumber == TOTAL_WAVES);
+
             const bool nextWavePressed = componentButton(
               {
                 .id    = CLAY_ID("button_shop_next_wave"),
                 .group = groupGoNextWave,
                 .growX = true,
                 .keys  = keys,
-                .tier  = 7,
+                .tier  = (nextIsBoss ? 4 : 7),
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                const int  nextWaveNumber = g.run.state.waveIndex + 2;
-                const bool nextIsBoss     = (nextWaveNumber == TOTAL_WAVES);
-
                 BF_CLAY_IMAGE(
-                  {
-                    .texID = glib->ui_icon_go_next_wave_texture_id(),
-                    .color = (nextIsBoss ? palTextRed : WHITE),
-                  },
+                  {.texID = glib->ui_icon_go_next_wave2_texture_id()},
                   [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({
                       .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
@@ -8239,7 +8235,7 @@ void DoUI() {
                       FLOATING_BEAUTIFY;
                       FontBegin(&g.meta.fontUINextWave);
 
-                      auto color = (nextIsBoss ? palTextRed : palTextPaleYellow);
+                      auto color = palTextPaleYellow;
                       BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), {.color = color});
                       BF_CLAY_TEXT(TextFormat("/%d", TOTAL_WAVES), {.color = color});
                       FontEnd();
@@ -8336,7 +8332,7 @@ void DoUI() {
           [&]() BF_FORCE_INLINE_LAMBDA {
             if (!g.run.state.won) {
               // Wave.
-              BF_CLAY_TEXT("       ");
+              BF_CLAY_TEXT(". ");
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE__CAPS);
               BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
             }
@@ -9344,6 +9340,8 @@ void DoUI() {
 
   // Control groups navigation.
   if (!draw) {  ///
+    ControlsGroupConnect(groupDetails, Direction_RIGHT, groupDetails);
+
     ControlsContext shownScreen{};
     ControlsContext shownModal{};
     for (int i = 1; i < ControlsContext_COUNT; i++) {
