@@ -78,6 +78,7 @@ x better explosion
 x описание самой мелкой сложности
 x green resume (PAUSE) + new run / restart (END) buttons
 x GRAY LOOKS LIKE SHIT
+x more contrast ui frame
 
 * prod: particles: ходьба
 *
