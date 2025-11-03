@@ -37,7 +37,24 @@ int Round(f32 value) {  ///
   return lround(value);
 }
 
-f32 MoveTowards(f32 v, f32 target, f32 maxDistance) {  ///
+f32 MoveTowardsF(f32 v, f32 target, f32 maxDistance) {  ///
+  ASSERT(maxDistance >= 0);
+
+  if (v > target) {
+    v -= maxDistance;
+    if (v < target)
+      v = target;
+  }
+  else if (v < target) {
+    v += maxDistance;
+    if (v > target)
+      v = target;
+  }
+
+  return v;
+}
+
+int MoveTowardsI(int v, int target, int maxDistance) {  ///
   ASSERT(maxDistance >= 0);
 
   if (v > target) {
@@ -55,12 +72,19 @@ f32 MoveTowards(f32 v, f32 target, f32 maxDistance) {  ///
 }
 
 TEST_CASE ("MoveTowards") {  ///
-  ASSERT(MoveTowards(0, 10, 5) == 5);
-  ASSERT(MoveTowards(-10, 10, 5) == -5);
-  ASSERT(MoveTowards(10, -10, 5) == 5);
-  ASSERT(MoveTowards(0, 10, 30) == 10);
-  ASSERT(MoveTowards(-10, 10, 30) == 10);
-  ASSERT(MoveTowards(10, -10, 30) == -10);
+  ASSERT(MoveTowardsI(0, 10, 5) == 5);
+  ASSERT(MoveTowardsI(-10, 10, 5) == -5);
+  ASSERT(MoveTowardsI(10, -10, 5) == 5);
+  ASSERT(MoveTowardsI(0, 10, 30) == 10);
+  ASSERT(MoveTowardsI(-10, 10, 30) == 10);
+  ASSERT(MoveTowardsI(10, -10, 30) == -10);
+
+  ASSERT(MoveTowardsF(0, 10, 5) == 5);
+  ASSERT(MoveTowardsF(-10, 10, 5) == -5);
+  ASSERT(MoveTowardsF(10, -10, 5) == 5);
+  ASSERT(MoveTowardsF(0, 10, 30) == 10);
+  ASSERT(MoveTowardsF(-10, 10, 30) == 10);
+  ASSERT(MoveTowardsF(10, -10, 30) == -10);
 }
 
 //  [0; 360)
@@ -119,19 +143,19 @@ TEST_CASE ("BisectAngleDeg") {  ///
   }
 }
 
-f32 MoveTowardsAngleDeg(f32 a1, f32 a2, f32 maxAngle) {  ///
+f32 MoveTowardsFAngleDeg(f32 a1, f32 a2, f32 maxAngle) {  ///
   ASSERT_IS_NUMBER(a1);
   ASSERT_IS_NUMBER(a2);
   ASSERT_IS_NUMBER(maxAngle);
   ASSERT(maxAngle >= 0);
 
   auto diff = AngleDiffDeg(a1, a2);
-  auto d    = MoveTowards(0, diff, maxAngle);
+  auto d    = MoveTowardsF(0, diff, maxAngle);
   auto res  = a1 + d;
   return res;
 }
 
-TEST_CASE ("MoveTowardsAngleDeg") {  ///
+TEST_CASE ("MoveTowardsFAngleDeg") {  ///
   const struct {
     int a, b, c, d;
   } r[] = {
@@ -148,7 +172,7 @@ TEST_CASE ("MoveTowardsAngleDeg") {  ///
     {90, 180, 5, 95},
   };
   for (auto [a, b, c, d] : r) {
-    auto res = MoveTowardsAngleDeg((f32)a, (f32)b, (f32)c);
+    auto res = MoveTowardsFAngleDeg((f32)a, (f32)b, (f32)c);
     CHECK(FloatAngleDegreesEquals(res, (f32)d));
   }
 }

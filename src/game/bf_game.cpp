@@ -2261,7 +2261,7 @@ void AddXP(f32 xp) {  ///
 void HealPlayer(int amount = 1) {  ///
   if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
     PLAYER_CREATURE.health
-      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+      = MoveTowardsF(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
   }
   Save();
 }
@@ -2537,7 +2537,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
         if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
           PLAYER_CREATURE.health
-            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+            = MoveTowardsF(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
           g.run.playerLastLifestealAt = {};
           g.run.playerLastLifestealAt.SetNow();
         }
@@ -9870,7 +9870,7 @@ void GameFixedUpdate() {
       g.meta.playerUsesKeyboardOrController = false;
   }
 
-  g.meta.pauseButtonFadeProgress = MoveTowards(
+  g.meta.pauseButtonFadeProgress = MoveTowardsF(
     g.meta.pauseButtonFadeProgress,
     (g.meta.playerUsesKeyboardOrController ? 0 : 1),
     FIXED_DT * 2
@@ -9949,9 +9949,11 @@ void GameFixedUpdate() {
       }
     }
 
-    // N - increase wave.
+    // N - increase wave. Shift N - decrease wave.
     if (IsKeyPressed(SDL_SCANCODE_N)) {  ///
-      g.run.state.waveIndex++;
+      g.run.state.waveIndex = MoveTowardsI(
+        g.run.state.waveIndex, (IsKeyDown(SDL_SCANCODE_LSHIFT) ? 0 : TOTAL_WAVES - 2), 1
+      );
       RecalculateThisWaveMobs();
     }
   }
@@ -12443,9 +12445,13 @@ void GameDraw() {
     auto p
       = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
+    auto textColor = palTextWhite;
+
     int locale = Loc_UI_WAVE_WON__CAPS;
-    if (!g.run.state.waveWon)
-      locale = Loc_UI_WAVE_LOST__CAPS;
+    if (!g.run.state.waveWon) {
+      locale    = Loc_UI_WAVE_LOST__CAPS;
+      textColor = palTextRed;
+    }
     if (g.run.state.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
       locale = Loc_UI_WON__CAPS;
     auto text = localization_strings->Get(locale);
@@ -12491,7 +12497,7 @@ void GameDraw() {
           .font       = &g.meta.fontUIGiganticOutlined,
           .text       = text->c_str(),
           .bytesCount = bytesToShow,
-          .color      = Fade(WHITE, fade),
+          .color      = Fade(textColor, fade),
         },
         DrawZ_UI
       );
@@ -12551,7 +12557,7 @@ void GameDraw() {
       DebugText("F9 add crate");
     }
 
-    DebugText("N increase wave");
+    DebugText("N - increase wave. Shift N - decrease wave");
 
     DebugText(TextFormat("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x));
 
