@@ -74,7 +74,6 @@ x оставить только 3 сложности
 x fix achievement "stand still for 10 seconds" (newline shit)
 x fix: почему-то отображаются 4 сложности
 
-
 * fix sometimes asserts after choosing upgrade upon entering shop
 *
 * better expolosion particles
