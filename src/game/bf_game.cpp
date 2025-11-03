@@ -9132,8 +9132,6 @@ void DoUI() {
       }}) {
         FLOATING_BEAUTIFY;
 
-        FontBegin(&g.meta.fontUIBig);
-
         CLAY({
           .layout{
             .sizing{
@@ -9155,12 +9153,14 @@ void DoUI() {
 
           BF_CLAY_SPACER_VERTICAL;
 
+          FontBegin(&g.meta.fontUIBig);
           BF_CLAY_TEXT_LOCALIZED(Loc_UI_ARE_YOU_SURE__CAPS);
+          FontEnd();
 
           BF_CLAY_SPACER_VERTICAL;
 
           CLAY({}) {
-            const bool quit = componentButton(
+            const bool quit = componentTextButton(
               {.id = confirmID, .group = group},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
@@ -9169,7 +9169,7 @@ void DoUI() {
 
             CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
 
-            const bool cancelled = componentButton(
+            const bool cancelled = componentTextButton(
               {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, {.color = textColor});
@@ -9187,8 +9187,6 @@ void DoUI() {
             }
           }
         }
-
-        FontEnd();
       }
 
       zIndex -= UIZIndexOffset_CONFIRM_MODAL;
