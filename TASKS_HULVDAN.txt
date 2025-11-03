@@ -85,6 +85,8 @@ x fix: touch: stick controls
 x removed test items
 x changed "next wave" button icon + good colors
 x tweak run lost label on end screen
+x YOU DIED
+x cheats: can decrease wave + crash-proofed
 
 * финализировать названия статов
 * описания статов

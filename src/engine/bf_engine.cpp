@@ -91,13 +91,13 @@ bool Vector3Equals(Vector3 v1, Vector3 v2) {  ///
   return FloatEquals(v1.x, v2.x) && FloatEquals(v1.y, v2.y) && FloatEquals(v1.z, v2.z);
 }
 
-Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, f32 maxDistance) {  ///
+Vector2 Vector2MoveTowardsF(Vector2 v, Vector2 target, f32 maxDistance) {  ///
   if (Vector2Equals(v, target))
     return target;
 
   auto d = Vector2Normalize(target - v);
-  v.x    = MoveTowards(v.x, target.x, d.x * maxDistance);
-  v.y    = MoveTowards(v.y, target.y, d.y * maxDistance);
+  v.x    = MoveTowardsF(v.x, target.x, d.x * maxDistance);
+  v.y    = MoveTowardsF(v.y, target.y, d.y * maxDistance);
   return v;
 }
 
