@@ -10234,9 +10234,6 @@ void GameFixedUpdate() {
           c.startPos    = ScreenPosToLogical(GetMouseScreenPos());
           c.targetPos   = c.startPos;
         }
-        else if (IsMouseDown(L)) {
-          c.targetPos = ScreenPosToLogical(GetMouseScreenPos());
-        }
         else if (ge.meta._latestActiveTouchID != InvalidTouchID) {
           const auto td = GetTouchData(ge.meta._latestActiveTouchID);
 
@@ -10247,7 +10244,9 @@ void GameFixedUpdate() {
 
           c.targetPos = ScreenPosToLogical(td.screenPos);
         }
-        else if (!IsMouseDown(L))
+        else if (IsMouseDown(L))
+          c.targetPos = ScreenPosToLogical(GetMouseScreenPos());
+        else
           c.controlling = false;
 
         if (c.controlling && (c.startPos != c.targetPos)) {

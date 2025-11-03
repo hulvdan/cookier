@@ -80,6 +80,7 @@ x green resume (PAUSE) + new run / restart (END) buttons
 x GRAY LOOKS LIKE SHIT
 x more contrast ui frame
 x fix: just unlocked achievement in shop must be shown above stats
+x fix: touch: stick controls
 
 * prod: particles: ходьба
 *
