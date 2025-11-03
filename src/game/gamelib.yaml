@@ -119,7 +119,7 @@ ui_item_slot_colors:
   - 0 # Flash.
 ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
 ui_frame_nine_slice:
-  texture_id: ui_frame_2
+  texture_id: ui_frame
   left: 48
   right: 48
   top: 48
