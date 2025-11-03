@@ -90,6 +90,7 @@ x cheats: can decrease wave + crash-proofed
 x clarity: покраснение экрана при получении большого урона / когда мало хп
 x better take icon
 x fix: confirm modals: componentTextButton
+x shop: added item/weapon bounce + flash
 
 * prod sfx: steps
 * prod sfx: player hurt
