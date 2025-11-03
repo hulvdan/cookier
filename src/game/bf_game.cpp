@@ -5060,6 +5060,21 @@ void DoUI() {
     return result;
   };
 
+  LAMBDA (
+    bool,
+    componentTextButton,
+    (ComponentButtonData                             data,
+     auto /* void (bool hovered, Color textColor) */ innerLambda)
+  )
+  {  ///
+    FontBegin(&g.meta.fontUIBigOutlined);
+    const bool result = componentButton(data, [&](bool hovered, Color textColor) {
+      innerLambda(hovered, palTextWhite);
+    });
+    FontEnd();
+    return result;
+  };
+
   const auto rerollID = CLAY_ID("button_reroll");
 
   LAMBDA (bool, componentButtonReroll, (ControlsGroupID group, int price)) {  ///
@@ -5120,6 +5135,7 @@ void DoUI() {
     int             price = {};
     bool            big   = false;
     Color           color = WHITE;
+    int             tier  = 0;
   };
 
   LAMBDA (bool, componentButtonRecycle, (ComponentButtonRecycleData data)) {  ///
@@ -5131,7 +5147,7 @@ void DoUI() {
       = (data.big ? glib->ui_icon_sell_big_texture_id() : glib->ui_icon_sell_texture_id());
 
     return componentButton(
-      {.id = data.id, .group = data.group},
+      {.id = data.id, .group = data.group, .tier = data.tier},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
           {.texID = texID, .color = data.color},
@@ -6186,8 +6202,13 @@ void DoUI() {
             if ((g.run.shopActivatedModalWeaponIndex >= 0) || g.meta.showingStats.IsSet())
               keys.count = 0;
 
-            auto bought = componentButton(
-              {.id = buyButtonID, .group = data.shopGroup, .keys = keys},
+            const bool bought = componentButton(
+              {
+                .id    = buyButtonID,
+                .group = data.shopGroup,
+                .keys  = keys,
+                .tier  = tier,
+              },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
                   BF_CLAY_SIZING_GROW_X,
@@ -6295,7 +6316,11 @@ void DoUI() {
             auto combineID = CLAY_ID("button_weapon_combine");
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
-                {.id = combineID, .group = groupDetails},
+                {
+                  .id    = combineID,
+                  .group = groupDetails,
+                  .tier  = tier,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
                 }
@@ -6311,6 +6336,7 @@ void DoUI() {
                      .id    = weaponRecycleID,
                      .group = groupDetails,
                      .price = recyclePrice,
+                     .tier  = tier,
             });
 
             // Cancel button.
@@ -6323,6 +6349,7 @@ void DoUI() {
                   .id    = cancelID,
                   .group = groupDetails,
                   .keys  = KEYS_CANCEL,
+                  .tier  = tier,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_cancel_texture_id()});
@@ -7714,7 +7741,7 @@ void DoUI() {
         }}) {
           auto       tookID = CLAY_ID("button_picked_up_item_take");
           const bool took   = componentButton(
-            {.id = tookID, .group = group},
+            {.id = tookID, .group = group, .tier = fb->tier()},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
             }
@@ -7727,6 +7754,7 @@ void DoUI() {
             .id    = CLAY_ID("button_picked_up_item_recycle"),
             .group = group,
             .price = recyclePrice,
+            .tier  = fb->tier(),
           });
 
           if (took)
@@ -7904,7 +7932,12 @@ void DoUI() {
 
               auto chooseButtonID = CLAY_IDI("button_upgrades_choose", i);
               bool chosen         = componentButton(
-                {.id = chooseButtonID, .group = groupUpgrades, .keys = keys},
+                {
+                          .id    = chooseButtonID,
+                          .group = groupUpgrades,
+                          .keys  = keys,
+                          .tier  = upgrade.tier,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_upgrade_texture_id()});
                 }
@@ -8375,8 +8408,12 @@ void DoUI() {
       }}) {
         bool restarted = false;
         if (!g.run.state.won) {
-          restarted = componentButton(
-            {.id = CLAY_ID("button_end_restart"), .group = groupButtons},
+          restarted = componentTextButton(
+            {
+              .id    = CLAY_ID("button_end_restart"),
+              .group = groupButtons,
+              .tier  = 7,
+            },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, {.color = textColor});
             }
@@ -8385,8 +8422,12 @@ void DoUI() {
 
         const auto newRunID = CLAY_ID("button_end_new_run");
 
-        const bool newRun = componentButton(
-          {.id = newRunID, .group = groupButtons},
+        const bool newRun = componentTextButton(
+          {
+            .id    = newRunID,
+            .group = groupButtons,
+            .tier  = 7,
+          },
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, {.color = textColor});
           }
@@ -8630,14 +8671,12 @@ void DoUI() {
 
           // Back button.
           const auto backButtonID = CLAY_ID("button_pause_achievements_back");
-          FontBegin(&g.meta.fontUIBig);
-          const bool back = componentButton(
+          const bool back         = componentTextButton(
             {.id = backButtonID, .group = groupBackButton, .keys = KEYS_CANCEL},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, {.color = textColor});
             }
           );
-          FontEnd();
           markControlAsDefault(backButtonID);
 
           if (back) {
@@ -8699,19 +8738,18 @@ void DoUI() {
                 .childGap        = GAP_BIG,
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               }}) {
-                FontBegin(&g.meta.fontUIBig);
-
                 const auto resumeButtonID = CLAY_ID("button_pause_resume");
                 markControlAsDefault(resumeButtonID);
                 if (!controlsContexts[currentContext].focused.id)
                   controlsContexts[currentContext].focused = resumeButtonID;
 
-                const bool resumed = componentButton(
+                const bool resumed = componentTextButton(
                   {
                     .id    = resumeButtonID,
                     .group = groupButtons,
                     .growX = true,
                     .keys  = KEYS_PAUSE,
+                    .tier  = 7,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                     BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, {.color = textColor});
@@ -8720,7 +8758,7 @@ void DoUI() {
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool restarted = componentButton(
+                const bool restarted = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_restart"),
                     .group = groupButtons,
@@ -8733,7 +8771,7 @@ void DoUI() {
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool newRun = componentButton(
+                const bool newRun = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_new_run"),
                     .group = groupButtons,
@@ -8746,7 +8784,7 @@ void DoUI() {
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool achievements = componentButton(
+                const bool achievements = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_achievements"),
                     .group = groupButtons,
@@ -8766,7 +8804,7 @@ void DoUI() {
 #if defined(SDL_PLATFORM_DESKTOP)
                 ControlsGroupNewRow(groupButtons);
 
-                quit = componentButton(
+                quit = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_quit"),
                     .group = groupButtons,
@@ -8791,8 +8829,6 @@ void DoUI() {
 
                 if (resumed || restarted || newRun || achievements || quit)
                   PlaySound(Sound_UI_CLICK);
-
-                FontEnd();
               }
             }
 

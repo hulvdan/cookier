@@ -94,13 +94,13 @@ ui_health_boss_texture_ids:
 ui_modal_fade: 0.75
 ui_item_slot_colors:
   # Tier 0.
-  - 0x3a3a41ff # Colors. Gray.
+  - 0x5e3735ff # Colors. Gray.
   - 0 # Flash.
   # Tier 1.
-  - 0x01455dff # Colors. Blue.
+  - 0x208cb2ff # Colors. Blue.
   - 0 # Flash.
   # Tier 2.
-  - 0x6d2047ff # Colors. Purple.
+  - 0xa13d77ff # Colors. Purple.
   - 0 # Flash.
   # Tier 3.
   - 0xb8560fff # Colors. Orange.
