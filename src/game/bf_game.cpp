@@ -4631,26 +4631,30 @@ void RemoveImmediateWeaponEffects() {  ///
   }
 }
 
-#define SCOPED_CONTEXT(context_)                           \
-  const auto _prevContext                = currentContext; \
-  currentContext                         = (context_);     \
-  controlsContexts[(context_)].thisFrame = true;           \
-  if (!controlsContexts[(context_)].prevFrame)             \
-    controlsContexts[(context_)].focused = {};             \
-  DEFER {                                                  \
-    currentContext = _prevContext;                         \
+#define SCOPED_CONTEXT(context_)                   \
+  const auto _prevContext = currentContext;        \
+  currentContext          = (context_);            \
+  if (!draw) {                                     \
+    controlsContexts[(context_)].thisFrame = true; \
+    if (!controlsContexts[(context_)].prevFrame)   \
+      controlsContexts[(context_)].focused = {};   \
+  }                                                \
+  DEFER {                                          \
+    currentContext = _prevContext;                 \
   };
 
-#define SCOPED_CONTEXT_IF(context_, enabled_)          \
-  const auto _prevContext = currentContext;            \
-  currentContext          = (context_);                \
-  if (enabled_)                                        \
-    controlsContexts[(context_)].thisFrame = true;     \
-  controlsContexts[(context_)].disabled = !(enabled_); \
-  if (!controlsContexts[(context_)].prevFrame)         \
-    controlsContexts[(context_)].focused = {};         \
-  DEFER {                                              \
-    currentContext = _prevContext;                     \
+#define SCOPED_CONTEXT_IF(context_, enabled_)            \
+  const auto _prevContext = currentContext;              \
+  currentContext          = (context_);                  \
+  if (!draw) {                                           \
+    if (enabled_)                                        \
+      controlsContexts[(context_)].thisFrame = true;     \
+    controlsContexts[(context_)].disabled = !(enabled_); \
+    if (!controlsContexts[(context_)].prevFrame)         \
+      controlsContexts[(context_)].focused = {};         \
+  }                                                      \
+  DEFER {                                                \
+    currentContext = _prevContext;                       \
   };
 
 #define CURRENT_CONTEXT (controlsContexts[currentContext])
@@ -4670,16 +4674,18 @@ f32 GetScaleOfCoins(const FrameVisual& changedAt) {  ///
   return scale;
 }
 
-// NOTE: Logic must be executed only when `draw` is false!
+// NOTE: Logic must be executed only when `ge.meta._drawing` (`draw`) is false!
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
-void DoUI(bool draw) {
+void DoUI() {
   ZoneScoped;
 
   // Setup.
   // {  ///
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
+
+  const auto draw = ge.meta._drawing;
 
   ControlsContext currentContext{};
 
@@ -4712,6 +4718,9 @@ void DoUI(bool draw) {
   bool justFocusedDefaultControl = false;
 
   LAMBDA (void, markControlAsDefault, (Clay_ElementId id)) {
+    if (draw)
+      return;
+
     const bool allowed = (CURRENT_CONTEXT.thisFrame || CURRENT_CONTEXT.disabled);
     ASSERT(allowed);
 
@@ -4963,7 +4972,8 @@ void DoUI(bool draw) {
      auto /* void (bool hovered, Color textColor) */ innerLambda)
   )
   {  ///
-    ASSERT(currentContext);
+    if (!draw)
+      ASSERT(currentContext);
 
     ASSERT(data.id.id);
     bool result = false;
@@ -5007,7 +5017,7 @@ void DoUI(bool draw) {
 
         // MOUSE can focus buttons.
         if (hovered && (ge.events.last != LastEventType_TOUCH)) {
-          if (focused.id != data.id.id) {
+          if (!draw && (focused.id != data.id.id)) {
             focused      = data.id;
             justSelected = true;
           }
@@ -5028,7 +5038,7 @@ void DoUI(bool draw) {
       if (justSelected)
         ButtonSFX(draw, data.id, true);
 
-      if (isCurrentContextActive()) {
+      if (!draw && isCurrentContextActive()) {
         result |= clickOrTouchPressed();
         if (result)
           disallowTouch();
@@ -5184,7 +5194,7 @@ void DoUI(bool draw) {
 
       auto& focused = controlsContexts[currentContext].focused;
 
-      if (hovered) {
+      if (hovered && !draw) {
         if (ge.events.thisFrame.Mouse())
           g.run.hideSlotDetails = false;
 
@@ -11832,7 +11842,7 @@ void GameFixedUpdate() {
     ge.meta.frameGame++;
   }
 
-  DoUI(false);
+  DoUI();
 
   // Removing excessive data from `g.ui.buttonStates`.
   {  ///
@@ -12463,7 +12473,7 @@ void GameDraw() {
     DrawGroup_End();
   }
 
-  DoUI(true);
+  DoUI();
 
   EngineApplyStrips();
   EngineApplyVignette();
