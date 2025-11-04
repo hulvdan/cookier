@@ -2,8 +2,8 @@ WORKING SINCE 2025-09-07
 
 x torrent more sfx
 x ui frame darker outline
+x default windows mode is maximized
 
-* default windows mode is maximized
 * next wave 2 crossing swords icon
 *
 * prod sfx: steps
