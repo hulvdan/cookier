@@ -2285,12 +2285,23 @@ struct TryApplyDamageData {  ///
   bool*            outJustKilled                      = nullptr;
 };
 
-f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  ///
+f32 GetLifestealChance(
+  WeaponType typeOrInvalid,
+  int        tier,
+  bool       affectedByGame = true
+) {  ///
+  auto fb = glib->weapons()->Get(typeOrInvalid);
+
   f32 lifesteal = 0;
   if (affectedByGame)
     lifesteal += (f32)g.run.state.stats[StatType_LIFE_STEAL] / 100.0f;
-  if (typeOrInvalid)
-    lifesteal += glib->weapons()->Get(typeOrInvalid)->life_steal_percent() / 100.0f;
+
+  if (typeOrInvalid) {
+    auto fb_percents = fb->life_steal_percents();
+    if (fb_percents)
+      lifesteal += fb_percents->Get(tier - fb->min_tier_index()) / 100.0f;
+  }
+
   return lifesteal;
 }
 
@@ -2531,10 +2542,14 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     // Player lifesteals.
     if (data.damagerCreatureType == CreatureType_PLAYER) {
       auto weaponType = WeaponType_INVALID;
-      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-        weaponType = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
+      int  tier       = 0;
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+        const auto& w = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1];
+        weaponType    = w.type;
+        tier          = w.tier;
+      }
 
-      if (GRAND.FRand() < GetLifestealChance(weaponType)) {
+      if (GRAND.FRand() < GetLifestealChance(weaponType, tier)) {
         bool canLifesteal = true;
         if (g.run.playerLastLifestealAt.IsSet()
             && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
@@ -2780,6 +2795,7 @@ void Pickup(Pickupable* pickupable_) {  ///
     if (GRAND.FRand() < healChance)
       HealPlayer();
 
+    PlaySound(Sound_GAME_COIN);
   } break;
 
   case PickupableType_CONSUMABLE: {
@@ -4308,9 +4324,7 @@ void RefillShopToPick() {  ///
           continue;
         x.weapon      = w;
         const auto fb = fb_weapons->Get(x.weapon);
-        // Legendary weapons can't be bought in shop.
-        // TODO: Check if it's possible to buy legendary weapons in Brotato.
-        x.tier = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
+        x.tier        = (int)GRAND.RandInt(fb->min_tier_index(), TOTAL_TIERS - 1);
       }
     }
   }
@@ -6162,7 +6176,7 @@ void DoUI() {
 
           // Life Steal.
           {
-            auto chance = GetLifestealChance(data.weapon, data.affectedByGame);
+            auto chance = GetLifestealChance(data.weapon, tier, data.affectedByGame);
             if (chance > 0) {
               componentWeaponStatEntry(
                 fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
