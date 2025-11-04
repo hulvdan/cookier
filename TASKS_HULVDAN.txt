@@ -3,6 +3,7 @@ WORKING SINCE 2025-09-07
 x torrent more sfx
 x ui frame darker outline
 x default windows mode is maximized
+x gamelib: check tiered values assert len is `4 - min_tier_index`
 
 * next wave 2 crossing swords icon
 *
