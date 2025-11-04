@@ -226,11 +226,16 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
             for vv in x["damage_scalings"]:
                 field_to_list(vv, "percents_per_tier")
 
-            assert len(x["base_damage"]) == required_tier_values, (
-                "Weapon {} must have {} `base_damage` because it's `min_tier_index` is {}".format(
-                    x["type"], required_tier_values, x["min_tier_index"]
+            for f in ("base_damage", "life_steal_percents"):
+                value = x.get(f)
+                if value is None:
+                    continue
+
+                assert len(value) == required_tier_values, (
+                    "Weapon {} must have {} `{}` because it's `min_tier_index` is {}".format(
+                        x["type"], required_tier_values, f, x["min_tier_index"]
+                    )
                 )
-            )
 
             for scalings in x["damage_scalings"]:
                 percents_count = len(scalings["percents_per_tier"])
