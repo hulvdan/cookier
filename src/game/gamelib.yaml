@@ -32,6 +32,9 @@ sounds: # {  ###
     pool: 4
   - type: UI_HOVER_SMALL
     pool: 8
+  - type: GAME_COIN
+    volume: 0.4
+    pool: 16
     # - type: GAME_ITEM_PICKUP
     #   pool: 4
     # - type: GAME_PROJECTILE_TEAR
@@ -660,7 +663,7 @@ weapons: # {  ###
     shooting_duration_frames: 10
     range_meters: 3
     knockback_meters: 5
-    life_steal_percent: 1.5
+    life_steal_percents: 1.5
     melee_collider_height_px: 76
     icon_texture_id: game_weapon_sword
     texture_ids:
