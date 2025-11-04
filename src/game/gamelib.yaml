@@ -1394,6 +1394,152 @@ weapons: # {  ###
     icon_texture_id: game_weapon_javelin
     texture_ids:
       - game_weapon_javelin
+  - type: CARAMEL_CLUB
+    min_tier_index: 0
+    weaponkind_type: MELEE              
+    base_damage: 10 20 30 50
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE         
+        percents_per_tier: 80 85 90 100
+    crit_damage_multiplier: 2.0         
+    max_price: 130
+    cooldown_frames: 199                
+    shooting_duration_frames: 15        
+    range_meters: 2.5                   
+    knockback_meters: 8                 
+    life_steal_percent: 0
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: CHOPPER
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage: 6 12 18 30
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 50 50 50 50
+    crit_damage_multiplier: 2.0
+    cooldown_frames: 115                  
+    shooting_duration_frames: 12
+    range_meters: 2.0                       
+    knockback_meters: 2                     
+    life_steal_percent: 0
+    max_price: 130
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: CIRCULAR_SAW
+    min_tier_index: 1
+    weaponkind_type: MELEE
+    base_damage: 10 15 25
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100 100 100
+    cooldown_frames: 80    
+    shooting_duration_frames: 10
+    range_meters: 2.2
+    knockback_meters: 0
+    life_steal_percent: 45
+    melee_collider_height_px: 75
+    max_price: 140
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: CLAW
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage: 5 10 15 25
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 50 50 50 50
+      - stat_type: ATTACK_SPEED
+        percents_per_tier: 15 20 25 30
+    crit_damage_multiplier: 2.25
+    cooldown_frames: 85
+    shooting_duration_frames: 8
+    range_meters: 1.9
+    knockback_meters: 2
+    life_steal_percent: 0
+    max_price: 125
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: DEXTROYER
+    min_tier_index: 3 
+    weaponkind_type: MELEE
+    base_damage: 100   
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100
+      - stat_type: ENGINEERING
+        percents_per_tier: 100
+    crit_damage_multiplier: 2.0
+    cooldown_frames: 160
+    shooting_duration_frames: 15
+    range_meters: 5.0          
+    knockback_meters: 10
+    life_steal_percent: 0
+    melee_collider_height_px: 80
+    max_price: 200
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: DRILL
+    min_tier_index: 3
+    weaponkind_type: MELEE
+    base_damage: 10
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100
+      - stat_type: ENGINEERING
+        percents_per_tier: 100
+    crit_damage_multiplier: 2.5
+    cooldown_frames: 54
+    shooting_duration_frames: 6
+    range_meters: 1.3
+    knockback_meters: 5
+    life_steal_percent: 0
+    melee_collider_height_px: 65
+    max_price: 180
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: EXCALIBUR
+    min_tier_index: 3   
+    weaponkind_type: MELEE
+    base_damage:  200
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 200
+    crit_damage_multiplier: 2.5
+    cooldown_frames: 79
+    shooting_duration_frames: 10
+    range_meters: 2.5
+    knockback_meters: 5
+    life_steal_percent: 0
+    melee_collider_height_px: 85
+    max_price: 250
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: FIST
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage: 8 16 32 64
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100 100 100 100
+    crit_damage_multiplier: 1.5
+    cooldown_frames: 84
+    shooting_duration_frames: 8
+    range_meters: 1.9
+    knockback_meters: 15
+    life_steal_percent: 0
+    melee_collider_height_px: 55
+    max_price: 100
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
 # }
 
 projectiles: # {  ###
