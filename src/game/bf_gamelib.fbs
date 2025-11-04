@@ -109,7 +109,7 @@ table Creature {
 
     speed: float;
     not_aggroed_speed: float = 1;
-    speed_variation: float;
+    speed_plus_minus: float;
     hostility_type: int = 1;
     knockback_resistance: float;
     consumable_drop_chance: float = 0.007;
@@ -251,7 +251,7 @@ table Weapon {
     range_meters: float;
     max_price: int;
     melee_collider_height_px: float;
-    life_steal_percent: float;
+    life_steal_percents: [float];
     effects: [Effect];
     color: uint = 0xffffffff;
     icon_texture_id: int;
@@ -269,14 +269,20 @@ table Projectile {
     texture_ids: [int];
 }
 
+table ParticleVariation {
+    texture_ids: [int];
+}
+
 table Particle {
     duration_seconds: float;
-    texture_ids: [int];
+    duration_plus_minus: float;
+    color: uint = 0xffffffff;
+    variations: [ParticleVariation];
 }
 
 table Pickupable {
     name_locale: int;
-    texture_id: int;
+    variation_texture_ids: [int];
 }
 
 table Number {
@@ -339,35 +345,36 @@ table GameLibrary {
     shadow_texture_ids: [int];
 
     // AUTOMATIC_TEXTURE_BIND_START
-    ui_item_slot_texture_id: int;
     vignette_texture_id: int;
+    ui_item_slot_texture_id: int;
     ui_coin_texture_id: int;
     ui_coin_x2_texture_id: int;
     ui_item_locked_texture_id: int;
     ui_item_question_texture_id: int;
-    game_decal_pre_spawn_texture_id: int;
-    game_landmine_texture_id: int;
-    game_garden_texture_id: int;
     ui_controls_touch_base_texture_id: int;
     ui_controls_touch_handle_texture_id: int;
     ui_icon_back_big_texture_id: int;
     ui_icon_combine_texture_id: int;
     ui_icon_go_texture_id: int;
     ui_icon_go_next_wave_texture_id: int;
+    ui_icon_go_next_wave2_texture_id: int;
     ui_icon_pause_texture_id: int;
     ui_icon_cancel_big_texture_id: int;
     ui_icon_cancel_texture_id: int;
-    ui_icon_sell_big_texture_id: int;
     ui_icon_sell_texture_id: int;
     ui_icon_stats_texture_id: int;
     ui_icon_stats2_texture_id: int;
     ui_icon_refresh_texture_id: int;
-    ui_icon_upgrade_texture_id: int;
     ui_icon_take_big_texture_id: int;
     ui_icon_take_texture_id: int;
     ui_icon_stopwatch2_texture_id: int;
     ui_icon_up_texture_id: int;
     ui_icon_down_texture_id: int;
+    ui_vignette_danger_hp_level_texture_id: int;
+    game_decal_pre_spawn_texture_id: int;
+    game_landmine_texture_id: int;
+    game_garden_texture_id: int;
+    game_coin_glow_texture_id: int;
     // AUTOMATIC_TEXTURE_BIND_END
 
     ui_controls_touch_handle_margin: int;

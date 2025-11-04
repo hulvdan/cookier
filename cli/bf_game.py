@@ -220,6 +220,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                     x["type"], field
                 )
 
+            field_to_list(x, "life_steal_percents")
             field_to_list(x, "base_damage")
             field_to_list(x, "projectile_spawn_frames")
             for vv in x["damage_scalings"]:
