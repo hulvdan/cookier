@@ -663,7 +663,7 @@ weapons: # {  ###
     shooting_duration_frames: 10
     range_meters: 3
     knockback_meters: 5
-    life_steal_percents: 1.5
+    life_steal_percents: 1.5 1.5 1.5 1.5
     melee_collider_height_px: 76
     icon_texture_id: game_weapon_sword
     texture_ids:
