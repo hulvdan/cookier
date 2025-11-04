@@ -1,106 +1,14 @@
 WORKING SINCE 2025-09-07
 
-x new run: TOUCH: don't proceed to the next stage upon clicking
-  if slot wasn't selected in the first place
-x shop: keyboard: when slot is selected item show details
-x ref: componentWeaponsGrid
-x inline componentUniversalDetails
-x ref: merge `componentWeaponDetails` with `componentUniversalDetails`
-x ui: activate weapon details context after pressing SPACE
-  also show overlay below it
-x shop: keyboard: when slot is selected weapon show details
-x shop: keyboard: when details are shown, pressing ESC hides them
-x shop: keyboard: when details are not shown, pressing SCAPE shows them
-x shop: mouse: hovering shows details
-x shop: mouse: unhovering hides them
-x fix setting `_mouseOrLatestTouchPos` to latest touch pos BEFORE game update
-x touch: pressing on slot (item / weapon) shows details
-x touch: pressing again - hides them
-x mouse: hiding details if not hovered
-x fix: showing multiple details during the same frame
-x touch: make it not possible to "activate" weapon in shop
-  but buttons should work
-x touch: hide cancel button in weapon details
-x touch: show slots as "selected" only when `stickedSlotDetails` is true
-x touch: when touching outside of slot -> hide details
-x touch: new run: after difficulty selection -> don't react to this touch position
-x touch: new run: pressing back button
-  HIGHLIGHTS previously selected stuff as SELECTED
-x .txt indent 2
-x touch: details: use PASSTHROUGH when touch is down but not pressed
-  so that moving finger in weapons / items can select other
-x modal: quit: disable mouse grab
-x modal: quit: pressing cancel sound
-x modal: quit: pressing quit closes win
-x modal: quit: good design: frame
-x modal: quit: good design: font size
-x modal: quit: good design: empty spaces
-x modal: restart + new run
-x fix: disable ability to press SPACE in pause to ACTIVATE weapon
-x prioritization
-- green resume button
-x fix: hovered details tier + affectedByGame
-- end screen green buttons
-x fix: mouse can move character
-- ловкость -> скорость атаки
-x создать 50 тестовых предметов
-x скроллинг предметов
-x items scrolling: by pages (not by rows)
-x items scrolling: control group
-x items scrolling: отбить стрелки вправо
-x items scrolling: при получении того же предмета,
-  закидывать его в конец массива предметов
-x поставить переводчики / словари
-x shadow under modal
-x scroll: mouse wheel triggers item arrows
-x wave complete animation: CENTER
-x wave complete animation: increase speed of letters
-x wave complete animation: fade out
-x engine: text scale
-x fix: engine: text initial anchored pos
-x damage numbers squashing
-x fix web
-x fix reset stickControl on wave start
-x tweaked font sizes
-x fix: EffectConditionType_X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
-x particles: поднятие монетки
-x particles: duration variation
-x particles: нанесение / получение урона
-x bigger initial scale of damage numbers?
-x just added coins / stashed coins BOUNCE
-x on-floor-coins sprites
-x on-floor-coins glow
-x оставить только 3 сложности
-x fix achievement "stand still for 10 seconds" (newline shit)
-x fix: почему-то отображаются 4 сложности
-x fix: sometimes asserts after choosing upgrade upon entering shop
-x better explosion
-x описание самой мелкой сложности
-x green resume (PAUSE) + new run / restart (END) buttons
-x GRAY LOOKS LIKE SHIT
-x more contrast ui frame
-x fix: just unlocked achievement in shop must be shown above stats
-x fix: touch: stick controls
-- 20 тестовых оружий
-x removed test items
-x changed "next wave" button icon + good colors
-x tweak run lost label on end screen
-x YOU DIED
-x cheats: can decrease wave + crash-proofed
-x clarity: покраснение экрана при получении большого урона / когда мало хп
-x better take icon
-x fix: confirm modals: componentTextButton
-x shop: added item/weapon bounce + flash
+x torrent more sfx
 
-* reroll flashing (upgrades, shop)
-* take flashing (upgrades, picked up item)
 * prod sfx: steps
 * prod sfx: player hurt
 * prod sfx: mob hurt
 * prod sfx: explosion
 * prod sfx: level up
-* prod sfx: take
-* prod sfx: sell
+- prod sfx: take
+- prod sfx: sell
 * prod sfx: button click
 * prod sfx: button hover
 * prod sfx: wave complete/died whoosh
@@ -150,6 +58,8 @@ x shop: added item/weapon bounce + flash
 *
 * RELEASED!
 =======================
+* reroll flashing (upgrades, shop)
+* take flashing (upgrades, picked up item)
 * описания статов
 * clarity: player's HP text bouncing upon taking damage
 * clarity: player's HP bar yellow -> red bounce upon taking damage
