@@ -226,12 +226,14 @@ struct Beautify {
   BEAUTIFY(b);
 
 struct ClayImageData {
-  int     texID          = {};
-  Vector2 scale          = {1, 1};
-  Margins sourceMargins  = {0, 0};
-  Color   color          = WHITE;
-  Color   flash          = TRANSPARENT_BLACK;
-  Vector2 overriddenSize = {};  // Values must be > 0 to override.
+  int     texID         = {};
+  Vector2 scale         = {1, 1};
+  Margins sourceMargins = {0, 0};
+  Color   color         = WHITE;
+  Color   flash         = TRANSPARENT_BLACK;
+
+  bool    dontCareAboutScaleWhenCalculatingSize = false;
+  Vector2 overriddenSize                        = {};  // Values must be > 0 to override.
 
   // f32   scale     = {};
   // ImageFitType fitType   = {};
@@ -297,7 +299,7 @@ Vector2Int ToVector2Int(const BFGame::Pos* value) {  ///
 
 Vector2 Vector2DirectionOrRandom(Vector2 from, Vector2 to) {  ///
   if (from == to)
-    return Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
+    return Vector2Rotate({1, 0}, GRAND.Angle());
   return Vector2Normalize(to - from);
 }
 
@@ -480,11 +482,14 @@ struct Weapon {  ///
   int thisWaveUseCount      = 0;
 
   FrameGame lastShotAt = {};
+
+  FrameVisual uiBouncedAt = {};
 };
 
 struct Item {  ///
-  ItemType type  = {};
-  int      count = {};
+  ItemType    type        = {};
+  int         count       = {};
+  FrameVisual uiBouncedAt = {};
 };
 
 struct CreatureController {  ///
@@ -672,7 +677,9 @@ struct MakePickupableData {  ///
 
 struct Pickupable {  ///
   PickupableType type            = {};
+  u8             variation       = {};
   Vector2        pos             = {};
+  f32            rotation        = 0;
   FrameGame      createdAt       = {};
   FrameGame      pickedUpAt      = {};
   FrameVisual    startedFlyingAt = {};
@@ -791,10 +798,15 @@ struct PlaceholderGroup {
 };
 
 struct Particle {  ///
-  ParticleType type      = {};
-  Vector2      pos       = {};
-  f32          scale     = 1;
-  FrameGame    createdAt = {};
+  ParticleType type          = {};
+  u16          variation     = {};
+  Vector2      pos           = {};
+  Vector2      velocity      = {};
+  f32          rotation      = {};
+  f32          rotationSpeed = 0;
+  f32          scale         = 1;
+  lframe       duration      = {};
+  FrameGame    createdAt     = {};
 };
 
 int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
@@ -929,6 +941,29 @@ enum ConfirmModalResultType {  ///
   ConfirmModalResultType_CONFIRMED,
 };
 
+struct MakeParticlesData {  ///
+  ParticleType type = {};
+
+  int count = 1;
+
+  Vector2 pos = {};
+
+  f32 velocity          = 0;
+  f32 velocityPlusMinus = 0;
+
+  f32 velocityAngle          = 0;
+  f32 velocityAnglePlusMinus = 0;
+
+  f32               initialOffset          = 0;
+  f32               initialOffsetPlusMinus = 0;
+  Easing_function_t initialOffsetEasing    = EaseLinear;
+
+  f32 scale          = 1;
+  f32 scalePlusMinus = 0.2f;
+
+  f32 rotationSpeedPlusMinus = PI32;
+};
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -943,6 +978,7 @@ struct GameData {
     Font fontPricesOutlined     = {};
     Font fontItemCountsOutlined = {};
     Font fontUIGiganticOutlined = {};
+    Font fontUINextWave         = {};
 
     LoadFontsResult loadedFonts = {};
 
@@ -1081,6 +1117,8 @@ struct GameData {
     int itemsScrollShop  = 0;
     int itemsScrollEnd   = 0;
 
+    f32 dangerHPLevelOverlayValue = 0;
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -1140,6 +1178,9 @@ struct GameData {
 
     ControlsGroup* controlsGroupsFirst = {};
     ControlsGroup* controlsGroupsLast  = {};
+
+    FrameVisual changedCoinsAt            = {};
+    FrameVisual changedNotPickedUpCoinsAt = {};
   } ui;
 } g = {};
 
@@ -1617,6 +1658,8 @@ void RecalculateThisWaveMobs() {  ///
 }
 
 void OnWaveStarted() {  ///
+  g.meta.stickControl = {};
+
   g.run.state.upgrades.rerolls = {};
   g.run.state.previousCoins    = g.run.state.stats[StatType_COINS];
 
@@ -1990,6 +2033,11 @@ void ApplyAilment(
 }
 
 void ChangeCoins(int amount) {  ///
+  if (amount) {
+    g.ui.changedCoinsAt = {};
+    g.ui.changedCoinsAt.SetNow();
+  }
+
   if (amount > 0)
     AchievementAdd(AchievementType_COINS, amount);
 
@@ -2153,13 +2201,630 @@ void PlaceholdImage(const char* placeholder, int texID) {  ///
   PlaceholdGroupEnd();
 }
 
+void MakeNumber(MakeNumberData data) {  ///
+  ASSERT(data.type);
+  Number number{
+    .type  = data.type,
+    .value = data.value,
+    .pos   = data.pos,
+  };
+  number.createdAt.SetNow();
+  *g.run.numbers.Add() = number;
+}
+
+int GetNextLevelXp(int currentLevel) {  ///
+  return SQR(currentLevel + 3);
+}
+
+void AddXP(f32 xp) {  ///
+  if (xp > 0)
+    xp *= (f32)(MAX(1, g.run.state.stats[StatType_XP_GAIN] + 100)) / 100.0f;
+
+  g.run.state.xp += xp;
+  g.run.state.xp = MAX(0, g.run.state.xp);
+
+  // Handling level up.
+
+  auto nextLevelXp = GetNextLevelXp(g.run.state.level);
+
+  int addedLevels = 0;
+
+  while (g.run.state.xp >= nextLevelXp) {
+    addedLevels++;
+    g.run.state.xp -= nextLevelXp;
+    g.run.state.level++;
+    nextLevelXp = GetNextLevelXp(g.run.state.level);
+
+    MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
+
+    // Increasing random stat that has `upgrade_values`.
+    while (1) {
+      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
+      const auto fb   = glib->stats()->Get(stat);
+      const auto vals = fb->upgrade_values();
+      if (!vals)
+        continue;
+      ChangeStat(stat, vals->Get(0));
+      break;
+    }
+  }
+
+  if (addedLevels > 0) {
+    IterateOverEffects(
+      EffectConditionType_STAT__UPON_LEVEL_UP,
+      -1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          ApplyStatEffect(fb_effect, tierOffset, times * addedLevels);
+        }
+    );
+  }
+
+  Save();
+}
+
+void HealPlayer(int amount = 1) {  ///
+  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+    PLAYER_CREATURE.health
+      = MoveTowardsF(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+  }
+  Save();
+}
+
+struct TryApplyDamageData {  ///
+  int              creatureIndex                      = {};
+  int              damage                             = {};
+  Vector2          directionOrZero                    = {0, 0};
+  f32              knockbackMeters                    = 0;
+  CreatureType     damagerCreatureType                = CreatureType_INVALID;
+  f32              critDamageMultiplier               = 1;
+  int              indexOfWeaponThatDidDamageOrMinus1 = -1;
+  ApplyAilmentData ailment                            = {};
+  f32              ailmentChance                      = 0;
+  bool*            outWasCrit                         = nullptr;
+  bool*            outJustKilled                      = nullptr;
+};
+
+f32 GetLifestealChance(
+  WeaponType typeOrInvalid,
+  int        tier,
+  bool       affectedByGame = true
+) {  ///
+  auto fb = glib->weapons()->Get(typeOrInvalid);
+
+  f32 lifesteal = 0;
+  if (affectedByGame)
+    lifesteal += (f32)g.run.state.stats[StatType_LIFE_STEAL] / 100.0f;
+
+  if (typeOrInvalid) {
+    auto fb_percents = fb->life_steal_percents();
+    if (fb_percents)
+      lifesteal += fb_percents->Get(tier - fb->min_tier_index()) / 100.0f;
+  }
+
+  return lifesteal;
+}
+
+void MakeParticles(MakeParticlesData data) {  ///
+  ASSERT(data.type);
+
+  ASSERT(data.velocityAnglePlusMinus >= 0);
+  ASSERT(data.velocityAnglePlusMinus <= PI32);
+
+  ASSERT(data.count >= 0);
+
+  auto fb = glib->particles()->Get(data.type);
+
+  if (data.count > 0)
+    g.run.particles.Reserve(g.run.particles.count + data.count);
+
+  FOR_RANGE (int, particleIndex, data.count) {
+    const auto variation = (u16)(GRAND.Rand() % fb->variations()->size());
+
+    const f32 vel   = data.velocity + data.velocityPlusMinus * GRAND.FRand11();
+    const f32 angle = data.velocityAngle + data.velocityAnglePlusMinus * GRAND.FRand11();
+
+    const f32 initialOffset = data.initialOffset
+                              + Lerp(
+                                -data.initialOffsetPlusMinus,
+                                data.initialOffsetPlusMinus,
+                                data.initialOffsetEasing(GRAND.FRand())
+                              );
+
+    const f32 rotation = GRAND.Angle();
+
+    f32 rotationSpeed = data.rotationSpeedPlusMinus * GRAND.FRand11();
+
+    const f32 scale = data.scale + data.scalePlusMinus * GRAND.FRand11();
+
+    const f32 durationSeconds
+      = fb->duration_seconds() + fb->duration_plus_minus() * GRAND.FRand11();
+
+    ASSERT(durationSeconds > 0);
+    if (durationSeconds <= 0)
+      continue;
+
+    Particle p{
+      .type          = data.type,
+      .variation     = variation,
+      .pos           = data.pos + Vector2Rotate({initialOffset, 0}, angle),
+      .velocity      = Vector2Rotate({vel, 0}, angle),
+      .rotation      = rotation,
+      .rotationSpeed = rotationSpeed,
+      .scale         = scale,
+      .duration      = lframe::FromSeconds(durationSeconds),
+    };
+    p.createdAt.SetNow();
+    *g.run.particles.Add() = p;
+  }
+}
+
+void MakePickupable(MakePickupableData data);
+
+bool TryApplyDamage(TryApplyDamageData data) {  ///
+  if (data.outWasCrit)
+    *data.outWasCrit = false;
+  if (data.outJustKilled)
+    *data.outJustKilled = false;
+
+  ASSERT(data.creatureIndex >= 0);
+  ASSERT(data.damage >= 0);
+  if (data.damage != int_max) {
+    auto t = GRAND.Rand() % 7;
+    if ((t == 0) || (t == 1))
+      data.damage += 1;
+    else if (t == 2)
+      data.damage -= 1;
+  }
+
+  data.damage = MAX(1, data.damage);
+
+  if (data.directionOrZero != Vector2Zero())
+    ASSERT(FloatEquals(Vector2Length(data.directionOrZero), 1));
+
+  // Player can't take damage when finishing wave.
+  if (!data.creatureIndex && g.run.scheduledWaveCompleted.IsSet())
+    return false;
+
+  auto& creature = g.run.creatures[data.creatureIndex];
+  if (creature.health <= 0)
+    return false;
+
+  const auto fb = glib->creatures()->Get(creature.type);
+
+  creature.aggroed = fb->can_aggro();
+
+  if (data.damage == int_max) {
+    creature.killedBecauseOfTheEndOfTheWave = true;
+    creature.health                         = 0;
+    if (data.outJustKilled)
+      *data.outJustKilled = true;
+  }
+  else if (!creature.killedBecauseOfTheEndOfTheWave) {
+    bool isCrit = false;
+
+    if (data.creatureIndex) {
+      f32 critChance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
+
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+        IterateOverEffects(
+          EffectConditionType_EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if ((w->thisWaveUseCount % EFFECT_X_INT) == 0)
+                critChance += (f32)(EFFECT_Y_INT * times) / 100.0f;
+            }
+        );
+      }
+
+      if (fb->is_boss()) {
+        data.damage += Round(
+          (f32)data.damage * (f32)g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES]
+          / 100.0f
+        );
+      }
+
+      IterateOverEffects(
+        EffectConditionType_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES,
+        data.indexOfWeaponThatDidDamageOrMinus1,
+        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA {
+            int percent = EFFECT_X_INT * times;
+            if (fb->is_boss())
+              percent = EFFECT_Y_INT * times;
+            data.damage += Round(creature.health * (f32)percent / 100.0f);
+          }
+      );
+
+      if (creature.ailments[AilmentType_BURN - 1].startedAt.IsSet()) {
+        IterateOverEffects(
+          EffectConditionType_HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA { critChance += (f32)(EFFECT_X_INT * times); }
+        );
+      }
+
+      {
+        const f32 hpPercent = (f32)creature.health / (f32)creature.maxHealth;
+
+        IterateOverEffects(
+          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              auto requiredPercent = EFFECT_Y_INT;
+              if (hpPercent * 100 >= requiredPercent) {
+                data.damage
+                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
+              }
+            }
+        );
+
+        IterateOverEffects(
+          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              auto requiredPercent = EFFECT_Y_INT;
+              if (hpPercent * 100 <= requiredPercent) {
+                data.damage
+                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
+              }
+            }
+        );
+      }
+
+      isCrit = GRAND.FRand() < critChance;
+      if (isCrit)
+        data.damage += Round((f32)data.damage * data.critDamageMultiplier);
+
+      data.damage = MAX(1, data.damage);
+
+      auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
+      if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
+        MakeNumber({
+          .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
+          .value = data.damage,
+          .pos   = creature.pos,
+        });
+      }
+    }
+    else {
+      // Can't hurt player if he was recently damaged.
+      if (creature.lastDamagedAt.IsSet()
+          && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
+        return false;
+
+      // Dodge.
+      if (GRAND.FRand() < MIN(
+            (f32)MAX_DODGE_PERCENT / 100.0f,
+            (f32)g.run.state.stats[StatType_DODGE] / 100.0f
+          ))
+      {
+        MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
+
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING,
+          -1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                HealPlayer(EFFECT_Y_INT * times);
+            }
+        );
+
+        // TODO: lastInvincibilityTriggeredAt?
+        creature.lastDamagedAt = {};
+        creature.lastDamagedAt.SetNow();
+        return false;
+      }
+
+      // Applying player's armor.
+      auto armor = (f32)g.run.state.stats[StatType_ARMOR];
+      if (armor > 0)
+        data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
+      else if (armor < 0)
+        data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
+      data.damage = MAX(1, data.damage);
+
+      MakeNumber({
+        .type  = NumberType_DAMAGE_MOB,
+        .value = data.damage,
+        .pos   = creature.pos,
+      });
+    }
+
+    if (data.outWasCrit)
+      *data.outWasCrit = isCrit;
+
+    // Player lifesteals.
+    if (data.damagerCreatureType == CreatureType_PLAYER) {
+      auto weaponType = WeaponType_INVALID;
+      int  tier       = 0;
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+        const auto& w = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1];
+        weaponType    = w.type;
+        tier          = w.tier;
+      }
+
+      if (GRAND.FRand() < GetLifestealChance(weaponType, tier)) {
+        bool canLifesteal = true;
+        if (g.run.playerLastLifestealAt.IsSet()
+            && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
+          canLifesteal = false;
+
+        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
+          PLAYER_CREATURE.health
+            = MoveTowardsF(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
+          g.run.playerLastLifestealAt = {};
+          g.run.playerLastLifestealAt.SetNow();
+        }
+      }
+    }
+
+    if (!data.creatureIndex) {
+      g.run.dangerHPLevelOverlayValue
+        += (f32)MIN(data.damage, creature.health) / (f32)creature.health;
+    }
+
+    creature.health -= data.damage;
+
+    int effectDroppedCoins = 0;
+
+    if (creature.health <= 0) {
+      if (data.outJustKilled)
+        *data.outJustKilled = true;
+
+      if (isCrit) {
+        IterateOverEffects(
+          EffectConditionType_X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT,
+          data.indexOfWeaponThatDidDamageOrMinus1,
+          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+            BF_FORCE_INLINE_LAMBDA {
+              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
+                effectDroppedCoins += EFFECT_Y_INT * times;
+            }
+        );
+      }
+    }
+
+    IterateOverEffects(
+      EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
+      data.indexOfWeaponThatDidDamageOrMinus1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          if (GRAND.FRand() < (f32)EFFECT_Y_INT / 100.0f)
+            effectDroppedCoins += EFFECT_X_INT * times;
+        }
+    );
+
+    if (effectDroppedCoins > 0) {
+      MakePickupable({
+        .type        = PickupableType_COIN,
+        .pos         = creature.pos,
+        .coin_amount = effectDroppedCoins,
+      });
+    }
+
+    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
+      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
+        += data.damage;
+    }
+
+    bool ailmentCanBeApplied = true;
+    auto resists             = fb->resists_ailment_types();
+    if (resists) {
+      for (auto v : *resists) {
+        if (v == data.ailment.type) {
+          ailmentCanBeApplied = false;
+          break;
+        }
+      }
+    }
+
+    if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance))
+    {
+      auto damage = data.ailment.value;
+      if (data.damagerCreatureType == CreatureType_PLAYER)
+        damage += g.run.state.stats[StatType_DAMAGE_ELEMENTAL];
+
+      if ((data.ailment.value == 0) || (damage > 0)) {
+        data.ailment.value = damage;
+        ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
+      }
+    }
+  }
+
+  creature.lastDamagedAt = {};
+  creature.lastDamagedAt.SetNow();
+  creature.lastDamagedFlashAt = {};
+  creature.lastDamagedFlashAt.SetNow();
+  creature.lastDamagedWeaponIndex = data.indexOfWeaponThatDidDamageOrMinus1;
+
+  data.knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
+  data.knockbackMeters *= 1.0f - fb->knockback_resistance();
+
+  b2Body_ApplyLinearImpulseToCenter(
+    creature.body.id, ToB2Vec2(data.directionOrZero * data.knockbackMeters), true
+  );
+
+  // Making blood particles.
+  if (!creature.killedBecauseOfTheEndOfTheWave) {
+    f32 velocityAngle          = 0;
+    f32 velocityAnglePlusMinus = PI32;
+    if (!Vector2Equals(data.directionOrZero, Vector2Zero())) {
+      velocityAngle          = Vector2Angle(data.directionOrZero),
+      velocityAnglePlusMinus = PI32 / 6;
+    }
+
+    MakeParticles({
+      .type                   = ParticleType_BLOOD,
+      .count                  = GRAND.RandInt(3, 6),
+      .pos                    = creature.pos,
+      .velocity               = 8 * (3 / 2.0f),
+      .velocityPlusMinus      = 3.0f,
+      .velocityAngle          = velocityAngle,
+      .velocityAnglePlusMinus = velocityAnglePlusMinus,
+      .initialOffset          = 0.2f,
+      .initialOffsetPlusMinus = 0.1f,
+    });
+  }
+
+  if (!g.run.justDamagedCreatures.Contains(data.creatureIndex))
+    *g.run.justDamagedCreatures.Add() = data.creatureIndex;
+
+  if (!data.creatureIndex)
+    Save();
+
+  return true;
+}
+
+void Pickup(Pickupable* pickupable_) {  ///
+  auto& pickupable = *pickupable_;
+
+  pickupable.pickedUpAt.SetNow();
+
+  auto fb_creatures = glib->creatures();
+
+  const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
+          if (fb_effect->pickupable_type() != pickupable.type)
+            return;
+
+          FOR_RANGE (int, i, 5) {
+            auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
+            const auto& creature      = g.run.creatures[creatureIndex];
+
+            if (creature.diedAt.IsSet())
+              continue;
+
+            auto fb = fb_creatures->Get(creature.type);
+            if (fb->hostility_type() == HostilityType_FRIENDLY)
+              continue;
+
+            int damage = EFFECT_Y_INT * times;
+            damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
+            damage = ApplyPlayerStatDamageMultiplier(damage);
+
+            f32 critDamageMultiplier = 1.5f;
+            if (w) {
+              critDamageMultiplier
+                = glib->weapons()->Get(w->type)->crit_damage_multiplier();
+            }
+
+            TryApplyDamage({
+              .creatureIndex                      = (int)creatureIndex,
+              .damage                             = damage,
+              .damagerCreatureType                = CreatureType_PLAYER,
+              .critDamageMultiplier               = critDamageMultiplier,
+              .indexOfWeaponThatDidDamageOrMinus1 = wi,
+            });
+
+            break;
+          }
+        }
+      }
+  );
+
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
+          if (fb_effect->pickupable_type() == pickupable.type)
+            HealPlayer(EFFECT_Y_INT * times);
+        }
+      }
+  );
+
+  IterateOverEffects(
+    EffectConditionType_X__COINS_UPON__PICKUPABLE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        if (fb_effect->pickupable_type() == pickupable.type) {
+          const int amount = times * EFFECT_X_INT;
+          ChangeCoins(amount);
+        }
+      }
+  );
+
+  switch (pickupable.type) {
+  case PickupableType_COIN: {
+    const auto& data    = pickupable.DataCoin();
+    int         amount  = data.amount;
+    int         xNumber = 1;
+
+    if (g.run.state.notPickedUpCoins > 0) {
+      int toAdd = amount;
+      if (toAdd > g.run.state.notPickedUpCoins)
+        toAdd = g.run.state.notPickedUpCoins;
+
+      g.run.state.notPickedUpCoins -= toAdd;
+      g.run.state.notPickedUpCoinsVisual -= toAdd;
+      amount += toAdd;
+      xNumber *= 2;
+    }
+
+    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
+    {
+      amount *= 2;
+      xNumber *= 2;
+    }
+
+    if (xNumber > 1) {
+      MakeNumber({
+        .type  = NumberType_PICKUPABLE,
+        .value = xNumber,
+        .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+      });
+    }
+
+    ChangeCoins(amount);
+    AddXP((f32)amount);
+
+    auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
+    if (GRAND.FRand() < healChance)
+      HealPlayer();
+
+    PlaySound(Sound_GAME_COIN);
+  } break;
+
+  case PickupableType_CONSUMABLE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+  } break;
+
+  case PickupableType_CRATE: {
+    if (consumableOrCrateHeal > 0)
+      HealPlayer(consumableOrCrateHeal);
+    g.run.state.crates++;
+  } break;
+
+  default:
+    INVALID_PATH;
+  }
+}
+
 void MakePickupable(MakePickupableData data) {  ///
   ASSERT(data.coin_amount >= 0);
   ASSERT(data.type);
 
+  auto fb = glib->pickupables()->Get(data.type);
+
   Pickupable pickupable{
-    .type = data.type,
-    .pos  = data.pos,
+    .type      = data.type,
+    .variation = (u8)(GRAND.Rand() % fb->variation_texture_ids()->size()),
+    .pos       = data.pos,
+    .rotation  = PI32 / 12 * GRAND.FRand11(),
   };
 
   switch (data.type) {
@@ -2191,10 +2856,11 @@ void MakePickupable(MakePickupableData data) {  ///
           chanceToInstaPickup += (f32)(EFFECT_X_INT * times) / 100.0f;
       }
   );
-  if (GRAND.FRand() < chanceToInstaPickup)
-    pickupable.pickedUpAt.SetNow();
 
   *g.run.pickupables.Add() = pickupable;
+
+  if (GRAND.FRand() < chanceToInstaPickup)
+    Pickup(g.run.pickupables.base + g.run.pickupables.count - 1);
 }
 
 template <typename T>
@@ -2227,17 +2893,6 @@ void CheckCollisionsRect(
     (bool (*)(b2ShapeId, void*))onCollided,
     context
   );
-}
-
-void MakeNumber(MakeNumberData data) {  ///
-  ASSERT(data.type);
-  Number number{
-    .type  = data.type,
-    .value = data.value,
-    .pos   = data.pos,
-  };
-  number.createdAt.SetNow();
-  *g.run.numbers.Add() = number;
 }
 
 static BF_FORCE_INLINE Clay_Dimensions MeasureText(
@@ -2307,11 +2962,21 @@ void BF_CLAY_IMAGE(
   auto          innerLambda,
   bool          _resetPlaceholders = true
 ) {  ///
+  if (!Vector2Equals(data.overriddenSize, Vector2Zero()))
+    ASSERT_FALSE(data.dontCareAboutScaleWhenCalculatingSize);
+  if (data.dontCareAboutScaleWhenCalculatingSize)
+    ASSERT(Vector2Equals(data.overriddenSize, Vector2Zero()));
+
   const auto texture      = glib->atlas_textures()->Get(data.texID);
   const auto originalSize = glib->original_texture_sizes()->Get(data.texID);
 
-  f32 w = (f32)originalSize->x() * data.scale.x * ASSETS_TO_LOGICAL_RATIO;
-  f32 h = (f32)originalSize->y() * data.scale.y * ASSETS_TO_LOGICAL_RATIO;
+  f32 w = (f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO;
+  f32 h = (f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO;
+
+  if (!data.dontCareAboutScaleWhenCalculatingSize) {
+    w *= data.scale.x;
+    h *= data.scale.y;
+  }
 
   ASSERT(data.overriddenSize.x >= 0);
   ASSERT(data.overriddenSize.y >= 0);
@@ -2359,8 +3024,15 @@ void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
   BF_CLAY_IMAGE(data, [] {}, _resetPlaceholders);
 }
 
+struct ClayTextOptions {
+  Color color = palTextWhite;
+
+  // Others: CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_WRAP_NONE.
+  Clay_TextElementConfigWrapMode wrapMode = CLAY_TEXT_WRAP_WORDS;
+};
+
 // NOTE: This overload DOESN'T SAVE string to trash arena.
-void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
+void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
   u16 fontID = 0;
   if (g.ui.overriddenFont)
     fontID = (UINT_FROM_PTR(g.ui.overriddenFont) - UINT_FROM_PTR(&g.meta.fontUI))
@@ -2373,8 +3045,11 @@ void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
       .chars     = string.chars,
       .baseChars = string.chars,
     };
-    Clay_TextElementConfig cfg{.fontId = fontID};
-    auto                   dim = MeasureText(s, &cfg, nullptr);
+    Clay_TextElementConfig cfg{
+      .fontId   = fontID,
+      .wrapMode = opts.wrapMode,
+    };
+    auto dim = MeasureText(s, &cfg, nullptr);
 
     // In flex space shouldn't break the line.
     // It's only other elements (which need more width) break the line.
@@ -2389,27 +3064,28 @@ void BF_CLAY_TEXT(Clay_String string, Color color = palTextWhite) {  ///
   CLAY_TEXT(
     string,
     CLAY_TEXT_CONFIG({
-      .textColor = ToClayColor(color),
+      .textColor = ToClayColor(opts.color),
       .fontId    = fontID,
+      .wrapMode  = opts.wrapMode,
     })
   );
 }
 
 // NOTE: This overload SAVES string to trash arena.
-void BF_CLAY_TEXT(const char* text, Color color = palTextWhite) {  ///
+void BF_CLAY_TEXT(const char* text, ClayTextOptions opts = {}) {  ///
   int         len           = 0;
   const char* allocatedText = PushTextToArena(&g.meta.trashArena, text, &len);
   Clay_String string{
     .length = (i32)len,
     .chars  = allocatedText,
   };
-  BF_CLAY_TEXT(string, color);
+  BF_CLAY_TEXT(string, opts);
 }
 
 void BF_CLAY_TEXT_BROKEN_LOCALIZED(
-  int   locale_,
-  Color color              = palTextWhite,
-  bool  _resetPlaceholders = true
+  int             locale_,
+  ClayTextOptions opts               = {},
+  bool            _resetPlaceholders = true
 ) {                                  ///
   const auto locale = (Loc)locale_;  // NOTE: For debug.
 
@@ -2447,7 +3123,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED(
       for (auto string : *group->strings()) {
         if (string->type() == BrokenStringDatumType_SPACE) {
           Clay_String text{.isStaticallyAllocated = true, .length = 1, .chars = " "};
-          BF_CLAY_TEXT(text, color);
+          BF_CLAY_TEXT(text, opts);
           continue;
         }
 
@@ -2478,7 +3154,7 @@ void BF_CLAY_TEXT_BROKEN_LOCALIZED(
             .length                = (i32)string->string()->size(),
             .chars                 = string->string()->c_str(),
           };
-          BF_CLAY_TEXT(text, color);
+          BF_CLAY_TEXT(text, opts);
         }
       }
     }
@@ -2681,19 +3357,19 @@ int MakeCreature(MakeCreatureData data) {  ///
              .isPlayer = (data.type == CreatureType_PLAYER),
       },
     }),
-    .speed     = fb->speed() + Lerp(-1.0f, 1.0f, GRAND.FRand()) * fb->speed_variation(),
+    .speed     = fb->speed() + Lerp(-1.0f, 1.0f, GRAND.FRand()) * fb->speed_plus_minus(),
   };
   creature.idleStartedAt.SetNow();
 
   if ((fb->aggro_distance() != f32_inf) || !fb->can_aggro()) {
-    creature.controller.move = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
+    creature.controller.move = Vector2Rotate({1, 0}, GRAND.Angle());
     creature.speedModifier *= fb->not_aggroed_speed() / fb->speed();
   }
 
   switch (creature.type) {
   case CreatureType_TURREL: {
     creature.DataTurrel() = {
-      .aimDirection = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
+      .aimDirection = Vector2Rotate({1, 0}, GRAND.Angle()),
     };
   } break;
 
@@ -2917,10 +3593,6 @@ int ToRecyclePrice(int price) {  ///
   return Ceil((f32)price * scale);
 }
 
-int GetNextLevelXp(int currentLevel) {  ///
-  return SQR(currentLevel + 3);
-}
-
 void AddItem(ItemType type) {  ///
   auto& items = g.run.state.items;
 
@@ -2937,6 +3609,9 @@ void AddItem(ItemType type) {  ///
   }
 
   if (increasedExistingItemCount >= 0) {
+    items[increasedExistingItemCount].uiBouncedAt = {};
+    items[increasedExistingItemCount].uiBouncedAt.SetNow();
+
     // Moving increased-count-item to the end.
     if (increasedExistingItemCount < items.count - 1) {
       auto t = items[increasedExistingItemCount];
@@ -2946,6 +3621,7 @@ void AddItem(ItemType type) {  ///
   }
   else {
     Item item{.type = type, .count = 1};
+    item.uiBouncedAt.SetNow();
     *items.Add() = item;
   }
 
@@ -3119,11 +3795,8 @@ void ReloadFontsIfNeeded() {  ///
   }
 
   static auto fontpath = "resources/arialnb.ttf";
-  static int  priceCodepoints[]{
-    ' ', '+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-  };
-  static int itemCountCodepoints[]{
-    ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x'
+  static int  numberCodepoints[]{
+    ' ', '+', '-', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x'
   };
 
   static LoadFontData loadFontData_[]{
@@ -3176,8 +3849,8 @@ void ReloadFontsIfNeeded() {  ///
       .filepath        = fontpath,
       .size            = 20,
       .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = priceCodepoints,
-      .codepointsCount = ARRAY_COUNT(priceCodepoints),
+      .codepoints      = numberCodepoints,
+      .codepointsCount = ARRAY_COUNT(numberCodepoints),
       .outlineWidth    = 3,
       .outlineAdvance  = 1,
     },
@@ -3186,18 +3859,28 @@ void ReloadFontsIfNeeded() {  ///
       .filepath        = fontpath,
       .size            = 20,
       .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = itemCountCodepoints,
-      .codepointsCount = ARRAY_COUNT(itemCountCodepoints),
+      .codepoints      = numberCodepoints,
+      .codepointsCount = ARRAY_COUNT(numberCodepoints),
       .outlineWidth    = 3,
       .outlineAdvance  = 1,
     },
     // fontUIGiganticOutlined.
     {
       .filepath        = fontpath,
-      .size            = 40,
+      .size            = 40 * 5 / 4,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
+      .outlineWidth    = 4,
+      .outlineAdvance  = 0,
+    },
+    // fontUINextWave.
+    {
+      .filepath        = fontpath,
+      .size            = 40,
+      .FIXME_sizeScale = 45.0f / 30.0f,
+      .codepoints      = numberCodepoints,
+      .codepointsCount = ARRAY_COUNT(numberCodepoints),
       .outlineWidth    = 3,
       .outlineAdvance  = 0,
     },
@@ -3211,10 +3894,6 @@ void ReloadFontsIfNeeded() {  ///
 
 void GameInit() {
   ZoneScoped;
-
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-  SDL_SetWindowMouseGrab(window, true);
-#endif
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
@@ -3432,9 +4111,17 @@ void GameInit() {
 
     for (auto fb : *glib->weapons()) {
       // NOTE: For debug.
-      auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
+      const auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
       if (fb->shoots_itself())
         ASSERT(fb->projectile_type());
+    }
+
+    int particleIndex = -1;
+    for (auto fb : *glib->particles()) {
+      particleIndex++;
+      // NOTE: For debug.
+      const auto particleType = (ParticleType)particleIndex;
+      ASSERT(fb->duration_seconds() >= fb->duration_plus_minus());
     }
   }
 
@@ -3475,7 +4162,7 @@ void GameInit() {
   RunInit();
 }
 
-void GameInitAfterLoading() {
+void GameInitAfterLoadingSavedata() {
   // Recalculating unlocked builds, items and weapons based off achievements.
   {  ///
     g.player.achievementStepsTotal     = 0;
@@ -3510,326 +4197,6 @@ constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
     return lframe::Unscaled(i64_max);
   const f32 regenPerSecond = (f32)regenLevel / 11.25f + 1.0f / 9.0f;
   return lframe::Unscaled((i64)((f32)FIXED_FPS / regenPerSecond));
-}
-
-f32 GetLifestealChance(WeaponType typeOrInvalid, bool affectedByGame = true) {  ///
-  f32 lifesteal = 0;
-  if (affectedByGame)
-    lifesteal += (f32)g.run.state.stats[StatType_LIFE_STEAL] / 100.0f;
-  if (typeOrInvalid)
-    lifesteal += glib->weapons()->Get(typeOrInvalid)->life_steal_percent() / 100.0f;
-  return lifesteal;
-}
-
-struct TryApplyDamageData {  ///
-  int              creatureIndex                      = {};
-  int              damage                             = {};
-  Vector2          directionOrZero                    = {0, 0};
-  f32              knockbackMeters                    = 0;
-  CreatureType     damagerCreatureType                = CreatureType_INVALID;
-  f32              critDamageMultiplier               = 1;
-  int              indexOfWeaponThatDidDamageOrMinus1 = -1;
-  ApplyAilmentData ailment                            = {};
-  f32              ailmentChance                      = 0;
-  bool*            outWasCrit                         = nullptr;
-  bool*            outJustKilled                      = nullptr;
-};
-
-void HealPlayer(int amount = 1) {  ///
-  if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
-    PLAYER_CREATURE.health
-      = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
-  }
-  Save();
-}
-
-bool TryApplyDamage(TryApplyDamageData data) {  ///
-  if (data.outWasCrit)
-    *data.outWasCrit = false;
-  if (data.outJustKilled)
-    *data.outJustKilled = false;
-
-  ASSERT(data.creatureIndex >= 0);
-  ASSERT(data.damage >= 0);
-  if (data.damage != int_max) {
-    auto t = GRAND.Rand() % 7;
-    if ((t == 0) || (t == 1))
-      data.damage += 1;
-    else if (t == 2)
-      data.damage -= 1;
-  }
-
-  data.damage = MAX(1, data.damage);
-
-  if (data.directionOrZero != Vector2Zero())
-    ASSERT(FloatEquals(Vector2Length(data.directionOrZero), 1));
-
-  // Player can't take damage when finishing wave.
-  if (!data.creatureIndex && g.run.scheduledWaveCompleted.IsSet())
-    return false;
-
-  auto& creature = g.run.creatures[data.creatureIndex];
-  if (creature.health <= 0)
-    return false;
-
-  const auto fb = glib->creatures()->Get(creature.type);
-
-  creature.aggroed = fb->can_aggro();
-
-  if (data.damage == int_max) {
-    creature.killedBecauseOfTheEndOfTheWave = true;
-    creature.health                         = 0;
-    if (data.outJustKilled)
-      *data.outJustKilled = true;
-  }
-  else if (!creature.killedBecauseOfTheEndOfTheWave) {
-    bool isCrit = false;
-
-    if (data.creatureIndex) {
-      f32 critChance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
-
-      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
-        IterateOverEffects(
-          EffectConditionType_EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              if ((w->thisWaveUseCount % EFFECT_X_INT) == 0)
-                critChance += (f32)(EFFECT_Y_INT * times) / 100.0f;
-            }
-        );
-      }
-
-      if (fb->is_boss()) {
-        data.damage += Round(
-          (f32)data.damage * (f32)g.run.state.stats[StatType_DAMAGE_AGAINST_BOSSES]
-          / 100.0f
-        );
-      }
-
-      IterateOverEffects(
-        EffectConditionType_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES,
-        data.indexOfWeaponThatDidDamageOrMinus1,
-        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-          BF_FORCE_INLINE_LAMBDA {
-            int percent = EFFECT_X_INT * times;
-            if (fb->is_boss())
-              percent = EFFECT_Y_INT * times;
-            data.damage += Round(creature.health * (f32)percent / 100.0f);
-          }
-      );
-
-      if (creature.ailments[AilmentType_BURN - 1].startedAt.IsSet()) {
-        IterateOverEffects(
-          EffectConditionType_HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA { critChance += (f32)(EFFECT_X_INT * times); }
-        );
-      }
-
-      {
-        const f32 hpPercent = (f32)creature.health / (f32)creature.maxHealth;
-
-        IterateOverEffects(
-          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              auto requiredPercent = EFFECT_Y_INT;
-              if (hpPercent * 100 >= requiredPercent) {
-                data.damage
-                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
-              }
-            }
-        );
-
-        IterateOverEffects(
-          EffectConditionType_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW__Y__PERCENT_HP,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              auto requiredPercent = EFFECT_Y_INT;
-              if (hpPercent * 100 <= requiredPercent) {
-                data.damage
-                  += Round((f32)data.damage * (f32)(EFFECT_X_INT * times) / 100.0f);
-              }
-            }
-        );
-      }
-
-      isCrit = GRAND.FRand() < critChance;
-      if (isCrit)
-        data.damage += Round((f32)data.damage * data.critDamageMultiplier);
-
-      data.damage = MAX(1, data.damage);
-
-      auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
-      if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
-        MakeNumber({
-          .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
-          .value = data.damage,
-          .pos   = creature.pos,
-        });
-      }
-    }
-    else {
-      // Can't hurt player if he was recently damaged.
-      if (creature.lastDamagedAt.IsSet()
-          && (creature.lastDamagedAt.Elapsed() <= PLAYER_INVINCIBILITY_FRAMES))
-        return false;
-
-      // Dodge.
-      if (GRAND.FRand() < MIN(
-            (f32)MAX_DODGE_PERCENT / 100.0f,
-            (f32)g.run.state.stats[StatType_DODGE] / 100.0f
-          ))
-      {
-        MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
-
-        IterateOverEffects(
-          EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING,
-          -1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
-                HealPlayer(EFFECT_Y_INT * times);
-            }
-        );
-
-        // TODO: lastInvincibilityTriggeredAt?
-        creature.lastDamagedAt = {};
-        creature.lastDamagedAt.SetNow();
-        return false;
-      }
-
-      // Applying player's armor.
-      auto armor = (f32)g.run.state.stats[StatType_ARMOR];
-      if (armor > 0)
-        data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
-      else if (armor < 0)
-        data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
-      data.damage = MAX(1, data.damage);
-
-      MakeNumber({
-        .type  = NumberType_DAMAGE_MOB,
-        .value = data.damage,
-        .pos   = creature.pos,
-      });
-    }
-
-    if (data.outWasCrit)
-      *data.outWasCrit = isCrit;
-
-    // Player lifesteals.
-    if (data.damagerCreatureType == CreatureType_PLAYER) {
-      auto weaponType = WeaponType_INVALID;
-      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
-        weaponType = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type;
-
-      if (GRAND.FRand() < GetLifestealChance(weaponType)) {
-        bool canLifesteal = true;
-        if (g.run.playerLastLifestealAt.IsSet()
-            && (g.run.playerLastLifestealAt.Elapsed() < LIFESTEAL_COOLDOWN_FRAMES))
-          canLifesteal = false;
-
-        if (canLifesteal && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)) {
-          PLAYER_CREATURE.health
-            = MoveTowards(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, 1);
-          g.run.playerLastLifestealAt = {};
-          g.run.playerLastLifestealAt.SetNow();
-        }
-      }
-    }
-
-    creature.health -= data.damage;
-
-    int effectDroppedCoins = 0;
-
-    if (creature.health <= 0) {
-      if (data.outJustKilled)
-        *data.outJustKilled = true;
-
-      if (isCrit) {
-        IterateOverEffects(
-          EffectConditionType_X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT,
-          data.indexOfWeaponThatDidDamageOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f)
-                effectDroppedCoins += EFFECT_Y_INT * times;
-            }
-        );
-      }
-    }
-
-    IterateOverEffects(
-      EffectConditionType_DROP__X__COINS_ON_HIT_WITH__Y__CHANCE,
-      data.indexOfWeaponThatDidDamageOrMinus1,
-      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-        BF_FORCE_INLINE_LAMBDA {
-          if (GRAND.FRand() < (f32)EFFECT_Y_INT / 100.0f)
-            effectDroppedCoins += EFFECT_X_INT * times;
-        }
-    );
-
-    if (effectDroppedCoins > 0) {
-      MakePickupable({
-        .type        = PickupableType_COIN,
-        .pos         = creature.pos,
-        .coin_amount = effectDroppedCoins,
-      });
-    }
-
-    if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
-      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
-        += data.damage;
-    }
-
-    bool ailmentCanBeApplied = true;
-    auto resists             = fb->resists_ailment_types();
-    if (resists) {
-      for (auto v : *resists) {
-        if (v == data.ailment.type) {
-          ailmentCanBeApplied = false;
-          break;
-        }
-      }
-    }
-
-    if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance))
-    {
-      auto damage = data.ailment.value;
-      if (data.damagerCreatureType == CreatureType_PLAYER)
-        damage += g.run.state.stats[StatType_DAMAGE_ELEMENTAL];
-
-      if ((data.ailment.value == 0) || (damage > 0)) {
-        data.ailment.value = damage;
-        ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
-      }
-    }
-  }
-
-  creature.lastDamagedAt = {};
-  creature.lastDamagedAt.SetNow();
-  creature.lastDamagedFlashAt = {};
-  creature.lastDamagedFlashAt.SetNow();
-  creature.lastDamagedWeaponIndex = data.indexOfWeaponThatDidDamageOrMinus1;
-
-  data.knockbackMeters *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING;
-  data.knockbackMeters *= 1.0f - fb->knockback_resistance();
-
-  b2Body_ApplyLinearImpulseToCenter(
-    creature.body.id, ToB2Vec2(data.directionOrZero * data.knockbackMeters), true
-  );
-
-  if (!g.run.justDamagedCreatures.Contains(data.creatureIndex))
-    *g.run.justDamagedCreatures.Add() = data.creatureIndex;
-
-  if (!data.creatureIndex)
-    Save();
-
-  return true;
 }
 
 void RunReset() {  ///
@@ -3881,7 +4248,7 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
 }
 
 void Rerolls::Roll() {  ///
-  PLAYER_COINS -= ApplyStatRerollPrice(GetPrice());
+  ChangeCoins(-ApplyStatRerollPrice(GetPrice()));
   ASSERT(PLAYER_COINS >= 0);
   if (rerolledFreeTimes < g.run.state.stats[StatType_FREE_REROLLS])
     rerolledFreeTimes++;
@@ -3957,9 +4324,7 @@ void RefillShopToPick() {  ///
           continue;
         x.weapon      = w;
         const auto fb = fb_weapons->Get(x.weapon);
-        // Legendary weapons can't be bought in shop.
-        // TODO: Check if it's possible to buy legendary weapons in Brotato.
-        x.tier = (int)(GRAND.Rand() % (TOTAL_TIERS - 1));
+        x.tier        = (int)GRAND.RandInt(fb->min_tier_index(), TOTAL_TIERS - 1);
       }
     }
   }
@@ -4087,7 +4452,7 @@ void EffectSpawnProjectilesOnHit(
             .ownerCreatureType         = CreatureType_PLAYER,
             .weaponIndexOrMinus1       = weaponIndex,
             .pos                       = creature.pos,
-            .dir                       = Vector2Rotate({1, 0}, GRAND.FRand() * 2 * PI32),
+            .dir                       = Vector2Rotate({1, 0}, GRAND.Angle()),
             .range                     = fb_effect->projectile_range_meters(),
             .damage                    = damage,
             .critDamageMultiplier      = critDamageMultiplier,
@@ -4163,53 +4528,6 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   return PLAYER_CREATURE.pos + weapon.targetDir * movedDistance;
 }
 
-void AddXP(f32 xp) {  ///
-  if (xp > 0)
-    xp *= (f32)(MAX(1, g.run.state.stats[StatType_XP_GAIN] + 100)) / 100.0f;
-
-  g.run.state.xp += xp;
-  g.run.state.xp = MAX(0, g.run.state.xp);
-
-  // Handling level up.
-
-  auto nextLevelXp = GetNextLevelXp(g.run.state.level);
-
-  int addedLevels = 0;
-
-  while (g.run.state.xp >= nextLevelXp) {
-    addedLevels++;
-    g.run.state.xp -= nextLevelXp;
-    g.run.state.level++;
-    nextLevelXp = GetNextLevelXp(g.run.state.level);
-
-    MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
-
-    // Increasing random stat that has `upgrade_values`.
-    while (1) {
-      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
-      const auto fb   = glib->stats()->Get(stat);
-      const auto vals = fb->upgrade_values();
-      if (!vals)
-        continue;
-      ChangeStat(stat, vals->Get(0));
-      break;
-    }
-  }
-
-  if (addedLevels > 0) {
-    IterateOverEffects(
-      EffectConditionType_STAT__UPON_LEVEL_UP,
-      -1,
-      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-        BF_FORCE_INLINE_LAMBDA {
-          ApplyStatEffect(fb_effect, tierOffset, times * addedLevels);
-        }
-    );
-  }
-
-  Save();
-}
-
 bool CanSpawnMoreCreatures() {  ///
   const auto framesUntilTheEndOfTheWave
     = GetWaveDuration(g.run.state.waveIndex) - g.run.waveStartedAt.Elapsed();
@@ -4218,12 +4536,12 @@ bool CanSpawnMoreCreatures() {  ///
 
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
   const auto& string = placeholder->string();
-  BF_CLAY_TEXT(string.value, string.color);
+  BF_CLAY_TEXT(string.value, {.color = string.color});
 }
 
 void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
   const auto& d = placeholder->brokenLocale();
-  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, d.color, false);
+  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, {.color = d.color}, false);
 }
 
 void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
@@ -4346,40 +4664,68 @@ void RemoveImmediateWeaponEffects() {  ///
   }
 }
 
-#define SCOPED_CONTEXT(context_)                           \
-  const auto _prevContext                = currentContext; \
-  currentContext                         = (context_);     \
-  controlsContexts[(context_)].thisFrame = true;           \
-  if (!controlsContexts[(context_)].prevFrame)             \
-    controlsContexts[(context_)].focused = {};             \
-  DEFER {                                                  \
-    currentContext = _prevContext;                         \
+#define SCOPED_CONTEXT(context_)                   \
+  const auto _prevContext = currentContext;        \
+  currentContext          = (context_);            \
+  if (!draw) {                                     \
+    controlsContexts[(context_)].thisFrame = true; \
+    if (!controlsContexts[(context_)].prevFrame)   \
+      controlsContexts[(context_)].focused = {};   \
+  }                                                \
+  DEFER {                                          \
+    currentContext = _prevContext;                 \
   };
 
-#define SCOPED_CONTEXT_IF(context_, enabled_)          \
-  const auto _prevContext = currentContext;            \
-  currentContext          = (context_);                \
-  if (enabled_)                                        \
-    controlsContexts[(context_)].thisFrame = true;     \
-  controlsContexts[(context_)].disabled = !(enabled_); \
-  if (!controlsContexts[(context_)].prevFrame)         \
-    controlsContexts[(context_)].focused = {};         \
-  DEFER {                                              \
-    currentContext = _prevContext;                     \
+#define SCOPED_CONTEXT_IF(context_, enabled_)            \
+  const auto _prevContext = currentContext;              \
+  currentContext          = (context_);                  \
+  if (!draw) {                                           \
+    if (enabled_)                                        \
+      controlsContexts[(context_)].thisFrame = true;     \
+    controlsContexts[(context_)].disabled = !(enabled_); \
+    if (!controlsContexts[(context_)].prevFrame)         \
+      controlsContexts[(context_)].focused = {};         \
+  }                                                      \
+  DEFER {                                                \
+    currentContext = _prevContext;                       \
   };
 
 #define CURRENT_CONTEXT (controlsContexts[currentContext])
 
-// NOTE: Logic must be executed only when `draw` is false!
+f32 ScaleDamageNumbersByProgress(f32 p) {  ///
+  return Lerp(5 / 2.0f, 1, EaseOutQuad(MIN(1, p * 3)));
+}
+
+f32 GetScaleOfCoins(const FrameVisual& changedAt) {  ///
+  f32 scale = 1.0f;
+  if (changedAt.IsSet()) {
+    const f32 s = ScaleDamageNumbersByProgress(
+      MIN(1, changedAt.Elapsed().Progress(DAMAGE_NUMBERS_FRAMES))
+    );
+    scale += (s - 1) / 3.5f;
+  }
+  return scale;
+}
+
+// NOTE: Logic must be executed only when `ge.meta._drawing` (`draw`) is false!
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
-void DoUI(bool draw) {
+void DoUI() {
   ZoneScoped;
+
+  enum UIZIndexOffset {  ///
+    UIZIndexOffset_HOVER_DETAILS              = 2,
+    UIZIndexOffset_STATS                      = 4,
+    UIZIndexOffset_CONFIRM_MODAL              = 6,
+    UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS = 8,
+  };
 
   // Setup.
   // {  ///
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
+
+  const auto draw = ge.meta._drawing;
 
   ControlsContext currentContext{};
 
@@ -4412,6 +4758,9 @@ void DoUI(bool draw) {
   bool justFocusedDefaultControl = false;
 
   LAMBDA (void, markControlAsDefault, (Clay_ElementId id)) {
+    if (draw)
+      return;
+
     const bool allowed = (CURRENT_CONTEXT.thisFrame || CURRENT_CONTEXT.disabled);
     ASSERT(allowed);
 
@@ -4529,7 +4878,7 @@ void DoUI(bool draw) {
       * ASSETS_TO_LOGICAL_RATIO;
   // }
 
-  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, Color color = palTextWhite)) {  ///
+  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, ClayTextOptions opts = {})) {  ///
     ASSERT((int)locale >= 0);
     ASSERT((int)locale < Loc_COUNT);
     auto        string = localization_strings->Get(locale);
@@ -4538,7 +4887,7 @@ void DoUI(bool draw) {
       .length                = (i32)string->size(),
       .chars                 = string->c_str(),
     };
-    BF_CLAY_TEXT(text, color);
+    BF_CLAY_TEXT(text, opts);
   };
 
   LAMBDA (void, componentOverlay, (auto innerLambda, f32 fade = 1)) {  ///
@@ -4663,7 +5012,8 @@ void DoUI(bool draw) {
      auto /* void (bool hovered, Color textColor) */ innerLambda)
   )
   {  ///
-    ASSERT(currentContext);
+    if (!draw)
+      ASSERT(currentContext);
 
     ASSERT(data.id.id);
     bool result = false;
@@ -4707,7 +5057,7 @@ void DoUI(bool draw) {
 
         // MOUSE can focus buttons.
         if (hovered && (ge.events.last != LastEventType_TOUCH)) {
-          if (focused.id != data.id.id) {
+          if (!draw && (focused.id != data.id.id)) {
             focused      = data.id;
             justSelected = true;
           }
@@ -4728,7 +5078,7 @@ void DoUI(bool draw) {
       if (justSelected)
         ButtonSFX(draw, data.id, true);
 
-      if (isCurrentContextActive()) {
+      if (!draw && isCurrentContextActive()) {
         result |= clickOrTouchPressed();
         if (result)
           disallowTouch();
@@ -4742,6 +5092,21 @@ void DoUI(bool draw) {
       }
     }
 
+    return result;
+  };
+
+  LAMBDA (
+    bool,
+    componentTextButton,
+    (ComponentButtonData                             data,
+     auto /* void (bool hovered, Color textColor) */ innerLambda)
+  )
+  {  ///
+    FontBegin(&g.meta.fontUIBigOutlined);
+    const bool result = componentButton(data, [&](bool hovered, Color textColor) {
+      innerLambda(hovered, palTextWhite);
+    });
+    FontEnd();
     return result;
   };
 
@@ -4786,7 +5151,8 @@ void DoUI(bool draw) {
 
                 FontBegin(&g.meta.fontUIBigOutlined);
                 BF_CLAY_TEXT(
-                  TextFormat("%d", price), (canReroll ? palTextWhite : palTextRed)
+                  TextFormat("%d", price),
+                  {.color = (canReroll ? palTextWhite : palTextRed)}
                 );
                 BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
                 FontEnd();
@@ -4802,8 +5168,8 @@ void DoUI(bool draw) {
     Clay_ElementId  id    = {};
     ControlsGroupID group = {};
     int             price = {};
-    bool            big   = false;
     Color           color = WHITE;
+    int             tier  = 0;
   };
 
   LAMBDA (bool, componentButtonRecycle, (ComponentButtonRecycleData data)) {  ///
@@ -4811,14 +5177,11 @@ void DoUI(bool draw) {
     ASSERT(data.group);
     ASSERT(data.id.id);
 
-    const int texID
-      = (data.big ? glib->ui_icon_sell_big_texture_id() : glib->ui_icon_sell_texture_id());
-
     return componentButton(
-      {.id = data.id, .group = data.group},
+      {.id = data.id, .group = data.group, .tier = data.tier},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
-          {.texID = texID, .color = data.color},
+          {.texID = glib->ui_icon_sell_texture_id(), .color = data.color},
           [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
@@ -4835,7 +5198,7 @@ void DoUI(bool draw) {
               FLOATING_BEAUTIFY;
 
               FontBegin(&g.meta.fontUIBigOutlined);
-              BF_CLAY_TEXT(TextFormat("%d", data.price), palTextWhite);
+              BF_CLAY_TEXT(TextFormat("%d", data.price), {.color = palTextWhite});
               BF_CLAY_IMAGE({
                 .texID = glib->ui_coin_texture_id(),
                 .scale = Vector2One() * 0.75f,
@@ -4858,6 +5221,7 @@ void DoUI(bool draw) {
     bool            showsDetails            = false;
     bool            disallowsTouch          = false;
     bool            touchPreservesSelection = false;
+    FrameVisual     uiBouncedAt             = {};
   };
 
   bool touchedInsideSlot = false;
@@ -4879,11 +5243,18 @@ void DoUI(bool draw) {
       auto color = slotColors[2 * data.tier];
       auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
 
+      if (data.uiBouncedAt.IsSet()) {
+        f32 p = data.uiBouncedAt.Elapsed().Progress(ANIMATION_2_FRAMES);
+        p     = EaseOutQuad(MIN(1, p));
+        color = ColorLerp(palWhite, color, p);
+        flash = ColorLerp(palWhite, flash, p);
+      }
+
       const bool hovered = data.canHover && Clay_Hovered();
 
       auto& focused = controlsContexts[currentContext].focused;
 
-      if (hovered) {
+      if (hovered && !draw) {
         if (ge.events.thisFrame.Mouse())
           g.run.hideSlotDetails = false;
 
@@ -4971,6 +5342,8 @@ void DoUI(bool draw) {
     bool showsDetails            = false;
     bool disallowsTouch          = false;
     bool touchPreservesSelection = false;
+
+    FrameVisual uiBouncedAt = {};
   };
 
   LAMBDA (bool, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
@@ -5018,6 +5391,7 @@ void DoUI(bool draw) {
         .showsDetails   = data.showsDetails,
         .disallowsTouch = data.disallowsTouch,
         .touchPreservesSelection = data.touchPreservesSelection,
+        .uiBouncedAt             = data.uiBouncedAt,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
         if (data.canHover) {
@@ -5042,7 +5416,11 @@ void DoUI(bool draw) {
         }
 
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          BF_CLAY_IMAGE({.texID = texID});
+          BF_CLAY_IMAGE({
+            .texID = texID,
+            .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
+            .dontCareAboutScaleWhenCalculatingSize = true,
+          });
 
           // Showing count if there are multiple of the same item.
           if (data.count > 1) {
@@ -5096,12 +5474,12 @@ void DoUI(bool draw) {
           // auto color = secondaryTextColor;
           auto color = palTextWhite;
           if (fb_effect->only_this_weapon())
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, color);
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, {.color = color});
           if (fb_effect->only_other_weapons())
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_OTHER_WEAPONS, color);
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_OTHER_WEAPONS, {.color = color});
           if (fb_effect->all_weapons())
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ALL_WEAPONS, color);
-          BF_CLAY_TEXT(": ", color);
+            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ALL_WEAPONS, {.color = color});
+          BF_CLAY_TEXT(": ", {.color = color});
         }
 
         if (fb_effect->stat_type()) {
@@ -5369,7 +5747,13 @@ void DoUI(bool draw) {
         int percent = MIN(100, v * 100 / fb_step->value());
         if ((percent < 100) && (fb_step->value() > 1)) {
           BF_CLAY_TEXT(" ");
-          BF_CLAY_TEXT(TextFormat("(%d / %d)", v, fb_step->value()), palTextBezhevy);
+          BF_CLAY_TEXT(
+            TextFormat("(%d / %d)", v, fb_step->value()),
+            {
+              .color    = palTextBezhevy,
+              .wrapMode = CLAY_TEXT_WRAP_NONE,
+            }
+          );
         }
       }
 
@@ -5405,7 +5789,6 @@ void DoUI(bool draw) {
   };
 
   const auto groupDetails = MakeControlsGroup();
-  ControlsGroupConnect(groupDetails, Direction_RIGHT, groupDetails);
 
   LAMBDA (Clay_ElementId, getIDFromShopBuyingIndex, (int index)) {  ///
     return CLAY_IDI("button_shop_buy", index);
@@ -5553,35 +5936,41 @@ void DoUI(bool draw) {
           CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             if (data.difficulty) {  ///
               BF_CLAY_TEXT_LOCALIZED(
-                fb_difficulty->name_locale(), textColorsPerTier[tier]
+                fb_difficulty->name_locale(), {.color = textColorsPerTier[tier]}
               );
 
               FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY, secondaryTextColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_DIFFICULTY, {.color = secondaryTextColor});
               FontEnd();
             }
             else if (data.build) {  ///
-              BF_CLAY_TEXT_LOCALIZED(fb_build->name_locale(), textColorsPerTier[tier]);
+              BF_CLAY_TEXT_LOCALIZED(
+                fb_build->name_locale(), {.color = textColorsPerTier[tier]}
+              );
               FontBegin(&g.meta.fontStats);
               const auto d = g.player.builds[data.build].maxDifficultyBeaten;
               if (d > 0) {
                 CLAY({}) {
                   auto dd = fb_difficulties->Get(d);
-                  BF_CLAY_TEXT_LOCALIZED(dd->name_locale(), secondaryTextColor);
+                  BF_CLAY_TEXT_LOCALIZED(
+                    dd->name_locale(), {.color = secondaryTextColor}
+                  );
                 }
               }
               else
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD, secondaryTextColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_BUILD, {.color = secondaryTextColor});
               FontEnd();
             }
             else if (data.item) {  ///
-              BF_CLAY_TEXT_LOCALIZED(fb_item->name_locale(), textColorsPerTier[tier]);
+              BF_CLAY_TEXT_LOCALIZED(
+                fb_item->name_locale(), {.color = textColorsPerTier[tier]}
+              );
 
               FontBegin(&g.meta.fontStats);
               if (fb_item->limit() > 0) {
                 if (fb_item->limit() > 1) {
                   CLAY({}) {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, secondaryTextColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, {.color = secondaryTextColor});
 
                     if (data.affectedByGame) {
                       int currentCount = 0;
@@ -5593,27 +5982,30 @@ void DoUI(bool draw) {
                       }
                       BF_CLAY_TEXT(
                         TextFormat(" (%d/%d)", currentCount, fb_item->limit()),
-                        secondaryTextColor
+                        {.color = secondaryTextColor}
                       );
                     }
                     else {
                       BF_CLAY_TEXT(
-                        TextFormat(" (%d)", fb_item->limit()), secondaryTextColor
+                        TextFormat(" (%d)", fb_item->limit()),
+                        {.color = secondaryTextColor}
                       );
                     }
                   }
                 }
                 else
-                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_UNIQUE, secondaryTextColor);
+                  BF_CLAY_TEXT_LOCALIZED(Loc_UI_UNIQUE, {.color = secondaryTextColor});
               }
               else
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM, secondaryTextColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_ITEM, {.color = secondaryTextColor});
               FontEnd();
             }
             else if (data.weapon) {  ///
-              BF_CLAY_TEXT_LOCALIZED(fb_weapon->name_locale(), textColorsPerTier[tier]);
+              BF_CLAY_TEXT_LOCALIZED(
+                fb_weapon->name_locale(), {.color = textColorsPerTier[tier]}
+              );
               FontBegin(&g.meta.fontStats);
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPON, secondaryTextColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPON, {.color = secondaryTextColor});
               FontEnd();
             }
             else {  ///
@@ -5662,8 +6054,8 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               FlexBegin(CARD_WIDTH, 0);
-              BF_CLAY_TEXT_BROKEN_LOCALIZED(labelLocale, secondaryTextColor);
-              BF_CLAY_TEXT(": ", secondaryTextColor);
+              BF_CLAY_TEXT_BROKEN_LOCALIZED(labelLocale, {.color = secondaryTextColor});
+              BF_CLAY_TEXT(": ", {.color = secondaryTextColor});
               innerLambda();
               FlexEnd();
             }
@@ -5677,11 +6069,13 @@ void DoUI(bool draw) {
               if (data.affectedByGame) {
                 const int actualDamage
                   = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
-                BF_CLAY_TEXT(TextFormat("%d", actualDamage), palTextGreen);
-                BF_CLAY_TEXT(TextFormat(" (%d)", baseDamage), secondaryTextColor);
+                BF_CLAY_TEXT(TextFormat("%d", actualDamage), {.color = palTextGreen});
+                BF_CLAY_TEXT(
+                  TextFormat(" (%d)", baseDamage), {.color = secondaryTextColor}
+                );
               }
               else
-                BF_CLAY_TEXT(TextFormat("%d", baseDamage), palTextGreen);
+                BF_CLAY_TEXT(TextFormat("%d", baseDamage), {.color = palTextGreen});
 
               // Scalings.
               const auto fb_scalings = fb->damage_scalings();
@@ -5729,7 +6123,7 @@ void DoUI(bool draw) {
             else
               cooldownFrames = lframe::Unscaled(cooldownFrames_);
             const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
-            BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), palTextGreen);
+            BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), {.color = palTextGreen});
           });
 
           // Knockback.
@@ -5782,7 +6176,7 @@ void DoUI(bool draw) {
 
           // Life Steal.
           {
-            auto chance = GetLifestealChance(data.weapon, data.affectedByGame);
+            auto chance = GetLifestealChance(data.weapon, tier, data.affectedByGame);
             if (chance > 0) {
               componentWeaponStatEntry(
                 fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
@@ -5792,7 +6186,7 @@ void DoUI(bool draw) {
                       "%s%%",
                       StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
                     ),
-                    palTextGreen
+                    {.color = palTextGreen}
                   );
                 }
               );
@@ -5807,7 +6201,7 @@ void DoUI(bool draw) {
             componentWeaponStatEntry(
               Loc_UI_THIS_WAVE_DAMAGE,
               [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), palTextWhite);
+                BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), {.color = palTextWhite});
               }
             );
           };
@@ -5853,8 +6247,13 @@ void DoUI(bool draw) {
             if ((g.run.shopActivatedModalWeaponIndex >= 0) || g.meta.showingStats.IsSet())
               keys.count = 0;
 
-            auto bought = componentButton(
-              {.id = buyButtonID, .group = data.shopGroup, .keys = keys},
+            const bool bought = componentButton(
+              {
+                .id    = buyButtonID,
+                .group = data.shopGroup,
+                .keys  = keys,
+                .tier  = tier,
+              },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
                   BF_CLAY_SIZING_GROW_X,
@@ -5863,7 +6262,7 @@ void DoUI(bool draw) {
                   FontBegin(&g.meta.fontPricesOutlined);
                   BF_CLAY_TEXT(
                     TextFormat("%d ", price),
-                    ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)
+                    {.color = ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)}
                   );
                   FontEnd();
                   BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
@@ -5886,6 +6285,9 @@ void DoUI(bool draw) {
                     RemoveImmediateWeaponEffects();
                     weapon.tier += 1;
                     ApplyImmediateWeaponEffects();
+
+                    weapon.uiBouncedAt = {};
+                    weapon.uiBouncedAt.SetNow();
                   }
                   else {
                     RemoveImmediateWeaponEffects();
@@ -5895,6 +6297,9 @@ void DoUI(bool draw) {
                     weapon.tier = tier;
 
                     ApplyImmediateWeaponEffects();
+
+                    weapon.uiBouncedAt = {};
+                    weapon.uiBouncedAt.SetNow();
                   }
                 }
                 else if (data.item)
@@ -5962,7 +6367,11 @@ void DoUI(bool draw) {
             auto combineID = CLAY_ID("button_weapon_combine");
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
-                {.id = combineID, .group = groupDetails},
+                {
+                  .id    = combineID,
+                  .group = groupDetails,
+                  .tier  = tier,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
                 }
@@ -5978,6 +6387,7 @@ void DoUI(bool draw) {
                      .id    = weaponRecycleID,
                      .group = groupDetails,
                      .price = recyclePrice,
+                     .tier  = tier,
             });
 
             // Cancel button.
@@ -5990,6 +6400,7 @@ void DoUI(bool draw) {
                   .id    = cancelID,
                   .group = groupDetails,
                   .keys  = KEYS_CANCEL,
+                  .tier  = tier,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_cancel_texture_id()});
@@ -6084,17 +6495,17 @@ void DoUI(bool draw) {
 
         if (type) {
           if (g.player.achievements[type].value >= fb_step->value()) {
-            BF_CLAY_TEXT_LOCALIZED(fb->name_locale(), nameColor);
+            BF_CLAY_TEXT_LOCALIZED(fb->name_locale(), {.color = nameColor});
             static const char* romanNumbers_[]{
               "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
               "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
             };
             VIEW_FROM_ARRAY_DANGER(romanNumbers);
-            BF_CLAY_TEXT(" ", nameColor);
-            BF_CLAY_TEXT(romanNumbers[stepIndex + 1], nameColor);
+            BF_CLAY_TEXT(" ", {.color = nameColor});
+            BF_CLAY_TEXT(romanNumbers[stepIndex + 1], {.color = nameColor});
           }
           else
-            BF_CLAY_TEXT("???", nameColor);
+            BF_CLAY_TEXT("???", {.color = nameColor});
         }
       }
 
@@ -6214,7 +6625,7 @@ void DoUI(bool draw) {
         }
       }
 
-      zIndex += 2;
+      zIndex += UIZIndexOffset_HOVER_DETAILS;
 
       auto pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE;
       if (!draw) {
@@ -6261,7 +6672,7 @@ void DoUI(bool draw) {
         });
       }
 
-      zIndex -= 2;
+      zIndex -= UIZIndexOffset_HOVER_DETAILS;
     }
 
     if ((CURRENT_CONTEXT.focused.id == data.id.id)  //
@@ -6365,6 +6776,7 @@ void DoUI(bool draw) {
                   .item         = item.type,
                   .count        = item.count,
                   .showsDetails = true,
+                  .uiBouncedAt  = item.uiBouncedAt,
                 });
                 itemType  = item.type;
                 itemCount = item.count;
@@ -6411,7 +6823,8 @@ void DoUI(bool draw) {
               .group             = data.groupArrows,
               .growY             = true,
               .paddingHorizontal = GAP_SMALL,
-              .keys              = KEYS_MOVE_UP,
+              // FIXME: make item slot focused (if item was focues previously).
+              // .keys              = KEYS_MOVE_UP,
             },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_up_texture_id()});
@@ -6436,7 +6849,8 @@ void DoUI(bool draw) {
               .group             = data.groupArrows,
               .growY             = true,
               .paddingHorizontal = GAP_SMALL,
-              .keys              = KEYS_MOVE_DOWN,
+              // FIXME: make item slot focused (if item was focues previously).
+              // .keys              = KEYS_MOVE_DOWN,
             },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_down_texture_id()});
@@ -6545,6 +6959,7 @@ void DoUI(bool draw) {
             .weapon       = weapon.type,
             .tier         = weapon.tier,
             .showsDetails = true,
+            .uiBouncedAt  = weapon.uiBouncedAt,
           });
 
           if (data.weAreInShop && selectedWeapon && !ge.events.thisFrame.Touch()) {
@@ -6633,7 +7048,7 @@ void DoUI(bool draw) {
       );
 
       FontBegin(&g.meta.fontUIBig);
-      BF_CLAY_TEXT(TextFormat(" %d", PLAYER_COINS), color);
+      BF_CLAY_TEXT(TextFormat(" %d", PLAYER_COINS), {.color = color});
       FontEnd();
 
       if (ge.meta.debugEnabled && Clay_Hovered() && wheel)
@@ -6828,6 +7243,7 @@ void DoUI(bool draw) {
           }
         }
 
+        // Coins.
         {
           BEAUTIFY_WIGGLING_DANGER_SCOPED(
             g.ui.errorGold,
@@ -6840,11 +7256,16 @@ void DoUI(bool draw) {
             .childGap = GAP_SMALL,
             BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
           }}) {
-            BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
+            BF_CLAY_IMAGE({
+              .texID = glib->ui_coin_texture_id(),
+              .scale = Vector2One() * GetScaleOfCoins(g.ui.changedCoinsAt),
+              .dontCareAboutScaleWhenCalculatingSize = true,
+            });
             BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
           }
         }
 
+        // Not picked up coins.
         CLAY({.layout{
           .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
@@ -6854,7 +7275,9 @@ void DoUI(bool draw) {
           CLAY({.id = id}) {
             BF_CLAY_IMAGE({
               .texID = glib->ui_coin_x2_texture_id(),
+              .scale = Vector2One() * GetScaleOfCoins(g.ui.changedNotPickedUpCoinsAt),
               .color = Fade(WHITE, fade),
+              .dontCareAboutScaleWhenCalculatingSize = true,
             });
           }
           const auto d = Clay_GetElementData(id);
@@ -6865,7 +7288,8 @@ void DoUI(bool draw) {
           }
 
           BF_CLAY_TEXT(
-            TextFormat("%d", g.run.state.notPickedUpCoinsVisual), Fade(palTextWhite, fade)
+            TextFormat("%d", g.run.state.notPickedUpCoinsVisual),
+            {.color = Fade(palTextWhite, fade)}
           );
         }
       }
@@ -6914,9 +7338,7 @@ void DoUI(bool draw) {
               if (g.run.state.screen != ScreenType_GAMEPLAY)
                 remainingSeconds = 0;
 
-              // FontBegin(&g.meta.fontPricesOutlined);
               BF_CLAY_TEXT(TextFormat("%d", remainingSeconds));
-              // FontEnd();
             }
           }
         );
@@ -6942,7 +7364,10 @@ void DoUI(bool draw) {
 
         FOR_RANGE (int, i, g.run.state.crates) {
           const auto fb = fb_pickupables->Get(PickupableType_CRATE);
-          BF_CLAY_IMAGE({.texID = fb->texture_id()});
+          BF_CLAY_IMAGE({
+            .texID
+            = fb->variation_texture_ids()->Get(i % fb->variation_texture_ids()->size()),
+          });
         }
       }
       // }
@@ -7369,7 +7794,7 @@ void DoUI(bool draw) {
         }}) {
           auto       tookID = CLAY_ID("button_picked_up_item_take");
           const bool took   = componentButton(
-            {.id = tookID, .group = group},
+            {.id = tookID, .group = group, .tier = fb->tier()},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
             }
@@ -7382,6 +7807,7 @@ void DoUI(bool draw) {
             .id    = CLAY_ID("button_picked_up_item_recycle"),
             .group = group,
             .price = recyclePrice,
+            .tier  = fb->tier(),
           });
 
           if (took)
@@ -7489,12 +7915,14 @@ void DoUI(bool draw) {
               }}) {
                 // Name.
                 BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                  fb->upgrade_name_locale(), textColorsPerTier[upgrade.tier]
+                  fb->upgrade_name_locale(), {.color = textColorsPerTier[upgrade.tier]}
                 );
 
                 // "Upgrade" label.
                 FontBegin(&g.meta.fontStats);
-                BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_UPGRADE, secondaryTextColor);
+                BF_CLAY_TEXT_BROKEN_LOCALIZED(
+                  Loc_UI_UPGRADE, {.color = secondaryTextColor}
+                );
                 FontEnd();
               }
             }
@@ -7523,7 +7951,7 @@ void DoUI(bool draw) {
                 .id = id,
                 .layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
               }) {
-                BF_CLAY_TEXT(TextFormat("+%d", amount), palTextGreen);
+                BF_CLAY_TEXT(TextFormat("+%d", amount), {.color = palTextGreen});
 
                 BF_CLAY_IMAGE({.texID = fb->icon_texture_id()});
 
@@ -7557,9 +7985,14 @@ void DoUI(bool draw) {
 
               auto chooseButtonID = CLAY_IDI("button_upgrades_choose", i);
               bool chosen         = componentButton(
-                {.id = chooseButtonID, .group = groupUpgrades, .keys = keys},
+                {
+                          .id    = chooseButtonID,
+                          .group = groupUpgrades,
+                          .keys  = keys,
+                          .tier  = upgrade.tier,
+                },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_IMAGE({.texID = glib->ui_icon_upgrade_texture_id()});
+                  BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
                 }
               );
 
@@ -7778,7 +8211,7 @@ void DoUI(bool draw) {
 
               BF_CLAY_TEXT_LOCALIZED(
                 Loc_UI_WEAPONS__CAPS,
-                (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
+                {.color = (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)}
               );
 
               // BF_CLAY_TEXT(
@@ -7819,23 +8252,20 @@ void DoUI(bool draw) {
             if (g.meta.showingStats.IsSet() || (g.run.shopActivatedModalWeaponIndex >= 0))
               keys.count = 0;
 
+            const int  nextWaveNumber = g.run.state.waveIndex + 2;
+            const bool nextIsBoss     = (nextWaveNumber == TOTAL_WAVES);
+
             const bool nextWavePressed = componentButton(
               {
                 .id    = CLAY_ID("button_shop_next_wave"),
                 .group = groupGoNextWave,
                 .growX = true,
                 .keys  = keys,
-                .tier  = 7,
+                .tier  = (nextIsBoss ? 4 : 7),
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                const int  nextWaveNumber = g.run.state.waveIndex + 2;
-                const bool nextIsBoss     = (nextWaveNumber == TOTAL_WAVES);
-
                 BF_CLAY_IMAGE(
-                  {
-                    .texID = glib->ui_icon_go_next_wave_texture_id(),
-                    .color = (nextIsBoss ? palTextRed : WHITE),
-                  },
+                  {.texID = glib->ui_icon_go_next_wave2_texture_id()},
                   [&]() BF_FORCE_INLINE_LAMBDA {
                     CLAY({
                       .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
@@ -7850,11 +8280,11 @@ void DoUI(bool draw) {
                       },
                     }) {
                       FLOATING_BEAUTIFY;
-                      FontBegin(&g.meta.fontUIGiganticOutlined);
+                      FontBegin(&g.meta.fontUINextWave);
 
-                      auto color = (nextIsBoss ? palTextRed : palTextPaleYellow);
-                      BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), color);
-                      BF_CLAY_TEXT(TextFormat("/%d", TOTAL_WAVES), color);
+                      auto color = palTextPaleYellow;
+                      BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), {.color = color});
+                      BF_CLAY_TEXT(TextFormat("/%d", TOTAL_WAVES), {.color = color});
                       FontEnd();
                     }
                   }
@@ -7949,7 +8379,7 @@ void DoUI(bool draw) {
           [&]() BF_FORCE_INLINE_LAMBDA {
             if (!g.run.state.won) {
               // Wave.
-              BF_CLAY_TEXT("       ");
+              BF_CLAY_TEXT(". ");
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE__CAPS);
               BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
             }
@@ -8028,20 +8458,28 @@ void DoUI(bool draw) {
       }}) {
         bool restarted = false;
         if (!g.run.state.won) {
-          restarted = componentButton(
-            {.id = CLAY_ID("button_end_restart"), .group = groupButtons},
+          restarted = componentTextButton(
+            {
+              .id    = CLAY_ID("button_end_restart"),
+              .group = groupButtons,
+              .tier  = 7,
+            },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, textColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, {.color = textColor});
             }
           );
         }
 
         const auto newRunID = CLAY_ID("button_end_new_run");
 
-        const bool newRun = componentButton(
-          {.id = newRunID, .group = groupButtons},
+        const bool newRun = componentTextButton(
+          {
+            .id    = newRunID,
+            .group = groupButtons,
+            .tier  = 7,
+          },
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, textColor);
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, {.color = textColor});
           }
         );
 
@@ -8142,7 +8580,7 @@ void DoUI(bool draw) {
                   auto color = palTextBezhevy;
                   if (percent >= 100)
                     color = palTextGreen;
-                  BF_CLAY_TEXT(TextFormat(" %d%%", percent), color);
+                  BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = color});
                 }
               }
             );
@@ -8283,14 +8721,12 @@ void DoUI(bool draw) {
 
           // Back button.
           const auto backButtonID = CLAY_ID("button_pause_achievements_back");
-          FontBegin(&g.meta.fontUIBig);
-          const bool back = componentButton(
+          const bool back         = componentTextButton(
             {.id = backButtonID, .group = groupBackButton, .keys = KEYS_CANCEL},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, textColor);
+              BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, {.color = textColor});
             }
           );
-          FontEnd();
           markControlAsDefault(backButtonID);
 
           if (back) {
@@ -8340,9 +8776,10 @@ void DoUI(bool draw) {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             }}) {
               CLAY({}) {
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, TRANSPARENT_BLACK);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE, {.color = TRANSPARENT_BLACK});
                 BF_CLAY_TEXT(
-                  TextFormat(" %d", g.run.state.waveIndex + 1), TRANSPARENT_BLACK
+                  TextFormat(" %d", g.run.state.waveIndex + 1),
+                  {.color = TRANSPARENT_BLACK}
                 );
               }
 
@@ -8351,64 +8788,65 @@ void DoUI(bool draw) {
                 .childGap        = GAP_BIG,
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               }}) {
-                FontBegin(&g.meta.fontUIBig);
-
                 const auto resumeButtonID = CLAY_ID("button_pause_resume");
                 markControlAsDefault(resumeButtonID);
                 if (!controlsContexts[currentContext].focused.id)
                   controlsContexts[currentContext].focused = resumeButtonID;
 
-                const bool resumed = componentButton(
+                const bool resumed = componentTextButton(
                   {
                     .id    = resumeButtonID,
                     .group = groupButtons,
                     .growX = true,
                     .keys  = KEYS_PAUSE,
+                    .tier  = 7,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESUME__CAPS, {.color = textColor});
                   }
                 );
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool restarted = componentButton(
+                const bool restarted = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_restart"),
                     .group = groupButtons,
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, {.color = textColor});
                   }
                 );
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool newRun = componentButton(
+                const bool newRun = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_new_run"),
                     .group = groupButtons,
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, {.color = textColor});
                   }
                 );
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool achievements = componentButton(
+                const bool achievements = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_achievements"),
                     .group = groupButtons,
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_ACHIEVEMENTS__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(
+                      Loc_UI_ACHIEVEMENTS__CAPS, {.color = textColor}
+                    );
                     int percent = GetAchievementsCompletedPercent();
                     if (percent > 0)
-                      BF_CLAY_TEXT(TextFormat(" %d%%", percent), textColor);
+                      BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = textColor});
                   }
                 );
 
@@ -8416,14 +8854,14 @@ void DoUI(bool draw) {
 #if defined(SDL_PLATFORM_DESKTOP)
                 ControlsGroupNewRow(groupButtons);
 
-                quit = componentButton(
+                quit = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_quit"),
                     .group = groupButtons,
                     .growX = true,
                   },
                   [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, textColor);
+                    BF_CLAY_TEXT_LOCALIZED(Loc_UI_QUIT__CAPS, {.color = textColor});
                   }
                 );
 #endif
@@ -8441,8 +8879,6 @@ void DoUI(bool draw) {
 
                 if (resumed || restarted || newRun || achievements || quit)
                   PlaySound(Sound_UI_CLICK);
-
-                FontEnd();
               }
             }
 
@@ -8506,7 +8942,7 @@ void DoUI(bool draw) {
   if (g.meta.showingStats.IsSet()) {  ///
     SCOPED_CONTEXT(ControlsContext_MODAL_STATS);
 
-    zIndex += 4;
+    zIndex += UIZIndexOffset_STATS;
 
     bool closeStats = false;
 
@@ -8700,7 +9136,7 @@ void DoUI(bool draw) {
       BF_CLAY_SPACER_VERTICAL;
     }
 
-    zIndex -= 4;
+    zIndex -= UIZIndexOffset_STATS;
 
     if (closeStats) {
       PlaySound(Sound_UI_CLICK);
@@ -8723,7 +9159,7 @@ void DoUI(bool draw) {
 
       SCOPED_CONTEXT(c);
 
-      zIndex += 6;
+      zIndex += UIZIndexOffset_CONFIRM_MODAL;
 
       auto confirmID = CLAY_IDI("confirm_confirm", (int)c);
       auto cancelID  = CLAY_IDI("confirm_cancel", (int)c);
@@ -8739,8 +9175,6 @@ void DoUI(bool draw) {
         .attachTo = CLAY_ATTACH_TO_PARENT,
       }}) {
         FLOATING_BEAUTIFY;
-
-        FontBegin(&g.meta.fontUIBig);
 
         CLAY({
           .layout{
@@ -8763,23 +9197,26 @@ void DoUI(bool draw) {
 
           BF_CLAY_SPACER_VERTICAL;
 
+          FontBegin(&g.meta.fontUIBig);
           BF_CLAY_TEXT_LOCALIZED(Loc_UI_ARE_YOU_SURE__CAPS);
+          FontEnd();
 
           BF_CLAY_SPACER_VERTICAL;
 
           CLAY({}) {
-            const bool quit = componentButton(
+            const bool quit = componentTextButton(
               {.id = confirmID, .group = group},
-              [&](bool hovered, Color textColor)
-                BF_FORCE_INLINE_LAMBDA { BF_CLAY_TEXT_LOCALIZED(locale, textColor); }
+              [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
+              }
             );
 
             CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
 
-            const bool cancelled = componentButton(
+            const bool cancelled = componentTextButton(
               {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, textColor);
+                BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, {.color = textColor});
               }
             );
 
@@ -8794,11 +9231,9 @@ void DoUI(bool draw) {
             }
           }
         }
-
-        FontEnd();
       }
 
-      zIndex -= 6;
+      zIndex -= UIZIndexOffset_CONFIRM_MODAL;
 
       ControlsGroupConnect(group, Direction_RIGHT, group);
 
@@ -8852,6 +9287,8 @@ void DoUI(bool draw) {
                 .Progress(ACHIEVEMENT_OUT_FRAMES);
       alpha = Clamp01(1 - EaseOutQuad(p));
     }
+
+    zIndex += UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS;
 
     CLAY({.floating{
       .offset{-GAP_SMALL, GAP_SMALL},
@@ -8940,12 +9377,16 @@ void DoUI(bool draw) {
         componentAchievement(x.type, x.stepIndex);
       }
     }
+
+    zIndex -= UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS;
   }
 
   ASSERT_FALSE(currentContext);
 
   // Control groups navigation.
   if (!draw) {  ///
+    ControlsGroupConnect(groupDetails, Direction_RIGHT, groupDetails);
+
     ControlsContext shownScreen{};
     ControlsContext shownModal{};
     for (int i = 1; i < ControlsContext_COUNT; i++) {
@@ -9371,13 +9812,6 @@ void MakeAOE(
 ) {  ///
   const f32 sizeMultiplier = GetExplosionSizeMultiplier();
 
-  Particle p{
-    .type  = ParticleType_EXPLOSION,
-    .pos   = pos,
-    .scale = sizeMultiplier,
-  };
-  p.createdAt.SetNow();
-
   const auto fb_damager = glib->creatures()->Get(damager);
 
   int creatureIndex = -1;
@@ -9415,7 +9849,19 @@ void MakeAOE(
       .indexOfWeaponThatDidDamageOrMinus1 = weaponIndexOrMinus1,
     });
   }
-  *g.run.particles.Add() = p;
+
+  MakeParticles({
+    .type                   = ParticleType_EXPLOSION,
+    .count                  = Ceil(SQR(baseRadius + 1) * sizeMultiplier * 3),
+    .pos                    = pos,
+    .velocity               = 0.4f,
+    .velocityAnglePlusMinus = PI32,
+    .initialOffset          = baseRadius * sizeMultiplier / 2.0f,
+    .initialOffsetPlusMinus = baseRadius * sizeMultiplier / 2.0f,
+    .initialOffsetEasing    = EaseOutQuart,
+    .scale                  = 1.3f,
+    .scalePlusMinus         = 0.15f,
+  });
 }
 
 int GetMobDamage(CreatureType type) {  ///
@@ -9428,137 +9874,6 @@ int GetMobDamage(CreatureType type) {  ///
          );
 }
 
-void Pickup(Pickupable* pickupable_) {  ///
-  auto& pickupable = *pickupable_;
-
-  pickupable.pickedUpAt.SetNow();
-
-  auto fb_creatures = glib->creatures();
-
-  const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
-  IterateOverEffects(
-    EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
-    -1,
-    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA {
-        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
-          if (fb_effect->pickupable_type() != pickupable.type)
-            return;
-
-          FOR_RANGE (int, i, 5) {
-            auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
-            const auto& creature      = g.run.creatures[creatureIndex];
-
-            if (creature.diedAt.IsSet())
-              continue;
-
-            auto fb = fb_creatures->Get(creature.type);
-            if (fb->hostility_type() == HostilityType_FRIENDLY)
-              continue;
-
-            int damage = EFFECT_Y_INT * times;
-            damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
-            damage = ApplyPlayerStatDamageMultiplier(damage);
-
-            f32 critDamageMultiplier = 1.5f;
-            if (w) {
-              critDamageMultiplier
-                = glib->weapons()->Get(w->type)->crit_damage_multiplier();
-            }
-
-            TryApplyDamage({
-              .creatureIndex                      = (int)creatureIndex,
-              .damage                             = damage,
-              .damagerCreatureType                = CreatureType_PLAYER,
-              .critDamageMultiplier               = critDamageMultiplier,
-              .indexOfWeaponThatDidDamageOrMinus1 = wi,
-            });
-
-            break;
-          }
-        }
-      }
-  );
-
-  IterateOverEffects(
-    EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE,
-    -1,
-    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA {
-        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
-          if (fb_effect->pickupable_type() == pickupable.type)
-            HealPlayer(EFFECT_Y_INT * times);
-        }
-      }
-  );
-
-  IterateOverEffects(
-    EffectConditionType_X__COINS_UPON__PICKUPABLE,
-    -1,
-    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-      BF_FORCE_INLINE_LAMBDA {
-        if (fb_effect->pickupable_type() == pickupable.type) {
-          const int amount = times * EFFECT_X_INT;
-          ChangeCoins(amount);
-        }
-      }
-  );
-
-  switch (pickupable.type) {
-  case PickupableType_COIN: {
-    const auto& data    = pickupable.DataCoin();
-    int         amount  = data.amount;
-    int         xNumber = 1;
-
-    if (g.run.state.notPickedUpCoins > 0) {
-      int toAdd = amount;
-      if (toAdd > g.run.state.notPickedUpCoins)
-        toAdd = g.run.state.notPickedUpCoins;
-
-      g.run.state.notPickedUpCoins -= toAdd;
-      g.run.state.notPickedUpCoinsVisual -= toAdd;
-      amount += toAdd;
-      xNumber *= 2;
-    }
-
-    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-    {
-      amount *= 2;
-      xNumber *= 2;
-    }
-
-    if (xNumber > 1) {
-      MakeNumber({
-        .type  = NumberType_PICKUPABLE,
-        .value = xNumber,
-        .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
-      });
-    }
-
-    ChangeCoins(amount);
-    AddXP((f32)amount);
-
-    auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
-    if (GRAND.FRand() < healChance)
-      HealPlayer();
-  } break;
-
-  case PickupableType_CONSUMABLE: {
-    if (consumableOrCrateHeal > 0)
-      HealPlayer(consumableOrCrateHeal);
-  } break;
-
-  case PickupableType_CRATE: {
-    if (consumableOrCrateHeal > 0)
-      HealPlayer(consumableOrCrateHeal);
-    g.run.state.crates++;
-  } break;
-
-  default:
-    INVALID_PATH;
-  }
-}
-
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -9569,7 +9884,7 @@ void GameFixedUpdate() {
   {  ///
     auto loaded = LoadSaveDataOnce(&g.meta.trashArena);
     if (loaded == SavedataLoadingType_JUST_FISNIHED) {
-      GameInitAfterLoading();
+      GameInitAfterLoadingSavedata();
       GameReady();
     }
     else if (loaded != SavedataLoadingType_FISNIHED)
@@ -9600,7 +9915,7 @@ void GameFixedUpdate() {
       g.meta.playerUsesKeyboardOrController = false;
   }
 
-  g.meta.pauseButtonFadeProgress = MoveTowards(
+  g.meta.pauseButtonFadeProgress = MoveTowardsF(
     g.meta.pauseButtonFadeProgress,
     (g.meta.playerUsesKeyboardOrController ? 0 : 1),
     FIXED_DT * 2
@@ -9679,9 +9994,11 @@ void GameFixedUpdate() {
       }
     }
 
-    // N - increase wave.
+    // N - increase wave. Shift N - decrease wave.
     if (IsKeyPressed(SDL_SCANCODE_N)) {  ///
-      g.run.state.waveIndex++;
+      g.run.state.waveIndex = MoveTowardsI(
+        g.run.state.waveIndex, (IsKeyDown(SDL_SCANCODE_LSHIFT) ? 0 : TOTAL_WAVES - 2), 1
+      );
       RecalculateThisWaveMobs();
     }
   }
@@ -9725,10 +10042,10 @@ void GameFixedUpdate() {
 
         pickupable.startedFlyingAt.SetNow();
 
-        const auto durVariation = WAVE_COMPLETED_FRAMES.value
+        const auto durPlusMinus = WAVE_COMPLETED_FRAMES.value
                                   - WAVE_COMPLETED_COINS_FLYING_FRAMES.value
                                   - WAVE_COMPLETED_COINS_FLYING_FRAMES_RIGHT.value;
-        pickupable.startedFlyingAt._value += (i64)(GRAND.FRand() * (f32)durVariation);
+        pickupable.startedFlyingAt._value += (i64)(GRAND.FRand() * (f32)durPlusMinus);
       }
     }
 
@@ -9962,9 +10279,6 @@ void GameFixedUpdate() {
           c.startPos    = ScreenPosToLogical(GetMouseScreenPos());
           c.targetPos   = c.startPos;
         }
-        else if (IsMouseDown(L)) {
-          c.targetPos = ScreenPosToLogical(GetMouseScreenPos());
-        }
         else if (ge.meta._latestActiveTouchID != InvalidTouchID) {
           const auto td = GetTouchData(ge.meta._latestActiveTouchID);
 
@@ -9975,7 +10289,9 @@ void GameFixedUpdate() {
 
           c.targetPos = ScreenPosToLogical(td.screenPos);
         }
-        else if (!IsMouseDown(L))
+        else if (IsMouseDown(L))
+          c.targetPos = ScreenPosToLogical(GetMouseScreenPos());
+        else
           c.controlling = false;
 
         if (c.controlling && (c.startPos != c.targetPos)) {
@@ -10324,7 +10640,7 @@ void GameFixedUpdate() {
               const f32 off = Lerp(
                 fb->spawn_group_radius_min(), fb->spawn_group_radius_max(), GRAND.FRand()
               );
-              p = posToSpawn + Vector2Rotate({off, 0}, 2 * PI32 * GRAND.FRand());
+              p = posToSpawn + Vector2Rotate({off, 0}, GRAND.Angle());
             } while (!creaturesWorldSpawnBounds.ContainsInside(p));
             PreSpawn spawn{.type = PreSpawnType_CREATURE, .typeCreature = type, .pos = p};
             spawn.createdAt.SetNow();
@@ -10602,15 +10918,15 @@ void GameFixedUpdate() {
       );
     }
 
-    // Picked up pickupables fly towards player.
-    for (auto& pickupable : g.run.pickupables) {  ///
-      ZoneScopedN("Picked up pickupables fly towards player.");
-
-      if (pickupable.pickedUpAt.IsSet()) {
-        pickupable.pos
-          = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
-      }
-    }
+    // // Picked up pickupables fly towards player.
+    // for (auto& pickupable : g.run.pickupables) {  ///
+    //   ZoneScopedN("Picked up pickupables fly towards player.");
+    //
+    //   if (pickupable.pickedUpAt.IsSet()) {
+    //     pickupable.pos
+    //       = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
+    //   }
+    // }
 
     // Burning spread.
     {  ///
@@ -11238,7 +11554,7 @@ void GameFixedUpdate() {
                   projectile.dir
                     = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
                 else
-                  projectile.dir = Vector2Rotate({1, 0}, 2 * PI32 * GRAND.FRand());
+                  projectile.dir = Vector2Rotate({1, 0}, GRAND.Angle());
               }
               else if (canPierce) {
                 projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
@@ -11334,7 +11650,7 @@ void GameFixedUpdate() {
               GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX,
               GRAND.FRand()
             );
-            pos = garden.pos + Vector2Rotate({off, 0}, 2 * PI32 * GRAND.FRand());
+            pos = garden.pos + Vector2Rotate({off, 0}, GRAND.Angle());
           } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
           MakePickupable({
@@ -11414,7 +11730,7 @@ void GameFixedUpdate() {
                             ),
                             0
                           ),
-                          GRAND.FRand() * 2.0f * PI32
+                          GRAND.Angle()
                         );
                 } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
@@ -11548,21 +11864,51 @@ void GameFixedUpdate() {
       int        off   = 0;
       FOR_RANGE (int, i, total) {
         const auto& pickupable = g.run.pickupables[i - off];
+
+        bool needsRemoving = false;
+
         if (pickupable.pickedUpAt.IsSet()
             && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
         {
-          g.run.pickupables.UnstableRemoveAt(i - off);
-          off++;
+          if (pickupable.type == PickupableType_COIN) {
+            MakeParticles({
+              .type                   = ParticleType_COIN,
+              .count                  = GRAND.RandInt(3, 6),
+              .pos                    = PLAYER_CREATURE.pos,
+              .velocity               = 4.0f,
+              .velocityPlusMinus      = 0.5f,
+              .velocityAngle          = 0,
+              .velocityAnglePlusMinus = PI32,
+              .initialOffset          = 0.25f,
+              .initialOffsetPlusMinus = 0.1f,
+            });
+          }
+
+          needsRemoving = true;
         }
         else if (pickupable.startedFlyingAt.IsSet()
                  && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
         {
           const auto& d = pickupable.DataCoin();
+
           g.run.state.notPickedUpCoinsVisual += d.amount;
+          g.ui.changedNotPickedUpCoinsAt = {};
+          g.ui.changedNotPickedUpCoinsAt.SetNow();
+
+          needsRemoving = true;
+        }
+
+        if (needsRemoving) {
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
         }
       }
+    }
+
+    // Updating particles.
+    for (auto& p : g.run.particles) {  ///
+      p.pos += p.velocity * FIXED_DT;
+      p.rotation += p.rotationSpeed * FIXED_DT;
     }
 
     // Removing old particles.
@@ -11574,7 +11920,7 @@ void GameFixedUpdate() {
       FOR_RANGE (int, i, total) {
         const auto& particle = g.run.particles[i - off];
         const auto  fb       = fb_particles->Get(particle.type);
-        if (particle.createdAt.Elapsed() >= lframe::FromSeconds(fb->duration_seconds())) {
+        if (particle.createdAt.Elapsed() >= particle.duration) {
           g.run.particles.UnstableRemoveAt(i - off);
           off++;
         }
@@ -11597,7 +11943,7 @@ void GameFixedUpdate() {
     ge.meta.frameGame++;
   }
 
-  DoUI(false);
+  DoUI();
 
   // Removing excessive data from `g.ui.buttonStates`.
   {  ///
@@ -11624,6 +11970,9 @@ void GameFixedUpdate() {
     else if (x.shownAt.Elapsed() >= ACHIEVEMENT_TOTAL_FRAMES)
       g.ui.justUnlockedAchievements.RemoveAt(0);
   }
+
+  g.run.dangerHPLevelOverlayValue
+    = MoveTowardsF(g.run.dangerHPLevelOverlayValue, 0, FIXED_DT / 3);
 
   ge.meta.frameVisual++;
 }
@@ -12010,8 +12359,8 @@ void GameDraw() {
 
       DrawGroup_CommandText({
         .pos        = number.pos + Vector2(0, EaseABitUpThenDown(p) / 4.0f),
-        .scale      = Vector2One() * Lerp(1.5f, 1, EaseOutQuad(MIN(1, p * 2))),
-        .font       = &g.meta.fontUIOutlined,
+        .scale      = Vector2One() * ScaleDamageNumbersByProgress(p),
+        .font       = &g.meta.fontUIBigOutlined,
         .text       = buffer,
         .bytesCount = (int)bytesCount,
         .color      = color,
@@ -12027,14 +12376,14 @@ void GameDraw() {
     DrawGroup_SetSortY(0);
     for (const auto& particle : g.run.particles) {
       ASSERT(particle.type);
-      const auto fb  = fb_particles->Get(particle.type);
-      const auto dur = lframe::FromSeconds(fb->duration_seconds());
-      const auto p   = Clamp01(particle.createdAt.Elapsed().Progress(dur));
+      const auto fb = fb_particles->Get(particle.type);
+      const auto p  = Clamp01(particle.createdAt.Elapsed().Progress(particle.duration));
       DrawGroup_CommandTexture({
-        .texID = fb->texture_ids()->Get(0),
-        .pos   = particle.pos,
-        .scale = Vector2One() * particle.scale,
-        .color = Fade(WHITE, EaseOutQuad(1 - p)),
+        .texID    = fb->variations()->Get(particle.variation)->texture_ids()->Get(0),
+        .rotation = particle.rotation,
+        .pos      = particle.pos,
+        .scale    = Vector2One() * particle.scale,
+        .color    = Fade(ColorFromRGBA(fb->color()), EaseOutQuad(1 - p)),
       });
     }
     DrawGroup_End();
@@ -12087,13 +12436,21 @@ void GameDraw() {
       const auto e = pickupable.createdAt.Elapsed();
       fade *= Clamp01(e.Progress(PICKUPABLE_FADE_FRAMES));
     }
+
+    auto pos = pickupable.pos;
+
     if (pickupable.pickedUpAt.IsSet()) {
-      const auto e = pickupable.pickedUpAt.Elapsed();
-      fade *= Clamp01(1 - e.Progress(PICKUPABLE_FADE_FRAMES));
+      const auto p
+        = MIN(1, pickupable.pickedUpAt.Elapsed().Progress(PICKUPABLE_FADE_FRAMES));
+
+      fade *= Clamp01(1 - p);
+
+      pos = Vector2Lerp(pickupable.pos, PLAYER_CREATURE.pos, EaseInQuad(p));
     }
+
     fade = EaseOutCubic(fade);
 
-    auto pos = WorldToLogical(pickupable.pos, &g.run.camera);
+    pos = WorldToLogical(pos, &g.run.camera);
     if (pickupable.startedFlyingAt.IsSet()) {
       auto p
         = pickupable.startedFlyingAt.Elapsed().Progress(WAVE_COMPLETED_COINS_FLYING_FRAMES
@@ -12103,13 +12460,44 @@ void GameDraw() {
       pos = Vector2Lerp(pos, g.ui.notPickedUpCoinsLogicalPos, p);
     }
 
-    DrawGroup_OneShotTexture(
+    DrawGroup_Begin(DrawZ_PICKUPABLES);
+
+    const bool isCoin = (pickupable.type == PickupableType_COIN);
+
+    if (isCoin) {
+      DrawGroup_CommandTexture(
+        {
+          .texID    = glib->game_coin_glow_texture_id(),
+          .rotation = pickupable.rotation,
+          .pos      = pos,
+          .color    = Fade(palYellow, fade / 6),
+        },
+        DrawCommandSetSortY_DO_NOTHING
+      );
+    }
+
+    DrawGroup_CommandTexture(
       {
-        .texID = fb->texture_id(),
+        .texID = fb->variation_texture_ids()->Get(pickupable.variation),
         .pos   = pos,
         .color = Fade(WHITE, fade),
       },
-      DrawZ_PICKUPABLES
+      DrawCommandSetSortY_SET_BASELINE
+    );
+
+    DrawGroup_End();
+  }
+
+  // Drawing danger hp level vignette.
+  if (g.run.dangerHPLevelOverlayValue > 0) {  ///
+    DrawGroup_OneShotTexture(
+      {
+        .texID = glib->ui_vignette_danger_hp_level_texture_id(),
+        .pos   = (Vector2)LOGICAL_RESOLUTION / 2.0f,
+        .scale = Vector2One() * 4.001f,
+        .color = Fade(palRed, MIN(1, g.run.dangerHPLevelOverlayValue)),
+      },
+      DrawZ_DANGER_HP_LEVEL_VIGNETTE
     );
   }
 
@@ -12118,9 +12506,13 @@ void GameDraw() {
     auto p
       = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
+    auto textColor = palTextWhite;
+
     int locale = Loc_UI_WAVE_WON__CAPS;
-    if (!g.run.state.waveWon)
-      locale = Loc_UI_WAVE_LOST__CAPS;
+    if (!g.run.state.waveWon) {
+      locale    = Loc_UI_WAVE_LOST__CAPS;
+      textColor = palTextRed;
+    }
     if (g.run.state.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
       locale = Loc_UI_WON__CAPS;
     auto text = localization_strings->Get(locale);
@@ -12166,7 +12558,7 @@ void GameDraw() {
           .font       = &g.meta.fontUIGiganticOutlined,
           .text       = text->c_str(),
           .bytesCount = bytesToShow,
-          .color      = Fade(WHITE, fade),
+          .color      = Fade(textColor, fade),
         },
         DrawZ_UI
       );
@@ -12202,7 +12594,7 @@ void GameDraw() {
     DrawGroup_End();
   }
 
-  DoUI(true);
+  DoUI();
 
   EngineApplyStrips();
   EngineApplyVignette();
@@ -12226,7 +12618,7 @@ void GameDraw() {
       DebugText("F9 add crate");
     }
 
-    DebugText("N increase wave");
+    DebugText("N - increase wave. Shift N - decrease wave");
 
     DebugText(TextFormat("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x));
 

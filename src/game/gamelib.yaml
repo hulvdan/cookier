@@ -17,6 +17,7 @@ draw_z: # {  ###
   - WEAPONS_5
   - WEAPONS_6
   - DAMAGE_NUMBERS
+  - DANGER_HP_LEVEL_VIGNETTE
   - VIGNETTE
   - SCREEN_FADE
   - UI
@@ -31,6 +32,9 @@ sounds: # {  ###
     pool: 4
   - type: UI_HOVER_SMALL
     pool: 8
+  - type: GAME_COIN
+    volume: 0.4
+    pool: 16
     # - type: GAME_ITEM_PICKUP
     #   pool: 4
     # - type: GAME_PROJECTILE_TEAR
@@ -94,13 +98,13 @@ ui_health_boss_texture_ids:
 ui_modal_fade: 0.75
 ui_item_slot_colors:
   # Tier 0.
-  - 0x3a3a41ff # Colors. Gray.
+  - 0x5e3735ff # Colors. Gray.
   - 0 # Flash.
   # Tier 1.
-  - 0x01455dff # Colors. Blue.
+  - 0x208cb2ff # Colors. Blue.
   - 0 # Flash.
   # Tier 2.
-  - 0x6d2047ff # Colors. Purple.
+  - 0xa13d77ff # Colors. Purple.
   - 0 # Flash.
   # Tier 3.
   - 0xb8560fff # Colors. Orange.
@@ -119,7 +123,7 @@ ui_item_slot_colors:
   - 0 # Flash.
 ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
 ui_frame_nine_slice:
-  texture_id: ui_frame_2
+  texture_id: ui_frame
   left: 48
   right: 48
   top: 48
@@ -212,7 +216,7 @@ creatures: # {  ###
     contact_damage_increase_per_wave: 0.6
     knockback_resistance: 0
     speed: 4.5
-    speed_variation: 0.8
+    speed_plus_minus: 0.8
     color: 0xffffffff
     idle_texture_ids:
       - game_creature_mob_small_move_1
@@ -238,7 +242,7 @@ creatures: # {  ###
     knockback_resistance: 0
     color: 0xb8560fff
     speed: 5
-    speed_variation: 0.8
+    speed_plus_minus: 0.8
     idle_texture_ids:
       - game_creature_player_move_1
     move_texture_ids:
@@ -257,7 +261,7 @@ creatures: # {  ###
     projectile_damage: 4
     color: 0xb59a66ff
     speed: 7
-    speed_variation: 0.8
+    speed_plus_minus: 0.8
     idle_texture_ids:
       - game_creature_player_move_1
     move_texture_ids:
@@ -276,7 +280,7 @@ creatures: # {  ###
     color: 0x7a7576ff
     speed: 5
     not_aggroed_speed: 3.75
-    speed_variation: 0.8
+    speed_plus_minus: 0.8
     coins_dropped: 3
     aggro_distance: 7
     idle_texture_ids:
@@ -296,7 +300,7 @@ creatures: # {  ###
     knockback_resistance: 0.7
     color: 0x82dcd7ff
     speed: 5
-    speed_variation: 0.8
+    speed_plus_minus: 0.8
     on_death_spawns_creature_type: MOB_SMALL
     on_death_spawns_count_min: 4
     on_death_spawns_count_max: 6
@@ -322,7 +326,7 @@ creatures: # {  ###
     color: 0xdc9824ff
     speed: 4
     not_aggroed_speed: 4
-    speed_variation: 0.8
+    speed_plus_minus: 0.8
     consumable_drop_chance: inf
     crate_instead_of_consumable_factor: inf
     idle_texture_ids:
@@ -346,7 +350,7 @@ creatures: # {  ###
     speed: 3.5
     collider_scale: 2
     hurtbox_scale: 1.7
-    speed_variation: 0
+    speed_plus_minus: 0
     idle_texture_ids:
       - game_creature_boss_idle_1
     move_texture_ids:
@@ -391,6 +395,7 @@ effect_condition_variables: # {  ###
 
 effect_conditions: # {  ###
   - type: DEFAULT_GET__STAT
+  - type: SMALLEST_DIFFICULTY
   - type: STAT__EVERY__X__KILLED_ENEMIES
   - type: END_OF_THE_WAVE_GET__STAT
   - type: START_OF_THE_WAVE_GET__STAT
@@ -608,399 +613,7 @@ items: # {  ###
     limit: 1
     effects:
       - stat_type: DAMAGE
-        value: 1
-  - type: TODO_2
-    texture_id: ui_item_todo
-    tier: 0
-    price: 2
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 2
-  - type: TODO_3
-    texture_id: ui_item_todo
-    tier: 0
-    price: 3
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 3
-  - type: TODO_4
-    texture_id: ui_item_todo
-    tier: 0
-    price: 4
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 4
-  - type: TODO_5
-    texture_id: ui_item_todo
-    tier: 0
-    price: 5
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 5
-  - type: TODO_6
-    texture_id: ui_item_todo
-    tier: 0
-    price: 6
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 6
-  - type: TODO_7
-    texture_id: ui_item_todo
-    tier: 0
-    price: 7
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 7
-  - type: TODO_8
-    texture_id: ui_item_todo
-    tier: 0
-    price: 8
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 8
-  - type: TODO_9
-    texture_id: ui_item_todo
-    tier: 0
-    price: 9
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 9
-  - type: TODO_10
-    texture_id: ui_item_todo
-    tier: 0
-    price: 10
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
         value: 10
-  - type: TODO_11
-    texture_id: ui_item_todo
-    tier: 0
-    price: 11
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 11
-  - type: TODO_12
-    texture_id: ui_item_todo
-    tier: 0
-    price: 12
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 12
-  - type: TODO_13
-    texture_id: ui_item_todo
-    tier: 0
-    price: 13
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 13
-  - type: TODO_14
-    texture_id: ui_item_todo
-    tier: 0
-    price: 14
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 14
-  - type: TODO_15
-    texture_id: ui_item_todo
-    tier: 0
-    price: 15
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 15
-  - type: TODO_16
-    texture_id: ui_item_todo
-    tier: 0
-    price: 16
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 16
-  - type: TODO_17
-    texture_id: ui_item_todo
-    tier: 0
-    price: 17
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 17
-  - type: TODO_18
-    texture_id: ui_item_todo
-    tier: 0
-    price: 18
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 18
-  - type: TODO_19
-    texture_id: ui_item_todo
-    tier: 0
-    price: 19
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 19
-  - type: TODO_20
-    texture_id: ui_item_todo
-    tier: 0
-    price: 20
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 20
-  - type: TODO_21
-    texture_id: ui_item_todo
-    tier: 0
-    price: 21
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 21
-  - type: TODO_22
-    texture_id: ui_item_todo
-    tier: 0
-    price: 22
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 22
-  - type: TODO_23
-    texture_id: ui_item_todo
-    tier: 0
-    price: 23
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 23
-  - type: TODO_24
-    texture_id: ui_item_todo
-    tier: 0
-    price: 24
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 24
-  - type: TODO_25
-    texture_id: ui_item_todo
-    tier: 0
-    price: 25
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 25
-  - type: TODO_26
-    texture_id: ui_item_todo
-    tier: 0
-    price: 26
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 26
-  - type: TODO_27
-    texture_id: ui_item_todo
-    tier: 0
-    price: 27
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 27
-  - type: TODO_28
-    texture_id: ui_item_todo
-    tier: 0
-    price: 28
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 28
-  - type: TODO_29
-    texture_id: ui_item_todo
-    tier: 0
-    price: 29
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 29
-  - type: TODO_30
-    texture_id: ui_item_todo
-    tier: 0
-    price: 30
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 30
-  - type: TODO_31
-    texture_id: ui_item_todo
-    tier: 0
-    price: 31
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 31
-  - type: TODO_32
-    texture_id: ui_item_todo
-    tier: 0
-    price: 32
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 32
-  - type: TODO_33
-    texture_id: ui_item_todo
-    tier: 0
-    price: 33
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 33
-  - type: TODO_34
-    texture_id: ui_item_todo
-    tier: 0
-    price: 34
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 34
-  - type: TODO_35
-    texture_id: ui_item_todo
-    tier: 0
-    price: 35
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 35
-  - type: TODO_36
-    texture_id: ui_item_todo
-    tier: 0
-    price: 36
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 36
-  - type: TODO_37
-    texture_id: ui_item_todo
-    tier: 0
-    price: 37
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 37
-  - type: TODO_38
-    texture_id: ui_item_todo
-    tier: 0
-    price: 38
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 38
-  - type: TODO_39
-    texture_id: ui_item_todo
-    tier: 0
-    price: 39
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 39
-  - type: TODO_40
-    texture_id: ui_item_todo
-    tier: 0
-    price: 40
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 40
-  - type: TODO_41
-    texture_id: ui_item_todo
-    tier: 0
-    price: 41
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 41
-  - type: TODO_42
-    texture_id: ui_item_todo
-    tier: 0
-    price: 42
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 42
-  - type: TODO_43
-    texture_id: ui_item_todo
-    tier: 0
-    price: 43
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 43
-  - type: TODO_44
-    texture_id: ui_item_todo
-    tier: 0
-    price: 44
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 44
-  - type: TODO_45
-    texture_id: ui_item_todo
-    tier: 0
-    price: 45
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 45
-  - type: TODO_46
-    texture_id: ui_item_todo
-    tier: 0
-    price: 46
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 46
-  - type: TODO_47
-    texture_id: ui_item_todo
-    tier: 0
-    price: 47
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 47
-  - type: TODO_48
-    texture_id: ui_item_todo
-    tier: 0
-    price: 48
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 48
-  - type: TODO_49
-    texture_id: ui_item_todo
-    tier: 0
-    price: 49
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 49
-  - type: TODO_50
-    texture_id: ui_item_todo
-    tier: 0
-    price: 50
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 50
 # }
 
 weapon_kinds: # {  ###
@@ -1050,7 +663,7 @@ weapons: # {  ###
     shooting_duration_frames: 10
     range_meters: 3
     knockback_meters: 5
-    life_steal_percent: 1.5
+    life_steal_percents: 1.5
     melee_collider_height_px: 76
     icon_texture_id: game_weapon_sword
     texture_ids:
@@ -1594,19 +1207,71 @@ projectiles: # {  ###
 particles: # {  ###
   - type: INVALID
   - type: EXPLOSION
+    color: 0x7b7c74ff
     duration_seconds: 0.4
-    texture_ids:
-      - game_particle_explosion_1
+    duration_plus_minus: 0.15
+    variations:
+      - texture_ids:
+          - game_particle_4_1
+      - texture_ids:
+          - game_particle_4_2
+      - texture_ids:
+          - game_particle_4_3
+      - texture_ids:
+          - game_particle_4_4
+      - texture_ids:
+          - game_particle_4_5
+  - type: COIN
+    color: 0xf3bc5eff
+    duration_seconds: 0.4
+    duration_plus_minus: 0.15
+    variations:
+      - texture_ids:
+          - game_particle_3_1
+      - texture_ids:
+          - game_particle_3_2
+      - texture_ids:
+          - game_particle_3_3
+      - texture_ids:
+          - game_particle_3_4
+      - texture_ids:
+          - game_particle_3_5
+      - texture_ids:
+          - game_particle_3_6
+  - type: BLOOD
+    duration_seconds: 0.3
+    duration_plus_minus: 0.15
+    color: 0xc02931ff
+    variations:
+      - texture_ids:
+          - game_particle_4_1
+      - texture_ids:
+          - game_particle_4_2
+      - texture_ids:
+          - game_particle_4_3
+      - texture_ids:
+          - game_particle_4_4
+      - texture_ids:
+          - game_particle_4_5
+          # - texture_ids:
+          #     - game_particle_4_6
 # }
 
 pickupables: # {  ###
   - type: INVALID
   - type: COIN
-    texture_id: game_pickupable_coin
+    variation_texture_ids:
+      - game_pickupable_coin_1
+      - game_pickupable_coin_2
+      - game_pickupable_coin_3
+      - game_pickupable_coin_4
+      - game_pickupable_coin_5
   - type: CONSUMABLE
-    texture_id: game_pickupable_consumable
+    variation_texture_ids:
+      - game_pickupable_consumable
   - type: CRATE
-    texture_id: game_pickupable_crate
+    variation_texture_ids:
+      - game_pickupable_crate
 # }
 
 numbers: # {  ###
@@ -1859,6 +1524,8 @@ difficulties: # {  ###
   - type: INVALID
   - type: D0
     texture_id: ui_difficulty_0
+    effects:
+      - effectcondition_type: SMALLEST_DIFFICULTY
   - type: D1
     texture_id: ui_difficulty_1
     effects:
@@ -1871,27 +1538,29 @@ difficulties: # {  ###
         value: 12
       - stat_type: ENEMY_SPEED
         value: 20
-  - type: D3
-    texture_id: ui_difficulty_3
-    effects:
-      - stat_type: ENEMY_HP_SCALE
-        value: 25
-      - stat_type: ENEMY_SPEED
-        value: 20
-  - type: D4
-    texture_id: ui_difficulty_4
-    effects:
-      - stat_type: ENEMY_HP_SCALE
-        value: 40
-      - stat_type: ENEMY_SPEED
-        value: 20
-  - type: D5
-    texture_id: ui_difficulty_5
-    effects:
-      - stat_type: ENEMY_HP_SCALE
-        value: 75
-      - stat_type: ENEMY_SPEED
-        value: 20
+        # - type: D3
+        #   texture_id: ui_difficulty_3
+        #   effects:
+        #     - stat_type: ENEMY_HP_SCALE
+        #       value: 25
+        #     - stat_type: ENEMY_SPEED
+        #       value: 20
+        # - type: D4
+        #   enabled: false
+        #   texture_id: ui_difficulty_4
+        #   effects:
+        #     - stat_type: ENEMY_HP_SCALE
+        #       value: 40
+        #     - stat_type: ENEMY_SPEED
+        #       value: 20
+        # - type: D5
+        #   enabled: false
+        #   texture_id: ui_difficulty_5
+        #   effects:
+        #     - stat_type: ENEMY_HP_SCALE
+        #       value: 75
+        #     - stat_type: ENEMY_SPEED
+        #       value: 20
 # }
 
 builds: # {  ###
@@ -1975,9 +1644,9 @@ achievements: # {  ###
         unlocks_build_type: WIZARD
       - value: 2
       - value: 3
-      - value: 4
-      - value: 5
-      - value: 6
+        # - value: 4
+        # - value: 5
+        # - value: 6
   - type: KILLER
     steps:
       - value: 10
@@ -2035,6 +1704,9 @@ achievements: # {  ###
       - value: 1
       - value: 1
       #
+      - value: 1
+      - value: 1
+      - value: 1
       - value: 1
       - value: 1
       - value: 1
