@@ -205,7 +205,7 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
     }
   }
 
-  SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE;
+  SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
 
   ge.meta.screenSize = LOGICAL_RESOLUTION;
 
