@@ -9,7 +9,7 @@ import bf_swatch_aco
 import typer
 from bf_gamelib import do_generate
 from bf_image_outline import image_outline
-from bf_image_split import image_split
+from bf_image_split import image_extract_black, image_extract_white
 from bf_lib import (
     ALLOWED_BUILDS,
     ART_DIR,
@@ -499,8 +499,9 @@ def process_images():
     for i, filepath in enumerate(split_files):
         log.info("{}/{}: {}".format(i + 1, len(split_files), filepath.stem))
         img = Image.open(filepath)
-        img_front, img_back = image_split(image=img)
+        img_front = image_extract_white(img)
         img_front.save(filepath.parent.parent / (filepath.stem + "_front.png"))
+        img_back = image_extract_black(img)
         img_back.save(filepath.parent.parent / (filepath.stem + "_back.png"))
     log.info("Splitting... Success!")
 

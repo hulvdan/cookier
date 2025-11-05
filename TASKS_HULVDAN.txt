@@ -12,8 +12,17 @@ x cheat: recalc random upon changing wave
 x upgrades: guaranteed 4 blues / 4 pinks / 4 legendaries on specific levels
 x prices inflation (shop buy or recyle + recycle picked up item)
 x recycle price doesn't get affected by shop price
+x split: get only outline
+- split: white outline 2 (or more) pixels
+x drew some tiles
 
-* prod: игровое поле: тайлы
+* prod: игровое поле: снизу
+* prod: игровое поле: вертикаль
+* prod: игровое поле: углы
+* prod: игровое поле: залить центр
+*
+* prod: игровое поле: рандом сегменты
+*
 * prod: игровое поле: цветочки травинки
 * prod: игровое поле:
 *

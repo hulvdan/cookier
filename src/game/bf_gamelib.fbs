@@ -322,7 +322,8 @@ table Achievement {
 }
 
 table FloorSegment {
-    texture_id: int;
+    front_texture_id: int;
+    back_texture_id: int;
     offset: Posf;
 }
 // GAME STUFF END

@@ -713,8 +713,8 @@ struct MakeNumberData {  ///
 };
 
 lframe GetWaveDuration(int waveIndex) {  ///
-  constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
-                             60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
+  constexpr int durations_[]{1020, 25, 30, 35, 40, 45, 50, 55, 60, 60,
+                             60,   60, 60, 60, 60, 60, 60, 60, 60, 90};
   VIEW_FROM_ARRAY_DANGER(durations);
   int seconds = durations[MIN(durations.count - 1, waveIndex)];
 #if BF_DEBUG
@@ -12250,24 +12250,22 @@ void GameDraw() {
     DrawGroup_Begin(DrawZ_FLOOR);
     DrawGroup_SetSortY(0);
 
-    constexpr Color color = ColorFromRGBA(0x362316ff);
+    constexpr Color color = ColorFromRGBA(0x2e5621ff);
 
     static_assert((WORLD_X % 4) == 0);
     static_assert((WORLD_Y % 4) == 0);
-    int previousSegment = -1;
 
     FOR_RANGE (int, mode, 2) {  // 0 - back, 1 - front.
-      const auto color = (mode ? WHITE : BLACK);
-
       FOR_RANGE (int, x, (WORLD_X - 8) / 4) {
-        DrawGroup_OneShotTexture(
-          {
-            .pos   = {0},
-            .size  = (Vector2)WORLD_SIZE,
-            .color = color,
-          },
-          DrawZ_FLOOR
-        );
+        auto fb = fb_segments->Get(0);
+        auto offset
+          = ToVector2(fb->offset()) * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
+
+        DrawGroup_CommandTexture({
+          .texID = (mode ? fb->back_texture_id() : fb->front_texture_id()),
+          .pos   = Vector2(6 + x * 4, WORLD_Y) + offset,
+          .color = (mode ? BLACK : color),
+        });
       }
     }
 
@@ -12726,15 +12724,12 @@ void GameDraw() {
     const bool isCoin = (pickupable.type == PickupableType_COIN);
 
     if (isCoin) {
-      DrawGroup_CommandTexture(
-        {
-          .texID    = glib->game_coin_glow_texture_id(),
-          .rotation = pickupable.rotation,
-          .pos      = pos,
-          .color    = Fade(palYellow, fade / 6),
-        },
-        DrawCommandSetSortY_DO_NOTHING
-      );
+      DrawGroup_CommandTexture({
+        .texID    = glib->game_coin_glow_texture_id(),
+        .rotation = pickupable.rotation,
+        .pos      = pos,
+        .color    = Fade(palYellow, fade / 6),
+      });
     }
 
     DrawGroup_CommandTexture(
