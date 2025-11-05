@@ -1,9 +1,9 @@
 // Game Toggles.
 // ============================================================
 
-#define BF_SPAWN_MOBS (BF_RELEASE || 0)
+#define BF_DISABLE_MOB_SPAWNS (BF_DEBUG && 0)
 #define BF_VERY_SHORT_WAVE_DURATION (BF_DEBUG && 0)
-#define BF_VERY_LONG_WAVE_DURATION (BF_DEBUG && 1)
+#define BF_VERY_LONG_WAVE_DURATION (BF_DEBUG && 0)
 
 // Other stuff.
 // ============================================================
