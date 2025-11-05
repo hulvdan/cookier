@@ -221,7 +221,7 @@ table Item {
     tier: int;
     price: int;
     limit: int = 2147483647;  // TODO: how can i specify int_max?
-    deprecated: bool = true;
+    deprecated: bool;
     effects: [Effect];
 }
 
