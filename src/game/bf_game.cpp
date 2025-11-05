@@ -819,7 +819,6 @@ enum ScreenType {  ///
 struct ShopItem {  ///
   WeaponType weapon = {};
   ItemType   item   = {};
-  int        price  = {};
   int        tier   = {};
 };
 
@@ -3664,26 +3663,19 @@ ItemType GenerateRandomItem() {  ///
   return {};
 }
 
-int _ApplyStatPrice(StatType s, int price) {  ///
-  const StatType allowed_[]{StatType_ITEMS_PRICE, StatType_REROLL_PRICE};
+f32 _ApplyStatPrice(StatType s, f32 price) {  ///
+  const StatType allowed_[]{StatType_SHOP_PRICE, StatType_REROLL_PRICE};
   VIEW_FROM_ARRAY_DANGER(allowed);
   ASSERT(allowed.Contains(s));
 
   int stat = g.run.state.stats[s];
   if (stat == 0)
     return price;
-  stat        = MAX(-100, stat);
-  auto factor = (f32)(stat + 100) / 100.0f;
-  price       = Round((f32)price * factor);
+
+  stat             = MAX(-100, stat);
+  const f32 factor = 1 + (f32)stat / 100.0f;
+  price            = (f32)price * factor;
   return price;
-}
-
-int ApplyStatItemsPrice(int price) {  ///
-  return _ApplyStatPrice(StatType_ITEMS_PRICE, price);
-}
-
-int ApplyStatRerollPrice(int price) {  ///
-  return _ApplyStatPrice(StatType_REROLL_PRICE, price);
 }
 
 int GetNumberOfTreesToSpawn() {  ///
@@ -3722,15 +3714,18 @@ int GetNumberOfTreesToSpawn() {  ///
   return 0;
 }
 
-int GetWeaponPrice(WeaponType type, int tier) {  ///
+f32 CalculateItemOrWeaponPrice(f32 price, int tier) {  ///
   ASSERT(tier >= 0);
-  ASSERT(tier < 4);
-  const auto fb = glib->weapons()->Get(type);
-  ASSERT(fb->min_tier_index() <= tier);
-  return Round((f32)fb->max_price() * PRICE_SCALINGS_PER_TIER[tier]);
+  ASSERT(tier < TOTAL_TIERS);
+  price *= PRICE_SCALINGS_PER_TIER[tier];
+
+  const int wave = g.run.state.waveIndex + 1;
+  price          = (price + wave + (price * wave * 0.1f));
+
+  return price;
 }
 
-int ToRecyclePrice(int price) {  ///
+int ToRecyclePrice(f32 price) {  ///
   int percent = 0;
   IterateOverEffects(
     EffectConditionType_X__PERCENT_MORE_COINS_FROM_RECYCLING,
@@ -3739,7 +3734,7 @@ int ToRecyclePrice(int price) {  ///
       BF_FORCE_INLINE_LAMBDA { percent += EFFECT_X_INT * times; }
   );
   f32 scale = MAX(0, 1.0f + (f32)percent / 100.0f) / 3.0f;
-  return Ceil((f32)price * scale);
+  return MAX(1, Round(price * scale));
 }
 
 void AddItem(ItemType type) {  ///
@@ -4465,11 +4460,12 @@ int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
 
   auto price = rerollPricesPerWave[waveIndex]
                + rerolledTimes * rerollPriceIncreasePerWave[waveIndex];
-  return price;
+
+  return MAX(1, Round(_ApplyStatPrice(StatType_REROLL_PRICE, price)));
 }
 
 void Rerolls::Roll() {  ///
-  ChangeCoins(-ApplyStatRerollPrice(GetPrice()));
+  ChangeCoins(-GetPrice());
   ASSERT(PLAYER_COINS >= 0);
   if (rerolledFreeTimes < g.run.state.stats[StatType_FREE_REROLLS])
     rerolledFreeTimes++;
@@ -4564,15 +4560,6 @@ void RefillShopToPick() {  ///
         x = {.weapon = w, .tier = tier};
       }
     }
-  }
-}
-
-void RecalculateShopToPick() {  ///
-  for (auto& x : g.run.state.shop.toPick) {
-    if (x.item)
-      x.price = glib->items()->Get(x.item)->price();
-    else if (x.weapon)
-      x.price = GetWeaponPrice(x.weapon, x.tier);
   }
 }
 
@@ -6061,17 +6048,17 @@ void DoUI() {
         tier = 0;
     }
 
-    int price        = 0;
+    f32 price_       = 0;
     int recyclePrice = 0;
     if (fb_weapon) {
-      price        = GetWeaponPrice(data.weapon, tier);
-      recyclePrice = ToRecyclePrice(price);
+      price_       = CalculateItemOrWeaponPrice(fb_weapon->price(), tier);
+      recyclePrice = ToRecyclePrice(price_);
     }
     if (fb_item) {
-      price        = fb_item->price();
-      recyclePrice = ToRecyclePrice(price);
+      price_       = CalculateItemOrWeaponPrice(fb_item->price(), fb_item->tier());
+      recyclePrice = ToRecyclePrice(price_);
     }
-    price = ApplyStatItemsPrice(price);
+    const int price = MAX(1, Round(_ApplyStatPrice(StatType_SHOP_PRICE, price_)));
 
     bool canBuy                     = (price <= PLAYER_COINS);
     bool canBuyErrorWeapon          = false;
@@ -6614,9 +6601,6 @@ void DoUI() {
                 }
               );
             }
-
-            const int recyclePrice
-              = ToRecyclePrice(GetWeaponPrice(weapon.type, weapon.tier));
 
             // Recycle button.
             const auto weaponRecycleID = CLAY_ID("button_weapon_recycle");
@@ -8042,7 +8026,8 @@ void DoUI() {
           );
           markControlAsDefault(tookID);
 
-          const int recyclePrice = ToRecyclePrice(fb->price());
+          const int recyclePrice
+            = ToRecyclePrice(CalculateItemOrWeaponPrice(fb->price(), fb->tier()));
 
           const bool recycled = componentButtonRecycle({
             .id    = CLAY_ID("button_picked_up_item_recycle"),
@@ -8268,10 +8253,9 @@ void DoUI() {
       BF_CLAY_SPACER_VERTICAL;
 
       // Reroll button.
-      const auto calculatedRerollPrice
-        = ApplyStatRerollPrice(g.run.state.upgrades.rerolls.GetPrice());
-      const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
-      bool       rerolled  = componentButtonReroll(groupReroll, calculatedRerollPrice);
+      const auto calculatedRerollPrice = g.run.state.upgrades.rerolls.GetPrice();
+      const bool canReroll             = (calculatedRerollPrice <= PLAYER_COINS);
+      bool       rerolled = componentButtonReroll(groupReroll, calculatedRerollPrice);
       if (rerolled) {
         if (canReroll) {
           PlaySound(Sound_UI_CLICK);
@@ -8343,9 +8327,8 @@ void DoUI() {
 
           // Reroll button.
           CLAY({.layout{.childGap = GAP_BIG}}) {
-            const auto calculatedRerollPrice
-              = ApplyStatRerollPrice(g.run.state.shop.rerolls.GetPrice());
-            const bool canReroll = (calculatedRerollPrice <= PLAYER_COINS);
+            const auto calculatedRerollPrice = g.run.state.shop.rerolls.GetPrice();
+            const bool canReroll             = (calculatedRerollPrice <= PLAYER_COINS);
 
             bool rerolled = componentButtonReroll(groupTop, calculatedRerollPrice);
             if (rerolled) {
@@ -8353,7 +8336,6 @@ void DoUI() {
                 PlaySound(Sound_UI_CLICK);
                 g.run.state.shop.rerolls.Roll();
                 RefillShopToPick();
-                RecalculateShopToPick();
                 Save();
               }
               else {
@@ -10436,7 +10418,6 @@ void GameFixedUpdate() {
       g.run.state.shop.rerolls = {};
       RefillShopToPick();
     }
-    RecalculateShopToPick();
 
     Save();
   }

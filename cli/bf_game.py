@@ -221,7 +221,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
             assert required_tier_values <= MAX_WEAPON_TIER
 
             mandatory_fields = [
-                "max_price",
+                "price",
                 "min_tier_index",
                 "base_damage",
                 "damage_scalings",

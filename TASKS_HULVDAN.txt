@@ -10,9 +10,9 @@ x prod: рандом в picked up item-ах
 x prod: рандом оружий
 x cheat: recalc random upon changing wave
 x upgrades: guaranteed 4 blues / 4 pinks / 4 legendaries on specific levels
+x prices inflation (shop buy or recyle + recycle picked up item)
+x recycle price doesn't get affected by shop price
 
-* prices inflation (shop buy or recyle + recycle picked up item)
-*
 * next wave 2 crossing swords icon
 *
 * prod sfx: steps
@@ -96,7 +96,7 @@ x upgrades: guaranteed 4 blues / 4 pinks / 4 legendaries on specific levels
 *
 *
 *
-* sparkles that highlight the weapons can be upgraded
+* sparkles that highlight the weapons can be combined
 * outline with offset down
 *
 * enemy that tanks 1-3 damage

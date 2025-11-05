@@ -20,7 +20,7 @@ STAT_CONSUMABLE_HEAL;                Лечение Яблоками;           
 STAT_COINS_HEAL;                     Лечение Монетами . Лечение Печеньгами;             Coins Healing . Cookiens Healing;
 STAT_XP_GAIN;                        Получение Опыта/Обучаемость;                       XP Gain;
 STAT_PICKUP_RANGE;                   Радиус Подбора . магнетизм;                        Pickup Range;
-STAT_ITEMS_PRICE;                    Цена Товаров . скидка;                             Item Prices;
+STAT_SHOP_PRICE;                    Цена Товаров . скидка;                             Item Prices;
 STAT_EXPLOSION_DAMAGE;               Взрывной Урон;                                     Explosive Damage;
 STAT_EXPLOSION_SIZE;                 Размер Взрывов;                                    Explosion Size;
 STAT_BOUNCES;                        Отскоки;                                           Bounces;

@@ -682,7 +682,7 @@ weapons: # {  ###
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 80 80 80 80
     crit_damage_multiplier: 1.5
-    max_price: 122
+    price: 122
     cooldown_frames: 20
     shooting_duration_frames: 10
     range_meters: 3
@@ -763,7 +763,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 85 90 95 100
-    max_price: 130
+    price: 130
     knockback_meters: 1
     cooldown_frames: 10
     shooting_duration_frames: 20
@@ -864,7 +864,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 85 90 95 100
-    max_price: 130
+    price: 130
     knockback_meters: 1
     cooldown_frames: 15
     shooting_duration_frames: 15
@@ -915,7 +915,7 @@ weapons: # {  ###
     projectile_spawn_frames: 4
     projectile_pierce: 1
     range_meters: 8
-    max_price: 140
+    price: 140
     shooting_duration_frames: 10
     icon_texture_id: ui_weapon_bow
     texture_ids:
@@ -952,7 +952,7 @@ weapons: # {  ###
     projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 12
-    max_price: 120
+    price: 120
     shooting_duration_frames: 12
     effects:
       # - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
@@ -990,7 +990,7 @@ weapons: # {  ###
     projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 12
-    max_price: 130
+    price: 130
     shooting_duration_frames: 12
     icon_texture_id: game_weapon_wand
     texture_ids:
@@ -1008,7 +1008,7 @@ weapons: # {  ###
     projectile_spawn_frames: 7
     projectile_bounce: 2
     range_meters: 4
-    max_price: 120
+    price: 120
     shooting_duration_frames: 12
     icon_texture_id: game_weapon_wand2
     texture_ids:
@@ -1021,7 +1021,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 85 90 95 100
-    max_price: 130
+    price: 130
     knockback_meters: 1
     cooldown_frames: 10
     shooting_duration_frames: 15
@@ -1322,7 +1322,7 @@ stats: # {  ###
   - type: PICKUP_RANGE
     is_percent: true
     is_secondary: true
-  - type: ITEMS_PRICE
+  - type: SHOP_PRICE
     is_percent: true
     is_secondary: true
   - type: EXPLOSION_DAMAGE
