@@ -3457,7 +3457,7 @@ int MakeCreature(MakeCreatureData data) {  ///
   auto slot  = g.run.creatures.Add();
 
   const auto fb = glib->creatures()->Get(data.type);
-  if (index && !BF_SPAWN_MOBS)
+  if (index && BF_DISABLE_MOB_SPAWNS)
     return -1;
 
   f32 hurtboxRadius = PLAYER_HURTBOX_RADIUS;
