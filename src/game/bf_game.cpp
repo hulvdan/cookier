@@ -12261,7 +12261,15 @@ void GameDraw() {
     static_assert((WORLD_X % 4) == 0);
     static_assert((WORLD_Y % 4) == 0);
 
+    DrawGroup_CommandRect({
+      .pos{(f32)WORLD_X / 2, (f32)WORLD_Y / 2},
+      .size{(f32)WORLD_X - 1, (f32)WORLD_Y - 1},
+      .color = color,
+    });
+
     FOR_RANGE (int, mode, 2) {  // 0 - back, 1 - front.
+      Random floorRand{0};
+
       struct {
         Vector2 pos      = {};
         f32     rotation = {};
@@ -12273,7 +12281,7 @@ void GameDraw() {
       };
 
       for (const auto& c : corners) {
-        auto fb = fb_corners->Get(0);
+        auto fb = fb_corners->Get(floorRand.Rand() % fb_corners->size());
         auto offset
           = ToVector2(fb->offset()) * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
 
@@ -12284,20 +12292,20 @@ void GameDraw() {
           .color    = (mode ? BLACK : color),
         });
 
-        DrawGroup_CommandRect({
-          .pos = c.pos,
-          .size{4, 4},
-          .color = Fade(RED, 0.15f),
-        });
+        // DrawGroup_CommandRect({
+        //   .pos = c.pos,
+        //   .size{4, 4},
+        //   .color = Fade(RED, 0.15f),
+        // });
       }
 
       FOR_RANGE (int, x, (WORLD_X - 8) / 4) {
-        if (x == 0)
-          continue;
-        if (x == 2)
-          continue;
+        // if (x == 0)
+        //   continue;
+        // if (x == 2)
+        //   continue;
 
-        auto fb = fb_segments->Get(4);
+        auto fb = fb_segments->Get(floorRand.Rand() % fb_segments->size());
         auto offset
           = ToVector2(fb->offset()) * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
 
@@ -12309,11 +12317,51 @@ void GameDraw() {
           .color = (mode ? BLACK : color),
         });
 
-        DrawGroup_CommandRect({
-          .pos{posX, WORLD_Y - 1},
-          .size{4, 2},
-          .color = Fade(RED, 0.15f),
+        DrawGroup_CommandTexture({
+          .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
+          .rotation = PI32,
+          .pos      = Vector2(posX, 0) + Vector2{offset.x, -offset.y},
+          .color    = (mode ? BLACK : color),
         });
+
+        // DrawGroup_CommandRect({
+        //   .pos{posX, WORLD_Y - 1},
+        //   .size{4, 2},
+        //   .color = Fade(RED, 0.15f),
+        // });
+      }
+
+      FOR_RANGE (int, y, (WORLD_Y - 8) / 4) {
+        // if (y == 0)
+        //   continue;
+        // if (y == 2)
+        //   continue;
+
+        auto fb = fb_segments->Get(floorRand.Rand() % fb_segments->size());
+        auto offset
+          = ToVector2(fb->offset()) * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
+
+        int posY = 6 + y * 4;
+
+        DrawGroup_CommandTexture({
+          .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
+          .rotation = 3 * PI32 / 2,
+          .pos      = Vector2(WORLD_X, posY) + Vector2Rotate(offset, 3 * PI32 / 2),
+          .color    = (mode ? BLACK : color),
+        });
+
+        DrawGroup_CommandTexture({
+          .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
+          .rotation = PI32 / 2,
+          .pos      = Vector2(0, posY) + Vector2Rotate(offset, PI32 / 2),
+          .color    = (mode ? BLACK : color),
+        });
+
+        // DrawGroup_CommandRect({
+        //   .pos{posX, WORLD_Y - 1},
+        //   .size{4, 2},
+        //   .color = Fade(RED, 0.15f),
+        // });
       }
     }
 
