@@ -77,7 +77,7 @@ function rebuild_tasks()
         { "w_temp", cli_command("temp") },
         { "p_deploy_yandex", cli_command("deploy_yandex") },
         { "i_make_swatch", cli_command("make_swatch") },
-        { "process_images", cli_command("process_images") },
+        { "l_process_images", cli_command("process_images") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         { "l_lint_cpp", cli_command("lint") },

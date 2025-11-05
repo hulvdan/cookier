@@ -499,8 +499,9 @@ def process_images():
     for i, filepath in enumerate(split_files):
         log.info("{}/{}: {}".format(i + 1, len(split_files), filepath.stem))
         img = Image.open(filepath)
-        out_img = image_split(image=img)
-        out_img.save(filepath.parent.parent / filepath.name)
+        img_front, img_back = image_split(image=img)
+        img_front.save(filepath.parent.parent / (filepath.stem + "_front.png"))
+        img_back.save(filepath.parent.parent / (filepath.stem + "_back.png"))
     log.info("Splitting... Success!")
 
 
