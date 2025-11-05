@@ -320,6 +320,11 @@ table Achievement {
     hide_progress: bool;
     steps: [AchievementStep];
 }
+
+table FloorSegment {
+    texture_id: int;
+    offset: Posf;
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -407,6 +412,9 @@ table GameLibrary {
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;
     landmine_explosion_radius: float = 1.5;
+
+    floor_segments: [FloorSegment] (required);
+    floor_corners: [FloorSegment] (required);
 
     explosion_radius: float = 1.5;
     // GAME STUFF END

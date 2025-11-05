@@ -12244,11 +12244,13 @@ void GameDraw() {
 
   // Drawing floor.
   {  ///
+    constexpr Color floorColor = ColorFromRGBA(0x362316ff);
+
     DrawGroup_OneShotRect(
       {
         .pos   = (Vector2)WORLD_SIZE / 2.0f,
         .size  = (Vector2)WORLD_SIZE,
-        .color = ColorFromRGBA(0x362316ff),
+        .color = floorColor,
       },
       DrawZ_FLOOR
     );

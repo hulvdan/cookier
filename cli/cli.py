@@ -8,7 +8,8 @@ import bf_swatch
 import bf_swatch_aco
 import typer
 from bf_gamelib import do_generate
-from bf_image_outline import outline
+from bf_image_outline import image_outline
+from bf_image_split import image_split
 from bf_lib import (
     ALLOWED_BUILDS,
     ART_DIR,
@@ -481,16 +482,26 @@ def lint():
 
 @command
 @timing
-def outline_images():
-    src_dir = ART_DIR / "textures" / "to_outline"
-    files = list(src_dir.rglob("*.png"))
+def process_images():
+    outline_files = list((ART_DIR / "textures" / "to_outline").rglob("*.png"))
     log.info("Outlining...")
-    for i, filepath in enumerate(files):
-        log.info("{}/{}: {}".format(i + 1, len(files), filepath.stem))
+    for i, filepath in enumerate(outline_files):
+        log.info("{}/{}: {}".format(i + 1, len(outline_files), filepath.stem))
         img = Image.open(filepath)
-        out_img = outline(image=img, stroke_size=8, color=(0, 0, 0, 255), is_shadow=False)
+        out_img = image_outline(
+            image=img, stroke_size=8, color=(0, 0, 0, 255), is_shadow=False
+        )
         out_img.save(filepath.parent.parent / filepath.name)
     log.info("Outlining... Success!")
+
+    split_files = list((ART_DIR / "textures" / "to_split").rglob("*.png"))
+    log.info("Splitting...")
+    for i, filepath in enumerate(split_files):
+        log.info("{}/{}: {}".format(i + 1, len(split_files), filepath.stem))
+        img = Image.open(filepath)
+        out_img = image_split(image=img)
+        out_img.save(filepath.parent.parent / filepath.name)
+    log.info("Splitting... Success!")
 
 
 def main() -> None:
