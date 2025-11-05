@@ -540,7 +540,7 @@ items: # {  ###
   - type: LANDMINE
     texture_id: ui_item_todo
     price: 25
-    tier: 3
+    tier: 0
     limit: 5
     effects:
       - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
@@ -553,7 +553,7 @@ items: # {  ###
   - type: GARDEN
     texture_id: ui_item_todo
     price: 50
-    tier: 2
+    tier: 1
     limit: 3
     effects:
       - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
@@ -561,7 +561,7 @@ items: # {  ###
           - floats: 15
   - type: HELMET
     texture_id: ui_item_helmet
-    tier: 2
+    tier: 1
     price: 40
     limit: 5
     effects:
@@ -578,7 +578,7 @@ items: # {  ###
         value: -5
   - type: BLACK_FLAG
     texture_id: ui_item_black_flag
-    tier: 0
+    tier: 1
     price: 35
     limit: 3
     effects:
@@ -600,7 +600,7 @@ items: # {  ###
         value_multiplier: 1.2
   - type: TODO_REROLLER
     texture_id: ui_item_todo
-    tier: 2
+    tier: 1
     price: 40
     limit: 3
     effects:
@@ -609,6 +609,30 @@ items: # {  ###
   - type: TODO_1
     texture_id: ui_item_todo
     tier: 0
+    price: 1
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 10
+  - type: TODO_2
+    texture_id: ui_item_todo
+    tier: 1
+    price: 1
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 10
+  - type: TODO_3
+    texture_id: ui_item_todo
+    tier: 2
+    price: 1
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 10
+  - type: TODO_4
+    texture_id: ui_item_todo
+    tier: 3
     price: 1
     limit: 1
     effects:
