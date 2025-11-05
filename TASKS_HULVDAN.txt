@@ -7,8 +7,10 @@ x gamelib: check tiered values assert len is `4 - min_tier_index`
 x downloaded more ui icons
 x prod: рандом в upgrade-ах
 x prod: рандом в picked up item-ах
+x prod: рандом оружий
+x cheat: recalc random upon changing wave
 
-* prod: рандом оружий
+* upgrades: guaranteed 4 blues / 4 pinks / 4 legendaries on specific levels
 *
 * next wave 2 crossing swords icon
 *

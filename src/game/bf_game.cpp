@@ -3611,7 +3611,7 @@ ItemType GenerateRandomItem() {  ///
     int       currentItemCount = 0;
 
     auto& pool = g.run.itemPools[tier];
-    if (pool.count <= 0)
+    if (pool.count <= 0)  // TODO: decrease tier by 1.
       continue;
 
     const ItemType type = pool[GRAND.Rand() % pool.count].type;
@@ -3799,9 +3799,14 @@ void RunInit() {
     int itemIndex = -1;
     for (auto fb : *glib->items()) {
       itemIndex++;
-      int tier = fb->tier();
+      if (!itemIndex)
+        continue;
 
-      g.run.itemPools[tier][tieredCounts[tier]++] = {
+      const int tier        = fb->tier();
+      auto&     pool        = g.run.itemPools[tier];
+      auto&     tieredCount = tieredCounts[tier];
+
+      pool[tieredCount++] = {
         .type  = (ItemType)itemIndex,
         .count = (fb->limit() ? fb->limit() : int_max),
       };
@@ -3818,6 +3823,8 @@ void RunInit() {
     int weaponIndex = -1;
     for (auto fb : *glib->weapons()) {
       weaponIndex++;
+      if (!weaponIndex)
+        continue;
 
       for (int tier = fb->min_tier_index(); tier < TOTAL_TIERS; tier++) {
         auto& pool         = g.run.weaponPools[tier];
@@ -3826,7 +3833,7 @@ void RunInit() {
     }
 
     FOR_RANGE (int, i, TOTAL_TIERS) {
-      ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData.count);
+      ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData[i].count);
     }
   }
 
@@ -4381,6 +4388,9 @@ void GameInitAfterLoadingSavedata() {
     ASSERT(g.player.achievementStepsCompleted >= 0);
     ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
   }
+
+  g.run.random
+    = GetRandomCumulativeChances(g.run.state.waveIndex, g.run.state.stats[StatType_LUCK]);
 }
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///
@@ -4503,25 +4513,21 @@ void RefillShopToPick() {  ///
   for (auto& x : g.run.state.shop.toPick) {
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
     if (setToItem) {
+      x      = {};
       x.item = GenerateRandomItem();
-
-      const auto fb = fb_items->Get(x.item);
-      x.tier        = fb->tier();
+      x.tier = fb_items->Get(x.item)->tier();
     }
     else {
       while (!x.weapon) {
         const int   tier = GetRandomTier();
         const auto& pool = g.run.weaponPools[tier];
-        if (pool.count <= 0)
-          continue;
+        ASSERT(pool.count > 0);
 
         const WeaponType w = pool[GRAND.Rand() % pool.count];
         if (g.player.lockedWeapons[w].achievement)
           continue;
 
-        x.weapon      = w;
-        const auto fb = fb_weapons->Get(x.weapon);
-        x.tier        = (int)GRAND.RandInt(fb->min_tier_index(), TOTAL_TIERS - 1);
+        x = {.weapon = w, .tier = tier};
       }
     }
   }
@@ -6164,7 +6170,7 @@ void DoUI() {
               );
 
               FontBegin(&g.meta.fontStats);
-              if (fb_item->limit() > 0) {
+              if (fb_item->limit() != int_max) {
                 if (fb_item->limit() > 1) {
                   CLAY({}) {
                     BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, {.color = secondaryTextColor});
@@ -6617,6 +6623,10 @@ void DoUI() {
                 weapon.thisWaveKilledEnemies,
                 g.run.state.weapons[canCombineWithIndex].thisWaveKilledEnemies
               );
+
+              weapon.uiBouncedAt = {};
+              weapon.uiBouncedAt.SetNow();
+
               StableRemoveWeapon(canCombineWithIndex);
               ApplyImmediateWeaponEffects();
               Save();
@@ -10197,6 +10207,9 @@ void GameFixedUpdate() {
         g.run.state.waveIndex, (IsKeyDown(SDL_SCANCODE_LSHIFT) ? 0 : TOTAL_WAVES - 2), 1
       );
       RecalculateThisWaveMobs();
+      g.run.random = GetRandomCumulativeChances(
+        g.run.state.waveIndex, g.run.state.stats[StatType_LUCK]
+      );
     }
   }
 
