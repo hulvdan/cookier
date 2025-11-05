@@ -1596,27 +1596,27 @@ floor_segments: # {  ###
     back_texture_id: game_floor_segment_1_back
     offset:
       x: 0
-      y: 0
+      y: -34
   - front_texture_id: game_floor_segment_2_front
     back_texture_id: game_floor_segment_2_back
     offset:
       x: 0
-      y: 0
+      y: -21
   - front_texture_id: game_floor_segment_3_front
     back_texture_id: game_floor_segment_3_back
     offset:
       x: 0
-      y: 0
+      y: -30
   - front_texture_id: game_floor_segment_4_front
     back_texture_id: game_floor_segment_4_back
     offset:
       x: 0
-      y: 0
+      y: -30
   - front_texture_id: game_floor_segment_5_front
     back_texture_id: game_floor_segment_5_back
     offset:
       x: 0
-      y: 0
+      y: -25
 # }
 
 floor_corners: # {  ###
