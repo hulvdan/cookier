@@ -30,5 +30,13 @@
             "console": "integratedTerminal",
             "args": "codegen Win Debug",
         },
+        {
+            "name": "python process_images",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli/cli.py",
+            "console": "integratedTerminal",
+            "args": "process_images",
+        },
     ],
 }
