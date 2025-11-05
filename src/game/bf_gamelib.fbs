@@ -220,7 +220,7 @@ table Item {
     texture_id: int;
     tier: int;
     price: int;
-    limit: int = 2147483647;  // TODO: how can i specify int_max?
+    limit: int;
     deprecated: bool;
     effects: [Effect];
 }

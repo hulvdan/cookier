@@ -6170,7 +6170,7 @@ void DoUI() {
               );
 
               FontBegin(&g.meta.fontStats);
-              if (fb_item->limit() != int_max) {
+              if (fb_item->limit() > 0) {
                 if (fb_item->limit() > 1) {
                   CLAY({}) {
                     BF_CLAY_TEXT_LOCALIZED(Loc_UI_LIMITED, {.color = secondaryTextColor});
