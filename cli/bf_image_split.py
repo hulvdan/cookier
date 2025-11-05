@@ -34,36 +34,26 @@ def _cv2pil(cv_img):
     return Image.fromarray(cv_img.astype("uint8"))
 
 
-def image_outline(
-    *,
-    image: Image.Image,
-    stroke_size: int,
-    color: tuple[int, int, int, int],
-    is_shadow: bool,
-    threshold: int = 0,
-    blend_image_on_top: bool = True,
-) -> Image.Image:
-    assert threshold >= 0
-
+def image_split(*, image: Image.Image) -> Image.Image:
     img = np.asarray(image)
     h, w, _ = img.shape
     padding = stroke_size
     alpha = img[:, :, 3]
     rgb_img = img[:, :, 0:3]
-    bigger_img = cv2.copyMakeBorder(
-        rgb_img,
-        padding,
-        padding,
-        padding,
-        padding,
-        cv2.BORDER_CONSTANT,
-        value=(0, 0, 0, 0),
-    )
-    alpha = cv2.copyMakeBorder(  #  type: ignore  # noqa
-        alpha, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=0
-    )
-    bigger_img = cv2.merge((bigger_img, alpha))
-    h, w, _ = bigger_img.shape
+    # bigger_img = cv2.copyMakeBorder(
+    #     rgb_img,
+    #     padding,
+    #     padding,
+    #     padding,
+    #     padding,
+    #     cv2.BORDER_CONSTANT,
+    #     value=(0, 0, 0, 0),
+    # )
+    # alpha = cv2.copyMakeBorder(  #  type: ignore  # noqa
+    #     alpha, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=0
+    # )
+    # bigger_img = cv2.merge((bigger_img, alpha))
+    # h, w, _ = bigger_img.shape
 
     _, alpha_without_shadow = cv2.threshold(
         alpha, threshold, 255, cv2.THRESH_BINARY

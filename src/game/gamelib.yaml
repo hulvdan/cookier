@@ -1591,4 +1591,40 @@ achievements: # {  ###
       - value: 1
 # }
 
+floor_segments: # {  ###
+  - front_texture_id: floor_segment_1_front
+    back_texture_id: floor_segment_1_back
+    offset:
+      - x: 0
+        y: 0
+  - front_texture_id: floor_segment_2_front
+    back_texture_id: floor_segment_2_back
+    offset:
+      - x: 0
+        y: 0
+  - front_texture_id: floor_segment_3_front
+    back_texture_id: floor_segment_3_back
+    offset:
+      - x: 0
+        y: 0
+  - front_texture_id: floor_segment_4_front
+    back_texture_id: floor_segment_4_back
+    offset:
+      - x: 0
+        y: 0
+  - front_texture_id: floor_segment_5_front
+    back_texture_id: floor_segment_5_back
+    offset:
+      - x: 0
+        y: 0
+# }
+
+floor_corners: # {  ###
+  - front_texture_id: floor_corner_1_front
+    back_texture_id: floor_corner_1_back
+    offset:
+      - x: 0
+        y: 0
+# }
+
 ###

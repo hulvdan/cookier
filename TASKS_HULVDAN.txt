@@ -13,6 +13,10 @@ x upgrades: guaranteed 4 blues / 4 pinks / 4 legendaries on specific levels
 x prices inflation (shop buy or recyle + recycle picked up item)
 x recycle price doesn't get affected by shop price
 
+* prod: игровое поле: тайлы
+* prod: игровое поле: цветочки травинки
+* prod: игровое поле:
+*
 * next wave 2 crossing swords icon
 *
 * prod sfx: steps
@@ -59,7 +63,6 @@ x recycle price doesn't get affected by shop price
 * prod: босс
 * prod: MUSIC
 * prod: SFX
-* prod: игровое поле
 * prod: мобы
 * prod: сакутиновая отправка event-ов аналитики
 * prod: аналитика
