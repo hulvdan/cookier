@@ -35,16 +35,18 @@ def _cv2pil(cv_img):
 
 def image_split(*, image: Image.Image) -> tuple[Image.Image, Image.Image]:
     img = np.asarray(image)
-    h, w, d = img.shape
+    h, w, _ = img.shape
 
-    # r_img = img[:, :, 0:1]
+    one = np.full((h, w), 255, np.uint8)
+
+    r_img = img[:, :, 0:1]
     alpha = img[:, :, 3]
-    # alpha = cv2.min(r_img, alpha)
+    front_alpha = cv2.min(r_img, alpha)
 
-    img2 = cv2.merge((np.ones((w, h, 3)), alpha))
-    img2 = _cv2pil(img2)
+    img_front = cv2.merge((one, one, one, front_alpha))
+    img_back = cv2.merge((one,one,one, alpha))
 
-    return img2, img2
+    return _cv2pil(img_front), _cv2pil(img_back)
 
     # padding = stroke_size
     # alpha = img[:, :, 3]
