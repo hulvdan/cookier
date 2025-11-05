@@ -12256,6 +12256,8 @@ void GameDraw() {
     DrawGroup_Begin(DrawZ_FLOOR);
     DrawGroup_SetSortY(0);
 
+    f32 floorOffsetY = -0.25f;
+
     constexpr Color color = ColorFromRGBA(0x2e5621ff);
 
     static_assert((WORLD_X % 4) == 0);
@@ -12265,14 +12267,16 @@ void GameDraw() {
 
     if (DEBUG_SEGMENT < 0) {
       DrawGroup_CommandRect({
-        .pos{(f32)WORLD_X / 2, (f32)WORLD_Y / 2},
+        .pos{(f32)WORLD_X / 2, (f32)WORLD_Y / 2 + floorOffsetY},
         .size{(f32)WORLD_X - 1, (f32)WORLD_Y - 1},
         .color = color,
       });
     }
+    else
+      floorOffsetY = 0;
 
     FOR_RANGE (int, mode, 2) {  // 0 - back, 1 - front.
-      Random floorRand{0};
+      Random floorRand{1};
 
       struct {
         Vector2 pos      = {};
@@ -12292,8 +12296,8 @@ void GameDraw() {
         DrawGroup_CommandTexture({
           .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
           .rotation = c.rotation,
-          .pos      = c.pos + Vector2Rotate(offset, c.rotation),
-          .color    = (mode ? BLACK : color),
+          .pos   = c.pos + Vector2Rotate(offset, c.rotation) + Vector2(0, floorOffsetY),
+          .color = (mode ? BLACK : color),
         });
 
         if (DEBUG_SEGMENT >= 0) {
@@ -12305,8 +12309,21 @@ void GameDraw() {
         }
       }
 
+      int prevSegment = -1;
+      LAMBDA (int, newSegmentIndex, ()) {
+        while (1) {
+          const int result = floorRand.Rand() % fb_segments->size();
+          if ((result != prevSegment) || (fb_segments->size() == 1)) {
+            prevSegment = result;
+            return result;
+          }
+        }
+        INVALID_PATH;
+        return 0;
+      };
+
       FOR_RANGE (int, x, (WORLD_X - 8) / 4) {
-        auto fb = fb_segments->Get(floorRand.Rand() % fb_segments->size());
+        auto fb = fb_segments->Get(newSegmentIndex());
 
         if (DEBUG_SEGMENT >= 0) {
           if (x == 0)
@@ -12324,15 +12341,16 @@ void GameDraw() {
 
         DrawGroup_CommandTexture({
           .texID = (mode ? fb->back_texture_id() : fb->front_texture_id()),
-          .pos   = Vector2(posX, WORLD_Y) + offset,
+          .pos   = Vector2(posX, WORLD_Y) + offset + Vector2(0, floorOffsetY),
           .color = (mode ? BLACK : color),
         });
 
         DrawGroup_CommandTexture({
           .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
           .rotation = PI32,
-          .pos      = Vector2(posX, 0) + Vector2{offset.x, -offset.y},
-          .color    = (mode ? BLACK : color),
+          .pos
+          = Vector2(posX, 0) + Vector2{offset.x, -offset.y} + Vector2(0, floorOffsetY),
+          .color = (mode ? BLACK : color),
         });
 
         if (DEBUG_SEGMENT >= 0) {
@@ -12346,7 +12364,7 @@ void GameDraw() {
 
       if (DEBUG_SEGMENT < 0) {
         FOR_RANGE (int, y, (WORLD_Y - 8) / 4) {
-          auto fb = fb_segments->Get(floorRand.Rand() % fb_segments->size());
+          auto fb = fb_segments->Get(newSegmentIndex());
           auto offset
             = ToVector2(fb->offset()) * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
 
@@ -12355,15 +12373,17 @@ void GameDraw() {
           DrawGroup_CommandTexture({
             .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
             .rotation = 3 * PI32 / 2,
-            .pos      = Vector2(WORLD_X, posY) + Vector2Rotate(offset, 3 * PI32 / 2),
-            .color    = (mode ? BLACK : color),
+            .pos      = Vector2(WORLD_X, posY) + Vector2Rotate(offset, 3 * PI32 / 2)
+                   + Vector2(0, floorOffsetY),
+            .color = (mode ? BLACK : color),
           });
 
           DrawGroup_CommandTexture({
             .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
             .rotation = PI32 / 2,
-            .pos      = Vector2(0, posY) + Vector2Rotate(offset, PI32 / 2),
-            .color    = (mode ? BLACK : color),
+            .pos      = Vector2(0, posY) + Vector2Rotate(offset, PI32 / 2)
+                   + Vector2(0, floorOffsetY),
+            .color = (mode ? BLACK : color),
           });
         }
       }
