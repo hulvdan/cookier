@@ -276,6 +276,10 @@ f32 Clamp01(f32 value) {  ///
   return Clamp(value, 0, 1);
 }
 
+f32 Clamp11(f32 value) {  ///
+  return Clamp(value, -1, 1);
+}
+
 int ClampInt(int value, int min, int max) {  ///
   ASSERT(min <= max);
   if (value < min)

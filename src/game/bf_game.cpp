@@ -718,6 +718,90 @@ lframe GetWaveDuration(int waveIndex) {  ///
   return lframe::Unscaled(seconds * FIXED_FPS);
 }
 
+struct GetRandomCumulativeChancesResult {
+  f32 cumulativeChances[4] = {};
+};
+
+GetRandomCumulativeChancesResult
+GetRandomCumulativeChances(int waveIndex, int luck) {  ///
+  struct {
+    int minWaveIndex   = {};
+    f32 percentBase    = {};
+    f32 percentPerWave = {};
+    f32 percentMax     = {};
+  } tierChances[TOTAL_TIERS]{
+    // 0.
+    {
+      .minWaveIndex   = 0,
+      .percentBase    = 100,
+      .percentPerWave = 0,
+      .percentMax     = 100,
+    },
+    // 1.
+    {
+      .minWaveIndex   = 1,
+      .percentBase    = 0,
+      .percentPerWave = 6,
+      .percentMax     = 60,
+    },
+    // 2.
+    {
+      .minWaveIndex   = 3,
+      .percentBase    = 0,
+      .percentPerWave = 2,
+      .percentMax     = 25,
+    },
+    // 3.
+    {
+      .minWaveIndex   = 7,
+      .percentBase    = 0,
+      .percentPerWave = 0.23f,
+      .percentMax     = 8,
+    },
+  };
+
+  GetRandomCumulativeChancesResult result{};
+
+  f32 prev = 0;
+  for (int tierIndex = TOTAL_TIERS - 1; tierIndex >= 0; tierIndex--) {
+    const auto& d = tierChances[tierIndex];
+
+    if (waveIndex < d.minWaveIndex)
+      continue;
+
+    f32 v = (d.percentPerWave * (waveIndex - d.minWaveIndex) + d.percentBase)
+            * (1 + (f32)luck / 100.0f);
+    v = MIN(v, d.percentMax) / 100.0f;
+
+    if (v > 0) {
+      result.cumulativeChances[tierIndex] = v - prev;
+      prev += v - prev;
+    }
+  }
+
+  for (int i = TOTAL_TIERS - 2; i >= 0; i--) {
+    for (int x = i + 1; x < TOTAL_TIERS; x++)
+      result.cumulativeChances[x] += result.cumulativeChances[i];
+  }
+
+  result.cumulativeChances[TOTAL_TIERS - 1] = f32_inf;
+  return result;
+}
+
+TEST_CASE ("GetRandomCumulativeChances") {  ///
+  auto r1 = GetRandomCumulativeChances(0, 0);
+  ASSERT(FloatEquals(r1.cumulativeChances[0], 1));
+  ASSERT(FloatEquals(r1.cumulativeChances[1], 1));
+  ASSERT(FloatEquals(r1.cumulativeChances[2], 1));
+  ASSERT(r1.cumulativeChances[3] == f32_inf);
+
+  auto r2 = GetRandomCumulativeChances(19, 0);
+  ASSERT(FloatEquals(r2.cumulativeChances[0], 0.4f));
+  ASSERT(FloatEquals(r2.cumulativeChances[1], 0.75f));
+  ASSERT(FloatEquals(r2.cumulativeChances[2], 0.9724000096321106f));
+  ASSERT(r2.cumulativeChances[3] == f32_inf);
+}
+
 enum ScreenType {  ///
   ScreenType_NEW_RUN,
   ScreenType_GAMEPLAY,
