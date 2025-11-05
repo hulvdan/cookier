@@ -249,7 +249,7 @@ table Weapon {
     projectile_pierce: int = 0;
     projectile_bounce: int = 0;
     range_meters: float;
-    max_price: int;
+    price: int;
     melee_collider_height_px: float;
     life_steal_percents: [float];
     effects: [Effect];

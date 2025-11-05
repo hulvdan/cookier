@@ -170,7 +170,7 @@ constexpr auto MOB_BOSS_COOLDOWN_MAX              = lframe::FromSeconds(4.0f);
 
 constexpr f32 MOB_BOSS_PROJECTILE_RANGE_METERS = 11;
 
-constexpr f32 PRICE_SCALINGS_PER_TIER_[]{
+constexpr f32 PRICE_SCALINGS_PER_TIER_[TOTAL_TIERS]{
   20.0f / 149.0f,
   39.0f / 149.0f,
   74.0f / 149.0f,
