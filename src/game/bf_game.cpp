@@ -719,6 +719,10 @@ lframe GetWaveDuration(int waveIndex) {  ///
   int seconds = durations[MIN(durations.count - 1, waveIndex)];
 #if BF_DEBUG
   seconds /= 3;
+  if (BF_VERY_SHORT_WAVE_DURATION)
+    seconds = 2;
+  if (BF_VERY_LONG_WAVE_DURATION)
+    seconds = 9999;
 #endif
   return lframe::Unscaled(seconds * FIXED_FPS);
 }
@@ -3453,6 +3457,8 @@ int MakeCreature(MakeCreatureData data) {  ///
   auto slot  = g.run.creatures.Add();
 
   const auto fb = glib->creatures()->Get(data.type);
+  if (index && !BF_SPAWN_MOBS)
+    return -1;
 
   f32 hurtboxRadius = PLAYER_HURTBOX_RADIUS;
   if (data.type != CreatureType_PLAYER)
@@ -12256,31 +12262,60 @@ void GameDraw() {
     static_assert((WORLD_Y % 4) == 0);
 
     FOR_RANGE (int, mode, 2) {  // 0 - back, 1 - front.
-      FOR_RANGE (int, x, (WORLD_X - 8) / 4) {
-        auto fb = fb_segments->Get(0);
+      struct {
+        Vector2 pos      = {};
+        f32     rotation = {};
+      } corners[]{
+        {.pos{2, WORLD_Y - 2}, .rotation = 0},
+        {.pos{2, 2}, .rotation = PI32 / 2},
+        {.pos{WORLD_X - 2, 2}, .rotation = PI32},
+        {.pos{WORLD_X - 2, WORLD_Y - 2}, .rotation = PI32 * 3 / 2},
+      };
+
+      for (const auto& c : corners) {
+        auto fb = fb_corners->Get(0);
         auto offset
           = ToVector2(fb->offset()) * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
 
         DrawGroup_CommandTexture({
+          .texID    = (mode ? fb->back_texture_id() : fb->front_texture_id()),
+          .rotation = c.rotation,
+          .pos      = c.pos + Vector2Rotate(offset, c.rotation),
+          .color    = (mode ? BLACK : color),
+        });
+
+        DrawGroup_CommandRect({
+          .pos = c.pos,
+          .size{4, 4},
+          .color = Fade(RED, 0.15f),
+        });
+      }
+
+      FOR_RANGE (int, x, (WORLD_X - 8) / 4) {
+        if (x == 0)
+          continue;
+        if (x == 2)
+          continue;
+
+        auto fb = fb_segments->Get(4);
+        auto offset
+          = ToVector2(fb->offset()) * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
+
+        int posX = 6 + x * 4;
+
+        DrawGroup_CommandTexture({
           .texID = (mode ? fb->back_texture_id() : fb->front_texture_id()),
-          .pos   = Vector2(6 + x * 4, WORLD_Y) + offset,
+          .pos   = Vector2(posX, WORLD_Y) + offset,
           .color = (mode ? BLACK : color),
+        });
+
+        DrawGroup_CommandRect({
+          .pos{posX, WORLD_Y - 1},
+          .size{4, 2},
+          .color = Fade(RED, 0.15f),
         });
       }
     }
-
-    // FOR_RANGE (int, y, (WORLD_Y - 8) / 4) {
-    //   FOR_RANGE (int, x, ) {
-    //     DrawGroup_OneShotRect(
-    //       {
-    //         .pos   = (Vector2)WORLD_SIZE / 2.0f,
-    //         .size  = (Vector2)WORLD_SIZE,
-    //         .color = floorColor,
-    //       },
-    //       DrawZ_FLOOR
-    //     );
-    //   }
-    // }
 
     DrawGroup_End();
   }
