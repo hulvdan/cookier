@@ -57,7 +57,7 @@ table Save {
     wave_won: bool;
 
     level: int;
-    previous_level: int;
+    level_on_start_of_the_wave: int;
     xp: float;
 
     player_killed_enemies: int;

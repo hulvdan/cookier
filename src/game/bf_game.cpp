@@ -1120,11 +1120,11 @@ struct GameData {
       int  waveIndex = 0;
       bool waveWon   = false;
 
-      int level         = 1;
-      int previousLevel = 1;
-      f32 xp            = 0;
-      f32 previousXp    = 0;
-      int previousCoins = 0;
+      int level                 = 1;
+      int levelOnStartOfTheWave = 1;
+      f32 xp                    = 0;
+      f32 xpOnStartOfTheWave    = 0;
+      int previousCoins         = 0;
 
       int playerKilledEnemies    = 0;
       int notPickedUpCoins       = 0;
@@ -1891,9 +1891,9 @@ void GameLoad(const BFSave::Save* save) {  ///
   s.waveIndex              = save->wave_index();
   s.waveWon                = save->wave_won();
   s.level                  = save->level();
-  s.previousLevel          = save->previous_level();
+  s.levelOnStartOfTheWave  = save->level_on_start_of_the_wave();
   s.xp                     = save->xp();
-  s.previousXp             = s.xp;
+  s.xpOnStartOfTheWave     = s.xp;
   s.playerKilledEnemies    = save->player_killed_enemies();
   s.notPickedUpCoins       = save->not_picked_up_coins();
   s.notPickedUpCoinsVisual = s.notPickedUpCoins;
@@ -2031,19 +2031,19 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
     fb_save.build      = (int)g.player.build;
     fb_save.weapon     = (int)g.player.weapon;
 
-    fb_save.random_state          = ge.meta.logicRand._state;
-    fb_save.health                = PLAYER_CREATURE.health;
-    fb_save.won                   = s.won;
-    fb_save.screen                = s.screen;
-    fb_save.wave_index            = s.waveIndex;
-    fb_save.wave_won              = s.waveWon;
-    fb_save.level                 = s.level;
-    fb_save.previous_level        = s.previousLevel;
-    fb_save.xp                    = s.xp;
-    fb_save.player_killed_enemies = s.playerKilledEnemies;
-    fb_save.not_picked_up_coins   = s.notPickedUpCoins;
-    fb_save.crates                = s.crates;
-    fb_save.to_spawn              = s.toSpawn;
+    fb_save.random_state               = ge.meta.logicRand._state;
+    fb_save.health                     = PLAYER_CREATURE.health;
+    fb_save.won                        = s.won;
+    fb_save.screen                     = s.screen;
+    fb_save.wave_index                 = s.waveIndex;
+    fb_save.wave_won                   = s.waveWon;
+    fb_save.level                      = s.level;
+    fb_save.level_on_start_of_the_wave = s.levelOnStartOfTheWave;
+    fb_save.xp                         = s.xp;
+    fb_save.player_killed_enemies      = s.playerKilledEnemies;
+    fb_save.not_picked_up_coins        = s.notPickedUpCoins;
+    fb_save.crates                     = s.crates;
+    fb_save.to_spawn                   = s.toSpawn;
 
     for (const auto& weapon : g.run.state.weapons) {
       fb_save.weapons.push_back(std::make_unique<BFSave::WeaponT>(BFSave::WeaponT{
@@ -2096,8 +2096,8 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
     if (s.screen == ScreenType_GAMEPLAY) {
       fb_save.stats[StatType_COINS] = s.previousCoins;
 
-      fb_save.level  = fb_save.previous_level;
-      fb_save.xp     = s.previousXp;
+      fb_save.level  = fb_save.level_on_start_of_the_wave;
+      fb_save.xp     = s.xpOnStartOfTheWave;
       fb_save.crates = 0;
     }
   }
@@ -4483,8 +4483,21 @@ int Rerolls::GetPrice() const {  ///
   return GetRerollPrice(g.run.state.waveIndex, rerolledTimes);
 }
 
-void RefillUpgradesToPick() {  ///
+void RefillUpgradesToPick(bool rerolled) {  ///
   const auto fb_stats = glib->stats();
+
+  int guaranteedTier = -1;
+
+  if (!rerolled                                   //
+      && (g.run.state.levelOnStartOfTheWave > 0)  //
+      && (((g.run.state.levelOnStartOfTheWave + 1) % 5) == 0))
+  {
+    guaranteedTier = 1;
+    if (g.run.state.levelOnStartOfTheWave >= 9)
+      guaranteedTier = 2;
+    if (g.run.state.levelOnStartOfTheWave >= 24)
+      guaranteedTier = 3;
+  }
 
   FOR_RANGE (int, i, g.run.state.upgrades.toPick.count) {
     while (1) {
@@ -4513,11 +4526,12 @@ void RefillUpgradesToPick() {  ///
       if (contains)
         continue;
 
+      int tier = guaranteedTier;
+      if (tier < 0)
+        tier = GetRandomTier();
+
       // Setting upgrade.
-      g.run.state.upgrades.toPick[i] = {
-        .stat = newStat,
-        .tier = GetRandomTier(),
-      };
+      g.run.state.upgrades.toPick[i] = {.stat = newStat, .tier = tier};
       break;
     }
   }
@@ -8229,8 +8243,8 @@ void DoUI() {
               if (chosen) {
                 PlaySound(Sound_UI_CLICK);
 
-                if (g.run.state.previousLevel < g.run.state.level) {
-                  g.run.state.previousLevel++;
+                if (g.run.state.levelOnStartOfTheWave < g.run.state.level) {
+                  g.run.state.levelOnStartOfTheWave++;
                   g.run.scheduledUpgrades      = true;
                   g.run.scheduledUpgradesReset = true;
                 }
@@ -8263,12 +8277,15 @@ void DoUI() {
           PlaySound(Sound_UI_CLICK);
 
           g.run.state.upgrades.rerolls.Roll();
-          RefillUpgradesToPick();
+          RefillUpgradesToPick(true);
           Save();
         }
         else {
           g.ui.errorGold = {};
           g.ui.errorGold.SetNow();
+
+          g.run.state.upgrades.toPick = {};
+
           PlaySound(Sound_UI_ERROR);
         }
       }
@@ -10374,10 +10391,10 @@ void GameFixedUpdate() {
 
     if (g.run.scheduledUpgradesReset) {
       g.run.scheduledUpgradesReset = false;
-      RefillUpgradesToPick();
+      RefillUpgradesToPick(false);
     }
 
-    if (g.run.state.level == g.run.state.previousLevel) {
+    if (g.run.state.level == g.run.state.levelOnStartOfTheWave) {
       g.run.scheduledShop      = true;
       g.run.scheduledShopReset = true;
     }
@@ -10439,7 +10456,7 @@ void GameFixedUpdate() {
     g.run.state.screen = ScreenType_GAMEPLAY;
 
     g.run.state.waveIndex++;
-    g.run.state.previousXp = g.run.state.xp;
+    g.run.state.xpOnStartOfTheWave = g.run.state.xp;
     OnWaveStarted();
 
     const int health          = g.run.state.stats[StatType_HP];
