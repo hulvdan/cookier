@@ -12244,16 +12244,47 @@ void GameDraw() {
 
   // Drawing floor.
   {  ///
-    constexpr Color floorColor = ColorFromRGBA(0x362316ff);
+    auto fb_segments = glib->floor_segments();
+    auto fb_corners  = glib->floor_corners();
 
-    DrawGroup_OneShotRect(
-      {
-        .pos   = (Vector2)WORLD_SIZE / 2.0f,
-        .size  = (Vector2)WORLD_SIZE,
-        .color = floorColor,
-      },
-      DrawZ_FLOOR
-    );
+    DrawGroup_Begin(DrawZ_FLOOR);
+    DrawGroup_SetSortY(0);
+
+    constexpr Color color = ColorFromRGBA(0x362316ff);
+
+    static_assert((WORLD_X % 4) == 0);
+    static_assert((WORLD_Y % 4) == 0);
+    int previousSegment = -1;
+
+    FOR_RANGE (int, mode, 2) {  // 0 - back, 1 - front.
+      const auto color = (mode ? WHITE : BLACK);
+
+      FOR_RANGE (int, x, (WORLD_X - 8) / 4) {
+        DrawGroup_OneShotTexture(
+          {
+            .pos   = {0},
+            .size  = (Vector2)WORLD_SIZE,
+            .color = color,
+          },
+          DrawZ_FLOOR
+        );
+      }
+    }
+
+    // FOR_RANGE (int, y, (WORLD_Y - 8) / 4) {
+    //   FOR_RANGE (int, x, ) {
+    //     DrawGroup_OneShotRect(
+    //       {
+    //         .pos   = (Vector2)WORLD_SIZE / 2.0f,
+    //         .size  = (Vector2)WORLD_SIZE,
+    //         .color = floorColor,
+    //       },
+    //       DrawZ_FLOOR
+    //     );
+    //   }
+    // }
+
+    DrawGroup_End();
   }
 
   // Drawing prespawns.
