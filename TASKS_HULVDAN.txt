@@ -5,9 +5,9 @@ x ui frame darker outline
 x default windows mode is maximized
 x gamelib: check tiered values assert len is `4 - min_tier_index`
 x downloaded more ui icons
+x prod: рандом в upgrade-ах
 
 * prod: рандом в магазе
-* prod: рандом в upgrade-ах
 * prod: рандом в picked up item-ах
 *
 * next wave 2 crossing swords icon
