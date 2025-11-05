@@ -718,12 +718,11 @@ lframe GetWaveDuration(int waveIndex) {  ///
   return lframe::Unscaled(seconds * FIXED_FPS);
 }
 
-struct GetRandomCumulativeChancesResult {
+struct RandomCumulativeChances {  ///
   f32 cumulativeChances[4] = {};
 };
 
-GetRandomCumulativeChancesResult
-GetRandomCumulativeChances(int waveIndex, int luck) {  ///
+RandomCumulativeChances GetRandomCumulativeChances(int waveIndex, int luck) {  ///
   struct {
     int minWaveIndex   = {};
     f32 percentBase    = {};
@@ -760,7 +759,7 @@ GetRandomCumulativeChances(int waveIndex, int luck) {  ///
     },
   };
 
-  GetRandomCumulativeChancesResult result{};
+  RandomCumulativeChances result{};
 
   f32 prev = 0;
   for (int tierIndex = TOTAL_TIERS - 1; tierIndex >= 0; tierIndex--) {
@@ -1203,6 +1202,8 @@ struct GameData {
 
     f32 dangerHPLevelOverlayValue = 0;
 
+    RandomCumulativeChances random = {};
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -1267,6 +1268,16 @@ struct GameData {
     FrameVisual changedNotPickedUpCoinsAt = {};
   } ui;
 } g = {};
+
+int GetRandomTier() {
+  f32 v = GRAND.FRand();
+  FOR_RANGE (int, tierIndex, TOTAL_TIERS) {
+    if (v < g.run.random.cumulativeChances[tierIndex])
+      return tierIndex;
+  }
+  INVALID_PATH;
+  return 0;
+}
 
 ControlsGroup* _GetControlsGroup(ControlsGroupID id) {  ///
   auto group = g.ui.controlsGroupsLast;
@@ -1766,6 +1777,9 @@ void OnWaveStarted() {  ///
     weapon.thisWaveDamage   = 0;
     weapon.thisWaveUseCount = 0;
   }
+
+  g.run.random
+    = GetRandomCumulativeChances(g.run.state.waveIndex, g.run.state.stats[StatType_LUCK]);
 }
 
 void AchievementStepSetLock(
@@ -4379,7 +4393,7 @@ void RefillUpgradesToPick() {  ///
       // Setting upgrade.
       g.run.state.upgrades.toPick[i] = {
         .stat = newStat,
-        .tier = (int)(GRAND.Rand() % TOTAL_TIERS),
+        .tier = GetRandomTier(),
       };
       break;
     }
