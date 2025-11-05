@@ -1919,6 +1919,26 @@ void GameLoad(const BFSave::Save* save) {  ///
         .count = x->count(),
       };
     }
+
+    // Removing player-equipped items from pools.
+    for (const auto& x : s.items) {
+      const auto fb   = glib->items()->Get(x.type);
+      auto&      pool = g.run.itemPools[fb->tier()];
+
+      int otherItemIndex = -1;
+      for (auto& otherItem : pool) {
+        otherItemIndex++;
+
+        if (otherItem.type == x.type) {
+          otherItem.count -= x.count;
+
+          if (otherItem.count <= 0) {
+            pool.UnstableRemoveAt(otherItemIndex);
+            break;
+          }
+        }
+      }
+    }
   }
 
   // Resetting stats to default values.
@@ -3908,6 +3928,56 @@ void RunInit() {
     }
   }
 
+  // Refilling `itemPools` and `weaponPools`.
+  {  ///
+    g.run.itemPools[0] = {.count = ITEMS_PER_TIER[0], .base = g.run.itemPool0.base};
+    g.run.itemPools[1] = {.count = ITEMS_PER_TIER[1], .base = g.run.itemPool1.base};
+    g.run.itemPools[2] = {.count = ITEMS_PER_TIER[2], .base = g.run.itemPool2.base};
+    g.run.itemPools[3] = {.count = ITEMS_PER_TIER[3], .base = g.run.itemPool3.base};
+
+    int tieredCounts[TOTAL_TIERS]{};
+
+    int itemIndex = -1;
+    for (auto fb : *glib->items()) {
+      itemIndex++;
+      if (!itemIndex)
+        continue;
+
+      const int tier        = fb->tier();
+      auto&     pool        = g.run.itemPools[tier];
+      auto&     tieredCount = tieredCounts[tier];
+
+      pool[tieredCount++] = {
+        .type  = (ItemType)itemIndex,
+        .count = (fb->limit() ? fb->limit() : int_max),
+      };
+    }
+
+    FOR_RANGE (int, i, TOTAL_TIERS) {
+      ASSERT(tieredCounts[i] == ITEMS_PER_TIER[i]);
+    }
+
+    FOR_RANGE (int, i, TOTAL_TIERS) {
+      g.run.weaponPools[i] = {.count = 0, .base = g.run.weaponPoolsData[i].base};
+    }
+
+    int weaponIndex = -1;
+    for (auto fb : *glib->weapons()) {
+      weaponIndex++;
+      if (!weaponIndex)
+        continue;
+
+      for (int tier = fb->min_tier_index(); tier < TOTAL_TIERS; tier++) {
+        auto& pool         = g.run.weaponPools[tier];
+        pool[pool.count++] = (WeaponType)weaponIndex;
+      }
+    }
+
+    FOR_RANGE (int, i, TOTAL_TIERS) {
+      ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData[i].count);
+    }
+  }
+
   OnWaveStarted();
 }
 
@@ -4341,75 +4411,6 @@ void GameInitAfterLoadingSavedata() {
 
   g.run.random
     = GetRandomCumulativeChances(g.run.state.waveIndex, g.run.state.stats[StatType_LUCK]);
-
-  // Refilling `itemPools` and `weaponPools`.
-  {  ///
-    g.run.itemPools[0] = {.count = ITEMS_PER_TIER[0], .base = g.run.itemPool0.base};
-    g.run.itemPools[1] = {.count = ITEMS_PER_TIER[1], .base = g.run.itemPool1.base};
-    g.run.itemPools[2] = {.count = ITEMS_PER_TIER[2], .base = g.run.itemPool2.base};
-    g.run.itemPools[3] = {.count = ITEMS_PER_TIER[3], .base = g.run.itemPool3.base};
-
-    int tieredCounts[TOTAL_TIERS]{};
-
-    int itemIndex = -1;
-    for (auto fb : *glib->items()) {
-      itemIndex++;
-      if (!itemIndex)
-        continue;
-
-      const int tier        = fb->tier();
-      auto&     pool        = g.run.itemPools[tier];
-      auto&     tieredCount = tieredCounts[tier];
-
-      pool[tieredCount++] = {
-        .type  = (ItemType)itemIndex,
-        .count = (fb->limit() ? fb->limit() : int_max),
-      };
-    }
-
-    FOR_RANGE (int, i, TOTAL_TIERS) {
-      ASSERT(tieredCounts[i] == ITEMS_PER_TIER[i]);
-    }
-
-    for (const auto& item : g.run.state.items) {
-      const auto fb   = glib->items()->Get(item.type);
-      auto&      pool = g.run.itemPools[fb->tier()];
-
-      int otherItemIndex = -1;
-      for (auto& otherItem : pool) {
-        otherItemIndex++;
-
-        if (otherItem.type == item.type) {
-          otherItem.count -= item.count;
-
-          if (otherItem.count <= 0) {
-            pool.UnstableRemoveAt(otherItemIndex);
-            break;
-          }
-        }
-      }
-    }
-
-    FOR_RANGE (int, i, TOTAL_TIERS) {
-      g.run.weaponPools[i] = {.count = 0, .base = g.run.weaponPoolsData[i].base};
-    }
-
-    int weaponIndex = -1;
-    for (auto fb : *glib->weapons()) {
-      weaponIndex++;
-      if (!weaponIndex)
-        continue;
-
-      for (int tier = fb->min_tier_index(); tier < TOTAL_TIERS; tier++) {
-        auto& pool         = g.run.weaponPools[tier];
-        pool[pool.count++] = (WeaponType)weaponIndex;
-      }
-    }
-
-    FOR_RANGE (int, i, TOTAL_TIERS) {
-      ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData[i].count);
-    }
-  }
 }
 
 constexpr lframe GetFramesPerRegen(int regenLevel) {  ///

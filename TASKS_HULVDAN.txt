@@ -11,6 +11,7 @@ x prod: рандом оружий
 x cheat: recalc random upon changing wave
 
 * upgrades: guaranteed 4 blues / 4 pinks / 4 legendaries on specific levels
+* prices inflation (shop buy or recyle + recycle picked up item)
 *
 * next wave 2 crossing swords icon
 *
