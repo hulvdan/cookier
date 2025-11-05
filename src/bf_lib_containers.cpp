@@ -200,6 +200,10 @@ struct View {
     return IndexOf(value) != -1;
   }
 
+  void UnstableRemoveAt(const int i) {  ///
+    ::UnstableRemoveAt((u8*)base, sizeof(*base), i, &count);
+  }
+
   T* begin() {  ///
     return base;
   }
@@ -265,6 +269,31 @@ struct Array {
     };
   }
 };
+
+void UnstableRemoveAt(u8* base, size_t stride, const int i, int* count) {  ///
+  ASSERT(i >= 0);
+  ASSERT(i < *count);
+
+  if (i != *count - 1) {
+    memcpy(base + stride * i, base + stride * (*count - 1), stride);
+  }
+
+  (*count)--;
+}
+
+TEST_CASE ("UnstableRemoveAt") {  ///
+  int values[]{0, 1, 2, 3};
+  int valuesCount = ARRAY_COUNT(values);
+  UnstableRemoveAt((u8*)values, sizeof(*values), 2, &valuesCount);
+  ASSERT(valuesCount == 3);
+  ASSERT(values[0] == 0);
+  ASSERT(values[1] == 1);
+  ASSERT(values[2] == 3);
+  UnstableRemoveAt((u8*)values, sizeof(*values), 0, &valuesCount);
+  ASSERT(valuesCount == 2);
+  ASSERT(values[0] == 3);
+  ASSERT(values[1] == 1);
+}
 
 template <typename T>
 struct Vector {
@@ -343,15 +372,10 @@ struct Vector {
   }
 
   void UnstableRemoveAt(const int i) {  ///
-    ASSERT(i >= 0);
-    ASSERT(i < count);
-
-    if (i != count - 1)
-      base[i] = base[count - 1];
-
-    count--;
+    ::UnstableRemoveAt((u8*)base, sizeof(*base), i, &count);
   }
 
+  // Remove value + ensure there's no of the same value remaining.
   void UnstableRemoveUniqueAssert(T value) {  ///
 #if BF_ENABLE_ASSERTS
     int found = 0;

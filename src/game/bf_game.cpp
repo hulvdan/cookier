@@ -492,6 +492,11 @@ struct Item {  ///
   FrameVisual uiBouncedAt = {};
 };
 
+struct AvailableItem {
+  ItemType type  = {};
+  int      count = {};
+};
+
 struct CreatureController {  ///
   Vector2 move = {};
 };
@@ -1203,6 +1208,15 @@ struct GameData {
     f32 dangerHPLevelOverlayValue = 0;
 
     RandomCumulativeChances random = {};
+
+    Array<AvailableItem, ITEMS_PER_TIER_[0]> itemPool0 = {};
+    Array<AvailableItem, ITEMS_PER_TIER_[1]> itemPool1 = {};
+    Array<AvailableItem, ITEMS_PER_TIER_[2]> itemPool2 = {};
+    Array<AvailableItem, ITEMS_PER_TIER_[3]> itemPool3 = {};
+    Array<View<AvailableItem>, TOTAL_TIERS>  itemPools = {};
+
+    Array<Array<WeaponType, WeaponType_COUNT>, TOTAL_TIERS> weaponPoolsData = {};
+    Array<View<WeaponType>, TOTAL_TIERS>                    weaponPools     = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -3583,11 +3597,24 @@ Vector2 GetCameraTargetPos() {  ///
 ItemType GenerateRandomItem() {  ///
   auto fb_items = glib->items();
 
-  ItemType type{};
-  int      currentItemCount = 0;
+  bool itemCanBeAdded = false;
+  for (const auto& pool : g.run.itemPools) {
+    if (pool.count > 0) {
+      itemCanBeAdded = true;
+      break;
+    }
+  }
+  ASSERT(itemCanBeAdded);
+
   while (1) {
-    type = (ItemType)((GRAND.Rand() % ((u32)ItemType_COUNT - 1)) + 1);
-    ASSERT(type);
+    const int tier             = GetRandomTier();
+    int       currentItemCount = 0;
+
+    auto& pool = g.run.itemPools[tier];
+    if (pool.count <= 0)
+      continue;
+
+    const ItemType type = pool[GRAND.Rand() % pool.count].type;
 
     for (auto& item : g.run.state.items) {
       if (item.type == type)
@@ -3602,15 +3629,19 @@ ItemType GenerateRandomItem() {  ///
 
     if (g.player.lockedItems[type].achievement)
       continue;
+
     auto fb = fb_items->Get(type);
-    if (!fb->deprecated())
+    if (fb->deprecated())
       continue;
-    if (fb->limit() <= 0)
-      break;
-    if (fb->limit() > currentItemCount)
-      break;
+
+    if (currentItemCount >= fb->limit())
+      continue;
+
+    return type;
   }
-  return type;
+
+  INVALID_PATH;
+  return {};
 }
 
 int _ApplyStatPrice(StatType s, int price) {  ///
@@ -3732,10 +3763,72 @@ void AddItem(ItemType type) {  ///
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
   );
+
+  // Removing item from pool.
+  {
+    auto  fb   = glib->items()->Get(type);
+    auto& pool = g.run.itemPools[fb->tier()];
+
+    int poolItemIndex = -1;
+    for (auto& poolItem : pool) {
+      poolItemIndex++;
+
+      if (poolItem.type == type) {
+        poolItem.count -= 1;
+        if (poolItem.count <= 0)
+          pool.UnstableRemoveAt(poolItemIndex);
+
+        break;
+      }
+    }
+  }
 }
 
 void RunInit() {
   ZoneScoped;
+
+  // Refilling `itemPools` and `weaponPools`.
+  {  ///
+    g.run.itemPools[0] = {.count = ITEMS_PER_TIER[0], .base = g.run.itemPool0.base};
+    g.run.itemPools[1] = {.count = ITEMS_PER_TIER[1], .base = g.run.itemPool1.base};
+    g.run.itemPools[2] = {.count = ITEMS_PER_TIER[2], .base = g.run.itemPool2.base};
+    g.run.itemPools[3] = {.count = ITEMS_PER_TIER[3], .base = g.run.itemPool3.base};
+
+    int tieredCounts[TOTAL_TIERS]{};
+
+    int itemIndex = -1;
+    for (auto fb : *glib->items()) {
+      itemIndex++;
+      int tier = fb->tier();
+
+      g.run.itemPools[tier][tieredCounts[tier]++] = {
+        .type  = (ItemType)itemIndex,
+        .count = (fb->limit() ? fb->limit() : int_max),
+      };
+    }
+
+    FOR_RANGE (int, i, TOTAL_TIERS) {
+      ASSERT(tieredCounts[i] == ITEMS_PER_TIER[i]);
+    }
+
+    FOR_RANGE (int, i, TOTAL_TIERS) {
+      g.run.weaponPools[i] = {.count = 0, .base = g.run.weaponPoolsData[i].base};
+    }
+
+    int weaponIndex = -1;
+    for (auto fb : *glib->weapons()) {
+      weaponIndex++;
+
+      for (int tier = fb->min_tier_index(); tier < TOTAL_TIERS; tier++) {
+        auto& pool         = g.run.weaponPools[tier];
+        pool[pool.count++] = (WeaponType)weaponIndex;
+      }
+    }
+
+    FOR_RANGE (int, i, TOTAL_TIERS) {
+      ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData.count);
+    }
+  }
 
   g.meta.paused               = false;
   g.meta.scheduledTogglePause = false;
@@ -4417,9 +4510,15 @@ void RefillShopToPick() {  ///
     }
     else {
       while (!x.weapon) {
-        auto w = (WeaponType)(GRAND.Rand() % fb_weapons->size());
+        const int   tier = GetRandomTier();
+        const auto& pool = g.run.weaponPools[tier];
+        if (pool.count <= 0)
+          continue;
+
+        const WeaponType w = pool[GRAND.Rand() % pool.count];
         if (g.player.lockedWeapons[w].achievement)
           continue;
+
         x.weapon      = w;
         const auto fb = fb_weapons->Get(x.weapon);
         x.tier        = (int)GRAND.RandInt(fb->min_tier_index(), TOTAL_TIERS - 1);

@@ -173,6 +173,10 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 
     # Items.
     # ============================================================
+    TOTAL_TIERS = 4
+
+    items_per_tier = [0] * TOTAL_TIERS
+
     for i, x in enumerate_table("items"):
         if i > 0:
             process_effects_of(x, 1)
@@ -187,6 +191,15 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 assert field in x, "Item {} has to have '{}' specified".format(
                     x["type"], field
                 )
+
+            items_per_tier[x.get("tier", 0)] += 1
+
+    genline(
+        "constexpr int ITEMS_PER_TIER_[] {{{}}};".format(
+            ", ".join(str(x) for x in items_per_tier)
+        )
+    )
+    genline("VIEW_FROM_ARRAY_DANGER(ITEMS_PER_TIER);\n")
 
     # Difficulties.
     # ============================================================
