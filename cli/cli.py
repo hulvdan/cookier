@@ -484,7 +484,7 @@ def lint():
 @command
 @timing
 def process_images():
-    outline_files = list((ART_TEXTURES_DIR / "to_outline").rglob("*.png"))
+    outline_files = list((ART_TEXTURES_DIR / "to_outline").glob("*.png"))
     log.info("Outlining...")
     for i, filepath in enumerate(outline_files):
         log.info("{}/{}: {}".format(i + 1, len(outline_files), filepath.stem))
@@ -495,7 +495,7 @@ def process_images():
         out_img.save(filepath.parent.parent / filepath.name)
     log.info("Outlining... Success!")
 
-    split_files = list((ART_TEXTURES_DIR / "to_split").rglob("*.png"))
+    split_files = list((ART_TEXTURES_DIR / "to_split").glob("*.png"))
     log.info("Splitting...")
     for i, filepath in enumerate(split_files):
         log.info("{}/{}: {}".format(i + 1, len(split_files), filepath.stem))
@@ -508,9 +508,12 @@ def process_images():
 
     gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
 
+    for f in ART_TEXTURES_DIR.glob("game_prop_*.png"):
+        f.unlink()
+
     for biome in gamelib["biomes"][1:]:
         t = biome["type"]
-        biome_files = list((ART_TEXTURES_DIR / "to_biome").rglob("*.png"))
+        biome_files = list((ART_TEXTURES_DIR / "to_biome").glob("*.png"))
 
         get_color = lambda b, x: hex_to_rgb_ints(hex(b[x])[2:-2])
 

@@ -378,7 +378,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
         for biome in gamelib["biomes"][1:]:
             prop_texture_ids: list[str] = []
             biome["prop_texture_ids"] = prop_texture_ids
-            for file in ART_TEXTURES_DIR.rglob(
+            for file in ART_TEXTURES_DIR.glob(
                 "game_prop_*_{}.png".format(biome["type"].lower())
             ):
                 prop_texture_ids.append(file.stem)
