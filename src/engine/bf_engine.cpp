@@ -896,6 +896,7 @@ struct EngineData {
     bool debugEnabled = false;
 
     Random logicRand{0};
+    Random visualRand{0};
 
     const Camera* _currentCamera = nullptr;
 
@@ -951,6 +952,7 @@ Vector2 LogicalPosToScreen(Vector2 pos) {  ///
 }
 
 #define GRAND (ge.meta.logicRand)
+#define VRAND (ge.meta.visualRand)
 
 // Points are contained inside. Not on edge.
 Vector2 Rect::GetRandomPosInside() const {  ///

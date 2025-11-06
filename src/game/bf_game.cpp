@@ -1057,6 +1057,7 @@ struct MakeParticlesData {  ///
 
 struct Prop {
   int     variation = {};
+  bool    right     = {};
   Vector2 pos       = {};
 };
 
@@ -3993,10 +3994,28 @@ void RunInit() {
     auto variations = glib->game_prop_texture_ids()->size();
 
     FOR_RANGE (int, i, g.run.propsData.count) {
-      g.run.props[g.run.props.count++] = {
-        .variation = (int)(GRAND.Rand() % variations),
-        .pos       = Vector2(GRAND.FRand() * WORLD_X, GRAND.FRand() * WORLD_Y),
-      };
+      while (1) {
+        Vector2 pos{VRAND.FRand() * WORLD_X, VRAND.FRand() * WORLD_Y};
+
+        bool shouldContinue = false;
+
+        for (auto& prop : g.run.props) {
+          if (Vector2DistanceSqr(prop.pos, pos) <= SQR(1)) {
+            shouldContinue = true;
+            break;
+          }
+        }
+
+        if (shouldContinue)
+          continue;
+
+        g.run.props[g.run.props.count++] = {
+          .variation = (int)(VRAND.Rand() % variations),
+          .right     = (bool)(VRAND.Rand() % 2),
+          .pos       = pos,
+        };
+        break;
+      }
     }
   }
 
@@ -12415,6 +12434,7 @@ void GameDraw() {
       DrawGroup_CommandTexture({
         .texID = fb_game_prop_texture_ids->Get(prop.variation),
         .pos   = prop.pos + Vector2(0, floorOffsetY),
+        .scale{(prop.right ? 1 : -1), 1},
       });
     }
 
