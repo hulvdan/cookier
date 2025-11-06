@@ -129,7 +129,8 @@ struct Rect {
     return true;
   }
 
-  Vector2 GetRandomPosInside() const;
+  Vector2 GetRandomGamePosInside() const;
+  Vector2 GetRandomVisualPosInside() const;
 };
 
 struct Color {
@@ -954,23 +955,33 @@ Vector2 LogicalPosToScreen(Vector2 pos) {  ///
 #define GRAND (ge.meta.logicRand)
 #define VRAND (ge.meta.visualRand)
 
-// Points are contained inside. Not on edge.
-Vector2 Rect::GetRandomPosInside() const {  ///
+Vector2 GetRandomPosInside(Random* random, const Rect* rect) {  ///
   Vector2 result{};
 
   f32 t{};
 
   do {
-    t = GRAND.FRand();
+    t = random->FRand();
   } while (t == 0);
-  result.x = pos.x + t * size.x;
+  result.x = rect->pos.x + t * rect->size.x;
 
   do {
-    t = GRAND.FRand();
+    t = random->FRand();
   } while (t == 0);
-  result.y = pos.y + t * size.y;
+
+  result.y = rect->pos.y + t * rect->size.y;
 
   return result;
+}
+
+// Points are contained inside. Not on edge.
+Vector2 Rect::GetRandomGamePosInside() const {  ///
+  return GetRandomPosInside(&GRAND, this);
+}
+
+// Points are contained inside. Not on edge.
+Vector2 Rect::GetRandomVisualPosInside() const {  ///
+  return GetRandomPosInside(&VRAND, this);
 }
 
 void BeginMode2D(const Camera* camera) {

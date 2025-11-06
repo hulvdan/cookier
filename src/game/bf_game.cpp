@@ -3990,22 +3990,25 @@ void RunInit() {
 
   // Filling props.
   {  ///
+    constexpr Rect bounds{
+      .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
+      .size{WORLD_X - 2 * CREATURES_SPAWN_MARGIN, WORLD_Y - 2 * CREATURES_SPAWN_MARGIN},
+    };
+
     g.run.props     = {.count = 0, .base = g.run.propsData.base};
     auto variations = glib->game_prop_texture_ids()->size();
 
     FOR_RANGE (int, i, g.run.propsData.count) {
       while (1) {
-        Vector2 pos{VRAND.FRand() * WORLD_X, VRAND.FRand() * WORLD_Y};
+        const auto pos = bounds.GetRandomVisualPosInside();
 
         bool shouldContinue = false;
-
         for (auto& prop : g.run.props) {
           if (Vector2DistanceSqr(prop.pos, pos) <= SQR(1)) {
             shouldContinue = true;
             break;
           }
         }
-
         if (shouldContinue)
           continue;
 
@@ -10888,7 +10891,7 @@ void GameFixedUpdate() {
           Vector2 posToSpawn{};
           while (1) {
             constexpr f32 epsilon = 0.001f;
-            posToSpawn            = creaturesWorldSpawnBounds.GetRandomPosInside();
+            posToSpawn            = creaturesWorldSpawnBounds.GetRandomGamePosInside();
             ASSERT(creaturesWorldSpawnBounds.ContainsInside(posToSpawn));
             auto t = MIN(
               1,
@@ -10973,7 +10976,7 @@ void GameFixedUpdate() {
 
                 PreSpawn x{
                   .type           = PreSpawnType_LANDMINE,
-                  .pos            = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                  .pos            = creaturesWorldSpawnBounds.GetRandomGamePosInside(),
                   .damage         = EFFECT_Y_INT,
                   .damageScalings = fb_effect->damage_scalings(),
                 };
@@ -10996,7 +10999,7 @@ void GameFixedUpdate() {
                 FOR_RANGE (int, i, times) {
                   PreSpawn x{
                     .type = PreSpawnType_GARDEN,
-                    .pos  = creaturesWorldSpawnBounds.GetRandomPosInside(),
+                    .pos  = creaturesWorldSpawnBounds.GetRandomGamePosInside(),
                   };
                   x.createdAt.SetNow();
                   *g.run.preSpawns.Add() = x;
