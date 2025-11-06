@@ -19,6 +19,7 @@ from bf_lib import (
     ART_DIR,
     ART_TEXTURES_DIR,
     ASSETS_DIR,
+    AUDIO_EXTENSIONS,
     FLATBUFFERS_GENERATED_DIR,
     FLATC_PATH,
     GAME_DIR,
@@ -531,7 +532,7 @@ def convert_gamelib_json_to_binary(
 
     # Enriching gamelib with sounds.
     if 1:
-        sound_paths = list(RESOURCES_DIR.rglob("*.ogg"))
+        sound_paths = list(RESOURCES_DIR.glob("*.ogg"))
         genenum(
             genline,
             "Sound",
@@ -974,12 +975,11 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
 def convert_audio() -> None:
     AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
     AUDIO_DST_DIR = RESOURCES_DIR
-    AUDIO_INPUT_EXTENSIONS = {".wav", ".mp3", ".flac", ".aac", ".m4a", ".wma", ".ogg"}
 
     src_files = {
         p
-        for p in AUDIO_SRC_DIR.rglob("*")
-        if p.suffix.lower() in AUDIO_INPUT_EXTENSIONS and p.is_file()
+        for p in AUDIO_SRC_DIR.glob("*")
+        if p.suffix.lower() in AUDIO_EXTENSIONS and p.is_file()
     }
 
     # Checking no duplicated names.
@@ -1033,10 +1033,10 @@ def convert_audio() -> None:
         os.utime(dst_file, ns=(mtime, mtime))
 
     # Removing orphan audio files from resources/.
-    for dst_file in AUDIO_DST_DIR.rglob("*.ogg"):
+    for dst_file in AUDIO_DST_DIR.glob("*.ogg"):
         src_file = AUDIO_SRC_DIR / dst_file.relative_to(AUDIO_DST_DIR)
         found = False
-        for ext in AUDIO_INPUT_EXTENSIONS:
+        for ext in AUDIO_EXTENSIONS:
             candidate = AUDIO_SRC_DIR / (dst_file.stem + ext)
             if candidate.exists():
                 found = True

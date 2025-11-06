@@ -31,6 +31,10 @@ x biomes (add yellow)
 
 * next wave 2 crossing swords icon
 *
+* crediting sfx
+*
+* better ui sounds from those that require credit
+*
 * prod sfx: steps
 * prod sfx: player hurt
 * prod sfx: mob hurt
