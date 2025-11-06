@@ -1227,8 +1227,8 @@ struct GameData {
     Array<Array<WeaponType, WeaponType_COUNT>, TOTAL_TIERS> weaponPoolsData = {};
     Array<View<WeaponType>, TOTAL_TIERS>                    weaponPools     = {};
 
-    Array<Prop, 200> propsData = {};
-    View<Prop>       props     = {};
+    Array<Prop, PROPS_COUNT> propsData = {};
+    View<Prop>               props     = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -3990,34 +3990,54 @@ void RunInit() {
 
   // Filling props.
   {  ///
+    constexpr int  margin = 1.0f;
     constexpr Rect bounds{
-      .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
-      .size{WORLD_X - 2 * CREATURES_SPAWN_MARGIN, WORLD_Y - 2 * CREATURES_SPAWN_MARGIN},
+      .pos{margin, margin}, .size{WORLD_X - 2 * margin, WORLD_Y - 2 * margin}
     };
 
-    g.run.props     = {.count = 0, .base = g.run.propsData.base};
-    auto variations = glib->game_prop_texture_ids()->size();
+    g.run.props          = {.count = 0, .base = g.run.propsData.base};
+    const int variations = (int)glib->game_prop_texture_ids()->size();
 
-    FOR_RANGE (int, i, g.run.propsData.count) {
-      while (1) {
-        const auto pos = bounds.GetRandomVisualPosInside();
+    int groupDataIndex = -1;
+    int toSpawnInGroup = 0;
+    for (const auto& toSpawnGroups : PROP_GROUP_COUNTS) {
+      groupDataIndex++;
+      toSpawnInGroup++;
 
-        bool shouldContinue = false;
-        for (auto& prop : g.run.props) {
-          if (Vector2DistanceSqr(prop.pos, pos) <= SQR(1)) {
-            shouldContinue = true;
-            break;
+      FOR_RANGE (int, _, toSpawnGroups) {
+        while (1) {
+          const auto pos = bounds.GetRandomVisualPosInside();
+
+          bool shouldContinue = false;
+          for (auto& prop : g.run.props) {
+            if (Vector2DistanceSqr(prop.pos, pos) <= SQR(1.8f)) {
+              shouldContinue = true;
+              break;
+            }
           }
-        }
-        if (shouldContinue)
-          continue;
+          if (shouldContinue)
+            continue;
 
-        g.run.props[g.run.props.count++] = {
-          .variation = (int)(VRAND.Rand() % variations),
-          .right     = (bool)(VRAND.Rand() % 2),
-          .pos       = pos,
-        };
-        break;
+          FOR_RANGE (int, propIndex, toSpawnInGroup) {
+            const auto offset = Lerp(0.4f, 1.0f, VRAND.FRand())
+                                * PROP_GROUP_OFFSET_SCALES[groupDataIndex];
+            const auto rotatedOffset = Vector2Rotate(
+              {offset, 0},
+              (f32)propIndex * 2 * PI32 / (f32)toSpawnInGroup + VRAND.FRand11() * PI32 / 8
+            );
+
+            const auto propPos = pos + rotatedOffset;
+            if (!bounds.ContainsInside(propPos))
+              continue;
+
+            g.run.props[g.run.props.count++] = {
+              .variation = (int)(VRAND.Rand() % variations),
+              .right     = (bool)(VRAND.Rand() % 2),
+              .pos       = propPos,
+            };
+          };
+          break;
+        }
       }
     }
   }

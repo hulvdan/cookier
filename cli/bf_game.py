@@ -372,13 +372,35 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
     with open(SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
         gamelib_fbs_lines = [l.strip() for l in in_file if l.strip()]
 
-    # Prop textures.
+    # Props.
     # ============================================================
     if 1:
         prop_texture_ids: list[str] = []
         gamelib["game_prop_texture_ids"] = prop_texture_ids
         for file in ART_TEXTURES_DIR.rglob("game_prop_*.png"):
             prop_texture_ids.append(file.stem)
+
+        groups = [70, 52, 20]
+        offsetScales = [0, 1, 1]
+        assert len(offsetScales) == len(groups)
+
+        genline(
+            "constexpr int PROP_GROUP_COUNTS_[]{{{}}};".format(
+                ", ".join(str(x) for x in groups)
+            )
+        )
+        genline(
+            "constexpr f32 PROP_GROUP_OFFSET_SCALES_[]{{{}}};".format(
+                ", ".join(str(x) for x in offsetScales)
+            )
+        )
+        genline("VIEW_FROM_ARRAY_DANGER(PROP_GROUP_COUNTS);")
+        genline("VIEW_FROM_ARRAY_DANGER(PROP_GROUP_OFFSET_SCALES);")
+        genline(
+            "constexpr int PROPS_COUNT = {};\n".format(
+                sum(i * g for i, g in enumerate(groups, 1))
+            )
+        )
 
     # Texture bind.
     # ============================================================
