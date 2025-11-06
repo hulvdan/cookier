@@ -24,9 +24,10 @@ x игровое поле: рандом сегменты
 x python: image: single file
 x python: image: invert
 x python: image: remap black and white to different colors
+x props: blue noise (check min distances)
 
-* игровое поле: цветочки травинки
-* игровое поле:
+* props: don't place on edges
+* props: groups of multiple props
 *
 * next wave 2 crossing swords icon
 *
