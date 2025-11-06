@@ -713,8 +713,8 @@ struct MakeNumberData {  ///
 };
 
 lframe GetWaveDuration(int waveIndex) {  ///
-  constexpr int durations_[]{1020, 25, 30, 35, 40, 45, 50, 55, 60, 60,
-                             60,   60, 60, 60, 60, 60, 60, 60, 60, 90};
+  constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
+                             60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
   VIEW_FROM_ARRAY_DANGER(durations);
   int seconds = durations[MIN(durations.count - 1, waveIndex)];
 #if BF_DEBUG
@@ -1109,7 +1109,7 @@ struct GameData {
     DifficultyType difficulty = DifficultyType_D0;
     BuildType      build      = BuildType_DEFAULT;
     WeaponType     weapon     = WeaponType_SWORD;
-    BiomeType      biome      = BiomeType_FOREST;
+    BiomeType      biome      = BiomeType_INVALID;
 
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
@@ -3989,6 +3989,14 @@ void RunInit() {
     FOR_RANGE (int, i, TOTAL_TIERS) {
       ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData[i].count);
     }
+  }
+
+  // Selecting next biome.
+  {  ///
+    int biome = (int)g.player.biome + 1;
+    if (biome >= BiomeType_COUNT)
+      biome = 1;
+    g.player.biome = (BiomeType)biome;
   }
 
   // Filling props.
@@ -8019,11 +8027,6 @@ void DoUI() {
               else if (chosen) {
                 PlaySound(Sound_UI_CLICK);
                 p.weapon = weapon;
-
-                int biome = (int)p.biome + 1;
-                if (biome >= BiomeType_COUNT)
-                  biome = 1;
-                p.biome = (BiomeType)biome;
 
                 Save();
 
