@@ -510,7 +510,9 @@ def process_images():
         log.info("{}/{}: {}".format(i + 1, len(remap_files), filepath.stem))
         img = Image.open(filepath)
         out_img = bf_image.remap(
-            img, hex_to_rgb_ints("142621"), hex_to_rgb_ints("66a650")
+            img,
+            hex_to_rgb_ints("1f3b16"),
+            hex_to_rgb_ints("55701b"),
         )
         out_img.save(filepath.parent.parent / filepath.name)
     log.info("Remapping... Success!")
