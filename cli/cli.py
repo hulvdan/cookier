@@ -8,6 +8,7 @@ import bf_image
 import bf_swatch
 import bf_swatch_aco
 import typer
+import yaml
 from bf_gamelib import do_generate
 from bf_lib import (
     ALLOWED_BUILDS,
@@ -16,6 +17,7 @@ from bf_lib import (
     CLANG_TIDY_PATH,
     CMAKE_TESTS_PATH,
     CPPCHECK_PATH,
+    GAME_DIR,
     MSBUILD_PATH,
     PROJECT_DIR,
     SRC_DIR,
@@ -504,18 +506,29 @@ def process_images():
         img_back.save(filepath.parent.parent / (filepath.stem + "_back.png"))
     log.info("Splitting... Success!")
 
-    remap_files = list((ART_TEXTURES_DIR / "to_remap").rglob("*.png"))
-    log.info("Remapping...")
-    for i, filepath in enumerate(remap_files):
-        log.info("{}/{}: {}".format(i + 1, len(remap_files), filepath.stem))
-        img = Image.open(filepath)
-        out_img = bf_image.remap(
-            img,
-            hex_to_rgb_ints("1f3b16"),
-            hex_to_rgb_ints("55701b"),
-        )
-        out_img.save(filepath.parent.parent / filepath.name)
-    log.info("Remapping... Success!")
+    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+
+    for biome in gamelib["biomes"][1:]:
+        t = biome["type"]
+        biome_files = list((ART_TEXTURES_DIR / "to_biome").rglob("*.png"))
+
+        get_color = lambda b, x: hex_to_rgb_ints(hex(b[x])[2:-2])
+
+        log.info(f"Biomefying `{t}`...")
+
+        for i, filepath in enumerate(biome_files):
+            log.info("{}/{}: {}".format(i + 1, len(biome_files), filepath.stem))
+            img = Image.open(filepath)
+            out_img = bf_image.remap(
+                img,
+                get_color(biome, "outline_color"),
+                get_color(biome, "fill_color"),
+            )
+            out_img.save(
+                filepath.parent.parent / "{}_{}.png".format(filepath.stem, t.lower())
+            )
+
+        log.info(f"Biomefying `{t}`... Success!")
 
 
 def main() -> None:

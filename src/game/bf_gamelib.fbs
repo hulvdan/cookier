@@ -326,6 +326,13 @@ table FloorSegment {
     back_texture_id: int;
     offset: Posf;
 }
+
+table Biome {
+    floor_color: uint;
+    outline_color: uint;
+    fill_color: uint;
+    prop_texture_ids: [int];
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -349,7 +356,6 @@ table GameLibrary {
     ui_button_nine_slice: NineSlice;
 
     shadow_texture_ids: [int];
-    game_prop_texture_ids: [int];
 
     // AUTOMATIC_TEXTURE_BIND_START
     vignette_texture_id: int;
@@ -389,6 +395,7 @@ table GameLibrary {
     // It goes through the field names in the following TABLE_GEN_START/END region.
     // Then makes code generation magic (enums in `bf_codegen.cpp`, recursive replaces)
     // TABLE_GEN_START
+    biomes: [Biome] (required);
     hostilities: [Hostility] (required);
     pre_spawns: [PreSpawn] (required);
     creatures: [Creature] (required);
