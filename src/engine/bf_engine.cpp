@@ -3085,8 +3085,7 @@ std::tuple<bool, LoadFontsResult> _ProcessFonts(
 
   int maxExtraPadding = 0;
   for (const auto& data : data_) {
-    maxExtraPadding
-      = MAX(maxExtraPadding, Round((f32)data.outlineWidth * scaleToFit) * 2);
+    maxExtraPadding = MAX(maxExtraPadding, Ceil((f32)data.outlineWidth * scaleToFit) * 2);
   }
 
   Vector2Int atlasSize = {512, 512};
@@ -3129,7 +3128,7 @@ std::tuple<bool, LoadFontsResult> _ProcessFonts(
       const auto& data = data_[fontIndex];
 
       font.size           = data.size * scaleToFit;
-      font.outlineWidth   = Round((f32)data.outlineWidth * scaleToFit);
+      font.outlineWidth   = Ceil((f32)data.outlineWidth * scaleToFit);
       font.outlineAdvance = (f32)data.outlineAdvance * scaleToFit;
       font._scaleToFit    = scaleToFit;
 
