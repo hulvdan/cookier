@@ -13,6 +13,7 @@ from bf_gamelib import do_generate
 from bf_lib import (
     ALLOWED_BUILDS,
     ART_TEXTURES_DIR,
+    AUDIO_EXTENSIONS,
     BUTLER_PATH,
     CLANG_TIDY_PATH,
     CMAKE_TESTS_PATH,
@@ -532,6 +533,38 @@ def process_images():
             )
 
         log.info(f"Biomefying `{t}`... Success!")
+
+
+def _credit_sfx(folder: Path, credits: str = "") -> None:
+    assert isinstance(credits, str)
+
+    credits_file = folder / "_credits.txt"
+    if credits_file.exists():
+        credits = credits_file.read_text("utf-8")
+
+    for file in folder.iterdir():
+        is_audio = file.is_file() and any(file.name.endswith(x) for x in AUDIO_EXTENSIONS)
+        if credits:
+            run_command(
+                [
+                    "ffmpeg",
+                    "-i",
+                    "-i",
+                ]
+            )
+        else:
+            log.warning()
+
+
+@command
+@timing
+def credit_sfx() -> None:
+    credits_stack: list[str] = [""]
+
+    stack = [Path("e:/Media/SFX CREDIT REQUIRED")]
+    while stack:
+        p = stack.pop(0)
+        stack = stack[1:]
 
 
 def main() -> None:

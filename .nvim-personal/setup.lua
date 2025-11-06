@@ -78,6 +78,7 @@ function rebuild_tasks()
         { "p_deploy_yandex", cli_command("deploy_yandex") },
         { "i_make_swatch", cli_command("make_swatch") },
         { "l_process_images", cli_command("process_images") },
+        { "s_credit_sfx", cli_command("credit_sfx") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         { "l_lint_cpp", cli_command("lint") },
