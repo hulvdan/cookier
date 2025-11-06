@@ -1055,6 +1055,11 @@ struct MakeParticlesData {  ///
   f32 rotationSpeedPlusMinus = PI32;
 };
 
+struct Prop {
+  int     variation = {};
+  Vector2 pos       = {};
+};
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -1220,6 +1225,9 @@ struct GameData {
 
     Array<Array<WeaponType, WeaponType_COUNT>, TOTAL_TIERS> weaponPoolsData = {};
     Array<View<WeaponType>, TOTAL_TIERS>                    weaponPools     = {};
+
+    Array<Prop, 200> propsData = {};
+    View<Prop>       props     = {};
 
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
@@ -3976,6 +3984,19 @@ void RunInit() {
 
     FOR_RANGE (int, i, TOTAL_TIERS) {
       ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData[i].count);
+    }
+  }
+
+  // Filling props.
+  {  ///
+    g.run.props     = {.count = 0, .base = g.run.propsData.base};
+    auto variations = glib->game_prop_texture_ids()->size();
+
+    FOR_RANGE (int, i, g.run.propsData.count) {
+      g.run.props[g.run.props.count++] = {
+        .variation = (int)(GRAND.Rand() % variations),
+        .pos       = Vector2(GRAND.FRand() * WORLD_X, GRAND.FRand() * WORLD_Y),
+      };
     }
   }
 
@@ -12387,6 +12408,14 @@ void GameDraw() {
           });
         }
       }
+    }
+
+    const auto fb_game_prop_texture_ids = glib->game_prop_texture_ids();
+    for (const auto& prop : g.run.props) {
+      DrawGroup_CommandTexture({
+        .texID = fb_game_prop_texture_ids->Get(prop.variation),
+        .pos   = prop.pos + Vector2(0, floorOffsetY),
+      });
     }
 
     DrawGroup_End();
