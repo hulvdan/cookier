@@ -157,7 +157,7 @@ biomes: # {  ###
     floor_color: 0x4b5721ff
     outline_color: 0x3c451aff
     fill_color: 0x66752dff
-  - type: KAZAKHSTAN
+  - type: SAVANNA
     floor_color: 0x5e4d2dff
     outline_color: 0x453821ff
     fill_color: 0x856b20ff

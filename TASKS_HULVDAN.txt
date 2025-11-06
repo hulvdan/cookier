@@ -27,9 +27,8 @@ x python: image: remap black and white to different colors
 x props: blue noise (check min distances)
 x props: don't place on edges
 x props: groups of multiple props
+x biomes (add yellow)
 
-* biomes (add yellow)
-*
 * next wave 2 crossing swords icon
 *
 * prod sfx: steps
