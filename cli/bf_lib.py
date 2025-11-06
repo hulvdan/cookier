@@ -207,6 +207,7 @@ TEMP_ART_DIR = TEMP_DIR / "art"
 CLI_DIR = Path("cli")
 ASSETS_DIR = PROJECT_DIR / "assets"
 ART_DIR = ASSETS_DIR / "art"
+ART_TEXTURES_DIR = ART_DIR / "textures"
 SRC_DIR = Path("src")
 RESOURCES_DIR = PROJECT_DIR / "resources"
 VENDOR_DIR = PROJECT_DIR / "vendor"
@@ -599,7 +600,7 @@ def git_bump_tag() -> None:
     run_command(f"git push origin v1.{next_version}")
 
 
-def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
+def hex_to_rgb_ints(hex_color: str) -> tuple[int, int, int]:
     hex_color = hex_color.lstrip("#")
     r = int(hex_color[0:2], 16)
     g = int(hex_color[2:4], 16)

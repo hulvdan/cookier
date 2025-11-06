@@ -17,6 +17,7 @@ import yaml
 from bf_game import *  # noqa
 from bf_lib import (
     ART_DIR,
+    ART_TEXTURES_DIR,
     ASSETS_DIR,
     FLATBUFFERS_GENERATED_DIR,
     FLATC_PATH,
@@ -676,7 +677,7 @@ def convert_gamelib_json_to_binary(
 def downscale_images(downscale_factors: list[int]) -> None:
     assert downscale_factors, downscale_factors
 
-    images_to_downscale = list((ART_DIR / "textures").glob("*.png"))
+    images_to_downscale = list(ART_TEXTURES_DIR.glob("*.png"))
 
     for factor in downscale_factors:
         assert factor >= 1, factor
@@ -833,8 +834,8 @@ def check_no_excessive_images_in_temp_art_dir(downscale_factors: list[int]) -> N
             for filepath in TEMP_ART_DOWNSCALED_DIR.rglob("*.png")
         ]
         art_filepaths = [
-            filepath.relative_to(ART_DIR / "textures")
-            for filepath in (ART_DIR / "textures").glob("*.png")
+            filepath.relative_to(ART_TEXTURES_DIR)
+            for filepath in ART_TEXTURES_DIR.glob("*.png")
         ]
 
         for temp_filepath in temp_filepaths:
