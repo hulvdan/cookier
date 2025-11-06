@@ -21,6 +21,9 @@ x игровое поле: тайлы по углам
 x игровое поле: залить центр
 x игровое поле: норм offset-ы
 x игровое поле: рандом сегменты
+x python: image: single file
+x python: image: invert
+x python: image: remap black and white to different colors
 
 * игровое поле: цветочки травинки
 * игровое поле:

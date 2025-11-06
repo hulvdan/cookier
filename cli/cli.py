@@ -4,15 +4,14 @@ import zipfile
 from pathlib import Path
 from typing import Callable, ParamSpec
 
+import bf_image
 import bf_swatch
 import bf_swatch_aco
 import typer
 from bf_gamelib import do_generate
-from bf_image_outline import image_outline
-from bf_image_split import image_extract_black, image_extract_white
 from bf_lib import (
     ALLOWED_BUILDS,
-    ART_DIR,
+    ART_TEXTURES_DIR,
     BUTLER_PATH,
     CLANG_TIDY_PATH,
     CMAKE_TESTS_PATH,
@@ -30,8 +29,8 @@ from bf_lib import (
     git_stash,
     global_timing_manager_instance,
     hash32,
-    hex_to_rgb,
     hex_to_rgb_floats,
+    hex_to_rgb_ints,
     log,
     rgb_floats_to_hex,
     run_command,
@@ -436,7 +435,7 @@ def make_swatch():
     bf_swatch.write(swatch_data, "aboba.ase")
 
     def process_color2(color: str) -> bf_swatch_aco.RawColor:
-        r, g, b = hex_to_rgb(color)
+        r, g, b = hex_to_rgb_ints(color)
         r = int(r * 65535 / 255)
         g = int(g * 65535 / 255)
         b = int(b * 65535 / 255)
@@ -467,7 +466,7 @@ def make_swatch():
         )
         color_lines = []
         for color in new_colors:
-            r, g, b = hex_to_rgb(color)
+            r, g, b = hex_to_rgb_ints(color)
             color_lines.append(f"{r} {g} {b}")
         color_lines = color_lines[2:] + color_lines[:2]
         out_file.write("\n".join(color_lines))
@@ -483,27 +482,38 @@ def lint():
 @command
 @timing
 def process_images():
-    outline_files = list((ART_DIR / "textures" / "to_outline").rglob("*.png"))
+    outline_files = list((ART_TEXTURES_DIR / "to_outline").rglob("*.png"))
     log.info("Outlining...")
     for i, filepath in enumerate(outline_files):
         log.info("{}/{}: {}".format(i + 1, len(outline_files), filepath.stem))
         img = Image.open(filepath)
-        out_img = image_outline(
+        out_img = bf_image.outline(
             image=img, stroke_size=8, color=(0, 0, 0, 255), is_shadow=False
         )
         out_img.save(filepath.parent.parent / filepath.name)
     log.info("Outlining... Success!")
 
-    split_files = list((ART_DIR / "textures" / "to_split").rglob("*.png"))
+    split_files = list((ART_TEXTURES_DIR / "to_split").rglob("*.png"))
     log.info("Splitting...")
     for i, filepath in enumerate(split_files):
         log.info("{}/{}: {}".format(i + 1, len(split_files), filepath.stem))
         img = Image.open(filepath)
-        img_front = image_extract_white(img)
+        img_front = bf_image.extract_white(img)
         img_front.save(filepath.parent.parent / (filepath.stem + "_front.png"))
-        img_back = image_extract_black(img)
+        img_back = bf_image.extract_black(img)
         img_back.save(filepath.parent.parent / (filepath.stem + "_back.png"))
     log.info("Splitting... Success!")
+
+    remap_files = list((ART_TEXTURES_DIR / "to_remap").rglob("*.png"))
+    log.info("Remapping...")
+    for i, filepath in enumerate(remap_files):
+        log.info("{}/{}: {}".format(i + 1, len(remap_files), filepath.stem))
+        img = Image.open(filepath)
+        out_img = bf_image.remap(
+            img, hex_to_rgb_ints("142621"), hex_to_rgb_ints("66a650")
+        )
+        out_img.save(filepath.parent.parent / filepath.name)
+    log.info("Remapping... Success!")
 
 
 def main() -> None:

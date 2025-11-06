@@ -17,6 +17,7 @@ from itertools import groupby
 from typing import Any
 
 from bf_lib import (
+    ART_TEXTURES_DIR,
     SRC_DIR,
     data_values,
     gamelib_processor,
@@ -370,6 +371,14 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 
     with open(SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
         gamelib_fbs_lines = [l.strip() for l in in_file if l.strip()]
+
+    # Prop textures.
+    # ============================================================
+    if 1:
+        prop_texture_ids: list[str] = []
+        gamelib["game_prop_texture_ids"] = prop_texture_ids
+        for file in ART_TEXTURES_DIR.rglob("game_prop_*.png"):
+            prop_texture_ids.append(file.stem)
 
     # Texture bind.
     # ============================================================
