@@ -1105,10 +1105,11 @@ struct GameData {
     bool confirmingNewRun  = false;
   } meta;
 
-  struct {  ///
+  struct Player {  ///
     DifficultyType difficulty = DifficultyType_D0;
     BuildType      build      = BuildType_DEFAULT;
     WeaponType     weapon     = WeaponType_SWORD;
+    BiomeType      biome      = BiomeType_FOREST;
 
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
@@ -1251,7 +1252,7 @@ struct GameData {
 #undef X
   } run;
 
-  struct {  ///
+  struct UIFlex {  ///
     bool active        = false;
     bool addedChildren = false;
     u16  childGap      = {};
@@ -1897,6 +1898,7 @@ void GameLoad(const BFSave::Save* save) {  ///
   g.player.difficulty      = (DifficultyType)save->difficulty();
   g.player.build           = (BuildType)save->build();
   g.player.weapon          = (WeaponType)save->weapon();
+  g.player.biome           = (BiomeType)save->biome();
   PLAYER_CREATURE.health   = save->health();
   s.won                    = save->won();
   s.screen                 = (ScreenType)save->screen();
@@ -2042,6 +2044,7 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
     fb_save.difficulty = (int)g.player.difficulty;
     fb_save.build      = (int)g.player.build;
     fb_save.weapon     = (int)g.player.weapon;
+    fb_save.biome      = (int)g.player.biome;
 
     fb_save.random_state               = ge.meta.logicRand._state;
     fb_save.health                     = PLAYER_CREATURE.health;
@@ -3995,8 +3998,9 @@ void RunInit() {
       .pos{margin, margin}, .size{WORLD_X - 2 * margin, WORLD_Y - 2 * margin}
     };
 
-    g.run.props          = {.count = 0, .base = g.run.propsData.base};
-    const int variations = (int)glib->game_prop_texture_ids()->size();
+    g.run.props = {.count = 0, .base = g.run.propsData.base};
+    const int variations
+      = (int)glib->biomes()->Get(g.player.biome)->prop_texture_ids()->size();
 
     int groupDataIndex = -1;
     int toSpawnInGroup = 0;
@@ -8015,6 +8019,12 @@ void DoUI() {
               else if (chosen) {
                 PlaySound(Sound_UI_CLICK);
                 p.weapon = weapon;
+
+                int biome = (int)p.biome + 1;
+                if (biome >= BiomeType_COUNT)
+                  biome = 1;
+                p.biome = (BiomeType)biome;
+
                 Save();
 
                 ResetFocus(currentContext);
@@ -12321,7 +12331,7 @@ void GameDraw() {
 
     f32 floorOffsetY = -0.25f;
 
-    constexpr Color color = ColorFromRGBA(0x2e5621ff);
+    const Color color = ColorFromRGBA(glib->biomes()->Get(g.player.biome)->floor_color());
 
     static_assert((WORLD_X % 4) == 0);
     static_assert((WORLD_Y % 4) == 0);
@@ -12452,10 +12462,11 @@ void GameDraw() {
       }
     }
 
-    const auto fb_game_prop_texture_ids = glib->game_prop_texture_ids();
+    const auto fb_prop_texture_ids
+      = glib->biomes()->Get(g.player.biome)->prop_texture_ids();
     for (const auto& prop : g.run.props) {
       DrawGroup_CommandTexture({
-        .texID = fb_game_prop_texture_ids->Get(prop.variation),
+        .texID = fb_prop_texture_ids->Get(prop.variation),
         .pos   = prop.pos + Vector2(0, floorOffsetY),
         .scale{(prop.right ? 1 : -1), 1},
       });

@@ -151,6 +151,18 @@ shadow_texture_ids:
 ui_controls_touch_handle_margin: 16
 # }
 
+biomes: # {  ###
+  - type: INVALID
+  - type: FOREST
+    floor_color: 0x2e5621ff
+    outline_color: 0x1f3b16ff
+    fill_color: 0x55701bff
+  - type: KAZAKHSTAN
+    floor_color: 0x5e4d2dff
+    outline_color: 0x453821ff
+    fill_color: 0x856b20ff
+# }
+
 # "Hostility" is about colors of "spawn crosses" in brotato.
 # Colors differ based on whether a creature that will be spawned
 # would be neutral (like trees), friendly (like flying bots), or hostile (like mobs).
