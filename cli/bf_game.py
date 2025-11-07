@@ -548,11 +548,15 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 @command
 @timing
 def process_images():
+    # {  ###
     SLOT_SIZE = (200, 200)
     UI_SLOT_OR_FRAME_RADIUS = 30
 
+    # `ui_item_slot`.
     slot_image = bf_image.rectangle(SLOT_SIZE, radius=UI_SLOT_OR_FRAME_RADIUS)
+    slot_image.save(ART_TEXTURES_DIR / "ui_item_slot.png")
 
+    # `ui_frame`.
     bf_image.rectangle(
         (112, 112),
         radius=UI_SLOT_OR_FRAME_RADIUS,
@@ -563,7 +567,7 @@ def process_images():
 
     DEBUG_SHADOWS = 0
 
-    # Small shadow.
+    # `ui_frame_shadow_small`.
     bf_image.outline(
         image=bf_image.red(slot_image),
         radius=60,
@@ -572,7 +576,7 @@ def process_images():
         blend_image_on_top=DEBUG_SHADOWS,
     ).save(ART_TEXTURES_DIR / "ui_frame_shadow_small.png")
 
-    # Big shadow.
+    # `ui_frame_shadow_big`.
     bf_image.outline(
         image=bf_image.red(slot_image),
         radius=120,
@@ -581,9 +585,31 @@ def process_images():
         blend_image_on_top=DEBUG_SHADOWS,
     ).save(ART_TEXTURES_DIR / "ui_frame_shadow_big.png")
 
-    return
+    TOUCH_OUTLINE = 10
 
-    # {  ###
+    # TOUCH_COLOR = (*hex_to_rgb_ints("efcb84"), 255)
+    TOUCH_COLOR = (255, 255, 255, 255)
+
+    # `ui_controls_touch_base`.
+    bf_image.outline(
+        bf_image.ellipse(
+            (480, 480),
+            width=24,
+            outline=TOUCH_COLOR,
+            fill=(0, 0, 0, 0),
+        ),
+        radius=TOUCH_OUTLINE,
+    ).save(ART_TEXTURES_DIR / "ui_controls_touch_base.png")
+
+    # `ui_controls_touch_handle`.
+    bf_image.outline(
+        bf_image.ellipse(
+            (128, 128),
+            fill=TOUCH_COLOR,
+        ),
+        radius=TOUCH_OUTLINE,
+    ).save(ART_TEXTURES_DIR / "ui_controls_touch_handle.png")
+
     # Outlining ui icons.
     bf_image.conveyor(
         "to_outline",

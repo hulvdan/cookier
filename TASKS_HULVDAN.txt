@@ -36,9 +36,9 @@ x upgrades: remove excessive icons
 x stats: same width outlines
 x ref image processing conveyors
 x achievement light shadow
+x better touch controls images:
+  python: (opt. hollow) circle image + support for conveyor
 
-* python: (opt. hollow) circle image + support for conveyor
-*
 * next wave 2 crossing swords icon
 *
 * crediting sfx
