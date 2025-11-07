@@ -1,23 +1,17 @@
+from bf_typer import app, command, timing, global_timing_manager_instance  # noqa
+
 import os
-import subprocess
 import zipfile
 from pathlib import Path
-from typing import Callable, ParamSpec
 
-import bf_image
-import bf_swatch
-import bf_swatch_aco
-import typer
-import yaml
+from bf_game import *  # noqa
 from bf_gamelib import do_generate
 from bf_lib import (
     ALLOWED_BUILDS,
-    ART_TEXTURES_DIR,
     BUTLER_PATH,
     CLANG_TIDY_PATH,
     CMAKE_TESTS_PATH,
     CPPCHECK_PATH,
-    GAME_DIR,
     MSBUILD_PATH,
     PROJECT_DIR,
     SRC_DIR,
@@ -25,36 +19,17 @@ from bf_lib import (
     BuildPlatform,
     BuildTarget,
     BuildType,
-    T,
     data_values,
     git_bump_tag,
     git_stash,
-    global_timing_manager_instance,
     hash32,
-    hex_to_rgb_floats,
-    hex_to_rgb_ints,
-    rgb_floats_to_hex,
     run_command,
-    timed_exit,
-    timing,
-    transform_color,
-)
-
-P = ParamSpec("P")
-
-
-def hook_exit():
-    global exit
-    exit = timed_exit  # noqa: A001
-
-
-app = typer.Typer(
-    callback=hook_exit, result_callback=timed_exit, pretty_exceptions_enable=False
 )
 
 
 @timing
 def make_web_build_archive(zip_path: Path, base_path: Path) -> None:
+    # {  ###
     with zipfile.ZipFile(zip_path, "w") as archive:
         for filepath in (
             "index.data",
@@ -63,10 +38,12 @@ def make_web_build_archive(zip_path: Path, base_path: Path) -> None:
             "index.wasm",
         ):
             archive.write(base_path / filepath, filepath)
+    # }
 
 
 @timing
 def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
+    # {  ###
     command = [
         "cmake",
         "-DBUILD_SHARED_LIBS=OFF",
@@ -92,10 +69,12 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
             assert False, f"Not supported platform: {platform}"
 
     run_command(" ".join(command))
+    # }
 
 
 @timing
 def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
+    # {  ###
     build_id = (target, platform, build_type)
     assert build_id in ALLOWED_BUILDS, "{} is not allowed!".format(build_id)
 
@@ -124,6 +103,7 @@ def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType
 
         case _:
             assert False, f"Not supported platform: {platform}"
+    # }
 
 
 @timing
@@ -133,6 +113,7 @@ def do_test() -> None:
 
 @timing
 def do_lint() -> None:
+    # {  ###
     files_to_lint = [
         *SRC_DIR.rglob("*.cpp"),
         *SRC_DIR.rglob("*.h"),
@@ -199,10 +180,12 @@ def do_lint() -> None:
             str(PROJECT_DIR).replace(os.path.sep, os.path.sep * 3) + os.path.sep * 3
         )
     )
+    # }
 
 
 @timing
 def do_cmake_ninja_files() -> None:
+    # {  ###
     run_command(
         rf"""
             cmake
@@ -214,10 +197,12 @@ def do_cmake_ninja_files() -> None:
             -DCMAKE_CONFIGURATION_TYPES={BuildType.Debug}
         """
     )
+    # }
 
 
 @timing
 def do_compile_commands_json() -> None:
+    # {  ###
     run_command(
         r"""
             ninja
@@ -227,6 +212,7 @@ def do_compile_commands_json() -> None:
             > compile_commands.json
         """
     )
+    # }
 
 
 @timing
@@ -240,12 +226,9 @@ def do_run_in_debugger_ahk(target: BuildTarget, build_type: BuildType) -> None:
     run_command(rf".nvim-personal\cli.ahk run_in_debugger {exe_path}")
 
 
-def command(f: Callable[P, T]) -> Callable[P, T]:
-    return app.command(f.__name__)(f)
-
-
 # @command
 # def cog():
+#     # {  ###
 #     files_to_cog_and_format = [
 #         *SRC_DIR.rglob("*.cpp"),
 #         *SRC_DIR.rglob("*.h"),
@@ -292,6 +275,7 @@ def command(f: Callable[P, T]) -> Callable[P, T]:
 #                 text=True,
 #                 shell=True,
 #             )
+#   # }
 
 
 @command
@@ -302,22 +286,27 @@ def codegen(platform: BuildPlatform, build_type: BuildType):
 
 @command
 def build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
+    # {  ###
     do_cmake(platform, build_type)
     do_generate(platform, build_type)
     do_build(target, platform, build_type)
+    # }
 
 
 @command
 def build_all_and_test():
+    # {  ###
     test()
     for target, platform, build_type in ALLOWED_BUILDS:
         if target != BuildTarget.game:
             continue
         build(BuildTarget.game, platform, build_type)
+    # }
 
 
 @command
 def run_in_debugger(target: BuildTarget, build_type: BuildType):
+    # {  ###
     platform = BuildPlatform.Win
 
     do_stop_debugger_ahk()
@@ -327,19 +316,23 @@ def run_in_debugger(target: BuildTarget, build_type: BuildType):
     do_build(target, platform, build_type)
 
     do_run_in_debugger_ahk(target, build_type)
+    # }
 
 
 @command
 def update_template():
-    subprocess.run("git fetch template", check=True, shell=True)
+    # {  ###
+    run_command("git fetch template")
 
     with git_stash():
-        subprocess.run("git rebase template/template", check=True, shell=True)
-        subprocess.run("poetry install", check=True, shell=True)
+        run_command("git merge template/template")
+        run_command("poetry install")
+    # }
 
 
 @command
 def test():
+    # {  ###
     platform = BuildPlatform.Win
     build_type = BuildType.Debug
 
@@ -347,10 +340,12 @@ def test():
     do_generate(platform, build_type)
     do_build(BuildTarget.tests, platform, build_type)
     do_test()
+    # }
 
 
 @command
 def deploy_itch():
+    # {  ###
     git_bump_tag()
 
     with git_stash():
@@ -361,179 +356,29 @@ def deploy_itch():
 
     target = "{}:html".format(data_values.itch_target)
     run_command([BUTLER_PATH, "push", zip_path, target])
+    # }
 
 
 @command
 def deploy_yandex():
+    # {  ###
     git_bump_tag()
 
     with git_stash():
         build(BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release)
-
-
-@command
-def make_swatch():
-    # result = bf_swatch.parse("c:/Users/user/Downloads/woodspark.ase")
-    # print(result)
-    colors = [
-        "#ffffff",
-        "#2c4941",
-        "#66a650",
-        "#b9d850",
-        "#82dcd7",
-        "#208cb2",
-        "#253348",
-        "#1d1b24",
-        "#3a3a41",
-        "#7a7576",
-        "#b59a66",
-        "#cec7b1",
-        "#edefe2",
-        "#d78b98",
-        "#a13d77",
-        "#6d2047",
-        "#3c1c43",
-        "#2c2228",
-        "#5e3735",
-        "#885a44",
-        "#b8560f",
-        "#dc9824",
-        "#efcb84",
-        "#e68556",
-        "#c02931",
-        "#000000",
-    ]
-
-    new_colors = ["#ffffff", "#000000"]
-
-    for i in range(len(colors)):
-        color = colors[i]
-        if color in ("#000000", "#ffffff"):
-            continue
-        c = rgb_floats_to_hex(
-            transform_color(
-                hex_to_rgb_floats(color),
-                saturation_scale=1.2,
-                value_scale=0.52,
-            )
-        )
-        new_colors.append(color)
-        new_colors.append(c)
-        colors.append(c)
-
-    def process_color(color: str) -> dict:
-        return {
-            "name": color,
-            "type": "Global",
-            "data": {
-                "mode": "RGB",
-                "values": hex_to_rgb_floats(color),
-            },
-        }
-
-    swatch_data = [process_color(c) for c in colors]
-    bf_swatch.write(swatch_data, "aboba.ase")
-
-    def process_color2(color: str) -> bf_swatch_aco.RawColor:
-        r, g, b = hex_to_rgb_ints(color)
-        r = int(r * 65535 / 255)
-        g = int(g * 65535 / 255)
-        b = int(b * 65535 / 255)
-        assert r < 65536, r
-        assert g < 65536, g
-        assert b < 65536, b
-        assert r >= 0, r
-        assert g >= 0, g
-        assert b >= 0, b
-
-        return bf_swatch_aco.RawColor(
-            name=color,
-            color_space=bf_swatch_aco.ColorSpace.RGB,
-            component_1=r,
-            component_2=g,
-            component_3=b,
-            component_4=65535,
-        )
-
-    with open("aboba.aco", "wb") as out_file:
-        bf_swatch_aco.save_aco_file([process_color2(c) for c in new_colors], out_file)
-
-    with open("aboba.pal", "w") as out_file:
-        out_file.write(
-            "JASC-PAL\n0100\n{}\n".format(
-                len(new_colors),
-            )
-        )
-        color_lines = []
-        for color in new_colors:
-            r, g, b = hex_to_rgb_ints(color)
-            color_lines.append(f"{r} {g} {b}")
-        color_lines = color_lines[2:] + color_lines[:2]
-        out_file.write("\n".join(color_lines))
+    # }
 
 
 @command
 def lint():
+    # {  ###
     do_cmake_ninja_files()
     do_compile_commands_json()
     do_lint()
+    # }
 
 
-@command
-@timing
-def process_images():
-    # Outlining ui icons.
-    bf_image.conveyor(
-        "to_outline",
-        "outlining",
-        bf_image.conveyor_outline(stroke_size=8, color=(0, 0, 0, 255), is_shadow=False),
-    )
-
-    # Extracting white and black of floor sprites.
-    for f in ART_TEXTURES_DIR.glob("game_floor_*.png"):
-        f.unlink()
-    bf_image.conveyor(
-        "to_split",
-        "extract white",
-        bf_image.conveyor_extract_white(),
-        bf_image.conveyor_suffix("front"),
-    )
-    bf_image.conveyor(
-        "to_split",
-        "extract_black",
-        bf_image.conveyor_extract_black(),
-        bf_image.conveyor_suffix("back"),
-    )
-
-    # Biomefying props.
-    for f in ART_TEXTURES_DIR.glob("game_prop_*.png"):
-        f.unlink()
-    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
-    get_color = lambda biome, x: hex_to_rgb_ints(hex(biome[x])[2:-2])
-    for biome in gamelib["biomes"][1:]:
-        t = biome["type"]
-        bf_image.conveyor(
-            "to_biome",
-            f"{t}: remapping",
-            bf_image.conveyor_remap(
-                get_color(biome, "outline_color"), get_color(biome, "fill_color")
-            ),
-            bf_image.conveyor_suffix(t.lower()),
-        )
-
-    # Transforming stat icons into big and small.
-    for f in ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
-        f.unlink()
-    bf_image.conveyor("stat_icons", "copying big", bf_image.conveyor_suffix("big"))
-    bf_image.conveyor(
-        "stat_icons",
-        "downscaling small",
-        bf_image.conveyor_scale(0.5),
-        bf_image.conveyor_outline(stroke_size=1, color=(0, 0, 0, 255), is_shadow=False),
-        bf_image.conveyor_suffix("small"),
-    )
-
-
+# CREDITING SFX {  ###
 def _credit_sfx(_folder: Path, _credit: str = "") -> None:
     pass
     # assert isinstance(credit, str)
@@ -563,10 +408,14 @@ def _credit_sfx(_folder: Path, _credit: str = "") -> None:
 #     while stack:
 #         p = stack.pop(0)
 #         stack = stack[1:]
+# }
 
 
 def main() -> None:
+    # {  ###
     test_value = hash32("test")
+    assert test_value == 0xAFD071E5, test_value
+    test_value = hash32("test")  # Checking that it's stable.
     assert test_value == 0xAFD071E5, test_value
 
     # Исполняем файл относительно корня проекта.
@@ -580,7 +429,10 @@ def main() -> None:
             caught_exc = e
     if caught_exc is not None:
         raise caught_exc
+    # }
 
 
 if __name__ == "__main__":
     main()
+
+###

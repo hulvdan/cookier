@@ -16,15 +16,23 @@ USAGE:
 from itertools import groupby
 from typing import Any
 
+import bf_image
+import bf_swatch
+import yaml
 from bf_lib import (
     ART_TEXTURES_DIR,
+    GAME_DIR,
     SRC_DIR,
     data_values,
     gamelib_processor,
     genenum,
-    log,
+    hex_to_rgb_floats,
+    hex_to_rgb_ints,
     recursive_replace_transform,
+    rgb_floats_to_hex,
+    transform_color,
 )
+from bf_typer import command, log, timing
 
 data_values.itch_target = "hulvdan/cookier"
 data_values.languages = ["russian", "english"]
@@ -501,3 +509,159 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
     # ============================================================
     for v in transforms:
         recursive_replace_transform(gamelib, *v)
+
+
+@command
+@timing
+def process_images():
+    # Outlining ui icons.
+    bf_image.conveyor(
+        "to_outline",
+        "outlining",
+        bf_image.conveyor_outline(stroke_size=8, color=(0, 0, 0, 255), is_shadow=False),
+    )
+
+    # Extracting white and black of floor sprites.
+    for f in ART_TEXTURES_DIR.glob("game_floor_*.png"):
+        f.unlink()
+    bf_image.conveyor(
+        "to_split",
+        "extract white",
+        bf_image.conveyor_extract_white(),
+        bf_image.conveyor_suffix("front"),
+    )
+    bf_image.conveyor(
+        "to_split",
+        "extract_black",
+        bf_image.conveyor_extract_black(),
+        bf_image.conveyor_suffix("back"),
+    )
+
+    # Biomefying props.
+    for f in ART_TEXTURES_DIR.glob("game_prop_*.png"):
+        f.unlink()
+    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+    get_color = lambda biome, x: hex_to_rgb_ints(hex(biome[x])[2:-2])
+    for biome in gamelib["biomes"][1:]:
+        t = biome["type"]
+        bf_image.conveyor(
+            "to_biome",
+            f"{t}: remapping",
+            bf_image.conveyor_remap(
+                get_color(biome, "outline_color"), get_color(biome, "fill_color")
+            ),
+            bf_image.conveyor_suffix(t.lower()),
+        )
+
+    # Transforming stat icons into big and small.
+    for f in ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
+        f.unlink()
+    bf_image.conveyor("stat_icons", "copying big", bf_image.conveyor_suffix("big"))
+    bf_image.conveyor(
+        "stat_icons",
+        "downscaling small",
+        bf_image.conveyor_scale(0.5),
+        bf_image.conveyor_outline(stroke_size=1, color=(0, 0, 0, 255), is_shadow=False),
+        bf_image.conveyor_suffix("small"),
+    )
+
+
+@command
+def make_swatch():
+    # result = bf_swatch.parse("c:/Users/user/Downloads/woodspark.ase")
+    # print(result)
+    colors = [
+        "#ffffff",
+        "#2c4941",
+        "#66a650",
+        "#b9d850",
+        "#82dcd7",
+        "#208cb2",
+        "#253348",
+        "#1d1b24",
+        "#3a3a41",
+        "#7a7576",
+        "#b59a66",
+        "#cec7b1",
+        "#edefe2",
+        "#d78b98",
+        "#a13d77",
+        "#6d2047",
+        "#3c1c43",
+        "#2c2228",
+        "#5e3735",
+        "#885a44",
+        "#b8560f",
+        "#dc9824",
+        "#efcb84",
+        "#e68556",
+        "#c02931",
+        "#000000",
+    ]
+
+    new_colors = ["#ffffff", "#000000"]
+
+    for i in range(len(colors)):
+        color = colors[i]
+        if color in ("#000000", "#ffffff"):
+            continue
+        c = rgb_floats_to_hex(
+            transform_color(
+                hex_to_rgb_floats(color),
+                saturation_scale=1.2,
+                value_scale=0.52,
+            )
+        )
+        new_colors.append(color)
+        new_colors.append(c)
+        colors.append(c)
+
+    def process_color(color: str) -> dict:
+        return {
+            "name": color,
+            "type": "Global",
+            "data": {
+                "mode": "RGB",
+                "values": hex_to_rgb_floats(color),
+            },
+        }
+
+    swatch_data = [process_color(c) for c in colors]
+    bf_swatch.write(swatch_data, "aboba.ase")
+
+    def process_color2(color: str) -> bf_swatch.RawColor:
+        r, g, b = hex_to_rgb_ints(color)
+        r = int(r * 65535 / 255)
+        g = int(g * 65535 / 255)
+        b = int(b * 65535 / 255)
+        assert r < 65536, r
+        assert g < 65536, g
+        assert b < 65536, b
+        assert r >= 0, r
+        assert g >= 0, g
+        assert b >= 0, b
+
+        return bf_swatch.RawColor(
+            name=color,
+            color_space=bf_swatch.ColorSpace.RGB,
+            component_1=r,
+            component_2=g,
+            component_3=b,
+            component_4=65535,
+        )
+
+    with open("aboba.aco", "wb") as out_file:
+        bf_swatch.save_aco_file([process_color2(c) for c in new_colors], out_file)
+
+    with open("aboba.pal", "w") as out_file:
+        out_file.write(
+            "JASC-PAL\n0100\n{}\n".format(
+                len(new_colors),
+            )
+        )
+        color_lines = []
+        for color in new_colors:
+            r, g, b = hex_to_rgb_ints(color)
+            color_lines.append(f"{r} {g} {b}")
+        color_lines = color_lines[2:] + color_lines[:2]
+        out_file.write("\n".join(color_lines))
