@@ -1,6 +1,13 @@
+from pathlib import Path
+from typing import Any, Callable, TypeAlias
+
 import cv2
 import numpy as np
+from bf_lib import ART_TEXTURES_DIR, log
 from PIL import Image, ImageChops
+
+ConveyorDatum: TypeAlias = tuple[Image.Image, Path]
+ConveyorCallable: TypeAlias = Callable[[Image.Image, Path], ConveyorDatum]
 
 
 def _change_matrix_outline(input_mat, stroke_size: int):
@@ -161,3 +168,69 @@ def remap_grayscale(
     return remap(
         grayscale_image, (black_to, black_to, black_to), (white_to, white_to, white_to)
     )
+
+
+def conveyor(folder_name: str, conveyor_name: str, *args: ConveyorCallable) -> None:
+    log.info(f"`{folder_name}`: {conveyor_name}...")
+    folder = ART_TEXTURES_DIR / folder_name
+    assert folder.exists(), f"`{folder}` does not exist!"
+
+    files = list(folder.glob("*.png"))
+    for f in files:
+        img = Image.open(f)
+        for func in args:
+            img2, f = func(img, f)  # noqa: PLW2901
+            img = img2
+        img.save(ART_TEXTURES_DIR / f.name)
+    log.info(f"`{folder_name}`: {conveyor_name}... Success!")
+
+
+def conveyor_suffix(suffix: str) -> ConveyorCallable:
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        extension = path_.name.rsplit(".", 1)[-1]
+        path = path_.parent / "{}_{}.{}".format(path_.stem, suffix, extension)
+        return image_, path
+
+    return inner
+
+
+def conveyor_scale(factor: float) -> ConveyorCallable:
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        image = image_.resize(
+            (round(image_.size[0] * factor), round(image_.size[1] * factor))
+        )
+        return image, path_
+
+    return inner
+
+
+def conveyor_outline(**kwargs: Any) -> ConveyorCallable:
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        image = outline(image=image_, **kwargs)
+        return image, path_
+
+    return inner
+
+
+def conveyor_remap(
+    black_to: tuple[int, int, int], white_to: tuple[int, int, int]
+) -> ConveyorCallable:
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        image = remap(image_, black_to, white_to)
+        return image, path_
+
+    return inner
+
+
+def conveyor_extract_white() -> ConveyorCallable:
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        return extract_white(image_), path_
+
+    return inner
+
+
+def conveyor_extract_black() -> ConveyorCallable:
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        return extract_black(image_), path_
+
+    return inner
