@@ -37,8 +37,7 @@ x stats: same width outlines
 x ref image processing conveyors
 x achievement light shadow
 
-* python: (opt. hollow) circle / rectangle image + support for conveyor
-*
+* python: (opt. hollow) circle image + support for conveyor
 *
 * next wave 2 crossing swords icon
 *
