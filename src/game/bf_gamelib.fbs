@@ -67,7 +67,8 @@ struct Pos {
 
 // GAME STUFF
 table Stat {
-    icon_texture_id: int;
+    big_icon_texture_id: int;
+    small_icon_texture_id: int;
     name_locale: int;
     is_hidden: bool;
     negative_is_good: bool;

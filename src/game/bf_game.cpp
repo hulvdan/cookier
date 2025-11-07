@@ -5954,7 +5954,7 @@ void DoUI() {
                     continue;
 
                   PlaceholdString(TextFormat("%d%%", v));
-                  PlaceholdImage(fb_stats->Get(s->stat_type())->icon_texture_id());
+                  PlaceholdImage(fb_stats->Get(s->stat_type())->small_icon_texture_id());
                   totalScalings--;
 
                   if (totalScalings > 0) {
@@ -6393,7 +6393,7 @@ void DoUI() {
                     "+%d%%",
                     fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
                   ));
-                  BF_CLAY_IMAGE({.texID = fb_stat->icon_texture_id()});
+                  BF_CLAY_IMAGE({.texID = fb_stat->small_icon_texture_id()});
                   if (scalingIndex < fb_scalings->size() - 1)
                     BF_CLAY_TEXT(" + ");
                 }
@@ -8207,31 +8207,28 @@ void DoUI() {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
               // Slot with upgrade's image.
               componentSlot({.tier = upgrade.tier}, [&]() BF_FORCE_INLINE_LAMBDA {
-                CLAY({
-                  .layout{
-                    BF_CLAY_SIZING_GROW_XY,
-                    BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-                  },
-                }) {
-                  BF_CLAY_IMAGE({.texID = fb->upgrade_texture_id()});
-                }
+                componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_IMAGE({.texID = fb->big_icon_texture_id()});
+                });
               });
 
               CLAY({.layout{
                 .childGap        = GAP_SMALL,
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               }}) {
-                // Name.
-                BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                  fb->upgrade_name_locale(), {.color = textColorsPerTier[upgrade.tier]}
-                );
+                // // Name.
+                // BF_CLAY_TEXT_BROKEN_LOCALIZED(
+                //   fb->upgrade_name_locale(), {.color = textColorsPerTier[upgrade.tier]}
+                // );
 
                 // "Upgrade" label.
-                FontBegin(&g.meta.fontStats);
+                // FontBegin(&g.meta.fontStats);
                 BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                  Loc_UI_UPGRADE, {.color = secondaryTextColor}
+                  // Loc_UI_UPGRADE  , {.color = secondaryTextColor}
+                  Loc_UI_UPGRADE,
+                  {.color = textColorsPerTier[upgrade.tier]}
                 );
-                FontEnd();
+                // FontEnd();
               }
             }
 
@@ -8261,7 +8258,7 @@ void DoUI() {
               }) {
                 BF_CLAY_TEXT(TextFormat("+%d", amount), {.color = palTextGreen});
 
-                BF_CLAY_IMAGE({.texID = fb->icon_texture_id()});
+                // BF_CLAY_IMAGE({.texID = fb->small_icon_texture_id()});
 
                 if (fb->is_percent())
                   BF_CLAY_TEXT("%");
@@ -9428,7 +9425,7 @@ void DoUI() {
                   const auto fb   = glib->stats()->Get(type);
                   if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
                     componentStatsEntry(
-                      fb->icon_texture_id(),
+                      fb->small_icon_texture_id(),
                       fb->name_locale(),
                       g.run.state.stats[type],
                       type

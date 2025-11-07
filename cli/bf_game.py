@@ -266,6 +266,12 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
     for i, x in enumerate_table("stats"):
         if i >= 1:
             x["name_locale"] = "STAT_" + x["type"].upper()
+            icon_texture = x.pop("icon_texture_id", None)
+            if icon_texture is not None:
+                x["big_icon_texture_id"] = f"{icon_texture}_big"
+                if x["type"] != "COINS":
+                    x["small_icon_texture_id"] = f"{icon_texture}_small"
+
         if i >= 3 and not x.get("is_secondary"):
             x["upgrade_name_locale"] = "UPGRADE_NAME_" + x["type"].upper()
 

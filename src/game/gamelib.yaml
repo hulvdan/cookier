@@ -121,7 +121,7 @@ ui_item_slot_colors:
   # Tier 7.
   - 0x66a650ff # Colors. Green.
   - 0 # Flash.
-ui_shop_current_level_icon_texture_id: ui_stat_icon_armor
+ui_shop_current_level_icon_texture_id: ui_stat_icon_level_small
 ui_frame_nine_slice:
   texture_id: ui_frame
   left: 48
@@ -1183,7 +1183,7 @@ numbers: # {  ###
 stats: # {  ###
   - type: INVALID
   - type: COINS
-    icon_texture_id: ui_coin
+    small_icon_texture_id: ui_coin
     is_hidden: true
   - type: CURSE
     icon_texture_id: ui_stat_icon_armor
@@ -1222,7 +1222,7 @@ stats: # {  ###
       - 12
       - 16
     upgrade_texture_id: ui_stat_upgrade_damage
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_damage
   - type: DAMAGE_MELEE
     upgrade_values:
       - 2
@@ -1238,7 +1238,7 @@ stats: # {  ###
       - 3
       - 4
     upgrade_texture_id: ui_stat_upgrade_damage_ranged
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_damage_ranged
   - type: DAMAGE_ELEMENTAL
     upgrade_values:
       - 1
@@ -1255,7 +1255,7 @@ stats: # {  ###
       - 15
       - 20
     upgrade_texture_id: ui_stat_upgrade_attack_speed
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_attack_speed
   - type: CRIT_CHANCE
     is_percent: true
     upgrade_values:
@@ -1280,7 +1280,7 @@ stats: # {  ###
       - 45
       - 60
     upgrade_texture_id: ui_stat_upgrade_range
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_range
   - type: ARMOR
     upgrade_values:
       - 1
@@ -1297,7 +1297,7 @@ stats: # {  ###
       - 9
       - 12
     upgrade_texture_id: ui_stat_upgrade_dodge
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_dodge
   - type: SPEED
     is_percent: true
     upgrade_values:
@@ -1322,7 +1322,7 @@ stats: # {  ###
       - 10
       - 12
     upgrade_texture_id: ui_stat_upgrade_harvesting
-    icon_texture_id: ui_stat_icon_armor
+    icon_texture_id: ui_stat_icon_harvesting
   - type: CONSUMABLE_HEAL
     player_value: 3
     is_secondary: true
