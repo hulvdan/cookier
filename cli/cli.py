@@ -2,7 +2,7 @@ import os
 import subprocess
 import zipfile
 from pathlib import Path
-from typing import Callable, ParamSpec
+from typing import Any, Callable, ParamSpec, TypeAlias
 
 import bf_image
 import bf_swatch
@@ -13,7 +13,6 @@ from bf_gamelib import do_generate
 from bf_lib import (
     ALLOWED_BUILDS,
     ART_TEXTURES_DIR,
-    AUDIO_EXTENSIONS,
     BUTLER_PATH,
     CLANG_TIDY_PATH,
     CMAKE_TESTS_PATH,
@@ -44,6 +43,9 @@ from bf_lib import (
 from PIL import Image
 
 P = ParamSpec("P")
+
+ConveyorDatum: TypeAlias = tuple[Image.Image, Path]
+ConveyorCallable: TypeAlias = Callable[[Image.Image, Path], ConveyorDatum]
 
 
 def hook_exit():
@@ -534,37 +536,87 @@ def process_images():
 
         log.info(f"Biomefying `{t}`... Success!")
 
+    def image_conveyor(conveyor_name: str, folder: Path, *args: ConveyorCallable) -> None:
+        assert folder.parent == ART_TEXTURES_DIR
+        log.info(f"{conveyor_name}...")
+        for f in folder.glob("*.png"):
+            img = Image.open(f)
+            for func in args:
+                img2, f = func(img, f)  # noqa: PLW2901
+                img = img2
+            img.save(ART_TEXTURES_DIR / f.name)
+        log.info(f"{conveyor_name}... Success!")
 
-def _credit_sfx(folder: Path, credits: str = "") -> None:
-    assert isinstance(credits, str)
+    def conveyor_suffix(suffix: str) -> ConveyorCallable:
+        def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+            extension = path_.name.rsplit(".", 1)[-1]
+            path = path_.parent / (path_.stem + suffix + "." + extension)
+            return image_, path
 
-    credits_file = folder / "_credits.txt"
-    if credits_file.exists():
-        credits = credits_file.read_text("utf-8")
+        return inner
 
-    for file in folder.iterdir():
-        is_audio = file.is_file() and any(file.name.endswith(x) for x in AUDIO_EXTENSIONS)
-        if credits:
-            run_command(
-                [
-                    "ffmpeg",
-                    "-i",
-                    "-i",
-                ]
+    def conveyor_scale(factor: float) -> ConveyorCallable:
+        def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+            image = image_.resize(
+                (round(image_.size[0] * factor), round(image_.size[1] * factor))
             )
-        else:
-            log.warning()
+            return image, path_
+
+        return inner
+
+    def conveyor_outline(**kwargs: Any) -> ConveyorCallable:
+        def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+            image = bf_image.outline(image=image_, **kwargs)
+            return image, path_
+
+        return inner
+
+    for f in ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
+        f.unlink()
+
+    image_conveyor(
+        "stat_icons",
+        ART_TEXTURES_DIR / "stat_icons",
+        conveyor_suffix("_big"),
+    )
+    image_conveyor(
+        "stat_icons",
+        ART_TEXTURES_DIR / "stat_icons",
+        conveyor_scale(0.5),
+        conveyor_outline(stroke_size=1, color=(0, 0, 0, 255), is_shadow=False),
+        conveyor_suffix("_small"),
+    )
 
 
-@command
-@timing
-def credit_sfx() -> None:
-    credits_stack: list[str] = [""]
+def _credit_sfx(_folder: Path, _credit: str = "") -> None:
+    pass
+    # assert isinstance(credit, str)
+    #
+    # credits_file = folder / "_credits.txt"
+    # if credits_file.exists():
+    #     credit = credits_file.read_text("utf-8")
+    #
+    # for file in folder.iterdir():
+    #     is_audio = file.is_file() and any(file.name.endswith(x) for x in AUDIO_EXTENSIONS)
+    #     if credit:
+    #         run_command(
+    #             [
+    #                 "ffmpeg",
+    #                 "-i",
+    #                 "-i",
+    #             ]
+    #         )
+    #     else:
+    #         log.warning()
 
-    stack = [Path("e:/Media/SFX CREDIT REQUIRED")]
-    while stack:
-        p = stack.pop(0)
-        stack = stack[1:]
+
+# @command
+# @timing
+# def credit_sfx() -> None:
+#     stack = [Path("e:/Media/SFX CREDIT REQUIRED")]
+#     while stack:
+#         p = stack.pop(0)
+#         stack = stack[1:]
 
 
 def main() -> None:

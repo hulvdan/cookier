@@ -28,7 +28,23 @@ x props: blue noise (check min distances)
 x props: don't place on edges
 x props: groups of multiple props
 x biomes (add yellow)
+x luck CLOVER
+x финализировать названия статов + иконки
+x upgrades: set small / big
+x upgrades: downscale alg
+x upgrades: remove excessive icons
 
+* upgrades: same width outlines
+* upgrades:
+* upgrades:
+* upgrades: downscale by X
+*
+* upgrades: don't show upgrade icon -> replace with stat icon
+* upgrades: don't show upgrade icon -> replace with stat icon
+*
+* downscale stats + outline
+* remove upgrade images
+*
 * next wave 2 crossing swords icon
 *
 * crediting sfx
@@ -67,7 +83,6 @@ x biomes (add yellow)
 * prod sfx:
 * prod sfx:
 *
-* финализировать названия статов
 * норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
