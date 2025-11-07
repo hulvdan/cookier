@@ -14,6 +14,8 @@ from typing import Any, Iterator, Sequence, TypeVar
 import fnvhash
 from bf_typer import log
 
+T = TypeVar("T")
+
 
 @dataclass(slots=True)
 class _DataValues:
@@ -63,9 +65,6 @@ ALLOWED_BUILDS = (
     (BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release),
     (BuildTarget.tests, BuildPlatform.Win, BuildType.Debug),
 )
-
-
-T = TypeVar("T")
 
 
 REPLACING_SPACES_PATTERN = re.compile(r"\ +")
