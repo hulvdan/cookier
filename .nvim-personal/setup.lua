@@ -4,7 +4,7 @@ vim.keymap.set("n", "gD", "<C-w>o:vs<CR>gd", opts)
 vim.keymap.set("n", "<leader>fc", ":e codegen/hands/bf_codegen.cpp<CR>", opts)
 
 function cli_command(cmd)
-    return [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && .venv\Scripts\python.exe cli\cli.py ]]
+    return [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && .venv\Scripts\python.exe cli\bf_cli.py ]]
         .. cmd
 end
 
