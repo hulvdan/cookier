@@ -1,3 +1,4 @@
+# Imports.  {  ###
 import colorsys
 import hashlib
 import re
@@ -12,6 +13,8 @@ from typing import Any, Iterator, Sequence, TypeVar
 
 import fnvhash
 from bf_typer import log
+
+# }
 
 T = TypeVar("T")
 

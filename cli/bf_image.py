@@ -1,3 +1,4 @@
+# Imports.  {  ###
 from pathlib import Path
 from typing import Any, Callable, TypeAlias
 
@@ -6,11 +7,14 @@ import numpy as np
 from bf_lib import ART_TEXTURES_DIR, log
 from PIL import Image, ImageChops
 
+# }
+
 ConveyorDatum: TypeAlias = tuple[Image.Image, Path]
 ConveyorCallable: TypeAlias = Callable[[Image.Image, Path], ConveyorDatum]
 
 
 def _change_matrix_outline(input_mat, stroke_size: int):
+    # {  ###
     # stroke_size = stroke_size - 1
     mat = np.ones(input_mat.shape)
     check_size = stroke_size + 1.0
@@ -18,9 +22,11 @@ def _change_matrix_outline(input_mat, stroke_size: int):
     border = (input_mat > stroke_size) & (input_mat <= check_size)
     mat[border] = 1.0 - (input_mat[border] - stroke_size)
     return mat
+    # }
 
 
 def _change_matrix_shadow(input_mat, stroke_size: int):
+    # {  ###
     mat = np.ones(input_mat.shape)
     mat[input_mat > stroke_size] = 0
     border = input_mat <= stroke_size
@@ -35,6 +41,7 @@ def _change_matrix_shadow(input_mat, stroke_size: int):
         / stroke_size
     )
     return mat
+    # }
 
 
 def _cv2pil(cv_img):
@@ -50,6 +57,7 @@ def outline(
     threshold: int = 0,
     blend_image_on_top: bool = True,
 ) -> Image.Image:
+    # {  ###
     assert threshold >= 0
 
     img = np.asarray(image)
@@ -96,9 +104,11 @@ def outline(
         bigger_img = _cv2pil(bigger_img)
         stroke = Image.alpha_composite(stroke, bigger_img)  # type: ignore  # noqa
     return stroke
+    # }
 
 
 def extract_white(grayscale_image: Image.Image) -> Image.Image:
+    # {  ###
     img = np.asarray(grayscale_image)
     h, w, _ = img.shape
     one = np.full((h, w), 255, np.uint8)
@@ -106,9 +116,11 @@ def extract_white(grayscale_image: Image.Image) -> Image.Image:
     img_alpha = img[:, :, 3]
     img_front = cv2.merge((one, one, one, cv2.min(img_r, img_alpha)))
     return _cv2pil(img_front)
+    # }
 
 
 def extract_black(grayscale_image: Image.Image) -> Image.Image:
+    # {  ###
     img = np.asarray(grayscale_image)
     h, w, _ = img.shape
     one = np.full((h, w), 255, np.uint8)
@@ -117,24 +129,29 @@ def extract_black(grayscale_image: Image.Image) -> Image.Image:
     alpha = cv2.min(255 - img_r, img_alpha)
     out_img = cv2.merge((one, one, one, alpha))
     return _cv2pil(out_img)
+    # }
 
 
 def white(image: Image.Image) -> Image.Image:
+    # {  ###
     img = np.asarray(image)
     h, w, _ = img.shape
     one = np.full((h, w), 255, np.uint8)
     alpha = img[:, :, 3]
     out_img = cv2.merge((one, one, one, alpha))
     return _cv2pil(out_img)
+    # }
 
 
 def black(image: Image.Image) -> Image.Image:
+    # {  ###
     img = np.asarray(image)
     h, w, _ = img.shape
-    one = np.full((h, w), 0, np.uint8)
+    zero = np.full((h, w), 0, np.uint8)
     alpha = img[:, :, 3]
-    out_img = cv2.merge((one, one, one, alpha))
+    out_img = cv2.merge((zero, zero, zero, alpha))
     return _cv2pil(out_img)
+    # }
 
 
 def invert(image: Image.Image) -> Image.Image:
@@ -146,6 +163,7 @@ def remap(
     black_to: tuple[int, int, int],
     white_to: tuple[int, int, int],
 ) -> Image.Image:
+    # {  ###
     img = np.asarray(grayscale_image)
     h, w, _ = img.shape
     img_r = img[:, :, 0]
@@ -160,17 +178,21 @@ def remap(
         )
     )
     return _cv2pil(out_img)
+    # }
 
 
 def remap_grayscale(
     grayscale_image: Image.Image, black_to: int, white_to: int
 ) -> Image.Image:
+    # {  ###
     return remap(
         grayscale_image, (black_to, black_to, black_to), (white_to, white_to, white_to)
     )
+    # }
 
 
 def conveyor(folder_name: str, conveyor_name: str, *args: ConveyorCallable) -> None:
+    # {  ###
     log.info(f"`{folder_name}`: {conveyor_name}...")
     folder = ART_TEXTURES_DIR / folder_name
     assert folder.exists(), f"`{folder}` does not exist!"
@@ -183,18 +205,22 @@ def conveyor(folder_name: str, conveyor_name: str, *args: ConveyorCallable) -> N
             img = img2
         img.save(ART_TEXTURES_DIR / f.name)
     log.info(f"`{folder_name}`: {conveyor_name}... Success!")
+    # }
 
 
 def conveyor_suffix(suffix: str) -> ConveyorCallable:
+    # {  ###
     def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
         extension = path_.name.rsplit(".", 1)[-1]
         path = path_.parent / "{}_{}.{}".format(path_.stem, suffix, extension)
         return image_, path
 
     return inner
+    # }
 
 
 def conveyor_scale(factor: float) -> ConveyorCallable:
+    # {  ###
     def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
         image = image_.resize(
             (round(image_.size[0] * factor), round(image_.size[1] * factor))
@@ -202,35 +228,47 @@ def conveyor_scale(factor: float) -> ConveyorCallable:
         return image, path_
 
     return inner
+    # }
 
 
 def conveyor_outline(**kwargs: Any) -> ConveyorCallable:
+    # {  ###
     def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
         image = outline(image=image_, **kwargs)
         return image, path_
 
     return inner
+    # }
 
 
 def conveyor_remap(
     black_to: tuple[int, int, int], white_to: tuple[int, int, int]
 ) -> ConveyorCallable:
+    # {  ###
     def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
         image = remap(image_, black_to, white_to)
         return image, path_
 
     return inner
+    # }
 
 
 def conveyor_extract_white() -> ConveyorCallable:
+    # {  ###
     def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
         return extract_white(image_), path_
 
     return inner
+    # }
 
 
 def conveyor_extract_black() -> ConveyorCallable:
+    # {  ###
     def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
         return extract_black(image_), path_
 
     return inner
+    # }
+
+
+###

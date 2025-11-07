@@ -13,6 +13,7 @@ USAGE:
             tile.pop("type")
 """
 
+# Imports.  {  ###
 from itertools import groupby
 from typing import Any
 
@@ -34,18 +35,23 @@ from bf_lib import (
 )
 from bf_typer import command, log, timing
 
+# }
+
 game_settings.itch_target = "hulvdan/cookier"
 game_settings.languages = ["russian", "english"]
 game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
 
 
 def _check_duplicates(values: list) -> None:
+    # {  ###
     for i in range(len(values)):
         for k in range(i + 1, len(values)):
             assert values[i] != values[k], f"Found duplicate value: {values[i]}"
+    # }
 
 
 def field_to_list(container, field: str) -> None:
+    # {  ###
     if field not in container:
         return
     if isinstance(container[field], list):
@@ -59,9 +65,11 @@ def field_to_list(container, field: str) -> None:
         container[field] = [container[field]]
     else:
         assert False
+    # }
 
 
 def does_require(effect_condition_name: str, v: str) -> bool:
+    # {  ###
     requires = False
     if effect_condition_name.startswith(f"{v}__"):
         requires = True
@@ -70,6 +78,7 @@ def does_require(effect_condition_name: str, v: str) -> bool:
     if f"__{v}__" in effect_condition_name:
         requires = True
     return requires
+    # }
 
 
 scoped_processing_args = ["None", "None"]
@@ -77,15 +86,18 @@ scoped_processing_args = ["None", "None"]
 
 @gamelib_processor
 def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+    # {  ###
     try:
         __process_gamelib(genline, gamelib, localization_codepoints)
     except Exception:
         print("ERROR HAPPENED DURING PROCESSING:", ", ".join(scoped_processing_args))
         raise
+    # }
 
 
 def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     def enumerate_table(field: str):
+        # {  ###
         scoped_processing_args[0] = field
 
         for i, x in enumerate(gamelib[field]):
@@ -94,17 +106,21 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 
         scoped_processing_args[0] = "None"
         scoped_processing_args[1] = "None"
+        # }
 
     transforms: list[tuple[str, str, dict[str, int]]] = []
 
     # Pickupables.
     # ============================================================
+    # {  ###
     for i, x in enumerate_table("pickupables"):
         if i > 0:
             x["name_locale"] = "PICKUPABLE_{}".format(x["type"])
+    # }
 
     # Effect conditions.
     # ============================================================
+    # {  ###
     EFFECT_CONDITION_LETTERS = ("x", "y", "z", "w")
 
     if 1:
@@ -156,8 +172,10 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                         "divided_by_times": x.pop(f"{letter}_divided_by_times", False),
                     }
                 )
+    # }
 
     def process_effects_of(x, required_tier_values: int) -> None:
+        # {  ###
         for e in x.get("effects", []):
             field_to_list(e, "value")
             field_to_list(e, "value_multiplier")
@@ -179,11 +197,13 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
             for v in e.get("placeholders", []):
                 field_to_list(v, "ints")
                 field_to_list(v, "floats")
+        # }
+
+    TOTAL_TIERS = 4
 
     # Items.
     # ============================================================
-    TOTAL_TIERS = 4
-
+    # {  ###
     items_per_tier = [0] * TOTAL_TIERS
 
     for i, x in enumerate_table("items"):
@@ -209,25 +229,27 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
         )
     )
     genline("VIEW_FROM_ARRAY_DANGER(ITEMS_PER_TIER);\n")
+    # }
 
     # Difficulties.
     # ============================================================
+    # {  ###
     for i, x in enumerate_table("difficulties"):
         if i > 0:
             process_effects_of(x, 1)
             x["name_locale"] = f"DIFFICULTY_{i}"
+    # }
 
     # Weapons.
     # ============================================================
-    MAX_WEAPON_TIER = 4
-
+    # {  ###
     for i, x in enumerate_table("weapons"):
         if i > 0:
             x["name_locale"] = "WEAPON_" + x["type"].upper()
 
-            required_tier_values = MAX_WEAPON_TIER - x["min_tier_index"]
+            required_tier_values = TOTAL_TIERS - x["min_tier_index"]
             assert required_tier_values > 0
-            assert required_tier_values <= MAX_WEAPON_TIER
+            assert required_tier_values <= TOTAL_TIERS
 
             mandatory_fields = [
                 "price",
@@ -268,9 +290,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 )
 
             process_effects_of(x, required_tier_values)
+    # }
 
     # Stats.
     # ============================================================
+    # {  ###
     for i, x in enumerate_table("stats"):
         if i >= 1:
             x["name_locale"] = "STAT_" + x["type"].upper()
@@ -282,9 +306,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 
         if i >= 3 and not x.get("is_secondary"):
             x["upgrade_name_locale"] = "UPGRADE_NAME_" + x["type"].upper()
+    # }
 
     # Creatures.
     # ============================================================
+    # {  ###
     for i, x in enumerate_table("creatures"):
         if i >= 2:
             mob_mandatory_fields = [
@@ -307,10 +333,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                         x["type"]
                     )
                 )
+    # }
 
     # Placeholders.
     # ============================================================
-    if 1:
+    if 1:  # {  ###
         genline("// Placeholders. {  ///")
         genline("struct Placeholder;")
         params = "const Placeholder* placeholder"
@@ -326,10 +353,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
         genline("VIEW_FROM_ARRAY_DANGER(clayPlaceholderFunctions);")
         genline("// }")
         genline("")
+    # }
 
     # Builds.
     # ============================================================
-    if 1:
+    if 1:  # {  ###
         max_weapons = 0
         for i, x in enumerate_table("builds"):
             process_effects_of(x, 1)
@@ -337,10 +365,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 x["name_locale"] = "BUILD_{}".format(x["type"])
                 max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
         genline("constexpr int MAX_BUILD_WEAPONS = {};\n".format(max_weapons))
+    # }
 
     # Achievements.
     # ============================================================
-    if 1:
+    if 1:  # {  ###
         unlocked_builds: list[str] = []
         unlocked_items: list[str] = []
         unlocked_weapons: list[str] = []
@@ -382,13 +411,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                             v = step[field]
                             assert v not in container, "{} {} duplicated".format(field, v)
                             container.append(v)
-
-    with open(SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
-        gamelib_fbs_lines = [l.strip() for l in in_file if l.strip()]
+    # }
 
     # Props.
     # ============================================================
-    if 1:
+    if 1:  # {  ###
         for biome in gamelib["biomes"][1:]:
             prop_texture_ids: list[str] = []
             biome["prop_texture_ids"] = prop_texture_ids
@@ -418,10 +445,14 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 sum(i * g for i, g in enumerate(groups, 1))
             )
         )
+    # }
+
+    with open(SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
+        gamelib_fbs_lines = [l.strip() for l in in_file if l.strip()]
 
     # Texture bind.
     # ============================================================
-    if 1:
+    if 1:  # {  ###
         start = -1
         end = -1
         for i, line in enumerate(gamelib_fbs_lines):
@@ -438,10 +469,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
         for i in range(start, end):
             field = gamelib_fbs_lines[i].split(":", 1)[0]
             gamelib[field] = field.split("_texture_id", 1)[0]
+    # }
 
     # Tables.
     # ============================================================
-    if 1:
+    if 1:  # {  ###
         start = -1
         end = -1
         for i, line in enumerate(gamelib_fbs_lines):
@@ -477,10 +509,11 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                     {v: i for i, v in enumerate(types)},
                 )
             )
+    # }
 
     # Codepoints.
     # ============================================================
-    if 1:
+    if 1:  # {  ###
         ranges = [
             (ord(" "), ord(" ") + 1),  # Space character
             (33, 127),  # ASCII
@@ -504,6 +537,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 )
             )
         genline("};\n")
+    # }
 
     # Transforms.
     # ============================================================
@@ -514,6 +548,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
 @command
 @timing
 def process_images():
+    # {  ###
     # Outlining ui icons.
     bf_image.conveyor(
         "to_outline",
@@ -564,12 +599,12 @@ def process_images():
         bf_image.conveyor_outline(stroke_size=1, color=(0, 0, 0, 255), is_shadow=False),
         bf_image.conveyor_suffix("small"),
     )
+    # }
 
 
 @command
 def make_swatch():
-    # result = bf_swatch.parse("c:/Users/user/Downloads/woodspark.ase")
-    # print(result)
+    # {  ###
     colors = [
         "#ffffff",
         "#2c4941",
@@ -665,3 +700,7 @@ def make_swatch():
             color_lines.append(f"{r} {g} {b}")
         color_lines = color_lines[2:] + color_lines[:2]
         out_file.write("\n".join(color_lines))
+    # }
+
+
+###
