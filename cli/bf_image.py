@@ -5,7 +5,7 @@ from typing import Any, Callable, TypeAlias
 import cv2
 import numpy as np
 from bf_lib import ART_TEXTURES_DIR, log
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageDraw
 
 # }
 
@@ -13,32 +13,29 @@ ConveyorDatum: TypeAlias = tuple[Image.Image, Path]
 ConveyorCallable: TypeAlias = Callable[[Image.Image, Path], ConveyorDatum]
 
 
-def _change_matrix_outline(input_mat, stroke_size: int):
+def _change_matrix_outline(input_mat, radius: int):
     # {  ###
-    # stroke_size = stroke_size - 1
+    # radius = radius - 1
     mat = np.ones(input_mat.shape)
-    check_size = stroke_size + 1.0
+    check_size = radius + 1.0
     mat[input_mat > check_size] = 0
-    border = (input_mat > stroke_size) & (input_mat <= check_size)
-    mat[border] = 1.0 - (input_mat[border] - stroke_size)
+    border = (input_mat > radius) & (input_mat <= check_size)
+    mat[border] = 1.0 - (input_mat[border] - radius)
     return mat
     # }
 
 
-def _change_matrix_shadow(input_mat, stroke_size: int):
+def _change_matrix_shadow(input_mat, radius: int):
     # {  ###
     mat = np.ones(input_mat.shape)
-    mat[input_mat > stroke_size] = 0
-    border = input_mat <= stroke_size
+    mat[input_mat > radius] = 0
+    border = input_mat <= radius
 
-    # mat[border] = (stroke_size - input_mat[border]) / stroke_size
+    # mat[border] = (radius - input_mat[border]) / radius
 
     # NOTE: Squared easing of shadow decay.
     mat[border] = (
-        (stroke_size - input_mat[border])
-        * (stroke_size - input_mat[border])
-        / stroke_size
-        / stroke_size
+        (radius - input_mat[border]) * (radius - input_mat[border]) / radius / radius
     )
     return mat
     # }
@@ -49,9 +46,9 @@ def _cv2pil(cv_img):
 
 
 def outline(
-    *,
     image: Image.Image,
-    stroke_size: int,
+    *,
+    radius: int,
     color: tuple[int, int, int, int],
     is_shadow: bool,
     threshold: int = 0,
@@ -62,7 +59,7 @@ def outline(
 
     img = np.asarray(image)
     h, w, _ = img.shape
-    padding = stroke_size
+    padding = radius
     alpha = img[:, :, 3]
     rgb_img = img[:, :, 0:3]
     bigger_img = cv2.copyMakeBorder(
@@ -89,9 +86,9 @@ def outline(
     )  # dist l1 : L1 , dist l2 : l2
 
     if is_shadow:
-        stroked = _change_matrix_shadow(dist, stroke_size)
+        stroked = _change_matrix_shadow(dist, radius)
     else:
-        stroked = _change_matrix_outline(dist, stroke_size)
+        stroked = _change_matrix_outline(dist, radius)
 
     stroke_b = np.full((h, w), color[2], np.uint8)
     stroke_g = np.full((h, w), color[1], np.uint8)
@@ -132,26 +129,26 @@ def extract_black(grayscale_image: Image.Image) -> Image.Image:
     # }
 
 
-def white(image: Image.Image) -> Image.Image:
+def replace_color(image: Image.Image, color: tuple[int, int, int]) -> Image.Image:
     # {  ###
     img = np.asarray(image)
     h, w, _ = img.shape
-    one = np.full((h, w), 255, np.uint8)
     alpha = img[:, :, 3]
-    out_img = cv2.merge((one, one, one, alpha))
+    out_img = cv2.merge(
+        (
+            np.full((h, w), color[0], np.uint8),
+            np.full((h, w), color[1], np.uint8),
+            np.full((h, w), color[2], np.uint8),
+            alpha,
+        )
+    )
     return _cv2pil(out_img)
     # }
 
 
-def black(image: Image.Image) -> Image.Image:
-    # {  ###
-    img = np.asarray(image)
-    h, w, _ = img.shape
-    zero = np.full((h, w), 0, np.uint8)
-    alpha = img[:, :, 3]
-    out_img = cv2.merge((zero, zero, zero, alpha))
-    return _cv2pil(out_img)
-    # }
+red = lambda image: replace_color(image, (255, 0, 0))
+white = lambda image: replace_color(image, (255, 255, 255))
+black = lambda image: replace_color(image, (0, 0, 0))
 
 
 def invert(image: Image.Image) -> Image.Image:
@@ -268,6 +265,38 @@ def conveyor_extract_black() -> ConveyorCallable:
         return extract_black(image_), path_
 
     return inner
+    # }
+
+
+def rectangle(
+    size: tuple[int, int],
+    *,
+    radius: int = 0,
+    fill: tuple[int, int, int, int] = (255, 255, 255, 255),
+    outline: tuple[int, int, int, int] = (0, 0, 0, 255),
+    width: int = 0,
+) -> Image.Image:
+    # {  ###
+    assert size[0] > radius * 2
+    assert size[1] > radius * 2
+    assert radius >= 0
+    assert width >= 0
+
+    original_size = size
+
+    if (radius > 0) or ((width > 0) and (fill != outline)):
+        scale_to_smooth_later = 2
+        size = (size[0] * scale_to_smooth_later, size[1] * scale_to_smooth_later)
+        radius *= scale_to_smooth_later
+        width *= scale_to_smooth_later
+
+    image = Image.new("RGBA", size)
+    d = ImageDraw.ImageDraw(image, "RGBA")
+    d.rounded_rectangle((0, 0, *size), radius, fill, outline, width)
+
+    if original_size != size:
+        return image.resize(original_size)
+    return image
     # }
 
 

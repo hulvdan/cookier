@@ -6217,7 +6217,7 @@ void DoUI() {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_BEGIN{
-            BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_nine_slice(), data.shadow),
+            BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_big_nine_slice(), data.shadow),
             BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
           } BF_CLAY_CUSTOM_END,
         }
@@ -6763,7 +6763,8 @@ void DoUI() {
     }
   };
 
-  LAMBDA (void, componentAchievement, (AchievementType type, int stepIndex)) {  ///
+  LAMBDA (void, componentAchievement, (AchievementType type, int stepIndex, bool shadow))
+  {  ///
     auto fb      = fb_achievements->Get(type);
     auto fb_step = (type ? fb->steps()->Get(stepIndex) : nullptr);
 
@@ -6789,6 +6790,7 @@ void DoUI() {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), shadow),
         BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
       } BF_CLAY_CUSTOM_END,
     }) {
@@ -9008,7 +9010,8 @@ void DoUI() {
               // Achievement's name and description.
               componentAchievement(
                 (AchievementType)g.meta.pausedAchievementsHoveredAchievement,
-                g.meta.pausedAchievementsHoveredAchievementStep
+                g.meta.pausedAchievementsHoveredAchievementStep,
+                false
               );
 
               // Achievement's reward.
@@ -9664,22 +9667,33 @@ void DoUI() {
       };
 
       CLAY({.layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-        CLAY({.layout{.childGap = GAP_SMALL}}) {
-          if (fb_step->unlocks_build_type()) {
-            auto fbx = fb_builds->Get(fb_step->unlocks_build_type());
-            componentAchievementReward(fbx->texture_id(), 3);
-          }
-          if (fb_step->unlocks_weapon_type()) {
-            auto fbx = fb_weapons->Get(fb_step->unlocks_weapon_type());
-            componentAchievementReward(fbx->icon_texture_id(), 3);
-          }
-          if (fb_step->unlocks_item_type()) {
-            auto fbx = fb_items->Get(fb_step->unlocks_item_type());
-            componentAchievementReward(fbx->texture_id(), 3);
+        const bool unlocksSomething = fb_step->unlocks_build_type()
+                                      || fb_step->unlocks_weapon_type()
+                                      || fb_step->unlocks_item_type();
+
+        if (unlocksSomething) {
+          CLAY({
+            .layout{.childGap = GAP_SMALL},
+            BF_CLAY_CUSTOM_BEGIN{
+              BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
+            } BF_CLAY_CUSTOM_END,
+          }) {
+            if (fb_step->unlocks_build_type()) {
+              auto fbx = fb_builds->Get(fb_step->unlocks_build_type());
+              componentAchievementReward(fbx->texture_id(), 3);
+            }
+            if (fb_step->unlocks_weapon_type()) {
+              auto fbx = fb_weapons->Get(fb_step->unlocks_weapon_type());
+              componentAchievementReward(fbx->icon_texture_id(), 3);
+            }
+            if (fb_step->unlocks_item_type()) {
+              auto fbx = fb_items->Get(fb_step->unlocks_item_type());
+              componentAchievementReward(fbx->texture_id(), 3);
+            }
           }
         }
 
-        componentAchievement(x.type, x.stepIndex);
+        componentAchievement(x.type, x.stepIndex, true);
       }
     }
 
@@ -10023,7 +10037,7 @@ void DoUI() {
                   bb.y - (f32)fb->outer_bottom() / downscaleFactor,
                 },
                 .anchor{},
-                .color{0, 0, 0, (u8)(255.0f * beautifierAlpha / 2.0f)},
+                .color = Fade(WHITE, beautifierAlpha * 3.0f / 5.0f),
                 .nineSliceMargins{
                   (f32)fb->left() / downscaleFactor,
                   (f32)fb->right() / downscaleFactor,
