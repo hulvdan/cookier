@@ -49,8 +49,8 @@ def outline(
     image: Image.Image,
     *,
     radius: int,
-    color: tuple[int, int, int, int],
-    is_shadow: bool,
+    color: tuple[int, int, int, int] = (0, 0, 0, 255),
+    is_shadow: bool = False,
     threshold: int = 0,
     blend_image_on_top: bool = True,
 ) -> Image.Image:
@@ -268,7 +268,8 @@ def conveyor_extract_black() -> ConveyorCallable:
     # }
 
 
-def rectangle(
+def _shape(
+    func_name: str,
     size: tuple[int, int],
     *,
     radius: int = 0,
@@ -284,20 +285,30 @@ def rectangle(
 
     original_size = size
 
-    if (radius > 0) or ((width > 0) and (fill != outline)):
-        scale_to_smooth_later = 2
-        size = (size[0] * scale_to_smooth_later, size[1] * scale_to_smooth_later)
-        radius *= scale_to_smooth_later
-        width *= scale_to_smooth_later
+    scale_to_smooth_later = 2
+    size = (size[0] * scale_to_smooth_later, size[1] * scale_to_smooth_later)
+    radius *= scale_to_smooth_later
+    width *= scale_to_smooth_later
 
     image = Image.new("RGBA", size)
     d = ImageDraw.ImageDraw(image, "RGBA")
-    d.rounded_rectangle((0, 0, *size), radius, fill, outline, width)
 
-    if original_size != size:
-        return image.resize(original_size)
-    return image
+    kw = {}
+    if func_name == "rounded_rectangle":
+        kw["radius"] = radius
+
+    getattr(d, func_name)(xy=(0, 0, *size), fill=fill, outline=outline, width=width, **kw)
+
+    return image.resize(original_size)
     # }
+
+
+def rectangle(*args: Any, **kwargs: Any) -> Image.Image:
+    return _shape("rounded_rectangle", *args, **kwargs)
+
+
+def ellipse(*args: Any, **kwargs: Any) -> Image.Image:
+    return _shape("ellipse", *args, **kwargs)
 
 
 ###

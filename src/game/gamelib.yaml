@@ -158,7 +158,7 @@ shadow_texture_ids:
   - game_shadow_1
   - game_shadow_2
   - game_shadow_3
-ui_controls_touch_handle_margin: 16
+ui_controls_touch_handle_margin: 36
 # }
 
 biomes: # {  ###
