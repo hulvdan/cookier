@@ -2,7 +2,7 @@ import os
 import subprocess
 import zipfile
 from pathlib import Path
-from typing import Any, Callable, ParamSpec, TypeAlias
+from typing import Callable, ParamSpec
 
 import bf_image
 import bf_swatch
@@ -33,19 +33,14 @@ from bf_lib import (
     hash32,
     hex_to_rgb_floats,
     hex_to_rgb_ints,
-    log,
     rgb_floats_to_hex,
     run_command,
     timed_exit,
     timing,
     transform_color,
 )
-from PIL import Image
 
 P = ParamSpec("P")
-
-ConveyorDatum: TypeAlias = tuple[Image.Image, Path]
-ConveyorCallable: TypeAlias = Callable[[Image.Image, Path], ConveyorDatum]
 
 
 def hook_exit():
@@ -487,104 +482,55 @@ def lint():
 @command
 @timing
 def process_images():
-    outline_files = list((ART_TEXTURES_DIR / "to_outline").glob("*.png"))
-    log.info("Outlining...")
-    for i, filepath in enumerate(outline_files):
-        log.info("{}/{}: {}".format(i + 1, len(outline_files), filepath.stem))
-        img = Image.open(filepath)
-        out_img = bf_image.outline(
-            image=img, stroke_size=8, color=(0, 0, 0, 255), is_shadow=False
-        )
-        out_img.save(filepath.parent.parent / filepath.name)
-    log.info("Outlining... Success!")
+    # Outlining ui icons.
+    bf_image.conveyor(
+        "to_outline",
+        "outlining",
+        bf_image.conveyor_outline(stroke_size=8, color=(0, 0, 0, 255), is_shadow=False),
+    )
 
-    split_files = list((ART_TEXTURES_DIR / "to_split").glob("*.png"))
-    log.info("Splitting...")
-    for i, filepath in enumerate(split_files):
-        log.info("{}/{}: {}".format(i + 1, len(split_files), filepath.stem))
-        img = Image.open(filepath)
-        img_front = bf_image.extract_white(img)
-        img_front.save(filepath.parent.parent / (filepath.stem + "_front.png"))
-        img_back = bf_image.extract_black(img)
-        img_back.save(filepath.parent.parent / (filepath.stem + "_back.png"))
-    log.info("Splitting... Success!")
+    # Extracting white and black of floor sprites.
+    for f in ART_TEXTURES_DIR.glob("game_floor_*.png"):
+        f.unlink()
+    bf_image.conveyor(
+        "to_split",
+        "extract white",
+        bf_image.conveyor_extract_white(),
+        bf_image.conveyor_suffix("front"),
+    )
+    bf_image.conveyor(
+        "to_split",
+        "extract_black",
+        bf_image.conveyor_extract_black(),
+        bf_image.conveyor_suffix("back"),
+    )
 
-    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
-
+    # Biomefying props.
     for f in ART_TEXTURES_DIR.glob("game_prop_*.png"):
         f.unlink()
-
+    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+    get_color = lambda biome, x: hex_to_rgb_ints(hex(biome[x])[2:-2])
     for biome in gamelib["biomes"][1:]:
         t = biome["type"]
-        biome_files = list((ART_TEXTURES_DIR / "to_biome").glob("*.png"))
+        bf_image.conveyor(
+            "to_biome",
+            f"{t}: remapping",
+            bf_image.conveyor_remap(
+                get_color(biome, "outline_color"), get_color(biome, "fill_color")
+            ),
+            bf_image.conveyor_suffix(t.lower()),
+        )
 
-        get_color = lambda b, x: hex_to_rgb_ints(hex(b[x])[2:-2])
-
-        log.info(f"Biomefying `{t}`...")
-
-        for i, filepath in enumerate(biome_files):
-            log.info("{}/{}: {}".format(i + 1, len(biome_files), filepath.stem))
-            img = Image.open(filepath)
-            out_img = bf_image.remap(
-                img,
-                get_color(biome, "outline_color"),
-                get_color(biome, "fill_color"),
-            )
-            out_img.save(
-                filepath.parent.parent / "{}_{}.png".format(filepath.stem, t.lower())
-            )
-
-        log.info(f"Biomefying `{t}`... Success!")
-
-    def image_conveyor(conveyor_name: str, folder: Path, *args: ConveyorCallable) -> None:
-        assert folder.parent == ART_TEXTURES_DIR
-        log.info(f"{conveyor_name}...")
-        for f in folder.glob("*.png"):
-            img = Image.open(f)
-            for func in args:
-                img2, f = func(img, f)  # noqa: PLW2901
-                img = img2
-            img.save(ART_TEXTURES_DIR / f.name)
-        log.info(f"{conveyor_name}... Success!")
-
-    def conveyor_suffix(suffix: str) -> ConveyorCallable:
-        def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
-            extension = path_.name.rsplit(".", 1)[-1]
-            path = path_.parent / (path_.stem + suffix + "." + extension)
-            return image_, path
-
-        return inner
-
-    def conveyor_scale(factor: float) -> ConveyorCallable:
-        def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
-            image = image_.resize(
-                (round(image_.size[0] * factor), round(image_.size[1] * factor))
-            )
-            return image, path_
-
-        return inner
-
-    def conveyor_outline(**kwargs: Any) -> ConveyorCallable:
-        def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
-            image = bf_image.outline(image=image_, **kwargs)
-            return image, path_
-
-        return inner
-
+    # Transforming stat icons into big and small.
     for f in ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
         f.unlink()
-
-    image_conveyor(
+    bf_image.conveyor("stat_icons", "copying big", bf_image.conveyor_suffix("big"))
+    bf_image.conveyor(
         "stat_icons",
-        ART_TEXTURES_DIR / "stat_icons",
-        conveyor_suffix("_big"),
-    )
-    image_conveyor(
-        "stat_icons",
-        ART_TEXTURES_DIR / "stat_icons",
-        conveyor_scale(0.5),
-        conveyor_outline(stroke_size=1, color=(0, 0, 0, 255), is_shadow=False),
-        conveyor_suffix("_small"),
+        "downscaling small",
+        bf_image.conveyor_scale(0.5),
+        bf_image.conveyor_outline(stroke_size=1, color=(0, 0, 0, 255), is_shadow=False),
+        bf_image.conveyor_suffix("small"),
     )
 
 

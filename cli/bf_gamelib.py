@@ -683,6 +683,8 @@ def downscale_images(downscale_factors: list[int]) -> None:
     for factor in downscale_factors:
         assert factor >= 1, factor
 
+        log.info("Downscaling by {}".format(factor))
+
         export_dir = TEMP_ART_DIR / f"d{factor}"
         recursive_mkdir(export_dir)
 
@@ -696,7 +698,6 @@ def downscale_images(downscale_factors: list[int]) -> None:
             ):
                 continue
 
-            log.info("Downscaling by {} '{}'".format(factor, export_image_path))
             im = Image.open(image_path)
             im.thumbnail(
                 (im.size[0] // factor, im.size[1] // factor), Image.Resampling.LANCZOS
