@@ -12,7 +12,8 @@ T = TypeVar("T")
 LOG_FILE_POSITION = False
 
 
-class CustomLoggingFormatter(logging.Formatter):
+class ColoredLoggingFormatter(logging.Formatter):
+    # {  ###
     _grey = "\x1b[30;20m"
     _green = "\x1b[32;20m"
     _yellow = "\x1b[33;20m"
@@ -45,12 +46,14 @@ class CustomLoggingFormatter(logging.Formatter):
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
+    # }
+
 
 log = logging.getLogger(__file__)
 log.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
-console_handler.setFormatter(CustomLoggingFormatter())
+console_handler.setFormatter(ColoredLoggingFormatter())
 log.addHandler(console_handler)
 
 _exiting = False
@@ -62,6 +65,7 @@ _timing_recursion_depth = 0
 
 
 def timing(f: Callable[P, T]) -> Callable[P, T]:
+    # {  ###
     @wraps(f)
     def wrap(*args: P.args, **kw: P.kwargs) -> T:
         global timings_stack
@@ -97,6 +101,7 @@ def timing(f: Callable[P, T]) -> Callable[P, T]:
         return result
 
     return wrap
+    # }
 
 
 def timing_mark(text):
@@ -104,6 +109,7 @@ def timing_mark(text):
 
 
 def print_timings():
+    # {  ###
     total_elapsed = sum(i[1] for i in _root_timings_stack)
     if total_elapsed == 0:
         total_elapsed = 0.000001
@@ -136,6 +142,7 @@ def print_timings():
     log.info(timings_string)
 
     log.info("RUNNING TOOK: {:.2f} SEC".format(time() - _started_at))
+    # }
 
 
 _started_at = None
@@ -143,6 +150,7 @@ _started_at = None
 
 @contextmanager
 def timing_manager():
+    # {  ###
     global _exiting
     global _started_at
 
@@ -154,6 +162,7 @@ def timing_manager():
 
     if _timing_recursion_depth == 0:
         print_timings()
+    # }
 
 
 global_timing_manager_instance = timing_manager()
@@ -163,11 +172,13 @@ old_exit = exit
 
 
 def timed_exit(code: int) -> NoReturn:
+    # {  ###
     if global_timing_manager_instance is not None:
         global_timing_manager_instance.__exit__(None, None, None)
         console_handler.flush()
 
     old_exit(code)
+    # }
 
 
 globals()["exit"] = timed_exit
@@ -185,3 +196,6 @@ app = typer.Typer(
 
 def command(f: Callable[P, T]) -> Callable[P, T]:
     return app.command(f.__name__)(f)
+
+
+###

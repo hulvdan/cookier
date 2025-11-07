@@ -1,3 +1,4 @@
+# Imports.  {  ###
 import csv
 import json
 import os
@@ -46,10 +47,13 @@ from bf_lib import (
 from bf_typer import timing, timing_mark
 from PIL import Image
 
+# }
+
 
 def texture_ids_recursive_transform(
     gamelib_recursed, transform_texture_id, transform_texture_ids_list
 ) -> None:
+    # {  ###
     if not isinstance(gamelib_recursed, dict):
         return
 
@@ -73,9 +77,11 @@ def texture_ids_recursive_transform(
                     texture_ids_recursive_transform(
                         v, transform_texture_id, transform_texture_ids_list
                     )
+    # }
 
 
 def degrees_to_radians_recursive_transform(gamelib_recursed) -> None:
+    # {  ###
     if not isinstance(gamelib_recursed, dict):
         return
 
@@ -97,6 +103,7 @@ def degrees_to_radians_recursive_transform(gamelib_recursed) -> None:
             for v in value:
                 if isinstance(v, dict):
                     degrees_to_radians_recursive_transform(v)
+    # }
 
 
 @unique
@@ -121,6 +128,7 @@ class StringMalformedError(Exception): ...
 
 
 def process_group(string: str) -> StringGroup:
+    # {  ###
     assert string
     assert " " not in string
     assert "\t" not in string
@@ -147,9 +155,11 @@ def process_group(string: str) -> StringGroup:
         result.append(BrokenStringDatum(type=BrokenStringDatumType.STRING, string=string))
 
     return result
+    # }
 
 
 def process_string(string: str) -> list[StringLine]:
+    # {  ###
     string = replace_double_spaces(string.strip().replace("\t", " ").replace("\r", ""))
 
     result: list[StringLine] = []
@@ -179,9 +189,11 @@ def process_string(string: str) -> list[StringLine]:
             raise
 
     return result
+    # }
 
 
 def test_process_group():
+    # {  ###
     assert process_group("a") == [
         BrokenStringDatum(type=BrokenStringDatumType.STRING, string="a")
     ]
@@ -222,9 +234,10 @@ def test_process_group():
         BrokenStringDatum(type=BrokenStringDatumType.STRING, string="cd"),
         BrokenStringDatum(type=BrokenStringDatumType.PLACEHOLDER, string="EF"),
     ]
+    # }
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # {  ###
     ("string", "result"),
     [
         ("", []),
@@ -399,13 +412,14 @@ def test_process_group():
             ],
         ),
     ],
-)
+)  # }
 def test_process_string(string: str, result: list[StringLine]) -> None:
     x = process_string(string)
     assert x == result
 
 
 def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
+    # {  ###
     loc_ids: list[str] = []
     loc_by_languages: dict[str, list[str]] = defaultdict(list)
 
@@ -519,12 +533,14 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
                     )
 
     return codepoints, locale_to_index
+    # }
 
 
 @timing
 def convert_gamelib_json_to_binary(
     texture_name_2_id: dict[str, int], genline, atlas_data, original_texture_sizes
 ) -> None:
+    # {  ###
     gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
 
     gamelib["original_texture_sizes"] = original_texture_sizes
@@ -630,6 +646,7 @@ def convert_gamelib_json_to_binary(
     for gamelib_processing_function in gamelib_processing_functions:
         gamelib_processing_function(genline, gamelib, localization_codepoints)
 
+    # Asserting on not found textures.
     if 1:
         not_found_textures: list[str] = []
         transform_texture_id = lambda data, key: transform_to_texture_index(
@@ -672,9 +689,11 @@ def convert_gamelib_json_to_binary(
 
     intermediate_binary_path = Path(str(intermediate_path).rsplit(".", 1)[0] + ".bin")
     shutil.move(intermediate_binary_path, RESOURCES_DIR / "gamelib.bin")
+    # }}
 
 
 def downscale_images(downscale_factors: list[int]) -> None:
+    # {  ###
     assert downscale_factors, downscale_factors
 
     images_to_downscale = list(ART_TEXTURES_DIR.glob("*.png"))
@@ -703,6 +722,7 @@ def downscale_images(downscale_factors: list[int]) -> None:
             )
             im.save(export_image_path, "PNG")
             os.utime(export_image_path, ns=(s1.st_atime_ns, s1.st_mtime_ns))
+    # }
 
 
 def texture_cmp_key(x: dict, factor: int) -> tuple[bool, str]:
@@ -711,6 +731,7 @@ def texture_cmp_key(x: dict, factor: int) -> tuple[bool, str]:
 
 @timing
 def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dict]]:
+    # {  ###
     assert downscale_factors, downscale_factors
 
     texture_name_2_id: dict[str, int] = {}
@@ -823,10 +844,12 @@ def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dic
         )
 
     return texture_name_2_id, atlases_data
+    # }
 
 
 @timing
 def check_no_excessive_images_in_temp_art_dir(downscale_factors: list[int]) -> None:
+    # {  ###
     for factor in downscale_factors:
         TEMP_ART_DOWNSCALED_DIR = TEMP_ART_DIR / f"d{factor}"
 
@@ -844,6 +867,7 @@ def check_no_excessive_images_in_temp_art_dir(downscale_factors: list[int]) -> N
                 p = TEMP_ART_DOWNSCALED_DIR / temp_filepath
                 log.info("Removing excessive image '{}'...".format(p))
                 p.unlink()
+    # }
 
 
 @timing
@@ -858,6 +882,7 @@ def transform_to_texture_indexes_list(
     texture_name_2_index: dict[str, int],
     not_found_textures: list[str],
 ) -> None:
+    # {  ###
     textures = data[key]
     assert isinstance(textures, list)
 
@@ -869,6 +894,7 @@ def transform_to_texture_indexes_list(
                 textures[i] = texture_name_2_index[texture_name]
             else:
                 not_found_textures.append(texture_name)
+    # }
 
 
 def transform_to_texture_index(
@@ -877,6 +903,7 @@ def transform_to_texture_index(
     texture_name_2_index: dict[str, int],
     not_found_textures: list[str],
 ) -> None:
+    # {  ###
     texture_name = data[key]
     assert isinstance(texture_name, str)
 
@@ -888,9 +915,11 @@ def transform_to_texture_index(
         data[key] = texture_name_2_index[texture_name]
     else:
         not_found_textures.append(texture_name)
+    # }
 
 
 def listfiles_with_hashes_in_dir(path: str | Path) -> dict[str, int]:
+    # {  ###
     filepath_string_to_hash = {}
 
     for filepath in Path(path).rglob("*"):
@@ -900,10 +929,12 @@ def listfiles_with_hashes_in_dir(path: str | Path) -> dict[str, int]:
             )
 
     return filepath_string_to_hash
+    # }
 
 
 @timing
 def generate_flatbuffer_files():
+    # {  ###
     recursive_mkdir(FLATBUFFERS_GENERATED_DIR)
 
     hashes_for_msbuild = listfiles_with_hashes_in_dir(FLATBUFFERS_GENERATED_DIR)
@@ -944,10 +975,12 @@ def generate_flatbuffer_files():
             # Костыль, чтобы MSBuild не ребилдился каждый раз.
             if file_hash != hashes_for_msbuild.get(file):
                 shutil.copyfile(Path(td) / file, FLATBUFFERS_GENERATED_DIR / file)
+    # }
 
 
 @timing
 def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType) -> None:
+    # {  ###
     match platform:
         case BuildPlatform.Win:
             target_dir_ = f".cmake/vs17/{build_type}/resources"
@@ -969,10 +1002,12 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
         if file.is_file() and file.name not in src_files:
             file.unlink()
             log.info(f"Removed orphan resources/ file '{file}'")
+    # }
 
 
 @timing
 def convert_audio() -> None:
+    # {  ###
     AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
     AUDIO_DST_DIR = RESOURCES_DIR
 
@@ -1044,10 +1079,12 @@ def convert_audio() -> None:
         if not found:
             log.info(f"Removing orphaned audio file: {dst_file}")
             dst_file.unlink()
+    # }
 
 
 @timing
 def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
+    # {  ###
     remove_orphan_resources_files(platform, build_type)
     convert_audio()
 
@@ -1226,6 +1263,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
             texture_name_2_id, genline, atlases_data[0], original_texture_sizes
         )
         genline("///")
+    # }
 
 
 ###
