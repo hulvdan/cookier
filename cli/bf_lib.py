@@ -72,10 +72,9 @@ REPLACING_SPACES_PATTERN = re.compile(r"\ +")
 REPLACING_NEWLINES_PATTERN = re.compile(r"\n+")
 
 
-# -----------------------------------------------------------------------------------
 # Constants.
-# -----------------------------------------------------------------------------------
-
+# ============================================================
+# {  ###
 PROJECT_DIR = Path(__file__).parent.parent
 TEMP_DIR = PROJECT_DIR / ".temp"
 TEMP_ART_DIR = TEMP_DIR / "art"
@@ -102,8 +101,11 @@ MSBUILD_PATH = r"c:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild
 CLANG_CL_PATH = r"c:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\Llvm\x64\bin\clang-cl.exe"
 
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".aac", ".m4a", ".wma", ".ogg"}
+# }
 
 
+# Utility functions.
+# ============================================================
 def replace_double_spaces(string: str) -> str:
     return re.sub(REPLACING_SPACES_PATTERN, " ", string)
 
@@ -113,6 +115,7 @@ def replace_double_newlines(string: str) -> str:
 
 
 def test_replace_double_spaces():
+    # {  ###
     assert replace_double_spaces("") == ""
     assert replace_double_spaces(" ") == " "
     assert replace_double_spaces("  ") == " "
@@ -120,9 +123,11 @@ def test_replace_double_spaces():
     assert replace_double_spaces("\n") == "\n"
     assert replace_double_spaces("\n\n") == "\n\n"
     assert replace_double_spaces("\n\n\n") == "\n\n\n"
+    # }
 
 
 def test_replace_double_newlines():
+    # {  ###
     assert replace_double_newlines("") == ""
     assert replace_double_newlines(" ") == " "
     assert replace_double_newlines("  ") == "  "
@@ -130,6 +135,7 @@ def test_replace_double_newlines():
     assert replace_double_newlines("\n") == "\n"
     assert replace_double_newlines("\n\n") == "\n"
     assert replace_double_newlines("\n\n\n") == "\n"
+    # }
 
 
 def remove_spaces(string: str) -> str:
@@ -142,6 +148,7 @@ def run_command(
     cwd=None,
     timeout_seconds: int | None = None,
 ) -> None:
+    # {  ###
     if isinstance(cmd, str):
         cmd = replace_double_spaces(cmd.replace("\n", " ").strip())
 
@@ -166,38 +173,18 @@ def run_command(
     if p.returncode:
         log.critical(f'Failed to execute: "{c}"')
         exit(p.returncode)
+    # }
 
 
 def recursive_mkdir(path: Path) -> None:
+    # {  ###
     parents = list(path.parents)
     parents.insert(0, path)
     count = len(parents)
 
     for i in range(count):
         parents[-i - 1].mkdir(exist_ok=True)
-
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
-
-def better_json_dump(data, path):
-    with open(path, "w", encoding="utf-8") as out_file:
-        json.dump(data, out_file, indent="\t", ensure_ascii=False)
-
-
-def hash32(value: str) -> int:
-    return fnvhash.fnv1a_32(value.encode(encoding="ascii"))
-
-
-def hash32_utf8(value: str) -> int:
-    return fnvhash.fnv1a_32(value.encode(encoding="utf-8"))
-
-
-def hash32_file_utf8(filepath) -> int:
-    with open(filepath, encoding="utf-8") as in_file:
-        d = in_file.read()
-    return hash32_utf8(d)
+    # }
 
 
 def batched(list_: list[T], n: int) -> Iterator[list[T]]:
@@ -205,13 +192,17 @@ def batched(list_: list[T], n: int) -> Iterator[list[T]]:
         yield list_[i : i + n]
 
 
+# Codegen helpers.
+# ============================================================
 def generate_binary_file_header(genline, source_path: Path, variable_name: str) -> None:
+    # {  ###
     data = source_path.read_bytes()
     genline(f"const u8 {variable_name}[] = {{")
     for i in range(0, len(data), 12):
         chunk = ", ".join(f"0x{b:02x}" for b in data[i : i + 12])
         genline(f"    {chunk},")
     genline("};\n")
+    # }
 
 
 def genenum(
@@ -227,6 +218,7 @@ def genenum(
     add_to_string: bool = False,
     comments: list[str] | None = None,
 ) -> None:
+    # {  ###
     assert not (hex_values and enumerate_values)
     assert not (override_values and enumerate_values)
 
@@ -279,6 +271,7 @@ def genenum(
         genline("  };")
         genline("  return strings[type];")
         genline("};\n")
+    # }
 
 
 def recursive_replace_transform(
@@ -289,6 +282,7 @@ def recursive_replace_transform(
     *,
     root=True,
 ) -> list[str] | None:
+    # {  ###
     errors = None
 
     if not isinstance(gamelib_recursed, dict):
@@ -351,12 +345,14 @@ def recursive_replace_transform(
         raise AssertionError(message)
 
     return errors
+    # }
 
 
-# Git.
-# ==================================================
+# Git helpers.
+# ============================================================
 @contextmanager
 def git_stash():
+    # {  ###
     process = subprocess.run(
         "git status --porcelain", check=True, shell=True, capture_output=True, text=True
     )
@@ -375,9 +371,11 @@ def git_stash():
     if should_stash:
         log.info("git_stash: applying previously stashed changes...")
         subprocess.run("git stash apply", check=True, shell=True)
+    # }
 
 
 def _git_get_current_commit_version_tag() -> str | None:
+    # {  ###
     process = subprocess.run(
         'git tag -l "v1\\.*" --points-at HEAD',
         check=True,
@@ -386,9 +384,11 @@ def _git_get_current_commit_version_tag() -> str | None:
         text=True,
     )
     return process.stdout.strip()
+    # }
 
 
 def _git_get_current_branch() -> str:
+    # {  ###
     return subprocess.run(
         "git branch --show-current",
         check=True,
@@ -396,9 +396,11 @@ def _git_get_current_branch() -> str:
         capture_output=True,
         text=True,
     ).stdout.strip()
+    # }
 
 
 def git_bump_tag() -> None:
+    # {  ###
     assert _git_get_current_branch() in ("master", "main")
 
     if _git_get_current_commit_version_tag():
@@ -428,17 +430,23 @@ def git_bump_tag() -> None:
 
     run_command(f"git tag v1.{next_version}")
     run_command(f"git push origin v1.{next_version}")
+    # }
 
 
+# Color helpers.
+# ============================================================
 def hex_to_rgb_ints(hex_color: str) -> tuple[int, int, int]:
+    # {  ###
     hex_color = hex_color.lstrip("#")
     r = int(hex_color[0:2], 16)
     g = int(hex_color[2:4], 16)
     b = int(hex_color[4:6], 16)
     return (r, g, b)
+    # }
 
 
 def hex_to_rgb_floats(hex_color: str) -> tuple[float, float, float]:
+    # {  ###
     hex_color = hex_color.lstrip("#")
     r = int(hex_color[0:2], 16)
     g = int(hex_color[2:4], 16)
@@ -448,14 +456,17 @@ def hex_to_rgb_floats(hex_color: str) -> tuple[float, float, float]:
     b_float = b / 255.0
     r_float = min(1, r_float)
     return (r_float, g_float, b_float)
+    # }
 
 
 def rgb_floats_to_hex(rgb_floats: tuple[float, float, float]) -> str:
+    # {  ###
     r, g, b = rgb_floats
     r_int = round(r * 255)
     g_int = round(g * 255)
     b_int = round(b * 255)
     return "#{:02X}{:02X}{:02X}".format(r_int, g_int, b_int)
+    # }
 
 
 def transform_color(
@@ -464,6 +475,7 @@ def transform_color(
     saturation_scale: float = 1,
     value_scale: float = 1.0,
 ) -> tuple[float, float, float]:
+    # {  ###
     """
     Saturate an RGB color (tuple of 3 floats in 0-1) by a given amount.
 
@@ -478,14 +490,33 @@ def transform_color(
     s = min(s * saturation_scale, 1.0)
     v = min(v * value_scale, 1.0)
     return colorsys.hsv_to_rgb(h, s, v)
+    # }
 
 
+# Hashing helpers.
+# ==================================================
 def stable_hash(value: str | int) -> int:
+    # {  ###
     if isinstance(value, int):
         value = str(value)
     if isinstance(value, str):
         return int(hashlib.md5(value.encode("utf-8")).hexdigest(), 16)
     assert False, "Not supported type of value"
+    # }
+
+
+def hash32(value: str) -> int:
+    return fnvhash.fnv1a_32(value.encode(encoding="ascii"))
+
+
+def hash32_utf8(value: str) -> int:
+    return fnvhash.fnv1a_32(value.encode(encoding="utf-8"))
+
+
+def hash32_file_utf8(filepath) -> int:
+    with open(filepath, encoding="utf-8") as in_file:
+        d = in_file.read()
+    return hash32_utf8(d)
 
 
 from bf_game import *  # noqa
