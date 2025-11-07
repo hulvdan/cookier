@@ -34,6 +34,7 @@ x upgrades: set small / big
 x upgrades: downscale alg
 x upgrades: remove excessive icons
 x stats: same width outlines
+x ref image processing conveyors
 
 * next wave 2 crossing swords icon
 *
