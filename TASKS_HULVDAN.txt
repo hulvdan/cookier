@@ -35,16 +35,6 @@ x upgrades: downscale alg
 x upgrades: remove excessive icons
 x stats: same width outlines
 
-* upgrades:
-* upgrades:
-* upgrades: downscale by X
-*
-* upgrades: don't show upgrade icon -> replace with stat icon
-* upgrades: don't show upgrade icon -> replace with stat icon
-*
-* downscale stats + outline
-* remove upgrade images
-*
 * next wave 2 crossing swords icon
 *
 * crediting sfx
@@ -97,11 +87,11 @@ x stats: same width outlines
 * prod: мобы
 * prod: сакутиновая отправка event-ов аналитики
 * prod: аналитика
-* prod: другое управление мышью?
 * prod:
 *
 * RELEASED!
 =======================
+* prod: другое управление мышью?
 * reroll flashing (upgrades, shop)
 * take flashing (upgrades, picked up item)
 * описания статов
