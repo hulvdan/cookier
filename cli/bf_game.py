@@ -548,12 +548,47 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 @command
 @timing
 def process_images():
+    SLOT_SIZE = (200, 200)
+    UI_SLOT_OR_FRAME_RADIUS = 30
+
+    slot_image = bf_image.rectangle(SLOT_SIZE, radius=UI_SLOT_OR_FRAME_RADIUS)
+
+    bf_image.rectangle(
+        (112, 112),
+        radius=UI_SLOT_OR_FRAME_RADIUS,
+        width=10,
+        outline=hex_to_rgb_ints("969696"),
+        fill=hex_to_rgb_ints("5a5a5a"),
+    ).save(ART_TEXTURES_DIR / "ui_frame.png")
+
+    DEBUG_SHADOWS = 0
+
+    # Small shadow.
+    bf_image.outline(
+        image=bf_image.red(slot_image),
+        radius=60,
+        color=(0, 0, 0, 255),
+        is_shadow=True,
+        blend_image_on_top=DEBUG_SHADOWS,
+    ).save(ART_TEXTURES_DIR / "ui_frame_shadow_small.png")
+
+    # Big shadow.
+    bf_image.outline(
+        image=bf_image.red(slot_image),
+        radius=120,
+        color=(0, 0, 0, 255),
+        is_shadow=True,
+        blend_image_on_top=DEBUG_SHADOWS,
+    ).save(ART_TEXTURES_DIR / "ui_frame_shadow_big.png")
+
+    return
+
     # {  ###
     # Outlining ui icons.
     bf_image.conveyor(
         "to_outline",
         "outlining",
-        bf_image.conveyor_outline(stroke_size=8, color=(0, 0, 0, 255), is_shadow=False),
+        bf_image.conveyor_outline(radius=8, color=(0, 0, 0, 255), is_shadow=False),
     )
 
     # Extracting white and black of floor sprites.
@@ -596,7 +631,7 @@ def process_images():
         "stat_icons",
         "downscaling small",
         bf_image.conveyor_scale(0.5),
-        bf_image.conveyor_outline(stroke_size=1, color=(0, 0, 0, 255), is_shadow=False),
+        bf_image.conveyor_outline(radius=1, color=(0, 0, 0, 255), is_shadow=False),
         bf_image.conveyor_suffix("small"),
     )
     # }
