@@ -1,11 +1,11 @@
 """
 USAGE:
 
-    from bf_lib import data_values, gamelib_processor
+    from bf_lib import game_settings, gamelib_processor
 
-    data_values.itch_target = "hulvdan/cult-boy"
-    data_values.languages = ["russian", "english"]
-    data_values.generate_flatbuffers_api_for = ["bf_save.fbs"]
+    game_settings.itch_target = "hulvdan/cult-boy"
+    game_settings.languages = ["russian", "english"]
+    game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
 
     @gamelib_processor
     def _process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
@@ -23,7 +23,7 @@ from bf_lib import (
     ART_TEXTURES_DIR,
     GAME_DIR,
     SRC_DIR,
-    data_values,
+    game_settings,
     gamelib_processor,
     genenum,
     hex_to_rgb_floats,
@@ -34,9 +34,9 @@ from bf_lib import (
 )
 from bf_typer import command, log, timing
 
-data_values.itch_target = "hulvdan/cookier"
-data_values.languages = ["russian", "english"]
-data_values.generate_flatbuffers_api_for = ["bf_save.fbs"]
+game_settings.itch_target = "hulvdan/cookier"
+game_settings.languages = ["russian", "english"]
+game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
 
 
 def _check_duplicates(values: list) -> None:

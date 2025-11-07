@@ -33,7 +33,7 @@ from bf_lib import (
     VENDOR_DIR,
     BuildPlatform,
     BuildType,
-    data_values,
+    game_settings,
     gamelib_processing_functions,
     genenum,
     log,
@@ -417,7 +417,7 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
             loc_ids.append(row_id)
             for c in row:
                 if c not in not_language_columns:
-                    assert c in data_values.languages
+                    assert c in game_settings.languages
                     translation = row[c]
                     loc_by_languages[c].append(
                         translation.strip() or "<<NOT_TRANSLATED>>"
@@ -514,7 +514,7 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
                     )
                     assert string_placeholders_to_verify == russian_placeholders, (
                         "Translated string differs in placeholders",
-                        data_values.languages[loc_index],
+                        game_settings.languages[loc_index],
                         index_to_locale[string_index],
                     )
 
@@ -929,7 +929,7 @@ def generate_flatbuffer_files():
             (
                 i
                 for i in flatbuffer_files
-                if i.name in data_values.generate_flatbuffers_api_for
+                if i.name in game_settings.generate_flatbuffers_api_for
             ),
             "--gen-object-api",
             "--reflect-names",
@@ -937,7 +937,7 @@ def generate_flatbuffer_files():
         gen(
             i
             for i in flatbuffer_files
-            if i.name not in data_values.generate_flatbuffers_api_for
+            if i.name not in game_settings.generate_flatbuffers_api_for
         )
 
         for file, file_hash in listfiles_with_hashes_in_dir(td).items():

@@ -17,7 +17,7 @@ from bf_lib import (
     BuildPlatform,
     BuildTarget,
     BuildType,
-    data_values,
+    game_settings,
     git_bump_tag,
     git_stash,
     hash32,
@@ -353,7 +353,7 @@ def deploy_itch():
     zip_path = TEMP_DIR / "itch.zip"
     make_web_build_archive(zip_path, Path(".cmake/Web_Release"))
 
-    target = "{}:html".format(data_values.itch_target)
+    target = "{}:html".format(game_settings.itch_target)
     run_command([BUTLER_PATH, "push", zip_path, target])
     # }
 
