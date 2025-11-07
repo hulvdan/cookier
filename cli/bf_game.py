@@ -8,7 +8,7 @@ USAGE:
     game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
 
     @gamelib_processor
-    def _process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
+    def process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
         for tile in gamelib["tiles"]:
             tile.pop("type")
 """
@@ -42,7 +42,7 @@ game_settings.languages = ["russian", "english"]
 game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
 
 
-def _check_duplicates(values: list) -> None:
+def check_duplicates(values: list) -> None:
     # {  ###
     for i in range(len(values)):
         for k in range(i + 1, len(values)):
@@ -85,17 +85,17 @@ scoped_processing_args = ["None", "None"]
 
 
 @gamelib_processor
-def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+def process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     # {  ###
     try:
-        __process_gamelib(genline, gamelib, localization_codepoints)
+        _process_gamelib(genline, gamelib, localization_codepoints)
     except Exception:
         print("ERROR HAPPENED DURING PROCESSING:", ", ".join(scoped_processing_args))
         raise
     # }
 
 
-def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
     def enumerate_table(field: str):
         # {  ###
         scoped_processing_args[0] = field
@@ -500,7 +500,7 @@ def __process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> No
                 assert t.upper() == t, (
                     "{}. {}. `type` fields must be in CONSTANT_CASE".format(field_name, t)
                 )
-            _check_duplicates(types)
+            check_duplicates(types)
             genenum(genline, type_name + "Type", types, add_count=True)
             transforms.append(
                 (
