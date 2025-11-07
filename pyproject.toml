@@ -51,7 +51,6 @@ ignore = [
     "COM",
     "D",
     "DTZ005",
-    "E402",  # TODO: replace with per-file-ignores for bf_cli.py
     "E501",
     "E731",
     "E741",
