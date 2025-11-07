@@ -211,7 +211,7 @@ creatures: # {  ###
       - game_creature_main_character_move_2
       - game_creature_main_character_move_3
       - game_creature_main_character_move_4
-  - type: TURREL
+  - type: TURRET
     health: 1
     hostility_type: FRIENDLY
     can_move: false
@@ -219,16 +219,12 @@ creatures: # {  ###
     resists_ailment_types:
       - BURN
     projectile_damage: 1
-    turrel_projectile_type: BULLET
-    turrel_damage_scalings:
-      - stat_type: ENGINEERING
-        percents_per_tier:
-          - 100
-    turrel_range_meters: 5
-    turrel_knockback_meters: 0.3
-    turrel_projectile_shoot_anchor_y: 0.7116
+    turret_projectile_type: BULLET
+    turret_range_meters: 5
+    turret_knockback_meters: 0.3
+    turret_projectile_shoot_anchor_y: 0.7116
     idle_texture_ids:
-      - game_creature_turrel_base
+      - game_creature_turret_base
   - type: MOB_SMALL
     appearing_wave_number: 1
     spawn_factor: 100
@@ -417,14 +413,15 @@ effect_condition_variables: # {  ###
 
 effect_conditions: # {  ###
   - type: DEFAULT_GET__STAT
-  - type: SMALLEST_DIFFICULTY
+  - type: SMALLEST_DIFFICULTY_DESCRIPTION
   - type: STAT__EVERY__X__KILLED_ENEMIES
   - type: END_OF_THE_WAVE_GET__STAT
   - type: START_OF_THE_WAVE_GET__STAT
-  - type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+  - type: STAT__EVERY__X__SECONDS
     x_condvar_type: FLOAT
-  - type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
-  - type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
+    x_divided_by_times: true
+  - type: STAT__EVERY__X__WALKED_METERS
+  - type: STAT__EVERY__X__IDLE_SECONDS
     x_condvar_type: FLOAT
   - type: X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
     x_signed: true
@@ -455,6 +452,14 @@ effect_conditions: # {  ###
     x_signed: true
     y_multiplied_by_times: true
   - type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+    x_is_percent: true
+    x_signed: true
+    y_multiplied_by_times: true
+  - type: X__CHANCE_TO_HEAL__Y__HP_UPON_KILLING
+    x_is_percent: true
+    x_signed: true
+    y_multiplied_by_times: true
+  - type: X__CHANCE_TO_HEAL__Y__HP_UPON_KILLING_WITH_CRIT
     x_is_percent: true
     x_signed: true
     y_multiplied_by_times: true
@@ -500,8 +505,26 @@ effect_conditions: # {  ###
     x_is_percent: true
     y_is_percent: true
     y_multiplied_by_times: true
+  - type: CRITS_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+    y_multiplied_by_times: true
+  - type: BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+    x_signed: true
+    x_multiplied_by_times: true
+    x_is_percent: true
+    y_is_percent: true
+    y_multiplied_by_times: true
   - type: X__CHANCE_TO_EXPLODE
     x_is_percent: true
+  - type: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_UPON__PICKUPABLE
+    x_multiplied_by_times: true
+    x_is_percent: true
+  - type: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
+    x_is_percent: true
+    y_condvar_type: DAMAGE
   - type: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
     x_is_percent: true
     y_multiplied_by_times: true
@@ -511,6 +534,40 @@ effect_conditions: # {  ###
     x_multiplied_by_times: true
   - type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
     x_multiplied_by_times: true
+  - type: X__DAMAGE_EVERY__Y__SECONDS
+    x_condvar_type: DAMAGE
+    y_condvar_type: FLOAT
+    y_divided_by_times: true
+  - type: STAT__DURING_NEXT_WAVE
+  - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING
+    x_multiplied_by_times: true
+    y_condvar_type: DAMAGE
+  - type: STAT__UPON__PICKUPABLE__AT_MAX_HP
+    x_multiplied_by_times: true
+  - type: STAT__UPON__PICKUPABLE__AT_MAX_HP_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+    x_multiplied_by_times: true
+  - type: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+    x_multiplied_by_times: true
+  - type: STAT__FOR_EVERY_DIFFERENT_WEAPON
+    x_multiplied_by_times: true
+  - type: STAT__FOR_EVERY_BURNING_ENEMY
+    x_multiplied_by_times: true
+  - type: ITEMS_WILL_BE_TIER_HIGHER_UPON_REROLL
+  # - type: CAP__STAT
+  # - type: STAT__EVERY_OTHER__X__STAT2
+  - type: WEAPONS_CAN_NO_LONGER_BE_UPGRADED_OR_RECYCLED
+  - type: RESTORE__X__HP_PER__Y__SECONDS_WITHOUT_ABILITY_TO_HEAL_ANY_OTHER_WAY
+    x_multiplied_by_times: true
+    y_condvar_type: FLOAT
+  - type: TURRET_DEALING__X__DAMAGE
+    x_condvar_type: DAMAGE
+  - type: TYLER_DEALING__X__DAMAGE_AND_SHOOTING__Y__PROJECTILES
+    requires_projectile: true
+    x_condvar_type: DAMAGE
+  - type: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
+  - type: START_THE_NEXT_WAVE_WITH_1_HP
+  - type: CHANGE_BURNING_ACTIVATION_SPEED_BY__X__PERCENT
+    x_signed: true
 # }
 
 build_effect_conditions: # { ###
@@ -522,56 +579,867 @@ build_effect_conditions: # { ###
 
 items: # {  ###
   - type: INVALID
-  - type: TURREL
-    texture_id: ui_item_todo
-    price: 13
-    tier: 2
-    limit: 5
+  - type: ACID
+    texture_id: ui_item_honey_comb
+    tier: 1
+    price: 65
     effects:
-      - stat_type: TURRELS_COUNT
-        value: 1
-        # - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
-        #   placeholders:
-        #     - ints: 67
-        #     - ints: 3
-        # - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
-        #   pickupable_type: COIN
-        #   placeholders:
-        #     - ints: 10
-        #     - ints: 1
-        # - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
-        #   pickupable_type: COIN
-        #   placeholders:
-        #     - ints: 50
-        #     - ints: 3
-        #   damage_scalings:
-        #     - stat_type: LUCK
-        #       percents_per_tier: 200
-        # - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
-        #   placeholders:
-        #     - ints: 35
-  - type: TURREL_ENHANCE_TODO
+      - stat_type: HP
+        value: 8
+      - stat_type: DODGE
+        value: -2
+        # - stat_type: KNOCKBACK
+        #   value: -2
+  - type: ADRENALINE # TODO ref DS3 кинжал для парирования
     texture_id: ui_item_todo
-    price: 15
     tier: 2
+    price: 60
+    limit: 1
+    effects:
+      - stat_type: DODGE
+        value: 5
+      - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING
+        placeholders:
+          - ints: 50
+          - ints: 5
+  - type: ALIEN_BABY
+    texture_id: ui_item_inspiring_banner
+    tier: 2
+    price: 80
+    effects:
+      - stat_type: HP
+        value: 15
+      - stat_type: ENEMY_HP_SCALE
+        value: 10
+  # - type: ALIEN_EYES
+  - type: ALIEN_MAGIC
+    texture_id: ui_item_health_potion
+    tier: 2
+    price: 85
+    effects:
+      - stat_type: HP
+        value: 8
+      - stat_type: REGEN
+        value: 3
+      - stat_type: LUCK
+        value: -8
+  - type: ALIEN_TONGUE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 10
+  - type: ALIEN_WORM
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: HP
+        value: 3
+      - stat_type: REGEN
+        value: 2
+      - stat_type: CONSUMABLE_HEAL
+        value: -1
+  - type: ALLOY
+    texture_id: ui_item_emblem_of_avenger
+    tier: 2
+    price: 80
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 3
+      - stat_type: DAMAGE_RANGED
+        value: 3
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 3
+      - stat_type: ENGINEERING
+        value: 3
+      - stat_type: CRIT_CHANCE
+        value: 5
+      - stat_type: DODGE
+        value: -6
+  # - type: ANVIL
+  - type: ASHES
+    texture_id: ui_item_todo
+    tier: 3
+    price: 120
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 20
+      - stat_type: ATTACK_SPEED
+        value: 20
+      - stat_type: RANGE
+        value: 100
+      - effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        stat_type: ARMOR
+        value: -1
+  # - type: AXOLOTL
+  - type: BABY_ELEPHANT
+    texture_id: ui_item_todo
+    tier: 0
+    price: 22
+    effects:
+      - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+        pickupable_type: COIN
+        placeholders:
+          - ints: 25
+          - ints: 0
+        damage_scalings:
+          - stat_type: LUCK
+            percents_per_tier: 25
+  - type: BABY_GECKO
+    texture_id: ui_item_todo
+    tier: 0
+    price: 18
+    limit: 4
+    effects:
+      - stat_type: RANGE
+        value: 10
+      - effectcondition_type: X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
+        pickupable_type: COIN
+        placeholders:
+          - ints: 25
+  - type: BABY_SQUID
+    texture_id: ui_item_todo
+    tier: 1
+    price: 55
+    effects:
+      - effectcondition_type: STAT__UPON_LEVEL_UP
+        stat_type: REGEN
+        value: 1
+      - stat_type: ATTACK_SPEED
+        value: -3
+  # - type: BABY_WITH_A_BEARD
+  - type: BAG
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    limit: 3
+    effects:
+      - effectcondition_type: X__COINS_UPON__PICKUPABLE
+        pickupable_type: CRATE
+        placeholders:
+          - ints: 15
+      - stat_type: SPEED
+        value: -1
+  - type: BAIT
+    texture_id: ui_item_todo
+    tier: 1
+    price: 25
+    limit: 2
+    effects:
+      # TODO: SPECIAL_ENEMIES_APPEAR_AT_THE_BEGINNING_OF_THE_NEXT_WAVE
+      # Then uncomment this:
+      # - stat_type: DAMAGE
+      #   value: 8
+      # And remove limit.
+      - stat_type: DAMAGE
+        value: 5
+  - type: BALL_AND_CHAIN
+    texture_id: ui_item_todo
+    tier: 2
+    price: 75
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 10 # TODO: 15
+      - stat_type: ARMOR
+        value: 5 # TODO: 10
+      # - stat_type: KNOCKBACK
+      #   value: 5 # TODO: 5
+      - stat_type: SPEED
+        value: -5 # TODO: -3
+        # TODO: weapons have a minimal cooldown of 0.75s between attacks
+  - type: BANDANA
+    texture_id: ui_item_todo
+    tier: 2
+    price: 75
+    effects:
+      - stat_type: PIERCING
+        value: 1
+      - stat_type: DAMAGE
+        value: -10
+  - type: BANNER
+    texture_id: ui_item_todo
+    tier: 1
+    price: 55
+    effects:
+      - stat_type: RANGE
+        value: 20
+      - stat_type: ATTACK_SPEED
+        value: 10
+        # - stat_type: KNOCKBACK
+        #   value: -5
+  # - type: BARNACLE
+  - type: BARRICADE
+    texture_id: ui_item_cobalt_shield
+    tier: 2
+    price: 75
+    limit: 1
+    effects:
+      # - stat_type: KNOCKBACK
+      #   value: 3
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: ARMOR
+        value: 8
+      - stat_type: SPEED
+        value: -5
+  - type: BAT
+    texture_id: ui_item_todo
+    tier: 1
+    price: 20
+    effects:
+      - stat_type: LIFE_STEAL
+        value: 2
+      - stat_type: HARVESTING
+        value: -2
+  - type: BEAN_TEACHER
+    texture_id: ui_item_todo
+    tier: 2
+    price: 70
+    effects:
+      - stat_type: XP_GAIN
+        value: 50
+      - stat_type: LIFE_STEAL
+        value: -2
+  - type: BEANIE
+    texture_id: ui_item_cloud_in_a_bottle
+    tier: 0
+    price: 20
+    limit: 1
+    effects:
+      - stat_type: SPEED
+        value: 4
+      - stat_type: RANGE
+        value: -6
+  - type: BIG_ARMS
+    texture_id: ui_item_todo
+    tier: 3
+    price: 105
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 12
+      - stat_type: DAMAGE_RANGED
+        value: 6
+      # - stat_type: KNOCKBACK
+      #   value: 3
+      - stat_type: ATTACK_SPEED
+        value: -3
+      - stat_type: SPEED
+        value: -3
+  - type: BLACK_BELT
+    texture_id: ui_item_todo
+    tier: 1
+    price: 50
+    effects:
+      - stat_type: XP_GAIN
+        value: 25
+      - stat_type: DAMAGE_MELEE
+        value: 3
+      # - stat_type: KNOCKBACK
+      #   value: 3
+      - stat_type: LUCK
+        value: -8
+  # - type: BLACK_FLAG
+  - type: BLINDFOLD
+    texture_id: ui_item_mask_of_assassin
+    tier: 1
+    price: 45
+    effects:
+      - stat_type: CRIT_CHANCE
+        value: 5
+      - stat_type: DODGE
+        value: 5
+      - stat_type: RANGE
+        value: -15
+  - type: BLOOD_DONATION
+    texture_id: ui_item_todo
+    tier: 2
+    price: 50
+    effects:
+      - stat_type: HARVESTING
+        value: 50
+      - effectcondition_type: X__DAMAGE_EVERY__Y__SECONDS
+        placeholders:
+          - ints: 1
+          - floats: 1
+  - type: BLOOD_LEECH
+    texture_id: ui_item_todo
+    tier: 1
+    price: 45
+    effects:
+      - stat_type: LIFE_STEAL
+        value: 2
+      - stat_type: REGEN
+        value: 2
+      - stat_type: HARVESTING
+        value: -3
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: BLOODY_HAND
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 110
+  #   limit: 1
+  #   effects:
+  #     - stat_type: LIFE_STEAL
+  #       value: 10
+  #     - stat_type: LIFE_STEAL
+  #       value: 10
+  #     - effectcondition_type: X__DAMAGE_EVERY__Y__SECONDS
+  #       placeholders:
+  #         - ints: 1
+  #         - floats: 1
+  - type: BOILING_WATER
+    texture_id: ui_item_obsidian_rose
+    tier: 0
+    price: 30
+    effects:
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 2
+      - stat_type: HP
+        value: -1
+  # TODO: X__CHANCE_TO_GET__STAT__WHEN_REROLLING_IN_THE_SHOP
+  # - type: BONE_DICE
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 1
+  #   limit: 1
+  #   effects:
+  #     - stat_type: DAMAGE
+  - type: BOOK
+    texture_id: ui_item_todo
+    tier: 0
+    price: 8
+    effects:
+      - stat_type: ENGINEERING
+        value: 1
+  - type: BOWLER_HAT
+    texture_id: ui_item_todo
+    tier: 2
+    price: 75
+    effects:
+      - stat_type: LUCK
+        value: 15
+      - stat_type: HARVESTING
+        value: 18
+      - stat_type: ATTACK_SPEED
+        value: -5
+      - stat_type: CRIT_CHANCE
+        value: -3
+  - type: BOXING_GLOVE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 18
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 1
+        # - stat_type: KNOCKBACK
+        #   value: 3
+  - type: BROKEN_MOUTH
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: HP
+        value: 5
+      - stat_type: REGEN
+        value: -1
+  - type: BUTTERFLY
+    texture_id: ui_item_todo
+    tier: 0
+    price: 30
+    effects:
+      - stat_type: LIFE_STEAL
+        value: 2
+      - stat_type: DAMAGE_ELEMENTAL
+        value: -1
+  - type: CAKE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: HP
+        value: 3
+      - stat_type: DAMAGE
+        value: -1
+  - type: CAMPFIRE
+    texture_id: ui_item_mana_potion
+    tier: 1
+    price: 40
+    effects:
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 2
+      - stat_type: REGEN
+        value: 2
+      - stat_type: SPEED
+        value: -2
+  - type: CANDLE
+    texture_id: ui_item_chandelier
+    tier: 2
+    price: 65
+    limit: 1
+    effects:
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 4
+      - stat_type: REGEN
+        value: 1
+      - stat_type: ENEMIES
+        value: -10
+      - stat_type: DAMAGE
+        value: -5
+  - type: TERRARIA_WATER_CANDLE
+    texture_id: ui_item_water_candle
+    tier: 1
+    price: 35
+    effects:
+      - stat_type: ENEMIES
+        value: 15
+  - type: TERRARIA_PINK_CANDLE
+    texture_id: ui_item_pink_candle
+    tier: 2
+    price: 48
+    effects:
+      - stat_type: ENEMIES
+        value: -10
+  - type: CAULDRON
+    texture_id: ui_item_void_sphere
+    tier: 1
+    price: 35
+    limit: 1
+    effects:
+      - stat_type: PICKUP_RANGE
+        value: 50
+      # TODO: X__PERCENT_DAMAGE_FOR__Y__SECONDS_AFTER_PICKING_UP__PICKUPABLE
+      # - stat_type: DAMAGE
+      #   value: 20
+      - stat_type: REGEN
+        value: -2
+  - type: CELERY_TEA
+    texture_id: ui_item_strange_mushroom
+    tier: 1
+    price: 35
+    effects:
+      - stat_type: XP_GAIN
+        value: 5
+      - effectcondition_type: STAT__DURING_NEXT_WAVE
+        stat_type: XP_GAIN
+        value: 50
+      - effectcondition_type: STAT__DURING_NEXT_WAVE
+        stat_type: ENEMY_HP_SCALE
+        value: 100
+  - type: CHAMELEON
+    texture_id: ui_item_handcuffed_doll
+    tier: 2
+    price: 70
+    effects:
+      - stat_type: DODGE
+        value: 3
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: DODGE
+        value: 20
+      - stat_type: DAMAGE
+        value: -4
+  - type: CHARCOAL # TODO: ref minecraft кремний
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 1
+      - stat_type: DAMAGE_MELEE
+        value: 2
+      - stat_type: HARVESTING
+        value: -2
+  - type: CLAW_TREE
+    texture_id: ui_item_small_throwing_knife
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 1
+      - stat_type: CRIT_CHANCE
+        value: 3
+      - stat_type: HP
+        value: -1
+  - type: CLOCKWORK_WASP
+    texture_id: ui_item_wd
+    tier: 1
+    price: 45
     effects:
       - stat_type: STRUCTURE_ATTACK_SPEED
         value: 5
-      - stat_type: STRUCTURE_RANGE
-        value: 25
-  - type: LANDMINE
-    texture_id: ui_item_todo
-    price: 25
-    tier: 0
-    limit: 5
+      - stat_type: SPEED
+        value: 3
+  - type: CLOVER
+    texture_id: ui_item_lucky_horseshoe
+    tier: 2
+    price: 65
     effects:
-      - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+      - stat_type: LUCK
+        value: 20
+      - stat_type: DODGE
+        value: 6
+      - stat_type: LIFE_STEAL
+        value: -2
+  - type: COFFEE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: ATTACK_SPEED
+        value: 10
+      - stat_type: DAMAGE
+        value: -2
+  - type: COG
+    texture_id: ui_item_cog
+    tier: 1
+    price: 35
+    effects:
+      - stat_type: ENGINEERING
+        value: 3
+      # - stat_type: KNOCKBACK
+      #   value: 1
+      - stat_type: DAMAGE
+        value: -4
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: COIL
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 70
+  #   limit: 3
+  #   effects:
+  #     - stat_type: KNOCKBACK
+  #       value: 5
+  #     - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+  #       stat_type: HP
+  #       value: 3
+  # TODO: X__STAT__FOR_EVERY_LIVING_ENEMY
+  # - type: COMMUNITY_SUPPORT
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 75
+  #   effects:
+  #     - effectcondition_type: X__STAT__FOR_EVERY_LIVING_ENEMY
+  #       stat_type: HP
+  #       value: 3
+  #     - stat_type: ARMOR
+  #       value: -2
+  - type: COMPASS
+    texture_id: ui_item_springed_boots
+    tier: 1
+    price: 40
+    effects:
+      - stat_type: SPEED
+        value: 5
+      - stat_type: ENGINEERING
+        value: 3
+      - stat_type: CRIT_CHANCE
+        value: -3
+  - type: CORAL
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    effects:
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: REGEN
+        value: 10
+      - stat_type: RANGE
+        value: -10
+  - type: CORRUPTED_SHARD
+    texture_id: ui_item_todo
+    tier: 0
+    price: 12
+    effects:
+      - stat_type: DAMAGE
+        value: 3
+      # TODO: CURSE
+      # Then remove HP bonus.
+      - stat_type: HP
+        value: -1
+  - type: CROWN
+    texture_id: ui_item_todo
+    tier: 0
+    price: 70
+    limit: 1
+    effects:
+      - effectcondition_type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
         placeholders:
-          - floats: 12
-          - ints: 10
-        damage_scalings:
-          - stat_type: ENGINEERING
-            percents_per_tier: 125
+          - ints: 8
+  # TODO: X__STAT__EVERY__Y__SECONDS_BONUS_GETS_LOST
+  # - type: CRYSTAL
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 15
+  #   effects:
+  #     - stat_type: HP
+  #       value: 3
+  - type: CUTE_MONKEY
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+        placeholders:
+          - ints: 8
+          - ints: 1
+        pickupable_type: COIN
+      - stat_type: DAMAGE_RANGED
+        value: -1
+  # TODO: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING
+  # - type: CYBERBALL
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 30
+  #   effects:
+  #     - stat_type: HP
+  #       value: 3
+  #     - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING
+  #       stat_type: HP
+  #       value: 3
+  - type: CYCLOPS_WORM
+    texture_id: ui_item_todo
+    tier: 1
+    price: 45
+    effects:
+      - stat_type: DAMAGE
+        value: 12
+      - stat_type: RANGE
+        value: -12
+  - type: DANGEROUS_BUNNY
+    texture_id: ui_item_todo
+    tier: 1
+    price: 30
+    limit: 3
+    effects:
+      - stat_type: FREE_REROLLS
+        value: 1
+  - type: DECOMPOSING_FLASH
+    texture_id: ui_item_todo
+    tier: 1
+    price: 30
+    effects:
+      - effectcondition_type: STAT__UPON_LEVEL_UP
+        stat_type: LIFE_STEAL
+        value: 1
+      - effectcondition_type: STAT__UPON_LEVEL_UP
+        stat_type: HP
+        value: -1
+  - type: DEFECTIVE_STEROIDS
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: HP
+        value: 2
+      - stat_type: DAMAGE_MELEE
+        value: 2
+      - stat_type: ATTACK_SPEED
+        value: -3
+  - type: DIPLOMA
+    texture_id: ui_item_todo
+    tier: 3
+    price: 90
+    effects:
+      - stat_type: ENGINEERING
+        value: 3
+      - stat_type: XP_GAIN
+        value: 50
+      - stat_type: HP
+        value: -3
+  - type: DUCT_TAPE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: ARMOR
+        value: 1
+      - stat_type: ENGINEERING
+        value: 1
+      - stat_type: HP
+        value: -2
+  - type: DYNAMITE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: EXPLOSION_SIZE
+        value: 15
+  - type: ENERGY_BRACELET
+    texture_id: ui_item_todo
+    tier: 1
+    price: 55
+    effects:
+      - stat_type: CRIT_CHANCE
+        value: 4
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 2
+      - stat_type: DAMAGE_RANGED
+        value: -2
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: ESTYS_COUCH
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 15
+  #   effects:
+  #     - stat_type: HP
+  #       value: 3
+  - type: EXOSKELETON
+    texture_id: ui_item_todo
+    tier: 3
+    price: 90
+    effects:
+      - stat_type: ARMOR
+        value: 3
+      - stat_type: CRIT_CHANCE
+        value: 5
+      - stat_type: ENGINEERING
+        value: 5
+      - stat_type: SPEED
+        value: 5
+      - stat_type: REGEN
+        value: -2
+      - stat_type: LIFE_STEAL
+        value: -2
+  - type: EXPLOSIVE_SHELLS
+    texture_id: ui_item_todo
+    tier: 3
+    price: 100
+    effects:
+      - stat_type: EXPLOSION_DAMAGE
+        value: 60
+      - stat_type: EXPLOSION_SIZE
+        value: 15
+      - stat_type: DAMAGE
+        value: -15
+  # TODO EXPLOSIVE TURRET
+  # - type: TODO
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 15
+  #   effects:
+  #     - stat_type: HP
+  #       value: 3
+  # TODO: STAT__UPON__PICKUPABLE__AT_MAX_HP
+  # - type: EXTRA_STOMACH
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 100
+  #   effects:
+  #     - effectcondition_type: STAT__UPON__PICKUPABLE__AT_MAX_HP
+  #       stat_type: HP
+  #       value: 1
+  # TODO: X__PIERCE_ON_CRIT
+  - type: EYEPATCH
+    texture_id: ui_item_todo
+    tier: 1
+    price: 45 # TODO: 55
+    effects:
+      - stat_type: CRIT_CHANCE
+        value: 3
+        # TODO: ACCURACY
+        # - stat_type: ACCURACY
+        #   value: 3
+  # TODO: CHANGE_BURNING_ACTIVATION_SPEED_BY__X__PERCENT
+  # - type: EYES_SURGERY
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 15
+  #   effects:
+  #     - stat_type: HP
+  #       value: 3
+  - type: FERTILIZER # MONOCLE?
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: HARVESTING
+        value: 8
+      - stat_type: DAMAGE_MELEE
+        value: -1
+  # TODO: X__STAT__FOR_EVERY_DIFFERENT__TIER__ITEM
+  # - type: FAIRY
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 15
+  #   effects:
+  #     - stat_type: HP
+  #       value: 3
+  - type: FEATHER
+    texture_id: ui_item_todo
+    tier: 0
+    price: 18
+    effects:
+      - stat_type: DAMAGE_RANGED
+        value: 1
+      - stat_type: DODGE
+        value: 3
+      - stat_type: XP_GAIN
+        value: -3
+  - type: FIN
+    texture_id: ui_item_todo
+    tier: 2
+    price: 65
+    effects:
+      - stat_type: HP
+        value: 10
+      - stat_type: HP
+        value: 3
+      - stat_type: HP
+        value: -8
+  # TODO: STAT__FOR_EVERY_DIFFERENT_WEAPON
+  # - type: FOCUS
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 110
+  #   effects:
+  #     - effectcondition_type: STAT__FOR_EVERY_DIFFERENT_WEAPON
+  #       stat_type:
+  #       placeholders:
+  # TODO: STAT__FOR_EVERY_BURNING_ENEMY
+  # - type: FRIED_RICE
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 60
+  #   limit: 1
+  #   effects:
+  #     - effectcondition_type: STAT__FOR_EVERY_BURNING_ENEMY
+  #       stat_type: REGEN
+  #       value: 1
+  # TODO: CHANGE_BURNING_ACTIVATION_SPEED_BY__X__PERCENT
+  # - type: FROZEN_HEART
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 90
+  #   limit: 1
+  #   effects:
+  #     - stat_type: DAMAGE_ELEMENTAL
+  #       value: 8
+  #     - stat_type: CRIT_CHANCE
+  #       value: 5
+  #     - effectcondition_type: CHANGE_BURNING_ACTIVATION_SPEED_BY__X__PERCENT
+  #       value: -100
+  - type: FUEL_TANK
+    texture_id: ui_item_obsidian_skull
+    tier: 1
+    price: 45
+    effects:
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 4
+      - stat_type: DAMAGE_MELEE
+        value: -1
+      - stat_type: DAMAGE_RANGED
+        value: -1
+  - type: GAMBLING_TOKEN
+    texture_id: ui_item_black_belt # BROWNIE BELT !
+    tier: 1
+    price: 50
+    effects:
+      - stat_type: DODGE
+        value: 8
+      - stat_type: ARMOR
+        value: -1
   - type: GARDEN
     texture_id: ui_item_todo
     price: 50
@@ -581,85 +1449,1561 @@ items: # {  ###
       - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
         placeholders:
           - floats: 15
+  - type: GENTLE_ALIEN
+    texture_id: ui_item_todo
+    tier: 0
+    price: 30
+    limit: 10
+    effects:
+      - stat_type: HP
+        value: 2
+      - stat_type: DAMAGE
+        value: 5
+      - stat_type: ENEMIES
+        value: 5
+  # - type: GIANT_BELT
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 110
+  #   limit: 1
+  #   effects:
+  #     - effectcondition_type: CRITS_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+  #       placeholders:
+  #         - ints: 10
+  #         - ints: 1
+  - type: GLASS_CANNON
+    texture_id: ui_item_flesh_knuckles
+    tier: 2
+    price: 75
+    effects:
+      - stat_type: DAMAGE
+        value: 25
+      - stat_type: ARMOR
+        value: -3
+  - type: GLASSES
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: RANGE
+        value: 20
+  - type: GNOME
+    texture_id: ui_item_todo
+    tier: 3
+    price: 100
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 10
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 10
+      - stat_type: RANGE
+        value: -20
+      - stat_type: PICKUP_RANGE
+        value: -20
+  - type: GOAT_SKULL
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 3
+      - stat_type: CRIT_CHANCE
+        value: -2
+  # TODO: X__CHANCE_TO_HEAL__Y__HP_UPON_KILLING
+  # - type: GOBLET
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 70
+  #   limit: 3
+  #   effects:
+  #     - stat_type:
+  #       effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_KILLING
+  #       placeholders:
+  #         - ints: 15
+  #         - ints: 1
+  #     - stat_type: REGEN
+  #       value: -3
+  # TODO: ITEMS_WILL_BE_TIER_HIGHER_UPON_REROLL
+  # - type: GOLDFISH
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 23
+  #   effects:
+  #     - effectcondition_type: ITEMS_WILL_BE_TIER_HIGHER_UPON_REROLL
+  - type: GREEK_FIRE
+    texture_id: ui_item_todo
+    tier: 3
+    price: 100
+    limit: 1
+    effects:
+      - effectcondition_type: BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+        placeholders:
+          - ints: 10
+          - ints: 1
+  - type: GRIND_MAGICAL_LEAF
+    texture_id: ui_item_todo
+    tier: 3
+    price: 110
+    effects:
+      - stat_type: HP
+        effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        value: 3
+      - stat_type: REGEN
+        effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        value: 1
+      - stat_type: LIFE_STEAL
+        effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        value: 1
+  - type: GUMMY_BERSERKER
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: ATTACK_SPEED
+        value: 5
+      - stat_type: RANGE
+        value: 25
+      - stat_type: ARMOR
+        value: -1
+  - type: HANDCUFFS
+    texture_id: ui_item_pill
+    tier: 2
+    price: 80
+    limit: 1
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 3 # TODO: 8
+      - stat_type: DAMAGE_RANGED
+        value: 3 # TODO: 8
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 3 # TODO: 8
+        # TODO: CAP__STAT
+        # - effectcondition_type: CAP__STAT
+        #   stat_type: HP
+  - type: HEAD_INJURY
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: DAMAGE
+        value: 6
+      - stat_type: RANGE
+        value: -8
+  - type: HEAVY_BULLETS
+    texture_id: ui_item_todo
+    tier: 3
+    price: 100
+    effects:
+      - stat_type: DAMAGE_RANGED
+        value: 5
+      - stat_type: DAMAGE
+        value: 10
+      - stat_type: RANGE
+        value: 10
+      - stat_type: ATTACK_SPEED
+        value: -5
+      - stat_type: CRIT_CHANCE
+        value: -5
+  - type: HEDGEHOG
+    texture_id: ui_item_todo
+    tier: 0
+    price: 30
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 2
+      - stat_type: DAMAGE_RANGED
+        value: 1
+      - stat_type: REGEN
+        value: -1
   - type: HELMET
     texture_id: ui_item_helmet
-    tier: 1
-    price: 40
-    limit: 5
+    tier: 0
+    price: 15
     effects:
       - stat_type: ARMOR
         value: 1
       - stat_type: SPEED
         value: -2
-  - type: WHITE_FLAG
-    texture_id: ui_item_white_flag
-    tier: 0
-    price: 30
+  - type: HONEY
+    texture_id: ui_item_grenade
+    tier: 2
+    price: 70
     effects:
-      - stat_type: ENEMIES
-        value: -5
-  - type: BLACK_FLAG
-    texture_id: ui_item_black_flag
-    tier: 1
-    price: 35
+      - stat_type: DAMAGE_RANGED
+        value: 3
+      - stat_type: EXPLOSION_DAMAGE
+        value: 10
+      - stat_type: EXPLOSION_SIZE
+        value: 5
+      - stat_type: SPEED
+        value: -3
+      - stat_type: DODGE
+        value: -3
+  - type: HUNTING_TROPHY
+    texture_id: ui_item_todo
+    tier: 2
+    price: 55
     limit: 3
     effects:
-      - stat_type: ENEMIES
-        value: 5
-      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
-        stat_type: ENEMIES
-        value: 1
+      - effectcondition_type: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
         placeholders:
-          - ints: 50
-  - type: PIGGY_BANK
-    texture_id: ui_item_piggy_bank
+          - ints: 33
+          - ints: 1
+  # # TODO: ENEMIES_TAKE__X__PERCENT_MORE_DAMAGE_DURING__Y__SECONDS_AFTER_ELEMENTAL_DAMAGE
+  # - type: ICE_CUBE
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 50
+  #   limit: 1
+  #   effects:
+  #     - stat_type:
+  #       value: 0
+  - type: IMPROVED_TOOLS
+    texture_id: ui_item_todo
+    tier: 2
+    price: 70
+    limit: 1
+    effects:
+      - stat_type: ATTACK_SPEED
+        value: 10
+      # TODO: STAT__EVERY_OTHER__X__STAT2
+      # - stat_type: ATTACK_SPEED
+      #   stat_type_2: STRUCTURE_ATTACK_SPEED
+      #   effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+      #   placeholders:
+      #     - ints: 1
+      #     - ints: 2
+      #   value: 10
+      # Then remove this:
+      - stat_type: STRUCTURE_ATTACK_SPEED
+        value: 15
+  # TODO: INCENDIARY_TURRET_DEALING_X_DAMAGE
+  # - type: INCENDIARY_TURRET
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 40
+  #   effects:
+  #     - stat_type:
+  #       value: 0
+  - type: INJECTION
+    texture_id: ui_item_thorns_bracelet
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: DAMAGE
+        value: 6
+      - stat_type: HP
+        value: -2
+  - type: INSANITY
+    texture_id: ui_item_devil_obodok # TODO: перевод ободок
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: CRIT_CHANCE
+        value: 5
+      - stat_type: DAMAGE
+        value: -3
+  - type: JELLY
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      # TODO: STAT__FOR_EVERY_DIFFERENT_WEAPON
+      # - stat_type: HP
+      #   effectcondition_type: STAT__FOR_EVERY_DIFFERENT_WEAPON
+      #   placeholders:
+      #     - ints: 1
+      # Then remove this.
+      - stat_type: HP
+        value: 2
+  - type: JERKY
+    texture_id: ui_item_honey_bottle
+    tier: 1
+    price: 50
+    limit: 1
+    effects:
+      - stat_type: CONSUMABLE_HEAL
+        value: 2 # TODO: then change to 3
+        # TODO: CONSUMABLES_HEAL_OVER__X__SECONDS
+        # - effectcondition_type: CONSUMABLES_HEAL_OVER__X__SECONDS
+        #   placeholders:
+        #     - floats: 4
+  - type: JET_PACK
+    texture_id: ui_item_flying_carpet
+    tier: 3
+    price: 100
+    effects:
+      - stat_type: SPEED
+        value: 15
+      - stat_type: DODGE
+        value: 10
+      - stat_type: HP
+        value: -5
+      - stat_type: ARMOR
+        value: -1
+  - type: KNOT
+    texture_id: ui_item_todo
+    tier: 2
+    price: 80
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 8 # Then 15.
+      - stat_type: HP
+        value: 4 # Then 15.
+        # TODO: WEAPONS_CAN_NO_LONGER_BE_UPGRADED_OR_RECYCLED
+        # - effectcondition_type: WEAPONS_CAN_NO_LONGER_BE_UPGRADED_OR_RECYCLED
+  # TODO: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_GETTING_HURT
+  # - type: KRAKEN_EYE
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 110
+  #   effects:
+  #     - stat_type:
+  #       value: 0
+  - type: LANDMINE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+        placeholders:
+          - floats: 12
+          - ints: 10
+        damage_scalings:
+          - stat_type: ENGINEERING
+            percents_per_tier: 100
+  - type: LANTERN
+    texture_id: ui_item_todo
+    tier: 2 # Then 3.
+    price: 100
+    limit: 1
+    effects:
+      - stat_type: DAMAGE
+        value: 10
+      - stat_type: RANGE
+        value: 50
+        # - stat_type: KNOCKBACK
+        #   value: 15
+        # TODO: KNOCKS_ENEMIES_IN__X__METERS_RADIUS_EVERY__Y__SECONDS
+        # - effectcondition_type: KNOCKS_ENEMIES_IN__X__METERS_RADIUS_EVERY__Y__SECONDS
+        #   placeholders:
+        #     - floats: 2
+        #     - floats: 3
+  # TODO: LASER_TURRET
+  # - type: LASER_TURRET
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 65
+  #   effects:
+  #     - stat_type:
+  #       value: 0
+  - type: LEATHER_VEST
+    texture_id: ui_item_todo
+    tier: 1
+    price: 45
+    effects:
+      - stat_type: ARMOR
+        value: 2
+      - stat_type: DODGE
+        value: 6
+      - stat_type: HP
+        value: -3
+  - type: LEMONADE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: CONSUMABLE_HEAL
+        value: 1
+  - type: LENS
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: DAMAGE_RANGED
+        value: 1
+      - stat_type: RANGE
+        value: -5
+  - type: LIGHTHOUSE
+    texture_id: ui_item_todo
+    tier: 2
+    price: 80
+    limit: 1
+    effects:
+      - stat_type: ENGINEERING
+        value: 7 # Then 20.
+        # TODO: X__STAT__FOR_EVERY__Y__STRUCTURES
+        # - effectcondition_type: X__STAT__FOR_EVERY__Y__STRUCTURES
+        #   stat_type: ENGINEERING
+        #   placeholders:
+        #     - ints: -1
+        #     - ints: 1
+  - type: LITTLE_FROG
+    texture_id: ui_item_todo
+    tier: 1
+    price: 45
+    effects:
+      - stat_type: PICKUP_RANGE
+        value: 20
+      - stat_type: HARVESTING
+        value: 10
+      - stat_type: DODGE
+        value: -3
+  - type: MUSCLES # TODO: Is it really called this way?
+    texture_id: ui_item_todo
+    tier: 1
+    price: 50
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 3
+      - stat_type: HP
+        value: 5
+      - stat_type: RANGE
+        value: -15
+  - type: LOST_DUCK
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: LUCK
+        value: 8
+      - stat_type: DAMAGE_ELEMENTAL
+        value: -1
+  - type: LUCKY_CHARM
+    texture_id: ui_item_todo
+    tier: 2
+    price: 75
+    effects:
+      - stat_type: LUCK
+        value: 30
+      - stat_type: DAMAGE_MELEE
+        value: -2
+      - stat_type: DAMAGE_RANGED
+        value: -1
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: LUCKY_COIN
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 105
+  #   limit: 1
+  #   effects:
+  #     - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+  #       stat_type: LUCK
+  #       stat_type_2: CRIT_CHANCE
+  #       placeholders:
+  #         - ints: 2
+  #         - ints: 1
+  #     - stat_type: ARMOR
+  #       value: -2
+  # TODO: X__LOOT_ALIENT_APPEAR_DURING_THE_NEXT_WAVE
+  # - type: LURE
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 34
+  #   effects:
+  #     - stat_type: REGEN
+  #       value: 2
+  # - effectcondition_type: X__LOOT_ALIENT_APPEAR_DURING_THE_NEXT_WAVE
+  #   placeholders:
+  #     - ints: 2
+  # TODO: TREES_DIE_IN_ONE_HIT
+  # - type: LUMBERJACK_SHIRT
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 15
+  #   limit: 1
+  #   effects:
+  #     - effectcondition_type: TREES_DIE_IN_ONE_HIT
+  #       value: 0
+  - type: MAMMOTH
+    texture_id: ui_item_todo
+    tier: 3
+    price: 110
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 20
+      - stat_type: REGEN
+        value: 5
+      # - stat_type: KNOCKBACK
+      #   value: 5
+      - stat_type: DAMAGE
+        value: -8
+      - stat_type: SPEED
+        value: -3
+  - type: MASTERY
+    texture_id: ui_item_todo
+    tier: 1
+    price: 55
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 6
+      - stat_type: DAMAGE_RANGED
+        value: 3
+  - type: MEDAL
+    texture_id: ui_item_todo
+    tier: 1
+    price: 55
+    effects:
+      - stat_type: HP
+        value: 3
+      - stat_type: DAMAGE
+        value: 3
+      - stat_type: ARMOR
+        value: 1
+      - stat_type: SPEED
+        value: 3
+      - stat_type: CRIT_CHANCE
+        value: -4
+  # TODO: MEDICAL_TURRET
+  # - type: MEDICAL_TURRET
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 40
+  #   effects:
+  #     - stat_type:
+  #       value: 0
+  - type: MEDIKIT
+    texture_id: ui_item_todo
+    tier: 3
+    price: 95
+    effects:
+      - stat_type: REGEN
+        value: 10
+      - effectcondition_type: STAT__EVERY__X__SECONDS
+        stat_type: REGEN
+        value: 2
+        placeholders:
+          - floats: 5
+      - stat_type: LUCK
+        value: -10
+  - type: METAL_DETECTOR
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    limit: 20
+    effects:
+      - stat_type: DOUBLE_COIN_CHANCE
+        value: 5
+      - stat_type: LUCK
+        value: 6
+      - stat_type: ENGINEERING
+        value: 2
+      - stat_type: DAMAGE
+        value: -5
+  - type: METAL_PLATE
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    effects:
+      - stat_type: ARMOR
+        value: 2
+      - stat_type: DAMAGE
+        value: -3
+  # TODO: DUPLICATES_NEXT_BOUGHT_ITEM_IN_SHOP
+  # - type: MIRROR
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 60
+  #   effects:
+  #     - effectcondition_type: DUPLICATES_NEXT_BOUGHT_ITEM_IN_SHOP
+  - type: MISSILE
+    texture_id: ui_item_todo
+    tier: 1
+    price: 45
+    effects:
+      - stat_type: DAMAGE
+        value: 10
+      - stat_type: ATTACK_SPEED
+        value: -4
+  - type: MOUSE
+    texture_id: ui_item_todo
+    tier: 2
+    price: 55
+    limit: 5
+    effects:
+      - stat_type: LIFE_STEAL
+        value: 5
+      - stat_type: ENEMIES
+        value: 10
+      - stat_type: HARVESTING
+        value: -5
+  - type: MUSROOM
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: REGEN
+        value: 3
+      - stat_type: LUCK
+        value: -2
+  - type: MUTATION
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: DAMAGE_RANGED
+        value: 1
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 1
+        # - stat_type: KNOCKBACK
+        #   value: -3
+  # TODO: WEAPON_DAMAGE_SCALES_WITH_ADDITIONAL__X
+  # - type: NAIL
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 65
+  #   limit: 1
+  #   effects:
+  #     - stat_type: ENGINEERING
+  #       value: 5
+  #     - effectcondition_type:
+  #       placeholders:
+  #         - ints: 0
+  #       damage_scalings:
+  #         -
+  #     - stat_type: DAMAGE_RANGED
+  #       value: 5
+  - type: NIGHT_GOOGLES
+    texture_id: ui_item_todo
+    tier: 3
+    price: 95
+    effects:
+      - stat_type: CRIT_CHANCE
+        value: 15
+      - stat_type: RANGE
+        value: 50
+      - stat_type: HP
+        value: -3
+      - stat_type: ARMOR
+        value: -1
+  - type: OCTOPUS
+    texture_id: ui_item_todo
+    tier: 3
+    price: 105
+    effects:
+      - stat_type: HP
+        value: 12
+      - stat_type: REGEN
+        value: 5
+      - stat_type: LIFE_STEAL
+        value: 3
+      - stat_type: CRIT_CHANCE
+        value: -8
+  - type: PADDING
+    texture_id: ui_item_todo
+    tier: 1
+    price: 45
+    limit: 1
+    effects:
+      - stat_type: HP
+        value: 9 # Then: 3
+        # TODO: X__STAT__FOR_EVERY__Y__COINS
+        # - effectcondition_type: X__STAT__FOR_EVERY__Y__COINS
+        #   stat_type: HP
+        #   placeholders:
+        #     - ints: 1
+        #     - ints: 80
+  - type: PANDA
+    texture_id: ui_item_todo
+    tier: 3
+    price: 100
+    effects:
+      - stat_type: HP
+        value: 12
+      - stat_type: LUCK
+        value: 25
+      - stat_type: DAMAGE
+        value: -5
+  - type: PEACEFUL_BEE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 18
+    effects:
+      - stat_type: DODGE
+        value: 4
+      - stat_type: HARVESTING
+        value: 4
+      - stat_type: DAMAGE_MELEE
+        value: -1
+      - stat_type: DAMAGE_RANGED
+        value: -1
+  - type: PEACOCK
+    texture_id: ui_item_todo
     tier: 2
     price: 50
+    effects:
+      - stat_type: XP_GAIN
+        value: 25
+      - stat_type: XP_GAIN
+        effectcondition_type: STAT__DURING_NEXT_WAVE
+        value: 100
+      - stat_type: ENEMY_DAMAGE
+        effectcondition_type: STAT__DURING_NEXT_WAVE
+        value: 50
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # TODO: X__CHANCE_OF_FINDING_THE_SAME_ITEM
+  # - type: PEARL
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 60
+  #   limit: 20
+  #   effects:
+  #     - stat_type: DAMAGE
+  #       stat_type_2: LUCK
+  #       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+  #       value: 0
+  #     - effectcondition_type: X__CHANCE_OF_FINDING_THE_SAME_ITEM
+  #       placeholders:
+  #         - ints: 3
+  - type: PENCIL
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: ENGINEERING
+        value: 2
+      - stat_type: ATTACK_SPEED
+        value: -1
+      - stat_type: CRIT_CHANCE
+        value: -1
+  # TODO: STAT__UPON__PICKUPABLE__AT_MAX_HP_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+  # - type: PENGUIN
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 25
+  #   limit: 3
+  #   effects:
+  #     - stat_type: REGEN
+  #       value: 1
+  #     - stat_type:
+  #       effectcondition_type: STAT__UPON__PICKUPABLE__AT_MAX_HP_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+  #       value: 1
+  - type: PIGGY_BANK
+    texture_id: ui_item_piggy_bank
+    tier: 1
+    price: 40
     limit: 1
     effects:
       - effectcondition_type: START_OF_THE_WAVE_GET__STAT
         stat_type: COINS
         value_multiplier: 1.2
-  - type: TODO_REROLLER
+  - type: PILE_OF_BOOKS
+    texture_id: ui_item_todo
+    tier: 2
+    price: 70
+    limit: 1
+    effects:
+      - stat_type: CRIT_CHANCE
+        value: 6 # Then 3.
+      - stat_type: ENGINEERING
+        value: 8 # Then 3.
+        # TODO: STRUCTURES_CAN_CRIT
+        # - effectcondition_type: STRUCTURES_CAN_CRIT
+  - type: PLANT
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: REGEN
+        value: 3
+      - stat_type: LIFE_STEAL
+        value: -1
+  - type: PLASTIC_EXPLOSIVE
+    texture_id: ui_item_todo
+    tier: 2
+    price: 60
+    effects:
+      - stat_type: EXPLOSION_SIZE
+        value: 25
+  - type: POISONOUS_TONIC
+    texture_id: ui_item_todo
+    tier: 2
+    price: 80
+    effects:
+      - stat_type: ATTACK_SPEED
+        value: 10
+      - stat_type: CRIT_CHANCE
+        value: 5
+      - stat_type: RANGE
+        value: 15
+      - stat_type: REGEN
+        value: -2
+  - type: POCKET_FACTORY
+    texture_id: ui_item_todo
+    tier: 1
+    price: 75
+    limit: 1
+    effects:
+      - stat_type: ENGINEERING
+        value: 5 # Then 2.
+        # TODO: KILLING_TREE_SPAWNS_TURRET.
+        # - effectcondition_type: KILLING_TREE_SPAWNS_TURRET
+  - type: POTATO
+    texture_id: ui_item_todo
+    tier: 3
+    price: 95
+    effects:
+      - stat_type: HP
+        value: 3
+      - stat_type: LIFE_STEAL
+        value: 1
+      - stat_type: DAMAGE
+        value: 5
+      - stat_type: ATTACK_SPEED
+        value: 5
+      - stat_type: SPEED
+        value: 3
+      - stat_type: DODGE
+        value: 3
+      - stat_type: ARMOR
+        value: 1
+      - stat_type: LUCK
+        value: 5
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: POWER_GENERATOR
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 65
+  #   limit: 1
+  #   effects:
+  #     - stat_type: DAMAGE
+  #       stat_type_2: SPEED
+  #       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+  #       placeholders:
+  #         - ints: 1
+  #         - ints: 1
+  #     - stat_type: DAMAGE
+  #       value: -5
+  - type: PROPELLER_HAT
+    texture_id: ui_item_todo
+    tier: 0
+    price: 28
+    effects:
+      - stat_type: LUCK
+        value: 10
+      - stat_type: DAMAGE
+        value: -2
+  - type: PUMPKIN
     texture_id: ui_item_todo
     tier: 1
     price: 40
-    limit: 3
     effects:
-      - stat_type: FREE_REROLLS
-        value: 1
-  - type: TODO_1
-    texture_id: ui_item_todo
-    tier: 0
-    price: 1
-    limit: 1
-    effects:
+      - stat_type: PIERCING_DAMAGE
+        value: 15
       - stat_type: DAMAGE
-        value: 10
-  - type: TODO_2
+        value: -2
+  - type: RECYCLING_MACHINE
     texture_id: ui_item_todo
     tier: 1
-    price: 1
+    price: 35
     limit: 1
     effects:
-      - stat_type: DAMAGE
-        value: 10
-  - type: TODO_3
-    texture_id: ui_item_todo
-    tier: 2
-    price: 1
-    limit: 1
-    effects:
-      - stat_type: DAMAGE
-        value: 10
-  - type: TODO_4
+      - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
+        placeholders:
+          - ints: 35
+  - type: REGENERATION_POTION
     texture_id: ui_item_todo
     tier: 3
-    price: 1
+    price: 90
+    limit: 1
+    effects:
+      # TODO: DOUBLE__STAT__WHEN_LESS_THAN__X__PERCENT_HP
+      # - effectcondition_type: DOUBLE__STAT__WHEN_LESS_THAN__X__PERCENT_HP
+      #   stat_type: REGEN
+      - stat_type: REGEN
+        value: 12 # Then 3.
+  - type: REINFORCED_STEEL
+    texture_id: ui_item_todo
+    tier: 1
+    price: 50
+    effects:
+      - stat_type: DAMAGE_RANGED
+        value: 2
+      - stat_type: ENGINEERING
+        value: 3
+      - stat_type: SPEED
+        value: -3
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: RETROMATION_HOODIE
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 110
+  #   limit: 1
+  #   effects:
+  #     - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+  #       stat_type: ATTACK_SPEED
+  #       stat_type_2: DODGE
+  #       placeholders:
+  #         - ints: 2
+  #         - ints: 1
+  #     - stat_type: RANGE
+  #       value: -80
+  - type: RICOCHET
+    texture_id: ui_item_todo
+    tier: 3
+    price: 110
+    effects:
+      - stat_type: BOUNCES
+        value: 1
+      - stat_type: DAMAGE
+        value: -25
+  # TODO: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
+  # - type: RIP_AND_TEAR
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 65
+  #   limit: 5
+  #   effects:
+  #     - effectcondition_type: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
+  #       placeholders:
+  #         - ints: 20
+  #         - ints: 10
+  #       damage_scalings:
+  #         - stat_type: DAMAGE_MELEE
+  #           percents_per_tier: 50
+  #     - stat_type: CRIT_CHANCE
+  #       value: -5
+  - type: RIPOSTE
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 3 # Then: ???
+        # TODO: X__CHANCE_TO_DEALTH__Y__EXTRA_DAMAGE_AFTER_DODGING
+        # - stat_type: DAMAGE_MELEE
+        #   effectcondition_type: X__CHANCE_TO_DEALTH__Y__EXTRA_DAMAGE_AFTER_DODGING
+  - type: RITUAL
+    texture_id: ui_item_todo
+    tier: 1
+    price: 60
+    effects:
+      - stat_type: DAMAGE
+        value: 6
+      - stat_type: LIFE_STEAL
+        value: 2
+      - stat_type: ENGINEERING
+        value: -2
+  - type: ROBOT_ARM
+    texture_id: ui_item_todo
+    tier: 3
+    price: 100
+    effects:
+      - stat_type: DAMAGE_MELEE
+        effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        value: 3
+      - stat_type: ENGINEERING
+        effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        value: 3
+      - stat_type: HP
+        effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        value: -1
+  - type: SAD_TOMATO
+    texture_id: ui_item_todo
+    tier: 2
+    price: 50
+    limit: 1
+    effects:
+      - stat_type: REGEN
+        value: 5 # Then 8.
+        # TODO: START_WAVES_WITH__X__PERCENT_CHANGED_HP
+        # - effectcondition_type: START_WAVES_WITH__X__PERCENT_CHANGED_HP
+        #   placeholders:
+        #     - ints: -50
+  - type: SALTWATER
+    texture_id: ui_item_todo
+    tier: 1
+    price: 50
+    # Then: limit: 1
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 2
+      - stat_type: ATTACK_SPEED
+        value: 3
+      # TODO: X__STAT__FOR__Y__SECONDS_UPON_TAKING_DAMAGE
+      # - stat_type: SPEED
+      #   effectcondition_type: X__STAT__FOR__Y__SECONDS_UPON_TAKING_DAMAGE
+      #   placeholders:
+      #     - ints: 10
+      #     - floats: 3
+      - stat_type: DAMAGE_ELEMENTAL
+        value: -1
+  - type: SCAR
+    texture_id: ui_item_mechanical_lens
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: XP_GAIN
+        value: 20
+      - stat_type: RANGE
+        value: -8
+  # TODO: Better burning
+  # - type: SCARED_SAUSAGE
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 25
+  #   limit: 4
+  #   effects:
+  #     - stat_type:
+  #       value: 0
+  - type: SCARF
+    texture_id: ui_item_todo
+    tier: 2
+    price: 80
+    effects:
+      - stat_type: REGEN
+        value: 4
+      - stat_type: DAMAGE_MELEE
+        value: 4
+      - stat_type: SPEED
+        value: 4
+      - stat_type: ENEMY_SPEED
+        effectcondition_type: STAT__DURING_NEXT_WAVE
+        value: 25
+  - type: SCOPE
+    texture_id: ui_item_todo
+    tier: 1
+    price: 48
+    effects:
+      - stat_type: DAMAGE_RANGED
+        value: 2
+      - stat_type: RANGE
+        value: 25
+      - stat_type: ATTACK_SPEED
+        value: -7
+  # TODO: X__NUMBERED_SHOT_HAS__Y__ADDITIONAL_PROJECTILES
+  # - type: SEASHELL
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 100
+  #   effects:
+  #     - stat_type:
+  #       effectcondition_type: X__NUMBERED_SHOT_HAS__Y__ADDITIONAL_PROJECTILES
+  #       value: 0
+  # TODO: CAP__STAT
+  # - type: SHACKLES
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 80
+  #   limit: 1
+  #   effects:
+  #     - stat_type: REGEN
+  #       value: 8
+  #     - stat_type: ENGINEERING
+  #       value: 8
+  #     - stat_type: RANGE
+  #       value: 80
+  #     - stat_type: SPEED
+  #       effectcondition_type: CAP__STAT
+  - type: SHADY_POTION
+    texture_id: ui_item_todo
+    tier: 1
+    price: 48
+    effects:
+      - stat_type: LUCK
+        value: 20
+      - stat_type: REGEN
+        value: -2
+  - type: SHARP_BULLET
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    limit: 1
+    effects:
+      - stat_type: PIERCING
+        value: 1
+      - stat_type: PIERCING_DAMAGE
+        value: -20
+      - stat_type: DAMAGE
+        value: -5
+        # - stat_type: KNOCKBACK
+        #   value: -3
+  - type: SHMOOP
+    texture_id: ui_item_todo
+    tier: 2
+    price: 60
+    effects:
+      - stat_type: HP
+        value: 6
+      - stat_type: REGEN
+        value: 2
+      - stat_type: DAMAGE_MELEE
+        value: -2
+      - stat_type: DAMAGE_RANGED
+        value: -1
+  - type: SIFD_RELIC
+    texture_id: ui_item_todo
+    tier: 3
+    price: 100
+    limit: 1
+    effects:
+      - stat_type: ARMOR
+        value: 3
+      - effectcondition_type: X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
+        pickupable_type: COIN
+        placeholders:
+          - ints: 100
+  - type: SILVER_BULLET
+    texture_id: ui_item_todo
+    tier: 2
+    price: 70
+    effects:
+      - stat_type: DAMAGE_AGAINST_BOSSES
+        value: 25
+  - type: SMALL_FISH
+    texture_id: ui_item_todo
+    tier: 0
+    price: 18
+    effects:
+      - effectcondition_type: X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP
+        placeholders:
+          - ints: 10
+          - ints: 75
+      - stat_type: ATTACK_SPEED
+        value: -3
+  - type: SMALL_MAGAZINE
+    texture_id: ui_item_todo
+    tier: 1
+    price: 60
+    effects:
+      - stat_type: DAMAGE_RANGED
+        value: 2
+      - stat_type: ATTACK_SPEED
+        value: 10
+      - stat_type: DAMAGE
+        value: -6
+  - type: SNAIL
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    limit: 1
+    effects:
+      - stat_type: ENEMY_SPEED
+        value: -8
+      - stat_type: SPEED
+        value: -3
+  - type: SNAKE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    effects:
+      - stat_type: BURNING_SPREAD
+        value: 1
+      - stat_type: HP
+        value: -1
+  # TODO: X__STAT__EVERY_TIME_YOU_GET_ITEM_THAT_INCREASES_ELEMENTAL_DAMAGE
+  # - type: SNOWBALL
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 50
+  #   limit: 1
+  #   effects:
+  #     - stat_type: DAMAGE_ELEMENTAL
+  #       effectcondition_type: X__STAT__EVERY_TIME_YOU_GET_ITEM_THAT_INCREASES_ELEMENTAL_DAMAGE
+  #       placeholders:
+  #         - ints: 1
+  # TODO: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_UPON__PICKUPABLE
+  # - type: SPICY_SAUCE
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 40
+  #   limit: 2
+  #   effects:
+  #     - stat_type: HP
+  #       value: 3
+  #     - effectcondition_type: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_UPON__PICKUPABLE
+  #       pickupable_type: CRATE
+  #       placeholders:
+  #         - ints: 50
+  #         - ints: 10
+  #       damage_scalings:
+  #         - stat_type: HP
+  #           percents_per_tier: 100
+  # TODO: STAT__FOR_EVERY_DIFFERENT_WEAPON
+  # - type: SPIDER
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 110
+  #   effects:
+  #     - stat_type: DAMAGE
+  #       value: 12
+  #     - stat_type: ATTACK_SPEED
+  #       effectcondition_type: STAT__FOR_EVERY_DIFFERENT_WEAPON
+  #       placeholders:
+  #         - ints: 6
+  #     - stat_type: DODGE
+  #       value: -3
+  #     - stat_type: HARVESTING
+  #       value: -5
+  - type: SPYGLASS
+    texture_id: ui_item_todo
+    tier: 1
+    price: 30
+    limit: 2
+    effects:
+      - stat_type: RANGE
+        value: 10
+      - stat_type: REROLL_PRICE
+        value: -25
+  - type: STARFISH
+    texture_id: ui_item_todo
+    tier: 2
+    price: 75
+    limit: 3
+    effects:
+      # TODO: X__PERCENT_MORE_OR_LESS_COINS_FROM_ENEMIES.
+      # - effectcondition_type: X__PERCENT_MORE_OR_LESS_COINS_FROM_ENEMIES
+      #   value: 20
+      # Then remove DOUBLE_COIN_CHANCE.
+      - stat_type: DOUBLE_COIN_CHANCE
+        value: 20
+      - stat_type: HARVESTING
+        value: 10
+      - stat_type: ENEMY_DAMAGE
+        value: 15
+  - type: STATUE
+    texture_id: ui_item_todo
+    tier: 2
+    price: 60
+    effects:
+      - stat_type: ATTACK_SPEED
+        effectcondition_type: STAT__WHEN_IDLE
+        value: 40
+      - stat_type: SPEED
+        value: -10
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: STRANGE_BOOK
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 70
+  #   limit: 1
+  #   effects:
+  #     - stat_type: ENGINEERING
+  #       stat_type_2: DAMAGE_ELEMENTAL
+  #       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+  #       placeholders:
+  #         - ints: 1
+  #         - ints: 1
+  #     - stat_type: DAMAGE_MELEE
+  #       value: -1
+  #     - stat_type: DAMAGE_RANGED
+  #       value: -1
+  # TODO: STAT__EVERY_OTHER__X__STAT2
+  # - type: STONE_SKIN
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 85
+  #   limit: 1
+  #   effects:
+  #     - stat_type: HP
+  #       stat_type_2: ARMOR
+  #       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+  #       placeholders:
+  #         - ints: 1
+  #         - ints: 1
+  #     - stat_type: ATTACK_SPEED
+  #       value: -6
+  - type: SUNGLASSES
+    texture_id: ui_item_todo
+    tier: 1
+    price: 50
+    effects:
+      - stat_type: CRIT_CHANCE
+        value: 10
+      - stat_type: ARMOR
+        value: -1
+  # TODO: ONCE_PER_WAVE_YOU_EXPLODE_FOR__Y__DAMAGE
+  # - type: SUNKEN_BELL
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 65
+  #   limit: 1
+  #   effects:
+  #     - effectcondition_type: ONCE_PER_WAVE_YOU_EXPLODE_FOR__Y__DAMAGE
+  #       placeholders:
+  #         - ints: 100
+  #       damage_scalings:
+  #         - stat_type: DAMAGE_MELEE
+  #           percents_per_tier: 500
+  #         - stat_type: DAMAGE_RANGED
+  #           percents_per_tier: 500
+  #         - stat_type: DAMAGE_ELEMENTAL
+  #           percents_per_tier: 500
+  #         - stat_type: ENGINEERING
+  #           percents_per_tier: 500
+  # TODO: NULLIFIES_ONE_HIT_TAKEN_EVERY_WAVE
+  # - type: TARDIGRADE
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 50
+  #   effects:
+  #     - effectcondition_type: NULLIFIES_ONE_HIT_TAKEN_EVERY_WAVE
+  #       value: 0
+  # TODO: X__CHANCE_TO_HEAL__Y__HP_UPON_KILLING_WITH_CRIT
+  # - type: TENTACLE
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 35
+  #   limit: 5
+  #   effects:
+  #     - stat_type: HP
+  #       effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON_KILLING_WITH_CRIT
+  #       placeholders:
+  #         - ints: 20
+  #         - ints: 1
+  - type: TERRIFIED_ONION
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: SPEED
+        value: 4
+      - stat_type: LUCK
+        value: -5
+  - type: TOOLBOX
+    texture_id: ui_item_todo
+    tier: 2
+    price: 55
+    effects:
+      - stat_type: ENGINEERING
+        value: 6
+      - stat_type: ATTACK_SPEED
+        value: -8
+  # TODO: RESTORE__X__HP_PER__Y__SECONDS_WITHOUT_ABILITY_TO_HEAL_ANY_OTHER_WAY
+  # - type: TORTURE
+  #   texture_id: ui_item_todo
+  #   tier: 3
+  #   price: 100
+  #   limit: 1
+  #   effects:
+  #     - stat_type: HP
+  #       value: 15
+  #     - effectcondition_type: RESTORE__X__HP_PER__Y__SECONDS_WITHOUT_ABILITY_TO_HEAL_ANY_OTHER_WAY
+  #       placeholders:
+  #         - ints: 5
+  #         - floats: 1
+  - type: TOXIC_SLUDGE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: DAMAGE_ELEMENTAL
+        value: 2
+      - stat_type: DODGE
+        value: -2
+  - type: TRACTOR
+    texture_id: ui_item_todo
+    tier: 2
+    price: 70
+    effects:
+      - stat_type: HARVESTING
+        value: 40
+      - stat_type: DAMAGE
+        value: -8
+  # TODO: EXTRA_ITEM_IN_A_CRATE_CHANCE
+  # - type: TREASURE_MAP
+  #   texture_id: ui_item_todo
+  #   tier: 1
+  #   price: 35
+  #   limit: 5
+  #   effects:
+  #     - stat_type: EXTRA_ITEM_IN_A_CRATE_CHANCE
+  #       value: 20
+  - type: TREE
+    texture_id: ui_item_todo
+    tier: 0
+    price: 15
+    effects:
+      - stat_type: TREES
+        value: 1
+  - type: TRIANGLE_OF_POWER
+    texture_id: ui_item_todo
+    tier: 2
+    price: 65
+    effects:
+      - stat_type: DAMAGE
+        value: 10 # Then 20
+      - stat_type: ARMOR
+        value: 1
+        # TODO: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+        # - stat_type: DAMAGE
+        #   effectcondition_type: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+        #   value: -2
+  - type: TURRET
+    texture_id: ui_item_todo
+    price: 15
+    tier: 0
+    effects:
+      - effectcondition_type: TURRET_DEALING__X__DAMAGE
+        placeholders:
+          - ints: 10
+        damage_scalings:
+          - stat_type: ENGINEERING
+            percents_per_tier: 80
+  # TODO: TYLER_DEALING__X__DAMAGE_AND_SHOOTING__Y__PROJECTILES
+  # + TYLER projectile (it's lightning)
+  # - type: TYLER
+  #   texture_id: ui_item_todo
+  #   tier: 2
+  #   price: 75
+  #   effects:
+  #     - effectcondition_type: TYLER_DEALING__X__DAMAGE_AND_SHOOTING__Y__PROJECTILES
+  #       projectile_type: TYLER
+  #       placeholders:
+  #         - ints: 10
+  #       damage_scalings:
+  #         - stat_type: ENGINEERING
+  #           percents_per_tier: 75
+  #         - stat_type: DAMAGE_ELEMENTAL
+  #           percents_per_tier: 75
+  - type: UGLY_TOOTH
+    texture_id: ui_item_todo
+    tier: 0
+    price: 25
+    limit: 1
+    effects:
+      # TODO: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
+      # - effectcondition_type: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
+      #   placeholders:
+      #     - ints: 5
+      #     - ints: 20
+      # Then remove ENEMY_SPEED
+      - stat_type: ENEMY_SPEED
+        value: -5
+      - stat_type: SPEED
+        value: -3
+  - type: VIGILANTE_RING
+    texture_id: ui_item_todo
+    tier: 2
+    price: 92
+    effects:
+      - stat_type: DAMAGE
+        effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        value: 3
+  - type: WARRIOR_HELMET
+    texture_id: ui_item_todo
+    tier: 2
+    price: 80
+    effects:
+      - stat_type: ARMOR
+        value: 3
+      - stat_type: HP
+        value: 5
+      - stat_type: SPEED
+        value: -5
+  - type: WEIRD_FOOD
+    texture_id: ui_item_todo
+    tier: 0
+    price: 20
+    effects:
+      - stat_type: CONSUMABLE_HEAL
+        value: 2
+      - stat_type: DODGE
+        value: -2
+  - type: WEIRD_GHOST
+    texture_id: ui_item_todo
+    tier: 0
+    price: 24 # Then 12
+    effects:
+      - stat_type: HP
+        value: 3
+        # TODO: START_THE_NEXT_WAVE_WITH_1_HP
+        # - effectcondition_type: START_THE_NEXT_WAVE_WITH_1_HP
+  - type: WHEAT
+    texture_id: ui_item_todo
+    tier: 2
+    price: 85
+    effects:
+      - stat_type: DAMAGE_MELEE
+        value: 4
+      - stat_type: DAMAGE_RANGED
+        value: 2
+      - stat_type: HARVESTING
+        value: 10
+      - stat_type: DAMAGE_ELEMENTAL
+        value: -2
+  - type: WHEELBARROW
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    effects:
+      - stat_type: HARVESTING
+        value: 16
+      - stat_type: ARMOR
+        value: -1
+  - type: WHETSTONE
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    effects:
+      - stat_type: LIFE_STEAL
+        value: 4
+        # - stat_type: KNOCKBACK
+        #   value: -3
+  # TODO: LOOT_ALIENS_CHANCE
+  # TODO: LOOT_ALIENS_SPEED
+  # - type: WHISTLE
+  #   texture_id: ui_item_todo
+  #   tier: 0
+  #   price: 25
+  #   effects:
+  #     - stat_type: LOOT_ALIENS_CHANCE
+  #       value: 50
+  #     - stat_type: LOOT_ALIENS_SPEED
+  #       value: 20
+  - type: WHITE_FLAG
+    texture_id: ui_item_todo
+    tier: 1
+    price: 40
+    limit: 1
+    effects:
+      - stat_type: HARVESTING
+        value: 5
+      - stat_type: ENEMIES
+        value: -5
+  - type: WINGS
+    texture_id: ui_item_todo
+    tier: 2
+    price: 85
+    effects:
+      - stat_type: SPEED
+        value: 10
+      - stat_type: RANGE
+        value: 30
+      - stat_type: DAMAGE_ELEMENTAL
+        value: -2
+  - type: WISDOM
+    texture_id: ui_item_todo
+    tier: 2
+    price: 85
     limit: 1
     effects:
       - stat_type: DAMAGE
-        value: 10
+        effectcondition_type: STAT__EVERY__X__SECONDS
+        value: 5
+        placeholders:
+          - floats: 5
+      - stat_type: DAMAGE
+        value: -15
+  - type: WOLF_HELMET
+    texture_id: ui_item_todo
+    tier: 3
+    price: 90
+    effects:
+      - stat_type: LIFE_STEAL # TODO: CHECK IT ON WIKI!!!
+        value: 8
+      - stat_type: LUCK
+        value: 20
+      - stat_type: ENGINEERING
+        value: -5
+  - type: COUPON
+    texture_id: ui_item_coupon
+    tier: 1
+    price: 35
+    effects:
+      - stat_type: SHOP_PRICE
+        value: -10
 # }
 
 weapon_kinds: # {  ###
@@ -679,7 +3023,7 @@ weapons: # {  ###
   #     `range_meters` is how far weapon travels from it's offset pos.
   #     It DOES NOT include weapon's texture width!
   #     Weapons have a minimum of 1 meter range.
-  #     NOTE: screen size is 32x18 meters.
+  #     NOTE: screen size is 28.24 x 15.89 meters.
   #
   #
   #                range_meters
@@ -737,13 +3081,13 @@ weapons: # {  ###
       #   weaponproperty_type: DAMAGE
       #   value: 100 100 100 100
       #
-      # - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+      # - effectcondition_type: STAT__EVERY__X__WALKED_METERS
       #   stat_type: DAMAGE
       #   value: 100 100 100 100
       #   placeholders:
       #     - ints: 4 3 2 1
       #
-      # - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+      # - effectcondition_type: STAT__EVERY__X__SECONDS
       #   stat_type: DAMAGE
       #   value: 100 100 100 100
       #   placeholders:
@@ -906,17 +3250,17 @@ weapons: # {  ###
             #   - effectcondition_type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
             #     stat_type: DAMAGE
             #     value: 1 1 1 1
-            #   - effectcondition_type: STAT__EVERY__X__SECONDS_DURING_THIS_WAVE
+            #   - effectcondition_type: STAT__EVERY__X__SECONDS
             #     stat_type: DAMAGE
             #     value: 1 1 1 1
             #     placeholders:
             #       - floats: 29 19 14 11
-            #   - effectcondition_type: STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE
+            #   - effectcondition_type: STAT__EVERY__X__WALKED_METERS
             #     stat_type: DAMAGE
             #     value: 1 1 1 1
             #     placeholders:
             #       - ints: 50 45 38 30
-            #   - effectcondition_type: STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE
+            #   - effectcondition_type: STAT__EVERY__X__IDLE_SECONDS
             #     stat_type: DAMAGE
             #     value: 1 1 1 1
             #     placeholders:
@@ -1383,8 +3727,8 @@ stats: # {  ###
     is_secondary: true
   - type: KNOCKBACK
     is_secondary: true
-  # Increases the chance of gaining double materials when picking up Materials
-  - type: DOUBLE_MATERIAL_CHANCE
+  # Increases the chance of gaining double coins when picking up Coins
+  - type: DOUBLE_COIN_CHANCE
     is_percent: true
     is_secondary: true
   # Provides an amount of free reroll at the beginning of each Shop
@@ -1400,15 +3744,24 @@ stats: # {  ###
   - type: ENEMY_SPEED
     is_percent: true
     is_secondary: true
+  - type: ENEMY_DAMAGE
+    is_percent: true
+    is_secondary: true
+  - type: ENEMY_HP_SCALE
+    is_percent: true
+    is_secondary: true
+    is_hidden: true
   # Increases or decreases the price of rerolling in the Shop and when choosing Upgrades
   - type: REROLL_PRICE
     is_percent: true
     is_secondary: true
-  - type: TURRELS_COUNT
+  - type: EXTRA_ITEM_IN_A_CRATE_CHANCE
     is_secondary: true
     is_hidden: true
-  - type: ENEMY_HP_SCALE
-    is_percent: true
+  - type: LOOT_ALIENS_CHANCE
+    is_secondary: true
+    is_hidden: true
+  - type: LOOT_ALIENS_SPEED
     is_secondary: true
     is_hidden: true
 # }
@@ -1425,7 +3778,7 @@ difficulties: # {  ###
   - type: D0
     texture_id: ui_difficulty_0
     effects:
-      - effectcondition_type: SMALLEST_DIFFICULTY
+      - effectcondition_type: SMALLEST_DIFFICULTY_DESCRIPTION
   - type: D1
     texture_id: ui_difficulty_1
     effects:
@@ -1485,15 +3838,11 @@ builds: # {  ###
         placeholders:
           - ints: 0
       - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        item_type: TURREL
+        item_type: TURRET
         placeholders:
           - ints: 0
-      # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
-      # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
-      - effectcondition_type: X__CHANCE_TO_INSTANTLY_ATTRACT__PICKUPABLE
-        pickupable_type: COIN
-        placeholders:
-          - ints: 25
+            # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
+            # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
   - type: NINJA
     starting_weapon_types:
       - SLINGSHOT
@@ -1503,13 +3852,6 @@ builds: # {  ###
         value: 15
       - stat_type: DODGE
         value: 7
-      - effectcondition_type: STAT__UPON_LEVEL_UP
-        stat_type: DAMAGE
-        value: 69
-      - effectcondition_type: X__COINS_UPON__PICKUPABLE
-        pickupable_type: CRATE
-        placeholders:
-          - ints: 25
       - effectcondition_type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
         placeholders:
           - ints: 35
@@ -1549,8 +3891,6 @@ achievements: # {  ###
         # - value: 6
   - type: KILLER
     steps:
-      - value: 10
-        unlocks_item_type: BLACK_FLAG
       - value: 40
         unlocks_build_type: NINJA
       - value: 100
@@ -1566,7 +3906,7 @@ achievements: # {  ###
   - type: IDLER
     steps:
       - value: 10
-        unlocks_item_type: TURREL
+        unlocks_item_type: TURRET
       - value: 200
       - value: 1000
   - type: COINS

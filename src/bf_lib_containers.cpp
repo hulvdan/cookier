@@ -2,6 +2,16 @@
 
 #pragma once
 
+void UnstableRemoveAt_(u8* base, size_t stride, const int i, int* count) {  ///
+  ASSERT(i >= 0);
+  ASSERT(i < *count);
+
+  if (i != *count - 1)
+    memcpy(base + stride * i, base + stride * (*count - 1), stride);
+
+  (*count)--;
+}
+
 #define ARRAY_PUSH(array, arrayCount, arrayMaxCount, value) \
   STATEMENT({                                               \
     *((array) + (arrayCount)) = value;                      \
@@ -201,7 +211,7 @@ struct View {
   }
 
   void UnstableRemoveAt(const int i) {  ///
-    ::UnstableRemoveAt((u8*)base, sizeof(*base), i, &count);
+    UnstableRemoveAt_((u8*)base, sizeof(*base), i, &count);
   }
 
   T* begin() {  ///
@@ -270,26 +280,15 @@ struct Array {
   }
 };
 
-void UnstableRemoveAt(u8* base, size_t stride, const int i, int* count) {  ///
-  ASSERT(i >= 0);
-  ASSERT(i < *count);
-
-  if (i != *count - 1) {
-    memcpy(base + stride * i, base + stride * (*count - 1), stride);
-  }
-
-  (*count)--;
-}
-
-TEST_CASE ("UnstableRemoveAt") {  ///
+TEST_CASE ("UnstableRemoveAt_") {  ///
   int values[]{0, 1, 2, 3};
   int valuesCount = ARRAY_COUNT(values);
-  UnstableRemoveAt((u8*)values, sizeof(*values), 2, &valuesCount);
+  UnstableRemoveAt_((u8*)values, sizeof(*values), 2, &valuesCount);
   ASSERT(valuesCount == 3);
   ASSERT(values[0] == 0);
   ASSERT(values[1] == 1);
   ASSERT(values[2] == 3);
-  UnstableRemoveAt((u8*)values, sizeof(*values), 0, &valuesCount);
+  UnstableRemoveAt_((u8*)values, sizeof(*values), 0, &valuesCount);
   ASSERT(valuesCount == 2);
   ASSERT(values[0] == 3);
   ASSERT(values[1] == 1);
@@ -372,7 +371,7 @@ struct Vector {
   }
 
   void UnstableRemoveAt(const int i) {  ///
-    ::UnstableRemoveAt((u8*)base, sizeof(*base), i, &count);
+    UnstableRemoveAt_((u8*)base, sizeof(*base), i, &count);
   }
 
   // Remove value + ensure there's no of the same value remaining.

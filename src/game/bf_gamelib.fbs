@@ -104,7 +104,7 @@ table Creature {
 
     contact_damage: int;
     contact_damage_increase_per_wave: float;
-    // For turrel. Mobs do contact_damage that scales.
+    // For turret. Mobs do contact_damage that scales.
     projectile_damage: int;
     crit_damage_multiplier: float = 1.5;
 
@@ -131,13 +131,12 @@ table Creature {
     on_death_spawns_distance_min: float;
     on_death_spawns_distance_max: float;
 
-    turrel_projectile_type: int;
-    turrel_damage_scalings: [DamageScaling];
-    turrel_range_meters: float;
-    turrel_knockback_meters: float;
-    turrel_pierce: int;
-    turrel_bounce: int;
-    turrel_projectile_shoot_anchor_y: float;
+    turret_projectile_type: int;
+    turret_range_meters: float;
+    turret_knockback_meters: float;
+    turret_pierce: int;
+    turret_bounce: int;
+    turret_projectile_shoot_anchor_y: float;
 
     color: uint = 0xffffffff;
 
@@ -193,6 +192,7 @@ table EffectPlaceholderValue {
 
 table Effect {
     stat_type: int;
+    // stat_type_2: int;
     weaponproperty_type: int;
     effectcondition_type: int;
     value: [int];

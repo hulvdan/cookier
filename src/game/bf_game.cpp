@@ -31,6 +31,9 @@
 
 #include "box2d/box2d.h"
 
+using DamageScalingsFBT = const flatbuffers::
+  Vector<flatbuffers::Offset<BFGame::DamageScaling>, flatbuffers::uoffset_t>*;
+
 // Clay.
 // ============================================================ {  ///
 #define CLAY_IMPLEMENTATION
@@ -545,10 +548,11 @@ struct Creature {  ///
 
   union {
     struct {
-      FrameGame startedShootingAt;
-      lframe    cooldown;
-      Vector2   aimDirection;
-    } turrel;
+      FrameGame         startedShootingAt;
+      lframe            cooldown;
+      Vector2           aimDirection;
+      DamageScalingsFBT damageScalings;
+    } turret;
 
     struct {
       FrameGame startedShootingAt;
@@ -568,14 +572,14 @@ struct Creature {  ///
     } boss;
   } _mob;
 
-  auto& DataTurrel() {
-    ASSERT(type == CreatureType_TURREL);
-    return _mob.turrel;
+  auto& DataTurret() {
+    ASSERT(type == CreatureType_TURRET);
+    return _mob.turret;
   };
 
-  const auto& DataTurrel() const {
-    ASSERT(type == CreatureType_TURREL);
-    return _mob.turrel;
+  const auto& DataTurret() const {
+    ASSERT(type == CreatureType_TURRET);
+    return _mob.turret;
   };
 
   auto& DataRanger() {
@@ -610,12 +614,10 @@ struct Creature {  ///
 };
 
 struct MakeCreatureData {  ///
-  CreatureType type = {};
-  Vector2      pos  = {};
+  CreatureType      type           = {};
+  Vector2           pos            = {};
+  DamageScalingsFBT damageScalings = {};
 };
-
-using DamageScalingsFBT = const flatbuffers::
-  Vector<flatbuffers::Offset<BFGame::DamageScaling>, flatbuffers::uoffset_t>*;
 
 struct PreSpawn {  ///
   PreSpawnType      type           = {};
@@ -1061,6 +1063,11 @@ struct Prop {
   Vector2 pos       = {};
 };
 
+struct TurretToSpawn {
+  int               baseDamage     = {};
+  DamageScalingsFBT damageScalings = {};
+};
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -1203,7 +1210,6 @@ struct GameData {
     int       playerContinuousWalkingFrames     = 0;
 
     int cratesDroppedThisWave = 0;
-    int turrelsToSpawn        = 0;
 
     FrameGame waveStartedAt = {};
 
@@ -1245,7 +1251,8 @@ struct GameData {
   X(int, justDamagedCreatures)             \
   X(Number, numbers)                       \
   X(Pickupable, pickupables)               \
-  X(Particle, particles)
+  X(Particle, particles)                   \
+  X(TurretToSpawn, turretsToSpawn)
 
 #define X(type_, name_) Vector<type_> name_ = {};
     VECTORS_TABLE;
@@ -1791,7 +1798,22 @@ void OnWaveStarted() {  ///
   g.run.playerContinuousWalkingFrames     = 0;
 
   g.run.cratesDroppedThisWave = 0;
-  g.run.turrelsToSpawn        = g.run.state.stats[StatType_TURRELS_COUNT];
+
+  g.run.turretsToSpawn.Reset();
+  IterateOverEffects(
+    EffectConditionType_TURRET_DEALING__X__DAMAGE,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        FOR_RANGE (int, i, times) {
+          *g.run.turretsToSpawn.Add() = {
+            .baseDamage     = EFFECT_X_INT,
+            .damageScalings = fb_effect->damage_scalings(),
+          };
+        }
+      }
+  );
+  GRAND.Shuffle(g.run.turretsToSpawn.base, g.run.turretsToSpawn.count);
 
   g.run.waveStartedAt = {};
   g.run.waveStartedAt.SetNow();
@@ -2921,8 +2943,7 @@ void Pickup(Pickupable* pickupable_) {  ///
       xNumber *= 2;
     }
 
-    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_MATERIAL_CHANCE] / 100.0f)
-    {
+    if (GRAND.FRand() < (f32)g.run.state.stats[StatType_DOUBLE_COIN_CHANCE] / 100.0f) {
       amount *= 2;
       xNumber *= 2;
     }
@@ -3516,9 +3537,10 @@ int MakeCreature(MakeCreatureData data) {  ///
   }
 
   switch (creature.type) {
-  case CreatureType_TURREL: {
-    creature.DataTurrel() = {
-      .aimDirection = Vector2Rotate({1, 0}, GRAND.Angle()),
+  case CreatureType_TURRET: {
+    creature.DataTurret() = {
+      .aimDirection   = Vector2Rotate({1, 0}, GRAND.Angle()),
+      .damageScalings = data.damageScalings,
     };
   } break;
 
@@ -3936,9 +3958,8 @@ void RunInit() {
       MOB_BOSS_SHOOTING_FRAMES[projectileIndex] = v;
     }
 
-    FOR_RANGE (int, i, MOB_BOSS_SHOOTING_FRAMES.count - 1) {
+    FOR_RANGE (int, i, MOB_BOSS_SHOOTING_FRAMES.count - 1)
       ASSERT(MOB_BOSS_SHOOTING_FRAMES[i] < MOB_BOSS_SHOOTING_FRAMES[i + 1]);
-    }
   }
 
   // Refilling `itemPools` and `weaponPools`.
@@ -3966,13 +3987,11 @@ void RunInit() {
       };
     }
 
-    FOR_RANGE (int, i, TOTAL_TIERS) {
+    FOR_RANGE (int, i, TOTAL_TIERS)
       ASSERT(tieredCounts[i] == ITEMS_PER_TIER[i]);
-    }
 
-    FOR_RANGE (int, i, TOTAL_TIERS) {
+    FOR_RANGE (int, i, TOTAL_TIERS)
       g.run.weaponPools[i] = {.count = 0, .base = g.run.weaponPoolsData[i].base};
-    }
 
     int weaponIndex = -1;
     for (auto fb : *glib->weapons()) {
@@ -3986,9 +4005,8 @@ void RunInit() {
       }
     }
 
-    FOR_RANGE (int, i, TOTAL_TIERS) {
+    FOR_RANGE (int, i, TOTAL_TIERS)
       ASSERT(g.run.weaponPools[i].count <= g.run.weaponPoolsData[i].count);
-    }
   }
 
   // Selecting next biome.
@@ -4320,9 +4338,8 @@ void GameInit() {
           } break;
 
           case CondVarType_DAMAGE: {
-            FOR_RANGE (int, i, tierValues) {
+            FOR_RANGE (int, i, tierValues)
               ASSERT(placValues->ints()->Get(i) >= 0);
-            }
           } break;
 
           default:
@@ -5161,9 +5178,9 @@ void DoUI() {
 
   const auto fb_slotColors = glib->ui_item_slot_colors();
   auto slotColors_ = ALLOCATE_ARRAY(&g.meta.trashArena, Color, fb_slotColors->size());
-  FOR_RANGE (int, i, fb_slotColors->size()) {
+  FOR_RANGE (int, i, fb_slotColors->size())
     slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
-  }
+
   const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
 
   constexpr int CARD_WIDTH          = 240;
@@ -5790,10 +5807,15 @@ void DoUI() {
         if (fb_effect->stat_type()) {
           const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
 
-          // if (fb_stat->icon_texture_id())
-          //   BF_CLAY_IMAGE({.texID = fb_stat->icon_texture_id()});
+          PlaceholdGroupBegin("STAT");
 
-          PlaceholdBrokenLocale("STAT", fb_stat->name_locale());
+          if (fb_stat->small_icon_texture_id()) {
+            PlaceholdImage(fb_stat->small_icon_texture_id());
+            PlaceholdString(" ");
+          }
+          PlaceholdBrokenLocale(fb_stat->name_locale());
+
+          PlaceholdGroupEnd();
 
           bool isPercent = fb_stat->is_percent();
           auto value     = fb_effect->value();
@@ -9403,37 +9425,35 @@ void DoUI() {
           CLAY({.layout{
             BF_CLAY_SIZING_GROW_XY,
             .childGap = GAP_BIG,
-          }}) {
-            FOR_RANGE (int, columnIndex, 2) {
-              CLAY({.layout{
-                BF_CLAY_SIZING_GROW_XY,
-                .childGap        = GAP_SMALL,
-                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-              }}) {
-                // Current level.
-                if (!columnIndex) {
-                  CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(STATS_ENTRY_WIDTH)}}}
-                  ) {
-                    componentStatsEntry(
-                      glib->ui_shop_current_level_icon_texture_id(),
-                      Loc_UI_CURRENT_LEVEL,
-                      g.run.state.level,
-                      StatType_INVALID
-                    );
-                  }
+          }})
+          FOR_RANGE (int, columnIndex, 2) {
+            CLAY({.layout{
+              BF_CLAY_SIZING_GROW_XY,
+              .childGap        = GAP_SMALL,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              // Current level.
+              if (!columnIndex) {
+                CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(STATS_ENTRY_WIDTH)}}}) {
+                  componentStatsEntry(
+                    glib->ui_shop_current_level_icon_texture_id(),
+                    Loc_UI_CURRENT_LEVEL,
+                    g.run.state.level,
+                    StatType_INVALID
+                  );
                 }
+              }
 
-                FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
-                  const auto type = (StatType)(i + 2);
-                  const auto fb   = glib->stats()->Get(type);
-                  if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
-                    componentStatsEntry(
-                      fb->small_icon_texture_id(),
-                      fb->name_locale(),
-                      g.run.state.stats[type],
-                      type
-                    );
-                  }
+              FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
+                const auto type = (StatType)(i + 2);
+                const auto fb   = glib->stats()->Get(type);
+                if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
+                  componentStatsEntry(
+                    fb->small_icon_texture_id(),
+                    fb->name_locale(),
+                    g.run.state.stats[type],
+                    type
+                  );
                 }
               }
             }
@@ -10837,10 +10857,10 @@ void GameFixedUpdate() {
               data.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
             }
           }
-          else if (creature.type == CreatureType_TURREL) {
-            auto& data = creature.DataTurrel();
+          else if (creature.type == CreatureType_TURRET) {
+            auto& data = creature.DataTurret();
 
-            f32 rangeMeters = fb->turrel_range_meters();
+            f32 rangeMeters = fb->turret_range_meters();
             rangeMeters *= (f32)g.run.state.stats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
             rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
 
@@ -10850,10 +10870,10 @@ void GameFixedUpdate() {
               = creature.pos
                 + Vector2(
                   0,
-                  (fb->turrel_projectile_shoot_anchor_y() - 0.5f) * (f32)originalSize->y()
+                  (fb->turret_projectile_shoot_anchor_y() - 0.5f) * (f32)originalSize->y()
                     * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE
                 );
-            auto projectileType = (ProjectileType)fb->turrel_projectile_type();
+            auto projectileType = (ProjectileType)fb->turret_projectile_type();
             ASSERT(projectileType);
             auto fb_projectile = fb_projectiles->Get(projectileType);
 
@@ -10897,11 +10917,11 @@ void GameFixedUpdate() {
               const auto e = data.startedShootingAt.Elapsed();
 
               const auto shotFrame
-                = ApplyStructureAttackSpeedToDuration(MOB_TURREL_SHOOT_FRAME.value);
+                = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOT_FRAME.value);
               if (e == shotFrame) {
                 int damage = fb->projectile_damage();
-                damage = ApplyDamageScalings(damage, 0, fb->turrel_damage_scalings(), 1);
-                damage = ApplyPlayerStatDamageMultiplier(damage);
+                damage     = ApplyDamageScalings(damage, 0, data.damageScalings, 1);
+                damage     = ApplyPlayerStatDamageMultiplier(damage);
                 MakeProjectile({
                   .type                 = projectileType,
                   .ownerCreatureType    = creature.type,
@@ -10911,14 +10931,14 @@ void GameFixedUpdate() {
                   .range                = rangeMeters,
                   .damage               = damage,
                   .critDamageMultiplier = fb->crit_damage_multiplier(),
-                  .knockbackMeters      = fb->turrel_knockback_meters(),
-                  .pierce               = fb->turrel_pierce(),
-                  .bounce               = fb->turrel_bounce(),
+                  .knockbackMeters      = fb->turret_knockback_meters(),
+                  .pierce               = fb->turret_pierce(),
+                  .bounce               = fb->turret_bounce(),
                 });
               }
 
               const auto dur
-                = ApplyStructureAttackSpeedToDuration(MOB_TURREL_SHOOTING_FRAMES.value);
+                = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOTING_FRAMES.value);
               if (e >= dur)
                 data.startedShootingAt = {};
             }
@@ -10928,8 +10948,7 @@ void GameFixedUpdate() {
 
       // Making pre spawn decals.
       {  ///
-
-        LAMBDA (void, makePreSpawns, (CreatureType type)) {
+        LAMBDA (void, makePreSpawns, (CreatureType type, TurretToSpawn turret = {})) {
           ASSERT(type);
 
           Vector2 posToSpawn{};
@@ -10963,7 +10982,13 @@ void GameFixedUpdate() {
               );
               p = posToSpawn + Vector2Rotate({off, 0}, GRAND.Angle());
             } while (!creaturesWorldSpawnBounds.ContainsInside(p));
-            PreSpawn spawn{.type = PreSpawnType_CREATURE, .typeCreature = type, .pos = p};
+            PreSpawn spawn{
+              .type           = PreSpawnType_CREATURE,
+              .typeCreature   = type,
+              .pos            = p,
+              .damage         = turret.baseDamage,
+              .damageScalings = turret.damageScalings,
+            };
             spawn.createdAt.SetNow();
             *g.run.preSpawns.Add() = spawn;
           }
@@ -10996,14 +11021,15 @@ void GameFixedUpdate() {
               g.run.state.toSpawn++;
           }
 
-          // Spawning turrels every 3 seconds.
+          // Spawning turrets.
           if ((g.run.waveStartedAt.Elapsed().value + 1)
-                % (FIXED_FPS * SPAWNING_TURRELS_EVERY_N_SECONDS)
+                % (FIXED_FPS * SPAWNING_TURRETS_EVERY_N_SECONDS)
               == 0)
           {
-            if (g.run.turrelsToSpawn > 0) {
-              g.run.turrelsToSpawn--;
-              makePreSpawns(CreatureType_TURREL);
+            if (g.run.turretsToSpawn.count > 0) {
+              auto t = g.run.turretsToSpawn[g.run.turretsToSpawn.count - 1];
+              g.run.turretsToSpawn.count--;
+              makePreSpawns(CreatureType_TURRET, t);
             }
           }
 
@@ -11087,8 +11113,13 @@ void GameFixedUpdate() {
                   ))
                 canSpawn = false;
             }
-            if (canSpawn)
-              MakeCreature({.type = x.typeCreature, .pos = x.pos});
+            if (canSpawn) {
+              MakeCreature({
+                .type           = x.typeCreature,
+                .pos            = x.pos,
+                .damageScalings = x.damageScalings,
+              });
+            }
           } break;
 
           case PreSpawnType_LANDMINE: {
@@ -11182,7 +11213,7 @@ void GameFixedUpdate() {
           g.run.playerContinuousWalkingFrames = 0;
 
           IterateOverEffects(
-            EffectConditionType_STAT__EVERY__X__IDLE_SECONDS_DURING_THIS_WAVE,
+            EffectConditionType_STAT__EVERY__X__IDLE_SECONDS,
             -1,
             [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
               BF_FORCE_INLINE_LAMBDA {
@@ -11206,7 +11237,7 @@ void GameFixedUpdate() {
           AchievementAdd(AchievementType_WALKER, 1);
 
           IterateOverEffects(
-            EffectConditionType_STAT__EVERY__X__WALKED_METERS_DURING_THIS_WAVE,
+            EffectConditionType_STAT__EVERY__X__WALKED_METERS,
             -1,
             [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
               BF_FORCE_INLINE_LAMBDA {
@@ -11221,9 +11252,9 @@ void GameFixedUpdate() {
         }
       }
 
-      // Processing EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE.
+      // Processing EffectConditionType_STAT__EVERY__X__SECONDS.
       IterateOverEffects(  ///
-        EffectConditionType_STAT__EVERY__X__SECONDS_DURING_THIS_WAVE,
+        EffectConditionType_STAT__EVERY__X__SECONDS,
         -1,
         [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
           BF_FORCE_INLINE_LAMBDA {

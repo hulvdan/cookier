@@ -10,7 +10,7 @@ USAGE:
     @gamelib_processor
     def process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
         for tile in gamelib["tiles"]:
-            tile.pop("type")
+            tile.pop("type")  # DONT POP THOUGHT!
 """
 
 # Imports.  {  ###
@@ -108,7 +108,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         scoped_processing_args[1] = "None"
         # }
 
-    transforms: list[tuple[str, str, dict[str, int]]] = []
+    transforms: list[tuple[str, str, str, dict[str, int]]] = []
 
     # Pickupables.
     # ============================================================
@@ -139,6 +139,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             for cond in (
                 *(l.upper() for l in EFFECT_CONDITION_LETTERS),
                 "STAT",
+                "STAT2",
                 "PROPERTY",
                 "PICKUPABLE",
                 # "TIER",
@@ -208,6 +209,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     for i, x in enumerate_table("items"):
         if i > 0:
+            assert x.get("price", 0) > 0, "All items must have price > 0!"
             process_effects_of(x, 1)
 
             x["name_locale"] = "ITEM_" + x["type"].upper()
@@ -495,7 +497,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             table_transform_data.append((field_name, type_name))
 
         for field_name, type_name in table_transform_data:
-            types = [x.pop("type") for x in gamelib[field_name]]
+            types = [x["type"] for x in gamelib[field_name]]
             for t in types:
                 assert t.upper() == t, (
                     "{}. {}. `type` fields must be in CONSTANT_CASE".format(field_name, t)
@@ -504,6 +506,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             genenum(genline, type_name + "Type", types, add_count=True)
             transforms.append(
                 (
+                    field_name,
                     f"{type_name.lower()}_type",
                     f"{type_name.lower()}_types",
                     {v: i for i, v in enumerate(types)},
@@ -542,7 +545,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Transforms.
     # ============================================================
     for v in transforms:
-        recursive_replace_transform(gamelib, *v)
+        recursive_replace_transform(gamelib, *(v[1:]))
+    for v in transforms:
+        for x in gamelib[v[0]]:
+            x.pop("type", None)
 
 
 @command
