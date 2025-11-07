@@ -1,6 +1,5 @@
 import colorsys
 import hashlib
-import json
 import re
 import subprocess
 import sys
@@ -18,13 +17,13 @@ T = TypeVar("T")
 
 
 @dataclass(slots=True)
-class _DataValues:
+class _GameSettings:
     itch_target: str = "hulvdan/game-template"
     languages: list[str] = field(default_factory=lambda: ["russian", "english"])
     generate_flatbuffers_api_for: list[str] = field(default_factory=list)
 
 
-data_values = _DataValues()
+game_settings = _GameSettings()
 
 gamelib_processing_functions = []
 
