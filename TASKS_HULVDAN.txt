@@ -39,7 +39,52 @@ x achievement light shadow
 x better touch controls images:
   python: (opt. hollow) circle image + support for conveyor
 
-* next wave 2 crossing swords icon
+* impl: STAT__DURING_NEXT_WAVE
+*
+* fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
+* localization: russian: the same STAT MODIFIER english
+* AUDIO SET METADATA: ffmpeg -i test.wav -c copy -metadata artist="ABOBA" test2.wav
+*
+* stats: knockback
+* stats: LOOT_ALIENS_CHANCE
+* stats: LOOT_ALIENS_SPEED
+* stats: ENEMY_DAMAGE
+*
+* better burning
+* achievements on picked up item / upgrades / shop / end screens
+* ref: remove stats `value` -> use placeholders
+  default effectcondition_type is `X__STAT`
+* impl:
+* impl:
+* impl:
+* impl:
+* impl:
+* impl:
+* impl:
+* impl:
+* impl:
+* impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
+* impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_GETTING_HURT
+* impl: CAP__STAT
+* impl: ITEMS_WILL_BE_TIER_HIGHER_UPON_REROLL
+* impl: X__CHANCE_TO_HEAL__Y__HP_UPON_KILLING
+* impl: CRITS_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+* impl: BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+* impl: X__STAT__FOR_EVERY_DIFFERENT__TIER__ITEM
+* stats: ACCURACY
+* impl: X__PIERCE_ON_CRIT
+* impl: X__STAT__UPON__PICKUPABLE__AT_MAX_HP
+* impl: X__STAT__UPON__PICKUPABLE__AT_MAX_HP_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+* impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING
+* impl: X__STAT__EVERY__Y__SECONDS_BONUS_GETS_LOST
+* impl: X__STAT__FOR_EVERY_LIVING_ENEMY
+* impl: X__STAT__EVERY_OTHER__Y__STAT2
+* impl: X__PERCENT_DAMAGE_FOR__Y__SECONDS_AFTER_PICKING_UP__PICKUPABLE
+* impl: X__DAMAGE_EVERY__Y__SECONDS
+* impl: STAT__WHEN_IDLE
+*
+* X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
+*
 *
 * crediting sfx
 *
@@ -50,8 +95,6 @@ x better touch controls images:
 * prod sfx: mob hurt
 * prod sfx: explosion
 * prod sfx: level up
-- prod sfx: take
-- prod sfx: sell
 * prod sfx: button click
 * prod sfx: button hover
 * prod sfx: wave complete/died whoosh
@@ -59,7 +102,7 @@ x better touch controls images:
 * prod sfx: pickup crate
 * prod sfx: pickup apple
 * prod sfx: got achievement
-* prod sfx: turrel shot
+* prod sfx: turret shot
 * prod sfx:
 * prod sfx:
 * prod sfx:
@@ -90,11 +133,16 @@ x better touch controls images:
 * prod: SFX
 * prod: мобы
 * prod: сакутиновая отправка event-ов аналитики
+* prod: больше ачивок?
+* prod: награды ачивок
 * prod: аналитика
 * prod:
 *
 * RELEASED!
 =======================
+- prod sfx: take
+- prod sfx: sell
+* next wave 2 crossing swords icon
 * prod: другое управление мышью?
 * reroll flashing (upgrades, shop)
 * take flashing (upgrades, picked up item)
@@ -146,7 +194,7 @@ x better touch controls images:
 * hp bar black outline
 * luck = подкова
 * multiple level ups icons in the top right corner (like picked up crates)
-* turrel: show damage in item
+* turret: show damage in item
 * landmine: show damage in item
 * landmine: show spawn rate "Gets spawned every %.1f seconds"
 * garden: show interval of fruit spawning "Spawns fruit every %.1f seconds"

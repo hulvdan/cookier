@@ -154,8 +154,8 @@ constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
 constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::Unscaled(2.5f * FIXED_FPS);
 constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::Unscaled(3.5f * FIXED_FPS);
 
-constexpr auto MOB_TURREL_SHOOTING_FRAMES = lframe::Scaled(10);
-constexpr auto MOB_TURREL_SHOOT_FRAME     = lframe::Scaled(3);
+constexpr auto MOB_TURRET_SHOOTING_FRAMES = lframe::Scaled(10);
+constexpr auto MOB_TURRET_SHOOT_FRAME     = lframe::Scaled(3);
 
 constexpr auto MOB_BOSS_TOTAL_SHOOTING_FRAMES              = lframe::FromSeconds(1.8f);
 constexpr auto MOB_BOSS_SHOOTING_LINES                     = 3;
@@ -197,7 +197,7 @@ constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 3.29f * 10.0f;
 
 constexpr f32 STRUCTURE_MIN_RANGE_METERS = 2;
 
-constexpr int  SPAWNING_TURRELS_EVERY_N_SECONDS   = 3;
+constexpr int  SPAWNING_TURRETS_EVERY_N_SECONDS   = 2;
 constexpr int  SPAWNING_GARDENS_EVERY_N_SECONDS   = 5;
 constexpr auto SPAWNING_LANDMINES_INTERVAL_FRAMES = lframe::FromSeconds(8);
 constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);

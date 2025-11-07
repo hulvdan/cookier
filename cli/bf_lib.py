@@ -275,13 +275,16 @@ def genenum(
     # }
 
 
+_recursive_replace_transform_stack: list[str | int] = []
+
+
 def recursive_replace_transform(
     gamelib_recursed,
     key_postfix_single: str,
     key_postfix_list: str,
     codename_to_index: dict[str, int],
     *,
-    root=True,
+    root: bool = True,
 ) -> list[str] | None:
     # {  ###
     errors = None
@@ -290,7 +293,17 @@ def recursive_replace_transform(
         return None
 
     for key, value in gamelib_recursed.items():
+        _recursive_replace_transform_stack.append(key)
+
+        added_type = False
+
         if isinstance(value, dict):
+            if "type" in value:
+                _recursive_replace_transform_stack.append(
+                    "(type={})".format(value["type"])
+                )
+                added_type = True
+
             more_errors = recursive_replace_transform(
                 value, key_postfix_single, key_postfix_list, codename_to_index, root=False
             )
@@ -315,7 +328,9 @@ def recursive_replace_transform(
                             errors = []
                         errors.append(v)
             else:
-                assert isinstance(value, str), f"value: {value}"
+                assert isinstance(value, str), "key: {}, value: {}, stack: {}".format(
+                    key, value, _recursive_replace_transform_stack
+                )
                 try:
                     gamelib_recursed[key] = codename_to_index[value]
                 except KeyError:
@@ -324,20 +339,40 @@ def recursive_replace_transform(
                     errors.append(value)
 
         elif isinstance(value, list):
-            for v in value:
-                if isinstance(v, dict):
-                    more_errors = recursive_replace_transform(
-                        v,
-                        key_postfix_single,
-                        key_postfix_list,
-                        codename_to_index,
-                        root=False,
+            for i, v in enumerate(value):
+                if not isinstance(v, dict):
+                    continue
+
+                _recursive_replace_transform_stack.append(i)
+
+                added_type2 = False
+                if "type" in v:
+                    _recursive_replace_transform_stack.append(
+                        "(type={})".format(v["type"])
                     )
-                    if more_errors:
-                        if not errors:
-                            errors = more_errors
-                        else:
-                            errors.extend(more_errors)
+                    added_type2 = True
+
+                more_errors = recursive_replace_transform(
+                    v,
+                    key_postfix_single,
+                    key_postfix_list,
+                    codename_to_index,
+                    root=False,
+                )
+                if more_errors:
+                    if not errors:
+                        errors = more_errors
+                    else:
+                        errors.extend(more_errors)
+
+                if added_type2:
+                    _recursive_replace_transform_stack.pop()
+
+                _recursive_replace_transform_stack.pop()
+
+        if added_type:
+            _recursive_replace_transform_stack.pop()
+        _recursive_replace_transform_stack.pop()
 
     if root and errors:
         message = "recursive_replace_transform({}, {}):\nNot found:\n{}".format(

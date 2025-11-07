@@ -5,7 +5,7 @@
 /.ruff_cache/
 /.scannerwork/
 /.temp/
-/assets/art/src/main2.png
+/assets/art/src/main*.png
 /codegen/
 /compile_commands.json
 /resources/*.basis
