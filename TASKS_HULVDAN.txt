@@ -33,8 +33,8 @@ x финализировать названия статов + иконки
 x upgrades: set small / big
 x upgrades: downscale alg
 x upgrades: remove excessive icons
+x stats: same width outlines
 
-* upgrades: same width outlines
 * upgrades:
 * upgrades:
 * upgrades: downscale by X
