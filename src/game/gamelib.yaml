@@ -613,7 +613,7 @@ items: # {  ###
         value: 10
   # - type: ALIEN_EYES
   - type: ALIEN_MAGIC
-    texture_id: ui_item_health_potion
+    texture_id: ui_item_health_potion # зелье светлого шоколада
     tier: 2
     price: 85
     effects:
@@ -632,7 +632,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: 10
   - type: ALIEN_WORM
-    texture_id: ui_item_todo
+    texture_id: ui_item_chocolate_mushroom
     tier: 0
     price: 15
     effects:
@@ -844,7 +844,7 @@ items: # {  ###
         value: -8
   # - type: BLACK_FLAG
   - type: BLINDFOLD
-    texture_id: ui_item_mask_of_assassin
+    texture_id: ui_item_hat_of_cook
     tier: 1
     price: 45
     effects:
@@ -956,7 +956,7 @@ items: # {  ###
       - stat_type: DAMAGE_ELEMENTAL
         value: -1
   - type: CAKE
-    texture_id: ui_item_todo
+    texture_id: ui_item_donut
     tier: 0
     price: 15
     effects:
@@ -965,7 +965,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: -1
   - type: CAMPFIRE
-    texture_id: ui_item_mana_potion
+    texture_id: ui_item_mana_potion # зелье тёмного шоколада
     tier: 1
     price: 40
     effects:
@@ -1004,7 +1004,7 @@ items: # {  ###
       - stat_type: ENEMIES
         value: -10
   - type: CAULDRON
-    texture_id: ui_item_void_sphere
+    texture_id: ui_item_void_donut # притягивающий пончик
     tier: 1
     price: 35
     limit: 1
@@ -1041,8 +1041,8 @@ items: # {  ###
         value: 20
       - stat_type: DAMAGE
         value: -4
-  - type: CHARCOAL # TODO: ref minecraft кремний
-    texture_id: ui_item_todo
+  - type: CHARCOAL
+    texture_id: ui_item_flint
     tier: 0
     price: 20
     effects:
@@ -1138,7 +1138,7 @@ items: # {  ###
       - stat_type: CRIT_CHANCE
         value: -3
   - type: CORAL
-    texture_id: ui_item_todo
+    texture_id: ui_item_shiny_stone
     tier: 1
     price: 40
     effects:
@@ -1267,7 +1267,7 @@ items: # {  ###
       - stat_type: EXPLOSION_SIZE
         value: 15
   - type: ENERGY_BRACELET
-    texture_id: ui_item_todo
+    texture_id: ui_item_red_ring # Кольцо алой ведьмы
     tier: 1
     price: 55
     effects:
@@ -1286,7 +1286,7 @@ items: # {  ###
   #     - stat_type: HP
   #       value: 3
   - type: EXOSKELETON
-    texture_id: ui_item_todo
+    texture_id: ui_item_phartuk_of_cook
     tier: 3
     price: 90
     effects:
@@ -1303,7 +1303,7 @@ items: # {  ###
       - stat_type: LIFE_STEAL
         value: -2
   - type: EXPLOSIVE_SHELLS
-    texture_id: ui_item_todo
+    texture_id: ui_item_gunpowder
     tier: 3
     price: 100
     effects:
@@ -2240,7 +2240,7 @@ items: # {  ###
         # TODO: KILLING_TREE_SPAWNS_TURRET.
         # - effectcondition_type: KILLING_TREE_SPAWNS_TURRET
   - type: POTATO
-    texture_id: ui_item_todo
+    texture_id: ui_item_milk
     tier: 3
     price: 95
     effects:
@@ -2276,7 +2276,7 @@ items: # {  ###
   #     - stat_type: DAMAGE
   #       value: -5
   - type: PROPELLER_HAT
-    texture_id: ui_item_todo
+    texture_id: ui_item_d6
     tier: 0
     price: 28
     effects:
@@ -2285,7 +2285,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: -2
   - type: PUMPKIN
-    texture_id: ui_item_todo
+    texture_id: ui_item_nail
     tier: 1
     price: 40
     effects:
@@ -2294,7 +2294,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: -2
   - type: RECYCLING_MACHINE
-    texture_id: ui_item_todo
+    texture_id: ui_item_recycling_bin
     tier: 1
     price: 35
     limit: 1
@@ -2303,7 +2303,7 @@ items: # {  ###
         placeholders:
           - ints: 35
   - type: REGENERATION_POTION
-    texture_id: ui_item_todo
+    texture_id: ui_item_regeneration_potion
     tier: 3
     price: 90
     limit: 1
@@ -2314,7 +2314,7 @@ items: # {  ###
       - stat_type: REGEN
         value: 12 # Then 3.
   - type: REINFORCED_STEEL
-    texture_id: ui_item_todo
+    texture_id: ui_item_steampunk_goggles
     tier: 1
     price: 50
     effects:
@@ -2340,9 +2340,10 @@ items: # {  ###
   #     - stat_type: RANGE
   #       value: -80
   - type: RICOCHET
-    texture_id: ui_item_todo
+    texture_id: ui_item_bouncing_ball_blueprint
     tier: 3
     price: 110
+    limit: 1
     effects:
       - stat_type: BOUNCES
         value: 1
@@ -2375,7 +2376,7 @@ items: # {  ###
         # - stat_type: DAMAGE_MELEE
         #   effectcondition_type: X__CHANCE_TO_DEALTH__Y__EXTRA_DAMAGE_AFTER_DODGING
   - type: RITUAL
-    texture_id: ui_item_todo
+    texture_id: ui_item_vampire_teeth # вставная вампирская челюсть
     tier: 1
     price: 60
     effects:
@@ -2448,7 +2449,7 @@ items: # {  ###
   #     - stat_type:
   #       value: 0
   - type: SCARF
-    texture_id: ui_item_todo
+    texture_id: ui_item_obsidian_horseshoe
     tier: 2
     price: 80
     effects:
@@ -2462,7 +2463,7 @@ items: # {  ###
         effectcondition_type: STAT__DURING_NEXT_WAVE
         value: 25
   - type: SCOPE
-    texture_id: ui_item_todo
+    texture_id: ui_item_heavy_spring
     tier: 1
     price: 48
     effects:
@@ -2497,7 +2498,7 @@ items: # {  ###
   #     - stat_type: SPEED
   #       effectcondition_type: CAP__STAT
   - type: SHADY_POTION
-    texture_id: ui_item_todo
+    texture_id: ui_item_d12
     tier: 1
     price: 48
     effects:
@@ -2506,9 +2507,9 @@ items: # {  ###
       - stat_type: REGEN
         value: -2
   - type: SHARP_BULLET
-    texture_id: ui_item_todo
-    tier: 0
-    price: 25
+    texture_id: ui_item_piercing_bullet_blueprint
+    tier: 1
+    price: 45
     limit: 1
     effects:
       - stat_type: PIERCING
@@ -2933,7 +2934,7 @@ items: # {  ###
       - stat_type: ARMOR
         value: -1
   - type: WHETSTONE
-    texture_id: ui_item_todo
+    texture_id: ui_item_chocolate_pillows_bowl
     tier: 1
     price: 40
     effects:
@@ -2987,7 +2988,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: -15
   - type: WOLF_HELMET
-    texture_id: ui_item_todo
+    texture_id: ui_item_clover_cracker
     tier: 3
     price: 90
     effects:
