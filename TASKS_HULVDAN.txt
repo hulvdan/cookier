@@ -1,44 +1,5 @@
 WORKING SINCE 2025-09-07
 
-x torrent more sfx
-x ui frame darker outline
-x default windows mode is maximized
-x gamelib: check tiered values assert len is `4 - min_tier_index`
-x downloaded more ui icons
-x prod: рандом в upgrade-ах
-x prod: рандом в picked up item-ах
-x prod: рандом оружий
-x cheat: recalc random upon changing wave
-x upgrades: guaranteed 4 blues / 4 pinks / 4 legendaries on specific levels
-x prices inflation (shop buy or recyle + recycle picked up item)
-x recycle price doesn't get affected by shop price
-x split: get only outline
-- split: white outline 2 (or more) pixels
-x drew some tiles
-x игровое поле: снизу отобразить тайлы
-x игровое поле: отобразить тайлы по вертикали
-x игровое поле: тайлы по углам
-x игровое поле: залить центр
-x игровое поле: норм offset-ы
-x игровое поле: рандом сегменты
-x python: image: single file
-x python: image: invert
-x python: image: remap black and white to different colors
-x props: blue noise (check min distances)
-x props: don't place on edges
-x props: groups of multiple props
-x biomes (add yellow)
-x luck CLOVER
-x финализировать названия статов + иконки
-x upgrades: set small / big
-x upgrades: downscale alg
-x upgrades: remove excessive icons
-x stats: same width outlines
-x ref image processing conveyors
-x achievement light shadow
-x better touch controls images:
-  python: (opt. hollow) circle image + support for conveyor
-
 * impl: STAT__DURING_NEXT_WAVE
 *
 * fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
