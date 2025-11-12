@@ -613,7 +613,7 @@ items: # {  ###
         value: 10
   # - type: ALIEN_EYES
   - type: ALIEN_MAGIC
-    texture_id: ui_item_health_potion # зелье светлого шоколада
+    texture_id: ui_item_white_chocolate_potion # зелье светлого шоколада
     tier: 2
     price: 85
     effects:
@@ -624,7 +624,7 @@ items: # {  ###
       - stat_type: LUCK
         value: -8
   - type: ALIEN_TONGUE
-    texture_id: ui_item_todo
+    texture_id: ui_item_dark_chocolate
     tier: 0
     price: 25
     limit: 1
@@ -643,7 +643,7 @@ items: # {  ###
       - stat_type: CONSUMABLE_HEAL
         value: -1
   - type: ALLOY
-    texture_id: ui_item_emblem_of_avenger
+    texture_id: ui_item_cooravie # куравье
     tier: 2
     price: 80
     effects:
@@ -677,7 +677,7 @@ items: # {  ###
         value: -1
   # - type: AXOLOTL
   - type: BABY_ELEPHANT
-    texture_id: ui_item_todo
+    texture_id: ui_item_falling_cookie_star
     tier: 0
     price: 22
     effects:
@@ -690,7 +690,7 @@ items: # {  ###
           - stat_type: LUCK
             percents_per_tier: 25
   - type: BABY_GECKO
-    texture_id: ui_item_todo
+    texture_id: ui_item_void_donut
     tier: 0
     price: 18
     limit: 4
@@ -702,7 +702,7 @@ items: # {  ###
         placeholders:
           - ints: 25
   - type: BABY_SQUID
-    texture_id: ui_item_todo
+    texture_id: ui_item_bandage
     tier: 1
     price: 55
     effects:
@@ -713,7 +713,7 @@ items: # {  ###
         value: -3
   # - type: BABY_WITH_A_BEARD
   - type: BAG
-    texture_id: ui_item_todo
+    texture_id: ui_item_chest_without_gold
     tier: 0
     price: 15
     limit: 3
@@ -727,7 +727,7 @@ items: # {  ###
   - type: BAIT
     texture_id: ui_item_todo
     tier: 1
-    price: 25
+    price: 35 # TODO 25
     limit: 2
     effects:
       # TODO: SPECIAL_ENEMIES_APPEAR_AT_THE_BEGINNING_OF_THE_NEXT_WAVE
@@ -736,7 +736,7 @@ items: # {  ###
       #   value: 8
       # And remove limit.
       - stat_type: DAMAGE
-        value: 5
+        value: 7
   - type: BALL_AND_CHAIN
     texture_id: ui_item_todo
     tier: 2
@@ -753,7 +753,7 @@ items: # {  ###
         value: -5 # TODO: -3
         # TODO: weapons have a minimal cooldown of 0.75s between attacks
   - type: BANDANA
-    texture_id: ui_item_todo
+    texture_id: ui_item_shpazhka # TODO как шпажка по-английски
     tier: 2
     price: 75
     effects:
@@ -762,7 +762,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: -10
   - type: BANNER
-    texture_id: ui_item_todo
+    texture_id: ui_item_dark_chocolate_potion # зелье тёмного шоколада
     tier: 1
     price: 55
     effects:
@@ -787,7 +787,7 @@ items: # {  ###
       - stat_type: SPEED
         value: -5
   - type: BAT
-    texture_id: ui_item_todo
+    texture_id: ui_item_partizan_cookie
     tier: 1
     price: 20
     effects:
@@ -796,7 +796,7 @@ items: # {  ###
       - stat_type: HARVESTING
         value: -2
   - type: BEAN_TEACHER
-    texture_id: ui_item_todo
+    texture_id: ui_item_bread_slice
     tier: 2
     price: 70
     effects:
@@ -830,7 +830,7 @@ items: # {  ###
       - stat_type: SPEED
         value: -3
   - type: BLACK_BELT
-    texture_id: ui_item_todo
+    texture_id: ui_item_brownie_belt
     tier: 1
     price: 50
     effects:
@@ -965,7 +965,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: -1
   - type: CAMPFIRE
-    texture_id: ui_item_mana_potion # зелье тёмного шоколада
+    texture_id: ui_item_regen_cracker
     tier: 1
     price: 40
     effects:
@@ -1004,7 +1004,7 @@ items: # {  ###
       - stat_type: ENEMIES
         value: -10
   - type: CAULDRON
-    texture_id: ui_item_void_donut # притягивающий пончик
+    texture_id: ui_item_alluring_donut # притягивающий пончик
     tier: 1
     price: 35
     limit: 1
@@ -1084,7 +1084,7 @@ items: # {  ###
       - stat_type: LIFE_STEAL
         value: -2
   - type: COFFEE
-    texture_id: ui_item_todo
+    texture_id: ui_item_banana
     tier: 0
     price: 20
     effects:
@@ -1159,7 +1159,7 @@ items: # {  ###
       - stat_type: HP
         value: -1
   - type: CROWN
-    texture_id: ui_item_todo
+    texture_id: ui_item_crown
     tier: 0
     price: 70
     limit: 1
@@ -1432,7 +1432,7 @@ items: # {  ###
       - stat_type: DAMAGE_RANGED
         value: -1
   - type: GAMBLING_TOKEN
-    texture_id: ui_item_black_belt # BROWNIE BELT !
+    texture_id: ui_item_cat_ring
     tier: 1
     price: 50
     effects:
@@ -1450,7 +1450,7 @@ items: # {  ###
         placeholders:
           - floats: 15
   - type: GENTLE_ALIEN
-    texture_id: ui_item_todo
+    texture_id: ui_item_healthy_cracker
     tier: 0
     price: 30
     limit: 10
@@ -1481,7 +1481,7 @@ items: # {  ###
       - stat_type: ARMOR
         value: -3
   - type: GLASSES
-    texture_id: ui_item_todo
+    texture_id: ui_item_jelly_eye
     tier: 0
     price: 20
     effects:
@@ -1616,7 +1616,7 @@ items: # {  ###
       - stat_type: REGEN
         value: -1
   - type: HELMET
-    texture_id: ui_item_helmet
+    texture_id: ui_item_watermelon_helmet
     tier: 0
     price: 15
     effects:
@@ -1964,7 +1964,7 @@ items: # {  ###
   #     - stat_type:
   #       value: 0
   - type: MEDIKIT
-    texture_id: ui_item_todo
+    texture_id: ui_item_white_chocolate
     tier: 3
     price: 95
     effects:
@@ -2638,17 +2638,17 @@ items: # {  ###
   #     - stat_type: HARVESTING
   #       value: -5
   - type: SPYGLASS
-    texture_id: ui_item_todo
+    texture_id: ui_item_2d4
     tier: 1
     price: 30
     limit: 2
     effects:
-      - stat_type: RANGE
-        value: 10
+      # - stat_type: RANGE
+      #   value: 10
       - stat_type: REROLL_PRICE
         value: -25
   - type: STARFISH
-    texture_id: ui_item_todo
+    texture_id: ui_item_chocolate_coin
     tier: 2
     price: 75
     limit: 3
@@ -2664,7 +2664,7 @@ items: # {  ###
       - stat_type: ENEMY_DAMAGE
         value: 15
   - type: STATUE
-    texture_id: ui_item_todo
+    texture_id: ui_item_concentrating_donut
     tier: 2
     price: 60
     effects:
@@ -2763,7 +2763,7 @@ items: # {  ###
       - stat_type: LUCK
         value: -5
   - type: TOOLBOX
-    texture_id: ui_item_todo
+    texture_id: ui_item_mechanical_flower
     tier: 2
     price: 55
     effects:
@@ -2785,7 +2785,7 @@ items: # {  ###
   #         - ints: 5
   #         - floats: 1
   - type: TOXIC_SLUDGE
-    texture_id: ui_item_todo
+    texture_id: ui_item_pepper
     tier: 0
     price: 20
     effects:
@@ -2794,7 +2794,7 @@ items: # {  ###
       - stat_type: DODGE
         value: -2
   - type: TRACTOR
-    texture_id: ui_item_todo
+    texture_id: ui_item_harvesting_pact
     tier: 2
     price: 70
     effects:
@@ -2812,19 +2812,19 @@ items: # {  ###
   #     - stat_type: EXTRA_ITEM_IN_A_CRATE_CHANCE
   #       value: 20
   - type: TREE
-    texture_id: ui_item_todo
+    texture_id: ui_item_sapling
     tier: 0
     price: 15
     effects:
       - stat_type: TREES
         value: 1
   - type: TRIANGLE_OF_POWER
-    texture_id: ui_item_todo
+    texture_id: ui_item_pumpkin
     tier: 2
     price: 65
     effects:
       - stat_type: DAMAGE
-        value: 10 # Then 20
+        value: 13 # Then 20
       - stat_type: ARMOR
         value: 1
         # TODO: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
