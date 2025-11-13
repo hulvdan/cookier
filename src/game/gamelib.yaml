@@ -1317,7 +1317,7 @@ items: # {  ###
       - stat_type: ENEMIES
         value: 5
   - type: GLASS_CANNON
-    texture_id: ui_item_flesh_knuckles
+    texture_id: ui_item_bread_knuckles
     tier: 2
     price: 75
     effects:
@@ -1369,7 +1369,7 @@ items: # {  ###
         effectcondition_type: END_OF_THE_WAVE_GET__STAT
         value: 1
   - type: GUMMY_BERSERKER
-    texture_id: ui_item_todo
+    texture_id: ui_item_glove_of_dexer # перчатка ловкача
     tier: 0
     price: 25
     effects:
@@ -1380,7 +1380,7 @@ items: # {  ###
       - stat_type: ARMOR
         value: -1
   - type: HANDCUFFS
-    texture_id: ui_item_pill
+    texture_id: ui_item_bowl_of_grechka
     tier: 2
     price: 80
     limit: 1
@@ -1395,7 +1395,7 @@ items: # {  ###
         # - effectcondition_type: CAP__STAT
         #   stat_type: HP
   - type: HEAD_INJURY
-    texture_id: ui_item_todo
+    texture_id: ui_item_heavy_bracelet
     tier: 0
     price: 25
     effects:
