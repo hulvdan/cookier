@@ -590,8 +590,8 @@ items: # {  ###
         value: -2
         # - stat_type: KNOCKBACK
         #   value: -2
-  - type: ADRENALINE # TODO ref DS3 кинжал для парирования
-    texture_id: ui_item_todo
+  - type: ADRENALINE # TODO изворотливый ниндзя-огурец
+    texture_id: ui_item_ninja_cucumber
     tier: 2
     price: 60
     limit: 1
@@ -642,7 +642,7 @@ items: # {  ###
       - stat_type: CONSUMABLE_HEAL
         value: -1
   - type: ALLOY
-    texture_id: ui_item_cooravie # куравье
+    texture_id: ui_item_greek_nut
     tier: 2
     price: 80
     effects:
@@ -880,14 +880,14 @@ items: # {  ###
       - stat_type: HP
         value: -1
   - type: BOOK
-    texture_id: ui_item_todo
+    texture_id: ui_item_book
     tier: 0
     price: 8
     effects:
       - stat_type: ENGINEERING
         value: 1
   - type: BOWLER_HAT
-    texture_id: ui_item_todo
+    texture_id: ui_item_portable_rainbow
     tier: 2
     price: 75
     effects:
@@ -900,7 +900,7 @@ items: # {  ###
       - stat_type: CRIT_CHANCE
         value: -3
   - type: BOXING_GLOVE
-    texture_id: ui_item_todo
+    texture_id: ui_item_cooravie
     tier: 0
     price: 18
     effects:
@@ -909,16 +909,16 @@ items: # {  ###
         # - stat_type: KNOCKBACK
         #   value: 3
   - type: BROKEN_MOUTH
-    texture_id: ui_item_todo
+    texture_id: ui_item_burger
     tier: 0
     price: 25
     effects:
       - stat_type: HP
         value: 5
       - stat_type: REGEN
-        value: -1
+        value: -2
   - type: BUTTERFLY
-    texture_id: ui_item_todo
+    texture_id: ui_item_garlick
     tier: 0
     price: 30
     effects:
@@ -1121,14 +1121,14 @@ items: # {  ###
     price: 25
     effects:
       - effectcondition_type: X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE
+        pickupable_type: COIN
         placeholders:
           - ints: 8
           - ints: 1
-        pickupable_type: COIN
       - stat_type: DAMAGE_RANGED
         value: -1
   - type: CYCLOPS_WORM
-    texture_id: ui_item_todo
+    texture_id: ui_item_soup # todo кострюля англ
     tier: 1
     price: 45
     effects:
@@ -1137,15 +1137,15 @@ items: # {  ###
       - stat_type: RANGE
         value: -12
   - type: DANGEROUS_BUNNY
-    texture_id: ui_item_todo
+    texture_id: ui_item_magnetic_d6
     tier: 1
     price: 30
     limit: 3
     effects:
       - stat_type: FREE_REROLLS
         value: 1
-  - type: DECOMPOSING_FLASH
-    texture_id: ui_item_todo
+  - type: DECOMPOSING_FLESH
+    texture_id: ui_item_bone
     tier: 1
     price: 30
     effects:
@@ -1167,7 +1167,7 @@ items: # {  ###
       - stat_type: ATTACK_SPEED
         value: -3
   - type: DIPLOMA
-    texture_id: ui_item_todo
+    texture_id: ui_item_highbrow_hat
     tier: 3
     price: 90
     effects:
@@ -1178,7 +1178,7 @@ items: # {  ###
       - stat_type: HP
         value: -3
   - type: DUCT_TAPE
-    texture_id: ui_item_todo
+    texture_id: ui_item_implant_plate # вживляемая пластина
     tier: 0
     price: 20
     effects:
@@ -1189,7 +1189,7 @@ items: # {  ###
       - stat_type: HP
         value: -2
   - type: DYNAMITE
-    texture_id: ui_item_todo
+    texture_id: ui_item_sugar
     tier: 0
     price: 20
     effects:
@@ -1235,7 +1235,7 @@ items: # {  ###
       - stat_type: DAMAGE
         value: -15
   - type: EYEPATCH
-    texture_id: ui_item_todo
+    texture_id: ui_item_magnifier
     tier: 1
     price: 45 # TODO: 55
     effects:
@@ -1244,8 +1244,8 @@ items: # {  ###
         # TODO: ACCURACY
         # - stat_type: ACCURACY
         #   value: 3
-  - type: FERTILIZER # MONOCLE?
-    texture_id: ui_item_todo
+  - type: FERTILIZER
+    texture_id: ui_item_golden_tree
     tier: 0
     price: 15
     effects:
@@ -1254,7 +1254,7 @@ items: # {  ###
       - stat_type: DAMAGE_MELEE
         value: -1
   - type: FEATHER
-    texture_id: ui_item_todo
+    texture_id: ui_item_smoke_bomb
     tier: 0
     price: 18
     effects:
@@ -1269,11 +1269,11 @@ items: # {  ###
     tier: 2
     price: 65
     effects:
-      - stat_type: HP
+      - stat_type: SPEED
         value: 10
-      - stat_type: HP
+      - stat_type: LIFE_STEAL
         value: 3
-      - stat_type: HP
+      - stat_type: LUCK
         value: -8
   - type: FUEL_TANK
     texture_id: ui_item_obsidian_skull
@@ -1333,7 +1333,7 @@ items: # {  ###
       - stat_type: RANGE
         value: 20
   - type: GNOME
-    texture_id: ui_item_todo
+    texture_id: ui_item_glove_of_pyromancer
     tier: 3
     price: 100
     effects:
@@ -1346,7 +1346,7 @@ items: # {  ###
       - stat_type: PICKUP_RANGE
         value: -20
   - type: GOAT_SKULL
-    texture_id: ui_item_todo
+    texture_id: ui_item_leather_glove
     tier: 0
     price: 25
     effects:
@@ -1354,18 +1354,8 @@ items: # {  ###
         value: 3
       - stat_type: CRIT_CHANCE
         value: -2
-  - type: GREEK_FIRE
-    texture_id: ui_item_todo
-    tier: 3
-    price: 100
-    limit: 1
-    effects:
-      - effectcondition_type: BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
-        placeholders:
-          - ints: 10
-          - ints: 1
   - type: GRIND_MAGICAL_LEAF
-    texture_id: ui_item_todo
+    texture_id: ui_item_grand_tree_sapling
     tier: 3
     price: 110
     effects:
@@ -3005,6 +2995,17 @@ items: # {  ###
 #       value: 50
 #     - stat_type: LOOT_ALIENS_SPEED
 #       value: 20
+# TODO: BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+# - type: GREEK_FIRE
+#   texture_id: ui_item_todo
+#   tier: 3
+#   price: 100
+#   limit: 1
+#   effects:
+#     - effectcondition_type: BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
+#       placeholders:
+#         - ints: 10
+#         - ints: 1
 # }
 
 weapon_kinds: # {  ###
