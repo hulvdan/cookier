@@ -559,9 +559,9 @@ def process_images():
     SLOT_SIZE = (200, 200)
     UI_SLOT_OR_FRAME_RADIUS = 30
 
-    # `ui_item_slot`.
+    # `ui_itemslot`.
     slot_image = bf_image.rectangle(SLOT_SIZE, radius=UI_SLOT_OR_FRAME_RADIUS)
-    slot_image.save(ART_TEXTURES_DIR / "ui_item_slot.png")
+    slot_image.save(ART_TEXTURES_DIR / "ui_itemslot.png")
 
     # `ui_frame`.
     bf_image.rectangle(
@@ -669,17 +669,19 @@ def process_images():
     )
 
     # Spritesheetifying clip studio items.
+    for f in ART_TEXTURES_DIR.glob("ui_item_*.png"):
+        f.unlink()
     filenames = [
         "cloud_in_a_bottle",
         "mechanical_lens",
         "obsidian_rose",
-        "obsidia_skull",
+        "obsidian_skull",
         "cobalt_shield",
-        "bowl_of_bowl_of_grechka_buckwheat",
-        "2d12",
+        "bowl_of_grechka_buckwheat",
+        "2d4",
         "crown",
         "partizan_cookie",
-        "falling_star",
+        "falling_cookie_star",
         "bone",
         "highbrow_hat",
         "sugar",
@@ -775,8 +777,10 @@ def process_images():
         "phartuk",
         "milk",
         "d12",
+        "locked",
+        "piggy_bank",
     ]
-    assert len(filenames) == 105
+    assert len(filenames) == 107
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_002.png",
         cell_size=(200, 200),
