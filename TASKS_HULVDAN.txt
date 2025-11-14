@@ -1,5 +1,11 @@
 WORKING SINCE 2025-09-07
 
+* TURRET
+* GARDEN
+* GO THROUGHT ALL ITEMS - FIND SOMETHING MANDATORY
+* DRAW THEM IN CASE FOUND SOME
+* CROP ITEM IMAGES
+*
 * impl: STAT__DURING_NEXT_WAVE
 *
 * fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
