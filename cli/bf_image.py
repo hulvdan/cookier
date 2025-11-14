@@ -296,6 +296,8 @@ def _shape(
     kw = {}
     if func_name == "rounded_rectangle":
         kw["radius"] = radius
+    else:
+        assert radius == 0
 
     getattr(d, func_name)(xy=(0, 0, *size), fill=fill, outline=outline, width=width, **kw)
 
@@ -309,6 +311,46 @@ def rectangle(*args: Any, **kwargs: Any) -> Image.Image:
 
 def ellipse(*args: Any, **kwargs: Any) -> Image.Image:
     return _shape("ellipse", *args, **kwargs)
+
+
+def spritesheetify(
+    image_path: Path,
+    *,
+    cell_size: tuple[int, int],
+    columns: list[int],
+    rows: list[int],  # From top.
+    out_filename_prefix: str = "",
+    out_filenames: list[str],
+    out_dir: Path,
+) -> None:
+    # {  ###
+    image = Image.open(image_path)
+    X = len(columns)
+    Y = len(rows)
+
+    log.info(f"spritesheetify: {image_path}...")
+
+    for i in range(len(columns) - 1):
+        assert columns[i] < columns[i + 1]
+    for i in range(len(rows) - 1):
+        assert rows[i] < rows[i + 1]
+
+    for y in range(Y):
+        for x in range(X):
+            t = y * X + x
+            if t >= len(out_filenames):
+                break
+
+            filename = out_filenames[t]
+
+            x0 = columns[x]
+            y0 = columns[y]
+            img = image.crop((x0, y0, x0 + cell_size[0], y0 + cell_size[1]))
+            img2 = img.crop(img.getbbox())
+            img2.save(out_dir / (out_filename_prefix + filename + ".png"))
+
+    log.info(f"spritesheetify: {image_path}... Success!")
+    # }
 
 
 ###

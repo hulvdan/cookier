@@ -829,7 +829,7 @@ items: # {  ###
         # - stat_type: KNOCKBACK
         #   value: 3
   - type: BROKEN_MOUTH
-    texture_id: ui_item_burger
+    texture_id: ui_item_hamburger
     tier: 0
     price: 25
     effects:
@@ -944,7 +944,7 @@ items: # {  ###
       - stat_type: HARVESTING
         value: -2
   - type: CLAW_TREE
-    texture_id: ui_item_small_throwing_knife
+    texture_id: ui_item_claws
     tier: 0
     price: 20
     effects:
@@ -1025,7 +1025,7 @@ items: # {  ###
         placeholders:
           - ints: 8
   - type: CYCLOPS_WORM
-    texture_id: ui_item_soup # todo кострюля англ
+    texture_id: ui_item_soup_pot
     tier: 1
     price: 45
     effects:
@@ -1082,7 +1082,7 @@ items: # {  ###
       - stat_type: EXPLOSION_SIZE
         value: 15
   - type: ENERGY_BRACELET
-    texture_id: ui_item_red_ring # Кольцо алой ведьмы
+    texture_id: ui_item_red_witch_ring # Кольцо алой ведьмы
     tier: 1
     price: 55
     effects:
@@ -1093,7 +1093,7 @@ items: # {  ###
       - stat_type: DAMAGE_RANGED
         value: -2
   - type: EXOSKELETON
-    texture_id: ui_item_phartuk_of_cook
+    texture_id: ui_item_phartuk
     tier: 3
     price: 90
     effects:
@@ -1131,7 +1131,7 @@ items: # {  ###
         # - stat_type: ACCURACY
         #   value: 3
   - type: FERTILIZER
-    texture_id: ui_item_golden_tree
+    texture_id: ui_item_golden_sapling
     tier: 0
     price: 15
     effects:
@@ -1255,7 +1255,7 @@ items: # {  ###
       - stat_type: ARMOR
         value: -1
   - type: HANDCUFFS
-    texture_id: ui_item_bowl_of_grechka
+    texture_id: ui_item_bowl_of_grechka_buckwheat # гречка
     tier: 2
     price: 80
     limit: 1
@@ -1288,7 +1288,7 @@ items: # {  ###
       - stat_type: SPEED
         value: -2
   - type: HONEY
-    texture_id: ui_item_grenade
+    texture_id: ui_item_bath_bomb_grenade
     tier: 2
     price: 70
     effects:
@@ -1312,7 +1312,7 @@ items: # {  ###
       - stat_type: HP
         value: -2
   - type: INSANITY
-    texture_id: ui_item_devil_obodok # TODO: перевод ободок
+    texture_id: ui_item_devil_horns
     tier: 0
     price: 20
     effects:
@@ -1346,7 +1346,7 @@ items: # {  ###
       - stat_type: ARMOR
         value: -1
   - type: LANDMINE
-    texture_id: ui_item_todo
+    texture_id: ui_item_landmine
     tier: 0
     price: 15
     effects:
