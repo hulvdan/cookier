@@ -344,9 +344,11 @@ def spritesheetify(
             filename = out_filenames[t]
 
             x0 = columns[x]
-            y0 = columns[y]
+            y0 = rows[y]
             img = image.crop((x0, y0, x0 + cell_size[0], y0 + cell_size[1]))
-            img2 = img.crop(img.getbbox())
+            bbox = img.getbbox()
+            assert bbox is not None
+            img2 = img.crop(bbox)
             img2.save(out_dir / (out_filename_prefix + filename + ".png"))
 
     log.info(f"spritesheetify: {image_path}... Success!")

@@ -350,7 +350,7 @@ table GameLibrary {
     ui_health_player_texture_ids: [int] (required);
     ui_health_boss_texture_ids: [int] (required);
     ui_modal_fade: float;
-    ui_item_slot_colors: [uint] (required);
+    ui_itemslot_colors: [uint] (required);
     ui_shop_current_level_icon_texture_id: int;
     ui_frame_nine_slice: NineSlice;
     ui_frame_shadow_big_nine_slice: NineSlice;
@@ -361,11 +361,10 @@ table GameLibrary {
 
     // AUTOMATIC_TEXTURE_BIND_START
     vignette_texture_id: int;
-    ui_item_slot_texture_id: int;
+    ui_itemslot_texture_id: int;
     ui_coin_texture_id: int;
     ui_coin_x2_texture_id: int;
     ui_item_locked_texture_id: int;
-    ui_item_question_texture_id: int;
     ui_controls_touch_base_texture_id: int;
     ui_controls_touch_handle_texture_id: int;
     ui_icon_back_big_texture_id: int;

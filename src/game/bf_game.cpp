@@ -5176,7 +5176,7 @@ void DoUI() {
 
   const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
 
-  const auto fb_slotColors = glib->ui_item_slot_colors();
+  const auto fb_slotColors = glib->ui_itemslot_colors();
   auto slotColors_ = ALLOCATE_ARRAY(&g.meta.trashArena, Color, fb_slotColors->size());
   FOR_RANGE (int, i, fb_slotColors->size())
     slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
@@ -5196,7 +5196,7 @@ void DoUI() {
     + GAP_FLEX;                                              // Gap between them.
 
   const auto slotSize
-    = ToVector2(glib->original_texture_sizes()->Get(glib->ui_item_slot_texture_id()))
+    = ToVector2(glib->original_texture_sizes()->Get(glib->ui_itemslot_texture_id()))
       * ASSETS_TO_LOGICAL_RATIO;
   // }
 
@@ -5554,7 +5554,7 @@ void DoUI() {
     if (data.group)
       ControlsGroupAdd(data.group, data.id);
 
-    const int texID        = glib->ui_item_slot_texture_id();
+    const int texID        = glib->ui_itemslot_texture_id();
     auto      originalSize = original_texture_sizes->Get(texID);
 
     CLAY({.layout{.sizing{
