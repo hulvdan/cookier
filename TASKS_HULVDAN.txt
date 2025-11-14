@@ -9,7 +9,10 @@ x piggy_bank
 x locked
 - question
 
+* spritesheetify props
+* make props big
 * LOCALIZATION
+* fix crash upon damaging
 *
 * impl: STAT__DURING_NEXT_WAVE
 *
