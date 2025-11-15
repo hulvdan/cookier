@@ -641,6 +641,18 @@ def process_images():
         bf_image.conveyor_suffix("back"),
     )
 
+    # Spritesheetifying props.
+    for f in (ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):
+        f.unlink()
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_003.png",
+        cell_size=(100, 100),
+        columns=[0, 114, 228, 342, 456],
+        rows=[0, 114, 228, 342, 456],
+        out_filename_prefix="game_prop_",
+        out_dir=ART_TEXTURES_DIR / "to_biome",
+    )
+
     # Biomefying props.
     for f in ART_TEXTURES_DIR.glob("game_prop_*.png"):
         f.unlink()

@@ -9,8 +9,8 @@ x piggy_bank
 x locked
 - question
 x difficulties
+x spritesheetify props
 
-* spritesheetify props
 * make props big
 * LOCALIZATION
 * fix crash upon damaging
