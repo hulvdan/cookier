@@ -4638,11 +4638,43 @@ void RefillShopToPick() {  ///
   for (auto& x : g.run.state.shop.toPick)
     x = {};
 
+  struct {
+    struct {
+      ItemType   item   = {};
+      WeaponType weapon = {};
+    } filled[4]{};
+
+    int filledCount = 0;
+
+    bool Contains(ItemType item) const {
+      FOR_RANGE (int, i, filledCount) {
+        if (filled[i].item == item)
+          return true;
+      }
+      return false;
+    }
+
+    bool Contains(WeaponType weapon) const {
+      FOR_RANGE (int, i, filledCount) {
+        if (filled[i].weapon == weapon)
+          return true;
+      }
+      return false;
+    }
+  } filled{};
+
   for (auto& x : g.run.state.shop.toPick) {
     const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
+
+    x = {};
+
     if (setToItem) {
-      x      = {};
-      x.item = GenerateRandomItem();
+      do {
+        x.item = GenerateRandomItem();
+      } while (filled.Contains(x.item));
+
+      filled.filled[filled.filledCount++] = {.item = x.item};
+
       x.tier = fb_items->Get(x.item)->tier();
     }
     else {
@@ -4651,9 +4683,12 @@ void RefillShopToPick() {  ///
         const auto& pool = g.run.weaponPools[tier];
         ASSERT(pool.count > 0);
 
-        const WeaponType w = pool[GRAND.Rand() % pool.count];
-        if (g.player.lockedWeapons[w].achievement)
-          continue;
+        WeaponType w{};
+        do {
+          w = pool[GRAND.Rand() % pool.count];
+        } while (filled.Contains(w) || g.player.lockedWeapons[w].achievement);
+
+        filled.filled[filled.filledCount++] = {.weapon = x.weapon};
 
         x = {.weapon = w, .tier = tier};
       }
