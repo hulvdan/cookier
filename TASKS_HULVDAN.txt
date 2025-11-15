@@ -19,8 +19,10 @@ x can't get duplicates in shop
 x turret shoots faster
 x other sprites: landmine
 x other sprites: pre spawn
+x ease spawning creatures
+x pre spawn rotation + mirror + SOME FIXES
 
-* ease spawning creatures
+* better landmine
 *
 * other sprites: tree
 * other sprites: garden

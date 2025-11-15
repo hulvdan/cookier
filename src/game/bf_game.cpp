@@ -532,6 +532,7 @@ struct Creature {  ///
   CreatureController controller                     = {};
   FrameGame          lastDamagedAt                  = {};
   FrameGame          lastDamagedFlashAt             = {};
+  FrameGame          spawnedAt                      = {};
   FrameGame          diedAt                         = {};
   f32                speed                          = {};
   f32                speedModifier                  = 1;
@@ -626,6 +627,7 @@ struct PreSpawn {  ///
   FrameGame         createdAt      = {};
   int               damage         = {};
   DamageScalingsFBT damageScalings = {};
+  f32               rotation       = {};
 };
 
 struct Projectile {  ///
@@ -1303,7 +1305,28 @@ struct GameData {
   } ui;
 } g = {};
 
-int GetRandomTier() {
+struct MakePreSpawnData {  ///
+  PreSpawnType      type           = {};
+  CreatureType      typeCreature   = {};
+  Vector2           pos            = {};
+  int               damage         = {};
+  DamageScalingsFBT damageScalings = {};
+};
+
+void MakePreSpawn(MakePreSpawnData data) {  ///
+  PreSpawn spawn{
+    .type           = data.type,
+    .typeCreature   = data.typeCreature,
+    .pos            = data.pos,
+    .damage         = data.damage,
+    .damageScalings = data.damageScalings,
+    .rotation       = GRAND.Angle() * ((GRAND.Rand() % 2) ? 1 : -1),
+  };
+  spawn.createdAt.SetNow();
+  *g.run.preSpawns.Add() = spawn;
+}
+
+int GetRandomTier() {  ///
   f32 v = GRAND.FRand();
   FOR_RANGE (int, tierIndex, TOTAL_TIERS) {
     if (v < g.run.random.cumulativeChances[tierIndex])
@@ -3530,6 +3553,7 @@ int MakeCreature(MakeCreatureData data) {  ///
     .speed     = fb->speed() + Lerp(-1.0f, 1.0f, GRAND.FRand()) * fb->speed_plus_minus(),
   };
   creature.idleStartedAt.SetNow();
+  creature.spawnedAt.SetNow();
 
   if ((fb->aggro_distance() != f32_inf) || !fb->can_aggro()) {
     creature.controller.move = Vector2Rotate({1, 0}, GRAND.Angle());
@@ -4596,7 +4620,9 @@ void RefillUpgradesToPick(bool rerolled) {  ///
   FOR_RANGE (int, i, g.run.state.upgrades.toPick.count) {
     while (1) {
       const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
-      if (!newStat)
+
+      // Can't get INVALID, CURSE or COINS from level up.
+      if ((int)newStat <= 2)
         continue;
 
       const auto fb = fb_stats->Get(newStat);
@@ -8273,19 +8299,10 @@ void DoUI() {
                 .childGap        = GAP_SMALL,
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               }}) {
-                // // Name.
-                // BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                //   fb->upgrade_name_locale(), {.color = textColorsPerTier[upgrade.tier]}
-                // );
-
                 // "Upgrade" label.
-                // FontBegin(&g.meta.fontStats);
                 BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                  // Loc_UI_UPGRADE  , {.color = secondaryTextColor}
-                  Loc_UI_UPGRADE,
-                  {.color = textColorsPerTier[upgrade.tier]}
+                  Loc_UI_UPGRADE, {.color = textColorsPerTier[upgrade.tier]}
                 );
-                // FontEnd();
               }
             }
 
@@ -11015,15 +11032,14 @@ void GameFixedUpdate() {
               );
               p = posToSpawn + Vector2Rotate({off, 0}, GRAND.Angle());
             } while (!creaturesWorldSpawnBounds.ContainsInside(p));
-            PreSpawn spawn{
+
+            MakePreSpawn({
               .type           = PreSpawnType_CREATURE,
               .typeCreature   = type,
               .pos            = p,
               .damage         = turret.baseDamage,
               .damageScalings = turret.damageScalings,
-            };
-            spawn.createdAt.SetNow();
-            *g.run.preSpawns.Add() = spawn;
+            });
           }
         };
 
@@ -11077,14 +11093,12 @@ void GameFixedUpdate() {
                 if (((e + 1) % interval.value) != 0)
                   return;
 
-                PreSpawn x{
+                MakePreSpawn({
                   .type           = PreSpawnType_LANDMINE,
                   .pos            = creaturesWorldSpawnBounds.GetRandomGamePosInside(),
                   .damage         = EFFECT_Y_INT,
                   .damageScalings = fb_effect->damage_scalings(),
-                };
-                x.createdAt.SetNow();
-                *g.run.preSpawns.Add() = x;
+                });
               }
           );
 
@@ -11100,12 +11114,10 @@ void GameFixedUpdate() {
                   return;
 
                 FOR_RANGE (int, i, times) {
-                  PreSpawn x{
+                  MakePreSpawn({
                     .type = PreSpawnType_GARDEN,
                     .pos  = creaturesWorldSpawnBounds.GetRandomGamePosInside(),
-                  };
-                  x.createdAt.SetNow();
-                  *g.run.preSpawns.Add() = x;
+                  });
                 }
               }
           );
@@ -12120,13 +12132,11 @@ void GameFixedUpdate() {
                         );
                 } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
 
-                PreSpawn spawn{
+                MakePreSpawn({
                   .type         = PreSpawnType_CREATURE,
                   .typeCreature = (CreatureType)fb->on_death_spawns_creature_type(),
                   .pos          = pos,
-                };
-                spawn.createdAt.SetNow();
-                *g.run.preSpawns.Add() = spawn;
+                });
               }
             }
 
@@ -12593,11 +12603,16 @@ void GameDraw() {
         / (f32)SPAWN_FRAMES.value
       );
 
+      auto scale = Vector2One() * EaseBounceSmall(p);
+      if (spawn.rotation < 0)
+        scale.x *= -1;
+
       DrawGroup_CommandTexture({
-        .texID = texID,
-        .pos   = spawn.pos,
-        .scale = Vector2One() * EaseBounceSmall(p),
-        .color = Fade(ColorFromRGBA(color), p),
+        .texID    = texID,
+        .rotation = abs(spawn.rotation),
+        .pos      = spawn.pos,
+        .scale    = scale,
+        .color    = Fade(ColorFromRGBA(color), p),
       });
     }
 
@@ -12614,9 +12629,11 @@ void GameDraw() {
     if (fb->is_boss())
       bossCreatureIndex = creatureIndex;
 
-    f32 fade = 1;
+    f32 fade = MIN(
+      1, creature.spawnedAt.Elapsed().Progress(lframe::FromSeconds(0.33f * 3.0f / 8.0f))
+    );
     if (creature.diedAt.IsSet())
-      fade = Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
+      fade *= Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
 
     int texID = 0;
     if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
@@ -12764,11 +12781,9 @@ void GameDraw() {
 
         f32 weaponFade = fade;
 
-        if (fb->shoots_itself()) {
-          if (weapon.lastShotAt.IsSet()) {
-            f32 t = MIN(1, weapon.lastShotAt.Elapsed().Progress(ANIMATION_1_FRAMES));
-            weaponFade *= EaseInQuad(t);
-          }
+        if (fb->shoots_itself() && weapon.lastShotAt.IsSet()) {
+          f32 t = MIN(1, weapon.lastShotAt.Elapsed().Progress(ANIMATION_1_FRAMES));
+          weaponFade *= EaseInQuad(t);
         }
 
         DrawGroup_OneShotTexture(
