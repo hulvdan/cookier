@@ -13,8 +13,19 @@ x spritesheetify props
 x make props big
 x fix texture cut
 x turret texture
+x LOCALIZATION
 
-* LOCALIZATION
+* loc: GREEK NUT проверить
+* loc: PARTIZAN COOKIE так ли
+* loc: шляпа повара / cook's hat как писать на рус + англ
+* loc: cooravie
+* loc: обычная книга англ
+* loc: TODOOO Подставка Для Свечек;TODOOO Candlestick;
+* loc: кастрюля или кострюля
+* loc: Phartuk
+* loc: ловкач англ (перчатка ловкача)
+* loc: Додекаэдр проверить
+* loc: правильно ли написано Piercing Bullet's Blueprint
 * fix crash upon damaging
 *
 * impl: STAT__DURING_NEXT_WAVE
@@ -98,7 +109,7 @@ x turret texture
 * prod sfx:
 * prod sfx:
 *
-* норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
+* норм иконка паузы. Игрок должен сразу понятьто это «кнопка паузы»
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
 *
