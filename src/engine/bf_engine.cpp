@@ -1636,10 +1636,6 @@ void FlushDrawCommands() {
             auto sx1 = sx0 + sourceRec.size.x;
             auto sy0 = sourceRec.pos.y;
             auto sy1 = sy0 + sourceRec.size.y;
-            sx0 += 0.7f;
-            sx1 -= 0.7f;
-            sy0 += 0.7f;
-            sy1 -= 0.7f;
             sx0 /= (f32)ge.meta.atlas.size.x;
             sx1 /= (f32)ge.meta.atlas.size.x;
             sy0 /= (f32)ge.meta.atlas.size.y;
