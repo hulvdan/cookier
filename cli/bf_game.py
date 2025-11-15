@@ -593,6 +593,23 @@ def process_images():
         blend_image_on_top=DEBUG_SHADOWS,
     ).save(ART_TEXTURES_DIR / "ui_frame_shadow_big.png")
 
+    # `ui_player_bar_back`.
+    bf_image.rectangle((634, 92), radius=30).save(
+        ART_TEXTURES_DIR / "ui_player_bar_back.png"
+    )
+    # `ui_player_bar_top`.
+    bf_image.rectangle((604, 64), radius=20).save(
+        ART_TEXTURES_DIR / "ui_player_bar_top.png"
+    )
+    # `ui_boss_bar_back`.
+    bf_image.rectangle((280, 40), radius=14).save(
+        ART_TEXTURES_DIR / "ui_boss_bar_back.png"
+    )
+    # `ui_boss_bar_top`.
+    bf_image.rectangle((260, 22), radius=10).save(
+        ART_TEXTURES_DIR / "ui_boss_bar_top.png"
+    )
+
     TOUCH_OUTLINE = 10
 
     # TOUCH_COLOR = (*hex_to_rgb_ints("efcb84"), 255)
