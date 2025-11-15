@@ -4605,10 +4605,6 @@ void RefillUpgradesToPick(bool rerolled) {  ///
       if (fb->is_secondary())
         continue;
 
-      // Can't upgrade `curse`.
-      if (!fb->upgrade_texture_id())
-        continue;
-
       // Not showing same upgrade twice.
       bool contains = false;
       for (const auto& v : g.run.state.upgrades.toPick) {
@@ -12589,10 +12585,19 @@ void GameDraw() {
         break;
       }
 
+      auto e = spawn.createdAt.Elapsed();
+      f32  p = Clamp01(
+        InOutLerp(
+          0, SPAWN_FRAMES.value, e.value, SPAWN_FRAMES.value, 10 * _BF_LOGICAL_FPS_SCALE
+        )
+        / (f32)SPAWN_FRAMES.value
+      );
+
       DrawGroup_CommandTexture({
         .texID = texID,
         .pos   = spawn.pos,
-        .color = ColorFromRGBA(color),
+        .scale = Vector2One() * EaseBounceSmall(p),
+        .color = Fade(ColorFromRGBA(color), p),
       });
     }
 

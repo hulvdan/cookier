@@ -3548,7 +3548,6 @@ stats: # {  ###
       - 6
       - 9
       - 12
-    upgrade_texture_id: ui_stat_upgrade_hp
     icon_texture_id: ui_stat_icon_hp
   - type: REGEN
     upgrade_values:
@@ -3556,7 +3555,6 @@ stats: # {  ###
       - 3
       - 4
       - 5
-    upgrade_texture_id: ui_stat_upgrade_regen
     icon_texture_id: ui_stat_icon_regen
   - type: LIFE_STEAL
     is_percent: true
@@ -3565,7 +3563,6 @@ stats: # {  ###
       - 2
       - 3
       - 4
-    upgrade_texture_id: ui_stat_upgrade_life_steal
     icon_texture_id: ui_stat_icon_life_steal
   - type: DAMAGE
     is_percent: true
@@ -3574,7 +3571,6 @@ stats: # {  ###
       - 8
       - 12
       - 16
-    upgrade_texture_id: ui_stat_upgrade_damage
     icon_texture_id: ui_stat_icon_damage
   - type: DAMAGE_MELEE
     upgrade_values:
@@ -3582,7 +3578,6 @@ stats: # {  ###
       - 4
       - 6
       - 8
-    upgrade_texture_id: ui_stat_upgrade_damage_melee
     icon_texture_id: ui_stat_icon_damage_melee
   - type: DAMAGE_RANGED
     upgrade_values:
@@ -3590,7 +3585,6 @@ stats: # {  ###
       - 2
       - 3
       - 4
-    upgrade_texture_id: ui_stat_upgrade_damage_ranged
     icon_texture_id: ui_stat_icon_damage_ranged
   - type: DAMAGE_ELEMENTAL
     upgrade_values:
@@ -3598,7 +3592,6 @@ stats: # {  ###
       - 2
       - 3
       - 4
-    upgrade_texture_id: ui_stat_upgrade_damage_elemental
     icon_texture_id: ui_stat_icon_damage_elemental
   - type: ATTACK_SPEED
     is_percent: true
@@ -3607,7 +3600,6 @@ stats: # {  ###
       - 10
       - 15
       - 20
-    upgrade_texture_id: ui_stat_upgrade_attack_speed
     icon_texture_id: ui_stat_icon_attack_speed
   - type: CRIT_CHANCE
     is_percent: true
@@ -3616,7 +3608,6 @@ stats: # {  ###
       - 5
       - 7
       - 9
-    upgrade_texture_id: ui_stat_upgrade_crit_chance
     icon_texture_id: ui_stat_icon_crit_chance
   - type: ENGINEERING
     upgrade_values:
@@ -3624,7 +3615,6 @@ stats: # {  ###
       - 3
       - 4
       - 5
-    upgrade_texture_id: ui_stat_upgrade_engineering
     icon_texture_id: ui_stat_icon_engineering
   - type: RANGE
     upgrade_values:
@@ -3632,7 +3622,6 @@ stats: # {  ###
       - 30
       - 45
       - 60
-    upgrade_texture_id: ui_stat_upgrade_range
     icon_texture_id: ui_stat_icon_range
   - type: ARMOR
     upgrade_values:
@@ -3640,7 +3629,6 @@ stats: # {  ###
       - 2
       - 3
       - 4
-    upgrade_texture_id: ui_stat_upgrade_armor
     icon_texture_id: ui_stat_icon_armor
   - type: DODGE
     is_percent: true
@@ -3649,7 +3637,6 @@ stats: # {  ###
       - 6
       - 9
       - 12
-    upgrade_texture_id: ui_stat_upgrade_dodge
     icon_texture_id: ui_stat_icon_dodge
   - type: SPEED
     is_percent: true
@@ -3658,7 +3645,6 @@ stats: # {  ###
       - 6
       - 9
       - 12
-    upgrade_texture_id: ui_stat_upgrade_speed
     icon_texture_id: ui_stat_icon_speed
   - type: LUCK
     upgrade_values:
@@ -3666,7 +3652,6 @@ stats: # {  ###
       - 10
       - 15
       - 20
-    upgrade_texture_id: ui_stat_upgrade_luck
     icon_texture_id: ui_stat_icon_luck
   - type: HARVESTING
     upgrade_values:
@@ -3674,7 +3659,6 @@ stats: # {  ###
       - 8
       - 10
       - 12
-    upgrade_texture_id: ui_stat_upgrade_harvesting
     icon_texture_id: ui_stat_icon_harvesting
   - type: CONSUMABLE_HEAL
     player_value: 3
