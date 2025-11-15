@@ -21,9 +21,8 @@ x other sprites: landmine
 x other sprites: pre spawn
 x ease spawning creatures
 x pre spawn rotation + mirror + SOME FIXES
+x better landmine
 
-* better landmine
-*
 * other sprites: tree
 * other sprites: garden
 * other sprites: apple
