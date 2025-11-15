@@ -89,12 +89,6 @@ sounds: # {  ###
     #   pool: 2
     # - type: GAME_MONSTRO_JUMP
     #   pool: 2
-ui_health_player_texture_ids:
-  - ui_health_player_back
-  - ui_health_player_top
-ui_health_boss_texture_ids:
-  - ui_health_boss_back
-  - ui_health_boss_top
 ui_modal_fade: 0.75
 ui_itemslot_colors:
   # Tier 0.

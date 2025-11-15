@@ -7432,7 +7432,10 @@ void DoUI() {
       // {  ///
       FontBegin(&g.meta.fontUIBigOutlined);
 
-      const auto  texs   = glib->ui_health_player_texture_ids();
+      const int texs[]{
+        glib->ui_player_bar_back_texture_id(),
+        glib->ui_player_bar_top_texture_id(),
+      };
       const auto& player = PLAYER_CREATURE;
 
       CLAY({
@@ -7457,7 +7460,7 @@ void DoUI() {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           // Health bar.
-          BF_CLAY_IMAGE({.texID = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_IMAGE({.texID = texs[0]}, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .floating{
                 .zIndex = zIndex,
@@ -7473,7 +7476,7 @@ void DoUI() {
               const auto health = MAX(0, PLAYER_CREATURE.health);
 
               BF_CLAY_IMAGE({
-                .texID = texs->Get(1),
+                .texID = texs[1],
                 .sourceMargins{
                   .right = Clamp01(1.0f - (f32)health / (f32)PLAYER_CREATURE.maxHealth)
                 },
@@ -7499,7 +7502,7 @@ void DoUI() {
           });
 
           // XP.
-          BF_CLAY_IMAGE({.texID = texs->Get(0)}, [&]() BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_IMAGE({.texID = texs[0]}, [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
               .floating{
                 .zIndex = zIndex,
@@ -7512,7 +7515,7 @@ void DoUI() {
             }) {
               FLOATING_BEAUTIFY;
               BF_CLAY_IMAGE({
-                .texID = texs->Get(1),
+                .texID = texs[1],
                 .sourceMargins{
                   .right
                   = 1 - (f32)g.run.state.xp / (f32)GetNextLevelXp(g.run.state.level)
@@ -12758,7 +12761,10 @@ void GameDraw() {
   // Drawing boss hp bar.
   if (bossCreatureIndex >= 0) {  ///
     const auto& creature = g.run.creatures[bossCreatureIndex];
-    auto        texs     = glib->ui_health_boss_texture_ids();
+    const int   texs[]{
+      glib->ui_boss_bar_back_texture_id(),
+      glib->ui_boss_bar_top_texture_id(),
+    };
 
     DrawGroup_Begin(DrawZ_BOSS_HP);
     DrawGroup_SetSortY(0);
@@ -12768,7 +12774,7 @@ void GameDraw() {
       if (i)
         rightMargin = Clamp01(1 - (f32)creature.health / (f32)creature.maxHealth);
       DrawGroup_CommandTexture({
-        .texID = texs->Get(i),
+        .texID = texs[i],
         .pos   = creature.pos - Vector2(0, 1),
         .sourceMargins{.right = rightMargin},
         .color = (i ? palRed : palWhite),
