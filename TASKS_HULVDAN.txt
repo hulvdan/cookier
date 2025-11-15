@@ -12,8 +12,8 @@ x difficulties
 x spritesheetify props
 x make props big
 x fix texture cut
+x turret texture
 
-* turret texture
 * LOCALIZATION
 * fix crash upon damaging
 *
