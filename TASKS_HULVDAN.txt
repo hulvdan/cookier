@@ -10,8 +10,10 @@ x locked
 - question
 x difficulties
 x spritesheetify props
+x make props big
+x fix texture cut
 
-* make props big
+* turret texture
 * LOCALIZATION
 * fix crash upon damaging
 *
