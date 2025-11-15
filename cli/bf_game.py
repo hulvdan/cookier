@@ -676,7 +676,7 @@ def process_images():
         "mechanical_lens",
         "obsidian_rose",
         "obsidian_skull",
-        "cobalt_shield",
+        "mithril_shield",
         "bowl_of_grechka_buckwheat",
         "2d4",
         "crown",
