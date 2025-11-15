@@ -17,18 +17,20 @@ x LOCALIZATION
 x hud bar better texture
 x can't get duplicates in shop
 x turret shoots faster
+x other sprites: landmine
+x other sprites: pre spawn
 
-* enemy projectile flies infinitely
-* mobs and player
+* ease spawning creatures
+*
 * other sprites: tree
-* other sprites: landmine
 * other sprites: garden
-* other sprites: pre spawn
 * other sprites: apple
-* other sprites: crate
-* other sprites: enemy projectile
 * other sprites: ui_coin_x2
 * other sprites: better shadows (bf_game.py)
+* other sprites: enemy projectile
+* other sprites: crate
+* enemy projectile flies infinitely
+* mobs and player
 * other sprites:
 * other sprites:
 * other sprites:

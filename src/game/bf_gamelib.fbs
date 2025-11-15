@@ -76,7 +76,6 @@ table Stat {
     is_secondary: bool;
     player_value: int;
     upgrade_name_locale: int;
-    upgrade_texture_id: int;
     upgrade_values: [int];
 }
 
@@ -371,7 +370,6 @@ table GameLibrary {
     ui_controls_touch_handle_texture_id: int;
     ui_icon_back_big_texture_id: int;
     ui_icon_combine_texture_id: int;
-    ui_icon_go_texture_id: int;
     ui_icon_go_next_wave2_texture_id: int;
     ui_icon_pause_texture_id: int;
     ui_icon_cancel_big_texture_id: int;
