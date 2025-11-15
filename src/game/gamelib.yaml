@@ -3781,16 +3781,13 @@ placeholders: # {  ###
 difficulties: # {  ###
   - type: INVALID
   - type: D0
-    texture_id: ui_difficulty_0
     effects:
       - effectcondition_type: SMALLEST_DIFFICULTY_DESCRIPTION
   - type: D1
-    texture_id: ui_difficulty_1
     effects:
       - stat_type: ENEMY_HP_SCALE
         value: 5
   - type: D2
-    texture_id: ui_difficulty_2
     effects:
       - stat_type: ENEMY_HP_SCALE
         value: 12

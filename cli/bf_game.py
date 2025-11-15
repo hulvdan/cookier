@@ -241,6 +241,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         if i > 0:
             process_effects_of(x, 1)
             x["name_locale"] = f"DIFFICULTY_{i}"
+            x["texture_id"] = "ui_item_difficulty_{}".format(i)
     # }
 
     # Weapons.
@@ -779,8 +780,9 @@ def process_images():
         "d12",
         "locked",
         "piggy_bank",
+        *["difficulty_{}".format(i + 1) for i in range(len(gamelib["difficulties"]) - 1)],
     ]
-    assert len(filenames) == 107
+    assert len(filenames) == 110, len(filenames)
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_002.png",
         cell_size=(200, 200),
