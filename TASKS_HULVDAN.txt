@@ -18,7 +18,21 @@ x hud bar better texture
 x can't get duplicates in shop
 x turret shoots faster
 
+* enemy projectile flies infinitely
 * mobs and player
+* other sprites: tree
+* other sprites: landmine
+* other sprites: garden
+* other sprites: pre spawn
+* other sprites: apple
+* other sprites: crate
+* other sprites: enemy projectile
+* other sprites: ui_coin_x2
+* other sprites: better shadows (bf_game.py)
+* other sprites:
+* other sprites:
+* other sprites:
+* effect works: xp gain DURING THE NEXT WAVE
 *
 *
 *
