@@ -16,8 +16,8 @@ x turret texture
 x LOCALIZATION
 x hud bar better texture
 x can't get duplicates in shop
+x turret shoots faster
 
-* turret shoots faster
 * mobs and player
 *
 *
