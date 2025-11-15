@@ -319,9 +319,9 @@ def spritesheetify(
     cell_size: tuple[int, int],
     columns: list[int],
     rows: list[int],  # From top.
-    out_filename_prefix: str = "",
-    out_filenames: list[str],
     out_dir: Path,
+    out_filename_prefix: str = "",
+    out_filenames: list[str] | None = None,
 ) -> None:
     # {  ###
     image = Image.open(image_path)
@@ -338,16 +338,25 @@ def spritesheetify(
     for y in range(Y):
         for x in range(X):
             t = y * X + x
-            if t >= len(out_filenames):
-                break
 
-            filename = out_filenames[t]
+            if (out_filenames is not None) and (t >= len(out_filenames)):
+                break
 
             x0 = columns[x]
             y0 = rows[y]
             img = image.crop((x0, y0, x0 + cell_size[0], y0 + cell_size[1]))
             bbox = img.getbbox()
-            assert bbox is not None
+
+            if bbox is None:
+                if out_filenames:
+                    assert False
+                break
+
+            if out_filenames is None:
+                filename = str(t + 1)
+            else:
+                filename = out_filenames[t]
+
             img2 = img.crop(bbox)
             img2.save(out_dir / (out_filename_prefix + filename + ".png"))
 
