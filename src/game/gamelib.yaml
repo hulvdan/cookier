@@ -224,7 +224,7 @@ creatures: # {  ###
     turret_knockback_meters: 0.3
     turret_projectile_shoot_anchor_y: 0.7116
     idle_texture_ids:
-      - game_creature_turret_base
+      - ui_item_turret
   - type: MOB_SMALL
     appearing_wave_number: 1
     spawn_factor: 100
