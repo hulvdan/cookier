@@ -726,7 +726,7 @@ items: # {  ###
         # - stat_type: KNOCKBACK
         #   value: -5
   - type: BARRICADE
-    texture_id: ui_item_cobalt_shield
+    texture_id: ui_item_mithril_shield
     tier: 2
     price: 75
     limit: 1
