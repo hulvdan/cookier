@@ -4718,19 +4718,16 @@ f32 GetPlayerStatStructureAttackSpeedMultiplier() {  ///
   return _AttackSpeedMultiplier(g.run.state.stats[StatType_STRUCTURE_ATTACK_SPEED]);
 }
 
-lframe ApplyAttackSpeedToDuration(int duration) {  ///
-  return lframe::Unscaled(MAX(
-    2,
-    (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration) / GetPlayerStatAttackSpeedMultiplier())
-  ));
+lframe ApplyAttackSpeedToDuration(lframe duration) {  ///
+  return lframe::Unscaled(
+    MAX(2, Round((f32)duration.value / GetPlayerStatAttackSpeedMultiplier()))
+  );
 }
 
-lframe ApplyStructureAttackSpeedToDuration(int duration) {  ///
-  return lframe::Unscaled(MAX(
-    2,
-    (int)((f32)(_BF_LOGICAL_FPS_SCALE * duration)
-          / GetPlayerStatStructureAttackSpeedMultiplier())
-  ));
+lframe ApplyStructureAttackSpeedToDuration(lframe duration) {  ///
+  return lframe::Unscaled(
+    MAX(2, Round((f32)duration.value / GetPlayerStatStructureAttackSpeedMultiplier()))
+  );
 }
 
 f32 GetExplosionDamageMultiplier() {  ///
@@ -4870,8 +4867,9 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
     return PLAYER_CREATURE.pos + GetPlayerWeaponOffset(weaponIndex);
 
-  const auto e            = weapon.startedShootingAt.Elapsed();
-  const auto shootingDur  = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+  const auto e = weapon.startedShootingAt.Elapsed();
+  const auto shootingDur
+    = ApplyAttackSpeedToDuration(lframe::Scaled(fb->shooting_duration_frames()));
   auto       p            = MIN(1, e.Progress(shootingDur) * 2);
   const auto texID        = fb->texture_ids()->Get(0);
   const auto colliderSize = (f32)glib->original_texture_sizes()->Get(texID)->x()
@@ -6481,9 +6479,10 @@ void DoUI() {
               = (fb->shooting_duration_frames() + fb->cooldown_frames());
             lframe cooldownFrames{};
             if (data.affectedByGame)
-              cooldownFrames = ApplyAttackSpeedToDuration(cooldownFrames_);
+              cooldownFrames
+                = ApplyAttackSpeedToDuration(lframe::Scaled(cooldownFrames_));
             else
-              cooldownFrames = lframe::Unscaled(cooldownFrames_);
+              cooldownFrames = lframe::Scaled(cooldownFrames_);
             const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
             BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), {.color = palTextGreen});
           });
@@ -10955,7 +10954,7 @@ void GameFixedUpdate() {
               const auto e = data.startedShootingAt.Elapsed();
 
               const auto shotFrame
-                = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOT_FRAME.value);
+                = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOT_FRAME);
               if (e == shotFrame) {
                 int damage = fb->projectile_damage();
                 damage     = ApplyDamageScalings(damage, 0, data.damageScalings, 1);
@@ -10976,7 +10975,7 @@ void GameFixedUpdate() {
               }
 
               const auto dur
-                = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOTING_FRAMES.value);
+                = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOTING_FRAMES);
               if (e >= dur)
                 data.startedShootingAt = {};
             }
@@ -11499,7 +11498,8 @@ void GameFixedUpdate() {
         int closestCreatureIndex = -1;
 
         // Resetting cooldown.
-        const auto cooldownDur = ApplyAttackSpeedToDuration(fb->cooldown_frames());
+        const auto cooldownDur
+          = ApplyAttackSpeedToDuration(lframe::Scaled(fb->cooldown_frames()));
         if (weapon.cooldownStartedAt.IsSet()
             && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
           weapon.cooldownStartedAt = {};
@@ -11572,7 +11572,7 @@ void GameFixedUpdate() {
           const auto e              = weapon.startedShootingAt.Elapsed();
 
           const auto shootingDur
-            = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
+            = ApplyAttackSpeedToDuration(lframe::Scaled(fb->shooting_duration_frames()));
 
           const auto projectileSpawnFrames = fb->projectile_spawn_frames();
 
@@ -12735,8 +12735,9 @@ void GameDraw() {
 
         auto pos = GetWeaponPos(i);
         if (!fb->projectile_type() && weapon.startedShootingAt.IsSet()) {
-          const auto dur = ApplyAttackSpeedToDuration(fb->shooting_duration_frames());
-          const f32  t   = InOutLerp(
+          const auto dur
+            = ApplyAttackSpeedToDuration(lframe::Scaled(fb->shooting_duration_frames()));
+          const f32 t = InOutLerp(
             0,
             1,
             (f32)weapon.startedShootingAt.Elapsed().value,
