@@ -22,21 +22,27 @@ x other sprites: pre spawn
 x ease spawning creatures
 x pre spawn rotation + mirror + SOME FIXES
 x better landmine
+x other sprites: garden
 
 * other sprites: tree
-* other sprites: garden
 * other sprites: apple
 * other sprites: ui_coin_x2
-* other sprites: better shadows (bf_game.py)
+* other sprites: chest
 * other sprites: enemy projectile
-* other sprites: crate
+* other sprites: better shadows (bf_game.py)
+*
 * enemy projectile flies infinitely
-* mobs and player
+*
+* sprites: mobs and player
 * other sprites:
 * other sprites:
 * other sprites:
+*
 * effect works: xp gain DURING THE NEXT WAVE
 *
+* polish: turret easing
+* polish: garden easing
+* polish: creatures movement
 *
 *
 *

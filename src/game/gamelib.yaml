@@ -153,6 +153,7 @@ shadow_texture_ids:
   - game_shadow_2
   - game_shadow_3
 ui_controls_touch_handle_margin: 36
+game_garden_texture_id: ui_item_garden
 # }
 
 biomes: # {  ###
@@ -432,6 +433,7 @@ effect_conditions: # {  ###
     x_is_percent: true
   - type: SPAWNS_GARDEN_EVERY__X__SECONDS
     x_condvar_type: FLOAT
+    x_divided_by_times: true
   - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
     x_condvar_type: FLOAT
     x_divided_by_times: true
