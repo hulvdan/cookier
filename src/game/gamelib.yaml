@@ -326,7 +326,7 @@ creatures: # {  ###
       - game_creature_player_move_2
       - game_creature_player_move_3
       - game_creature_player_move_4
-  - type: CRATER
+  - type: CHESTER
     appearing_wave_number: 3
     spawn_factor: 1
     luck_affects_spawn_factor: true
@@ -3439,7 +3439,6 @@ projectiles: # {  ###
     texture_ids:
       - game_weapon_javelin
   - type: MOB
-    color: 0xff0000ff
     speed: 10
     rotation_speed: 4
     rotation_speed_plus_minus: 1
