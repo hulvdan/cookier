@@ -3439,6 +3439,8 @@ projectiles: # {  ###
   - type: MOB
     color: 0xff0000ff
     speed: 10
+    rotation_speed: 4
+    rotation_speed_plus_minus: 1
     texture_ids:
       - game_projectile_mob
   - type: BOSS
