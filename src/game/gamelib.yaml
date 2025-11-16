@@ -233,14 +233,8 @@ creatures: # {  ###
     color: 0xffffffff
     idle_texture_ids:
       - game_creature_mob_small_move_1
-      - game_creature_mob_small_move_1
-      - game_creature_mob_small_move_1
-      - game_creature_mob_small_move_1
     move_texture_ids:
       - game_creature_mob_small_move_1
-      - game_creature_mob_small_move_2
-      - game_creature_mob_small_move_3
-      - game_creature_mob_small_move_4
   - type: MOB_CHASER
     appearing_wave_number: 2
     spawn_factor: 80

@@ -24,10 +24,10 @@ x sprites: better mob projectile
 *
 * sprites: player
 *
+* weapons
+*
 * sprites: weapons
 * sprites: projectiles
-*
-* weapons
 *
 *
 *
