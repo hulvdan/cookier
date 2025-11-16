@@ -261,6 +261,8 @@ table Weapon {
 table Projectile {
     color: uint = 0xffffffff;
     speed: float;
+    rotation_speed: float;
+    rotation_speed_plus_minus: float;
     ailment_type: int;
     ailment_chance: float;
     ailment_value: int;

@@ -3,15 +3,16 @@ WORKING SINCE 2025-09-07
 x other sprites: garden
 x apple mirror
 x tree mirror
+x other sprites: tree
+x other sprites: apple
+x other sprites: ui_coin_x2
+x other sprites: chest
+x other sprites: enemy projectile
+x enemy projectile rotates
+x enemy projectile flies infinitely
 
-* other sprites: tree
-* other sprites: apple
-* other sprites: ui_coin_x2
-* other sprites: chest
-* other sprites: enemy projectile
 * other sprites: better shadows (bf_game.py)
 *
-* enemy projectile flies infinitely
 *
 * sprites: mobs and player
 * other sprites:

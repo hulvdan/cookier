@@ -631,11 +631,13 @@ struct PreSpawn {  ///
 };
 
 struct Projectile {  ///
+  int                               id                        = {};
   ProjectileType                    type                      = {};
   CreatureType                      ownerCreatureType         = {};
   int                               weaponIndexOrMinus1       = -1;
   Vector2                           pos                       = {};
   Vector2                           dir                       = {};
+  f32                               rotationSpeed             = {};
   int                               damage                    = {};
   f32                               critDamageMultiplier      = {};
   int                               pierce                    = {};
@@ -644,7 +646,7 @@ struct Projectile {  ///
   int                               bounce                    = {};
   FrameGame                         createdAt                 = {};
   Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIDs        = {};
-  int                               damagedCount              = {};
+  int                               damagedCount              = 0;
   int                               piercedCount              = 0;
   int                               bouncedCount              = 0;
   f32                               knockbackMeters           = {};
@@ -10833,7 +10835,7 @@ void GameFixedUpdate() {
                   .ownerCreatureType = creature.type,
                   .pos               = creature.pos,
                   .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
-                  .range  = 12,
+                  .range  = SQR(WORLD_X + WORLD_Y) * 2,
                   .damage = GetMobDamage(creature.type),
                 });
               }
@@ -11699,12 +11701,21 @@ void GameFixedUpdate() {
     // Making projectiles.
     {  ///
       for (auto& data : g.run.projectilesToMake) {
+        static int nextProjectileId = 1;
+
+        auto fb = fb_projectiles->Get(data.type);
+
+        f32 rotationSpeed
+          = fb->rotation_speed() + fb->rotation_speed_plus_minus() * GRAND.FRand11();
+
         Projectile projectile{
+          .id                        = nextProjectileId++,
           .type                      = data.type,
           .ownerCreatureType         = data.ownerCreatureType,
           .weaponIndexOrMinus1       = data.weaponIndexOrMinus1,
           .pos                       = data.pos,
           .dir                       = data.dir,
+          .rotationSpeed             = rotationSpeed,
           .damage                    = data.damage,
           .critDamageMultiplier      = data.critDamageMultiplier,
           .pierce                    = data.pierce,
@@ -12869,7 +12880,14 @@ void GameDraw() {
   for (const auto& projectile : g.run.projectiles) {  ///
     const auto fb = fb_projectiles->Get(projectile.type);
 
-    f32     rotation = Vector2Angle(projectile.dir);
+    f32 rotation = Vector2Angle(projectile.dir);
+
+    f32 drot = projectile.rotationSpeed
+               * projectile.createdAt.Elapsed().Progress(lframe::Unscaled(FIXED_FPS));
+    if (Hash32((u8*)&projectile.id, sizeof(projectile.id)) % 2)
+      drot *= -1;
+    rotation += drot;
+
     Vector2 scale{1, 1};
     if (projectile.dir.x < 0) {
       rotation += (f32)PI32;
