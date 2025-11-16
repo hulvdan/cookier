@@ -836,9 +836,12 @@ def process_images():
         "game_pickupable_crate",
         "game_creature_tree",
         "game_pickupable_consumable",
+        "game_creature_ranger_move_1",
     ]
     for f in other_filenames:
-        (ART_TEXTURES_DIR / (f + ".png")).unlink()
+        fi = ART_TEXTURES_DIR / (f + ".png")
+        if fi.exists():
+            fi.unlink()
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_004.png",
         cell_size=440,
