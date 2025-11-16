@@ -610,6 +610,11 @@ def process_images():
         ART_TEXTURES_DIR / "ui_boss_bar_top.png"
     )
 
+    # `game_shadow_*.png`.
+    for i in range(3):
+        size = (312 // (2**i), 96 // (2**i))
+        bf_image.ellipse(size).save(ART_TEXTURES_DIR / f"game_shadow_{i + 1}.png")
+
     TOUCH_OUTLINE = 10
 
     # TOUCH_COLOR = (*hex_to_rgb_ints("efcb84"), 255)

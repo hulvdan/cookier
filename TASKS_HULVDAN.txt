@@ -11,10 +11,8 @@ x other sprites: enemy projectile
 x enemy projectile rotates
 x enemy projectile flies infinitely
 x can scale shadows
+x other sprites: better shadows (bf_game.py)
 
-* other sprites: better shadows (bf_game.py)
-*
-*
 * sprites: mobs and player
 * other sprites:
 * other sprites:
