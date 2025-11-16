@@ -527,7 +527,7 @@ struct Creature {  ///
   int                health                         = {};
   int                maxHealth                      = {};
   Vector2            pos                            = {};
-  Vector2            dir                            = {};
+  Vector2            dir                            = {1, 0};
   Body               body                           = {};
   CreatureController controller                     = {};
   FrameGame          lastDamagedAt                  = {};
@@ -689,6 +689,7 @@ struct Pickupable {  ///
   u8             variation       = {};
   Vector2        pos             = {};
   f32            rotation        = 0;
+  bool           mirrored        = false;
   FrameGame      createdAt       = {};
   FrameGame      pickedUpAt      = {};
   FrameVisual    startedFlyingAt = {};
@@ -3009,13 +3010,15 @@ void MakePickupable(MakePickupableData data) {  ///
   ASSERT(data.coin_amount >= 0);
   ASSERT(data.type);
 
-  auto fb = glib->pickupables()->Get(data.type);
+  auto       fb       = glib->pickupables()->Get(data.type);
+  const bool mirrored = GRAND.Rand() % 2;
 
   Pickupable pickupable{
     .type      = data.type,
     .variation = (u8)(GRAND.Rand() % fb->variation_texture_ids()->size()),
     .pos       = data.pos,
     .rotation  = PI32 / 12 * GRAND.FRand11(),
+    .mirrored  = mirrored,
   };
 
   switch (data.type) {
@@ -3581,6 +3584,11 @@ int MakeCreature(MakeCreatureData data) {  ///
     d       = {};
     d.startedShootingAt.SetNow();
     d.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
+  } break;
+
+  case CreatureType_TREE: {
+    if (GRAND.Rand() % 2)
+      creature.dir.x *= -1;
   } break;
 
   default:
@@ -10799,11 +10807,6 @@ void GameFixedUpdate() {
             }
           }
 
-          if (creature.controller.move.x >= 0)
-            creature.dir = {1, 0};
-          else
-            creature.dir = {-1, 0};
-
           if (creature.aggroed && (creature.type == CreatureType_RANGER)) {
             constexpr f32 thresholdMeters = 0.5f;
             constexpr f32 shootMeters     = 8;
@@ -10996,6 +10999,23 @@ void GameFixedUpdate() {
         }
       }
 
+      // Setting creatures `dir`.
+      {  ///
+        ZoneScopedN("Setting creatures `dir`.");
+
+        for (auto& creature : g.run.creatures) {
+          if (creature.diedAt.IsSet())
+            continue;
+
+          if (abs(creature.controller.move.x) > 0.2f) {
+            if (creature.controller.move.x > 0)
+              creature.dir.x = 1;
+            else
+              creature.dir.x = -1;
+          }
+        }
+      }
+
       // Making pre spawn decals.
       {  ///
         LAMBDA (void, makePreSpawns, (CreatureType type, TurretToSpawn turret = {})) {
@@ -11123,7 +11143,10 @@ void GameFixedUpdate() {
           );
 
           // Spawning trees every 10 seconds.
-          if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * 10) == 0) {
+          int seconds = 10;
+          if (BF_OVERRIDE_TREE_SPAWN_INTERVAL)
+            seconds = BF_OVERRIDE_TREE_SPAWN_INTERVAL;
+          if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * seconds) == 0) {
             const int toSpawn = GetNumberOfTreesToSpawn();
             FOR_RANGE (int, i, toSpawn)
               makePreSpawns(CreatureType_TREE);
@@ -11442,13 +11465,6 @@ void GameFixedUpdate() {
         b2Body_ApplyLinearImpulseToCenter(
           creature.body.id, ToB2Vec2(creature.controller.move * (FIXED_DT * speed)), true
         );
-
-        if (abs(creature.controller.move.x) > 0.2f) {
-          if (creature.controller.move.x > 0)
-            creature.dir.x = 1;
-          else
-            creature.dir.x = -1;
-        }
       }
     }
 
@@ -12653,7 +12669,7 @@ void GameDraw() {
 
     Vector2 scale{1, 1};
     if (creature.dir.x < 0)
-      scale.x = -1;
+      scale.x *= -1;
 
     auto color = ColorFromRGBA(fb->color());
     if (creature.type == CreatureType_RANGER) {
@@ -13028,20 +13044,27 @@ void GameDraw() {
 
     const bool isCoin = (pickupable.type == PickupableType_COIN);
 
+    Vector2 scale{1, 1};
+    if (pickupable.mirrored)
+      scale.x *= -1;
+
     if (isCoin) {
+      // Coin glows.
       DrawGroup_CommandTexture({
-        .texID    = glib->game_coin_glow_texture_id(),
-        .rotation = pickupable.rotation,
-        .pos      = pos,
-        .color    = Fade(palYellow, fade / 6),
+        .texID = glib->game_coin_glow_texture_id(),
+        .pos   = pos,
+        .scale = scale,
+        .color = Fade(palYellow, fade / 6),
       });
     }
 
     DrawGroup_CommandTexture(
       {
-        .texID = fb->variation_texture_ids()->Get(pickupable.variation),
-        .pos   = pos,
-        .color = Fade(WHITE, fade),
+        .texID    = fb->variation_texture_ids()->Get(pickupable.variation),
+        .rotation = pickupable.rotation,
+        .pos      = pos,
+        .scale    = scale,
+        .color    = Fade(WHITE, fade),
       },
       DrawCommandSetSortY_SET_BASELINE
     );
