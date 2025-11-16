@@ -13,10 +13,10 @@ x enemy projectile flies infinitely
 x can scale shadows
 x other sprites: better shadows (bf_game.py)
 x sprites: better mob projectile
+x sprites mob: ranger
+x sprites mob: chaser
 
 * sprites mob: small
-* sprites mob: chaser
-* sprites mob: ranger
 * sprites mob: rusher
 * sprites mob: spawner
 * sprites mob: chester
@@ -41,6 +41,7 @@ x sprites: better mob projectile
 * polish: turret easing
 * polish: garden easing
 * polish: creatures movement
+* polish: mob cooravie shooting easing
 *
 *
 *
