@@ -12760,7 +12760,7 @@ void GameDraw() {
           .texID = texID,
           .pos   = creature.pos + Vector2(0, fb->shadow_offset_y()),
           .scale = Vector2One() * (scale * fb->shadow_scale()),
-          .color = Fade(WHITE, fade * 0.33f),
+          .color = Fade(BLACK, fade * 0.33f),
         },
         DrawZ_FLOOR_SHADOWS
       );
