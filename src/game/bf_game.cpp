@@ -12739,29 +12739,27 @@ void GameDraw() {
     );
 
     {
+      int texID = 0;
       f32 scale = 1;
-      int texID = glib->shadow_texture_ids()->Get(0);
+
       for (auto t : *glib->shadow_texture_ids()) {
-        const f32 sx = glib->original_texture_sizes()->Get(t)->x()
-                       * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
+        const f32 sx = (f32)glib->original_texture_sizes()->Get(t)->x()
+                       * fb->shadow_scale() * ASSETS_TO_LOGICAL_RATIO
+                       / (f32)METER_LOGICAL_SIZE;
 
-        if (!texID) {
+        if ((!texID) || (sx >= CREATURE_COLLIDER_RADIUS * 2)) {
           texID = t;
-          scale = CREATURE_COLLIDER_RADIUS * 2 / sx;
-        }
-
-        if (sx >= CREATURE_COLLIDER_RADIUS * 2) {
-          texID = t;
-          scale = CREATURE_COLLIDER_RADIUS * 2 / sx;
+          scale = CREATURE_COLLIDER_RADIUS * 2 / sx * fb->shadow_scale();
         }
         else
           break;
       }
+
       DrawGroup_OneShotTexture(
         {
           .texID = texID,
           .pos   = creature.pos + Vector2(0, fb->shadow_offset_y()),
-          .scale = Vector2One() * scale,
+          .scale = Vector2One() * (scale * fb->shadow_scale()),
           .color = Fade(WHITE, fade * 0.33f),
         },
         DrawZ_FLOOR_SHADOWS

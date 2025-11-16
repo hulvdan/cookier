@@ -381,6 +381,8 @@ creatures: # {  ###
     can_move: false
     idle_texture_ids:
       - game_creature_tree
+    shadow_offset_y: -0.55
+    shadow_scale: 1.2
 # }
 
 ailments: # {  ###
