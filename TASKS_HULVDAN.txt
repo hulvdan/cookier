@@ -1,27 +1,5 @@
 WORKING SINCE 2025-09-07
 
-x TURRET
-x GARDEN
-x GO THROUGHT ALL ITEMS - FIND SOMETHING MANDATORY
-x LANDMINE
-x CROP ITEM IMAGES
-x piggy_bank
-x locked
-- question
-x difficulties
-x spritesheetify props
-x make props big
-x fix texture cut
-x turret texture
-x LOCALIZATION
-x hud bar better texture
-x can't get duplicates in shop
-x turret shoots faster
-x other sprites: landmine
-x other sprites: pre spawn
-x ease spawning creatures
-x pre spawn rotation + mirror + SOME FIXES
-x better landmine
 x other sprites: garden
 x apple mirror
 x tree mirror

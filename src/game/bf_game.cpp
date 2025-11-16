@@ -7764,6 +7764,7 @@ void DoUI() {
           BF_CLAY_IMAGE({
             .texID
             = fb->variation_texture_ids()->Get(i % fb->variation_texture_ids()->size()),
+            .color = Fade(WHITE, 0.4f),
           });
         }
       }
