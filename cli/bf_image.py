@@ -316,24 +316,27 @@ def ellipse(*args: Any, **kwargs: Any) -> Image.Image:
 def spritesheetify(
     image_path: Path,
     *,
-    cell_size: tuple[int, int],
-    columns: list[int],
-    rows: list[int],  # From top.
+    origin: tuple[int, int] = (0, 0),
+    cell_size: tuple[int, int] | int,
+    size: tuple[int, int],
+    gap: tuple[int, int] | int,
     out_dir: Path,
     out_filename_prefix: str = "",
     out_filenames: list[str] | None = None,
 ) -> None:
     # {  ###
     image = Image.open(image_path)
-    X = len(columns)
-    Y = len(rows)
+    X, Y = size
+
+    assert isinstance(gap, (int, tuple))
+    if isinstance(gap, int):
+        gap = (gap, gap)
+
+    assert isinstance(cell_size, (int, tuple))
+    if isinstance(cell_size, int):
+        cell_size = (cell_size, cell_size)
 
     log.info(f"spritesheetify: {image_path}...")
-
-    for i in range(len(columns) - 1):
-        assert columns[i] < columns[i + 1]
-    for i in range(len(rows) - 1):
-        assert rows[i] < rows[i + 1]
 
     for y in range(Y):
         for x in range(X):
@@ -342,14 +345,18 @@ def spritesheetify(
             if (out_filenames is not None) and (t >= len(out_filenames)):
                 break
 
-            x0 = columns[x]
-            y0 = rows[y]
+            x0 = origin[0] + (cell_size[0] + gap[0]) * x
+            y0 = origin[1] + (cell_size[1] + gap[1]) * y
             img = image.crop((x0, y0, x0 + cell_size[0], y0 + cell_size[1]))
             bbox = img.getbbox()
 
             if bbox is None:
                 if out_filenames:
-                    assert False
+                    assert False, (
+                        "In named spritesheet (`{}`) found a cell ({}, {}) that's named but doesn't contain anything".format(
+                            str(out_filenames)[:200], x, y
+                        )
+                    )
                 break
 
             if out_filenames is None:

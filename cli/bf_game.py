@@ -668,9 +668,9 @@ def process_images():
         f.unlink()
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_003.png",
-        cell_size=(100, 100),
-        columns=[0, 114, 228, 342, 456],
-        rows=[0, 114, 228, 342, 456],
+        gap=14,
+        cell_size=100,
+        size=(5, 5),
         out_filename_prefix="game_prop_",
         out_dir=ART_TEXTURES_DIR / "to_biome",
     )
@@ -819,37 +819,32 @@ def process_images():
     assert len(filenames) == 110, len(filenames)
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_002.png",
-        cell_size=(200, 200),
-        columns=[
-            22,
-            242,
-            462,
-            682,
-            913,
-            1174,
-            1394,
-            1614,
-            1827,
-            2047,
-            2285,
-            2505,
-            2722,
-            2942,
-            3162,
-        ],
-        rows=[
-            88,
-            308,
-            528,
-            748,
-            979,
-            1199,
-            1419,
-            1639,
-            1848,
-        ],
+        cell_size=200,
+        size=(15, 8),
+        gap=24,
         out_filename_prefix="ui_item_",
         out_filenames=filenames,
+        out_dir=ART_TEXTURES_DIR,
+    )
+
+    other_filenames = [
+        "game_creature_mob_small_move_1",
+        "game_decal_pre_spawn",
+        "game_landmine",
+        "ui_coin_x2",
+        "game_projectile_mob",
+        "game_pickupable_crate",
+        "game_creature_tree",
+        "game_pickupable_consumable",
+    ]
+    for f in other_filenames:
+        (ART_TEXTURES_DIR / (f + ".png")).unlink()
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_004.png",
+        cell_size=440,
+        size=(8, 4),
+        gap=16,
+        out_filenames=other_filenames,
         out_dir=ART_TEXTURES_DIR,
     )
     # }
