@@ -12810,8 +12810,16 @@ void GameDraw() {
   // Drawing gardens.
   {  ///
     const auto texID = glib->game_garden_texture_id();
-    for (const auto& x : g.run.gardens)
-      DrawGroup_OneShotTexture({.texID = texID, .pos = x.pos}, DrawZ_DEFAULT);
+    for (const auto& x : g.run.gardens) {
+      DrawGroup_OneShotTexture(
+        {
+          .texID = texID,
+          .pos   = x.pos,
+          .scale = Vector2One() * 1.2f,
+        },
+        DrawZ_DEFAULT
+      );
+    }
   }
 
   // Drawing boss hp bar.
