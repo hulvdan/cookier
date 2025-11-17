@@ -13,18 +13,20 @@ x enemy projectile flies infinitely
 x can scale shadows
 x other sprites: better shadows (bf_game.py)
 x sprites: better mob projectile
-x sprites mob: ranger
 x sprites mob: chaser
+x sprites mob: ranger
 x sprites mob: spawner
+x sprites mob: chester
+x cooravie shadow
+x spawner shadow
 
-* кто могли бы быть эти мобы ???
-*
 * sprites mob: small
 * sprites mob: rusher
-* sprites mob: chester
 * sprites mob: boss
 *
 * sprites: player
+*
+* gamelib hot reload
 *
 * weapons
 *
