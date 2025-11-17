@@ -10761,6 +10761,27 @@ void GameFixedUpdate() {
         }
       }
 
+      // Setting creatures' `dir`.
+      {  ///
+        ZoneScopedN("Setting creatures `dir`.");
+
+        for (auto& creature : g.run.creatures) {
+          if (creature.diedAt.IsSet())
+            continue;
+
+          bool thresholded = true;
+          if (creature.type == CreatureType_PLAYER)
+            thresholded = (abs(creature.controller.move.x) > 0.2f);
+          if (!thresholded)
+            continue;
+
+          if (creature.controller.move.x > 0)
+            creature.dir.x = 1;
+          else
+            creature.dir.x = -1;
+        }
+      }
+
       // Updating AI.
       {  ///
         ZoneScopedN("Updating AI.");
@@ -10828,6 +10849,8 @@ void GameFixedUpdate() {
             if (data.startedShootingAt.IsSet()) {
               creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
 
+              creature.dir.x = ((PLAYER_CREATURE.pos.x - creature.pos.x >= 0) ? 1 : -1);
+
               const auto e = data.startedShootingAt.Elapsed();
               if (e == MOB_RANGER_SHOOTING_FRAME) {
                 MakeProjectile({
@@ -10850,6 +10873,8 @@ void GameFixedUpdate() {
 
             if (data.startedRushingAt.IsSet()) {
               creature.controller.move = {};
+
+              creature.dir = data.rushingDir;
 
               const auto e = data.startedRushingAt.Elapsed();
               if ((MOB_RUSHER_RUSH_PRE_FRAMES < e)
@@ -10999,27 +11024,6 @@ void GameFixedUpdate() {
                 data.startedShootingAt = {};
             }
           }
-        }
-      }
-
-      // Setting creatures `dir`.
-      {  ///
-        ZoneScopedN("Setting creatures `dir`.");
-
-        for (auto& creature : g.run.creatures) {
-          if (creature.diedAt.IsSet())
-            continue;
-
-          bool thresholded = true;
-          if (creature.type == CreatureType_PLAYER)
-            thresholded = (abs(creature.controller.move.x) > 0.2f);
-          if (!thresholded)
-            continue;
-
-          if (creature.controller.move.x > 0)
-            creature.dir.x = 1;
-          else
-            creature.dir.x = -1;
         }
       }
 
