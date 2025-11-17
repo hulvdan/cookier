@@ -327,19 +327,15 @@ creatures: # {  ###
     contact_damage: 0
     contact_damage_increase_per_wave: 0
     knockback_resistance: 0.7
-    color: 0xdc9824ff
     speed: 4
     not_aggroed_speed: 4
     speed_plus_minus: 0.8
     consumable_drop_chance: inf
     crate_instead_of_consumable_factor: inf
     idle_texture_ids:
-      - game_creature_player_move_1
+      - game_creature_chester_move_1
     move_texture_ids:
-      - game_creature_player_move_1
-      - game_creature_player_move_2
-      - game_creature_player_move_3
-      - game_creature_player_move_4
+      - game_creature_chester_move_1
   - type: BOSS
     appearing_wave_number: 20
     spawn_factor: 0

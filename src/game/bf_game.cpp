@@ -11010,12 +11010,16 @@ void GameFixedUpdate() {
           if (creature.diedAt.IsSet())
             continue;
 
-          if (abs(creature.controller.move.x) > 0.2f) {
-            if (creature.controller.move.x > 0)
-              creature.dir.x = 1;
-            else
-              creature.dir.x = -1;
-          }
+          bool thresholded = true;
+          if (creature.type == CreatureType_PLAYER)
+            thresholded = (abs(creature.controller.move.x) > 0.2f);
+          if (!thresholded)
+            continue;
+
+          if (creature.controller.move.x > 0)
+            creature.dir.x = 1;
+          else
+            creature.dir.x = -1;
         }
       }
 
