@@ -20,6 +20,7 @@ x sprites mob: chester
 x cooravie shadow
 x spawner shadow
 x sprites mob: small
+x mob projectile scale from big upon creation
 
 * sprites mob: rusher
 * sprites mob: boss

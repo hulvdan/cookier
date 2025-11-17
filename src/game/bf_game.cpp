@@ -12896,13 +12896,27 @@ void GameDraw() {
       scale.x = -1;
     }
 
+    if (fb->scales_in()) {
+      scale *= Lerp(
+        2.0f,
+        1.0f,
+        EaseInQuad(MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES)))
+      );
+    }
+
+    f32 fade = 1;
+    if (fb->fades_in())
+      fade
+        = EaseOutQuad(MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES))
+        );
+
     DrawGroup_OneShotTexture(
       {
         .texID    = fb->texture_ids()->Get(0),
         .rotation = rotation,
         .pos      = projectile.pos,
         .scale    = scale,
-        .color    = ColorFromRGBA(fb->color()),
+        .color    = Fade(ColorFromRGBA(fb->color()), fade),
       },
       DrawZ_PROJECTILES
     );
