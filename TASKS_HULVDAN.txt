@@ -19,10 +19,12 @@ x sprites mob: spawner
 x sprites mob: chester
 x cooravie shadow
 x spawner shadow
+x sprites mob: small
 
-* sprites mob: small
 * sprites mob: rusher
 * sprites mob: boss
+*
+* sprites mob: better chaser (too many details right now)
 *
 * sprites: player
 *
