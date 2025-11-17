@@ -15,10 +15,12 @@ x other sprites: better shadows (bf_game.py)
 x sprites: better mob projectile
 x sprites mob: ranger
 x sprites mob: chaser
+x sprites mob: spawner
 
+* кто могли бы быть эти мобы ???
+*
 * sprites mob: small
 * sprites mob: rusher
-* sprites mob: spawner
 * sprites mob: chester
 * sprites mob: boss
 *
