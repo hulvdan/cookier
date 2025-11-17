@@ -12874,7 +12874,7 @@ void GameDraw() {
         rightMargin = Clamp01(1 - (f32)creature.health / (f32)creature.maxHealth);
       DrawGroup_CommandTexture({
         .texID = texs[i],
-        .pos   = creature.pos - Vector2(0, 1),
+        .pos   = creature.pos - Vector2(0, 1.35f),
         .sourceMargins{.right = rightMargin},
         .color = (i ? palRed : palWhite),
       });
