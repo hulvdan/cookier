@@ -144,6 +144,7 @@ table Creature {
 
     idle_texture_ids: [int];
     move_texture_ids: [int];
+    shadow_offset_x: float;
     shadow_offset_y: float = -0.5;
     shadow_scale: float = 1;
 }
