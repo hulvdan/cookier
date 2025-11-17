@@ -10,9 +10,6 @@ x sprites mob: boss
 * sprites: weapons
 * sprites: projectiles
 *
-*
-*
-*
 * other sprites:
 * other sprites:
 * other sprites:
@@ -23,8 +20,6 @@ x sprites mob: boss
 * polish: garden easing
 * polish: creatures movement
 * polish: mob cooravie shooting easing
-*
-*
 *
 * loc: GREEK NUT проверить
 * loc: PARTIZAN COOKIE так ли
@@ -54,15 +49,6 @@ x sprites mob: boss
 * achievements on picked up item / upgrades / shop / end screens
 * ref: remove stats `value` -> use placeholders
   default effectcondition_type is `X__STAT`
-* impl:
-* impl:
-* impl:
-* impl:
-* impl:
-* impl:
-* impl:
-* impl:
-* impl:
 * impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
 * impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_GETTING_HURT
 * impl: CAP__STAT
@@ -85,8 +71,7 @@ x sprites mob: boss
 *
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
 *
-*
-* crediting sfx
+* a way of automagically tracking used CC-BY-SA sounds in project
 *
 * better ui sounds from those that require credit
 *
