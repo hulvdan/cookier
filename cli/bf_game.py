@@ -828,7 +828,7 @@ def process_images():
     )
 
     other_filenames = [
-        "game_creature_mob_small_move_1",
+        "game_creature_chaser_move_1",
         "game_decal_pre_spawn",
         "game_landmine",
         "ui_coin_x2",
@@ -839,6 +839,7 @@ def process_images():
         "game_creature_ranger_move_1",
         "game_creature_spawner_move_1",
         "game_creature_chester_move_1",
+        "game_creature_mob_small_move_1",
     ]
     for f in other_filenames:
         fi = ART_TEXTURES_DIR / (f + ".png")
