@@ -838,6 +838,7 @@ def process_images():
         "game_pickupable_consumable",
         "game_creature_ranger_move_1",
         "game_creature_spawner_move_1",
+        "game_creature_chester_move_1",
     ]
     for f in other_filenames:
         fi = ART_TEXTURES_DIR / (f + ".png")
