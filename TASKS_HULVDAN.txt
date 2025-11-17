@@ -21,11 +21,10 @@ x cooravie shadow
 x spawner shadow
 x sprites mob: small
 x mob projectile scale from big upon creation
+x sprites mob: rusher
 
-* sprites mob: rusher
-* sprites mob: boss
-*
 * sprites mob: better chaser (too many details right now)
+* sprites mob: boss
 *
 * sprites: player
 *
