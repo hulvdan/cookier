@@ -1,6 +1,8 @@
 WORKING SINCE 2025-09-07
+
 x sprites mob: boss
 
+* boss shooting patterns
 * sprites: player
 *
 * gamelib hot reload
