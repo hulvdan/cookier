@@ -3434,10 +3434,10 @@ projectiles: # {  ###
     texture_ids:
       - game_projectile_mob
   - type: BOSS
-    color: 0xff0000ff
     speed: 3
+    rotation_speed: 5
     texture_ids:
-      - game_projectile_arrow
+      - game_projectile_boss
       # - game_projectile_mob
 # }
 

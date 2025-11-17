@@ -570,6 +570,8 @@ struct Creature {  ///
       FrameGame startedShootingAt;
       int       shotTimes;
       lframe    cooldown;
+      int       shootingPattern;
+      f32       shootingRotationOffset;
     } boss;
   } _mob;
 
@@ -655,6 +657,10 @@ struct Projectile {  ///
   int                               anchorCreatureID          = {};
   bool                              dontSpawnProjectilesOnHit = false;
 };
+
+int ProjectileCmp(const Projectile* v1, const Projectile* v2) {  ///
+  return IntCmp(&v1->id, &v2->id);
+}
 
 struct MakeProjectileData {  ///
   ProjectileType type                      = {};
@@ -3518,7 +3524,9 @@ int MakeCreature(MakeCreatureData data) {  ///
   auto slot  = g.run.creatures.Add();
 
   const auto fb = glib->creatures()->Get(data.type);
-  if (index && BF_DISABLE_MOB_SPAWNS)
+  if (index && BF_DISABLE_MOB_SPAWNS && !fb->is_boss())
+    return -1;
+  if (BF_DISABLE_BOSS_SPAWN && fb->is_boss())
     return -1;
 
   f32 hurtboxRadius = PLAYER_HURTBOX_RADIUS;
@@ -3585,6 +3593,7 @@ int MakeCreature(MakeCreatureData data) {  ///
     auto& d = creature.DataBoss();
     d       = {};
     d.startedShootingAt.SetNow();
+    d.pattern = GRAND.Rand() % BOSS_SHOOTING_PATTERNS.count;
     d.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
   } break;
 
@@ -10920,19 +10929,32 @@ void GameFixedUpdate() {
             auto&      data = creature.DataBoss();
             const auto e    = data.startedShootingAt.Elapsed() - data.cooldown;
 
+            const auto& pattern = BOSS_SHOOTING_PATTERNS[data.pattern];
+
             if (MOB_BOSS_SHOOTING_FRAMES.Contains(e.value)) {
-              MakeProjectile({
-                .type                 = ProjectileType_BOSS,
-                .ownerCreatureType    = creature.type,
-                .pos                  = creature.pos,
-                .range                = MOB_BOSS_PROJECTILE_RANGE_METERS,
-                .damage               = GetMobDamage(creature.type),
-                .critDamageMultiplier = fb->crit_damage_multiplier(),
-                .anchorCreatureID     = creature.id,
-              });
+              FOR_RANGE (int, shotIndex, pattern.projectilesPerShot) {
+                MakeProjectile({
+                  .type                 = ProjectileType_BOSS,
+                  .ownerCreatureType    = creature.type,
+                  .pos                  = creature.pos,
+                  .dir                  = Vector2Rotate({1, 0}, pattern.rotationOffset),
+                  .range                = f32_inf,
+                  .damage               = GetMobDamage(creature.type),
+                  .critDamageMultiplier = fb->crit_damage_multiplier(),
+                  // .anchorCreatureID     = creature.id,
+                });
+              }
+
+              data.shootingRotationOffset += pattern.rotationOffset;
             }
 
-            if (e >= MOB_BOSS_TOTAL_SHOOTING_FRAMES) {
+            const auto duration = lframe::Unscaled(
+              pattern.shotsCount
+                * (MOB_BOSS_PRE_SHOT_FRAMES.value + MOB_BOSS_POST_SHOT_FRAMES.value)
+              + (pattern.shotsCount - 1) * pattern.cooldownBetweenShots.value
+            );
+
+            if (e >= duration) {
               data.startedShootingAt = {};
               data.startedShootingAt.SetNow();
               data.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
@@ -12111,6 +12133,13 @@ void GameFixedUpdate() {
         g.run.projectiles.UnstableRemoveAt(projectileIndex);
       }
       g.run.projectilesToRemove.Reset();
+
+      qsort(
+        (void*)g.run.projectiles.base,
+        g.run.projectiles.count,
+        sizeof(*g.run.projectiles.base),
+        (int (*)(const void*, const void*))ProjectileCmp
+      );
     }
 
     // Processing `justDamagedCreatures`.
@@ -12884,50 +12913,57 @@ void GameDraw() {
   }
 
   // Drawing projectiles + their gizmos.
-  for (const auto& projectile : g.run.projectiles) {  ///
-    const auto fb = fb_projectiles->Get(projectile.type);
+  {  ///
+    DrawGroup_Begin(DrawZ_PROJECTILES);
+    DrawGroup_SetSortY(0);
 
-    f32 rotation = Vector2Angle(projectile.dir);
+    for (const auto& projectile : g.run.projectiles) {
+      const auto fb = fb_projectiles->Get(projectile.type);
 
-    f32 drot = projectile.rotationSpeed
-               * projectile.createdAt.Elapsed().Progress(lframe::Unscaled(FIXED_FPS));
-    if (Hash32((u8*)&projectile.id, sizeof(projectile.id)) % 2)
-      drot *= -1;
-    rotation += drot;
+      f32 rotation = Vector2Angle(projectile.dir);
 
-    Vector2 scale{1, 1};
-    if (projectile.dir.x < 0) {
-      rotation += (f32)PI32;
-      scale.x = -1;
-    }
+      f32 drot = projectile.rotationSpeed
+                 * projectile.createdAt.Elapsed().Progress(lframe::Unscaled(FIXED_FPS));
+      if (Hash32((u8*)&projectile.id, sizeof(projectile.id)) % 2)
+        drot *= -1;
+      rotation += drot;
 
-    if (fb->scales_in()) {
-      scale *= Lerp(
-        2.0f,
-        1.0f,
-        EaseInQuad(MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES)))
-      );
-    }
+      Vector2 scale{1, 1};
+      if (projectile.dir.x < 0) {
+        rotation += (f32)PI32;
+        scale.x = -1;
+      }
 
-    f32 fade = 1;
-    if (fb->fades_in())
-      fade
-        = EaseOutQuad(MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES))
+      if (fb->scales_in()) {
+        scale *= Lerp(
+          2.0f,
+          1.0f,
+          EaseInQuad(MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES)))
+        );
+      }
+
+      f32 fade = 1;
+      if (fb->fades_in())
+        fade = EaseOutQuad(
+          MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES))
         );
 
-    DrawGroup_OneShotTexture(
-      {
+      DrawGroup_CommandTexture({
         .texID    = fb->texture_ids()->Get(0),
         .rotation = rotation,
         .pos      = projectile.pos,
         .scale    = scale,
         .color    = Fade(ColorFromRGBA(fb->color()), fade),
-      },
-      DrawZ_PROJECTILES
-    );
+      });
+    }
 
-    // Gizmos.
-    if (ge.meta.debugEnabled) {
+    DrawGroup_End();
+  }
+  // Gizmos.
+  if (ge.meta.debugEnabled) {
+    for (const auto& projectile : g.run.projectiles) {
+      auto fb = fb_projectiles->Get(projectile.type);
+
       DrawGroup_OneShotCircleLines({
         .pos    = projectile.pos,
         .radius = fb->collider_radius(),

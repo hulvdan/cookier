@@ -168,7 +168,36 @@ constexpr auto MOB_BOSS_PROJECTILES_CIRCLE_FRAMES = lframe::FromSeconds(2.0f);
 constexpr auto MOB_BOSS_COOLDOWN_MIN              = lframe::FromSeconds(2.0f);
 constexpr auto MOB_BOSS_COOLDOWN_MAX              = lframe::FromSeconds(4.0f);
 
-constexpr f32 MOB_BOSS_PROJECTILE_RANGE_METERS = 11;
+constexpr auto MOB_BOSS_PRE_SHOT_FRAMES  = ANIMATION_0_FRAMES;
+constexpr auto MOB_BOSS_POST_SHOT_FRAMES = ANIMATION_0_FRAMES;
+
+struct ShootingPattern {
+  int    numberPerShot        = {};
+  f32    rotationOffset       = {};
+  lframe cooldownBetweenShots = {};
+  int    shotsCount           = {};
+} BOSS_SHOOTING_PATTERNS_[]{
+  {
+    .numberPerShot        = 3,
+    .rotationOffset       = PI32 * 2 / 100,
+    .cooldownBetweenShots = lframe::FromSeconds(0.12f),
+    .shotsCount           = 100,
+  },
+  {
+    .numberPerShot        = 3,
+    .rotationOffset       = PI32 * 2 / 3,
+    .cooldownBetweenShots = lframe::FromSeconds(0.4f),
+    .shotsCount           = 8,
+  },
+  {
+    .numberPerShot        = 8,
+    .rotationOffset       = PI32 * 2 / 16,
+    .cooldownBetweenShots = lframe::FromSeconds(0.8f),
+    .shotsCount           = 4,
+  },
+};
+
+VIEW_FROM_ARRAY_DANGER(BOSS_SHOOTING_PATTERNS);
 
 constexpr f32 PRICE_SCALINGS_PER_TIER_[TOTAL_TIERS]{
   20.0f / 149.0f,
