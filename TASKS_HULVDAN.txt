@@ -1,31 +1,5 @@
 WORKING SINCE 2025-09-07
 
-x other sprites: garden
-x apple mirror
-x tree mirror
-x other sprites: tree
-x other sprites: apple
-x other sprites: ui_coin_x2
-x other sprites: chest
-x other sprites: enemy projectile
-x enemy projectile rotates
-x enemy projectile flies infinitely
-x can scale shadows
-x other sprites: better shadows (bf_game.py)
-x sprites: better mob projectile
-x sprites mob: chaser
-x sprites mob: ranger
-x sprites mob: spawner
-x sprites mob: chester
-x cooravie shadow
-x spawner shadow
-x sprites mob: small
-x mob projectile scale from big upon creation
-x sprites mob: rusher
-x sprites mob: better chaser (too many details right now)
-x rusher: forcefully sets dir when rushing
-x ranger: forcefully sets dir when shooting
-
 * sprites mob: boss
 *
 * sprites: player
