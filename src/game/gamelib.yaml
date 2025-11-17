@@ -197,9 +197,6 @@ creatures: # {  ###
     hostility_type: FRIENDLY
     idle_texture_ids:
       - game_creature_main_character_move_1
-      - game_creature_main_character_move_1
-      - game_creature_main_character_move_1
-      - game_creature_main_character_move_1
     move_texture_ids:
       - game_creature_main_character_move_1
       - game_creature_main_character_move_2
