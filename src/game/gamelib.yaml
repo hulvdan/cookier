@@ -280,19 +280,20 @@ creatures: # {  ###
     contact_damage: 2
     contact_damage_increase_per_wave: 0.85
     knockback_resistance: 0.9
-    color: 0x7a7576ff
+    hurtbox_scale: 1.1
+    collider_scale: 1.15
     speed: 5
     not_aggroed_speed: 3.75
     speed_plus_minus: 0.8
     coins_dropped: 3
     aggro_distance: 7
     idle_texture_ids:
-      - game_creature_player_move_1
+      - game_creature_rusher_move_1
     move_texture_ids:
-      - game_creature_player_move_1
-      - game_creature_player_move_2
-      - game_creature_player_move_3
-      - game_creature_player_move_4
+      - game_creature_rusher_move_1
+    shadow_offset_x: 0.1
+    shadow_offset_y: -0.85
+    shadow_scale: 1.2
   - type: SPAWNER
     appearing_wave_number: 14
     spawn_factor: 10
@@ -347,7 +348,6 @@ creatures: # {  ###
     knockback_resistance: 1
     consumable_drop_chance: 0
     is_boss: true
-    color: 0xffaa00ff
     speed: 3.5
     collider_scale: 2
     hurtbox_scale: 1.7
