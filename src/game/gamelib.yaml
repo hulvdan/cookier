@@ -663,7 +663,7 @@ weapons: # {  ###
     shooting_duration_frames: 10
     range_meters: 3
     knockback_meters: 5
-    life_steal_percents: 1.5
+    life_steal_percents: 1.5 1.5 1.5 1.5
     melee_collider_height_px: 76
     icon_texture_id: game_weapon_sword
     texture_ids:
@@ -1018,13 +1018,13 @@ weapons: # {  ###
     max_price: 130
     cooldown_frames: 199                
     shooting_duration_frames: 15        
+    melee_collider_height_px: 25
     range_meters: 2.5                   
     knockback_meters: 8                 
-    life_steal_percent: 0
-    icon_texture_id: game_weapon_todo
+    icon_texture_id: game_weapon_caramel_club
     texture_ids:
-      - game_weapon_todo
-  - type: CHOPPER
+      - game_weapon_caramel_club
+  - type: SUGAR_CHOPPER
     min_tier_index: 0
     weaponkind_type: MELEE
     base_damage: 6 12 18 30
@@ -1035,13 +1035,13 @@ weapons: # {  ###
     cooldown_frames: 115                  
     shooting_duration_frames: 12
     range_meters: 2.0                       
+    melee_collider_height_px: 25
     knockback_meters: 2                     
-    life_steal_percent: 0
     max_price: 130
-    icon_texture_id: game_weapon_todo
+    icon_texture_id: game_weapon_sugar_chopper
     texture_ids:
-      - game_weapon_todo
-  - type: CIRCULAR_SAW
+      - game_weapon_sugar_chopper
+  - type: PIZZA_CUTTER
     min_tier_index: 1
     weaponkind_type: MELEE
     base_damage: 10 15 25
@@ -1052,13 +1052,13 @@ weapons: # {  ###
     shooting_duration_frames: 10
     range_meters: 2.2
     knockback_meters: 0
-    life_steal_percent: 45
-    melee_collider_height_px: 75
+    life_steal_percents: 45 45 45
+    melee_collider_height_px: 25
     max_price: 140
-    icon_texture_id: game_weapon_todo
+    icon_texture_id: game_weapon_pizza_cutter
     texture_ids:
-      - game_weapon_todo
-  - type: CLAW
+      - game_weapon_pizza_cutter
+  - type: SPORK
     min_tier_index: 0
     weaponkind_type: MELEE
     base_damage: 5 10 15 25
@@ -1072,12 +1072,12 @@ weapons: # {  ###
     shooting_duration_frames: 8
     range_meters: 1.9
     knockback_meters: 2
-    life_steal_percent: 0
     max_price: 125
-    icon_texture_id: game_weapon_todo
+    melee_collider_height_px: 25
+    icon_texture_id: game_weapon_spork
     texture_ids:
-      - game_weapon_todo
-  - type: DEXTROYER
+      - game_weapon_spork
+  - type: GREAT_GRAIN_DIVIDER
     min_tier_index: 3 
     weaponkind_type: MELEE
     base_damage: 100   
@@ -1091,12 +1091,11 @@ weapons: # {  ###
     shooting_duration_frames: 15
     range_meters: 5.0          
     knockback_meters: 10
-    life_steal_percent: 0
-    melee_collider_height_px: 80
+    melee_collider_height_px: 25
     max_price: 200
-    icon_texture_id: game_weapon_todo
+    icon_texture_id: game_weapon_great_grain_divider
     texture_ids:
-      - game_weapon_todo
+      - game_weapon_great_grain_divider
   - type: DRILL
     min_tier_index: 3
     weaponkind_type: MELEE
@@ -1111,8 +1110,7 @@ weapons: # {  ###
     shooting_duration_frames: 6
     range_meters: 1.3
     knockback_meters: 5
-    life_steal_percent: 0
-    melee_collider_height_px: 65
+    melee_collider_height_px: 25
     max_price: 180
     icon_texture_id: game_weapon_todo
     texture_ids:
@@ -1129,8 +1127,7 @@ weapons: # {  ###
     shooting_duration_frames: 10
     range_meters: 2.5
     knockback_meters: 5
-    life_steal_percent: 0
-    melee_collider_height_px: 85
+    melee_collider_height_px: 25
     max_price: 250
     icon_texture_id: game_weapon_todo
     texture_ids:
@@ -1147,9 +1144,112 @@ weapons: # {  ###
     shooting_duration_frames: 8
     range_meters: 1.9
     knockback_meters: 15
-    life_steal_percent: 0
-    melee_collider_height_px: 55
+    melee_collider_height_px: 25
     max_price: 100
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: FLAMING_BRASS_KNUCKLES
+    min_tier_index: 1
+    weaponkind_type: MELEE
+    base_damage: 16 32 64
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100 100 100
+    crit_damage_multiplier: 1.5
+    cooldown_frames: 80
+    shooting_duration_frames: 8
+    range_meters: 1.9
+    knockback_meters: 15
+    melee_collider_height_px: 25
+    max_price: 150
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: GHOST_AXE
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage: 12 18 24 40
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100 100 100 100
+    crit_damage_multiplier: 2.0
+    cooldown_frames: 194
+    shooting_duration_frames: 15  
+    range_meters: 2.5
+    knockback_meters: 2
+    melee_collider_height_px: 90 
+    max_price: 125
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: GHOST_FLINT
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage: 6 9 12 18
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100 100 100 100
+    crit_damage_multiplier: 2.0
+    cooldown_frames: 136
+    shooting_duration_frames: 8
+    range_meters: 2.1
+    knockback_meters: 2
+    melee_collider_height_px: 60
+    max_price: 120
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: HAMMER
+    min_tier_index: 1
+    weaponkind_type: MELEE
+    base_damage: 35 70 110
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 150 175 200
+    crit_damage_multiplier: 1.75
+    cooldown_frames: 190
+    shooting_duration_frames: 18
+    range_meters: 2.2
+    knockback_meters: 50
+    melee_collider_height_px: 100
+    max_price: 140
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: HAND
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage: 1 1 1 1
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 50 50 50 50
+    crit_damage_multiplier: 1.5
+    cooldown_frames: 105
+    shooting_duration_frames: 5
+    range_meters: 1.9
+    knockback_meters: 30
+    melee_collider_height_px: 50
+    max_price: 80
+    icon_texture_id: game_weapon_todo
+    texture_ids:
+      - game_weapon_todo
+  - type: HATCHET
+    min_tier_index: 0
+    weaponkind_type: MELEE
+    base_damage: 5 10 20 40
+    damage_scalings:
+      - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100 100 100 100
+      - stat_type: ATTACK_SPEED
+        percents_per_tier: 15 15 15 15
+    crit_damage_multiplier: 2.0
+    cooldown_frames: 76
+    shooting_duration_frames: 6       
+    range_meters: 1.6
+    knockback_meters: 2
+    melee_collider_height_px: 70
+    max_price: 115
     icon_texture_id: game_weapon_todo
     texture_ids:
       - game_weapon_todo
@@ -1570,6 +1670,7 @@ builds: # {  ###
       - SWORD
       - BOW
       - GUN
+      - HAND
     effects:
       - stat_type: HP
         value: 5
