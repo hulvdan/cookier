@@ -353,9 +353,12 @@ creatures: # {  ###
     hurtbox_scale: 1.7
     speed_plus_minus: 0
     idle_texture_ids:
-      - game_creature_boss_idle_1
+      - game_creature_boss_move_1
     move_texture_ids:
-      - game_creature_boss_idle_1
+      - game_creature_boss_move_1
+    shadow_offset_x: 0.05
+    shadow_offset_y: -0.95
+    shadow_scale: 2.1
   - type: TREE
     spawn_factor: 0
     health: 10

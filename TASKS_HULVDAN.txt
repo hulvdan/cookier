@@ -1,7 +1,6 @@
 WORKING SINCE 2025-09-07
+x sprites mob: boss
 
-* sprites mob: boss
-*
 * sprites: player
 *
 * gamelib hot reload
