@@ -329,7 +329,7 @@ STAT_CRIT_CHANCE;Шанс Крита;Crit Chance;
 STAT_ENGINEERING;Ремесло;Engineering;
 STAT_RANGE;Дальность;Range;
 STAT_ARMOR;Защита;Defense;
-STAT_DODGE;Уклон;Dodge;
+STAT_DODGE;Уворот;Dodge;
 STAT_SPEED;Скорость;Speed;
 STAT_LUCK;Удача;Luck;
 STAT_HARVESTING;Инвестиции;Investments;
