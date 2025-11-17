@@ -54,6 +54,12 @@ constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX = 2;
 
 // Other.
 // ============================================================
+constexpr auto ANIMATION_0_FRAMES = lframe::FromSeconds(0.2f);
+constexpr auto ANIMATION_1_FRAMES = lframe::FromSeconds(0.5f);
+constexpr auto ANIMATION_2_FRAMES = lframe::FromSeconds(1.2f);
+constexpr auto ANIMATION_3_FRAMES = lframe::FromSeconds(3.2f);
+constexpr auto ANIMATION_4_FRAMES = lframe::FromSeconds(5.0f);
+
 constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS        = lframe::Scaled(10);
 constexpr auto SPAWN_FRAMES                             = lframe::Scaled(60);
 constexpr auto DIE_FRAMES                               = lframe::Scaled(10);
@@ -172,25 +178,25 @@ constexpr auto MOB_BOSS_PRE_SHOT_FRAMES  = ANIMATION_0_FRAMES;
 constexpr auto MOB_BOSS_POST_SHOT_FRAMES = ANIMATION_0_FRAMES;
 
 struct ShootingPattern {
-  int    numberPerShot        = {};
+  int    projectilesPerShot   = {};
   f32    rotationOffset       = {};
   lframe cooldownBetweenShots = {};
   int    shotsCount           = {};
 } BOSS_SHOOTING_PATTERNS_[]{
   {
-    .numberPerShot        = 3,
+    .projectilesPerShot   = 3,
     .rotationOffset       = PI32 * 2 / 100,
     .cooldownBetweenShots = lframe::FromSeconds(0.12f),
     .shotsCount           = 100,
   },
   {
-    .numberPerShot        = 3,
+    .projectilesPerShot   = 3,
     .rotationOffset       = PI32 * 2 / 3,
     .cooldownBetweenShots = lframe::FromSeconds(0.4f),
     .shotsCount           = 8,
   },
   {
-    .numberPerShot        = 8,
+    .projectilesPerShot   = 8,
     .rotationOffset       = PI32 * 2 / 16,
     .cooldownBetweenShots = lframe::FromSeconds(0.8f),
     .shotsCount           = 4,
@@ -345,12 +351,6 @@ constexpr f32  DAMAGED_FLASH_PRECALC_X       = _PrecalcFlashingX(
   DAMAGED_FLASHING_TIMES,
   DAMAGED_FLASH_NOT_FLASH_RATIO
 );
-
-constexpr auto ANIMATION_0_FRAMES = lframe::FromSeconds(0.2f);
-constexpr auto ANIMATION_1_FRAMES = lframe::FromSeconds(0.5f);
-constexpr auto ANIMATION_2_FRAMES = lframe::FromSeconds(1.2f);
-constexpr auto ANIMATION_3_FRAMES = lframe::FromSeconds(3.2f);
-constexpr auto ANIMATION_4_FRAMES = lframe::FromSeconds(5.0f);
 
 constexpr auto ACHIEVEMENT_TOTAL_FRAMES = ANIMATION_3_FRAMES;
 constexpr auto ACHIEVEMENT_IN_FRAMES    = ANIMATION_1_FRAMES;
