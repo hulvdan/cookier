@@ -3593,7 +3593,7 @@ int MakeCreature(MakeCreatureData data) {  ///
     auto& d = creature.DataBoss();
     d       = {};
     d.startedShootingAt.SetNow();
-    d.pattern = GRAND.Rand() % BOSS_SHOOTING_PATTERNS.count;
+    d.shootingPattern = GRAND.Rand() % BOSS_SHOOTING_PATTERNS.count;
     d.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
   } break;
 
@@ -3678,6 +3678,21 @@ void MakeWalls(MakeWallsData data) {  ///
     if (data.outBodies.count)
       data.outBodies[i] = body;
   }
+}
+
+Vector2 Bezier(Vector2 v1, Vector2 v2, Vector2 v3, Vector2 v4, f32 t) {  ///
+  ASSERT(t >= 0);
+  ASSERT(t <= 1);
+
+  auto a1 = Vector2Lerp(v1, v2, t);
+  auto a2 = Vector2Lerp(v2, v3, t);
+  auto a3 = Vector2Lerp(v3, v4, t);
+
+  auto b1 = Vector2Lerp(a1, a2, t);
+  auto b2 = Vector2Lerp(a2, a3, t);
+
+  auto c = Vector2Lerp(b1, b2, t);
+  return c;
 }
 
 Vector2 GetCameraTargetPos() {  ///
@@ -10929,7 +10944,7 @@ void GameFixedUpdate() {
             auto&      data = creature.DataBoss();
             const auto e    = data.startedShootingAt.Elapsed() - data.cooldown;
 
-            const auto& pattern = BOSS_SHOOTING_PATTERNS[data.pattern];
+            const auto& pattern = BOSS_SHOOTING_PATTERNS[data.shootingPattern];
 
             if (MOB_BOSS_SHOOTING_FRAMES.Contains(e.value)) {
               FOR_RANGE (int, shotIndex, pattern.projectilesPerShot) {

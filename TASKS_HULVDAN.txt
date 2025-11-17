@@ -2,6 +2,8 @@ WORKING SINCE 2025-09-07
 
 x sprites mob: boss
 
+* убрать "писюн" босса
+* добавить боссу у рта справа трещину
 * boss shooting patterns
 * sprites: player
 *
