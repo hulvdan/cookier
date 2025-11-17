@@ -3,10 +3,10 @@
 #pragma once
 
 #ifndef PI32
-#  define PI32 3.14159265358979323846f
+#  define PI32 (3.14159265358979323846f)
 #endif
 #ifndef PI64
-#  define PI64 3.14159265358979323846
+#  define PI64 (3.14159265358979323846)
 #endif
 
 bool FloatEquals(f32 v1, f32 v2) {  ///

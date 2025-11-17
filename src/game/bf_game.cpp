@@ -495,7 +495,7 @@ struct Item {  ///
   FrameVisual uiBouncedAt = {};
 };
 
-struct AvailableItem {
+struct AvailableItem {  ///
   ItemType type  = {};
   int      count = {};
 };
@@ -887,7 +887,7 @@ struct Placeholder {  ///
   }
 };
 
-struct PlaceholderGroup {
+struct PlaceholderGroup {  ///
   const char*       placeholder = {};
   PlaceholderGroup* next        = nullptr;
 
@@ -962,7 +962,7 @@ struct JustUnlockedAchievement {  ///
 
 constexpr int MAX_BEAUTIFIERS = 32;
 
-enum Direction {
+enum Direction {  ///
   Direction_NONE,
   Direction_RIGHT,
   Direction_UP,
@@ -972,14 +972,14 @@ enum Direction {
 
 using ControlsGroupID = int;
 
-struct ControlsEntry {
+struct ControlsEntry {  ///
   Clay_ElementId id = {};
 
   ControlsEntry* next = {};
   ControlsEntry* prev = {};
 };
 
-struct ControlsDimension {
+struct ControlsDimension {  ///
   ControlsEntry* first = {};
   ControlsEntry* last  = {};
 
@@ -1062,13 +1062,13 @@ struct MakeParticlesData {  ///
   f32 rotationSpeedPlusMinus = PI32;
 };
 
-struct Prop {
+struct Prop {  ///
   int     variation = {};
   bool    right     = {};
   Vector2 pos       = {};
 };
 
-struct TurretToSpawn {
+struct TurretToSpawn {  ///
   int               baseDamage     = {};
   DamageScalingsFBT damageScalings = {};
 };
@@ -3220,7 +3220,7 @@ void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
   BF_CLAY_IMAGE(data, [] {}, _resetPlaceholders);
 }
 
-struct ClayTextOptions {
+struct ClayTextOptions {  ///
   Color color = palTextWhite;
 
   // Others: CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_WRAP_NONE.
