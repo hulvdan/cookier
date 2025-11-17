@@ -195,7 +195,6 @@ creatures: # {  ###
   - type: PLAYER
     speed: 7.5
     hostility_type: FRIENDLY
-    color: 0xffffffff
     idle_texture_ids:
       - game_creature_main_character_move_1
       - game_creature_main_character_move_1
@@ -231,7 +230,6 @@ creatures: # {  ###
     knockback_resistance: 0
     speed: 4.5
     speed_plus_minus: 0.8
-    color: 0xffffffff
     idle_texture_ids:
       - game_creature_mob_small_move_1
     move_texture_ids:
@@ -250,16 +248,13 @@ creatures: # {  ###
     contact_damage: 1
     contact_damage_increase_per_wave: 0.6
     knockback_resistance: 0
-    color: 0xb8560fff
     speed: 5
     speed_plus_minus: 0.8
     idle_texture_ids:
-      - game_creature_player_move_1
+      - game_creature_chaser_move_1
     move_texture_ids:
-      - game_creature_player_move_1
-      - game_creature_player_move_2
-      - game_creature_player_move_3
-      - game_creature_player_move_4
+      - game_creature_chaser_move_1
+    shadow_scale: 1.15
   - type: RANGER
     appearing_wave_number: 4
     spawn_factor: 25
@@ -269,7 +264,6 @@ creatures: # {  ###
     contact_damage_increase_per_wave: 0.6
     knockback_resistance: 0.95
     projectile_damage: 4
-    color: 0xb59a66ff
     speed: 7
     speed_plus_minus: 0.8
     idle_texture_ids:
