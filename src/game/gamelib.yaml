@@ -302,7 +302,7 @@ creatures: # {  ###
     contact_damage: 1
     contact_damage_increase_per_wave: 0.85
     knockback_resistance: 0.7
-    speed: 5
+    speed: 3.5
     speed_plus_minus: 0.8
     collider_scale: 1.2
     hurtbox_scale: 1.2
