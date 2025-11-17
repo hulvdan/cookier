@@ -269,6 +269,8 @@ table Projectile {
     ailment_value: int;
     collider_radius: float = 0.4;
     aoe_on_travel_end: bool = true;
+    fades_in: bool;
+    scales_in: bool;
     texture_ids: [int];
 }
 

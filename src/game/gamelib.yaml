@@ -3429,6 +3429,8 @@ projectiles: # {  ###
     speed: 10
     rotation_speed: 4
     rotation_speed_plus_minus: 1
+    fades_in: true
+    scales_in: true
     texture_ids:
       - game_projectile_mob
   - type: BOSS
