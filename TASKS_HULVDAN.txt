@@ -22,8 +22,11 @@ x spawner shadow
 x sprites mob: small
 x mob projectile scale from big upon creation
 x sprites mob: rusher
+x sprites mob: better chaser (too many details right now)
 
-* sprites mob: better chaser (too many details right now)
+* rusher: forcefully sets dir when rushing
+* ranger: forcefully sets dir when shooting
+*
 * sprites mob: boss
 *
 * sprites: player
