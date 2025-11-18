@@ -643,7 +643,7 @@ def process_images():
     # Outlining ui icons.
     bf_image.conveyor(
         "to_outline",
-        "outlining",
+        "Outlining",
         bf_image.conveyor_outline(radius=8, color=(0, 0, 0, 255), is_shadow=False),
     )
 
@@ -652,13 +652,13 @@ def process_images():
         f.unlink()
     bf_image.conveyor(
         "to_split",
-        "extract white",
+        "Extracting white",
         bf_image.conveyor_extract_white(),
         bf_image.conveyor_suffix("front"),
     )
     bf_image.conveyor(
         "to_split",
-        "extract_black",
+        "Extracting black",
         bf_image.conveyor_extract_black(),
         bf_image.conveyor_suffix("back"),
     )
@@ -684,22 +684,54 @@ def process_images():
         t = biome["type"]
         bf_image.conveyor(
             "to_biome",
-            f"{t}: remapping",
+            f"{t}: Remapping",
             bf_image.conveyor_remap(
                 get_color(biome, "outline_color"), get_color(biome, "fill_color")
             ),
             bf_image.conveyor_suffix(t.lower()),
         )
 
+    # Spritesheetifying stat icons.
+    for f in (ART_TEXTURES_DIR / "stat_icons").glob("*.png"):
+        f.unlink()
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_005.png",
+        cell_size=160,
+        size=(5, 5),
+        gap=10,
+        out_filename_prefix="ui_stat_icon_",
+        out_filenames=[
+            "level",
+            "hp",
+            "regen",
+            "life_steal",
+            "damage",
+            "damage_melee",
+            "damage_ranged",
+            "damage_elemental",
+            "attack_speed",
+            "crit_chance",
+            "engineering",
+            "range",
+            "armor",
+            "dodge",
+            "speed",
+            "luck",
+            "harvesting",
+        ],
+        out_dir=ART_TEXTURES_DIR / "stat_icons",
+    )
+
     # Transforming stat icons into big and small.
     for f in ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
         f.unlink()
-    bf_image.conveyor("stat_icons", "copying big", bf_image.conveyor_suffix("big"))
+    bf_image.conveyor("stat_icons", "Copying Big", bf_image.conveyor_suffix("big"))
     bf_image.conveyor(
         "stat_icons",
-        "downscaling small",
-        bf_image.conveyor_scale(0.5),
-        bf_image.conveyor_outline(radius=1, color=(0, 0, 0, 255), is_shadow=False),
+        "Downscaling Small",
+        bf_image.conveyor_scale(0.55),
+        # bf_image.conveyor_outline(radius=1, color=(0, 0, 0, 255), is_shadow=False),
+        # bf_image.conveyor_outline(radius=2, color=(255, 255, 255, 255), is_shadow=False),
         bf_image.conveyor_suffix("small"),
     )
 
