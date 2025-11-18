@@ -876,6 +876,7 @@ def process_images():
         "game_creature_rusher_move_1",
         "game_creature_boss_move_1",
         "game_projectile_boss",
+        "game_creature_player_move_1",
     ]
     for f in other_filenames:
         fi = ART_TEXTURES_DIR / (f + ".png")

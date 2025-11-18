@@ -196,12 +196,9 @@ creatures: # {  ###
     speed: 7.5
     hostility_type: FRIENDLY
     idle_texture_ids:
-      - game_creature_main_character_move_1
+      - game_creature_player_move_1
     move_texture_ids:
-      - game_creature_main_character_move_1
-      - game_creature_main_character_move_2
-      - game_creature_main_character_move_3
-      - game_creature_main_character_move_4
+      - game_creature_player_move_1
   - type: TURRET
     health: 1
     hostility_type: FRIENDLY
