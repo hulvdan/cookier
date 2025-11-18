@@ -7,6 +7,7 @@ x boss patterns: mirror (startedShootingAt)
 x boss patterns: projectile scale easing on spawn
 x убрать "писюн" босса
 x добавить боссу у рта справа трещину
+x polish: creatures movement
 
 * sprites: player
 *
@@ -23,8 +24,13 @@ x добавить боссу у рта справа трещину
 *
 * polish: turret easing
 * polish: garden easing
-* polish: creatures movement
 * polish: mob cooravie shooting easing
+* polish: boss scale easing upon shot pre/post frames
+* polish:
+* polish:
+* polish:
+* polish:
+* polish:
 *
 * loc: GREEK NUT проверить
 * loc: PARTIZAN COOKIE так ли
