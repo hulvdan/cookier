@@ -5218,13 +5218,13 @@ void DoUI() {
   auto& beautifiers      = g.ui.clayBeautifiers;
   auto& beautifiersCount = g.ui.clayBeautifiersCount;
 
-  constexpr u16 GAP_FLEX                 = 2;
-  constexpr u16 GAP_SMALL                = 8;
-  constexpr u16 GAP_BIG                  = 20;
-  constexpr u16 PADDING_FRAME            = 12;
-  constexpr u16 PADDING_FRAME_SHADOW     = 94 * ASSETS_TO_LOGICAL_RATIO;
-  constexpr u16 PADDING_OUTER_VERTICAL   = 10;
-  constexpr u16 PADDING_OUTER_HORIZONTAL = 12;
+#define GAP_FLEX (2)
+#define GAP_SMALL (8)
+#define GAP_BIG (20)
+#define PADDING_FRAME (12)
+#define PADDING_FRAME_SHADOW (94 * ASSETS_TO_LOGICAL_RATIO)
+#define PADDING_OUTER_VERTICAL (10)
+#define PADDING_OUTER_HORIZONTAL (12)
 
   int _wheel = 0;
   if (!draw) {
@@ -5873,10 +5873,10 @@ void DoUI() {
 
           PlaceholdGroupBegin("STAT");
 
-          if (fb_stat->small_icon_texture_id()) {
-            PlaceholdImage(fb_stat->small_icon_texture_id());
-            PlaceholdString(" ");
-          }
+          // if (fb_stat->small_icon_texture_id()) {
+          //   PlaceholdImage(fb_stat->small_icon_texture_id());
+          //   PlaceholdString(" ");
+          // }
           PlaceholdBrokenLocale(fb_stat->name_locale());
 
           PlaceholdGroupEnd();
@@ -5897,11 +5897,20 @@ void DoUI() {
             format = (isPositive ? "+%s%%" : "%s%%");
           else
             format = (isPositive ? "+%s" : "%s");
+
+          PlaceholdGroupBegin("MODIFIER");
+
           PlaceholdString(
-            "MODIFIER",
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
             (isPositive == fb_stat->negative_is_good() ? palTextRed : palTextGreen)
           );
+
+          if (fb_stat->small_icon_texture_id()) {
+            PlaceholdString(" ");
+            PlaceholdImage(fb_stat->small_icon_texture_id());
+          }
+
+          PlaceholdGroupEnd();
         }
 
         if (fb_effect->weaponproperty_type()) {
@@ -7384,6 +7393,89 @@ void DoUI() {
     }
   };
 
+  LAMBDA (void, componentStats2, ()) {  ///
+    static int maxStatIconWidth = 0;
+    if (!maxStatIconWidth) {
+      maxStatIconWidth = glib->original_texture_sizes()
+                           ->Get(glib->ui_shop_current_level_icon_texture_id())
+                           ->x();
+      for (auto fb_stat : *fb_stats) {
+        if (fb_stat->small_icon_texture_id()) {
+          maxStatIconWidth = MAX(
+            maxStatIconWidth,
+            glib->original_texture_sizes()->Get(fb_stat->small_icon_texture_id())->x()
+          );
+        }
+      }
+    }
+
+    CLAY({.layout{.childGap = GAP_FLEX, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+      LAMBDA (void, entry, (int texID, int value, Color color = palTextWhite)) {
+        CLAY({.layout{
+          BF_CLAY_SIZING_GROW_X,
+          BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER,
+        }}) {
+          if (value)
+            BF_CLAY_TEXT(TextFormat("%d", value), {.color = color});
+          else {
+            Beautify b{.translate{0, -GAP_FLEX}};
+            BEAUTIFY(b);
+            BF_CLAY_TEXT("-");
+          }
+
+          CLAY({.layout{.sizing{
+            .width = CLAY_SIZING_FIXED(maxStatIconWidth * ASSETS_TO_LOGICAL_RATIO)
+          }}}) {
+            componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({.texID = texID});
+            });
+          }
+        }
+      };
+
+      FontBegin(&g.meta.fontUIBig);
+
+      entry(glib->ui_shop_current_level_icon_texture_id(), g.run.state.level);
+      int statIndex = -1;
+      for (const auto fb_stat : *fb_stats) {
+        statIndex++;
+        if (fb_stat->is_secondary()  //
+            || fb_stat->is_hidden()  //
+            || !fb_stat->small_icon_texture_id())
+          continue;
+
+        auto color = palTextWhite;
+        auto v     = g.run.state.stats[statIndex];
+        if (v > 0)
+          color = (fb_stat->negative_is_good() ? palTextRed : palTextGreen);
+        else if (v < 0)
+          color = (fb_stat->negative_is_good() ? palTextGreen : palTextRed);
+        entry(fb_stat->small_icon_texture_id(), v, color);
+      }
+
+      FontEnd();
+    }
+  };
+
+  LAMBDA (
+    void,
+    componentStats2Wrapped,
+    (Clay_FloatingAttachPoints attachPoints
+     = {.element = CLAY_ATTACH_POINT_RIGHT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER},
+     Vector2 offset = {-GAP_SMALL, 0})
+  )
+  {
+    CLAY({.floating{
+      .offset{offset.x, offset.y},
+      .zIndex             = zIndex,
+      .attachPoints       = attachPoints,
+      .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+      .attachTo           = CLAY_ATTACH_TO_PARENT,
+    }}) {
+      componentStats2();
+    }
+  };
+
   const f32 topRowHeight
     = (f32)glib->original_texture_sizes()->Get(glib->ui_icon_stats_texture_id())->y()
         * ASSETS_TO_LOGICAL_RATIO
@@ -8161,10 +8253,12 @@ void DoUI() {
         BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
       } BF_CLAY_CUSTOM_END,
     }) {
+      componentStats2Wrapped();
+
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
-        componentButtonStats(groupTop);
+        // componentButtonStats(groupTop);
 
         componentScreenName_floatingInTheCenter(Loc_UI_ITEM_FOUND, []() {});
       });
@@ -8264,10 +8358,12 @@ void DoUI() {
         BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
       } BF_CLAY_CUSTOM_END,
     }) {
+      componentStats2Wrapped();
+
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
-        componentButtonStats(groupStats);
+        // componentButtonStats(groupStats);
 
         componentScreenName_floatingInTheCenter(Loc_UI_LEVEL_UP, []() {});
       });
@@ -8509,7 +8605,14 @@ void DoUI() {
             }
 
             // Stats.
-            componentButtonStats(groupTop);
+            // componentButtonStats(groupTop);
+            componentStats2Wrapped(
+              {
+                .element = CLAY_ATTACH_POINT_RIGHT_TOP,
+                .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+              },
+              {GAP_FLEX, 32}
+            );
           }
 
           componentScreenName_floatingInTheCenter(Loc_UI_SHOP, []() {});
@@ -8518,11 +8621,9 @@ void DoUI() {
         BF_CLAY_SPACER_VERTICAL;
 
         // 2. Items to buy.
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_X,
-          .childGap = GAP_BIG,
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-        }}) {
+        CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
+          CLAY({.layout{.sizing{.width = GAP_BIG * 2}}}) {}
+
           int toPickIndex = -1;
 
           const int selectNextIndices[SHOP_SELLING_ITEMS][3]{
@@ -8554,6 +8655,8 @@ void DoUI() {
               .shopBuyingIndex      = toPickIndex,
               .shopFocusAfterBuying = changeToID,
             });
+            if (toPickIndex < g.run.state.shop.toPick.count - 1)
+              CLAY({.layout{.sizing{.width = GAP_BIG}}}) {}
           }
 
           for (auto i : DEFAULT_BUYING_INDICES) {
@@ -8775,9 +8878,8 @@ void DoUI() {
           }
         );
 
-        BF_CLAY_SPACER_HORIZONTAL;
-
-        componentButtonStats(groupTop);
+        // BF_CLAY_SPACER_HORIZONTAL;
+        // componentButtonStats(groupTop);
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -8834,6 +8936,14 @@ void DoUI() {
               .detailsBelow = 0,
             });
           }
+
+          componentStats2Wrapped(
+            {
+              .element = CLAY_ATTACH_POINT_LEFT_CENTER,
+              .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
+            },
+            {GAP_BIG * 3, 0}
+          );
         }
       }
 
@@ -9136,6 +9246,8 @@ void DoUI() {
       else {  ///
         SCOPED_CONTEXT(ControlsContext_PAUSE);
 
+        componentStats2Wrapped();
+
         auto groupButtons         = MakeControlsGroup();
         auto groupWeaponsAndItems = MakeControlsGroup();
         auto groupItemArrows      = MakeControlsGroup();
@@ -9145,10 +9257,10 @@ void DoUI() {
           BF_CLAY_SIZING_GROW_XY,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-            BF_CLAY_SPACER_HORIZONTAL;
-            componentButtonStats(groupTop);
-          });
+          // componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+          //   BF_CLAY_SPACER_HORIZONTAL;
+          //   componentButtonStats(groupTop);
+          // });
 
           BF_CLAY_SPACER_VERTICAL;
 
@@ -10177,6 +10289,14 @@ void DoUI() {
       DrawGroup_End();
     }
   }
+
+#undef GAP_FLEX
+#undef GAP_SMALL
+#undef GAP_BIG
+#undef PADDING_FRAME
+#undef PADDING_FRAME_SHADOW
+#undef PADDING_OUTER_VERTICAL
+#undef PADDING_OUTER_HORIZONTAL
 }
 
 // NOTE: Current implementation assumes that `creatureSpeed` << `projectileSpeed`.
