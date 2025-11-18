@@ -537,6 +537,8 @@ struct Creature {  ///
   f32                speed                          = {};
   f32                speedModifier                  = 1;
   f32                movementAccumulator            = {};
+  f32                movementVisualFactor           = {};
+  f32                movementAccumulatorVisual      = {};
   FrameGame          idleStartedAt                  = {};
   bool               killedBecauseOfTheEndOfTheWave = false;
   bool               aggroed                        = false;
@@ -11545,11 +11547,19 @@ void GameFixedUpdate() {
           creature.movementAccumulator = 0;
           if (!creature.idleStartedAt.IsSet())
             creature.idleStartedAt.SetNow();
+
+          creature.movementVisualFactor
+            = MoveTowardsF(creature.movementVisualFactor, 0, FIXED_DT * 5);
         }
         else {
-          creature.movementAccumulator += Vector2Length(velocity) * FIXED_DT;
+          auto v = Vector2Length(velocity) * FIXED_DT;
+          creature.movementAccumulator += v;
+          creature.movementAccumulatorVisual += v;
           if (creature.idleStartedAt.IsSet())
             creature.idleStartedAt = {};
+
+          creature.movementVisualFactor
+            = MoveTowardsF(creature.movementVisualFactor, 1, FIXED_DT * 5);
         }
 
         const auto fb = fb_creatures->Get(creature.type);
@@ -12764,11 +12774,22 @@ void GameDraw() {
       DAMAGED_FLASH_PRECALC_X
     );
 
+    const f32 sy = (f32)glib->original_texture_sizes()->Get(texID)->y()
+                   * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
+
+    Vector2 movementScale{1, 1};
+    f32     movementCycle = creature.movementAccumulatorVisual * PI32 * 3 / 4;
+    f32     movementAmplitudeScale
+      = 0.1f * EaseInQuad(creature.movementVisualFactor) * 3 / 4 / sy * 2;
+    movementScale
+      += Vector2(cosf(movementCycle), sinf(movementCycle)) * movementAmplitudeScale;
+
     DrawGroup_OneShotTexture(
       {
         .texID = texID,
-        .pos   = creature.pos,
-        .scale = scale,
+        .pos   = creature.pos + Vector2(0, fb->shadow_offset_y()),
+        .anchor{0.5f, 0.5f + fb->shadow_offset_y() / sy},
+        .scale = scale * movementScale,
         .color = Fade(color, fade),
         .flash = flash,
       },
@@ -12942,13 +12963,13 @@ void GameDraw() {
         );
       }
 
-      Color flash{};
+      Color flash = TRANSPARENT_WHITE;
 
       f32 fade = 1;
       if (fb->fades_in()) {
         auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
         fade   = EaseOutQuad(MIN(1, p));
-        flash  = Fade(WHITE, 1 - fade);
+        // flash  = Fade(flash, 1 - fade);
       }
 
       DrawGroup_CommandTexture({

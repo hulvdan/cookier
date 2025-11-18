@@ -345,7 +345,7 @@ creatures: # {  ###
     knockback_resistance: 1
     consumable_drop_chance: 0
     is_boss: true
-    speed: 3.5
+    speed: 2.5
     collider_scale: 2
     hurtbox_scale: 1.7
     speed_plus_minus: 0
@@ -3969,15 +3969,15 @@ boss_shooting_patterns: # {  ###
   - projectiles_per_shot: 3
     rotation_offset: 0.20
     cooldown_between_shots_in_seconds: 0.005
-    shots_count: 50
+    shots_count: 30
   - projectiles_per_shot: 8
     rotation_offset: 0.3927
     cooldown_between_shots_in_seconds: 0.5
     shots_count: 9
 # }
 
-boss_cooldown_min_seconds: 1
-boss_cooldown_max_seconds: 2
+boss_cooldown_min_seconds: 3
+boss_cooldown_max_seconds: 4
 boss_pre_shot_seconds: 0.1
 boss_post_shot_seconds: 0.1
 
