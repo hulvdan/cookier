@@ -12933,7 +12933,7 @@ void GameDraw() {
     DrawGroup_End();
   }
 
-  // Drawing projectiles + their gizmos.
+  // Drawing projectiles.
   {  ///
     DrawGroup_Begin(DrawZ_PROJECTILES);
     DrawGroup_SetSortY(0);
@@ -12984,8 +12984,9 @@ void GameDraw() {
 
     DrawGroup_End();
   }
-  // Gizmos.
-  if (ge.meta.debugEnabled) {
+
+  // Drawing projectiles gizmos.
+  if (ge.meta.debugEnabled) {  ///
     for (const auto& projectile : g.run.projectiles) {
       auto fb = fb_projectiles->Get(projectile.type);
 
@@ -13179,7 +13180,7 @@ void GameDraw() {
       {
         .texID = glib->ui_vignette_danger_hp_level_texture_id(),
         .pos   = (Vector2)LOGICAL_RESOLUTION / 2.0f,
-        .scale = Vector2One() * 4.001f,
+        .scale = Vector2One() * 4.2f,
         .color = Fade(palRed, MIN(1, g.run.dangerHPLevelOverlayValue)),
       },
       DrawZ_DANGER_HP_LEVEL_VIGNETTE
