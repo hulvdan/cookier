@@ -90,9 +90,9 @@ def outline(
     else:
         stroked = _change_matrix_outline(dist, radius)
 
-    stroke_b = np.full((h, w), color[2], np.uint8)
+    stroke_b = np.full((h, w), color[0], np.uint8)
     stroke_g = np.full((h, w), color[1], np.uint8)
-    stroke_r = np.full((h, w), color[0], np.uint8)
+    stroke_r = np.full((h, w), color[2], np.uint8)
     stroke_alpha = (stroked * color[3]).astype(np.uint8)
 
     stroke = cv2.merge((stroke_b, stroke_g, stroke_r, stroke_alpha))

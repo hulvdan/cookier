@@ -8,7 +8,11 @@ x boss patterns: projectile scale easing on spawn
 x убрать "писюн" босса
 x добавить боссу у рта справа трещину
 x polish: creatures movement
+x spritesheetify stat icons
+x clean stat icons so that downscaled icons don't get artifacts
 
+* localization: russian: the same STAT MODIFIER english
+*
 * sprites: player
 *
 * weapons
@@ -36,7 +40,6 @@ x polish: creatures movement
 * loc: PARTIZAN COOKIE так ли
 * loc: шляпа повара / cook's hat как писать на рус + англ
 * loc: cooravie
-* loc: обычная книга англ
 * loc: TODOOO Подставка Для Свечек;TODOOO Candlestick;
 * loc: кастрюля или кострюля
 * loc: Phartuk
@@ -48,7 +51,6 @@ x polish: creatures movement
 * impl: STAT__DURING_NEXT_WAVE
 *
 * fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
-* localization: russian: the same STAT MODIFIER english
 * AUDIO SET METADATA: ffmpeg -i test.wav -c copy -metadata artist="ABOBA" test2.wav
 *
 * stats: knockback

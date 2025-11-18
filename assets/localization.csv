@@ -106,7 +106,7 @@ EFFECT_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING;{X} шанс нанести {Y}
 EFFECT_CAP__STAT;{STAT} более не сможет быть увеличен;{STAT} is capped at it's current value;
 EFFECT_WEAPONS_CAN_NO_LONGER_BE_UPGRADED_OR_RECYCLED;Оружия более не могут быть улучшены или переработаны;Weapons can no longer be upgraded or recycled;
 EFFECT_RESTORE__X__HP_PER__Y__SECONDS_WITHOUT_ABILITY_TO_HEAL_ANY_OTHER_WAY;Вы восстанавливаете {X} здоровья раз в {Y}с. Лечение другими способами более не работает;You restore {X} HP per {Y}s. Can't heal any other way;
-EFFECT_TURRET_DEALING__X__DAMAGE;Создаёт туррель, что наносит {X} урона;Spawns a Turret that deals {X} damage;
+EFFECT_TURRET_DEALING__X__DAMAGE;Создаёт туррель, что наносит {X} урона;Spawns a turret that deals {X} damage;
 EFFECT_TYLER_DEALING__X__DAMAGE_AND_SHOOTING__Y__PROJECTILES;TODO {X} {Y};TODO {X} {Y};
 EFFECT_HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y;TODO {X} {Y};TODO {X} {Y};
 EFFECT_START_THE_NEXT_WAVE_WITH_1_HP;Следующую волну вы начнёте с 1 здоровьем;Start the next wave with 1 HP;
@@ -171,7 +171,7 @@ ITEM_CYCLOPS_WORM;Кострюля Супа;Pot Of Soup;
 ITEM_DANGEROUS_BUNNY;Намагниченный Кубик;Magnetized Dice;
 ITEM_DECOMPOSING_FLESH;Кость;Bone;
 ITEM_DIPLOMA;Шляпа Для Умников;Highbrow's Hat;
-ITEM_DUCT_TAPE;Вживляеамя Пластина;Implantable Plate;
+ITEM_DUCT_TAPE;Вживляемая Пластина;Implantable Plate;
 ITEM_DYNAMITE;Сахар;Sugar;
 ITEM_ENERGY_BRACELET;Кольцо Алой Ведьмы;Crimson Witch's Ring;
 ITEM_EXPLOSIVE_SHELLS;Порох;Gunpowder;
