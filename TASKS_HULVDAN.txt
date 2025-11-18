@@ -14,9 +14,8 @@ x bright small stat icons
 x fix blood vignette
 x localization: russian: the same STAT MODIFIER english
 x wrap stats2 into a floating component
+x stats wheel cheating
 
-* stats wheel cheating
-*
 * sprites: player
 *
 * weapons

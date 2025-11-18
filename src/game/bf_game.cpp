@@ -7410,11 +7410,22 @@ void DoUI() {
     }
 
     CLAY({.layout{.childGap = GAP_FLEX, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
-      LAMBDA (void, entry, (int texID, int value, Color color = palTextWhite)) {
+      LAMBDA (
+        void, entry, (StatType stat, int texID, int value, Color color = palTextWhite)
+      )
+      {
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_X,
           BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER,
         }}) {
+          // Increasing stat by clicking on it in debug mode.
+          if (stat && (ge.meta.debugEnabled || BF_DEBUG)) {
+            if (clickOrTouchPressed())
+              ChangeStat(stat, 1);
+            if (wheel && Clay_Hovered())
+              ChangeStat(stat, wheel);
+          }
+
           if (value)
             BF_CLAY_TEXT(TextFormat("%d", value), {.color = color});
           else {
@@ -7435,7 +7446,7 @@ void DoUI() {
 
       FontBegin(&g.meta.fontUIBig);
 
-      entry(glib->ui_shop_current_level_icon_texture_id(), g.run.state.level);
+      entry({}, glib->ui_shop_current_level_icon_texture_id(), g.run.state.level);
       int statIndex = -1;
       for (const auto fb_stat : *fb_stats) {
         statIndex++;
@@ -7450,7 +7461,7 @@ void DoUI() {
           color = (fb_stat->negative_is_good() ? palTextRed : palTextGreen);
         else if (v < 0)
           color = (fb_stat->negative_is_good() ? palTextGreen : palTextRed);
-        entry(fb_stat->small_icon_texture_id(), v, color);
+        entry((StatType)statIndex, fb_stat->small_icon_texture_id(), v, color);
       }
 
       FontEnd();
