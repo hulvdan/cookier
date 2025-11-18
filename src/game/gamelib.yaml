@@ -3434,8 +3434,10 @@ projectiles: # {  ###
     texture_ids:
       - game_projectile_mob
   - type: BOSS
-    speed: 3
+    speed: 4
     rotation_speed: 5
+    fades_in: true
+    scales_in: true
     texture_ids:
       - game_projectile_boss
       # - game_projectile_mob
@@ -3962,5 +3964,21 @@ floor_corners: # {  ###
       x: -5
       y: 5
 # }
+
+boss_shooting_patterns: # {  ###
+  - projectiles_per_shot: 3
+    rotation_offset: 0.20
+    cooldown_between_shots_in_seconds: 0.005
+    shots_count: 50
+  - projectiles_per_shot: 8
+    rotation_offset: 0.3927
+    cooldown_between_shots_in_seconds: 0.5
+    shots_count: 9
+# }
+
+boss_cooldown_min_seconds: 1
+boss_cooldown_max_seconds: 2
+boss_pre_shot_seconds: 0.1
+boss_post_shot_seconds: 0.1
 
 ###

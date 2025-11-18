@@ -3640,8 +3640,17 @@ struct lframe {  ///
   }
 
   void SetRand(lframe v1, lframe v2) {
-    ASSERT(v2.value > v1.value);
+    ASSERT(v2.value >= v1.value);
     value = v1.value + ge.meta.logicRand.Rand() % (v2.value - v1.value);
+  }
+
+  void SetRandSeconds(f32 v) {
+    value = (f32)FIXED_FPS * v;
+  }
+
+  void SetRandSeconds(f32 v1, f32 v2) {
+    ASSERT(v2 >= v1);
+    value = Round((f32)FIXED_FPS * Lerp(v1, v2, GRAND.FRand()));
   }
 };
 

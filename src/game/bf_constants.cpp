@@ -163,48 +163,6 @@ constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::Unscaled(3.5f * FIXED_FPS)
 constexpr auto MOB_TURRET_SHOOTING_FRAMES = lframe::Scaled(10);
 constexpr auto MOB_TURRET_SHOOT_FRAME     = lframe::Scaled(2);
 
-constexpr auto MOB_BOSS_TOTAL_SHOOTING_FRAMES              = lframe::FromSeconds(1.8f);
-constexpr auto MOB_BOSS_SHOOTING_LINES                     = 3;
-constexpr auto MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE      = 4;
-constexpr auto MOB_BOSS_SHOOTING_EMPTY_SPOTS_BETWEEN_LINES = 3;
-int            MOB_BOSS_SHOOTING_FRAMES_
-  [MOB_BOSS_SHOOTING_LINES * MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE]{};
-VIEW_FROM_ARRAY_DANGER(MOB_BOSS_SHOOTING_FRAMES);
-constexpr auto MOB_BOSS_PROJECTILES_CIRCLE_FRAMES = lframe::FromSeconds(2.0f);
-constexpr auto MOB_BOSS_COOLDOWN_MIN              = lframe::FromSeconds(2.0f);
-constexpr auto MOB_BOSS_COOLDOWN_MAX              = lframe::FromSeconds(4.0f);
-
-constexpr auto MOB_BOSS_PRE_SHOT_FRAMES  = ANIMATION_0_FRAMES;
-constexpr auto MOB_BOSS_POST_SHOT_FRAMES = ANIMATION_0_FRAMES;
-
-struct ShootingPattern {
-  int    projectilesPerShot   = {};
-  f32    rotationOffset       = {};
-  lframe cooldownBetweenShots = {};
-  int    shotsCount           = {};
-} BOSS_SHOOTING_PATTERNS_[]{
-  {
-    .projectilesPerShot   = 3,
-    .rotationOffset       = PI32 * 2 / 100,
-    .cooldownBetweenShots = lframe::FromSeconds(0.12f),
-    .shotsCount           = 100,
-  },
-  {
-    .projectilesPerShot   = 3,
-    .rotationOffset       = PI32 * 2 / 3,
-    .cooldownBetweenShots = lframe::FromSeconds(0.4f),
-    .shotsCount           = 8,
-  },
-  {
-    .projectilesPerShot   = 8,
-    .rotationOffset       = PI32 * 2 / 16,
-    .cooldownBetweenShots = lframe::FromSeconds(0.8f),
-    .shotsCount           = 4,
-  },
-};
-
-VIEW_FROM_ARRAY_DANGER(BOSS_SHOOTING_PATTERNS);
-
 constexpr f32 PRICE_SCALINGS_PER_TIER_[TOTAL_TIERS]{
   20.0f / 149.0f,
   39.0f / 149.0f,

@@ -2,12 +2,12 @@ WORKING SINCE 2025-09-07
 
 x sprites mob: boss
 x улучшалка: gamelib hot reload
+x boss shooting patterns
+x boss patterns: mirror (startedShootingAt)
+x boss patterns: projectile scale easing on spawn
+x убрать "писюн" босса
+x добавить боссу у рта справа трещину
 
-* boss shooting patterns
-*
-* убрать "писюн" босса
-* добавить боссу у рта справа трещину
-*
 * sprites: player
 *
 * weapons
@@ -130,6 +130,7 @@ x улучшалка: gamelib hot reload
 *
 * RELEASED!
 =======================
+* boss patterns: vertical/horizontal row sliding with projectiles accelerating
 - prod sfx: take
 - prod sfx: sell
 * next wave 2 crossing swords icon
