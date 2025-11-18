@@ -10817,6 +10817,7 @@ void GameFixedUpdate() {
           if (IsTouchPressed(ge.meta._latestActiveTouchID)) {
             c.controlling = true;
             c.startPos    = ScreenPosToLogical(td.screenPos);
+            c.targetPos   = c.startPos;
           }
 
           c.targetPos = ScreenPosToLogical(td.screenPos);
@@ -10834,6 +10835,8 @@ void GameFixedUpdate() {
                 )
                 / g.ui.touchControlMaxLogicalOffset);
         }
+        else
+          c.calculatedDir = {};
       }
 
 #if BF_ENABLE_ASSERTS
