@@ -79,6 +79,7 @@ function rebuild_tasks()
         { "i_make_swatch", cli_command("make_swatch") },
         { "l_process_images", cli_command("process_images") },
         { "s_credit_sfx", cli_command("credit_sfx") },
+        { "g_codegen", cli_command("codegen Win Debug") },
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         { "l_lint_cpp", cli_command("lint") },
