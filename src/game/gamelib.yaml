@@ -199,6 +199,7 @@ creatures: # {  ###
       - game_creature_player_move_1
     move_texture_ids:
       - game_creature_player_move_1
+    shadow_offset_y: -0.68
   - type: TURRET
     health: 1
     hostility_type: FRIENDLY
