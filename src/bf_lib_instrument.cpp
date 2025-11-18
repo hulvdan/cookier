@@ -2,6 +2,7 @@
 // ============================================================
 
 #define BF_DISABLE_MOB_SPAWNS (BF_DEBUG && 0)
+#define BF_DISABLE_BOSS_SPAWN (BF_DEBUG && 0)
 #define BF_OVERRIDE_TREE_SPAWN_INTERVAL (BF_DEBUG * 0)
 #define BF_VERY_SHORT_WAVE_DURATION (BF_DEBUG && 0)
 #define BF_VERY_LONG_WAVE_DURATION (BF_DEBUG && 0)
