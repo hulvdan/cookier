@@ -10,6 +10,7 @@ x добавить боссу у рта справа трещину
 x polish: creatures movement
 x spritesheetify stat icons
 x clean stat icons so that downscaled icons don't get artifacts
+x bright small stat icons
 
 * localization: russian: the same STAT MODIFIER english
 *
