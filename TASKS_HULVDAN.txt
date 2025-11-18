@@ -15,6 +15,7 @@ x fix blood vignette
 x localization: russian: the same STAT MODIFIER english
 x wrap stats2 into a floating component
 x stats wheel cheating
+x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 
 * sprites: player
 *
@@ -47,13 +48,12 @@ x stats wheel cheating
 * loc: кастрюля или кострюля
 * loc: Phartuk
 * loc: ловкач англ (перчатка ловкача)
-* loc: Додекаэдр проверить
+* loc: Додекаэдр проверить (на русском)
 * loc: правильно ли написано Piercing Bullet's Blueprint
 * fix crash upon damaging
 *
 * impl: STAT__DURING_NEXT_WAVE
 *
-* fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 * AUDIO SET METADATA: ffmpeg -i test.wav -c copy -metadata artist="ABOBA" test2.wav
 *
 * stats: knockback
