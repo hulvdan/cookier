@@ -11,8 +11,11 @@ x polish: creatures movement
 x spritesheetify stat icons
 x clean stat icons so that downscaled icons don't get artifacts
 x bright small stat icons
+x fix blood vignette
+x localization: russian: the same STAT MODIFIER english
+x wrap stats2 into a floating component
 
-* localization: russian: the same STAT MODIFIER english
+* stats wheel cheating
 *
 * sprites: player
 *

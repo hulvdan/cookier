@@ -729,7 +729,7 @@ def process_images():
     bf_image.conveyor(
         "stat_icons",
         "Downscaling Small",
-        bf_image.conveyor_scale(0.55),
+        bf_image.conveyor_scale(0.65),
         bf_image.conveyor_brightness(1 + 3 / 8),
         # bf_image.conveyor_outline(radius=1, color=(0, 0, 0, 255), is_shadow=False),
         # bf_image.conveyor_outline(radius=2, color=(255, 255, 255, 255), is_shadow=False),
