@@ -16,17 +16,17 @@ x localization: russian: the same STAT MODIFIER english
 x wrap stats2 into a floating component
 x stats wheel cheating
 x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
+- ref: remove stats `value` -> use placeholders?
+  default effectcondition_type is `X__STAT`
+- prod: мобы
+- prod: предметы
+- prod: босс
 
 * sprites: player
-*
-* weapons
-*
 * sprites: weapons
 * sprites: projectiles
 *
-* other sprites:
-* other sprites:
-* other sprites:
+* weapons
 *
 * effect works: xp gain DURING THE NEXT WAVE
 *
@@ -34,6 +34,7 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 * polish: garden easing
 * polish: mob cooravie shooting easing
 * polish: boss scale easing upon shot pre/post frames
+* polish: mob rusher rotation pre/post easing
 * polish:
 * polish:
 * polish:
@@ -62,9 +63,9 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 * stats: ENEMY_DAMAGE
 *
 * better burning
-* achievements on picked up item / upgrades / shop / end screens
-* ref: remove stats `value` -> use placeholders
-  default effectcondition_type is `X__STAT`
+*
+* can open achievements on picked up item / upgrades / shop / end screens
+*
 * impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
 * impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_GETTING_HURT
 * impl: CAP__STAT
@@ -87,7 +88,6 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 *
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
 *
-* a way of automagically tracking used CC-BY-SA sounds in project
 *
 * better ui sounds from those that require credit
 *
@@ -121,18 +121,15 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 * prod sfx:
 * prod sfx:
 *
-* норм иконка паузы. Игрок должен сразу понятьто это «кнопка паузы»
+* норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
 *
 * prod: оружия
-* prod: предметы
 * prod: билды
 * prod: сложности
-* prod: босс
 * prod: MUSIC
 * prod: SFX
-* prod: мобы
 * prod: сакутиновая отправка event-ов аналитики
 * prod: больше ачивок?
 * prod: награды ачивок
@@ -141,6 +138,7 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 *
 * RELEASED!
 =======================
+* a way of automagically tracking used CC-BY-SA sounds in project
 * boss patterns: vertical/horizontal row sliding with projectiles accelerating
 - prod sfx: take
 - prod sfx: sell
