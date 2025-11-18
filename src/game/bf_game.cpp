@@ -654,7 +654,6 @@ struct Projectile {  ///
   f32                               knockbackMeters           = {};
   f32                               range                     = {};
   f32                               travelledDistance         = 0;
-  int                               anchorCreatureID          = {};
   bool                              dontSpawnProjectilesOnHit = false;
 };
 
@@ -674,7 +673,6 @@ struct MakeProjectileData {  ///
   f32            knockbackMeters           = {};
   int            pierce                    = {};
   int            bounce                    = {};
-  int            anchorCreatureID          = {};
   int            alreadyDamagedCreatureID  = 0;
   bool           dontSpawnProjectilesOnHit = false;
 };
@@ -3591,10 +3589,11 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   case CreatureType_BOSS: {
     auto& d = creature.DataBoss();
-    d       = {};
+    d       = {.shootingPattern = -1};
     d.startedShootingAt.SetNow();
-    d.shootingPattern = GRAND.Rand() % BOSS_SHOOTING_PATTERNS.count;
-    d.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
+    d.cooldown.SetRandSeconds(
+      glib->boss_cooldown_min_seconds(), glib->boss_cooldown_max_seconds()
+    );
   } break;
 
   case CreatureType_TREE: {
@@ -3612,10 +3611,7 @@ int MakeCreature(MakeCreatureData data) {  ///
 
 void MakeProjectile(MakeProjectileData data) {  ///
   ASSERT(data.type);
-  if (data.anchorCreatureID)
-    ASSERT(data.dir == Vector2Zero());
-  else
-    ASSERT(data.dir != Vector2Zero());
+  ASSERT(data.dir != Vector2Zero());
   if (data.ownerCreatureType == CreatureType_PLAYER)
     ASSERT(data.weaponIndexOrMinus1 >= 0);
 
@@ -3996,29 +3992,6 @@ void RunInit() {
 
   PLAYER_CREATURE.health    = MAX(1, g.run.state.stats[StatType_HP]);
   PLAYER_CREATURE.maxHealth = MAX(1, g.run.state.stats[StatType_HP]);
-
-  // Filling MOB_BOSS_SHOOTING_FRAMES.
-  {  ///
-    const int totalSpots
-      = MOB_BOSS_SHOOTING_LINES * MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE
-        + (MOB_BOSS_SHOOTING_LINES - 1) * MOB_BOSS_SHOOTING_EMPTY_SPOTS_BETWEEN_LINES;
-
-    FOR_RANGE (
-      int,
-      projectileIndex,
-      MOB_BOSS_SHOOTING_LINES * MOB_BOSS_SHOOTING_PROJECTILES_PER_LINE
-    )
-    {
-      int off = (projectileIndex / 4) * MOB_BOSS_SHOOTING_EMPTY_SPOTS_BETWEEN_LINES;
-      int v = (projectileIndex + off) * MOB_BOSS_TOTAL_SHOOTING_FRAMES.value / totalSpots;
-      ASSERT(v >= 0);
-      ASSERT(v < MOB_BOSS_TOTAL_SHOOTING_FRAMES.value);
-      MOB_BOSS_SHOOTING_FRAMES[projectileIndex] = v;
-    }
-
-    FOR_RANGE (int, i, MOB_BOSS_SHOOTING_FRAMES.count - 1)
-      ASSERT(MOB_BOSS_SHOOTING_FRAMES[i] < MOB_BOSS_SHOOTING_FRAMES[i + 1]);
-  }
 
   // Refilling `itemPools` and `weaponPools`.
   {  ///
@@ -10944,35 +10917,67 @@ void GameFixedUpdate() {
             auto&      data = creature.DataBoss();
             const auto e    = data.startedShootingAt.Elapsed() - data.cooldown;
 
-            const auto& pattern = BOSS_SHOOTING_PATTERNS[data.shootingPattern];
+            const auto patterns = glib->boss_shooting_patterns();
+            if ((data.shootingPattern < 0) || (data.shootingPattern >= patterns->size()))
+              data.shootingPattern = GRAND.Rand() % patterns->size();
 
-            if (MOB_BOSS_SHOOTING_FRAMES.Contains(e.value)) {
-              FOR_RANGE (int, shotIndex, pattern.projectilesPerShot) {
-                MakeProjectile({
-                  .type                 = ProjectileType_BOSS,
-                  .ownerCreatureType    = creature.type,
-                  .pos                  = creature.pos,
-                  .dir                  = Vector2Rotate({1, 0}, pattern.rotationOffset),
-                  .range                = f32_inf,
-                  .damage               = GetMobDamage(creature.type),
-                  .critDamageMultiplier = fb->crit_damage_multiplier(),
-                  // .anchorCreatureID     = creature.id,
-                });
+            const auto pattern       = patterns->Get(data.shootingPattern);
+            auto       shootingFrame = lframe::FromSeconds(glib->boss_pre_shot_seconds());
+            auto       stride        = lframe::FromSeconds(
+              glib->boss_pre_shot_seconds()     //
+              + glib->boss_post_shot_seconds()  //
+              + pattern->cooldown_between_shots_in_seconds()
+            );
+
+            FOR_RANGE (int, i, pattern->shots_count()) {
+              if (e > shootingFrame) {
+                shootingFrame = shootingFrame + stride;
+                continue;
               }
 
-              data.shootingRotationOffset += pattern.rotationOffset;
+              if (e == shootingFrame) {
+                auto projectilesToSpawn = pattern->projectiles_per_shot();
+                FOR_RANGE (int, shotIndex, projectilesToSpawn) {
+                  MakeProjectile({
+                    .type              = ProjectileType_BOSS,
+                    .ownerCreatureType = creature.type,
+                    .pos               = creature.pos,
+                    .dir               = Vector2Rotate(
+                      {1, 0},
+                      2 * PI32 * (f32)shotIndex / (f32)projectilesToSpawn
+                        + data.shootingRotationOffset
+                    ),
+                    .range                = f32_inf,
+                    .damage               = GetMobDamage(creature.type),
+                    .critDamageMultiplier = fb->crit_damage_multiplier(),
+                  });
+                }
+                data.shootingRotationOffset
+                  += pattern->rotation_offset()
+                     * ((data.startedShootingAt._value % 2) ? 1 : -1);
+              }
+
+              break;
             }
 
-            const auto duration = lframe::Unscaled(
-              pattern.shotsCount
-                * (MOB_BOSS_PRE_SHOT_FRAMES.value + MOB_BOSS_POST_SHOT_FRAMES.value)
-              + (pattern.shotsCount - 1) * pattern.cooldownBetweenShots.value
+            const auto duration = lframe::FromSeconds(
+              (f32)pattern->shots_count()
+                * (glib->boss_pre_shot_seconds() + glib->boss_post_shot_seconds())
+              + (f32)(pattern->shots_count() - 1)
+                  * pattern->cooldown_between_shots_in_seconds()
             );
 
             if (e >= duration) {
               data.startedShootingAt = {};
               data.startedShootingAt.SetNow();
-              data.cooldown.SetRand(MOB_BOSS_COOLDOWN_MIN, MOB_BOSS_COOLDOWN_MAX);
+              data.cooldown.SetRandSeconds(
+                glib->boss_cooldown_min_seconds(), glib->boss_cooldown_max_seconds()
+              );
+
+              int newPattern = data.shootingPattern;
+              while ((newPattern == data.shootingPattern) && (patterns->size() > 1))
+                newPattern = GRAND.Rand() % patterns->size();
+              data.shootingPattern = newPattern;
             }
           }
           else if (creature.type == CreatureType_TURRET) {
@@ -11767,7 +11772,6 @@ void GameFixedUpdate() {
           .bounce                    = data.bounce,
           .knockbackMeters           = data.knockbackMeters,
           .range                     = data.range,
-          .anchorCreatureID          = data.anchorCreatureID,
           .dontSpawnProjectilesOnHit = data.dontSpawnProjectilesOnHit,
         };
         projectile.createdAt.SetNow();
@@ -11807,26 +11811,7 @@ void GameFixedUpdate() {
         const auto fb       = fb_projectiles->Get(projectile.type);
         const auto distance = FIXED_DT * fb->speed();
         projectile.travelledDistance += distance;
-        if (projectile.anchorCreatureID) {
-          for (auto& creature : g.run.creatures) {
-            if (creature.id == projectile.anchorCreatureID) {
-              const auto e = ge.meta.frameGame % MOB_BOSS_PROJECTILES_CIRCLE_FRAMES.value;
-              const auto dir = Vector2Rotate(
-                {1, 0}, -2 * PI32 * e / MOB_BOSS_PROJECTILES_CIRCLE_FRAMES.value
-              );
-
-              f32 t          = projectile.travelledDistance / projectile.range;
-              t              = Lerp(t, EaseInQuad(t), 0.5f);
-              projectile.pos = creature.pos + dir * (projectile.range * t);
-
-              projectile.dir = Vector2Rotate(dir, -PI32 / 2);
-
-              break;
-            }
-          }
-        }
-        else
-          projectile.pos += projectile.dir * distance;
+        projectile.pos += projectile.dir * distance;
 
         bool createAoe = false;
 
@@ -12957,11 +12942,14 @@ void GameDraw() {
         );
       }
 
+      Color flash{};
+
       f32 fade = 1;
-      if (fb->fades_in())
-        fade = EaseOutQuad(
-          MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES))
-        );
+      if (fb->fades_in()) {
+        auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
+        fade   = EaseOutQuad(MIN(1, p));
+        flash  = Fade(WHITE, 1 - fade);
+      }
 
       DrawGroup_CommandTexture({
         .texID    = fb->texture_ids()->Get(0),
@@ -12969,6 +12957,7 @@ void GameDraw() {
         .pos      = projectile.pos,
         .scale    = scale,
         .color    = Fade(ColorFromRGBA(fb->color()), fade),
+        .flash    = flash,
       });
     }
 

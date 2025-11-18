@@ -339,6 +339,13 @@ table Biome {
     fill_color: uint;
     prop_texture_ids: [int];
 }
+
+table ShootingPattern {
+    projectiles_per_shot: int;
+    rotation_offset: float;
+    cooldown_between_shots_in_seconds: float;
+    shots_count: int;
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -432,6 +439,11 @@ table GameLibrary {
     floor_corners: [FloorSegment] (required);
 
     explosion_radius: float = 1.5;
+    boss_shooting_patterns: [ShootingPattern] (required);
+    boss_cooldown_min_seconds: float;
+    boss_cooldown_max_seconds: float;
+    boss_pre_shot_seconds: float;
+    boss_post_shot_seconds: float;
     // GAME STUFF END
 }
 
