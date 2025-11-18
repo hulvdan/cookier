@@ -23,6 +23,11 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 - prod: босс
 
 * sprites: player
+*
+* blood particles from projectile / weapon (DON'T USE RED)
+*
+* fix crash upon damaging
+*
 * sprites: weapons
 * sprites: projectiles
 *
@@ -51,7 +56,6 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 * loc: ловкач англ (перчатка ловкача)
 * loc: Додекаэдр проверить (на русском)
 * loc: правильно ли написано Piercing Bullet's Blueprint
-* fix crash upon damaging
 *
 * impl: STAT__DURING_NEXT_WAVE
 *
@@ -88,7 +92,6 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 *
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
 *
-*
 * better ui sounds from those that require credit
 *
 * prod sfx: steps
@@ -102,12 +105,12 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 * prod sfx: pickup coin
 * prod sfx: pickup crate
 * prod sfx: pickup apple
-* prod sfx: got achievement
+* prod sfx: got achievement + item unlocked
 * prod sfx: turret shot
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
+* prod sfx: mob/boss shoots
+* prod sfx: steps
+* prod sfx: run won
+* prod sfx: run lost
 * prod sfx:
 * prod sfx:
 * prod sfx:
