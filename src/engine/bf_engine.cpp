@@ -583,7 +583,10 @@ struct Texture2D {
   bgfx::TextureHandle handle = {};
 };
 
-const BFGame::GameLibrary* glib = nullptr;
+void*                      glibFile           = nullptr;
+const BFGame::GameLibrary* glib               = nullptr;
+const auto                 GAMELIB_DEBUG_PATH = "../../../resources/gamelib.bin";
+SDL_Time                   glibTime           = {};
 
 struct _PosColorFlashTexVertex {  ///
   f32 x, y, z;
@@ -2727,6 +2730,32 @@ void _UnloadTexture(Texture2D* texture) {  ///
   *texture = {};
 }
 
+#ifdef SDL_PLATFORM_WINDOWS
+
+struct PeekFiletimeResult {  ///
+  bool     success  = false;
+  SDL_Time filetime = {};
+};
+
+PeekFiletimeResult PeekFiletime(const char* filename) {  ///
+  PeekFiletimeResult res{};
+
+  WIN32_FIND_DATAA findData;
+  auto             handle = FindFirstFileA(filename, &findData);
+
+  if (handle != INVALID_HANDLE_VALUE) {
+    res.success  = true;
+    res.filetime = SDL_TimeFromWindows(
+      findData.ftLastWriteTime.dwLowDateTime, findData.ftLastWriteTime.dwHighDateTime
+    );
+    ASSERT(FindClose(handle));
+  }
+
+  return res;
+}
+
+#endif
+
 void InitEngine() {  ///
   ZoneScopedN("InitEngine");
 
@@ -2830,7 +2859,18 @@ void InitEngine() {  ///
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardState.count);
 #endif
 
-  glib = BFGame::GetGameLibrary(SDL_LoadFile("resources/gamelib.bin", nullptr));
+  auto glibPath = "resources/gamelib.bin";
+#ifdef SDL_PLATFORM_WINDOWS
+#  if BF_DEBUG
+  glibPath            = GAMELIB_DEBUG_PATH;
+  auto glibPeekResult = PeekFiletime(glibPath);
+  ASSERT(glibPeekResult.success);
+  glibTime = glibPeekResult.filetime;
+#  endif
+#endif
+
+  glibFile = SDL_LoadFile(glibPath, nullptr);
+  glib     = BFGame::GetGameLibrary(glibFile);
 
   ge.meta.atlas = _LoadTexture(
     "resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
@@ -3701,6 +3741,19 @@ SDL_AppResult EngineUpdate() {  ///
         }
       }
     }
+
+#ifdef SDL_PLATFORM_WINDOWS
+#  if BF_DEBUG
+    auto glibPeekResult = PeekFiletime(GAMELIB_DEBUG_PATH);
+    if (glibPeekResult.filetime != glibTime) {
+      glibTime = glibPeekResult.filetime;
+      SDL_free(glibFile);
+      glibFile = SDL_LoadFile(GAMELIB_DEBUG_PATH, nullptr);
+      glib     = BFGame::GetGameLibrary(glibFile);
+      LOGI("Gamelib reloaded!");
+    }
+#  endif
+#endif
 
     GameFixedUpdate();
 

@@ -1,13 +1,14 @@
 WORKING SINCE 2025-09-07
 
 x sprites mob: boss
+x улучшалка: gamelib hot reload
 
+* boss shooting patterns
+*
 * убрать "писюн" босса
 * добавить боссу у рта справа трещину
-* boss shooting patterns
-* sprites: player
 *
-* gamelib hot reload
+* sprites: player
 *
 * weapons
 *
