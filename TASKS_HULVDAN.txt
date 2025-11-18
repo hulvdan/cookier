@@ -21,8 +21,12 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 - prod: мобы
 - prod: предметы
 - prod: босс
+x sprites: player
 
-* sprites: player
+* gamelib.fbs is made from parsed yaml?
+  won't have to work with 2 files at the same time
+* builds have different hats
+* monochrome hats?
 *
 * blood particles from projectile / weapon (DON'T USE RED)
 *

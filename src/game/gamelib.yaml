@@ -195,10 +195,8 @@ creatures: # {  ###
   - type: PLAYER
     speed: 7.5
     hostility_type: FRIENDLY
-    idle_texture_ids:
-      - game_creature_player_move_1
-    move_texture_ids:
-      - game_creature_player_move_1
+    texture_ids:
+      - game_creature_player
     shadow_offset_y: -0.68
   - type: TURRET
     health: 1
@@ -212,7 +210,7 @@ creatures: # {  ###
     turret_range_meters: 5
     turret_knockback_meters: 0.3
     turret_projectile_shoot_anchor_y: 0.7116
-    idle_texture_ids:
+    texture_ids:
       - ui_item_turret
     shadow_offset_y: -0.43
   - type: MOB_SMALL
@@ -225,10 +223,8 @@ creatures: # {  ###
     knockback_resistance: 0
     speed: 4.5
     speed_plus_minus: 0.8
-    idle_texture_ids:
-      - game_creature_mob_small_move_1
-    move_texture_ids:
-      - game_creature_mob_small_move_1
+    texture_ids:
+      - game_creature_mob_small
     shadow_scale: 1
     shadow_offset_y: -0.5
   - type: MOB_CHASER
@@ -245,10 +241,8 @@ creatures: # {  ###
     knockback_resistance: 0
     speed: 5
     speed_plus_minus: 0.8
-    idle_texture_ids:
-      - game_creature_chaser_move_1
-    move_texture_ids:
-      - game_creature_chaser_move_1
+    texture_ids:
+      - game_creature_chaser
     shadow_scale: 1.15
   - type: RANGER
     appearing_wave_number: 4
@@ -261,10 +255,8 @@ creatures: # {  ###
     projectile_damage: 4
     speed: 7
     speed_plus_minus: 0.8
-    idle_texture_ids:
-      - game_creature_ranger_move_1
-    move_texture_ids:
-      - game_creature_ranger_move_1
+    texture_ids:
+      - game_creature_ranger
     shadow_offset_y: -0.68
     shadow_scale: 1.1
   - type: RUSHER
@@ -282,10 +274,8 @@ creatures: # {  ###
     speed_plus_minus: 0.8
     coins_dropped: 3
     aggro_distance: 7
-    idle_texture_ids:
-      - game_creature_rusher_move_1
-    move_texture_ids:
-      - game_creature_rusher_move_1
+    texture_ids:
+      - game_creature_rusher
     shadow_offset_x: 0.1
     shadow_offset_y: -0.85
     shadow_scale: 1.2
@@ -306,10 +296,8 @@ creatures: # {  ###
     on_death_spawns_count_max: 6
     on_death_spawns_distance_min: 3
     on_death_spawns_distance_max: 1
-    idle_texture_ids:
-      - game_creature_spawner_move_1
-    move_texture_ids:
-      - game_creature_spawner_move_1
+    texture_ids:
+      - game_creature_spawner
     shadow_offset_y: -0.69
     shadow_scale: 1.64
   - type: CHESTER
@@ -327,10 +315,8 @@ creatures: # {  ###
     speed_plus_minus: 0.8
     consumable_drop_chance: inf
     crate_instead_of_consumable_factor: inf
-    idle_texture_ids:
-      - game_creature_chester_move_1
-    move_texture_ids:
-      - game_creature_chester_move_1
+    texture_ids:
+      - game_creature_chester
     shadow_offset_y: -0.57
     shadow_scale: 1.4
   - type: BOSS
@@ -347,10 +333,8 @@ creatures: # {  ###
     collider_scale: 2
     hurtbox_scale: 1.7
     speed_plus_minus: 0
-    idle_texture_ids:
-      - game_creature_boss_move_1
-    move_texture_ids:
-      - game_creature_boss_move_1
+    texture_ids:
+      - game_creature_boss
     shadow_offset_x: 0.05
     shadow_offset_y: -0.95
     shadow_scale: 2.1
@@ -365,7 +349,7 @@ creatures: # {  ###
     consumable_drop_chance: 1
     coins_dropped: 3
     can_move: false
-    idle_texture_ids:
+    texture_ids:
       - game_creature_tree
     shadow_scale: 1.2
 # }

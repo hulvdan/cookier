@@ -8633,7 +8633,7 @@ void DoUI() {
 
         // 2. Items to buy.
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
-          CLAY({.layout{.sizing{.width = GAP_BIG * 2}}}) {}
+          CLAY({.layout{.sizing{.width = GAP_BIG * 1.75}}}) {}
 
           int toPickIndex = -1;
 
@@ -11124,7 +11124,7 @@ void GameFixedUpdate() {
             rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
 
             auto originalSize
-              = glib->original_texture_sizes()->Get(fb->idle_texture_ids()->Get(0));
+              = glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0));
             const auto projectileSpawnPos
               = creature.pos
                 + Vector2(
@@ -12844,20 +12844,12 @@ void GameDraw() {
     if (creature.diedAt.IsSet())
       fade *= Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
 
-    int texID = 0;
-    if (fb->move_texture_ids() && !creature.idleStartedAt.IsSet()) {
+    int texID = fb->texture_ids()->Get(0);
+    if (!creature.idleStartedAt.IsSet()) {
       texID = GetTextureIdByProgress(
-        fb->move_texture_ids(),
+        fb->texture_ids(),
         creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
       );
-    }
-    else {
-      f32 p = 0.0f;
-      if (creature.idleStartedAt.IsSet()) {
-        const auto idleDuration = lframe::Unscaled(fb->idle_seconds() * FIXED_FPS);
-        p = fmodf(creature.idleStartedAt.Elapsed().Progress(idleDuration), 1);
-      }
-      texID = GetTextureIdByProgress(fb->idle_texture_ids(), p);
     }
 
     Vector2 scale{1, 1};
@@ -12914,14 +12906,16 @@ void GameDraw() {
     Vector2 movementScale{1, 1};
     f32     movementCycle = creature.movementAccumulatorVisual * PI32 * 3 / 4;
     f32     movementAmplitudeScale
-      = 0.1f * EaseInQuad(creature.movementVisualFactor) * 3 / 4 / sy * 2;
-    movementScale += Vector2(cosf(movementCycle) * 1.1f, sinf(movementCycle))
+      = 0.07f * EaseInQuad(creature.movementVisualFactor) * 3 / 4 / sy * 2;
+    movementScale += Vector2(sinf(movementCycle) * 1.1f, cosf(movementCycle))
                      * movementAmplitudeScale;
 
     DrawGroup_OneShotTexture(
       {
-        .texID = texID,
-        .pos   = creature.pos + Vector2(0, fb->shadow_offset_y()),
+        .texID    = texID,
+        .rotation = -sinf(movementCycle * SIGN(creature.dir.x)) * PI32 / (40 / 1.0f)
+                    * creature.movementVisualFactor,
+        .pos = creature.pos + Vector2(0, fb->shadow_offset_y()),
         .anchor{0.5f, 0.5f + fb->shadow_offset_y() / sy},
         .scale = scale * movementScale,
         .color = Fade(color, fade),

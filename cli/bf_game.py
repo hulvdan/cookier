@@ -861,7 +861,7 @@ def process_images():
     )
 
     other_filenames = [
-        "game_creature_chaser_move_1",
+        "game_creature_chaser",
         "game_decal_pre_spawn",
         "game_landmine",
         "ui_coin_x2",
@@ -869,14 +869,14 @@ def process_images():
         "game_pickupable_crate",
         "game_creature_tree",
         "game_pickupable_consumable",
-        "game_creature_ranger_move_1",
-        "game_creature_spawner_move_1",
-        "game_creature_chester_move_1",
-        "game_creature_mob_small_move_1",
-        "game_creature_rusher_move_1",
-        "game_creature_boss_move_1",
+        "game_creature_ranger",
+        "game_creature_spawner",
+        "game_creature_chester",
+        "game_creature_mob_small",
+        "game_creature_rusher",
+        "game_creature_boss",
         "game_projectile_boss",
-        "game_creature_player_move_1",
+        "game_creature_player",
     ]
     for f in other_filenames:
         fi = ART_TEXTURES_DIR / (f + ".png")
