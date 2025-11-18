@@ -5,7 +5,7 @@ from typing import Any, Callable, TypeAlias
 import cv2
 import numpy as np
 from bf_lib import ART_TEXTURES_DIR, log
-from PIL import Image, ImageChops, ImageDraw
+from PIL import Image, ImageChops, ImageDraw, ImageEnhance
 
 # }
 
@@ -263,6 +263,16 @@ def conveyor_extract_black() -> ConveyorCallable:
     # {  ###
     def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
         return extract_black(image_), path_
+
+    return inner
+    # }
+
+
+def conveyor_brightness(factor: float) -> ConveyorCallable:
+    # {  ###
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        image = ImageEnhance.Brightness(image_).enhance(factor)
+        return image, path_
 
     return inner
     # }
