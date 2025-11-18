@@ -440,10 +440,10 @@ table GameLibrary {
 
     explosion_radius: float = 1.5;
     boss_shooting_patterns: [ShootingPattern] (required);
-    boss_cooldown_min_seconds: float;
-    boss_cooldown_max_seconds: float;
-    boss_pre_shot_seconds: float;
-    boss_post_shot_seconds: float;
+    boss_cooldown_min_seconds: float = 3;
+    boss_cooldown_max_seconds: float = 4;
+    boss_pre_shot_seconds: float = 0.1;
+    boss_post_shot_seconds: float = 0.1;
     // GAME STUFF END
 }
 

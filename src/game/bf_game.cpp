@@ -12781,8 +12781,8 @@ void GameDraw() {
     f32     movementCycle = creature.movementAccumulatorVisual * PI32 * 3 / 4;
     f32     movementAmplitudeScale
       = 0.1f * EaseInQuad(creature.movementVisualFactor) * 3 / 4 / sy * 2;
-    movementScale
-      += Vector2(cosf(movementCycle), sinf(movementCycle)) * movementAmplitudeScale;
+    movementScale += Vector2(cosf(movementCycle) * 1.1f, sinf(movementCycle))
+                     * movementAmplitudeScale;
 
     DrawGroup_OneShotTexture(
       {
