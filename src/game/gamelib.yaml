@@ -3976,9 +3976,4 @@ boss_shooting_patterns: # {  ###
     shots_count: 9
 # }
 
-boss_cooldown_min_seconds: 3
-boss_cooldown_max_seconds: 4
-boss_pre_shot_seconds: 0.1
-boss_post_shot_seconds: 0.1
-
 ###

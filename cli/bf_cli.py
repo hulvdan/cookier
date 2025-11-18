@@ -280,10 +280,16 @@ def do_run_in_debugger_ahk(target: BuildTarget, build_type: BuildType) -> None:
 #   # }
 
 
+@timing
+def do_activate_game_ahk() -> None:
+    run_command(r".nvim-personal\cli.ahk activate_game")
+
+
 @command
 def codegen(platform: BuildPlatform, build_type: BuildType):
     do_cmake(platform, build_type)
     do_generate(platform, build_type)
+    do_activate_game_ahk()
 
 
 @command
