@@ -911,6 +911,7 @@ struct Particle {  ///
   f32          rotation      = {};
   f32          rotationSpeed = 0;
   f32          scale         = 1;
+  Color        color         = {};
   lframe       duration      = {};
   FrameGame    createdAt     = {};
 };
@@ -1067,7 +1068,8 @@ struct MakeParticlesData {  ///
   f32 scale          = 1;
   f32 scalePlusMinus = 0.2f;
 
-  f32 rotationSpeedPlusMinus = PI32;
+  f32   rotationSpeedPlusMinus = PI32;
+  Color color                  = WHITE;
 };
 
 struct Prop {  ///
@@ -2518,6 +2520,10 @@ void MakeParticles(MakeParticlesData data) {  ///
 
   auto fb = glib->particles()->Get(data.type);
 
+  auto color = ColorFromRGBA(fb->color());
+  if (data.color != WHITE)
+    color = ColorTint(color, data.color);
+
   if (data.count > 0)
     g.run.particles.Reserve(g.run.particles.count + data.count);
 
@@ -2555,6 +2561,7 @@ void MakeParticles(MakeParticlesData data) {  ///
       .rotation      = rotation,
       .rotationSpeed = rotationSpeed,
       .scale         = scale,
+      .color         = color,
       .duration      = lframe::FromSeconds(durationSeconds),
     };
     p.createdAt.SetNow();
@@ -2853,7 +2860,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     creature.body.id, ToB2Vec2(data.directionOrZero * data.knockbackMeters), true
   );
 
-  // Making blood particles.
+  // Making hit particles.
   if (!creature.killedBecauseOfTheEndOfTheWave) {
     f32 velocityAngle          = 0;
     f32 velocityAnglePlusMinus = PI32;
@@ -2863,7 +2870,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     }
 
     MakeParticles({
-      .type                   = ParticleType_BLOOD,
+      .type                   = ParticleType_HIT,
       .count                  = GRAND.RandInt(3, 6),
       .pos                    = creature.pos,
       .velocity               = 8 * (3 / 2.0f),
@@ -2872,6 +2879,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       .velocityAnglePlusMinus = velocityAnglePlusMinus,
       .initialOffset          = 0.2f,
       .initialOffsetPlusMinus = 0.1f,
+      .color                  = ColorFromRGBA(fb->hit_particles_color()),
     });
   }
 
@@ -2897,41 +2905,43 @@ void Pickup(Pickupable* pickupable_) {  ///
     -1,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
-        if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
-          if (fb_effect->pickupable_type() != pickupable.type)
-            return;
+        if (fb_effect->pickupable_type() != pickupable.type)
+          return;
+        if (GRAND.FRand() >= (f32)EFFECT_X_INT / 100.0f)
+          return;
 
-          FOR_RANGE (int, i, 5) {
-            auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
-            const auto& creature      = g.run.creatures[creatureIndex];
+        FOR_RANGE (int, i, 5) {
+          auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
+          const auto& creature      = g.run.creatures[creatureIndex];
 
-            if (creature.diedAt.IsSet())
-              continue;
+          if (creature.diedAt.IsSet())
+            continue;
+          if (creature.health <= 0)
+            continue;
 
-            auto fb = fb_creatures->Get(creature.type);
-            if (fb->hostility_type() == HostilityType_FRIENDLY)
-              continue;
+          auto fb = fb_creatures->Get(creature.type);
+          if (fb->hostility_type() == HostilityType_FRIENDLY)
+            continue;
 
-            int damage = EFFECT_Y_INT * times;
-            damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
-            damage = ApplyPlayerStatDamageMultiplier(damage);
+          int damage = EFFECT_Y_INT * times;
+          damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
+          damage = ApplyPlayerStatDamageMultiplier(damage);
 
-            f32 critDamageMultiplier = 1.5f;
-            if (w) {
-              critDamageMultiplier
-                = glib->weapons()->Get(w->type)->crit_damage_multiplier();
-            }
-
-            TryApplyDamage({
-              .creatureIndex                      = (int)creatureIndex,
-              .damage                             = damage,
-              .damagerCreatureType                = CreatureType_PLAYER,
-              .critDamageMultiplier               = critDamageMultiplier,
-              .indexOfWeaponThatDidDamageOrMinus1 = wi,
-            });
-
-            break;
+          f32 critDamageMultiplier = 1.5f;
+          if (w) {
+            critDamageMultiplier
+              = glib->weapons()->Get(w->type)->crit_damage_multiplier();
           }
+
+          TryApplyDamage({
+            .creatureIndex                      = (int)creatureIndex,
+            .damage                             = damage,
+            .damagerCreatureType                = CreatureType_PLAYER,
+            .critDamageMultiplier               = critDamageMultiplier,
+            .indexOfWeaponThatDidDamageOrMinus1 = wi,
+          });
+
+          break;
         }
       }
   );
@@ -13266,7 +13276,7 @@ void GameDraw() {
         .rotation = particle.rotation,
         .pos      = particle.pos,
         .scale    = Vector2One() * particle.scale,
-        .color    = Fade(ColorFromRGBA(fb->color()), EaseOutQuad(1 - p)),
+        .color    = Fade(particle.color, EaseOutQuad(1 - p)),
       });
     }
     DrawGroup_End();

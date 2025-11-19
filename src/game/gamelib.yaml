@@ -199,6 +199,7 @@ creatures: # {  ###
       - game_creature_player
     offset_y: -0.1
     shadow_offset_y: -0.58
+    hit_particles_color: 0x885a44ff
   - type: TURRET
     health: 1
     hostility_type: FRIENDLY
@@ -228,11 +229,12 @@ creatures: # {  ###
       - game_creature_mob_small
     shadow_scale: 1
     shadow_offset_y: -0.5
+    hit_particles_color: 0xe68556ff
   - type: MOB_CHASER
     appearing_wave_number: 2
     spawn_factor: 80
     spawn_group_count_min: 5
-    spawn_group_count_max: 8
+    spawn_group_count_max: 7
     spawn_group_radius_min: 1
     spawn_group_radius_max: 3
     health: 1
@@ -245,6 +247,7 @@ creatures: # {  ###
     texture_ids:
       - game_creature_chaser
     shadow_scale: 1.15
+    hit_particles_color: 0xefcb84ff
   - type: RANGER
     appearing_wave_number: 4
     spawn_factor: 25
@@ -260,6 +263,7 @@ creatures: # {  ###
       - game_creature_ranger
     shadow_offset_y: -0.68
     shadow_scale: 1.1
+    hit_particles_color: 0xdc9824ff
   - type: RUSHER
     appearing_wave_number: 8
     spawn_factor: 16
@@ -280,6 +284,7 @@ creatures: # {  ###
     shadow_offset_x: 0.1
     shadow_offset_y: -0.85
     shadow_scale: 1.2
+    hit_particles_color: 0xb59a66ff
   - type: SPAWNER
     appearing_wave_number: 14
     spawn_factor: 10
@@ -301,6 +306,7 @@ creatures: # {  ###
       - game_creature_spawner
     shadow_offset_y: -0.69
     shadow_scale: 1.64
+    hit_particles_color: 0xe68556ff
   - type: CHESTER
     appearing_wave_number: 3
     spawn_factor: 1
@@ -320,12 +326,13 @@ creatures: # {  ###
       - game_creature_chester
     shadow_offset_y: -0.57
     shadow_scale: 1.4
+    hit_particles_color: 0xb8560fff
   - type: BOSS
     appearing_wave_number: 20
     spawn_factor: 0
     health: 25000 # TODO: Check Brotato.
     health_increase_per_wave: 100
-    contact_damage: 5 # TODO: Check Brotato.
+    contact_damage: 15 # TODO: Check Brotato.
     contact_damage_increase_per_wave: 5
     knockback_resistance: 1
     consumable_drop_chance: 0
@@ -339,6 +346,7 @@ creatures: # {  ###
     shadow_offset_x: 0.05
     shadow_offset_y: -0.95
     shadow_scale: 2.1
+    hit_particles_color: 0xdc9824ff
   - type: TREE
     spawn_factor: 0
     health: 10
@@ -353,6 +361,7 @@ creatures: # {  ###
     texture_ids:
       - game_creature_tree
     shadow_scale: 1.2
+    hit_particles_color: 0x66a650ff
 # }
 
 ailments: # {  ###
@@ -3460,10 +3469,9 @@ particles: # {  ###
           - game_particle_3_5
       - texture_ids:
           - game_particle_3_6
-  - type: BLOOD
+  - type: HIT
     duration_seconds: 0.3
     duration_plus_minus: 0.15
-    color: 0xc02931ff
     variations:
       - texture_ids:
           - game_particle_4_1
@@ -3980,8 +3988,8 @@ hats:
   - type: TOP
     texture_id: game_hat_top
     anchor:
-      x: 0.6
-      y: -1.3
+      x: 0.62
+      y: -1.35
   - type: KEPKA
     texture_id: game_hat_kepka
     anchor:
