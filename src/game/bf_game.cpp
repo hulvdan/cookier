@@ -5738,6 +5738,21 @@ void DoUI() {
     lframe unlockElapsed = {};
   };
 
+  LAMBDA (void, componentCenterFloater, (auto innerLambda)) {  ///
+    CLAY({.floating{
+      .zIndex = zIndex,
+      .attachPoints{
+        .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+        .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+      },
+      .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+      .attachTo           = CLAY_ATTACH_TO_PARENT,
+    }}) {
+      FLOATING_BEAUTIFY;
+      innerLambda();
+    }
+  };
+
   LAMBDA (bool, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
     ASSERT(data.count > 0);
     if (data.canHover)
@@ -5769,8 +5784,8 @@ void DoUI() {
     if (data.tier >= 0)
       tier = data.tier;
 
-    f32        unlockFadeLock             = 1;
-    f32        unlockFadeItem             = 0;
+    f32        unlockFadeLock             = 0;
+    f32        unlockFadeItem             = 1;
     f32        unlockFlashWhiteLock       = 0;
     f32        unlockFlashWhiteItem       = 0;
     const auto unlockDelayBeforeUnlocking = ANIMATION_2_FRAMES;
@@ -5779,22 +5794,22 @@ void DoUI() {
     if (data.unlocking) {
       if (data.unlockElapsed > unlockDelayBeforeUnlocking + unlockDuration) {
         // Item is shown clearly.
-        unlockFadeItem = 1;
-        unlockFadeLock = 0;
       }
       else if (data.unlockElapsed > unlockDelayBeforeUnlocking) {
-        // Animation.
+        // Unlock animation.
         f32 p = Clamp01(
           (data.unlockElapsed - unlockDelayBeforeUnlocking).Progress(unlockDuration)
         );
-        unlockFadeItem       = p;
-        unlockFadeLock       = 1 - p;
-        unlockFlashWhiteLock = 1 - SQR(SQR(cosf(PI32 * p)));
-        unlockFlashWhiteItem = 1 - SQR(SQR(cosf(PI32 * p)));
+        unlockFadeItem       = Clamp01(p);
+        unlockFadeLock       = Clamp01(1 - p);
+        unlockFlashWhiteLock = Clamp01(1 - SQR(SQR(cosf(PI32 * p))));
+        unlockFlashWhiteItem = Clamp01(1 - SQR(SQR(cosf(PI32 * p))));
+      }
+      else {
+        unlockFadeLock = 1;
+        unlockFadeItem = 0;
       }
     }
-    else
-      unlockFadeLock = 0;
 
     bool result = false;
 
@@ -5833,6 +5848,16 @@ void DoUI() {
         }
 
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
+          if (data.unlocking && ((unlockFadeLock > 0) || (unlockFlashWhiteLock > 0))) {
+            componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
+              BF_CLAY_IMAGE({
+                .texID = glib->ui_item_locked_texture_id(),
+                .color = Fade(WHITE, Clamp01(unlockFadeLock)),
+                .flash = Fade(WHITE, Clamp01(unlockFlashWhiteLock)),
+              });
+            });
+          }
+
           if (data.build) {
             CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
               LAMBDA (void, oneMoreFloatingImageOfBuild, (auto innerLambda)) {
@@ -5855,7 +5880,12 @@ void DoUI() {
 
               const f32 off = 2;
               oneMoreFloatingImageOfBuild([&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({.texID = playerTex, .offset{off, 0}});
+                BF_CLAY_IMAGE({
+                  .texID = playerTex,
+                  .offset{off, 0},
+                  .color = Fade(WHITE, Clamp01(unlockFadeItem)),
+                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
+                });
               });
 
               const auto fb_build = fb_builds->Get(data.build);
@@ -5866,7 +5896,9 @@ void DoUI() {
                   .texID = fb_hat->texture_id(),
                   .offset{off, 100.0f * 179 / 256},
                   .anchor = ToVector2(fb_hat->anchor()) * Vector2(1, -1),
-                  .color  = ColorFromRGBA(fb_build->hat_color()),
+                  .color
+                  = Fade(ColorFromRGBA(fb_build->hat_color()), Clamp01(unlockFadeItem)),
+                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
                 });
               });
             }
@@ -5875,6 +5907,8 @@ void DoUI() {
             BF_CLAY_IMAGE({
               .texID = texID,
               .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
+              .color = Fade(WHITE, Clamp01(unlockFadeItem)),
+              .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
               .dontCareAboutScaleWhenCalculatingSize = true,
             });
           }
@@ -6998,21 +7032,6 @@ void DoUI() {
           FontEnd();
         }
       }
-    }
-  };
-
-  LAMBDA (void, componentCenterFloater, (auto innerLambda)) {  ///
-    CLAY({.floating{
-      .zIndex = zIndex,
-      .attachPoints{
-        .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-        .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-      },
-      .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-      .attachTo           = CLAY_ATTACH_TO_PARENT,
-    }}) {
-      FLOATING_BEAUTIFY;
-      innerLambda();
     }
   };
 
@@ -9892,56 +9911,6 @@ void DoUI() {
 
       auto fb      = fb_achievements->Get(x.type);
       auto fb_step = fb->steps()->Get(x.stepIndex);
-
-      LAMBDA (void, componentAchievementReward, (int texID, int tier)) {
-        f32 unlockFadeLock       = 1;
-        f32 unlockFadeItem       = 0;
-        f32 unlockFlashWhiteLock = 0;
-        f32 unlockFlashWhiteItem = 0;
-
-        const auto unlockDelayBeforeUnlocking = ANIMATION_2_FRAMES;
-        const auto unlockDuration             = ANIMATION_0_FRAMES;
-
-        if (e > unlockDelayBeforeUnlocking + unlockDuration) {
-          // Item is shown clearly.
-          unlockFadeItem = 1;
-          unlockFadeLock = 0;
-        }
-        else if (e > unlockDelayBeforeUnlocking) {
-          // Animation.
-          f32 p = Clamp01((e - unlockDelayBeforeUnlocking).Progress(unlockDuration));
-          unlockFadeItem       = p;
-          unlockFadeLock       = 1 - p;
-          unlockFlashWhiteLock = 1 - SQR(SQR(cosf(PI32 * p)));
-          unlockFlashWhiteItem = 1 - SQR(SQR(cosf(PI32 * p)));
-        }
-
-        componentSlot(
-          {.tier = tier, .flashWhite = Clamp01(unlockFlashWhiteItem)},
-          [&]() BF_FORCE_INLINE_LAMBDA {
-            CLAY({.layout{
-              BF_CLAY_SIZING_GROW_XY,
-              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-            }}) {
-              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({
-                  .texID = glib->ui_item_locked_texture_id(),
-                  .color = Fade(WHITE, Clamp01(unlockFadeLock)),
-                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteLock)),
-                });
-              });
-
-              componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({
-                  .texID = texID,
-                  .color = Fade(WHITE, Clamp01(unlockFadeItem)),
-                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
-                });
-              });
-            }
-          }
-        );
-      };
 
       CLAY({.layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
         const bool unlocksSomething = fb_step->unlocks_build_type()
