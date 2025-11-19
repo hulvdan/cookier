@@ -197,7 +197,8 @@ creatures: # {  ###
     hostility_type: FRIENDLY
     texture_ids:
       - game_creature_player
-    shadow_offset_y: -0.68
+    offset_y: -0.1
+    shadow_offset_y: -0.58
   - type: TURRET
     health: 1
     hostility_type: FRIENDLY
@@ -3777,6 +3778,7 @@ difficulties: # {  ###
 builds: # {  ###
   - type: INVALID
   - type: DEFAULT
+    hat_type: GOPNIK_GRAY
     starting_weapon_types:
       - SWORD
       - BOW
@@ -3802,6 +3804,7 @@ builds: # {  ###
             # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
             # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
   - type: NINJA
+    hat_type: KEPKA_BLUE
     starting_weapon_types:
       - SLINGSHOT
       - SMG
@@ -3814,6 +3817,7 @@ builds: # {  ###
         placeholders:
           - ints: 35
   - type: WIZARD
+    hat_type: TOP_BLACK
     starting_weapon_types:
       - WAND
       - WAND2
@@ -3956,6 +3960,42 @@ boss_shooting_patterns: # {  ###
     rotation_offset: 0.3927
     cooldown_between_shots_in_seconds: 0.5
     shots_count: 9
+# }
+
+# hats {  ###
+hats:
+  - type: GOPNIK_GRAY
+    texture_id: game_hat_gopnik_gray
+    offset:
+      x: 0.6
+      y: -1.57
+  - type: BEANIE_RED
+    texture_id: game_hat_beanie_red
+    offset:
+      x: 0.6
+      y: -1.75
+  - type: TOP_BLACK
+    texture_id: game_hat_top_black
+    offset:
+      x: 0.6
+      y: -1.3
+  - type: KEPKA_BLUE
+    texture_id: game_hat_kepka_blue
+    offset:
+      x: 0.52
+      y: -1.78
+  - type: KEPKA
+    color: 0x208cb2ff
+    texture_id: game_hat_kepka
+    offset:
+      x: 0.52
+      y: -1.78
+  - type: BEANIE
+    color: 0xc02931ff
+    texture_id: game_hat_beanie
+    offset:
+      x: 0.6
+      y: -1.75
 # }
 
 ###
