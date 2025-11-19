@@ -26,9 +26,8 @@ x sprites: player
   won't have to work with 2 files at the same time
 x builds have different hats
 x monochrome hats
+x componentUniversalSlot: show builds
 
-* componentUniversalSlot: show builds
-*
 * componentUniversalSlot: fix unlock animation
 *
 * blood particles from projectile / weapon (DON'T USE RED)
