@@ -30,7 +30,9 @@ x componentUniversalSlot: show builds
 x componentUniversalSlot: fix unlock animation
 x blood particles from projectile / weapon (DON'T USE RED)
 
-* fix crash upon damaging when having a lot of items
+* fix: crash upon damaging when having a lot of items
+  SET ENEMIES TO A CRAZE AMOUNT
+* fix: 225 stat value looks like shit
 *
 * sprites: weapons
 * sprites: projectiles

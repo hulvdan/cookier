@@ -2571,6 +2571,12 @@ void MakeParticles(MakeParticlesData data) {  ///
 
 void MakePickupable(MakePickupableData data);
 
+bool CanSpawnMoreCreatures() {  ///
+  const auto framesUntilTheEndOfTheWave
+    = GetWaveDuration(g.run.state.waveIndex) - g.run.waveStartedAt.Elapsed();
+  return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
+}
+
 bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (data.outWasCrit)
     *data.outWasCrit = false;
@@ -2888,6 +2894,99 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
   if (!data.creatureIndex)
     Save();
+
+  if ((creature.health <= 0)                       //
+      && !creature.killedBecauseOfTheEndOfTheWave  //
+      && (creature.type != CreatureType_PLAYER))
+  {
+    // Mob died.
+
+    // Spawning children if mob spawns them on death.
+    if (fb->on_death_spawns_creature_type() && CanSpawnMoreCreatures()) {
+      int toSpawn
+        = GRAND.RandInt(fb->on_death_spawns_count_min(), fb->on_death_spawns_count_max());
+      FOR_RANGE (int, i, toSpawn) {
+        Vector2 pos{};
+        do {
+          const auto t1 = GRAND.FRand();
+          pos           = creature.pos
+                + Vector2Rotate(
+                  Vector2(
+                    Lerp(
+                      fb->on_death_spawns_distance_min(),
+                      fb->on_death_spawns_distance_max(),
+                      t1
+                    ),
+                    0
+                  ),
+                  GRAND.Angle()
+                );
+        } while (!CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(pos));
+
+        MakePreSpawn({
+          .type         = PreSpawnType_CREATURE,
+          .typeCreature = (CreatureType)fb->on_death_spawns_creature_type(),
+          .pos          = pos,
+        });
+      }
+    }
+
+    // Mob drops coin / consumable / crate.
+    {
+      MakePickupableData data{
+        .type        = PickupableType_COIN,
+        .pos         = creature.pos,
+        .coin_amount = fb->coins_dropped(),
+      };
+      MakePickupable(data);
+
+      const auto luckFactor = GetLuckFactor();
+      if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
+        data.type = PickupableType_CONSUMABLE;
+
+        const auto crateChance = fb->crate_instead_of_consumable_factor() * luckFactor
+                                 / (f32)(1 + g.run.cratesDroppedThisWave);
+        if (GRAND.FRand() <= crateChance) {
+          data.type = PickupableType_CRATE;
+          g.run.cratesDroppedThisWave++;
+        }
+
+        MakePickupable(data);
+      }
+    }
+
+    // Counting mob as player killed.
+    {
+      g.run.state.playerKilledEnemies++;
+      AchievementAdd(AchievementType_KILLER, 1);
+
+      if (creature.lastDamagedWeaponIndex >= 0) {
+        g.run.state.weapons[creature.lastDamagedWeaponIndex].thisWaveKilledEnemies++;
+      }
+
+      // Applying effects: STAT__EVERY__X__KILLED_ENEMIES.
+      IterateOverEffects(
+        EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
+        creature.lastDamagedWeaponIndex,
+        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA {
+            if (w) {
+              if ((w->thisWaveKilledEnemies % EFFECT_X_INT) == 0)
+                ApplyStatEffect(fb_effect, tierOffset, 1);
+            }
+            else if ((g.run.state.playerKilledEnemies % EFFECT_X_INT) == 0)
+              ApplyStatEffect(fb_effect, tierOffset, times);
+          }
+      );
+    }
+
+    // Wave gets set to completed upon killing boss.
+    if (fb->is_boss() && !g.run.scheduledWaveCompleted.IsSet()) {
+      TriggerWaveCompleted(false);
+      g.run.state.waveWon = true;
+      Save();
+    }
+  }
 
   return true;
 }
@@ -4924,12 +5023,6 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   const auto movedDistance  = p * movingDistance;
 
   return PLAYER_CREATURE.pos + weapon.targetDir * movedDistance;
-}
-
-bool CanSpawnMoreCreatures() {  ///
-  const auto framesUntilTheEndOfTheWave
-    = GetWaveDuration(g.run.state.waveIndex) - g.run.waveStartedAt.Elapsed();
-  return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
 }
 
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
@@ -10461,6 +10554,8 @@ int GetMobDamage(CreatureType type) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
+  g.run.state.stats[StatType_ENEMIES] = 400;
+
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
@@ -10848,11 +10943,6 @@ void GameFixedUpdate() {
   if (!ge.meta.windowIsInactive && !g.meta.paused && gameplayOrWaveEndScreen) {
     ZoneScopedN("Updating gameplay.");
 
-    constexpr Rect creaturesWorldSpawnBounds{
-      .pos{CREATURES_SPAWN_MARGIN, CREATURES_SPAWN_MARGIN},
-      .size{WORLD_X - 2 * CREATURES_SPAWN_MARGIN, WORLD_Y - 2 * CREATURES_SPAWN_MARGIN},
-    };
-
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
@@ -10994,19 +11084,19 @@ void GameFixedUpdate() {
 
             auto& move = creature.controller.move;
 
-            if ((creature.pos.x <= creaturesWorldSpawnBounds.pos.x) && (move.x <= 0))
+            if ((creature.pos.x <= CREATURES_WORLD_SPAWN_BOUNDS.pos.x) && (move.x <= 0))
               move = Vector2Rotate({1, 0}, Lerp(-PI32 / 2, PI32 / 2, GRAND.FRand()));
 
-            if ((creature.pos.y <= creaturesWorldSpawnBounds.pos.y) && (move.y <= 0))
+            if ((creature.pos.y <= CREATURES_WORLD_SPAWN_BOUNDS.pos.y) && (move.y <= 0))
               move = Vector2Rotate({1, 0}, Lerp(0, PI32, GRAND.FRand()));
 
-            if ((creature.pos.x
-                 >= creaturesWorldSpawnBounds.pos.x + creaturesWorldSpawnBounds.size.x)
+            if ((creature.pos.x >= CREATURES_WORLD_SPAWN_BOUNDS.pos.x
+                                     + CREATURES_WORLD_SPAWN_BOUNDS.size.x)
                 && (move.x >= 0))
               move = Vector2Rotate({1, 0}, Lerp(PI32 / 2, 3 * PI32 / 2, GRAND.FRand()));
 
-            if ((creature.pos.y
-                 >= creaturesWorldSpawnBounds.pos.y + creaturesWorldSpawnBounds.size.y)
+            if ((creature.pos.y >= CREATURES_WORLD_SPAWN_BOUNDS.pos.y
+                                     + CREATURES_WORLD_SPAWN_BOUNDS.size.y)
                 && (move.y >= 0))
               move = Vector2Rotate({1, 0}, Lerp(PI32, 2 * PI32, GRAND.FRand()));
           }
@@ -11267,8 +11357,8 @@ void GameFixedUpdate() {
           Vector2 posToSpawn{};
           while (1) {
             constexpr f32 epsilon = 0.001f;
-            posToSpawn            = creaturesWorldSpawnBounds.GetRandomGamePosInside();
-            ASSERT(creaturesWorldSpawnBounds.ContainsInside(posToSpawn));
+            posToSpawn            = CREATURES_WORLD_SPAWN_BOUNDS.GetRandomGamePosInside();
+            ASSERT(CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(posToSpawn));
             auto t = MIN(
               1,
               Unlerp(
@@ -11294,7 +11384,7 @@ void GameFixedUpdate() {
                 fb->spawn_group_radius_min(), fb->spawn_group_radius_max(), GRAND.FRand()
               );
               p = posToSpawn + Vector2Rotate({off, 0}, GRAND.Angle());
-            } while (!creaturesWorldSpawnBounds.ContainsInside(p));
+            } while (!CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(p));
 
             MakePreSpawn({
               .type           = PreSpawnType_CREATURE,
@@ -11358,7 +11448,7 @@ void GameFixedUpdate() {
 
                 MakePreSpawn({
                   .type           = PreSpawnType_LANDMINE,
-                  .pos            = creaturesWorldSpawnBounds.GetRandomGamePosInside(),
+                  .pos            = CREATURES_WORLD_SPAWN_BOUNDS.GetRandomGamePosInside(),
                   .damage         = EFFECT_Y_INT,
                   .damageScalings = fb_effect->damage_scalings(),
                 });
@@ -11379,7 +11469,7 @@ void GameFixedUpdate() {
                 FOR_RANGE (int, i, times) {
                   MakePreSpawn({
                     .type = PreSpawnType_GARDEN,
-                    .pos  = creaturesWorldSpawnBounds.GetRandomGamePosInside(),
+                    .pos  = CREATURES_WORLD_SPAWN_BOUNDS.GetRandomGamePosInside(),
                   });
                 }
               }
@@ -12305,7 +12395,7 @@ void GameFixedUpdate() {
               GRAND.FRand()
             );
             pos = garden.pos + Vector2Rotate({off, 0}, GRAND.Angle());
-          } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
+          } while (!CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(pos));
 
           MakePickupable({
             .type = PickupableType_CONSUMABLE,
@@ -12367,100 +12457,6 @@ void GameFixedUpdate() {
               TriggerWaveCompleted(false);
               g.run.state.waveWon = false;
               Save();
-            }
-          }
-          else {
-            // Mob died.
-
-            // Spawning children if mob spawns them on death.
-            if (fb->on_death_spawns_creature_type() && CanSpawnMoreCreatures()) {
-              int toSpawn = GRAND.RandInt(
-                fb->on_death_spawns_count_min(), fb->on_death_spawns_count_max()
-              );
-              FOR_RANGE (int, i, toSpawn) {
-                Vector2 pos{};
-                do {
-                  const auto t1 = GRAND.FRand();
-                  pos           = creature.pos
-                        + Vector2Rotate(
-                          Vector2(
-                            Lerp(
-                              fb->on_death_spawns_distance_min(),
-                              fb->on_death_spawns_distance_max(),
-                              t1
-                            ),
-                            0
-                          ),
-                          GRAND.Angle()
-                        );
-                } while (!creaturesWorldSpawnBounds.ContainsInside(pos));
-
-                MakePreSpawn({
-                  .type         = PreSpawnType_CREATURE,
-                  .typeCreature = (CreatureType)fb->on_death_spawns_creature_type(),
-                  .pos          = pos,
-                });
-              }
-            }
-
-            // Mob drops coin / consumable / crate.
-            if (!creature.killedBecauseOfTheEndOfTheWave) {
-              MakePickupableData data{
-                .type        = PickupableType_COIN,
-                .pos         = creature.pos,
-                .coin_amount = fb->coins_dropped(),
-              };
-              MakePickupable(data);
-
-              const auto luckFactor = GetLuckFactor();
-              if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
-                data.type = PickupableType_CONSUMABLE;
-
-                const auto crateChance = fb->crate_instead_of_consumable_factor()
-                                         * luckFactor
-                                         / (f32)(1 + g.run.cratesDroppedThisWave);
-                if (GRAND.FRand() <= crateChance) {
-                  data.type = PickupableType_CRATE;
-                  g.run.cratesDroppedThisWave++;
-                }
-
-                MakePickupable(data);
-              }
-            }
-
-            // Counting mob as player killed.
-            if (!creature.killedBecauseOfTheEndOfTheWave) {
-              g.run.state.playerKilledEnemies++;
-              AchievementAdd(AchievementType_KILLER, 1);
-
-              if (creature.lastDamagedWeaponIndex >= 0) {
-                g.run.state.weapons[creature.lastDamagedWeaponIndex]
-                  .thisWaveKilledEnemies++;
-              }
-
-              // Applying effects: STAT__EVERY__X__KILLED_ENEMIES.
-              IterateOverEffects(
-                EffectConditionType_STAT__EVERY__X__KILLED_ENEMIES,
-                creature.lastDamagedWeaponIndex,
-                [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-                  BF_FORCE_INLINE_LAMBDA {
-                    if (w) {
-                      if ((w->thisWaveKilledEnemies % EFFECT_X_INT) == 0)
-                        ApplyStatEffect(fb_effect, tierOffset, 1);
-                    }
-                    else if ((g.run.state.playerKilledEnemies % EFFECT_X_INT) == 0)
-                      ApplyStatEffect(fb_effect, tierOffset, times);
-                  }
-              );
-            }
-
-            // Wave gets set to completed upon killing boss.
-            if (fb->is_boss()) {
-              if (!g.run.scheduledWaveCompleted.IsSet()) {
-                TriggerWaveCompleted(false);
-                g.run.state.waveWon = true;
-                Save();
-              }
             }
           }
         }
