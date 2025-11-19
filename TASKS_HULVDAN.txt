@@ -29,6 +29,8 @@ x monochrome hats
 
 * componentUniversalSlot: show builds
 *
+* componentUniversalSlot: fix unlock animation
+*
 * blood particles from projectile / weapon (DON'T USE RED)
 *
 * fix crash upon damaging

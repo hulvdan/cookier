@@ -5179,6 +5179,7 @@ void DoUI() {
   const auto fb_achievements        = glib->achievements();
   const auto fb_builds              = glib->builds();
   const auto fb_effectConditions    = glib->effect_conditions();
+  const auto fb_creatures           = glib->creatures();
 
   static int _disallowTouchNumber = {};
 
@@ -5732,6 +5733,9 @@ void DoUI() {
     bool touchPreservesSelection = false;
 
     FrameVisual uiBouncedAt = {};
+
+    bool   unlocking     = false;
+    lframe unlockElapsed = {};
   };
 
   LAMBDA (bool, componentUniversalSlot, (ComponentUniversalSlotData data)) {  ///
@@ -5764,6 +5768,33 @@ void DoUI() {
     }
     if (data.tier >= 0)
       tier = data.tier;
+
+    f32        unlockFadeLock             = 1;
+    f32        unlockFadeItem             = 0;
+    f32        unlockFlashWhiteLock       = 0;
+    f32        unlockFlashWhiteItem       = 0;
+    const auto unlockDelayBeforeUnlocking = ANIMATION_2_FRAMES;
+    const auto unlockDuration             = ANIMATION_0_FRAMES;
+
+    if (data.unlocking) {
+      if (data.unlockElapsed > unlockDelayBeforeUnlocking + unlockDuration) {
+        // Item is shown clearly.
+        unlockFadeItem = 1;
+        unlockFadeLock = 0;
+      }
+      else if (data.unlockElapsed > unlockDelayBeforeUnlocking) {
+        // Animation.
+        f32 p = Clamp01(
+          (data.unlockElapsed - unlockDelayBeforeUnlocking).Progress(unlockDuration)
+        );
+        unlockFadeItem       = p;
+        unlockFadeLock       = 1 - p;
+        unlockFlashWhiteLock = 1 - SQR(SQR(cosf(PI32 * p)));
+        unlockFlashWhiteItem = 1 - SQR(SQR(cosf(PI32 * p)));
+      }
+    }
+    else
+      unlockFadeLock = 0;
 
     bool result = false;
 
@@ -5802,26 +5833,50 @@ void DoUI() {
         }
 
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          if (!data.build || (data.build && (data.hidden == HiddenType_SHOW_LOCK))) {
+          if (data.build) {
+            CLAY({.layout{BF_CLAY_SIZING_GROW_XY}}) {
+              LAMBDA (void, oneMoreFloatingImageOfBuild, (auto innerLambda)) {
+                CLAY({.floating{
+                  .zIndex = zIndex,
+                  .attachPoints{
+                    .element = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                    .parent  = CLAY_ATTACH_POINT_CENTER_BOTTOM,
+                  },
+                  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+                  .attachTo           = CLAY_ATTACH_TO_PARENT,
+                }}) {
+                  innerLambda();
+                }
+              };
+
+              const auto fb_creaturePlayer = fb_creatures->Get(CreatureType_PLAYER);
+
+              const auto playerTex = fb_creaturePlayer->texture_ids()->Get(0);
+
+              const f32 off = 2;
+              oneMoreFloatingImageOfBuild([&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({.texID = playerTex, .offset{off, 0}});
+              });
+
+              const auto fb_build = fb_builds->Get(data.build);
+              const auto fb_hat   = glib->hats()->Get(fb_build->hat_type());
+
+              oneMoreFloatingImageOfBuild([&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_IMAGE({
+                  .texID = fb_hat->texture_id(),
+                  .offset{off, 100.0f * 179 / 256},
+                  .anchor = ToVector2(fb_hat->anchor()) * Vector2(1, -1),
+                  .color  = ColorFromRGBA(fb_build->hat_color()),
+                });
+              });
+            }
+          }
+          else {
             BF_CLAY_IMAGE({
               .texID = texID,
               .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
               .dontCareAboutScaleWhenCalculatingSize = true,
             });
-          }
-          else {
-            BF_CLAY_SPACER_VERTICAL;
-            BF_CLAY_IMAGE(
-              {
-                .texID = texID,
-                .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
-                .dontCareAboutScaleWhenCalculatingSize = true,
-              },
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA { BF_CLAY_IMAGE({}); }
-                );
-              }
-            );
           }
 
           // Showing count if there are multiple of the same item.
@@ -7588,6 +7643,9 @@ void DoUI() {
       PlaySound(Sound_UI_CLICK);
       g.meta.showingStats.SetNow();
     }
+  };
+
+  LAMBDA (void, componentBuild, (BuildType build)) {
   };
 
   // Gameplay.
@@ -9836,30 +9894,30 @@ void DoUI() {
       auto fb_step = fb->steps()->Get(x.stepIndex);
 
       LAMBDA (void, componentAchievementReward, (int texID, int tier)) {
-        f32 fadeLock       = 1;
-        f32 fadeItem       = 0;
-        f32 flashWhiteLock = 0;
-        f32 flashWhiteItem = 0;
+        f32 unlockFadeLock       = 1;
+        f32 unlockFadeItem       = 0;
+        f32 unlockFlashWhiteLock = 0;
+        f32 unlockFlashWhiteItem = 0;
 
-        const auto delayBeforeUnlock = ANIMATION_2_FRAMES;
-        const auto unlockDuration    = ANIMATION_0_FRAMES;
+        const auto unlockDelayBeforeUnlocking = ANIMATION_2_FRAMES;
+        const auto unlockDuration             = ANIMATION_0_FRAMES;
 
-        if (e > delayBeforeUnlock + unlockDuration) {
+        if (e > unlockDelayBeforeUnlocking + unlockDuration) {
           // Item is shown clearly.
-          fadeItem = 1;
-          fadeLock = 0;
+          unlockFadeItem = 1;
+          unlockFadeLock = 0;
         }
-        else if (e > delayBeforeUnlock) {
+        else if (e > unlockDelayBeforeUnlocking) {
           // Animation.
-          f32 p          = Clamp01((e - delayBeforeUnlock).Progress(unlockDuration));
-          fadeItem       = p;
-          fadeLock       = 1 - p;
-          flashWhiteLock = 1 - SQR(SQR(cosf(PI32 * p)));
-          flashWhiteItem = 1 - SQR(SQR(cosf(PI32 * p)));
+          f32 p = Clamp01((e - unlockDelayBeforeUnlocking).Progress(unlockDuration));
+          unlockFadeItem       = p;
+          unlockFadeLock       = 1 - p;
+          unlockFlashWhiteLock = 1 - SQR(SQR(cosf(PI32 * p)));
+          unlockFlashWhiteItem = 1 - SQR(SQR(cosf(PI32 * p)));
         }
 
         componentSlot(
-          {.tier = tier, .flashWhite = Clamp01(flashWhiteItem)},
+          {.tier = tier, .flashWhite = Clamp01(unlockFlashWhiteItem)},
           [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({.layout{
               BF_CLAY_SIZING_GROW_XY,
@@ -9868,16 +9926,16 @@ void DoUI() {
               componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_IMAGE({
                   .texID = glib->ui_item_locked_texture_id(),
-                  .color = Fade(WHITE, Clamp01(fadeLock)),
-                  .flash = Fade(WHITE, Clamp01(flashWhiteLock)),
+                  .color = Fade(WHITE, Clamp01(unlockFadeLock)),
+                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteLock)),
                 });
               });
 
               componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_IMAGE({
                   .texID = texID,
-                  .color = Fade(WHITE, Clamp01(fadeItem)),
-                  .flash = Fade(WHITE, Clamp01(flashWhiteItem)),
+                  .color = Fade(WHITE, Clamp01(unlockFadeItem)),
+                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
                 });
               });
             }
@@ -9897,18 +9955,15 @@ void DoUI() {
               BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
             } BF_CLAY_CUSTOM_END,
           }) {
-            if (fb_step->unlocks_build_type()) {
-              auto fbx = fb_builds->Get(fb_step->unlocks_build_type());
-              componentAchievementReward(fbx->texture_id(), 3);
-            }
-            if (fb_step->unlocks_weapon_type()) {
-              auto fbx = fb_weapons->Get(fb_step->unlocks_weapon_type());
-              componentAchievementReward(fbx->icon_texture_id(), 3);
-            }
-            if (fb_step->unlocks_item_type()) {
-              auto fbx = fb_items->Get(fb_step->unlocks_item_type());
-              componentAchievementReward(fbx->texture_id(), 3);
-            }
+            componentUniversalSlot({
+              .build         = (BuildType)fb_step->unlocks_build_type(),
+              .item          = (ItemType)fb_step->unlocks_item_type(),
+              .weapon        = (WeaponType)fb_step->unlocks_weapon_type(),
+              .tier          = 3,
+              .canHover      = false,
+              .unlocking     = true,
+              .unlockElapsed = e,
+            });
           }
         }
 
@@ -10167,8 +10222,8 @@ void DoUI() {
                 bb.x + bb.width / 2 + data.offset.x,
                 bb.y + bb.height / 2 + data.offset.y,
               },
-              .scale         = data.scale,
               .anchor        = data.anchor,
+              .scale         = data.scale,
               .sourceMargins = data.sourceMargins,
               .color{
                 data.color.r,
@@ -12956,7 +13011,7 @@ void GameDraw() {
       const auto fb_build = fb_builds->Get(g.player.build);
       const auto hat      = glib->hats()->Get(fb_build->hat_type());
 
-      auto anchor = ToVector2(hat->offset());
+      auto anchor = ToVector2(hat->anchor());
       if (scale.x < 0)
         anchor.x = 1 - anchor.x;
 
