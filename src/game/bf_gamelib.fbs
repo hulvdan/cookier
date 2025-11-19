@@ -350,8 +350,7 @@ table ShootingPattern {
 
 table Hat {
     texture_id: int;
-    color: uint = 0xffffffff;
-    offset: Posf;
+    anchor: Posf;
 }
 // GAME STUFF END
 
