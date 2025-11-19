@@ -27,12 +27,11 @@ x sprites: player
 x builds have different hats
 x monochrome hats
 x componentUniversalSlot: show builds
+x componentUniversalSlot: fix unlock animation
 
-* componentUniversalSlot: fix unlock animation
-*
 * blood particles from projectile / weapon (DON'T USE RED)
 *
-* fix crash upon damaging
+* fix crash upon damaging when having a lot of items
 *
 * sprites: weapons
 * sprites: projectiles
