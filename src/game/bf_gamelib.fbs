@@ -147,6 +147,8 @@ table Creature {
     shadow_offset_x: float;
     shadow_offset_y: float = -0.5;
     shadow_scale: float = 1;
+
+    hit_particles_color: uint;
 }
 
 table CondVar {

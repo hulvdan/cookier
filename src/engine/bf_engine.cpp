@@ -133,13 +133,13 @@ struct Rect {
   Vector2 GetRandomVisualPosInside() const;
 };
 
-struct Color {
+struct Color {  ///
   u8 r = u8_max;
   u8 g = u8_max;
   u8 b = u8_max;
   u8 a = u8_max;
 
-  Color operator*(const Color& v) {  ///
+  Color operator*(const Color& v) {
     Color result{
       (u8)(v.r * r / 255),
       (u8)(v.g * g / 255),
@@ -147,6 +147,13 @@ struct Color {
       (u8)(v.a * a / 255),
     };
     return result;
+  }
+
+  bool operator==(const Color& other) const {
+    return (r == other.r)     //
+           && (g == other.g)  //
+           && (b == other.b)  //
+           && (a == other.a);
   }
 };
 
