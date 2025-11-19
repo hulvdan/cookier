@@ -736,6 +736,27 @@ def process_images():
         bf_image.conveyor_suffix("small"),
     )
 
+    # Spritesheetifying hats.
+    for f in ART_TEXTURES_DIR.glob("game_hat_*.png"):
+        f.unlink()
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_005.png",
+        cell_size=160,
+        size=(5, 5),
+        origin=(870, 0),
+        gap=10,
+        out_filename_prefix="game_hat_",
+        out_filenames=[
+            "gopnik_gray",
+            "beanie_red",
+            "top_black",
+            "kepka_blue",
+            "kepka",
+            "beanie",
+        ],
+        out_dir=ART_TEXTURES_DIR,
+    )
+
     # Spritesheetifying clip studio items.
     for f in ART_TEXTURES_DIR.glob("ui_item_*.png"):
         f.unlink()

@@ -143,6 +143,7 @@ table Creature {
     idle_seconds: float = 0.75;
 
     texture_ids: [int];
+    offset_y: float;
     shadow_offset_x: float;
     shadow_offset_y: float = -0.5;
     shadow_scale: float = 1;
@@ -308,6 +309,7 @@ table Difficulty {
 table Build {
     texture_id: int;
     name_locale: int;
+    hat_type: int;
     starting_weapon_types: [int];
     effects: [Effect];
 }
@@ -344,6 +346,12 @@ table ShootingPattern {
     rotation_offset: float;
     cooldown_between_shots_in_seconds: float;
     shots_count: int;
+}
+
+table Hat {
+    texture_id: int;
+    color: uint = 0xffffffff;
+    offset: Posf;
 }
 // GAME STUFF END
 
@@ -428,6 +436,7 @@ table GameLibrary {
     difficulties: [Difficulty] (required);
     builds: [Build] (required);
     achievements: [Achievement] (required);
+    hats: [Hat] (required);
     // TABLE_GEN_END
 
     landmine_crit_damage_multiplier: float = 1.5;

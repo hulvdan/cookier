@@ -12615,6 +12615,7 @@ void GameDraw() {
   const auto fb_pickupables    = glib->pickupables();
   const auto fb_numbers        = glib->numbers();
   const auto fb_particles      = glib->particles();
+  const auto fb_builds         = glib->builds();
   // }
 
   BeginMode2D(&g.run.camera);
@@ -12910,19 +12911,46 @@ void GameDraw() {
     movementScale += Vector2(sinf(movementCycle) * 1.1f, cosf(movementCycle))
                      * movementAmplitudeScale;
 
-    DrawGroup_OneShotTexture(
+    DrawGroup_Begin(DrawZ_DEFAULT);
+
+    const auto basePos
+      = creature.pos + Vector2(0, fb->offset_y() + fb->shadow_offset_y());
+
+    const auto creatureRotation = -sinf(movementCycle * SIGN(creature.dir.x)) * PI32
+                                  / (40 / 1.0f) * creature.movementVisualFactor;
+
+    DrawGroup_CommandTexture(
       {
         .texID    = texID,
-        .rotation = -sinf(movementCycle * SIGN(creature.dir.x)) * PI32 / (40 / 1.0f)
-                    * creature.movementVisualFactor,
-        .pos = creature.pos + Vector2(0, fb->shadow_offset_y()),
+        .rotation = creatureRotation,
+        .pos      = basePos,
         .anchor{0.5f, 0.5f + fb->shadow_offset_y() / sy},
         .scale = scale * movementScale,
         .color = Fade(color, fade),
         .flash = flash,
       },
-      DrawZ_DEFAULT
+      DrawCommandSetSortY_SET_BASELINE
     );
+
+    if (creature.type == CreatureType_PLAYER) {
+      const auto hat = glib->hats()->Get(fb_builds->Get(g.player.build)->hat_type());
+
+      auto anchor = ToVector2(hat->offset());
+      if (scale.x < 0)
+        anchor.x = 1 - anchor.x;
+
+      DrawGroup_CommandTexture({
+        .texID    = hat->texture_id(),
+        .rotation = creatureRotation,
+        .pos      = basePos,
+        .anchor   = anchor,
+        .scale    = scale * movementScale,
+        .color    = Fade(ColorFromRGBA(hat->color()), fade),
+        .flash    = flash,
+      });
+    }
+
+    DrawGroup_End();
 
     {
       int texID       = 0;
