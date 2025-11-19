@@ -2584,7 +2584,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     *data.outJustKilled = false;
 
   ASSERT(data.creatureIndex >= 0);
-  ASSERT(data.damage >= 0);
+  data.damage = MAX(1, data.damage);
   if (data.damage != int_max) {
     auto t = GRAND.Rand() % 7;
     if ((t == 0) || (t == 1))
