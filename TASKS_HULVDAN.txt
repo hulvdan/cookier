@@ -32,9 +32,8 @@ x blood particles from projectile / weapon (DON'T USE RED)
 x fix: crash upon damaging when having a lot of items
   SET ENEMIES TO A CRAZE AMOUNT
 x one more crash fix
+x fix: 225 stat value looks like shit
 
-* fix: 225 stat value looks like shit
-*
 * sprites: weapons
 * sprites: projectiles
 *

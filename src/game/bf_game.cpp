@@ -3382,7 +3382,9 @@ void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
     CLAY_TEXT_CONFIG({
       .textColor = ToClayColor(opts.color),
       .fontId    = fontID,
-      .wrapMode  = opts.wrapMode,
+      // fontSize fixes clay's incorrect MeasureText cache
+      .fontSize = (u16)Hash32((u8*)&fontID, sizeof(fontID)),
+      .wrapMode = opts.wrapMode,
     })
   );
 }
