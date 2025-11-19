@@ -3778,7 +3778,8 @@ difficulties: # {  ###
 builds: # {  ###
   - type: INVALID
   - type: DEFAULT
-    hat_type: GOPNIK_GRAY
+    hat_type: GOPNIK
+    hat_color: 0xcec7b1ff
     starting_weapon_types:
       - SWORD
       - BOW
@@ -3804,7 +3805,8 @@ builds: # {  ###
             # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
             # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
   - type: NINJA
-    hat_type: KEPKA_BLUE
+    hat_type: KEPKA
+    hat_color: 0x208cb2ff
     starting_weapon_types:
       - SLINGSHOT
       - SMG
@@ -3817,7 +3819,8 @@ builds: # {  ###
         placeholders:
           - ints: 35
   - type: WIZARD
-    hat_type: TOP_BLACK
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
     starting_weapon_types:
       - WAND
       - WAND2
