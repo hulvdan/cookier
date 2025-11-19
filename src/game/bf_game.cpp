@@ -10554,8 +10554,6 @@ int GetMobDamage(CreatureType type) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
-  g.run.state.stats[StatType_ENEMIES] = 400;
-
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
