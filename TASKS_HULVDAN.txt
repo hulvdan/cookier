@@ -34,10 +34,31 @@ x fix: crash upon damaging when having a lot of items
 x one more crash fix
 x fix: 225 stat value looks like shit
 
+* loc: GREEK NUT проверить
+* loc: PARTIZAN COOKIE так ли
+* loc: шляпа повара / cook's hat как писать на рус + англ
+* loc: cooravie
+* loc: TODOOO Подставка Для Свечек;TODOOO Candlestick;
+* loc: кастрюля или кострюля
+* loc: Phartuk
+* loc: ловкач англ (перчатка ловкача)
+* loc: Додекаэдр проверить (на русском)
+* loc: правильно ли написано Piercing Bullet's Blueprint
+*
+* weapons
+*
+* prod: оружия
+* prod: билды
+* prod: сложности
+*
+* fire particles
+* zap particles
 * sprites: weapons
 * sprites: projectiles
 *
-* weapons
+* 10 билдов
+* подредачить баффы сложностей
+*
 *
 * effect works: xp gain DURING THE NEXT WAVE
 *
@@ -52,20 +73,8 @@ x fix: 225 stat value looks like shit
 * polish:
 * polish:
 *
-* loc: GREEK NUT проверить
-* loc: PARTIZAN COOKIE так ли
-* loc: шляпа повара / cook's hat как писать на рус + англ
-* loc: cooravie
-* loc: TODOOO Подставка Для Свечек;TODOOO Candlestick;
-* loc: кастрюля или кострюля
-* loc: Phartuk
-* loc: ловкач англ (перчатка ловкача)
-* loc: Додекаэдр проверить (на русском)
-* loc: правильно ли написано Piercing Bullet's Blueprint
-*
 * impl: STAT__DURING_NEXT_WAVE
 *
-* AUDIO SET METADATA: ffmpeg -i test.wav -c copy -metadata artist="ABOBA" test2.wav
 *
 * stats: knockback
 * stats: LOOT_ALIENS_CHANCE
@@ -130,13 +139,12 @@ x fix: 225 stat value looks like shit
 * prod sfx:
 * prod sfx:
 *
-* норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
+* норм иконка паузы. Игрок должен сразу понять, п
+*
+* landmine easings: on create, что это «кнопка паузы»
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
 *
-* prod: оружия
-* prod: билды
-* prod: сложности
 * prod: MUSIC
 * prod: SFX
 * prod: сакутиновая отправка event-ов аналитики
@@ -147,6 +155,7 @@ x fix: 225 stat value looks like shit
 *
 * RELEASED!
 =======================
+* AUDIO SET METADATA: ffmpeg -i test.wav -c copy -metadata artist="ABOBA" test2.wav
 * a way of automagically tracking used CC-BY-SA sounds in project
 * boss patterns: vertical/horizontal row sliding with projectiles accelerating
 - prod sfx: take
