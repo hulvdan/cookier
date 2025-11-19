@@ -230,7 +230,9 @@ struct Beautify {
 
 struct ClayImageData {
   int     texID         = {};
+  Vector2 offset        = {};
   Vector2 scale         = {1, 1};
+  Vector2 anchor        = {0.5f, 0.5f};
   Margins sourceMargins = {0, 0};
   Color   color         = WHITE;
   Color   flash         = TRANSPARENT_BLACK;
@@ -5748,10 +5750,8 @@ void DoUI() {
       texID = fb_difficulties->Get(data.difficulty)->texture_id();
       tier  = (int)data.difficulty - 1;
     }
-    if (data.build) {
-      texID = fb_builds->Get(data.build)->texture_id();
-      tier  = GetBuildTier(data.build);
-    }
+    if (data.build)
+      tier = GetBuildTier(data.build);
     if (data.item) {
       auto fbx = fb_items->Get(data.item);
       texID    = fbx->texture_id();
@@ -5802,11 +5802,27 @@ void DoUI() {
         }
 
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
-          BF_CLAY_IMAGE({
-            .texID = texID,
-            .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
-            .dontCareAboutScaleWhenCalculatingSize = true,
-          });
+          if (!data.build || (data.build && (data.hidden == HiddenType_SHOW_LOCK))) {
+            BF_CLAY_IMAGE({
+              .texID = texID,
+              .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
+              .dontCareAboutScaleWhenCalculatingSize = true,
+            });
+          }
+          else {
+            BF_CLAY_SPACER_VERTICAL;
+            BF_CLAY_IMAGE(
+              {
+                .texID = texID,
+                .scale = Vector2One() * GetScaleOfCoins(data.uiBouncedAt),
+                .dontCareAboutScaleWhenCalculatingSize = true,
+              },
+              [&]() BF_FORCE_INLINE_LAMBDA {
+                componentCenterFloater([&]() BF_FORCE_INLINE_LAMBDA { BF_CLAY_IMAGE({}); }
+                );
+              }
+            );
+          }
 
           // Showing count if there are multiple of the same item.
           if (data.count > 1) {
@@ -10147,8 +10163,12 @@ void DoUI() {
             const auto& data = *(ClayImageData*)d.imageData;
             DrawGroup_CommandTexture({
               .texID = data.texID,
-              .pos{bb.x + bb.width / 2, bb.y + bb.height / 2},
+              .pos{
+                bb.x + bb.width / 2 + data.offset.x,
+                bb.y + bb.height / 2 + data.offset.y,
+              },
               .scale         = data.scale,
+              .anchor        = data.anchor,
               .sourceMargins = data.sourceMargins,
               .color{
                 data.color.r,

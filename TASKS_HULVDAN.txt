@@ -24,10 +24,10 @@ x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
 x sprites: player
 - gamelib.fbs is made from parsed yaml?
   won't have to work with 2 files at the same time
+x builds have different hats
+x monochrome hats
 
-* builds have different hats
-*
-* monochrome hats?
+* componentUniversalSlot: show builds
 *
 * blood particles from projectile / weapon (DON'T USE RED)
 *
