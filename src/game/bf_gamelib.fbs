@@ -310,6 +310,7 @@ table Build {
     texture_id: int;
     name_locale: int;
     hat_type: int;
+    hat_color: uint = 0xffffffff;
     starting_weapon_types: [int];
     effects: [Effect];
 }

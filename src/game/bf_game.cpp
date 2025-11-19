@@ -12933,7 +12933,8 @@ void GameDraw() {
     );
 
     if (creature.type == CreatureType_PLAYER) {
-      const auto hat = glib->hats()->Get(fb_builds->Get(g.player.build)->hat_type());
+      const auto fb_build = fb_builds->Get(g.player.build);
+      const auto hat      = glib->hats()->Get(fb_build->hat_type());
 
       auto anchor = ToVector2(hat->offset());
       if (scale.x < 0)
@@ -12945,7 +12946,7 @@ void GameDraw() {
         .pos      = basePos,
         .anchor   = anchor,
         .scale    = scale * movementScale,
-        .color    = Fade(ColorFromRGBA(hat->color()), fade),
+        .color    = Fade(ColorFromRGBA(fb_build->hat_color()), fade),
         .flash    = flash,
       });
     }

@@ -747,12 +747,10 @@ def process_images():
         gap=10,
         out_filename_prefix="game_hat_",
         out_filenames=[
-            "gopnik_gray",
-            "beanie_red",
-            "top_black",
-            "kepka_blue",
-            "kepka",
+            "gopnik",
             "beanie",
+            "top",
+            "kepka",
         ],
         out_dir=ART_TEXTURES_DIR,
     )
