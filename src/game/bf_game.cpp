@@ -2991,10 +2991,10 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   return true;
 }
 
-void Pickup(Pickupable* pickupable_) {  ///
-  auto& pickupable = *pickupable_;
+void Pickup(int pickupableIndex) {  ///
+#define PICKUPABLE (g.run.pickupables[pickupableIndex])
 
-  pickupable.pickedUpAt.SetNow();
+  PICKUPABLE.pickedUpAt.SetNow();
 
   auto fb_creatures = glib->creatures();
 
@@ -3004,7 +3004,7 @@ void Pickup(Pickupable* pickupable_) {  ///
     -1,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
-        if (fb_effect->pickupable_type() != pickupable.type)
+        if (fb_effect->pickupable_type() != PICKUPABLE.type)
           return;
         if (GRAND.FRand() >= (f32)EFFECT_X_INT / 100.0f)
           return;
@@ -3051,7 +3051,7 @@ void Pickup(Pickupable* pickupable_) {  ///
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
         if (GRAND.FRand() < (f32)EFFECT_X_INT / 100.0f) {
-          if (fb_effect->pickupable_type() == pickupable.type)
+          if (fb_effect->pickupable_type() == PICKUPABLE.type)
             HealPlayer(EFFECT_Y_INT * times);
         }
       }
@@ -3062,16 +3062,16 @@ void Pickup(Pickupable* pickupable_) {  ///
     -1,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
-        if (fb_effect->pickupable_type() == pickupable.type) {
+        if (fb_effect->pickupable_type() == PICKUPABLE.type) {
           const int amount = times * EFFECT_X_INT;
           ChangeCoins(amount);
         }
       }
   );
 
-  switch (pickupable.type) {
+  switch (PICKUPABLE.type) {
   case PickupableType_COIN: {
-    const auto& data    = pickupable.DataCoin();
+    const auto& data    = PICKUPABLE.DataCoin();
     int         amount  = data.amount;
     int         xNumber = 1;
 
@@ -3123,6 +3123,8 @@ void Pickup(Pickupable* pickupable_) {  ///
   default:
     INVALID_PATH;
   }
+
+#undef PICKUPABLE
 }
 
 void MakePickupable(MakePickupableData data) {  ///
@@ -3170,10 +3172,11 @@ void MakePickupable(MakePickupableData data) {  ///
       }
   );
 
-  *g.run.pickupables.Add() = pickupable;
+  const int pickupableIndex = g.run.pickupables.count;
+  *g.run.pickupables.Add()  = pickupable;
 
   if (GRAND.FRand() < chanceToInstaPickup)
-    Pickup(g.run.pickupables.base + g.run.pickupables.count - 1);
+    Pickup(pickupableIndex);
 }
 
 template <typename T>
@@ -10691,11 +10694,16 @@ void GameFixedUpdate() {
 
   // Picking up remaining crates at the end of the wave.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
+    int pickupableIndex = -1;
+
     for (auto& pickupable : g.run.pickupables) {
+      pickupableIndex++;
+
       if (pickupable.type != PickupableType_CRATE)
         continue;
+
       if (!pickupable.pickedUpAt.IsSet())
-        Pickup(&pickupable);
+        Pickup(pickupableIndex);
     }
   }
 
@@ -11581,7 +11589,10 @@ void GameFixedUpdate() {
       if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
         ZoneScopedN("Picking up pickupables.");
 
+        int pickupableIndex = -1;
         for (auto& pickupable : g.run.pickupables) {
+          pickupableIndex++;
+
           if (pickupable.pickedUpAt.IsSet())
             continue;
 
@@ -11591,7 +11602,7 @@ void GameFixedUpdate() {
 
           if (Vector2DistanceSqr(pickupable.pos, PLAYER_CREATURE.pos)
               <= SQR(PICKUPABLE_HURTBOX_RADIUS * pickupRangeScale))
-            Pickup(&pickupable);
+            Pickup(pickupableIndex);
         }
       }
 
