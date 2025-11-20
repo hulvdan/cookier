@@ -3,15 +3,8 @@ WORKING SINCE 2025-09-07
 x выписал список оружий
 x определить, какие оружия оставить в игре
 x attack speed использовать не cooldown_frames / shooting_duration_frames, а shooting_duration_frames + factor
+x забить данные оружий в gamelib (без эффектов)
 
-* забить данные оружий в gamelib (без эффектов)
-*
-* game.py: crit_chance
-*
-* impl: fb_weapon->projectiles_count()
-*
-* fix: projectile_spawn_frame_factors
-*
 * нарисовать MELEE_0_CACTI_CLUB
 * нарисовать MELEE_0_CHOPPER
 * нарисовать MELEE_0_CLAW
@@ -62,10 +55,15 @@ x attack speed использовать не cooldown_frames / shooting_duration
 * нарисовать RANGED_3_CHAIN_GUN
 * нарисовать RANGED_3_GATLING_LASER
 *
+* game.py: crit_chance
+* impl: fb_weapon->projectiles_count()
+* fix: projectile_spawn_frame_factors
+*
+* забить данные эффектов оружий в gamelib
+*
 * нарисовать спрайты оружий
 * нарисовать иконки оружий
 *
-* забить данные эффектов оружий в gamelib
 * реализовать оружия (без доработок)
 * реализовать оружия (с доработками)
 *
