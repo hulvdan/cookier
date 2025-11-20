@@ -233,26 +233,26 @@ table Ailment {
     duration_seconds: float;
 }
 
-table WeaponKind {
-    stat_type: int;
-}
+// table WeaponKind {
+//     stat_type: int;
+// }
 
 table Weapon {
     name_locale: int;
     min_tier_index: int;
-    weaponkind_type: int;
+    // weaponkind_type: int;
     base_damage: [int];
     damage_scalings: [DamageScaling];
-    crit_damage_multiplier: float = 1.5;
-    knockback_meters: float;
-    cooldown_frames: int;
-    shooting_duration_frames: int;
+    crit_damage_multiplier: [float];
+    knockback_meters: [float];
+    cooldown_frames: [int];
+    shooting_duration_frames: [int];
     shoots_itself: bool;
     projectile_type: int;
     projectile_spawn_frames: [int];
-    projectile_pierce: int = 0;
-    projectile_bounce: int = 0;
-    range_meters: float;
+    projectile_pierce: [int];
+    projectile_bounce: [int];
+    range_meters: [float];
     price: int;
     melee_collider_height_px: float;
     life_steal_percents: [float];
@@ -426,7 +426,7 @@ table GameLibrary {
     effect_condition_variables: [CondVar] (required);
     effect_conditions: [EffectCondition] (required);
     items: [Item] (required);
-    weapon_kinds: [WeaponKind] (required);
+    // weapon_kinds: [WeaponKind] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
     particles: [Particle] (required);

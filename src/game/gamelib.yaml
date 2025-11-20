@@ -2988,13 +2988,12 @@ items: # {  ###
 #       value: -2
 # }
 
-weapon_kinds: # {  ###
-  - type: INVALID
-  - type: MELEE
-  - type: RANGED
-  - type: ELEMENTAL
-# }
-
+# weapon_kinds: # {  ###
+#   - type: INVALID
+#   - type: MELEE
+#   - type: RANGED
+#   - type: ELEMENTAL
+# # }
 weapons: # {  ###
   #
   # If a weapon doesn't have `projectile_type` specified,
@@ -3626,103 +3625,103 @@ weapons: # {  ###
   #   texture_ids:
   #     - game_weapon_todo
   - type: MELEE_0_CACTI_CLUB
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_CHOPPER
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_CLAW
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_FIST
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_GHOST_AXE
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_GHOST_FLINT
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_JOUSTING_LANCE
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_LIGHTNING_SHIV
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_PLANK
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_PRUNER
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_QUATERSTAFF
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_ROCK
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_SCREWDRIVER
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_SHARP_TOOTH
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_SPIKY_SHIELD
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_STICK
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_TORCH
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_0_WRENCH
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_1_CIRCULAR_SAW
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_1_HAMMER
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_1_SWORD
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_2_PLASMA_SLEDGE
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_2_POWER_FIST
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_2_THUNDER_SWORD
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_3_DEX_TROYER
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_3_EXCALIBUR
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: MELEE_3_SCYTHE
-    weaponkind_type: MELEE
+    # weaponkind_type: MELEE
   - type: RANGED_0_CROSSBOW
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_DOUBLE_BARREL_SHOTGUN
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_GHOST_SCEPTER
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_ICICLE
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_JAVELIN
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_LASER_GUN
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_PISTOL
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_SHREDDER
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_SHURIKEN
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_SLINGSHOT
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_SMG
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_0_WAND
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_1_FIREBALL
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_1_FLAMETHROWER
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_1_POTATO_THROWER
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_1_ROCKER_LAUNCHER
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_2_MINIGUN
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_2_NUCLEAR_LAUNCHER
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_2_SNIPER_GUN
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_3_CHAIN_GUN
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
   - type: RANGED_3_GATLING_LASER
-    weaponkind_type: RANGED
+    # weaponkind_type: RANGED
 # }
 
 projectiles: # {  ###
