@@ -3626,6 +3626,7 @@ weapons: # {  ###
   #     - game_weapon_todo
   - type: MELEE_0_CACTI_CLUB
     base_damage: 10 20 30 50
+    attack_speed: 1.66 1.58 1.51 1.36
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 200 200 200 200
@@ -3633,6 +3634,7 @@ weapons: # {  ###
     price: 149
   - type: MELEE_0_CHOPPER
     base_damage: 6 12 18 30
+    attack_speed: 0.99 0.99 0.96 0.89
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 10 15 20 25
     range_meters: 135 150 165 180
@@ -3640,6 +3642,7 @@ weapons: # {  ###
     price: 122
   - type: MELEE_0_CLAW
     base_damage: 5 10 15 25
+    attack_speed: 0.78 0.73 0.69 0.59
     crit_damage_multiplier: 2 2.15 2.3 2.5
     crit_chance: 10 15 20 25
     range_meters: 150 150 150 150
@@ -3647,6 +3650,7 @@ weapons: # {  ###
     price: 110
   - type: MELEE_0_FIST
     base_damage: 8 16 32 64
+    attack_speed: 0.78 0.73 0.69 0.59
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
     range_meters: 150 150 150 150
@@ -3654,6 +3658,7 @@ weapons: # {  ###
     price: 91
   - type: MELEE_0_GHOST_AXE
     base_damage: 12 18 24 40
+    attack_speed: 1.73 1.66 1.58 1.51
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 200 200 200 200
@@ -3661,6 +3666,7 @@ weapons: # {  ###
     price: 149
   - type: MELEE_0_GHOST_FLINT
     base_damage: 6 9 12 18
+    attack_speed: 1.23 1.17 1.10 1.04
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 150 160 170 180
@@ -3668,6 +3674,7 @@ weapons: # {  ###
     price: 105
   - type: MELEE_0_JOUSTING_LANCE
     base_damage: 20 25 30 50
+    attack_speed: 1.58 1.50 1.42 1.33
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 250 250 250 250
@@ -3675,6 +3682,7 @@ weapons: # {  ###
     price: 132
   - type: MELEE_0_LIGHTNING_SHIV
     base_damage: 3 6 9 16
+    attack_speed: 1.01 0.93 0.86 0.78
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 4 6 8 10
     range_meters: 150 150 150 150
@@ -3682,6 +3690,7 @@ weapons: # {  ###
     price: 142
   - type: MELEE_0_PLANK
     base_damage: 10 15 20 25
+    attack_speed: 1.23 1.14 1.06 0.98
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 150 150 150 150
@@ -3689,6 +3698,7 @@ weapons: # {  ###
     price: 122
   - type: MELEE_0_PRUNER
     base_damage: 10 15 20 25
+    attack_speed: 1.14 1.06 0.98 0.89
     crit_damage_multiplier: 1.25 1.5 1.75 2
     crit_chance: 3 6 9 12
     range_meters: 150 150 150 150
@@ -3696,6 +3706,7 @@ weapons: # {  ###
     price: 95
   - type: MELEE_0_QUATERSTAFF
     base_damage: 10 15 20 30
+    attack_speed: 1.42 1.25 1.09 0.92
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
@@ -3703,6 +3714,7 @@ weapons: # {  ###
     price: 130
   - type: MELEE_0_ROCK
     base_damage: 20 35 50 70
+    attack_speed: 1.68 1.61 1.53 1.46
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 10 15 20 25
     range_meters: 150 150 150 150
@@ -3710,6 +3722,7 @@ weapons: # {  ###
     price: 91
   - type: MELEE_0_SCREWDRIVER
     base_damage: 8 12 16 20
+    attack_speed: 1.05 1.00 0.97 0.87
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 10 15 20 30
     range_meters: 125 125 125 125
@@ -3717,6 +3730,7 @@ weapons: # {  ###
     price: 91
   - type: MELEE_0_SHARP_TOOTH
     base_damage: 5 8 11 15
+    attack_speed: 1.14 1.07 1.00 0.93
     crit_damage_multiplier: 2 2.15 2.3 2.5
     crit_chance: 3 6 9 12
     range_meters: 150 160 170 180
@@ -3724,6 +3738,7 @@ weapons: # {  ###
     price: 105
   - type: MELEE_0_SPIKY_SHIELD
     base_damage: 10 15 20 30
+    attack_speed: 1.16 1.16 1.16 1.01
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 150 165 180 200
@@ -3731,6 +3746,7 @@ weapons: # {  ###
     price: 122
   - type: MELEE_0_STICK
     base_damage: 8 9 10 12
+    attack_speed: 1.29 1.22 1.15 1.09
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
@@ -3738,6 +3754,7 @@ weapons: # {  ###
     price: 91
   - type: MELEE_0_TORCH
     base_damage: 1 1 1 1
+    attack_speed: 1.10 1.04 0.95 0.8
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 0 0 0 0
     range_meters: 175 175 175 175
@@ -3745,6 +3762,7 @@ weapons: # {  ###
     price: 91
   - type: MELEE_0_WRENCH
     base_damage: 12 16 20 24
+    attack_speed: 1.70 1.64 1.55 1.49
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
@@ -3752,6 +3770,7 @@ weapons: # {  ###
     price: 173
   - type: MELEE_1_CIRCULAR_SAW
     base_damage: 10 15 25
+    attack_speed: 0.72 0.67 0.62
     crit_damage_multiplier: 2 2 2
     crit_chance: 5 10 20
     life_steal_percents: 45 50 60
@@ -3760,6 +3779,7 @@ weapons: # {  ###
     price: 173
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES
     base_damage: 16 32 64
+    attack_speed: 0.73 0.69 0.59
     crit_damage_multiplier: 1.5  1.5  1.5
     crit_chance: 1 1 1
     range_meters: 150 150 150
@@ -3767,6 +3787,7 @@ weapons: # {  ###
     price: 173
   - type: MELEE_1_HAMMER
     base_damage: 35 70 110
+    attack_speed: 1.67 1.59 1.50
     crit_damage_multiplier: 1.75 1.75 1.75
     crit_chance: 3 3 3
     range_meters: 175 175 175
@@ -3774,6 +3795,7 @@ weapons: # {  ###
     price: 190
   - type: MELEE_1_SWORD
     base_damage: 25 40 60
+    attack_speed: 1.28 1.13 0.98
     crit_damage_multiplier: 2 2 2
     crit_chance: 3 3 3
     range_meters: 200 200 200
@@ -3781,6 +3803,7 @@ weapons: # {  ###
     price: 190
   - type: MELEE_2_PLASMA_SLEDGE
     base_damage: 80 120
+    attack_speed: 1.55 1.49
     crit_damage_multiplier: 1.75 1.75
     crit_chance: 3 3
     range_meters: 175 175
@@ -3788,6 +3811,7 @@ weapons: # {  ###
     price: 272
   - type: MELEE_2_POWER_FIST
     base_damage: 40 60
+    attack_speed: 0.69 0.59
     crit_damage_multiplier: 1.5 1.5
     crit_chance: 1 1
     range_meters: 150 150
@@ -3795,6 +3819,7 @@ weapons: # {  ###
     price: 221
   - type: MELEE_2_THUNDER_SWORD
     base_damage: 30 60
+    attack_speed: 1.21 1.06
     crit_damage_multiplier: 2 2
     crit_chance: 3 3
     range_meters: 200 200
@@ -3802,6 +3827,7 @@ weapons: # {  ###
     price: 238
   - type: MELEE_3_DEX_TROYER
     base_damage: 100
+    attack_speed: 1.33
     crit_damage_multiplier: 2
     crit_chance: 3
     range_meters: 400
@@ -3809,6 +3835,7 @@ weapons: # {  ###
     price: 315
   - type: MELEE_3_EXCALIBUR
     base_damage: 200
+    attack_speed: 0.66
     crit_damage_multiplier: 2.5
     crit_chance: 10
     range_meters: 200
@@ -3816,6 +3843,7 @@ weapons: # {  ###
     price: 230
   - type: MELEE_3_SCYTHE
     base_damage: 150
+    attack_speed: 0.72
     crit_damage_multiplier: 2
     crit_chance: 3
     life_steal_percents: 100
@@ -3824,6 +3852,7 @@ weapons: # {  ###
     price: 285
   - type: RANGED_0_CROSSBOW
     base_damage: 10 12 15 18
+    attack_speed: 1.13 1.13 1.13 1.13
     crit_damage_multiplier: 1.5 1.75 2 2.25
     crit_chance: 30 35 40 45
     range_meters: 350 350 350 350
@@ -3831,6 +3860,7 @@ weapons: # {  ###
     price: 132
   - type: RANGED_0_DOUBLE_BARREL_SHOTGUN
     base_damage: 3 6 9 9
+    attack_speed: 1.37 1.28 1.20 1.20
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     projectile_count: 4 4 4 6
@@ -3839,6 +3869,7 @@ weapons: # {  ###
     price: 149
   - type: RANGED_0_GHOST_SCEPTER
     base_damage: 10 15 20 30
+    attack_speed: 0.98 0.93 0.88 0.83
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 300 350 400 450
@@ -3846,6 +3877,7 @@ weapons: # {  ###
     price: 122
   - type: RANGED_0_ICICLE
     base_damage: 10 20 30 40
+    attack_speed: 1.03 0.95 0.87 0.70
     crit_damage_multiplier: 2 2 2.5 3
     crit_chance: 5 10 15 20
     range_meters: 400 400 400 400
@@ -3853,6 +3885,7 @@ weapons: # {  ###
     price: 140
   - type: RANGED_0_JAVELIN
     base_damage: 8 12 16 20
+    attack_speed: 1.20 1.12 1.03 0.95
     crit_damage_multiplier: 2.5 2.75 3 3.25
     crit_chance: 0 0 0 0
     range_meters: 350 375 400 425
@@ -3860,6 +3893,7 @@ weapons: # {  ###
     price: 140
   - type: RANGED_0_LASER_GUN
     base_damage: 40 55 70 100
+    attack_speed: 1.98 1.90 1.82 1.65
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 500 500 500 500
@@ -3867,6 +3901,7 @@ weapons: # {  ###
     price: 122
   - type: RANGED_0_PISTOL
     base_damage: 12 20 30 50
+    attack_speed: 1.20 1.12 1.03 0.87
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 5 10 15 20
     range_meters: 400 400 400 400
@@ -3874,6 +3909,7 @@ weapons: # {  ###
     price: 91
   - type: RANGED_0_SHREDDER
     base_damage: 5 10 15 25
+    attack_speed: 1.30 1.22 1.13 1.05
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 450 450 450 450
@@ -3881,6 +3917,7 @@ weapons: # {  ###
     price: 122
   - type: RANGED_0_SHURIKEN
     base_damage: 6 8 10 15
+    attack_speed: 0.87 0.83 0.80 0.70
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 35 38 41 45
     range_meters: 350 350 350 350
@@ -3888,6 +3925,7 @@ weapons: # {  ###
     price: 105
   - type: RANGED_0_SLINGSHOT
     base_damage: 10 13 16 21
+    attack_speed: 1.22 1.17 1.12 1.05
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 300 300 300 300
@@ -3895,6 +3933,7 @@ weapons: # {  ###
     price: 120
   - type: RANGED_0_SMG
     base_damage: 3 4 5 8
+    attack_speed: 0.17 0.17 0.17 0.15
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
     range_meters: 400 400 400 400
@@ -3902,6 +3941,7 @@ weapons: # {  ###
     price: 149
   - type: RANGED_0_WAND
     base_damage: 1 1 1 1
+    attack_speed: 0.87 0.78 0.70 0.53
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 0 0 0 0
     range_meters: 350 375 400 425
@@ -3909,6 +3949,7 @@ weapons: # {  ###
     price: 105
   - type: RANGED_1_FIREBALL
     base_damage: 5 10 20
+    attack_speed: 1.12 1.03 0.87
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 3 3 3
     range_meters: 400 450 500
@@ -3916,6 +3957,7 @@ weapons: # {  ###
     price: 140
   - type: RANGED_1_FLAMETHROWER
     base_damage: 1 1 1
+    attack_speed: 0.12 0.12 0.09
     crit_damage_multiplier: 2 2 2
     crit_chance: 0 0 0
     range_meters: 250 300 400
@@ -3923,6 +3965,7 @@ weapons: # {  ###
     price: 207
   - type: RANGED_1_POTATO_THROWER
     base_damage: 1 1 1
+    attack_speed: 0.45 0.37 0.25
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 3 3 3
     range_meters: 500 500 500
@@ -3930,6 +3973,7 @@ weapons: # {  ###
     price: 139
   - type: RANGED_1_ROCKER_LAUNCHER
     base_damage: 30 50 80
+    attack_speed: 1.78 1.37 1.03
     crit_damage_multiplier: 2 2 2
     crit_chance: 3 3 3
     range_meters: 500 550 600
@@ -3937,6 +3981,7 @@ weapons: # {  ###
     price: 207
   - type: RANGED_2_MINIGUN
     base_damage: 1 3
+    attack_speed: 0.09 0.073
     crit_damage_multiplier: 1.75 2
     crit_chance: 1 3
     range_meters: 400 450
@@ -3944,6 +3989,7 @@ weapons: # {  ###
     price: 255
   - type: RANGED_2_NUCLEAR_LAUNCHER
     base_damage: 60 120
+    attack_speed: 2.12 2.12
     crit_damage_multiplier: 2 2
     crit_chance: 3 3
     range_meters: 800 800
@@ -3951,6 +3997,7 @@ weapons: # {  ###
     price: 289
   - type: RANGED_2_SNIPER_GUN
     base_damage: 50 80
+    attack_speed: 2.40 2.40
     crit_damage_multiplier: 3 4
     crit_chance: 20 20
     range_meters: 800 1000
@@ -3958,6 +4005,7 @@ weapons: # {  ###
     price: 245
   - type: RANGED_3_CHAIN_GUN
     base_damage: 2
+    attack_speed: 0.073
     crit_damage_multiplier: 1.5
     crit_chance: 3
     projectile_count: 3
@@ -3966,6 +4014,7 @@ weapons: # {  ###
     price: 300
   - type: RANGED_3_GATLING_LASER
     base_damage: 10
+    attack_speed: 0.073
     crit_damage_multiplier: 3
     crit_chance: 10
     range_meters: 500
