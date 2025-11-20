@@ -1,39 +1,36 @@
 WORKING SINCE 2025-09-07
 
-x sprites mob: boss
-x улучшалка: gamelib hot reload
-x boss shooting patterns
-x boss patterns: mirror (startedShootingAt)
-x boss patterns: projectile scale easing on spawn
-x убрать "писюн" босса
-x добавить боссу у рта справа трещину
-x polish: creatures movement
-x spritesheetify stat icons
-x clean stat icons so that downscaled icons don't get artifacts
-x bright small stat icons
-x fix blood vignette
-x localization: russian: the same STAT MODIFIER english
-x wrap stats2 into a floating component
-x stats wheel cheating
-x fix: touch: untouch while moving then hold LMB again -> player SHOULD NOT move
-- ref: remove stats `value` -> use placeholders?
-  default effectcondition_type is `X__STAT`
-- prod: мобы
-- prod: предметы
-- prod: босс
-x sprites: player
-- gamelib.fbs is made from parsed yaml?
-  won't have to work with 2 files at the same time
-x builds have different hats
-x monochrome hats
-x componentUniversalSlot: show builds
-x componentUniversalSlot: fix unlock animation
-x blood particles from projectile / weapon (DON'T USE RED)
-x fix: crash upon damaging when having a lot of items
-  SET ENEMIES TO A CRAZE AMOUNT
-x one more crash fix
-x fix: 225 stat value looks like shit
-
+* weapons
+*
+* 10 билдов
+* подредачить баффы сложностей
+*
+* prod: оружия
+* prod: билды
+* prod: сложности
+*
+* на старте рана не стартовать волну, пока не выйдешь за пределы области
+  * скрыть hud
+  * спрайты для разных стилей управления (* клава, * мышь, * пальцы)
+*
+* написать лене письмо
+  - не бросишь курить, если не видишь выгоды
+  - Слава Грис - человек, которого я уважаю - сравнение курящий, некурящий
+  - алкоголик не найдёт ничего лучше алкоголя
+  - бросить курить не сможешь, нося пачку сигарет в кармане
+  - на силе воли нельзя изменить привычки. сила воли закончится быстрее.
+    (в считанные дни, если и не за один день, как в случае с стрессовой работой)
+  - дело не в силе воли и том, что её не хватает.
+  - по книге амена - да, вероятно, начнёшь курить снова,
+    но нужно идти по пути устойчивости и возвращаться к своим целям
+    (устойчивость - не в смысле сопротивления, а в скорость возвращения в исходную точку
+     - кукла неваляшка устойчива, т.к. возвращается в начальную позицию после внешнего воздействия)
+*
+* письмо Гере про результат работы, дворников и т.п. + РБ
+*
+* написать статейку про трекинг сна, желания работать над игрой, ego depletion.
+  Чтобы её можно было скинуть Лене, Серёге, Гере, Ане
+*
 * loc: GREEK NUT проверить
 * loc: PARTIZAN COOKIE так ли
 * loc: шляпа повара / cook's hat как писать на рус + англ
@@ -45,20 +42,10 @@ x fix: 225 stat value looks like shit
 * loc: Додекаэдр проверить (на русском)
 * loc: правильно ли написано Piercing Bullet's Blueprint
 *
-* weapons
-*
-* prod: оружия
-* prod: билды
-* prod: сложности
-*
 * fire particles
 * zap particles
 * sprites: weapons
 * sprites: projectiles
-*
-* 10 билдов
-* подредачить баффы сложностей
-*
 *
 * effect works: xp gain DURING THE NEXT WAVE
 *
@@ -74,7 +61,6 @@ x fix: 225 stat value looks like shit
 * polish:
 *
 * impl: STAT__DURING_NEXT_WAVE
-*
 *
 * stats: knockback
 * stats: LOOT_ALIENS_CHANCE
@@ -139,9 +125,9 @@ x fix: 225 stat value looks like shit
 * prod sfx:
 * prod sfx:
 *
-* норм иконка паузы. Игрок должен сразу понять, п
+* норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
 *
-* landmine easings: on create, что это «кнопка паузы»
+* landmine easings: on create
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
 *
