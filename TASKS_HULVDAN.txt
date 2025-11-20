@@ -9,6 +9,11 @@ x нарисовать MELEE_0_SPIKY_SHIELD
 x нарисовать MELEE_1_HAMMER
 x нарисовать MELEE_0_STICK
 x нарисовать MELEE_0_WRENCH
+x нарисовать MELEE_0_QUATERSTAFF
+x нарисовать RANGED_0_SHURIKEN
+x нарисовать RANGED_1_POTATO_THROWER
+x нарисовать RANGED_0_JAVELIN
+x нарисовать MELEE_1_SWORD
 
 * нарисовать MELEE_0_CACTI_CLUB
 * нарисовать MELEE_0_CHOPPER
@@ -20,14 +25,12 @@ x нарисовать MELEE_0_WRENCH
 * нарисовать MELEE_0_LIGHTNING_SHIV
 * нарисовать MELEE_0_PLANK
 * нарисовать MELEE_0_PRUNER
-* нарисовать MELEE_0_QUATERSTAFF
 * нарисовать MELEE_0_ROCK
 * нарисовать MELEE_0_SCREWDRIVER
 * нарисовать MELEE_0_SHARP_TOOTH
 * нарисовать MELEE_0_TORCH
 * нарисовать MELEE_1_CIRCULAR_SAW
 * нарисовать MELEE_1_FLAMING_BRASS_KNUCKLES
-* нарисовать MELEE_1_SWORD
 * нарисовать MELEE_2_PLASMA_SLEDGE
 * нарисовать MELEE_2_POWER_FIST
 * нарисовать MELEE_2_THUNDER_SWORD
@@ -38,16 +41,13 @@ x нарисовать MELEE_0_WRENCH
 * нарисовать RANGED_0_DOUBLE_BARREL_SHOTGUN
 * нарисовать RANGED_0_GHOST_SCEPTER
 * нарисовать RANGED_0_ICICLE
-* нарисовать RANGED_0_JAVELIN
 * нарисовать RANGED_0_LASER_GUN
 * нарисовать RANGED_0_SHREDDER
-* нарисовать RANGED_0_SHURIKEN
 * нарисовать RANGED_0_SLINGSHOT
 * нарисовать RANGED_0_SMG
 * нарисовать RANGED_0_WAND
 * нарисовать RANGED_1_FIREBALL
 * нарисовать RANGED_1_FLAMETHROWER
-* нарисовать RANGED_1_POTATO_THROWER
 * нарисовать RANGED_1_ROCKER_LAUNCHER
 * нарисовать RANGED_2_MINIGUN
 * нарисовать RANGED_2_NUCLEAR_LAUNCHER
@@ -84,19 +84,6 @@ x нарисовать MELEE_0_WRENCH
   * скрыть hud
   * спрайты для разных стилей управления (* клава, * мышь, * пальцы)
 *
-* написать лене письмо
-  - не бросишь курить, если не видишь выгоды
-  - Слава Грис - человек, которого я уважаю - сравнение курящий, некурящий
-  - алкоголик не найдёт ничего лучше алкоголя
-  - бросить курить не сможешь, нося пачку сигарет в кармане
-  - на силе воли нельзя изменить привычки. сила воли закончится быстрее.
-    (в считанные дни, если и не за один день, как в случае с стрессовой работой)
-  - дело не в силе воли и том, что её не хватает.
-  - по книге амена - да, вероятно, начнёшь курить снова,
-    но нужно идти по пути устойчивости и возвращаться к своим целям
-    (устойчивость - не в смысле сопротивления, а в скорость возвращения в исходную точку
-     - кукла неваляшка устойчива, т.к. возвращается в начальную позицию после внешнего воздействия)
-  - ego depletion -> идёшь на поводу у стимулов (What's so great about self-control)
 *
 * Серёге по похудению
   - ego depletion -> идёшь на поводу у стимулов (What's so great about self-control)

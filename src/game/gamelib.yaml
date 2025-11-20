@@ -3754,7 +3754,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 95
-  - type: MELEE_0_QUATERSTAFF
+  - type: MELEE_0_QUATERSTAFF # ручка
     base_damage: 10 15 20 30
     damage_scalings:
       - stat_type: LEVEL
@@ -3846,7 +3846,7 @@ weapons: # {  ###
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 1
     price: 91
-  - type: MELEE_0_WRENCH
+  - type: MELEE_0_WRENCH # шестигранник
     base_damage: 12 16 20 24
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -4081,7 +4081,7 @@ weapons: # {  ###
     range_meters: 450 450 450 450
     knockback_meters: 0 0 0 0
     price: 122
-  - type: RANGED_0_SHURIKEN
+  - type: RANGED_0_SHURIKEN # кунай
     base_damage: 6 8 10 15
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -4147,7 +4147,7 @@ weapons: # {  ###
     range_meters: 250 300 400
     knockback_meters: 0 0 0
     price: 207
-  - type: RANGED_1_POTATO_THROWER
+  - type: RANGED_1_POTATO_THROWER # egg thrower
     base_damage: 1 1 1
     damage_scalings:
       - stat_type: DAMAGE_RANGED
