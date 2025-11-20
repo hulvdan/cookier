@@ -259,7 +259,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             continue
 
         assert "min_tier_index" not in x
-        x["min_tier_index"] = int(i["type"].split("_", 2)[1])
+        x["min_tier_index"] = int(x["type"].split("_", 2)[1])
         min_tier_index = x["min_tier_index"]
         x["name_locale"] = "WEAPON_" + x["type"].upper()
 
@@ -300,11 +300,12 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         assert shooting_duration_factor <= 1
 
         x["shooting_duration_frames"] = [
-            ceil(f * shooting_duration_factor) for f in x["shooting_duration_frames"]
+            ceil(frame * shooting_duration_factor)
+            for frame in x["shooting_duration_frames"]
         ]
         x["cooldown_frames"] = [
-            floor(f * (1 - shooting_duration_factor))
-            for f in x["shooting_duration_frames"]
+            floor(frame * (1 - shooting_duration_factor))
+            for frame in x["shooting_duration_frames"]
         ]
 
         for scalings in x["damage_scalings"]:

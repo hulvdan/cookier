@@ -2,8 +2,9 @@ WORKING SINCE 2025-09-07
 
 x выписал список оружий
 x определить, какие оружия оставить в игре
+x attack speed использовать не cooldown_frames / shooting_duration_frames, а shooting_duration_frames + factor
 
-* attack speed использовать не cooldown_frames / shooting_duration_frames, а shooting_duration_frames + factor
+* fix: projectile_spawn_frame_factors
 * забить данные оружий в gamelib (без эффектов)
 *
 * нарисовать MELEE_0_CACTI_CLUB

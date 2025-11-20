@@ -3625,103 +3625,103 @@ weapons: # {  ###
   #   texture_ids:
   #     - game_weapon_todo
   - type: MELEE_0_CACTI_CLUB
-    # weaponkind_type: MELEE
+    price: 149
   - type: MELEE_0_CHOPPER
-    # weaponkind_type: MELEE
+    price: 122
   - type: MELEE_0_CLAW
-    # weaponkind_type: MELEE
+    price: 110
   - type: MELEE_0_FIST
-    # weaponkind_type: MELEE
+    price: 91
   - type: MELEE_0_GHOST_AXE
-    # weaponkind_type: MELEE
+    price: 149
   - type: MELEE_0_GHOST_FLINT
-    # weaponkind_type: MELEE
+    price: 105
   - type: MELEE_0_JOUSTING_LANCE
-    # weaponkind_type: MELEE
+    price: 132
   - type: MELEE_0_LIGHTNING_SHIV
-    # weaponkind_type: MELEE
+    price: 142
   - type: MELEE_0_PLANK
-    # weaponkind_type: MELEE
+    price: 122
   - type: MELEE_0_PRUNER
-    # weaponkind_type: MELEE
+    price: 95
   - type: MELEE_0_QUATERSTAFF
-    # weaponkind_type: MELEE
+    price: 130
   - type: MELEE_0_ROCK
-    # weaponkind_type: MELEE
+    price: 91
   - type: MELEE_0_SCREWDRIVER
-    # weaponkind_type: MELEE
+    price: 91
   - type: MELEE_0_SHARP_TOOTH
-    # weaponkind_type: MELEE
+    price: 105
   - type: MELEE_0_SPIKY_SHIELD
-    # weaponkind_type: MELEE
+    price: 122
   - type: MELEE_0_STICK
-    # weaponkind_type: MELEE
+    price: 91
   - type: MELEE_0_TORCH
-    # weaponkind_type: MELEE
+    price: 91
   - type: MELEE_0_WRENCH
-    # weaponkind_type: MELEE
+    price: 173
   - type: MELEE_1_CIRCULAR_SAW
-    # weaponkind_type: MELEE
+    price: 173
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES
-    # weaponkind_type: MELEE
+    price: 173
   - type: MELEE_1_HAMMER
-    # weaponkind_type: MELEE
+    price: 190
   - type: MELEE_1_SWORD
-    # weaponkind_type: MELEE
+    price: 190
   - type: MELEE_2_PLASMA_SLEDGE
-    # weaponkind_type: MELEE
+    price: 272
   - type: MELEE_2_POWER_FIST
-    # weaponkind_type: MELEE
+    price: 221
   - type: MELEE_2_THUNDER_SWORD
-    # weaponkind_type: MELEE
+    price: 238
   - type: MELEE_3_DEX_TROYER
-    # weaponkind_type: MELEE
+    price: 315
   - type: MELEE_3_EXCALIBUR
-    # weaponkind_type: MELEE
+    price: 230
   - type: MELEE_3_SCYTHE
-    # weaponkind_type: MELEE
+    price: 285
   - type: RANGED_0_CROSSBOW
-    # weaponkind_type: RANGED
+    price: 132
   - type: RANGED_0_DOUBLE_BARREL_SHOTGUN
-    # weaponkind_type: RANGED
+    price: 149
   - type: RANGED_0_GHOST_SCEPTER
-    # weaponkind_type: RANGED
+    price: 122
   - type: RANGED_0_ICICLE
-    # weaponkind_type: RANGED
+    price: 140
   - type: RANGED_0_JAVELIN
-    # weaponkind_type: RANGED
+    price: 140
   - type: RANGED_0_LASER_GUN
-    # weaponkind_type: RANGED
+    price: 122
   - type: RANGED_0_PISTOL
-    # weaponkind_type: RANGED
+    price: 91
   - type: RANGED_0_SHREDDER
-    # weaponkind_type: RANGED
+    price: 122
   - type: RANGED_0_SHURIKEN
-    # weaponkind_type: RANGED
+    price: 105
   - type: RANGED_0_SLINGSHOT
-    # weaponkind_type: RANGED
+    price: 120
   - type: RANGED_0_SMG
-    # weaponkind_type: RANGED
+    price: 149
   - type: RANGED_0_WAND
-    # weaponkind_type: RANGED
+    price: 105
   - type: RANGED_1_FIREBALL
-    # weaponkind_type: RANGED
+    price: 140
   - type: RANGED_1_FLAMETHROWER
-    # weaponkind_type: RANGED
+    price: 207
   - type: RANGED_1_POTATO_THROWER
-    # weaponkind_type: RANGED
+    price: 139
   - type: RANGED_1_ROCKER_LAUNCHER
-    # weaponkind_type: RANGED
+    price: 207
   - type: RANGED_2_MINIGUN
-    # weaponkind_type: RANGED
+    price: 255
   - type: RANGED_2_NUCLEAR_LAUNCHER
-    # weaponkind_type: RANGED
+    price: 289
   - type: RANGED_2_SNIPER_GUN
-    # weaponkind_type: RANGED
+    price: 245
   - type: RANGED_3_CHAIN_GUN
-    # weaponkind_type: RANGED
+    price: 300
   - type: RANGED_3_GATLING_LASER
-    # weaponkind_type: RANGED
+    price: 290
 # }
 
 projectiles: # {  ###
