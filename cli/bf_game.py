@@ -248,52 +248,56 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     # {  ###
     for i, x in enumerate_table("weapons"):
-        if i > 0:
-            x["name_locale"] = "WEAPON_" + x["type"].upper()
+        if i == 0:
+            continue
 
-            required_tier_values = TOTAL_TIERS - x["min_tier_index"]
-            assert required_tier_values > 0
-            assert required_tier_values <= TOTAL_TIERS
+        assert "min_tier_index" not in x
+        x["min_tier_index"] = int(i["type"].split("_", 2)[1])
+        min_tier_index = x["min_tier_index"]
+        x["name_locale"] = "WEAPON_" + x["type"].upper()
 
-            mandatory_fields = [
-                "price",
-                "min_tier_index",
-                "base_damage",
-                "damage_scalings",
-                "icon_texture_id",
-                "texture_ids",
-            ]
-            for field in mandatory_fields:
-                assert field in x, "Weapon {} has to have '{}' specified".format(
-                    x["type"], field
+        required_tier_values = TOTAL_TIERS - min_tier_index
+        assert required_tier_values > 0
+        assert required_tier_values <= TOTAL_TIERS
+
+        mandatory_fields = [
+            "price",
+            "base_damage",
+            "damage_scalings",
+            "icon_texture_id",
+            "texture_ids",
+        ]
+        for field in mandatory_fields:
+            assert field in x, "Weapon {} has to have '{}' specified".format(
+                x["type"], field
+            )
+
+        field_to_list(x, "life_steal_percents")
+        field_to_list(x, "base_damage")
+        field_to_list(x, "projectile_spawn_frames")
+        for vv in x["damage_scalings"]:
+            field_to_list(vv, "percents_per_tier")
+
+        for f in ("base_damage", "life_steal_percents"):
+            value = x.get(f)
+            if value is None:
+                continue
+
+            assert len(value) == required_tier_values, (
+                "Weapon {} must have {} `{}` because it's `min_tier_index` is {}".format(
+                    x["type"], required_tier_values, f, min_tier_index
                 )
+            )
 
-            field_to_list(x, "life_steal_percents")
-            field_to_list(x, "base_damage")
-            field_to_list(x, "projectile_spawn_frames")
-            for vv in x["damage_scalings"]:
-                field_to_list(vv, "percents_per_tier")
-
-            for f in ("base_damage", "life_steal_percents"):
-                value = x.get(f)
-                if value is None:
-                    continue
-
-                assert len(value) == required_tier_values, (
-                    "Weapon {} must have {} `{}` because it's `min_tier_index` is {}".format(
-                        x["type"], required_tier_values, f, x["min_tier_index"]
-                    )
+        for scalings in x["damage_scalings"]:
+            percents_count = len(scalings["percents_per_tier"])
+            assert percents_count == required_tier_values, (
+                "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
+                    x["type"], required_tier_values, min_tier_index
                 )
+            )
 
-            for scalings in x["damage_scalings"]:
-                percents_count = len(scalings["percents_per_tier"])
-                assert percents_count == required_tier_values, (
-                    "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
-                        x["type"], required_tier_values, x["min_tier_index"]
-                    )
-                )
-
-            process_effects_of(x, required_tier_values)
+        process_effects_of(x, required_tier_values)
     # }
 
     # Stats.
