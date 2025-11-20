@@ -3634,6 +3634,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 200 200 200 200
     knockback_meters: 8 8 8 8
+    melee_collider_height_px: 1
     price: 149
   - type: MELEE_0_CHOPPER
     base_damage: 6 12 18 30
@@ -3647,6 +3648,7 @@ weapons: # {  ###
     crit_chance: 10 15 20 25
     range_meters: 135 150 165 180
     knockback_meters: 2 2 2 2
+    melee_collider_height_px: 1
     price: 122
   - type: MELEE_0_CLAW
     base_damage: 5 10 15 25
@@ -3660,6 +3662,7 @@ weapons: # {  ###
     crit_chance: 10 15 20 25
     range_meters: 150 150 150 150
     knockback_meters: 2 2 2 2
+    melee_collider_height_px: 1
     price: 110
   - type: MELEE_0_FIST
     base_damage: 8 16 32 64
@@ -3671,6 +3674,7 @@ weapons: # {  ###
     crit_chance: 1 1 1 1
     range_meters: 150 150 150 150
     knockback_meters: 15 15 15 15
+    melee_collider_height_px: 1
     price: 91
   - type: MELEE_0_GHOST_AXE
     base_damage: 12 18 24 40
@@ -3682,6 +3686,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 200 200 200 200
     knockback_meters: 2 2 2 2
+    melee_collider_height_px: 1
     price: 149
   - type: MELEE_0_GHOST_FLINT
     base_damage: 6 9 12 18
@@ -3693,6 +3698,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 150 160 170 180
     knockback_meters: 2 2 2 2
+    melee_collider_height_px: 1
     price: 105
   - type: MELEE_0_JOUSTING_LANCE
     base_damage: 20 25 30 50
@@ -3706,6 +3712,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 250 250 250 250
     knockback_meters: 0 0 0 0
+    melee_collider_height_px: 1
     price: 132
   - type: MELEE_0_LIGHTNING_SHIV
     base_damage: 3 6 9 16
@@ -3717,6 +3724,7 @@ weapons: # {  ###
     crit_chance: 4 6 8 10
     range_meters: 150 150 150 150
     knockback_meters: 0 0 0 0
+    melee_collider_height_px: 1
     price: 142
   - type: MELEE_0_PLANK
     base_damage: 10 15 20 25
@@ -3732,6 +3740,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 150 150 150 150
     knockback_meters: 5 5 5 5
+    melee_collider_height_px: 1
     price: 122
   - type: MELEE_0_PRUNER
     base_damage: 10 15 20 25
@@ -3743,6 +3752,7 @@ weapons: # {  ###
     crit_chance: 3 6 9 12
     range_meters: 150 150 150 150
     knockback_meters: 2 2 2 2
+    melee_collider_height_px: 1
     price: 95
   - type: MELEE_0_QUATERSTAFF
     base_damage: 10 15 20 30
@@ -3756,6 +3766,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
     knockback_meters: 0 0 0 0
+    melee_collider_height_px: 1
     price: 130
   - type: MELEE_0_ROCK
     base_damage: 20 35 50 70
@@ -3767,6 +3778,7 @@ weapons: # {  ###
     crit_chance: 10 15 20 25
     range_meters: 150 150 150 150
     knockback_meters: 5 5 5 5
+    melee_collider_height_px: 1
     price: 91
   - type: MELEE_0_SCREWDRIVER
     base_damage: 8 12 16 20
@@ -3780,6 +3792,7 @@ weapons: # {  ###
     crit_chance: 10 15 20 30
     range_meters: 125 125 125 125
     knockback_meters: 3 3 3 3
+    melee_collider_height_px: 1
     price: 91
   - type: MELEE_0_SHARP_TOOTH
     base_damage: 5 8 11 15
@@ -3793,6 +3806,7 @@ weapons: # {  ###
     crit_chance: 3 6 9 12
     range_meters: 150 160 170 180
     knockback_meters: 2 2 2 2
+    melee_collider_height_px: 1
     price: 105
   - type: MELEE_0_SPIKY_SHIELD
     base_damage: 10 15 20 30
@@ -3804,6 +3818,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 150 165 180 200
     knockback_meters: 20 20 20 20
+    melee_collider_height_px: 1
     price: 122
   - type: MELEE_0_STICK
     base_damage: 8 9 10 12
@@ -3815,6 +3830,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
     knockback_meters: 0 0 0 0
+    melee_collider_height_px: 1
     price: 91
   - type: MELEE_0_TORCH
     base_damage: 1 1 1 1
@@ -3828,6 +3844,7 @@ weapons: # {  ###
     crit_chance: 0 0 0 0
     range_meters: 175 175 175 175
     knockback_meters: 20 20 20 20
+    melee_collider_height_px: 1
     price: 91
   - type: MELEE_0_WRENCH
     base_damage: 12 16 20 24
@@ -3839,6 +3856,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
     knockback_meters: 20 20 20 20
+    melee_collider_height_px: 1
     price: 173
   - type: MELEE_1_CIRCULAR_SAW
     base_damage: 10 15 25
@@ -3851,6 +3869,7 @@ weapons: # {  ###
     life_steal_percents: 45 50 60
     range_meters: 175 175 175 175
     knockback_meters: 0 0 0
+    melee_collider_height_px: 1
     price: 173
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES
     base_damage: 16 32 64
@@ -3862,6 +3881,7 @@ weapons: # {  ###
     crit_chance: 1 1 1
     range_meters: 150 150 150
     knockback_meters: 15 15 15
+    melee_collider_height_px: 1
     price: 173
   - type: MELEE_1_HAMMER
     base_damage: 35 70 110
@@ -3873,6 +3893,7 @@ weapons: # {  ###
     crit_chance: 3 3 3
     range_meters: 175 175 175
     knockback_meters: 30 40 50
+    melee_collider_height_px: 1
     price: 190
   - type: MELEE_1_SWORD
     base_damage: 25 40 60
@@ -3884,6 +3905,7 @@ weapons: # {  ###
     crit_chance: 3 3 3
     range_meters: 200 200 200
     knockback_meters: 5 5 5
+    melee_collider_height_px: 1
     price: 190
   - type: MELEE_2_PLASMA_SLEDGE
     base_damage: 80 120
@@ -3897,6 +3919,7 @@ weapons: # {  ###
     crit_chance: 3 3
     range_meters: 175 175
     knockback_meters: 30 30
+    melee_collider_height_px: 1
     price: 272
   - type: MELEE_2_POWER_FIST
     base_damage: 40 60
@@ -3908,6 +3931,7 @@ weapons: # {  ###
     crit_chance: 1 1
     range_meters: 150 150
     knockback_meters: 15 15
+    melee_collider_height_px: 1
     price: 221
   - type: MELEE_2_THUNDER_SWORD
     base_damage: 30 60
@@ -3921,6 +3945,7 @@ weapons: # {  ###
     crit_chance: 3 3
     range_meters: 200 200
     knockback_meters: 5 5
+    melee_collider_height_px: 1
     price: 238
   - type: MELEE_3_DEX_TROYER
     base_damage: 100
@@ -3934,6 +3959,7 @@ weapons: # {  ###
     crit_chance: 3
     range_meters: 400
     knockback_meters: 10
+    melee_collider_height_px: 1
     price: 315
   - type: MELEE_3_EXCALIBUR
     base_damage: 200
@@ -3947,6 +3973,7 @@ weapons: # {  ###
     crit_chance: 10
     range_meters: 200
     knockback_meters: 5
+    melee_collider_height_px: 1
     price: 230
   - type: MELEE_3_SCYTHE
     base_damage: 150
@@ -3961,6 +3988,7 @@ weapons: # {  ###
     life_steal_percents: 100
     range_meters: 250
     knockback_meters: 5
+    melee_collider_height_px: 1
     price: 285
   - type: RANGED_0_CROSSBOW
     base_damage: 10 12 15 18
