@@ -801,7 +801,7 @@ items: # {  ###
     tier: 0
     price: 18
     effects:
-      - stat_type: DAMAGE_MELEE
+      - stat_type: DAMAGE_RANGED
         value: 1
         # - stat_type: KNOCKBACK
         #   value: 3
