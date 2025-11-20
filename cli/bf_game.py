@@ -932,6 +932,19 @@ def process_images():
         out_filenames=other_filenames,
         out_dir=ART_TEXTURES_DIR,
     )
+
+    # Weapons.
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_006.png",
+        cell_size=280,
+        size=(),
+        gap=(),
+        out_filenames=other_filenames,
+        out_dir=ART_TEXTURES_DIR,
+    )
+
+    # TODO: Weapon icons.
+
     # }
 
 
