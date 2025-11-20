@@ -69,6 +69,7 @@ x attack speed использовать не cooldown_frames / shooting_duration
 * реализовать оружия (без доработок)
 * реализовать оружия (с доработками)
 *
+* melee weapon colliders
 * проставить названия оружий
 *
 * weapons
