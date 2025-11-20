@@ -4,6 +4,11 @@ x выписал список оружий
 x определить, какие оружия оставить в игре
 x attack speed использовать не cooldown_frames / shooting_duration_frames, а shooting_duration_frames + factor
 x забить данные оружий в gamelib (без эффектов)
+x нарисовать RANGED_0_PISTOL
+x нарисовать MELEE_0_SPIKY_SHIELD
+x нарисовать MELEE_1_HAMMER
+x нарисовать MELEE_0_STICK
+x нарисовать MELEE_0_WRENCH
 
 * нарисовать MELEE_0_CACTI_CLUB
 * нарисовать MELEE_0_CHOPPER
@@ -19,13 +24,9 @@ x забить данные оружий в gamelib (без эффектов)
 * нарисовать MELEE_0_ROCK
 * нарисовать MELEE_0_SCREWDRIVER
 * нарисовать MELEE_0_SHARP_TOOTH
-* нарисовать MELEE_0_SPIKY_SHIELD
-* нарисовать MELEE_0_STICK
 * нарисовать MELEE_0_TORCH
-* нарисовать MELEE_0_WRENCH
 * нарисовать MELEE_1_CIRCULAR_SAW
 * нарисовать MELEE_1_FLAMING_BRASS_KNUCKLES
-* нарисовать MELEE_1_HAMMER
 * нарисовать MELEE_1_SWORD
 * нарисовать MELEE_2_PLASMA_SLEDGE
 * нарисовать MELEE_2_POWER_FIST
@@ -39,7 +40,6 @@ x забить данные оружий в gamelib (без эффектов)
 * нарисовать RANGED_0_ICICLE
 * нарисовать RANGED_0_JAVELIN
 * нарисовать RANGED_0_LASER_GUN
-* нарисовать RANGED_0_PISTOL
 * нарисовать RANGED_0_SHREDDER
 * нарисовать RANGED_0_SHURIKEN
 * нарисовать RANGED_0_SLINGSHOT

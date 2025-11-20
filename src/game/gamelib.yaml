@@ -3636,7 +3636,7 @@ weapons: # {  ###
     knockback_meters: 8 8 8 8
     melee_collider_height_px: 1
     price: 149
-  - type: MELEE_0_CHOPPER
+  - type: MELEE_0_CHOPPER # овощерезка
     base_damage: 6 12 18 30
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3650,7 +3650,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 122
-  - type: MELEE_0_CLAW
+  - type: MELEE_0_CLAW #
     base_damage: 5 10 15 25
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3808,7 +3808,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 105
-  - type: MELEE_0_SPIKY_SHIELD
+  - type: MELEE_0_SPIKY_SHIELD # shield of thorns
     base_damage: 10 15 20 30
     damage_scalings:
       - stat_type: ARMOR
@@ -3820,7 +3820,7 @@ weapons: # {  ###
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 1
     price: 122
-  - type: MELEE_0_STICK
+  - type: MELEE_0_STICK # ложка
     base_damage: 8 9 10 12
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3883,7 +3883,7 @@ weapons: # {  ###
     knockback_meters: 15 15 15
     melee_collider_height_px: 1
     price: 173
-  - type: MELEE_1_HAMMER
+  - type: MELEE_1_HAMMER # кухонный молоток
     base_damage: 35 70 110
     damage_scalings:
       - stat_type: DAMAGE_MELEE
