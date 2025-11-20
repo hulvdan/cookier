@@ -1,5 +1,63 @@
 WORKING SINCE 2025-09-07
 
+x выписал список оружий
+x определить, какие оружия оставить в игре
+
+* нарисовать MELEE_0_CACTI_CLUB
+* нарисовать MELEE_0_CHOPPER
+* нарисовать MELEE_0_CLAW
+* нарисовать MELEE_0_FIST
+* нарисовать MELEE_0_GHOST_AXE
+* нарисовать MELEE_0_GHOST_FLINT
+* нарисовать MELEE_0_JOUSTING_LANCE
+* нарисовать MELEE_0_LIGHTNING_SHIV
+* нарисовать MELEE_0_PLANK
+* нарисовать MELEE_0_PRUNER
+* нарисовать MELEE_0_QUATERSTAFF
+* нарисовать MELEE_0_ROCK
+* нарисовать MELEE_0_SCREWDRIVER
+* нарисовать MELEE_0_SHARP_TOOTH
+* нарисовать MELEE_0_SPIKY_SHIELD
+* нарисовать MELEE_0_STICK
+* нарисовать MELEE_0_TORCH
+* нарисовать MELEE_0_WRENCH
+* нарисовать MELEE_1_CIRCULAR_SAW
+* нарисовать MELEE_1_FLAMING_BRASS_KNUCKLES
+* нарисовать MELEE_1_HAMMER
+* нарисовать MELEE_1_SWORD
+* нарисовать MELEE_2_PLASMA_SLEDGE
+* нарисовать MELEE_2_POWER_FIST
+* нарисовать MELEE_2_THUNDER_SWORD
+* нарисовать MELEE_3_DEX_TROYER
+* нарисовать MELEE_3_EXCALIBUR
+* нарисовать MELEE_3_SCYTHE
+* нарисовать RANGED_0_CROSSBOW
+* нарисовать RANGED_0_DOUBLE_BARREL_SHOTGUN
+* нарисовать RANGED_0_GHOST_SCEPTER
+* нарисовать RANGED_0_ICICLE
+* нарисовать RANGED_0_JAVELIN
+* нарисовать RANGED_0_LASER_GUN
+* нарисовать RANGED_0_PISTOL
+* нарисовать RANGED_0_SHREDDER
+* нарисовать RANGED_0_SHURIKEN
+* нарисовать RANGED_0_SLINGSHOT
+* нарисовать RANGED_0_SMG
+* нарисовать RANGED_0_WAND
+* нарисовать RANGED_1_FIREBALL
+* нарисовать RANGED_1_FLAMETHROWER
+* нарисовать RANGED_1_POTATO_THROWER
+* нарисовать RANGED_1_ROCKER_LAUNCHER
+* нарисовать RANGED_2_MINIGUN
+* нарисовать RANGED_2_NUCLEAR_LAUNCHER
+* нарисовать RANGED_2_SNIPER_GUN
+* нарисовать RANGED_3_CHAIN_GUN
+* нарисовать RANGED_3_GATLING_LASER
+*
+* забить данные оружий в gamelib
+* нарисовать спрайты оружий
+* реализовать оружия (без доработок)
+* реализовать оружия (с доработками)
+*
 * weapons
 *
 * 10 билдов
