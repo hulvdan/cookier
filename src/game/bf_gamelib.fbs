@@ -249,7 +249,7 @@ table Weapon {
     shooting_duration_frames: [int];
     shoots_itself: bool;
     projectile_type: int;
-    projectile_spawn_frames: [int];
+    projectile_spawn_frame_factors: [float];
     projectile_pierce: [int];
     projectile_bounce: [int];
     range_meters: [float];
