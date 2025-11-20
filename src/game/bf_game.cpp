@@ -4890,7 +4890,7 @@ f32 GetExplosionSizeMultiplier() {  ///
 }
 
 // NOTE: Doesn't include melee weapon's size.
-f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
+f32 GetWeaponRangeMeters(WeaponType type, int tier, bool affectedByGame = true) {  ///
   const auto fb = glib->weapons()->Get(type);
 
   f32 range = 0;
@@ -4901,8 +4901,10 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
 
   if (range >= 0)
     bonusRange = range * RANGE_TO_METER_SCALE;
-  else
-    bonusRange = (powf(2, range / -RANGE_GETS_HALVED_WHEN) - 1) * fb->range_meters();
+  else {
+    bonusRange = (powf(2, range / -RANGE_GETS_HALVED_WHEN) - 1)
+                 * fb->range_meters()->Get(tier - fb->min_tier_index());
+  }
 
   // Divided by 2 because range stat is half as effective for melee weapons.
   // (don't confuse with weapons that have DamageType_MELEE).
@@ -4911,7 +4913,7 @@ f32 GetWeaponRangeMeters(WeaponType type, bool affectedByGame = true) {  ///
   if (!fb->projectile_type())
     bonusRange /= 2.0f;
 
-  return fb->range_meters() + bonusRange;
+  return fb->range_meters()->Get(tier - fb->min_tier_index()) + bonusRange;
 }
 
 int TryGetCreatureIndexByID(int id) {  ///
@@ -5024,7 +5026,7 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
 
   p = EaseInOutQuad(p);
 
-  const f32  movingDistance = MAX(1, GetWeaponRangeMeters(weapon.type));
+  const f32  movingDistance = MAX(1, GetWeaponRangeMeters(weapon.type, weapon.tier));
   const auto movedDistance  = p * movingDistance;
 
   return PLAYER_CREATURE.pos + weapon.targetDir * movedDistance;
@@ -6766,9 +6768,15 @@ void DoUI() {
 
           // Pierce.
           if (fb->projectile_type()) {
-            int value = fb->projectile_pierce();
+            int value = 0;
+
+            auto pierces = fb->projectile_pierce();
+            if (pierces)
+              value += pierces->Get(tier - fb->min_tier_index());
+
             if (data.affectedByGame)
               value += g.run.state.stats[StatType_PIERCING];
+
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(TextFormat("%d", value));
@@ -6778,9 +6786,15 @@ void DoUI() {
 
           // Bounce.
           if (fb->projectile_type()) {
-            int value = fb->projectile_bounce();
+            int value = 0;
+
+            auto bounces = fb->projectile_bounce();
+            if (bounces)
+              value += bounces->Get(tier - fb->min_tier_index());
+
             if (data.affectedByGame)
               value += g.run.state.stats[StatType_BOUNCES];
+
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(TextFormat("%d", value));

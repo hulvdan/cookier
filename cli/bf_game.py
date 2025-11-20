@@ -15,6 +15,7 @@ USAGE:
 
 # Imports.  {  ###
 from itertools import groupby
+from math import ceil, floor
 from typing import Any
 
 import bf_image
@@ -51,8 +52,11 @@ def check_duplicates(values: list) -> None:
     # }
 
 
-def field_to_list(container, field: str) -> None:
+def field_to_list(container, field: str, ensure_length: int | None = None) -> None:
     # {  ###
+    if ensure_length is not None:
+        assert ensure_length >= 0
+
     if field not in container:
         return
     if isinstance(container[field], list):
@@ -66,6 +70,9 @@ def field_to_list(container, field: str) -> None:
         container[field] = [container[field]]
     else:
         assert False
+
+    if ensure_length is not None:
+        assert len(container[field]) == ensure_length
     # }
 
 
@@ -264,30 +271,41 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             "price",
             "base_damage",
             "damage_scalings",
+            "crit_damage_multiplier",
+            "knockback_meters",
+            "range_meters",
             "icon_texture_id",
             "texture_ids",
         ]
+        assert "cooldown_frames" not in x
         for field in mandatory_fields:
             assert field in x, "Weapon {} has to have '{}' specified".format(
                 x["type"], field
             )
 
-        field_to_list(x, "life_steal_percents")
-        field_to_list(x, "base_damage")
+        field_to_list(x, "base_damage", required_tier_values)
+        field_to_list(x, "crit_damage_multiplier", required_tier_values)
+        field_to_list(x, "knockback_meters", required_tier_values)
+        field_to_list(x, "shooting_duration_frames", required_tier_values)
+        field_to_list(x, "projectile_pierce", required_tier_values)
+        field_to_list(x, "projectile_bounce", required_tier_values)
+        field_to_list(x, "range_meters", required_tier_values)
+        field_to_list(x, "life_steal_percents", required_tier_values)
         field_to_list(x, "projectile_spawn_frames")
         for vv in x["damage_scalings"]:
-            field_to_list(vv, "percents_per_tier")
+            field_to_list(vv, "percents_per_tier", required_tier_values)
 
-        for f in ("base_damage", "life_steal_percents"):
-            value = x.get(f)
-            if value is None:
-                continue
+        shooting_duration_factor = x.get("shooting_duration_factor", 0.8)
+        assert shooting_duration_factor >= 0
+        assert shooting_duration_factor <= 1
 
-            assert len(value) == required_tier_values, (
-                "Weapon {} must have {} `{}` because it's `min_tier_index` is {}".format(
-                    x["type"], required_tier_values, f, min_tier_index
-                )
-            )
+        x["shooting_duration_frames"] = [
+            ceil(f * shooting_duration_factor) for f in x["shooting_duration_frames"]
+        ]
+        x["cooldown_frames"] = [
+            floor(f * (1 - shooting_duration_factor))
+            for f in x["shooting_duration_frames"]
+        ]
 
         for scalings in x["damage_scalings"]:
             percents_count = len(scalings["percents_per_tier"])
