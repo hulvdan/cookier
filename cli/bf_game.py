@@ -259,13 +259,21 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             continue
 
         assert "min_tier_index" not in x
-        x["min_tier_index"] = int(x["type"].split("_", 2)[1])
-        min_tier_index = x["min_tier_index"]
+
+        _, min_tier_index, name = x["type"].split("_", 2)[1]
+        min_tier_index = int(min_tier_index)
+
+        x["min_tier_index"] = min_tier_index
         x["name_locale"] = "WEAPON_" + x["type"].upper()
 
         required_tier_values = TOTAL_TIERS - min_tier_index
         assert required_tier_values > 0
         assert required_tier_values <= TOTAL_TIERS
+
+        texture_ids = x.get("texture_ids", [])
+        texture_ids.insert(0, "game_weapon_" + name.lower())
+        x["texture_ids"] = texture_ids
+        x["icon_texture_id"] = "ui_weapon_" + name.lower()
 
         mandatory_fields = [
             "price",
@@ -781,7 +789,7 @@ def process_images():
     # Spritesheetifying clip studio items.
     for f in ART_TEXTURES_DIR.glob("ui_item_*.png"):
         f.unlink()
-    filenames = [
+    item_names = [
         "cloud_in_a_bottle",
         "mechanical_lens",
         "obsidian_rose",
@@ -891,14 +899,14 @@ def process_images():
         "piggy_bank",
         *["difficulty_{}".format(i + 1) for i in range(len(gamelib["difficulties"]) - 1)],
     ]
-    assert len(filenames) == 110, len(filenames)
+    assert len(item_names) == 110, len(item_names)
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_002.png",
         cell_size=200,
         size=(15, 8),
         gap=24,
         out_filename_prefix="ui_item_",
-        out_filenames=filenames,
+        out_filenames=item_names,
         out_dir=ART_TEXTURES_DIR,
     )
 
@@ -933,17 +941,82 @@ def process_images():
         out_dir=ART_TEXTURES_DIR,
     )
 
-    # Weapons.
+    # Game weapons (not ui icons).
+    for f in ART_TEXTURES_DIR.glob("game_weapon_*.png"):
+        f.unlink()
+    weapon_names = [
+        "cacti_club",
+        "chopper",
+        "claw",
+        "fist",
+        "ghost_axe",
+        "ghost_flint",
+        "jousting_lance",
+        "lightning_shiv",
+        "plank",
+        "pruner",
+        "quaterstaff",
+        "rock",
+        "screwdriver",
+        "sharp_tooth",
+        "spiky_shield",
+        "stick",
+        "torch",
+        "wrench",
+        "circular_saw",
+        "flaming_brass_knuckles",
+        "hammer",
+        "sword",
+        "plasma_sledge",
+        "power_fist",
+        "thunder_sword",
+        "dex_troyer",
+        "excalibur",
+        "scythe",
+        "crossbow",
+        "double_barrel_shotgun",
+        "ghost_scepter",
+        "icicle",
+        "javelin",
+        "laser_gun",
+        "pistol",
+        "shredder",
+        "shuriken",
+        "slingshot",
+        "smg",
+        "wand",
+        "fireball",
+        "flamethrower",
+        "potato_thrower",
+        "rocker_launcher",
+        "minigun",
+        "nuclear_launcher",
+        "sniper_gun",
+        "chain_gun",
+        "gatling_laser",
+    ]
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_006.png",
         cell_size=280,
-        size=(),
-        gap=(),
-        out_filenames=other_filenames,
+        size=(12, 6),
+        gap=10,
+        out_filename_prefix="game_weapon_",
+        out_filenames=weapon_names,
         out_dir=ART_TEXTURES_DIR,
     )
 
-    # TODO: Weapon icons.
+    # Weapon icons.
+    for f in ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
+        f.unlink()
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_007.png",
+        cell_size=200,
+        size=(17, 8),
+        gap=24,
+        out_filename_prefix="ui_weapon_",
+        out_filenames=weapon_names,
+        out_dir=ART_TEXTURES_DIR,
+    )
 
     # }
 
