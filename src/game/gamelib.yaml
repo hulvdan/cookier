@@ -3636,7 +3636,7 @@ weapons: # {  ###
     knockback_meters: 8 8 8 8
     melee_collider_height_px: 1
     price: 149
-  - type: MELEE_0_CHOPPER # овощерезка
+  - type: MELEE_0_CHOPPER # боевой саженец
     base_damage: 6 12 18 30
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3676,7 +3676,7 @@ weapons: # {  ###
     knockback_meters: 15 15 15 15
     melee_collider_height_px: 1
     price: 91
-  - type: MELEE_0_GHOST_AXE
+  - type: MELEE_0_GHOST_AXE # открывашка
     base_damage: 12 18 24 40
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3688,7 +3688,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 149
-  - type: MELEE_0_GHOST_FLINT
+  - type: MELEE_0_GHOST_FLINT # овощерезка
     base_damage: 6 9 12 18
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3726,7 +3726,7 @@ weapons: # {  ###
     knockback_meters: 0 0 0 0
     melee_collider_height_px: 1
     price: 142
-  - type: MELEE_0_PLANK
+  - type: MELEE_0_PLANK # динамит на палочке
     base_damage: 10 15 20 25
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3933,7 +3933,7 @@ weapons: # {  ###
     knockback_meters: 15 15
     melee_collider_height_px: 1
     price: 221
-  - type: MELEE_2_THUNDER_SWORD
+  - type: MELEE_2_THUNDER_SWORD # recettear's "twisted dagger"
     base_damage: 30 60
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -4015,7 +4015,7 @@ weapons: # {  ###
     range_meters: 350 350 350 350
     knockback_meters: 8 8 8 8
     price: 149
-  - type: RANGED_0_GHOST_SCEPTER
+  - type: RANGED_0_GHOST_SCEPTER # bowl of apples
     base_damage: 10 15 20 30
     damage_scalings:
       - stat_type: DAMAGE_RANGED
