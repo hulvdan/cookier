@@ -3768,7 +3768,7 @@ weapons: # {  ###
     knockback_meters: 0 0 0 0
     melee_collider_height_px: 1
     price: 130
-  - type: MELEE_0_ROCK
+  - type: MELEE_0_ROCK # barrel
     base_damage: 20 35 50 70
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -4103,7 +4103,7 @@ weapons: # {  ###
     range_meters: 300 300 300 300
     knockback_meters: 5 5 5 5
     price: 120
-  - type: RANGED_0_SMG
+  - type: RANGED_0_SMG # автомат
     base_damage: 3 4 5 8
     damage_scalings:
       - stat_type: DAMAGE_RANGED
