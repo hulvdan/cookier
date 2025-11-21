@@ -42,15 +42,16 @@ x нарисовать RANGED_2_NUCLEAR_LAUNCHER
 * нарисовать RANGED_3_CHAIN_GUN
 * нарисовать RANGED_3_GATLING_LASER
 *
+* жене билд
+*
+* забить данные эффектов оружий в gamelib
+*
+* нарисовать иконки оружий
+*
 * game.py: crit_chance
 * impl: fb_weapon->projectiles_count()
 * fix: projectile_spawn_frame_factors
 * fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
-*
-* забить данные эффектов оружий в gamelib
-*
-* нарисовать спрайты оружий
-* нарисовать иконки оружий
 *
 * реализовать оружия (без доработок)
 * реализовать оружия (с доработками)
