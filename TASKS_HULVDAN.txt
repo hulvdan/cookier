@@ -21,6 +21,10 @@ x нарисовать MELEE_0_CHOPPER
 x нарисовать MELEE_0_GHOST_AXE
 x нарисовать MELEE_0_GHOST_FLINT
 x нарисовать RANGED_0_GHOST_SCEPTER
+x нарисовать RANGED_2_SNIPER_GUN
+x нарисовать RANGED_0_ICICLE
+x нарисовать RANGED_0_LASER_GUN
+x нарисовать RANGED_0_WAND
 
 * нарисовать MELEE_0_CACTI_CLUB
 * нарисовать MELEE_0_CLAW
@@ -30,15 +34,11 @@ x нарисовать RANGED_0_GHOST_SCEPTER
 * нарисовать MELEE_3_DEX_TROYER
 * нарисовать RANGED_0_CROSSBOW
 * нарисовать RANGED_0_DOUBLE_BARREL_SHOTGUN
-* нарисовать RANGED_0_ICICLE
-* нарисовать RANGED_0_LASER_GUN
 * нарисовать RANGED_0_SHREDDER
-* нарисовать RANGED_0_WAND
 * нарисовать RANGED_1_FLAMETHROWER
 * нарисовать RANGED_1_ROCKER_LAUNCHER
 * нарисовать RANGED_2_MINIGUN
 * нарисовать RANGED_2_NUCLEAR_LAUNCHER
-* нарисовать RANGED_2_SNIPER_GUN
 * нарисовать RANGED_3_CHAIN_GUN
 * нарисовать RANGED_3_GATLING_LASER
 *
