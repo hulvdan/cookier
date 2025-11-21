@@ -4026,7 +4026,7 @@ weapons: # {  ###
     range_meters: 300 350 400 450
     knockback_meters: 2 2 2 2
     price: 122
-  - type: RANGED_0_ICICLE
+  - type: RANGED_0_ICICLE # grimoire of milk
     base_damage: 10 20 30 40
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
@@ -4116,7 +4116,7 @@ weapons: # {  ###
     range_meters: 400 400 400 400
     knockback_meters: 0 0 0 0
     price: 149
-  - type: RANGED_0_WAND
+  - type: RANGED_0_WAND # mushoku tensei, жезл ученика
     base_damage: 1 1 1 1
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
