@@ -3664,7 +3664,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 110
-  - type: MELEE_0_FIST
+  - type: MELEE_0_FIST # перчатка молочника
     base_damage: 8 16 32 64
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3714,7 +3714,7 @@ weapons: # {  ###
     knockback_meters: 0 0 0 0
     melee_collider_height_px: 1
     price: 132
-  - type: MELEE_0_LIGHTNING_SHIV
+  - type: MELEE_0_LIGHTNING_SHIV # electrified gum
     base_damage: 3 6 9 16
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3794,7 +3794,7 @@ weapons: # {  ###
     knockback_meters: 3 3 3 3
     melee_collider_height_px: 1
     price: 91
-  - type: MELEE_0_SHARP_TOOTH
+  - type: MELEE_0_SHARP_TOOTH # nail hollow knight / tooth
     base_damage: 5 8 11 15
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3858,7 +3858,7 @@ weapons: # {  ###
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 1
     price: 173
-  - type: MELEE_1_CIRCULAR_SAW
+  - type: MELEE_1_CIRCULAR_SAW # pizza cutter
     base_damage: 10 15 25
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3961,7 +3961,7 @@ weapons: # {  ###
     knockback_meters: 10
     melee_collider_height_px: 1
     price: 315
-  - type: MELEE_3_EXCALIBUR
+  - type: MELEE_3_EXCALIBUR # terra sword
     base_damage: 200
     damage_scalings:
       - stat_type: DAMAGE_MELEE
