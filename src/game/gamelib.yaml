@@ -3742,7 +3742,7 @@ weapons: # {  ###
     knockback_meters: 5 5 5 5
     melee_collider_height_px: 1
     price: 122
-  - type: MELEE_0_PRUNER
+  - type: MELEE_0_PRUNER # sunflower
     base_damage: 10 15 20 25
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3871,7 +3871,7 @@ weapons: # {  ###
     knockback_meters: 0 0 0
     melee_collider_height_px: 1
     price: 173
-  - type: MELEE_1_FLAMING_BRASS_KNUCKLES
+  - type: MELEE_1_FLAMING_BRASS_KNUCKLES # frying pan, сковорода
     base_damage: 16 32 64
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -4093,6 +4093,8 @@ weapons: # {  ###
     knockback_meters: 0 0 0 0
     price: 105
   - type: RANGED_0_SLINGSHOT
+    # Оружие из терратии - дуть, чтобы стрельнуть семечкой.
+    # Свёрнутая трубочкой бумага.
     base_damage: 10 13 16 21
     damage_scalings:
       - stat_type: DAMAGE_RANGED

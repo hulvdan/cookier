@@ -11,17 +11,18 @@ x нарисовать MELEE_3_SCYTHE
 x нарисовать MELEE_3_EXCALIBUR
 x better pistol
 x нарисовать MELEE_0_FIST
+x нарисовать MELEE_0_PRUNER
+x нарисовать RANGED_0_SLINGSHOT
+x нарисовать MELEE_0_JOUSTING_LANCE
+x нарисовать MELEE_1_FLAMING_BRASS_KNUCKLES
 
 * нарисовать MELEE_0_CACTI_CLUB
 * нарисовать MELEE_0_CHOPPER
 * нарисовать MELEE_0_CLAW
 * нарисовать MELEE_0_GHOST_AXE
 * нарисовать MELEE_0_GHOST_FLINT
-* нарисовать MELEE_0_JOUSTING_LANCE
 * нарисовать MELEE_0_PLANK
-* нарисовать MELEE_0_PRUNER
 * нарисовать MELEE_0_TORCH
-* нарисовать MELEE_1_FLAMING_BRASS_KNUCKLES
 * нарисовать MELEE_2_PLASMA_SLEDGE
 * нарисовать MELEE_2_POWER_FIST
 * нарисовать MELEE_2_THUNDER_SWORD
@@ -32,7 +33,6 @@ x нарисовать MELEE_0_FIST
 * нарисовать RANGED_0_ICICLE
 * нарисовать RANGED_0_LASER_GUN
 * нарисовать RANGED_0_SHREDDER
-* нарисовать RANGED_0_SLINGSHOT
 * нарисовать RANGED_0_WAND
 * нарисовать RANGED_1_FLAMETHROWER
 * нарисовать RANGED_1_ROCKER_LAUNCHER
