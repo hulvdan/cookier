@@ -1130,7 +1130,7 @@ struct GameData {
   struct Player {  ///
     DifficultyType difficulty = DifficultyType_D0;
     BuildType      build      = BuildType_DEFAULT;
-    WeaponType     weapon     = WeaponType_SWORD;
+    WeaponType     weapon     = WeaponType_MELEE_0_FIST;
     BiomeType      biome      = BiomeType_INVALID;
 
     Array<Achievement, AchievementType_COUNT> achievements = {};
@@ -3006,8 +3006,10 @@ void Pickup(int pickupableIndex) {  ///
         if (GRAND.FRand() >= (f32)EFFECT_X_INT / 100.0f)
           return;
 
+        const auto fb_weapon = (w ? glib->weapons()->Get(w->type) : nullptr);
+
         FOR_RANGE (int, i, 5) {
-          auto        creatureIndex = GRAND.Rand() % g.run.creatures.count;
+          const auto  creatureIndex = GRAND.Rand() % g.run.creatures.count;
           const auto& creature      = g.run.creatures[creatureIndex];
 
           if (creature.diedAt.IsSet())
@@ -3025,8 +3027,9 @@ void Pickup(int pickupableIndex) {  ///
 
           f32 critDamageMultiplier = 1.5f;
           if (w) {
-            critDamageMultiplier
-              = glib->weapons()->Get(w->type)->crit_damage_multiplier();
+            critDamageMultiplier = fb_weapon->crit_damage_multiplier()->Get(
+              w->tier - fb_weapon->min_tier_index()
+            );
           }
 
           TryApplyDamage({
@@ -4743,8 +4746,8 @@ void RefillUpgradesToPick(bool rerolled) {  ///
     while (1) {
       const auto newStat = (StatType)(GRAND.Rand() % fb_stats->size());
 
-      // Can't get INVALID, CURSE or COINS from level up.
-      if ((int)newStat <= 2)
+      // Can't get INVALID, LEVEL, CURSE or COINS from level up.
+      if ((int)newStat <= 3)
         continue;
 
       const auto fb = fb_stats->Get(newStat);
@@ -4987,20 +4990,22 @@ bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
   if (weapon.piercedCount < weapon.piercedCreatureIDs.count) {
     weapon.piercedCreatureIDs[weapon.piercedCount++] = creature.id;
 
+    const int tierOffset = weapon.tier - fb->min_tier_index();
+
     const bool hit = TryApplyDamage({
       .creatureIndex   = creatureIndex,
       .damage          = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier),
       .directionOrZero = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      .knockbackMeters = fb->knockback_meters(),
+      .knockbackMeters = fb->knockback_meters()->Get(tierOffset),
       .damagerCreatureType                = CreatureType_PLAYER,
-      .critDamageMultiplier               = fb->crit_damage_multiplier(),
+      .critDamageMultiplier               = fb->crit_damage_multiplier()->Get(tierOffset),
       .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndex,
     });
 
-    const int tierOffset = weapon.tier - fb->min_tier_index();
-
     if (hit)
-      EffectSpawnProjectilesOnHit(creature, *weaponIndex, fb->crit_damage_multiplier());
+      EffectSpawnProjectilesOnHit(
+        creature, *weaponIndex, fb->crit_damage_multiplier()->Get(tierOffset)
+      );
   }
   return continueCollisions;
 }
@@ -5013,9 +5018,11 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   if (fb->projectile_type() || !weapon.startedShootingAt.IsSet())
     return PLAYER_CREATURE.pos + GetPlayerWeaponOffset(weaponIndex);
 
+  const int tierOffset = weapon.tier - fb->min_tier_index();
+
   const auto e = weapon.startedShootingAt.Elapsed();
   const auto shootingDur
-    = ApplyAttackSpeedToDuration(lframe::Scaled(fb->shooting_duration_frames()));
+    = ApplyAttackSpeedToDuration(lframe::FromSeconds(fb->cooldown()->Get(tierOffset)));
   auto       p            = MIN(1, e.Progress(shootingDur) * 2);
   const auto texID        = fb->texture_ids()->Get(0);
   const auto colliderSize = (f32)glib->original_texture_sizes()->Get(texID)->x()
@@ -6677,7 +6684,7 @@ void DoUI() {
           componentWeaponStatEntry(
             fb_stats->Get(StatType_DAMAGE)->name_locale(),
             [&]() BF_FORCE_INLINE_LAMBDA {
-              const int baseDamage = fb->base_damage()->Get(tier - fb->min_tier_index());
+              const int baseDamage = fb->base_damage()->Get(tierOffset);
               if (data.affectedByGame) {
                 const int actualDamage
                   = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
@@ -6696,10 +6703,9 @@ void DoUI() {
                 FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
                   const auto fb_scaling = fb_scalings->Get(scalingIndex);
                   const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
-                  BF_CLAY_TEXT(TextFormat(
-                    "+%d%%",
-                    fb_scaling->percents_per_tier()->Get(tier - fb->min_tier_index())
-                  ));
+                  BF_CLAY_TEXT(
+                    TextFormat("%d%%", fb_scaling->percents_per_tier()->Get(tierOffset))
+                  );
                   BF_CLAY_IMAGE({.texID = fb_stat->small_icon_texture_id()});
                   if (scalingIndex < fb_scalings->size() - 1)
                     BF_CLAY_TEXT(" + ");
@@ -6714,7 +6720,7 @@ void DoUI() {
             componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT(TextFormat(
                 "x%.1f (%d%%)",
-                fb->crit_damage_multiplier(),
+                fb->crit_damage_multiplier()->Get(tierOffset),
                 MIN(100, MAX(0, g.run.state.stats[StatType_CRIT_CHANCE]))
               ));
             });
@@ -6727,21 +6733,13 @@ void DoUI() {
 
           // Cooldown.
           componentWeaponStatEntry(Loc_UI_COOLDOWN, [&]() BF_FORCE_INLINE_LAMBDA {
-            auto cooldownFrames_
-              = (fb->shooting_duration_frames() + fb->cooldown_frames());
-            lframe cooldownFrames{};
-            if (data.affectedByGame)
-              cooldownFrames
-                = ApplyAttackSpeedToDuration(lframe::Scaled(cooldownFrames_));
-            else
-              cooldownFrames = lframe::Scaled(cooldownFrames_);
-            const f32 cooldownSeconds = (f32)cooldownFrames.value / (f32)FIXED_FPS;
+            const f32 cooldownSeconds = fb->cooldown()->Get(tierOffset);
             BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), {.color = palTextGreen});
           });
 
           // Knockback.
           {
-            f32 value = fb->knockback_meters();
+            f32 value = fb->knockback_meters()->Get(tierOffset);
             if (data.affectedByGame)
               value *= (f32)(100 + g.run.state.stats[StatType_KNOCKBACK]) / 100.0f;
             componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
@@ -6752,7 +6750,7 @@ void DoUI() {
           // Range.
           componentWeaponStatEntry(Loc_UI_RANGE, [&]() BF_FORCE_INLINE_LAMBDA {
             const f32 rangeMeters
-              = GetWeaponRangeMeters(data.weapon, data.affectedByGame);
+              = GetWeaponRangeMeters(data.weapon, tier, data.affectedByGame);
             if (fb->projectile_type())
               BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
             else {
@@ -6769,7 +6767,7 @@ void DoUI() {
 
             auto pierces = fb->projectile_pierce();
             if (pierces)
-              value += pierces->Get(tier - fb->min_tier_index());
+              value += pierces->Get(tierOffset);
 
             if (data.affectedByGame)
               value += g.run.state.stats[StatType_PIERCING];
@@ -6787,7 +6785,7 @@ void DoUI() {
 
             auto bounces = fb->projectile_bounce();
             if (bounces)
-              value += bounces->Get(tier - fb->min_tier_index());
+              value += bounces->Get(tierOffset);
 
             if (data.affectedByGame)
               value += g.run.state.stats[StatType_BOUNCES];
@@ -7655,11 +7653,6 @@ void DoUI() {
 
       FontBegin(&g.meta.fontUIBig);
 
-      entry(
-        {},
-        glib->ui_shop_current_level_icon_texture_id(),
-        g.run.state.stats[StatType_LEVEL]
-      );
       int statIndex = -1;
       for (const auto fb_stat : *fb_stats) {
         statIndex++;
@@ -11878,8 +11871,10 @@ void GameFixedUpdate() {
         int closestCreatureIndex = -1;
 
         // Resetting cooldown.
-        const auto cooldownDur
-          = ApplyAttackSpeedToDuration(lframe::Scaled(fb->cooldown_frames()));
+        const int  tierOffset  = weapon.tier - fb->min_tier_index();
+        const auto cooldownDur = ApplyAttackSpeedToDuration(lframe::FromSeconds(
+          fb->cooldown()->Get(tierOffset) * (1 - fb->attack_or_cooldown_ratio())
+        ));
         if (weapon.cooldownStartedAt.IsSet()
             && (weapon.cooldownStartedAt.Elapsed() >= cooldownDur))
           weapon.cooldownStartedAt = {};
@@ -11908,7 +11903,7 @@ void GameFixedUpdate() {
 
           if (closestCreatureIndex >= 0) {
             const auto& closestCreature = g.run.creatures[closestCreatureIndex];
-            auto        range           = GetWeaponRangeMeters(weapon.type);
+            auto        range           = GetWeaponRangeMeters(weapon.type, weapon.tier);
 
             if (fb->projectile_type()) {
               const auto fb_projectile = glib->projectiles()->Get(fb->projectile_type());
@@ -11951,37 +11946,46 @@ void GameFixedUpdate() {
           const auto projectileType = (ProjectileType)fb->projectile_type();
           const auto e              = weapon.startedShootingAt.Elapsed();
 
-          const auto shootingDur
-            = ApplyAttackSpeedToDuration(lframe::Scaled(fb->shooting_duration_frames()));
+          const int tierOffset = weapon.tier - fb->min_tier_index();
 
-          const auto projectileSpawnFrames = fb->projectile_spawn_frames();
+          const auto shootingDur = ApplyAttackSpeedToDuration(lframe::FromSeconds(
+            fb->cooldown()->Get(tierOffset) * fb->attack_or_cooldown_ratio()
+          ));
+
+          const auto projectileSpawnFrameFactors = fb->projectile_spawn_frame_factors();
 
           if (projectileType) {
             // It's a weapon that shoots projectiles (RANGED / ELEMENTAL damage types).
-            ASSERT(projectileSpawnFrames);
+            ASSERT(projectileSpawnFrameFactors);
 
             bool       spawn     = false;
             const auto speedMult = GetPlayerStatAttackSpeedMultiplier();
-            for (auto value : *projectileSpawnFrames) {
-              if (Ceil((f32)value / speedMult) == e.value) {
+            for (auto value : *projectileSpawnFrameFactors) {
+              if (Ceil((f32)shootingDur.value * value / speedMult) == e.value) {
                 spawn = true;
                 break;
               }
             }
 
             if (spawn) {
+              int pierce = 0;
+              int bounce = 0;
+              if (fb->projectile_pierce())
+                pierce = fb->projectile_pierce()->Get(tierOffset);
+              if (fb->projectile_bounce())
+                bounce = fb->projectile_bounce()->Get(tierOffset);
               MakeProjectile({
                 .type                = projectileType,
                 .ownerCreatureType   = PLAYER_CREATURE.type,
                 .weaponIndexOrMinus1 = weaponIndex,
                 .pos                 = pos,
                 .dir                 = weapon.targetDir,
-                .range               = GetWeaponRangeMeters(weapon.type),
+                .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
                 .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
-                .critDamageMultiplier = fb->crit_damage_multiplier(),
-                .knockbackMeters      = fb->knockback_meters(),
-                .pierce               = fb->projectile_pierce(),
-                .bounce               = fb->projectile_bounce(),
+                .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
+                .knockbackMeters      = fb->knockback_meters()->Get(tierOffset),
+                .pierce               = pierce,
+                .bounce               = bounce,
               });
 
               weapon.lastShotAt = {};
@@ -11991,7 +11995,7 @@ void GameFixedUpdate() {
           else {
             // It's a weapon that gets "shot" itself (MELEE / ELEMENTAL damage types).
             // Not projectile.
-            ASSERT(!projectileSpawnFrames);
+            ASSERT(!projectileSpawnFrameFactors);
 
             const auto colliderActiveStart = shootingDur.value / 4;
             const auto colliderActiveEnd   = shootingDur.value / 2;
@@ -12010,7 +12014,7 @@ void GameFixedUpdate() {
               };
               colliderSize *= ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
-              colliderSize.x += GetWeaponRangeMeters(weapon.type);
+              colliderSize.x += GetWeaponRangeMeters(weapon.type, weapon.tier);
 
               CheckCollisionsRect(
                 ShapeCategory_STATIC,
@@ -12209,10 +12213,13 @@ void GameFixedUpdate() {
               if (!projectile.dontSpawnProjectilesOnHit
                   && (projectile.weaponIndexOrMinus1 >= 0))
               {
+                const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
+                const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
+
                 EffectSpawnProjectilesOnHit(
                   creature,
                   projectile.weaponIndexOrMinus1,
-                  fb_weapon->crit_damage_multiplier()
+                  fb_weapon->crit_damage_multiplier()->Get(tierOffset)
                 );
               }
 
@@ -13060,13 +13067,15 @@ void GameDraw() {
         if (!weapon.type)
           continue;
 
-        const auto fb = fb_weapons->Get(weapon.type);
+        const auto fb         = fb_weapons->Get(weapon.type);
+        const int  tierOffset = weapon.tier - fb->min_tier_index();
 
         auto pos = GetWeaponPos(i);
         if (!fb->projectile_type() && weapon.startedShootingAt.IsSet()) {
-          const auto dur
-            = ApplyAttackSpeedToDuration(lframe::Scaled(fb->shooting_duration_frames()));
-          const f32 t = InOutLerp(
+          const auto dur = ApplyAttackSpeedToDuration(lframe::FromSeconds(
+            fb->cooldown()->Get(tierOffset) * fb->attack_or_cooldown_ratio()
+          ));
+          const f32  t   = InOutLerp(
             0,
             1,
             (f32)weapon.startedShootingAt.Elapsed().value,
