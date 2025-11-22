@@ -3624,7 +3624,7 @@ weapons: # {  ###
   #   icon_texture_id: game_weapon_todo
   #   texture_ids:
   #     - game_weapon_todo
-  - type: MELEE_0_CACTI_CLUB
+  - type: MELEE_0_CACTI_CLUB # кактусовый меч
     base_damage: 10 20 30 50
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3650,7 +3650,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 122
-  - type: MELEE_0_CLAW #
+  - type: MELEE_0_CLAW # бинты ниндзя (рок ли)
     base_damage: 5 10 15 25
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3907,7 +3907,7 @@ weapons: # {  ###
     knockback_meters: 5 5 5
     melee_collider_height_px: 1
     price: 190
-  - type: MELEE_2_PLASMA_SLEDGE
+  - type: MELEE_2_PLASMA_SLEDGE # граната света на палочке
     base_damage: 80 120
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3921,7 +3921,7 @@ weapons: # {  ###
     knockback_meters: 30 30
     melee_collider_height_px: 1
     price: 272
-  - type: MELEE_2_POWER_FIST
+  - type: MELEE_2_POWER_FIST # перчатка подрывника
     base_damage: 40 60
     damage_scalings:
       - stat_type: DAMAGE_MELEE
