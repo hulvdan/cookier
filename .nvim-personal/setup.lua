@@ -116,26 +116,19 @@ end, opts)
 -- Остальное.
 ------------------------------------------------------------------------------------
 
+-- Errorformat.
 vim.fn.execute([[set errorformat=]])
-
--- Processing python errors.
+-- Python.
 vim.fn.execute([[set errorformat+=%f:%l:%c:\ %m]])
-
--- Обработка ошибок web.
+-- Web.
 vim.fn.execute([[set errorformat+=%f(%l\\,%c):\ %t%[A-z]%#\ %m]])
 vim.fn.execute([[set errorformat+=%f:%l:%c:\ %t%[A-z]%#:\ %m]])
-
--- Обработка ошибок MSBuild.
+-- MSBuild.
 -- https://forums.handmadehero.org/index.php/forum?view=topic&catid=4&id=704#3982
--- Microsoft MSBuild
--- Microsoft compiler: cl.exe
 vim.fn.execute([[set errorformat+=\\\ %#%f(%l)\ :\ %#%t%[A-z]%#\ %m]])
--- Microsoft HLSL compiler: fxc.exe
 vim.fn.execute([[set errorformat+=\\\ %#%f(%l\\\,%c-%*[0-9]):\ %#%t%[A-z]%#\ %m]])
-
--- Обработка ошибок FlatBuffers.
+-- FlatBuffers.
 vim.fn.execute([[set errorformat+=\ \ %f(%l\\,\ %c\\):\ %m]])
-
 -- Not sure what these are for.
 vim.fn.execute([[set errorformat+=%f:%l:\ %m]])
 
