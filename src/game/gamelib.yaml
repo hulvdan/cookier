@@ -207,8 +207,8 @@ creatures: # {  ###
     coins_dropped: 0
     resists_ailment_types:
       - BURN
-    projectile_damage: 1
     turret_projectile_type: BULLET
+    turret_crit_damage_multiplier: 1.5
     turret_range_meters: 5
     turret_knockback_meters: 0.3
     turret_projectile_shoot_anchor_y: 0.7116
@@ -256,7 +256,6 @@ creatures: # {  ###
     contact_damage: 1
     contact_damage_increase_per_wave: 0.6
     knockback_resistance: 0.95
-    projectile_damage: 4
     speed: 7
     speed_plus_minus: 0.8
     texture_ids:

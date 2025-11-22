@@ -646,6 +646,7 @@ struct Projectile {  ///
   f32                               rotationSpeed             = {};
   int                               damage                    = {};
   f32                               critDamageMultiplier      = {};
+  int                               weaponCritChance          = 0;
   int                               pierce                    = {};
   int                               effectCritPierce          = {};
   int                               effectCritBounce          = {};
@@ -674,6 +675,7 @@ struct MakeProjectileData {  ///
   f32            range                     = {};
   int            damage                    = {};
   f32            critDamageMultiplier      = {};
+  int            weaponCritChance          = 0;
   f32            knockbackMeters           = {};
   int            pierce                    = {};
   int            bounce                    = {};
@@ -2480,6 +2482,7 @@ struct TryApplyDamageData {  ///
   f32              knockbackMeters                    = 0;
   CreatureType     damagerCreatureType                = CreatureType_INVALID;
   f32              critDamageMultiplier               = 1;
+  int              weaponCritChance                   = 0;
   int              indexOfWeaponThatDidDamageOrMinus1 = -1;
   ApplyAilmentData ailment                            = {};
   f32              ailmentChance                      = 0;
@@ -2617,7 +2620,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     bool isCrit = false;
 
     if (data.creatureIndex) {
-      f32 critChance = (f32)g.run.state.stats[StatType_CRIT_CHANCE] / 100.0f;
+      f32 critChance
+        = (f32)(g.run.state.stats[StatType_CRIT_CHANCE] + data.weaponCritChance) / 100.0f;
 
       if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
         IterateOverEffects(
@@ -3026,10 +3030,11 @@ void Pickup(int pickupableIndex) {  ///
           damage = ApplyPlayerStatDamageMultiplier(damage);
 
           f32 critDamageMultiplier = 1.5f;
+          int weaponCritChance     = 0;
           if (w) {
-            critDamageMultiplier = fb_weapon->crit_damage_multiplier()->Get(
-              w->tier - fb_weapon->min_tier_index()
-            );
+            const int tierOffset = w->tier - fb_weapon->min_tier_index();
+            critDamageMultiplier = fb_weapon->crit_damage_multiplier()->Get(tierOffset);
+            weaponCritChance     = fb_weapon->crit_chance()->Get(tierOffset);
           }
 
           TryApplyDamage({
@@ -3037,6 +3042,7 @@ void Pickup(int pickupableIndex) {  ///
             .damage                             = damage,
             .damagerCreatureType                = CreatureType_PLAYER,
             .critDamageMultiplier               = critDamageMultiplier,
+            .weaponCritChance                   = weaponCritChance,
             .indexOfWeaponThatDidDamageOrMinus1 = wi,
           });
 
@@ -4932,12 +4938,14 @@ int GetCreatureIndexByID(int id) {  ///
   return index;
 }
 
-void EffectSpawnProjectilesOnHit(
-  const Creature& creature,
-  int             weaponIndex,
-  f32             critDamageMultiplier
-) {  ///
+void EffectSpawnProjectilesOnHit(const Creature& creature,
+                                 int             weaponIndex) {  ///
   ASSERT(weaponIndex >= 0);
+
+  const auto& weapon = g.run.state.weapons[weaponIndex];
+  auto        fb     = glib->weapons()->Get(weapon.type);
+
+  const int tierOffset = weapon.tier - fb->min_tier_index();
 
   IterateOverEffects(
     EffectConditionType_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE,
@@ -4958,7 +4966,8 @@ void EffectSpawnProjectilesOnHit(
             .dir                       = Vector2Rotate({1, 0}, GRAND.Angle()),
             .range                     = fb_effect->projectile_range_meters(),
             .damage                    = damage,
-            .critDamageMultiplier      = critDamageMultiplier,
+            .critDamageMultiplier      = fb->crit_damage_multiplier()->Get(tierOffset),
+            .weaponCritChance          = fb->crit_chance()->Get(tierOffset),
             .alreadyDamagedCreatureID  = creature.id,
             .dontSpawnProjectilesOnHit = true,
           });
@@ -4999,13 +5008,12 @@ bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
       .knockbackMeters = fb->knockback_meters()->Get(tierOffset),
       .damagerCreatureType                = CreatureType_PLAYER,
       .critDamageMultiplier               = fb->crit_damage_multiplier()->Get(tierOffset),
+      .weaponCritChance                   = fb->crit_chance()->Get(tierOffset),
       .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndex,
     });
 
     if (hit)
-      EffectSpawnProjectilesOnHit(
-        creature, *weaponIndex, fb->crit_damage_multiplier()->Get(tierOffset)
-      );
+      EffectSpawnProjectilesOnHit(creature, *weaponIndex);
   }
   return continueCollisions;
 }
@@ -6716,18 +6724,17 @@ void DoUI() {
           );
 
           // Critical.
-          if (data.affectedByGame) {
+          {
+            int chance = fb->crit_chance()->Get(tierOffset);
+            if (data.affectedByGame)
+              chance += g.run.state.stats[StatType_CRIT_CHANCE];
+
+            chance = MIN(100, MAX(0, chance));
+
             componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT(TextFormat(
-                "x%.1f (%d%%)",
-                fb->crit_damage_multiplier()->Get(tierOffset),
-                MIN(100, MAX(0, g.run.state.stats[StatType_CRIT_CHANCE]))
+                "x%.1f (%d%%)", fb->crit_damage_multiplier()->Get(tierOffset), chance
               ));
-            });
-          }
-          else {
-            componentWeaponStatEntry(Loc_UI_CRIT, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT(TextFormat("x%.1f", fb->crit_damage_multiplier()));
             });
           }
 
@@ -11232,9 +11239,8 @@ void GameFixedUpdate() {
                       2 * PI32 * (f32)shotIndex / (f32)projectilesToSpawn
                         + data.shootingRotationOffset
                     ),
-                    .range                = f32_inf,
-                    .damage               = GetMobDamage(creature.type),
-                    .critDamageMultiplier = fb->crit_damage_multiplier(),
+                    .range  = f32_inf,
+                    .damage = GetMobDamage(creature.type),
                   });
                 }
                 data.shootingRotationOffset
@@ -11327,8 +11333,7 @@ void GameFixedUpdate() {
               const auto shotFrame
                 = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOT_FRAME);
               if (e == shotFrame) {
-                int damage = fb->projectile_damage();
-                damage     = ApplyDamageScalings(damage, 0, data.damageScalings, 1);
+                int damage = ApplyDamageScalings(0, 0, data.damageScalings, 1);
                 damage     = ApplyPlayerStatDamageMultiplier(damage);
                 MakeProjectile({
                   .type                 = projectileType,
@@ -11338,7 +11343,7 @@ void GameFixedUpdate() {
                   .dir                  = data.aimDirection,
                   .range                = rangeMeters,
                   .damage               = damage,
-                  .critDamageMultiplier = fb->crit_damage_multiplier(),
+                  .critDamageMultiplier = fb->turret_crit_damage_multiplier(),
                   .knockbackMeters      = fb->turret_knockback_meters(),
                   .pierce               = fb->turret_pierce(),
                   .bounce               = fb->turret_bounce(),
@@ -11983,6 +11988,7 @@ void GameFixedUpdate() {
                 .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
                 .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
                 .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
+                .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
                 .knockbackMeters      = fb->knockback_meters()->Get(tierOffset),
                 .pierce               = pierce,
                 .bounce               = bounce,
@@ -12216,11 +12222,7 @@ void GameFixedUpdate() {
                 const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
                 const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
 
-                EffectSpawnProjectilesOnHit(
-                  creature,
-                  projectile.weaponIndexOrMinus1,
-                  fb_weapon->crit_damage_multiplier()->Get(tierOffset)
-                );
+                EffectSpawnProjectilesOnHit(creature, projectile.weaponIndexOrMinus1);
               }
 
               // Applying:

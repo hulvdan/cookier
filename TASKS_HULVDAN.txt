@@ -17,11 +17,10 @@ x нарисовать RANGED_1_FLAMETHROWER
 x нарисовать RANGED_3_CHAIN_GUN
 x отсортировать оружия
 x fix compilation shit
+x impl crit chance
+x проставить названия оружий
 
-* impl crit chance
-*
-* забить данные эффектов оружий в gamelib
-  (тех, что спавнят projectile-ы)
+* забить данные эффектов оружий в gamelib ("особых" - тех, что спавнят projectile-ы)
 *
 * реализовать оружия (без доработок)
 *
@@ -46,7 +45,6 @@ x fix compilation shit
 * fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
 *
 *
-* проставить названия оружий
 *
 * weapons
 *
