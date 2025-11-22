@@ -15,7 +15,6 @@ USAGE:
 
 # Imports.  {  ###
 from itertools import groupby
-from math import ceil, floor
 from typing import Any
 
 import bf_image
@@ -32,6 +31,7 @@ from bf_lib import (
     hex_to_rgb_floats,
     hex_to_rgb_ints,
     recursive_replace_transform,
+    replace_double_spaces,
     rgb_floats_to_hex,
     transform_color,
 )
@@ -62,10 +62,11 @@ def field_to_list(container, field: str, ensure_length: int | None = None) -> No
     if isinstance(container[field], list):
         return
     if isinstance(container[field], str):
+        val = replace_double_spaces(container[field])
         try:
-            container[field] = [int(v) for v in container[field].split(" ")]
+            container[field] = [int(v) for v in val.split(" ")]
         except ValueError:
-            container[field] = [float(v) for v in container[field].split(" ")]
+            container[field] = [float(v) for v in val.split(" ")]
     elif isinstance(container[field], (int, float)):
         container[field] = [container[field]]
     else:
@@ -271,10 +272,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         assert required_tier_values <= TOTAL_TIERS
 
         texture_ids = x.get("texture_ids", [])
-        texture_ids.insert(0, "game_weapon_{i:02}" + name.lower())
+        texture_ids.insert(0, f"game_weapon_{i:02}_" + name.lower())
         x["texture_ids"] = texture_ids
+
         # x["icon_texture_id"] = "ui_weapon_" + name.lower()
-        x["icon_texture_id"] = "ui_weapon_todo"
+        x["icon_texture_id"] = "game_weapon_01_cacti_club"
 
         mandatory_fields = [
             "price",
@@ -294,8 +296,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
         field_to_list(x, "base_damage", required_tier_values)
         field_to_list(x, "crit_damage_multiplier", required_tier_values)
+        field_to_list(x, "crit_chance", required_tier_values)
         field_to_list(x, "knockback_meters", required_tier_values)
-        field_to_list(x, "shooting_duration_frames", required_tier_values)
+        field_to_list(x, "attack_speed", required_tier_values)
+        field_to_list(x, "projectile_count", required_tier_values)
         field_to_list(x, "projectile_pierce", required_tier_values)
         field_to_list(x, "projectile_bounce", required_tier_values)
         field_to_list(x, "range_meters", required_tier_values)
@@ -307,15 +311,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         shooting_duration_factor = x.get("shooting_duration_factor", 0.8)
         assert shooting_duration_factor >= 0
         assert shooting_duration_factor <= 1
-
-        x["shooting_duration_frames"] = [
-            ceil(frame * shooting_duration_factor)
-            for frame in x["shooting_duration_frames"]
-        ]
-        x["cooldown_frames"] = [
-            floor(frame * (1 - shooting_duration_factor))
-            for frame in x["shooting_duration_frames"]
-        ]
 
         for scalings in x["damage_scalings"]:
             percents_count = len(scalings["percents_per_tier"])
@@ -340,7 +335,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 if x["type"] != "COINS":
                     x["small_icon_texture_id"] = f"{icon_texture}_small"
 
-        if i >= 3 and not x.get("is_secondary"):
+        if i >= 4 and not x.get("is_secondary"):
             x["upgrade_name_locale"] = "UPGRADE_NAME_" + x["type"].upper()
     # }
 

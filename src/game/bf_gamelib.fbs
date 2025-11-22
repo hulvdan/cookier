@@ -246,11 +246,11 @@ table Weapon {
     crit_damage_multiplier: [float];
     crit_chance: [int];
     knockback_meters: [float];
-    cooldown_frames: [int];
-    shooting_duration_frames: [int];
+    attack_speed: [float];
+    attack_speed_weapon_ratio: float = 0.8;
     shoots_itself: bool;
     projectile_type: int;
-    projectile_count: int;
+    projectile_count: [int];
     projectile_spawn_frame_factors: [float];
     projectile_pierce: [int];
     projectile_bounce: [int];
@@ -428,7 +428,6 @@ table GameLibrary {
     effect_condition_variables: [CondVar] (required);
     effect_conditions: [EffectCondition] (required);
     items: [Item] (required);
-    // weapon_kinds: [WeaponKind] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
     particles: [Particle] (required);
@@ -441,6 +440,9 @@ table GameLibrary {
     achievements: [Achievement] (required);
     hats: [Hat] (required);
     // TABLE_GEN_END
+
+    // nocheckin
+    // weapon_kinds: [WeaponKind] (required);
 
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;

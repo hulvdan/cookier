@@ -15,8 +15,9 @@ x better sword
 x нарисовать MELEE_0_CLAW
 x нарисовать RANGED_1_FLAMETHROWER
 x нарисовать RANGED_3_CHAIN_GUN
+x отсортировать оружия
 
-* отсортировать оружия
+* fix compilation shit
 *
 * melee weapon colliders
 *

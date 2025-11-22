@@ -3641,7 +3641,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 50 50 50 50
-      - stat_type: HEALTH
+      - stat_type: HP
         percents_per_tier: 15 20 25 30
     attack_speed: 0.99 0.99 0.96 0.89
     crit_damage_multiplier: 2 2 2 2
@@ -3867,7 +3867,7 @@ weapons: # {  ###
     crit_damage_multiplier: 2 2 2
     crit_chance: 5 10 20
     life_steal_percents: 45 50 60
-    range_meters: 175 175 175 175
+    range_meters: 175 175 175
     knockback_meters: 0 0 0
     melee_collider_height_px: 1
     price: 173
@@ -3877,7 +3877,7 @@ weapons: # {  ###
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100
     attack_speed: 0.73 0.69 0.59
-    crit_damage_multiplier: 1.5  1.5  1.5
+    crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 1 1 1
     range_meters: 150 150 150
     knockback_meters: 15 15 15
@@ -3966,7 +3966,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 200
-      - stat_type: HEALTH
+      - stat_type: HP
         percents_per_tier: 200
     attack_speed: 0.66
     crit_damage_multiplier: 2.5
@@ -4154,7 +4154,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 25 25 25
-      - stat_type: HEALTH
+      - stat_type: HP
         percents_per_tier: 20 20 20
     attack_speed: 0.45 0.37 0.25
     crit_damage_multiplier: 1.5 1.5 1.5
@@ -4272,7 +4272,7 @@ projectiles: # {  ###
   - type: JAVELIN
     speed: 16
     texture_ids:
-      - game_weapon_javelin
+      - game_weapon_33_javelin
   - type: MOB
     speed: 10
     rotation_speed: 4
@@ -4378,6 +4378,8 @@ numbers: # {  ###
 
 stats: # {  ###
   - type: INVALID
+  - type: LEVEL
+    icon_texture_id: ui_stat_icon_level
   - type: COINS
     small_icon_texture_id: ui_coin
     is_hidden: true
@@ -4645,10 +4647,7 @@ builds: # {  ###
     hat_type: GOPNIK
     hat_color: 0xcec7b1ff
     starting_weapon_types:
-      - SWORD
-      - BOW
-      - GUN
-      - HAND
+      - MELEE_0_FIST
     effects:
       - stat_type: HP
         value: 5
@@ -4660,7 +4659,7 @@ builds: # {  ###
         stat_type: DAMAGE
         value: 20
       - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        weapon_type: BOW
+        weapon_type: RANGED_0_PISTOL
         placeholders:
           - ints: 0
       - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
@@ -4673,8 +4672,7 @@ builds: # {  ###
     hat_type: BEANIE
     hat_color: 0x208cb2ff
     starting_weapon_types:
-      - SLINGSHOT
-      - SMG
+      - MELEE_0_FIST
     effects:
       - stat_type: DAMAGE
         value: 15
@@ -4687,8 +4685,7 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
-      - WAND
-      - WAND2
+      - MELEE_0_FIST
     effects:
       - stat_type: HP
         value: -3
@@ -4724,9 +4721,9 @@ achievements: # {  ###
       - value: 40
         unlocks_build_type: NINJA
       - value: 100
-        unlocks_weapon_type: SLINGSHOT
+        unlocks_weapon_type: RANGED_0_SLINGSHOT
       - value: 300
-        unlocks_weapon_type: BOW
+        unlocks_weapon_type: RANGED_0_CROSSBOW
   - type: WALKER
     steps:
       - value: 100
