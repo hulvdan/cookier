@@ -1152,7 +1152,6 @@ struct GameData {
       int  waveIndex = 0;
       bool waveWon   = false;
 
-      int level                 = 1;
       int levelOnStartOfTheWave = 1;
       f32 xp                    = 0;
       f32 xpOnStartOfTheWave    = 0;
@@ -1962,7 +1961,6 @@ void GameLoad(const BFSave::Save* save) {  ///
   s.screen                 = (ScreenType)save->screen();
   s.waveIndex              = save->wave_index();
   s.waveWon                = save->wave_won();
-  s.level                  = save->level();
   s.levelOnStartOfTheWave  = save->level_on_start_of_the_wave();
   s.xp                     = save->xp();
   s.xpOnStartOfTheWave     = s.xp;
@@ -2110,7 +2108,6 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
     fb_save.screen                     = s.screen;
     fb_save.wave_index                 = s.waveIndex;
     fb_save.wave_won                   = s.waveWon;
-    fb_save.level                      = s.level;
     fb_save.level_on_start_of_the_wave = s.levelOnStartOfTheWave;
     fb_save.xp                         = s.xp;
     fb_save.player_killed_enemies      = s.playerKilledEnemies;
@@ -2430,15 +2427,15 @@ void AddXP(f32 xp) {  ///
 
   // Handling level up.
 
-  auto nextLevelXp = GetNextLevelXp(g.run.state.level);
+  auto nextLevelXp = GetNextLevelXp(g.run.state.stats[StatType_LEVEL]);
 
   int addedLevels = 0;
 
   while (g.run.state.xp >= nextLevelXp) {
     addedLevels++;
     g.run.state.xp -= nextLevelXp;
-    g.run.state.level++;
-    nextLevelXp = GetNextLevelXp(g.run.state.level);
+    g.run.state.stats[StatType_LEVEL]++;
+    nextLevelXp = GetNextLevelXp(g.run.state.stats[StatType_LEVEL]);
 
     MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
 
@@ -7658,7 +7655,11 @@ void DoUI() {
 
       FontBegin(&g.meta.fontUIBig);
 
-      entry({}, glib->ui_shop_current_level_icon_texture_id(), g.run.state.level);
+      entry(
+        {},
+        glib->ui_shop_current_level_icon_texture_id(),
+        g.run.state.stats[StatType_LEVEL]
+      );
       int statIndex = -1;
       for (const auto fb_stat : *fb_stats) {
         statIndex++;
@@ -7900,8 +7901,9 @@ void DoUI() {
               BF_CLAY_IMAGE({
                 .texID = texs[1],
                 .sourceMargins{
-                  .right
-                  = 1 - (f32)g.run.state.xp / (f32)GetNextLevelXp(g.run.state.level)
+                  .right = 1
+                           - (f32)g.run.state.xp
+                               / (f32)GetNextLevelXp(g.run.state.stats[StatType_LEVEL])
                 },
                 .color = palGreen,
               });
@@ -7917,7 +7919,7 @@ void DoUI() {
                 },
               }) {
                 FLOATING_BEAUTIFY;
-                BF_CLAY_TEXT(TextFormat("%d", g.run.state.level));
+                BF_CLAY_TEXT(TextFormat("%d", g.run.state.stats[StatType_LEVEL]));
               }
             }
           });
@@ -8713,7 +8715,8 @@ void DoUI() {
               if (chosen) {
                 PlaySound(Sound_UI_CLICK);
 
-                if (g.run.state.levelOnStartOfTheWave < g.run.state.level) {
+                if (g.run.state.levelOnStartOfTheWave < g.run.state.stats[StatType_LEVEL])
+                {
                   g.run.state.levelOnStartOfTheWave++;
                   g.run.scheduledUpgrades      = true;
                   g.run.scheduledUpgradesReset = true;
@@ -9829,30 +9832,17 @@ void DoUI() {
               BF_CLAY_SIZING_GROW_XY,
               .childGap        = GAP_SMALL,
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            }}) {
-              // Current level.
-              if (!columnIndex) {
-                CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(STATS_ENTRY_WIDTH)}}}) {
-                  componentStatsEntry(
-                    glib->ui_shop_current_level_icon_texture_id(),
-                    Loc_UI_CURRENT_LEVEL,
-                    g.run.state.level,
-                    StatType_INVALID
-                  );
-                }
-              }
-
-              FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
-                const auto type = (StatType)(i + 2);
-                const auto fb   = glib->stats()->Get(type);
-                if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
-                  componentStatsEntry(
-                    fb->small_icon_texture_id(),
-                    fb->name_locale(),
-                    g.run.state.stats[type],
-                    type
-                  );
-                }
+            }})
+            FOR_RANGE (int, i, (int)StatType_COUNT - 2) {
+              const auto type = (StatType)(i + 2);
+              const auto fb   = glib->stats()->Get(type);
+              if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
+                componentStatsEntry(
+                  fb->small_icon_texture_id(),
+                  fb->name_locale(),
+                  g.run.state.stats[type],
+                  type
+                );
               }
             }
           }
@@ -10681,7 +10671,7 @@ void GameFixedUpdate() {
 
       // F8 - add level.
       if (IsKeyPressed(SDL_SCANCODE_F8)) {  ///
-        AddXP(GetNextLevelXp(g.run.state.level));
+        AddXP(GetNextLevelXp(g.run.state.stats[StatType_LEVEL]));
       }
 
       // F9 - add crate.
@@ -10851,7 +10841,7 @@ void GameFixedUpdate() {
       RefillUpgradesToPick(false);
     }
 
-    if (g.run.state.level == g.run.state.levelOnStartOfTheWave) {
+    if (g.run.state.stats[StatType_LEVEL] == g.run.state.levelOnStartOfTheWave) {
       g.run.scheduledShop      = true;
       g.run.scheduledShopReset = true;
     }
