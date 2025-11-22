@@ -3629,7 +3629,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 80 85 90 100
-    attack_speed: 1.66 1.58 1.51 1.36
+    cooldown: 1.66 1.58 1.51 1.36
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 200 200 200 200
@@ -3643,7 +3643,7 @@ weapons: # {  ###
         percents_per_tier: 50 50 50 50
       - stat_type: HP
         percents_per_tier: 15 20 25 30
-    attack_speed: 0.99 0.99 0.96 0.89
+    cooldown: 0.99 0.99 0.96 0.89
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 10 15 20 25
     range_meters: 135 150 165 180
@@ -3657,7 +3657,7 @@ weapons: # {  ###
         percents_per_tier: 50 50 50 50
       - stat_type: ATTACK_SPEED
         percents_per_tier: 15 20 25 30
-    attack_speed: 0.78 0.73 0.69 0.59
+    cooldown: 0.78 0.73 0.69 0.59
     crit_damage_multiplier: 2 2.15 2.3 2.5
     crit_chance: 10 15 20 25
     range_meters: 150 150 150 150
@@ -3669,7 +3669,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
-    attack_speed: 0.78 0.73 0.69 0.59
+    cooldown: 0.78 0.73 0.69 0.59
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
     range_meters: 150 150 150 150
@@ -3681,7 +3681,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.73 1.66 1.58 1.51
+    cooldown: 1.73 1.66 1.58 1.51
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 200 200 200 200
@@ -3693,7 +3693,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.23 1.17 1.10 1.04
+    cooldown: 1.23 1.17 1.10 1.04
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 150 160 170 180
@@ -3707,7 +3707,7 @@ weapons: # {  ###
         percents_per_tier: 50 50 50 50
       - stat_type: SPEED
         percents_per_tier: 30 35 40 50
-    attack_speed: 1.58 1.50 1.42 1.33
+    cooldown: 1.58 1.50 1.42 1.33
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 250 250 250 250
@@ -3719,7 +3719,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 80 80 80 80
-    attack_speed: 1.01 0.93 0.86 0.78
+    cooldown: 1.01 0.93 0.86 0.78
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 4 6 8 10
     range_meters: 150 150 150 150
@@ -3735,7 +3735,7 @@ weapons: # {  ###
         percents_per_tier: 50 60 70 80
       - stat_type: ENGINEERING
         percents_per_tier: 50 60 70 80
-    attack_speed: 1.23 1.14 1.06 0.98
+    cooldown: 1.23 1.14 1.06 0.98
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 150 150 150 150
@@ -3747,7 +3747,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 50 65 80 100
-    attack_speed: 1.14 1.06 0.98 0.89
+    cooldown: 1.14 1.06 0.98 0.89
     crit_damage_multiplier: 1.25 1.5 1.75 2
     crit_chance: 3 6 9 12
     range_meters: 150 150 150 150
@@ -3761,7 +3761,7 @@ weapons: # {  ###
         percents_per_tier: 75 85 100 125
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 50 65 85 100
-    attack_speed: 1.42 1.25 1.09 0.92
+    cooldown: 1.42 1.25 1.09 0.92
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
@@ -3773,7 +3773,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.68 1.61 1.53 1.46
+    cooldown: 1.68 1.61 1.53 1.46
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 10 15 20 25
     range_meters: 150 150 150 150
@@ -3787,7 +3787,7 @@ weapons: # {  ###
         percents_per_tier: 50 50 50 50
       - stat_type: ENGINEERING
         percents_per_tier: 50 50 50 50
-    attack_speed: 1.05 1.00 0.97 0.87
+    cooldown: 1.05 1.00 0.97 0.87
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 10 15 20 30
     range_meters: 125 125 125 125
@@ -3801,7 +3801,7 @@ weapons: # {  ###
         percents_per_tier: 50 50 50 50
       - stat_type: LIFE_STEAL
         percents_per_tier: 50 65 80 100
-    attack_speed: 1.14 1.07 1.00 0.93
+    cooldown: 1.14 1.07 1.00 0.93
     crit_damage_multiplier: 2 2.15 2.3 2.5
     crit_chance: 3 6 9 12
     range_meters: 150 160 170 180
@@ -3813,7 +3813,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: ARMOR
         percents_per_tier: 100 125 150 200
-    attack_speed: 1.16 1.16 1.16 1.01
+    cooldown: 1.16 1.16 1.16 1.01
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 150 165 180 200
@@ -3825,7 +3825,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.29 1.22 1.15 1.09
+    cooldown: 1.29 1.22 1.15 1.09
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
@@ -3839,7 +3839,7 @@ weapons: # {  ###
         percents_per_tier: 50 65 80 100
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 50 65 80 100
-    attack_speed: 1.10 1.04 0.95 0.8
+    cooldown: 1.10 1.04 0.95 0.8
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 0 0 0 0
     range_meters: 175 175 175 175
@@ -3851,7 +3851,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.70 1.64 1.55 1.49
+    cooldown: 1.70 1.64 1.55 1.49
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
@@ -3863,7 +3863,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100
-    attack_speed: 0.72 0.67 0.62
+    cooldown: 0.72 0.67 0.62
     crit_damage_multiplier: 2 2 2
     crit_chance: 5 10 20
     life_steal_percents: 45 50 60
@@ -3876,7 +3876,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100
-    attack_speed: 0.73 0.69 0.59
+    cooldown: 0.73 0.69 0.59
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 1 1 1
     range_meters: 150 150 150
@@ -3888,7 +3888,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 150 175 200
-    attack_speed: 1.67 1.59 1.50
+    cooldown: 1.67 1.59 1.50
     crit_damage_multiplier: 1.75 1.75 1.75
     crit_chance: 3 3 3
     range_meters: 175 175 175
@@ -3900,7 +3900,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100
-    attack_speed: 1.28 1.13 0.98
+    cooldown: 1.28 1.13 0.98
     crit_damage_multiplier: 2 2 2
     crit_chance: 3 3 3
     range_meters: 200 200 200
@@ -3914,7 +3914,7 @@ weapons: # {  ###
         percents_per_tier: 150 200
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 150 200
-    attack_speed: 1.55 1.49
+    cooldown: 1.55 1.49
     crit_damage_multiplier: 1.75 1.75
     crit_chance: 3 3
     range_meters: 175 175
@@ -3926,7 +3926,7 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100
-    attack_speed: 0.69 0.59
+    cooldown: 0.69 0.59
     crit_damage_multiplier: 1.5 1.5
     crit_chance: 1 1
     range_meters: 150 150
@@ -3940,7 +3940,7 @@ weapons: # {  ###
         percents_per_tier: 125 150
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 125 150
-    attack_speed: 1.21 1.06
+    cooldown: 1.21 1.06
     crit_damage_multiplier: 2 2
     crit_chance: 3 3
     range_meters: 200 200
@@ -3954,7 +3954,7 @@ weapons: # {  ###
         percents_per_tier: 100
       - stat_type: ENGINEERING
         percents_per_tier: 100
-    attack_speed: 1.33
+    cooldown: 1.33
     crit_damage_multiplier: 2
     crit_chance: 3
     range_meters: 400
@@ -3968,7 +3968,7 @@ weapons: # {  ###
         percents_per_tier: 200
       - stat_type: HP
         percents_per_tier: 200
-    attack_speed: 0.66
+    cooldown: 0.66
     crit_damage_multiplier: 2.5
     crit_chance: 10
     range_meters: 200
@@ -3982,7 +3982,7 @@ weapons: # {  ###
         percents_per_tier: 150
       - stat_type: LIFE_STEAL
         percents_per_tier: 100
-    attack_speed: 0.72
+    cooldown: 0.72
     crit_damage_multiplier: 2
     crit_chance: 3
     life_steal_percents: 100
@@ -3997,101 +3997,119 @@ weapons: # {  ###
         percents_per_tier: 50 50 50 50
       - stat_type: RANGE
         percents_per_tier: 10 10 10 10
-    attack_speed: 1.13 1.13 1.13 1.13
+    cooldown: 1.13 1.13 1.13 1.13
     crit_damage_multiplier: 1.5 1.75 2 2.25
     crit_chance: 30 35 40 45
     range_meters: 350 350 350 350
     knockback_meters: 8 8 8 8
     price: 132
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_DOUBLE_BARREL_SHOTGUN
     base_damage: 3 6 9 9
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 80 85 90 100
-    attack_speed: 1.37 1.28 1.20 1.20
+    cooldown: 1.37 1.28 1.20 1.20
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     projectile_count: 4 4 4 6
     range_meters: 350 350 350 350
     knockback_meters: 8 8 8 8
     price: 149
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_GHOST_SCEPTER # bowl of apples
     base_damage: 10 15 20 30
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 100 100 100 100
-    attack_speed: 0.98 0.93 0.88 0.83
+    cooldown: 0.98 0.93 0.88 0.83
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 300 350 400 450
     knockback_meters: 2 2 2 2
     price: 122
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_ICICLE # grimoire of milk
     base_damage: 10 20 30 40
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.03 0.95 0.87 0.70
+    cooldown: 1.03 0.95 0.87 0.70
     crit_damage_multiplier: 2 2 2.5 3
     crit_chance: 5 10 15 20
     range_meters: 400 400 400 400
     knockback_meters: 5 5 5 5
     price: 140
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_JAVELIN
     base_damage: 8 12 16 20
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.20 1.12 1.03 0.95
+    cooldown: 1.20 1.12 1.03 0.95
     crit_damage_multiplier: 2.5 2.75 3 3.25
     crit_chance: 0 0 0 0
     range_meters: 350 375 400 425
     knockback_meters: 0 0 0 0
     price: 140
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_LASER_GUN
     base_damage: 40 55 70 100
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 400 450 500 600
-    attack_speed: 1.98 1.90 1.82 1.65
+    cooldown: 1.98 1.90 1.82 1.65
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 500 500 500 500
     knockback_meters: 0 0 0 0
     price: 122
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_PISTOL
     base_damage: 12 20 30 50
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 100 100 100 100
-    attack_speed: 1.20 1.12 1.03 0.87
+    cooldown: 1.20 1.12 1.03 0.87
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 5 10 15 20
     range_meters: 400 400 400 400
     knockback_meters: 15 15 15 15
     price: 91
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_SHREDDER
     base_damage: 5 10 15 25
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 50 50 50 50
-    attack_speed: 1.30 1.22 1.13 1.05
+    cooldown: 1.30 1.22 1.13 1.05
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 450 450 450 450
     knockback_meters: 0 0 0 0
     price: 122
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_SHURIKEN # кунай
     base_damage: 6 8 10 15
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 25 34 42 50
-    attack_speed: 0.87 0.83 0.80 0.70
+    cooldown: 0.87 0.83 0.80 0.70
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 35 38 41 45
     range_meters: 350 350 350 350
     knockback_meters: 0 0 0 0
     price: 105
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_SLINGSHOT
     # Оружие из терратии - дуть, чтобы стрельнуть семечкой.
     # Свёрнутая трубочкой бумага.
@@ -4099,56 +4117,66 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 80 80 80 80
-    attack_speed: 1.22 1.17 1.12 1.05
+    cooldown: 1.22 1.17 1.12 1.05
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 300 300 300 300
     knockback_meters: 5 5 5 5
     price: 120
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_SMG # автомат
     base_damage: 3 4 5 8
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 50 60 70 80
-    attack_speed: 0.17 0.17 0.17 0.15
+    cooldown: 0.17 0.17 0.17 0.15
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
     range_meters: 400 400 400 400
     knockback_meters: 0 0 0 0
     price: 149
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_WAND # mushoku tensei, жезл ученика
     base_damage: 1 1 1 1
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 50 65 80 100
-    attack_speed: 0.87 0.78 0.70 0.53
+    cooldown: 0.87 0.78 0.70 0.53
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 0 0 0 0
     range_meters: 350 375 400 425
     knockback_meters: 10 10 10 10
     price: 105
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_1_FIREBALL
     base_damage: 5 10 20
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 25 50 75
-    attack_speed: 1.12 1.03 0.87
+    cooldown: 1.12 1.03 0.87
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 3 3 3
     range_meters: 400 450 500
     knockback_meters: 0 0 0
     price: 140
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2
   - type: RANGED_1_FLAMETHROWER
     base_damage: 1 1 1
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 1 1 1
-    attack_speed: 0.12 0.12 0.09
+    cooldown: 0.12 0.12 0.09
     crit_damage_multiplier: 2 2 2
     crit_chance: 0 0 0
     range_meters: 250 300 400
     knockback_meters: 0 0 0
     price: 207
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2
   - type: RANGED_1_POTATO_THROWER # egg thrower
     base_damage: 1 1 1
     damage_scalings:
@@ -4156,34 +4184,40 @@ weapons: # {  ###
         percents_per_tier: 25 25 25
       - stat_type: HP
         percents_per_tier: 20 20 20
-    attack_speed: 0.45 0.37 0.25
+    cooldown: 0.45 0.37 0.25
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 3 3 3
     range_meters: 500 500 500
     knockback_meters: 20 25 30
     price: 139
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2
   - type: RANGED_1_ROCKER_LAUNCHER
     base_damage: 30 50 80
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 100 100 100
-    attack_speed: 1.78 1.37 1.03
+    cooldown: 1.78 1.37 1.03
     crit_damage_multiplier: 2 2 2
     crit_chance: 3 3 3
     range_meters: 500 550 600
     knockback_meters: 15 15 15
     price: 207
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2 0.2
   - type: RANGED_2_MINIGUN
     base_damage: 1 3
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 50 75
-    attack_speed: 0.09 0.073
+    cooldown: 0.09 0.073
     crit_damage_multiplier: 1.75 2
     crit_chance: 1 3
     range_meters: 400 450
     knockback_meters: 3 3
     price: 255
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2
   - type: RANGED_2_NUCLEAR_LAUNCHER
     base_damage: 60 120
     damage_scalings:
@@ -4191,12 +4225,14 @@ weapons: # {  ###
         percents_per_tier: 100 100
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 100 100
-    attack_speed: 2.12 2.12
+    cooldown: 2.12 2.12
     crit_damage_multiplier: 2 2
     crit_chance: 3 3
     range_meters: 800 800
     knockback_meters: 15 15
     price: 289
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2
   - type: RANGED_2_SNIPER_GUN
     base_damage: 50 80
     damage_scalings:
@@ -4204,12 +4240,14 @@ weapons: # {  ###
         percents_per_tier: 100 100
       - stat_type: RANGE
         percents_per_tier: 20 30
-    attack_speed: 2.40 2.40
+    cooldown: 2.40 2.40
     crit_damage_multiplier: 3 4
     crit_chance: 20 20
     range_meters: 800 1000
     knockback_meters: 30 30
     price: 245
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2 0.2
   - type: RANGED_3_CHAIN_GUN # BFG
     base_damage: 2
     damage_scalings:
@@ -4217,24 +4255,28 @@ weapons: # {  ###
         percents_per_tier: 100
       - stat_type: ENGINEERING
         percents_per_tier: 100
-    attack_speed: 0.073
+    cooldown: 0.073
     crit_damage_multiplier: 1.5
     crit_chance: 3
     projectile_count: 3
     range_meters: 500
     knockback_meters: 5
     price: 300
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2
   - type: RANGED_3_GATLING_LASER
     base_damage: 10
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 100
-    attack_speed: 0.073
+    cooldown: 0.073
     crit_damage_multiplier: 3
     crit_chance: 10
     range_meters: 500
     knockback_meters: 5
     price: 290
+    projectile_type: JAVELIN
+    projectile_spawn_frame_factors: 0.2
 # }
 
 projectiles: # {  ###
@@ -4379,6 +4421,7 @@ numbers: # {  ###
 stats: # {  ###
   - type: INVALID
   - type: LEVEL
+    player_value: 1
     icon_texture_id: ui_stat_icon_level
   - type: COINS
     small_icon_texture_id: ui_coin

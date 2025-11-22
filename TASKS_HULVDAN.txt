@@ -16,15 +16,16 @@ x нарисовать MELEE_0_CLAW
 x нарисовать RANGED_1_FLAMETHROWER
 x нарисовать RANGED_3_CHAIN_GUN
 x отсортировать оружия
+x fix compilation shit
 
-* fix compilation shit
-*
-* melee weapon colliders
+* impl crit chance
 *
 * забить данные эффектов оружий в gamelib
   (тех, что спавнят projectile-ы)
 *
 * реализовать оружия (без доработок)
+*
+* melee weapon colliders
 *
 * projectiles
 *

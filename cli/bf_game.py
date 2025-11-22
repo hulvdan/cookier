@@ -261,7 +261,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
         assert "min_tier_index" not in x
 
-        _, min_tier_index, name = x["type"].split("_", 2)
+        weapon_type, min_tier_index, name = x["type"].split("_", 2)
         min_tier_index = int(min_tier_index)
 
         x["min_tier_index"] = min_tier_index
@@ -275,14 +275,25 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         texture_ids.insert(0, f"game_weapon_{i:02}_" + name.lower())
         x["texture_ids"] = texture_ids
 
-        # x["icon_texture_id"] = "ui_weapon_" + name.lower()
-        x["icon_texture_id"] = "game_weapon_01_cacti_club"
+        # x["icon_texture_id"] = f"ui_weapon_{i:02}_" + name.lower()
+        x["icon_texture_id"] = f"game_weapon_{i:02}_{name.lower()}"
+
+        if weapon_type == "MELEE":
+            assert x.get("melee_collider_height_px", 0) > 0
+            assert "projectile_spawn_frame_factors" not in x
+        elif weapon_type == "RANGED":
+            assert "projectile_type" in x
+            assert "melee_collider_height_px" not in x
+            assert "projectile_spawn_frame_factors" in x
+        else:
+            assert False
 
         mandatory_fields = [
             "price",
             "base_damage",
             "damage_scalings",
             "crit_damage_multiplier",
+            "crit_chance",
             "knockback_meters",
             "range_meters",
             "icon_texture_id",
@@ -298,15 +309,20 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         field_to_list(x, "crit_damage_multiplier", required_tier_values)
         field_to_list(x, "crit_chance", required_tier_values)
         field_to_list(x, "knockback_meters", required_tier_values)
-        field_to_list(x, "attack_speed", required_tier_values)
+        field_to_list(x, "cooldown", required_tier_values)
         field_to_list(x, "projectile_count", required_tier_values)
         field_to_list(x, "projectile_pierce", required_tier_values)
         field_to_list(x, "projectile_bounce", required_tier_values)
         field_to_list(x, "range_meters", required_tier_values)
         field_to_list(x, "life_steal_percents", required_tier_values)
-        field_to_list(x, "projectile_spawn_frames")
+        field_to_list(x, "projectile_spawn_frame_factors")
         for vv in x["damage_scalings"]:
             field_to_list(vv, "percents_per_tier", required_tier_values)
+
+        if "attack_or_cooldown_ratio" in x:
+            assert 0 <= x["attack_or_cooldown_ratio"] <= 1
+        for v in x.get("projectile_spawn_frame_factors", []):
+            assert 0 <= v <= 1
 
         shooting_duration_factor = x.get("shooting_duration_factor", 0.8)
         assert shooting_duration_factor >= 0
