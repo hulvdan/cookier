@@ -260,7 +260,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
         assert "min_tier_index" not in x
 
-        _, min_tier_index, name = x["type"].split("_", 2)[1]
+        _, min_tier_index, name = x["type"].split("_", 2)
         min_tier_index = int(min_tier_index)
 
         x["min_tier_index"] = min_tier_index
@@ -271,9 +271,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         assert required_tier_values <= TOTAL_TIERS
 
         texture_ids = x.get("texture_ids", [])
-        texture_ids.insert(0, "game_weapon_" + name.lower())
+        texture_ids.insert(0, "game_weapon_{i:02}" + name.lower())
         x["texture_ids"] = texture_ids
-        x["icon_texture_id"] = "ui_weapon_" + name.lower()
+        # x["icon_texture_id"] = "ui_weapon_" + name.lower()
+        x["icon_texture_id"] = "ui_weapon_todo"
 
         mandatory_fields = [
             "price",
@@ -994,29 +995,30 @@ def process_images():
         "sniper_gun",
         "chain_gun",
         "gatling_laser",
+        "crossbow_string",
     ]
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_006.png",
-        cell_size=280,
+        cell_size=300,
         size=(12, 6),
         gap=10,
         out_filename_prefix="game_weapon_",
-        out_filenames=weapon_names,
+        out_filenames=[f"{i + 1:02}_{x}" for i, x in enumerate(weapon_names)],
         out_dir=ART_TEXTURES_DIR,
     )
 
-    # Weapon icons.
-    for f in ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
-        f.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_007.png",
-        cell_size=200,
-        size=(17, 8),
-        gap=24,
-        out_filename_prefix="ui_weapon_",
-        out_filenames=weapon_names,
-        out_dir=ART_TEXTURES_DIR,
-    )
+    # # Weapon icons.
+    # for f in ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
+    #     f.unlink()
+    # bf_image.spritesheetify(
+    #     ART_DIR / "src" / "main_007.png",
+    #     cell_size=200,
+    #     size=(17, 8),
+    #     gap=24,
+    #     out_filename_prefix="ui_weapon_",
+    #     out_filenames=weapon_names,
+    #     out_dir=ART_TEXTURES_DIR,
+    # )
 
     # }
 

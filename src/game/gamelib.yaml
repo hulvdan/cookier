@@ -3780,7 +3780,7 @@ weapons: # {  ###
     knockback_meters: 5 5 5 5
     melee_collider_height_px: 1
     price: 91
-  - type: MELEE_0_SCREWDRIVER
+  - type: MELEE_0_SCREWDRIVER # гаечный ключ
     base_damage: 8 12 16 20
     damage_scalings:
       - stat_type: DAMAGE_MELEE
