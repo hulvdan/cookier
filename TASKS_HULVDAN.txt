@@ -13,9 +13,10 @@ x нарисовать RANGED_0_SHREDDER
 x better cactus sword
 x better sword
 x нарисовать MELEE_0_CLAW
+x нарисовать RANGED_1_FLAMETHROWER
+x нарисовать RANGED_3_CHAIN_GUN
 
-* нарисовать RANGED_1_FLAMETHROWER
-* нарисовать RANGED_3_CHAIN_GUN
+* отсортировать оружия
 *
 * melee weapon colliders
 *

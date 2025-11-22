@@ -4210,7 +4210,7 @@ weapons: # {  ###
     range_meters: 800 1000
     knockback_meters: 30 30
     price: 245
-  - type: RANGED_3_CHAIN_GUN
+  - type: RANGED_3_CHAIN_GUN # BFG
     base_damage: 2
     damage_scalings:
       - stat_type: DAMAGE_RANGED
