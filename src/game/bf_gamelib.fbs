@@ -103,9 +103,6 @@ table Creature {
 
     contact_damage: int;
     contact_damage_increase_per_wave: float;
-    // For turret. Mobs do contact_damage that scales.
-    projectile_damage: int;
-    crit_damage_multiplier: float = 1.5;
 
     speed: float;
     not_aggroed_speed: float = 1;
@@ -131,6 +128,7 @@ table Creature {
     on_death_spawns_distance_max: float;
 
     turret_projectile_type: int;
+    turret_crit_damage_multiplier: float = 1.5;
     turret_range_meters: float;
     turret_knockback_meters: float;
     turret_pierce: int;
