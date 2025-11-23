@@ -1,26 +1,11 @@
 WORKING SINCE 2025-09-07
 
-x нарисовать MELEE_0_TORCH
-x нарисовать MELEE_2_PLASMA_SLEDGE
-x нарисовать MELEE_2_POWER_FIST
-x нарисовать RANGED_0_DOUBLE_BARREL_SHOTGUN
-x нарисовать RANGED_0_CROSSBOW
-x нарисовать RANGED_3_GATLING_LASER
-x нарисовать MELEE_0_CACTI_CLUB
-x нарисовать RANGED_1_ROCKER_LAUNCHER
-x нарисовать MELEE_3_DEX_TROYER
-x нарисовать RANGED_0_SHREDDER
-x better cactus sword
-x better sword
-x нарисовать MELEE_0_CLAW
-x нарисовать RANGED_1_FLAMETHROWER
-x нарисовать RANGED_3_CHAIN_GUN
-x отсортировать оружия
-x fix compilation shit
-x impl crit chance
-x проставить названия оружий
-
-* забить данные эффектов оружий в gamelib ("особых" - тех, что спавнят projectile-ы)
+* забить данные эффектов оружий в gamelib
+*
+* impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+* impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
+* impl weapon burning_damage, burning_times, burning_damage_scalings
+* impl stat KNOCKBACK
 *
 * реализовать оружия (без доработок)
 *
@@ -36,8 +21,6 @@ x проставить названия оружий
 * реализовать оружия (с доработками)
 *
 * жене билд
-*
-* забить данные эффектов оружий в gamelib
 *
 * game.py: crit_chance
 * impl: fb_weapon->projectiles_count()

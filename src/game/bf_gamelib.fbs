@@ -231,16 +231,14 @@ table Ailment {
     duration_seconds: float;
 }
 
-// table WeaponKind {
-//     stat_type: int;
-// }
-
 table Weapon {
     name_locale: int;
     min_tier_index: int;
-    // weaponkind_type: int;
     base_damage: [int];
     damage_scalings: [DamageScaling];
+    burning_damage: [int];
+    burning_times: [int];
+    buning_damage_scalings: [DamageScaling];
     crit_damage_multiplier: [float];
     crit_chance: [int];
     knockback_meters: [float];
@@ -438,9 +436,6 @@ table GameLibrary {
     achievements: [Achievement] (required);
     hats: [Hat] (required);
     // TABLE_GEN_END
-
-    // nocheckin
-    // weapon_kinds: [WeaponKind] (required);
 
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;
