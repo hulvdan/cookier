@@ -49,13 +49,16 @@ def outline(
     image: Image.Image,
     *,
     radius: int,
-    color: tuple[int, int, int, int] = (0, 0, 0, 255),
+    color: tuple[int, int, int, int] | tuple[int, int, int] = (0, 0, 0, 255),
     is_shadow: bool = False,
     threshold: int = 0,
     blend_image_on_top: bool = True,
 ) -> Image.Image:
     # {  ###
     assert threshold >= 0
+
+    if len(color) == 3:
+        color = (*color, 255)
 
     img = np.asarray(image)
     h, w, _ = img.shape
@@ -147,6 +150,8 @@ def replace_color(image: Image.Image, color: tuple[int, int, int]) -> Image.Imag
 
 
 red = lambda image: replace_color(image, (255, 0, 0))
+green = lambda image: replace_color(image, (0, 255, 0))
+blue = lambda image: replace_color(image, (0, 0, 255))
 white = lambda image: replace_color(image, (255, 255, 255))
 black = lambda image: replace_color(image, (0, 0, 0))
 
