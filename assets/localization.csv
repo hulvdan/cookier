@@ -341,7 +341,7 @@ STAT_STRUCTURE_RANGE;Дальность Структур;Structure Range;
 STAT_BURNING_SPEED;Скорость Горения;Burning Speed;
 STAT_BURNING_SPREAD;Распространение Горения;Burning Spread;
 STAT_KNOCKBACK;Отбрасывание;Knockback;
-STAT_DOUBLE_COIN_CHANCE;Удвоение Печенег;Double Cookiens;
+STAT_DOUBLE_COIN_CHANCE;Шанс Выпадения Двойной Печеньги;Doubled Cookien Drop Chance;
 STAT_FREE_REROLLS;Бесплатные Перебрасывания;Free Rerolls;
 STAT_TREES;Количество Деревьев;Trees;
 STAT_ENEMIES;Количество Врагов;Enemies;
