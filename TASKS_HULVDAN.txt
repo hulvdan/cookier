@@ -23,8 +23,15 @@ x нарисовать projectile: FIRE
 x проставить везде, где надо, only_this_weapon: true
 x spritesheetify projectiles
 x spritesheetify fire
+x bullet gets squashed
+x bullet looks good
+x shotgun accuracy + multiple pellets
 
-* bullet gets squashed
+* apprentice's wand projectile looks good
+* rocket looks good
+* mob projectiles are always on top
+*
+* correct ranged weapons projectile spawn y positions
 *
 * impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS

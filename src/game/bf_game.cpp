@@ -11346,6 +11346,7 @@ void GameFixedUpdate() {
               if (e == shotFrame) {
                 int damage = ApplyDamageScalings(0, 0, data.damageScalings, 1);
                 damage     = ApplyPlayerStatDamageMultiplier(damage);
+
                 MakeProjectile({
                   .type                 = projectileType,
                   .ownerCreatureType    = creature.type,
@@ -11994,20 +11995,30 @@ void GameFixedUpdate() {
                 pierce = fb->projectile_pierce()->Get(tierOffset);
               if (fb->projectile_bounce())
                 bounce = fb->projectile_bounce()->Get(tierOffset);
-              MakeProjectile({
-                .type                = projectileType,
-                .ownerCreatureType   = PLAYER_CREATURE.type,
-                .weaponIndexOrMinus1 = weaponIndex,
-                .pos                 = pos,
-                .dir                 = weapon.targetDir,
-                .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
-                .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
-                .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
-                .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
-                .knockbackMeters      = fb->knockback_meters()->Get(tierOffset),
-                .pierce               = pierce,
-                .bounce               = bounce,
-              });
+
+              int toSpawn = 1;
+              if (fb->projectile_count())
+                toSpawn = fb->projectile_count()->Get(tierOffset);
+              FOR_RANGE (int, projectileIndex, toSpawn) {
+                auto dir = weapon.targetDir;
+                if (fb->accuracy_plus_minus() != 0)
+                  dir = Vector2Rotate(dir, GRAND.FRand11() * fb->accuracy_plus_minus());
+
+                MakeProjectile({
+                  .type                = projectileType,
+                  .ownerCreatureType   = PLAYER_CREATURE.type,
+                  .weaponIndexOrMinus1 = weaponIndex,
+                  .pos                 = pos,
+                  .dir                 = dir,
+                  .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
+                  .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
+                  .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
+                  .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
+                  .knockbackMeters      = fb->knockback_meters()->Get(tierOffset),
+                  .pierce               = pierce,
+                  .bounce               = bounce,
+                });
+              }
 
               weapon.lastShotAt = {};
               weapon.lastShotAt.SetNow();
@@ -13220,6 +13231,14 @@ void GameDraw() {
         auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
         fade   = EaseOutQuad(MIN(1, p));
         // flash  = Fade(flash, 1 - fade);
+      }
+
+      if (fb->squashes_in()) {
+        auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
+        p      = MIN(1, p);
+        p      = EaseOutQuad(p);
+        scale.x *= Lerp(1.0f, 3.5f, p);
+        scale.y *= Lerp(1, 0.4f, p);
       }
 
       DrawGroup_CommandTexture({

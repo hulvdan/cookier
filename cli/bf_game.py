@@ -341,6 +341,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     )
                 )
 
+        if "projectile_count" in x:
+            assert "accuracy_plus_minus" in x
+
         process_effects_of(x, required_tier_values)
     # }
 
@@ -1061,6 +1064,22 @@ def process_images():
         ],
         out_dir=ART_TEXTURES_DIR,
     )
+
+    bf_image.outline(
+        bf_image.ellipse((100, 100), width=10, outline=(207, 200, 178)),
+        radius=10,
+        color=(207, 200, 178),
+        is_shadow=True,
+        blend_image_on_top=True,
+    ).save(ART_TEXTURES_DIR / "game_projectile_bullet.png")
+
+    bf_image.outline(
+        bf_image.ellipse((100, 100), width=10, outline=(255, 123, 239)),
+        radius=10,
+        color=(255, 123, 239),
+        is_shadow=True,
+        blend_image_on_top=True,
+    ).save(ART_TEXTURES_DIR / "game_projectile_laser.png")
 
     # Spritesheetifying fire.
     for f in ART_TEXTURES_DIR.glob("game_particle_fire_*.png"):
