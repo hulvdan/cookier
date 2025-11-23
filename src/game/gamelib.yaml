@@ -414,6 +414,9 @@ effect_conditions: # {  ###
   - type: SPAWNS_GARDEN_EVERY__X__SECONDS
     x_condvar_type: FLOAT
     x_divided_by_times: true
+  - type: SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
+    x_condvar_type: FLOAT
+    x_divided_by_times: true
   - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
     x_condvar_type: FLOAT
     x_divided_by_times: true
@@ -3635,6 +3638,17 @@ weapons: # {  ###
     knockback_meters: 8 8 8 8
     melee_collider_height_px: 1
     price: 149
+    effects:
+      - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+        damage_scalings:
+          - stat_type: DAMAGE_RANGED
+            percents_per_tier: 50 60 70 80
+        projectile_type: CACTUS_NEEDLE
+        projectile_range_meters: 200
+        placeholders:
+          - ints: 3 4 5 6
+          - ints: 0 0 0 0
+        only_this_weapon: true
   - type: MELEE_0_CHOPPER # боевой саженец
     base_damage: 6 12 18 30
     damage_scalings:
@@ -3649,6 +3663,9 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 122
+    effects:
+      - stat_type: CONSUMABLE_HEAL
+        value: 1 1 1 2
   - type: MELEE_0_CLAW # бинты ниндзя (рок ли)
     base_damage: 5 10 15 25
     damage_scalings:
@@ -3685,6 +3702,13 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 200 200 200 200
     knockback_meters: 2 2 2 2
+    effects:
+      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
+        stat_type: DAMAGE
+        value: 1 1 1 1
+        only_this_weapon: true
+        placeholders:
+          - ints: 20 18 16 12
     melee_collider_height_px: 1
     price: 149
   - type: MELEE_0_GHOST_FLINT # овощерезка
@@ -3697,6 +3721,13 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 150 160 170 180
     knockback_meters: 2 2 2 2
+    effects:
+      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
+        stat_type: ATTACK_SPEED
+        value: 1 1 1 1
+        only_this_weapon: true
+        placeholders:
+          - ints: 20 18 16 12
     melee_collider_height_px: 1
     price: 105
   - type: MELEE_0_JOUSTING_LANCE
@@ -3711,6 +3742,13 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 250 250 250 250
     knockback_meters: 0 0 0 0
+    effects:
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: SPEED
+        value: 2 3 4 5
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: DAMAGE
+        value: -8 -12 -16 -20
     melee_collider_height_px: 1
     price: 132
   - type: MELEE_0_LIGHTNING_SHIV # electrified gum
@@ -3723,8 +3761,20 @@ weapons: # {  ###
     crit_chance: 4 6 8 10
     range_meters: 150 150 150 150
     knockback_meters: 0 0 0 0
+    projectile_pierce: 0 1 2 3
     melee_collider_height_px: 1
     price: 142
+    effects:
+      - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+        damage_scalings:
+          - stat_type: DAMAGE_ELEMENTAL
+            percents_per_tier: 80 80 80 80
+        projectile_type: LIGHTNING
+        projectile_range_meters: 150
+        placeholders:
+          - ints: 1 1 1 1
+          - ints: 5 6 8 11
+        only_this_weapon: true
   - type: MELEE_0_PLANK # динамит на палочке
     base_damage: 10 15 20 25
     damage_scalings:
@@ -3741,6 +3791,10 @@ weapons: # {  ###
     knockback_meters: 5 5 5 5
     melee_collider_height_px: 1
     price: 122
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 25 30 35 40
   - type: MELEE_0_PRUNER # sunflower
     base_damage: 10 15 20 25
     damage_scalings:
@@ -3753,6 +3807,10 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 95
+    effects:
+      - effectcondition_type: SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
+        placeholders:
+          - floats: 15 14 12 10
   - type: MELEE_0_QUATERSTAFF # ручка
     base_damage: 10 15 20 30
     damage_scalings:
@@ -3767,6 +3825,9 @@ weapons: # {  ###
     knockback_meters: 0 0 0 0
     melee_collider_height_px: 1
     price: 130
+    effects:
+      - stat_type: XP_GAIN
+        value: 2 5 9 15
   - type: MELEE_0_ROCK # barrel
     base_damage: 20 35 50 70
     damage_scalings:
@@ -3779,6 +3840,11 @@ weapons: # {  ###
     knockback_meters: 5 5 5 5
     melee_collider_height_px: 1
     price: 91
+    effects:
+      - stat_type: ARMOR
+        value: 0 1 2 2
+      - stat_type: HP
+        value: 0 0 2 2
   - type: MELEE_0_SCREWDRIVER # гаечный ключ
     base_damage: 8 12 16 20
     damage_scalings:
@@ -3793,6 +3859,14 @@ weapons: # {  ###
     knockback_meters: 3 3 3 3
     melee_collider_height_px: 1
     price: 91
+    effects:
+      - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
+        placeholders:
+          - floats: 12 9 6 3
+          - ints: 10 10 10 10
+        damage_scalings:
+          - stat_type: ENGINEERING
+            percents_per_tier: 100
   - type: MELEE_0_SHARP_TOOTH # nail hollow knight / tooth
     base_damage: 5 8 11 15
     damage_scalings:
@@ -3807,6 +3881,16 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 105
+    effects:
+      - stat_type: LIFE_STEAL
+        placeholders:
+          - ints: 2 2 3 4
+            # TODO: then remove upper
+            # - effectcondition_type: X__STAT_PER__Y__PERCENT_MISSING_HEALTH
+            #   stat_type: LIFE_STEAL
+            #   placeholders:
+            #     - ints: 1 1 1 1
+            #     - floats: 25 20 15 10
   - type: MELEE_0_SPIKY_SHIELD # shield of thorns
     base_damage: 10 15 20 30
     damage_scalings:
@@ -3831,6 +3915,10 @@ weapons: # {  ###
     knockback_meters: 0 0 0 0
     melee_collider_height_px: 1
     price: 91
+    effects:
+      - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
+        weaponproperty_type: DAMAGE
+        value: 4 6 8 10
   - type: MELEE_0_TORCH
     base_damage: 1 1 1 1
     damage_scalings:
@@ -3838,6 +3926,11 @@ weapons: # {  ###
         percents_per_tier: 50 65 80 100
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 50 65 80 100
+    burning_damage: 3 5 8 12
+    burning_times: 3 5 6 9
+    burning_damage_scalings:
+      - stat_type: DAMAGE_ELEMENTAL
+        percents_per_tier: 100 100 100 100
     cooldown: 1.10 1.04 0.95 0.8
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 0 0 0 0
@@ -3845,6 +3938,9 @@ weapons: # {  ###
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 1
     price: 91
+    effects:
+      - stat_type: BURNING_SPREAD
+        value: 0 0 1 1
   - type: MELEE_0_WRENCH # шестигранник
     base_damage: 12 16 20 24
     damage_scalings:
@@ -3857,6 +3953,13 @@ weapons: # {  ###
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 1
     price: 173
+    effects:
+      - stat_type: TURRET_DEALING__X__DAMAGE
+        placeholders:
+          - ints: 10
+        damage_scalings:
+          - stat_type: ENGINEERING
+            percents_per_tier: 80
   - type: MELEE_1_CIRCULAR_SAW # pizza cutter
     base_damage: 10 15 25
     damage_scalings:
@@ -3874,6 +3977,11 @@ weapons: # {  ###
     base_damage: 16 32 64
     damage_scalings:
       - stat_type: DAMAGE_MELEE
+        percents_per_tier: 100 100 100
+    burning_damage: 8 12 15
+    burning_times: 5 6 7
+    burning_damage_scalings:
+      - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 100 100 100
     cooldown: 0.73 0.69 0.59
     crit_damage_multiplier: 1.5 1.5 1.5
@@ -3894,6 +4002,9 @@ weapons: # {  ###
     knockback_meters: 30 40 50
     melee_collider_height_px: 1
     price: 190
+    effects:
+      - stat_type: KNOCKBACK
+        value: 2 4 6
   - type: MELEE_1_SWORD
     base_damage: 25 40 60
     damage_scalings:

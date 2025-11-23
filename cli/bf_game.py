@@ -62,7 +62,7 @@ def field_to_list(container, field: str, ensure_length: int | None = None) -> No
     if isinstance(container[field], list):
         return
     if isinstance(container[field], str):
-        val = replace_double_spaces(container[field])
+        val = replace_double_spaces(container[field]).strip()
         try:
             container[field] = [int(v) for v in val.split(" ")]
         except ValueError:
@@ -306,6 +306,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             )
 
         field_to_list(x, "base_damage", required_tier_values)
+        field_to_list(x, "burning_damage", required_tier_values)
+        field_to_list(x, "burning_times", required_tier_values)
         field_to_list(x, "crit_damage_multiplier", required_tier_values)
         field_to_list(x, "crit_chance", required_tier_values)
         field_to_list(x, "knockback_meters", required_tier_values)
@@ -332,6 +334,13 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             percents_count = len(scalings["percents_per_tier"])
             assert percents_count == required_tier_values, (
                 "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
+                    x["type"], required_tier_values, min_tier_index
+                )
+            )
+        for scalings in x.get("burning_damage_scalings", []):
+            percents_count = len(scalings["percents_per_tier"])
+            assert percents_count == required_tier_values, (
+                "Weapon in field `burning_damage_scalings` {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
                     x["type"], required_tier_values, min_tier_index
                 )
             )
