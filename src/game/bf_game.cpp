@@ -5136,8 +5136,8 @@ void _UpdateImmediateWeaponEffects(int weaponIndex, int scale) {  ///
     int                 times;
   } toUpdate_[]{
     {EffectConditionType_DEFAULT_GET__STAT, 1},
-    {EffectConditionType_GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
-    {EffectConditionType_GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
+    {EffectConditionType_STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
+    {EffectConditionType_STAT__FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
   };
   VIEW_FROM_ARRAY_DANGER(toUpdate);
 
