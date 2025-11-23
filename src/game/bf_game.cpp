@@ -6749,9 +6749,11 @@ void DoUI() {
             f32 value = fb->knockback_meters()->Get(tierOffset);
             if (data.affectedByGame)
               value *= (f32)(100 + g.run.state.stats[StatType_KNOCKBACK]) / 100.0f;
-            componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat("%.1f", value)));
-            });
+            if (value > 0) {
+              componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
+                BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat("%.1f", value)));
+              });
+            }
           }
 
           // Range.

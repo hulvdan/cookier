@@ -1,28 +1,29 @@
 WORKING SINCE 2025-09-07
 
-* забить данные эффектов оружий в gamelib
-* проставить везде this_weapon_only: true
-* test flamethrower (without damage_scalings works good)
-*
-* нарисовать projectile: CACTUS_NEEDLE
-* нарисовать projectile: CROSSBOW_BOLT
-* нарисовать projectile: GUN_BULLET
-* нарисовать projectile: APPLE
-* нарисовать projectile: MAGICAL_MILK
-* нарисовать projectile: LASER
-* нарисовать projectile: SEED
-* нарисовать projectile: FIREBALL
-* нарисовать projectile: EGG
-* нарисовать projectile: ROCKET
-* нарисовать projectile: MINI_BULLET
-* нарисовать projectile: NUCLEAR_MILK
-* нарисовать projectile: SNIPING_BULLET
-* нарисовать projectile: SNIPING_BONUS_BULLET
-* нарисовать projectile: BFG
-* нарисовать projectile: BFL
-* нарисовать projectile: TURRET_BULLET
-* fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
-*
+x забить данные эффектов оружий в gamelib
+x нарисовать projectile: GUN_BULLET
+x нарисовать projectile: LASER
+x нарисовать projectile: CACTUS_NEEDLE
+x нарисовать projectile: CROSSBOW_BOLT
+x нарисовать projectile: APPLE
+x нарисовать projectile: MAGICAL_MILK
+x нарисовать projectile: SEED
+x нарисовать projectile: FIREBALL
+x нарисовать projectile: EGG
+x нарисовать projectile: ROCKET
+x нарисовать projectile: MINI_BULLET
+x нарисовать projectile: NUCLEAR_MILK
+x нарисовать projectile: TURRET_BULLET
+x нарисовать projectile: BFG
+x нарисовать projectile: BFL
+x нарисовать projectile: SNIPING_BULLET
+x нарисовать projectile: SNIPING_BONUS_BULLET
+x нарисовать projectile: LIGHTNING
+x нарисовать projectile: FIRE
+x проставить везде, где надо, only_this_weapon: true
+
+* spritesheetify projectiles
+* spritesheetify fire
 * impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
 * impl weapon burning_damage, burning_times, burning_damage_scalings
@@ -35,7 +36,11 @@ WORKING SINCE 2025-09-07
 * stats: LOOT_ALIENS_SPEED
 * stats: ENEMY_DAMAGE
 *
+* test flamethrower (without damage_scalings works good)
+*
 * реализовать оружия (без доработок)
+*
+* fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
 *
 * melee weapon colliders
 *
@@ -100,8 +105,8 @@ WORKING SINCE 2025-09-07
 *
 * рисовка: улучшить: предмет мусорное ведро
 * рисовка: улучшить: предмет соты
-* рисовка: улучшить:
-* рисовка: улучшить:
+* рисовка: улучшить: torch
+* рисовка: улучшить: fire orb
 * рисовка: улучшить:
 * рисовка: улучшить:
 * рисовка: улучшить:

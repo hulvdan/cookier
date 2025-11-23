@@ -926,6 +926,9 @@ def process_images():
         out_dir=ART_TEXTURES_DIR,
     )
 
+    for f in ART_TEXTURES_DIR.glob("game_projectile_*.png"):
+        f.unlink()
+
     other_filenames = [
         "game_creature_chaser",
         "game_decal_pre_spawn",
@@ -1034,6 +1037,42 @@ def process_images():
     #     out_filenames=weapon_names,
     #     out_dir=ART_TEXTURES_DIR,
     # )
+
+    # Spritesheetifying projectiles.
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_005.png",
+        cell_size=160,
+        size=(5, 5),
+        origin=(1740, 0),
+        gap=10,
+        out_filename_prefix="game_projectile_",
+        out_filenames=[
+            "bullet",
+            "laser",
+            "needle",
+            "bolt",
+            "apple",
+            "magical_bullet",
+            "egg",
+            "missile",
+            "missile_milk",
+            "lightning",
+        ],
+        out_dir=ART_TEXTURES_DIR,
+    )
+
+    # Spritesheetifying fire.
+    for f in ART_TEXTURES_DIR.glob("game_particle_fire_*.png"):
+        f.unlink()
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_005.png",
+        cell_size=160,
+        size=(5, 5),
+        origin=(2610, 0),
+        gap=10,
+        out_filename_prefix="game_particle_fire_",
+        out_dir=ART_TEXTURES_DIR,
+    )
 
     # }
 
