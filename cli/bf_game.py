@@ -191,8 +191,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             field_to_list(e, "value_multiplier")
             for letter in EFFECT_CONDITION_LETTERS:
                 field_to_list(e, f"condition_{letter}")
-            for vv in e.get("damage_scalings", []):
-                field_to_list(vv, "percents_per_tier")
+            for f in ("damage_scalings", "burning_damage_scalings"):
+                for vv in e.get(f, []):
+                    field_to_list(vv, "percents_per_tier")
 
             if "value" in e:
                 assert "value_multiplier" not in e, x["type"]
@@ -292,7 +293,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         mandatory_fields = [
             "price",
             "base_damage",
-            "damage_scalings",
             "crit_damage_multiplier",
             "crit_chance",
             "knockback_meters",
@@ -319,8 +319,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         field_to_list(x, "range_meters", required_tier_values)
         field_to_list(x, "life_steal_percents", required_tier_values)
         field_to_list(x, "projectile_spawn_frame_factors")
-        for vv in x["damage_scalings"]:
-            field_to_list(vv, "percents_per_tier", required_tier_values)
 
         if "attack_or_cooldown_ratio" in x:
             assert 0 <= x["attack_or_cooldown_ratio"] <= 1
@@ -331,20 +329,16 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         assert shooting_duration_factor >= 0
         assert shooting_duration_factor <= 1
 
-        for scalings in x["damage_scalings"]:
-            percents_count = len(scalings["percents_per_tier"])
-            assert percents_count == required_tier_values, (
-                "Weapon {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
-                    x["type"], required_tier_values, min_tier_index
+        for f in ("damage_scalings", "burning_damage_scalings"):
+            for vv in x.get(f, []):
+                field_to_list(vv, "percents_per_tier", required_tier_values)
+            for scalings in x.get(f, []):
+                percents_count = len(scalings["percents_per_tier"])
+                assert percents_count == required_tier_values, (
+                    "Weapon {} in field `{}` must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
+                        x["type"], f, required_tier_values, min_tier_index
+                    )
                 )
-            )
-        for scalings in x.get("burning_damage_scalings", []):
-            percents_count = len(scalings["percents_per_tier"])
-            assert percents_count == required_tier_values, (
-                "Weapon in field `burning_damage_scalings` {} must have {} `percents_per_tier` because it's `min_tier_index` is {}".format(
-                    x["type"], required_tier_values, min_tier_index
-                )
-            )
 
         process_effects_of(x, required_tier_values)
     # }

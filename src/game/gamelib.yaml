@@ -207,7 +207,7 @@ creatures: # {  ###
     coins_dropped: 0
     resists_ailment_types:
       - BURN
-    turret_projectile_type: BULLET
+    turret_projectile_type: TURRET_BULLET
     turret_crit_damage_multiplier: 1.5
     turret_range_meters: 5
     turret_knockback_meters: 0.3
@@ -590,7 +590,9 @@ items: # {  ###
     price: 80
     effects:
       - stat_type: HP
-        value: 15
+        value: 13
+      - stat_type: DAMAGE_MELEE
+        value: 2
       - stat_type: ENEMY_HP_SCALE
         value: 10
   - type: ALIEN_MAGIC
@@ -3640,7 +3642,6 @@ weapons: # {  ###
     range_meters: 200 200 200 200
     knockback_meters: 8 8 8 8
     melee_collider_height_px: 1
-    price: 149
     effects:
       - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
         damage_scalings:
@@ -3652,6 +3653,7 @@ weapons: # {  ###
           - ints: 3 4 5 6
           - ints: 0 0 0 0
         only_this_weapon: true
+    price: 149
   - type: MELEE_0_CHOPPER # боевой саженец
     base_damage: 6 12 18 30
     damage_scalings:
@@ -3665,10 +3667,10 @@ weapons: # {  ###
     range_meters: 135 150 165 180
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
-    price: 122
     effects:
       - stat_type: CONSUMABLE_HEAL
         value: 1 1 1 2
+    price: 122
   - type: MELEE_0_CLAW # бинты ниндзя (рок ли)
     base_damage: 5 10 15 25
     damage_scalings:
@@ -4167,11 +4169,11 @@ weapons: # {  ###
     crit_chance: 30 35 40 45
     range_meters: 350 350 350 350
     projectile_type: CROSSBOW_BOLT
+    knockback_meters: 8 8 8 8
     effects:
       - effectcondition_type: CRITS_PIERCE_UP_TO__X__TIMES
         placeholders:
           - ints: 1 2 3 4
-    knockback_meters: 8 8 8 8
     price: 132
   - type: RANGED_0_DOUBLE_BARREL_SHOTGUN
     base_damage: 3 6 9 9
@@ -4185,6 +4187,7 @@ weapons: # {  ###
     range_meters: 350 350 350 350
     projectile_type: GUN_BULLET
     projectile_pierce: 2 2 2 3
+    projectile_piercing_damage_bonus_percent: 20 20 20 20
     knockback_meters: 8 8 8 8
     price: 149
   - type: RANGED_0_GHOST_SCEPTER # bowl of apples
@@ -4197,8 +4200,15 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 300 350 400 450
     knockback_meters: 2 2 2 2
-    price: 122
     projectile_type: APPLE
+    effects:
+      - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
+        stat_type: HP
+        value: 1 1 1 1
+        placeholders:
+          - ints: 20 18 16 12
+        only_this_weapon: true
+    price: 122
   - type: RANGED_0_ICICLE # grimoire of milk
     base_damage: 10 20 30 40
     damage_scalings:
@@ -4208,9 +4218,10 @@ weapons: # {  ###
     crit_damage_multiplier: 2 2 2.5 3
     crit_chance: 5 10 15 20
     range_meters: 400 400 400 400
+    projectile_type: MAGICAL_MILK
+    projectile_pierce: 1 1 1 1
     knockback_meters: 5 5 5 5
     price: 140
-    projectile_type: MAGICAL_MILK
   - type: RANGED_0_JAVELIN
     base_damage: 8 12 16 20
     damage_scalings:
@@ -4221,9 +4232,16 @@ weapons: # {  ###
     crit_chance: 0 0 0 0
     range_meters: 350 375 400 425
     knockback_meters: 0 0 0 0
-    price: 140
     projectile_type: JAVELIN
+    projectile_pierce: 2 3 4 5
+    projectile_piercing_damage_bonus_percent: 25 25 25 25
     shoots_itself: true
+    effects:
+      - effectcondition_type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
+        placeholders:
+          - ints: 5 4 3 2
+          - ints: 100 100 100 100
+    price: 140
   - type: RANGED_0_LASER_GUN
     base_damage: 40 55 70 100
     damage_scalings:
@@ -4234,8 +4252,10 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 500 500 500 500
     knockback_meters: 0 0 0 0
-    price: 122
     projectile_type: LASER
+    projectile_pierce: 1 1 1 1
+    projectile_piercing_damage_bonus_percent: 25 25 25 25
+    price: 122
   - type: RANGED_0_PISTOL
     base_damage: 12 20 30 50
     damage_scalings:
@@ -4245,9 +4265,10 @@ weapons: # {  ###
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 5 10 15 20
     range_meters: 400 400 400 400
-    knockback_meters: 15 15 15 15
-    price: 91
     projectile_type: GUN_BULLET
+    knockback_meters: 15 15 15 15
+    projectile_pierce: 1 1 1 1
+    price: 91
   - type: RANGED_0_SHREDDER
     base_damage: 5 10 15 25
     damage_scalings:
@@ -4257,10 +4278,16 @@ weapons: # {  ###
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 450 450 450 450
-    knockback_meters: 0 0 0 0
-    price: 122
     projectile_type: EXPLOSIVE_CUNAI
     shoots_itself: true
+    knockback_meters: 0 0 0 0
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 60 65 80 100
+    projectile_pierce: 3 3 3 3
+    projectile_piercing_damage_bonus_percent: 50 50 50 50
+    price: 122
   - type: RANGED_0_SHURIKEN # кунай
     base_damage: 6 8 10 15
     damage_scalings:
@@ -4270,10 +4297,10 @@ weapons: # {  ###
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 35 38 41 45
     range_meters: 350 350 350 350
-    knockback_meters: 0 0 0 0
-    price: 105
     projectile_type: CUNAI
     shoots_itself: true
+    knockback_meters: 0 0 0 0
+    price: 105
   - type: RANGED_0_SLINGSHOT
     # Оружие из терратии - дуть, чтобы стрельнуть семечкой.
     # Свёрнутая трубочкой бумага.
@@ -4285,9 +4312,13 @@ weapons: # {  ###
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
     range_meters: 300 300 300 300
-    knockback_meters: 5 5 5 5
-    price: 120
     projectile_type: SEED
+    knockback_meters: 5 5 5 5
+    effects:
+      - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
+        placeholders:
+          - ints: 1 2 3 4
+    price: 120
   - type: RANGED_0_SMG # автомат
     base_damage: 3 4 5 8
     damage_scalings:
@@ -4306,37 +4337,54 @@ weapons: # {  ###
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 50 65 80 100
+    burning_damage: 3 5 8 12
+    burning_times: 3 5 6 9
+    burning_damage_scalings:
+      - stat_type: DAMAGE_ELEMENTAL
+        percents_per_tier: 100 100 100 100
     cooldown: 0.87 0.78 0.70 0.53
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 0 0 0 0
     range_meters: 350 375 400 425
     knockback_meters: 10 10 10 10
-    price: 105
     projectile_type: FIREBALL
+    price: 105
   - type: RANGED_1_FIREBALL
     base_damage: 5 10 20
     damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 25 50 75
+    burning_damage: 5 6 8
+    burning_times: 3 4 5
+    burning_damage_scalings:
+      - stat_type: DAMAGE_ELEMENTAL
+        percents_per_tier: 100 100 100
     cooldown: 1.12 1.03 0.87
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 3 3 3
     range_meters: 400 450 500
     knockback_meters: 0 0 0
-    price: 140
     projectile_type: FIREBALL
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 100 100 100
+    price: 140
   - type: RANGED_1_FLAMETHROWER
     base_damage: 1 1 1
-    damage_scalings:
+    burning_damage: 1 3 5
+    burning_times: 3 5 8
+    burning_damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
-        percents_per_tier: 1 1 1
+        percents_per_tier: 100 100 100
     cooldown: 0.12 0.12 0.09
     crit_damage_multiplier: 2 2 2
     crit_chance: 0 0 0
     range_meters: 250 300 400
     knockback_meters: 0 0 0
-    price: 207
     projectile_type: FIRE
+    projectile_pierce: 100 100 100
+    price: 207
   - type: RANGED_1_POTATO_THROWER # egg thrower
     base_damage: 1 1 1
     damage_scalings:
@@ -4361,8 +4409,12 @@ weapons: # {  ###
     crit_chance: 3 3 3
     range_meters: 500 550 600
     knockback_meters: 15 15 15
-    price: 207
     projectile_type: ROCKET
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 100 100 100
+    price: 207
   - type: RANGED_2_MINIGUN
     base_damage: 1 3
     damage_scalings:
@@ -4373,8 +4425,9 @@ weapons: # {  ###
     crit_chance: 1 3
     range_meters: 400 450
     knockback_meters: 3 3
-    price: 255
     projectile_type: MINI_BULLET
+    projectile_pierce: 1 2
+    price: 255
   - type: RANGED_2_NUCLEAR_LAUNCHER
     base_damage: 60 120
     damage_scalings:
@@ -4387,8 +4440,12 @@ weapons: # {  ###
     crit_chance: 3 3
     range_meters: 800 800
     knockback_meters: 15 15
-    price: 289
     projectile_type: NUCLEAR_MILK
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 100 100 100
+    price: 289
   - type: RANGED_2_SNIPER_GUN
     base_damage: 50 80
     damage_scalings:
@@ -4401,8 +4458,19 @@ weapons: # {  ###
     crit_chance: 20 20
     range_meters: 800 1000
     knockback_meters: 30 30
-    price: 245
     projectile_type: SNIPING_BULLET
+    effects:
+      - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+        damage_scalings:
+          - stat_type: RANGE
+            percents_per_tier: 10 15
+        projectile_type: SNIPING_BONUS_BULLET
+        projectile_range_meters: 200
+        placeholders:
+          - ints: 5 8
+          - ints: 5 5
+        only_this_weapon: true
+    price: 245
   - type: RANGED_3_CHAIN_GUN # BFG
     base_damage: 2
     damage_scalings:
@@ -4416,8 +4484,14 @@ weapons: # {  ###
     projectile_count: 3
     range_meters: 500
     knockback_meters: 5
-    price: 300
     projectile_type: BFG
+    projectile_pierce: 1
+    effects:
+      - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
+        placeholders:
+          - floats: 2
+          - ints: 100
+    price: 300
   - type: RANGED_3_GATLING_LASER
     base_damage: 10
     damage_scalings:
@@ -4428,46 +4502,48 @@ weapons: # {  ###
     crit_chance: 10
     range_meters: 500
     knockback_meters: 5
-    price: 290
     projectile_type: BFL
+    projectile_pierce: 3
+    projectile_piercing_damage_bonus_percent: 25
+    price: 290
 # }
 
 projectiles: # {  ###
   - type: INVALID
-  - type: ARROW
-    speed: 12
-    texture_ids:
-      - game_projectile_arrow
-  - type: BULLET
-    speed: 16
-    texture_ids:
-      - game_projectile_bullet
-  - type: BULLET_EXPLOSIVE
-    speed: 14
-    aoe_on_travel_end: false
-    texture_ids:
-      - game_projectile_bullet_explosive
-  - type: STONE
-    speed: 30
-    texture_ids:
-      - game_projectile_stone
-  - type: LIGHTNING
-    speed: 12
-    ailment_type: ZAP
-    ailment_chance: 1
-    texture_ids:
-      - game_projectile_lightning
-  - type: FIRE
-    speed: 12
-    ailment_type: BURN
-    ailment_chance: 1
-    ailment_value: 3
-    texture_ids:
-      - game_projectile_fire
-  - type: JAVELIN
-    speed: 16
-    texture_ids:
-      - game_weapon_33_javelin
+  # - type: ARROW
+  #   speed: 12
+  #   texture_ids:
+  #     - game_projectile_arrow
+  # - type: BULLET
+  #   speed: 16
+  #   texture_ids:
+  #     - game_projectile_bullet
+  # - type: BULLET_EXPLOSIVE
+  #   speed: 14
+  #   aoe_on_travel_end: false
+  #   texture_ids:
+  #     - game_projectile_bullet_explosive
+  # - type: STONE
+  #   speed: 30
+  #   texture_ids:
+  #     - game_projectile_stone
+  # - type: LIGHTNING
+  #   speed: 12
+  #   ailment_type: ZAP
+  #   ailment_chance: 1
+  #   texture_ids:
+  #     - game_projectile_lightning
+  # - type: FIRE
+  #   speed: 12
+  #   ailment_type: BURN
+  #   ailment_chance: 1
+  #   ailment_value: 3
+  #   texture_ids:
+  #     - game_projectile_fire
+  # - type: JAVELIN
+  #   speed: 16
+  #   texture_ids:
+  #     - game_weapon_33_javelin
   - type: MOB
     speed: 10
     rotation_speed: 4
@@ -4484,6 +4560,40 @@ projectiles: # {  ###
     texture_ids:
       - game_projectile_boss
       # - game_projectile_mob
+  - type: CACTUS_NEEDLE
+    speed: 7
+  - type: CROSSBOW_BOLT
+    speed: 10
+  - type: GUN_BULLET
+    speed: 10
+  - type: APPLE
+    speed: 7
+  - type: MAGICAL_MILK
+    speed: 7
+  - type: LASER
+    speed: 13
+  - type: SEED
+    speed: 7
+  - type: FIREBALL
+    speed: 5
+  - type: EGG
+    speed: 7
+  - type: ROCKET
+    speed: 7
+  - type: MINI_BULLET
+    speed: 10
+  - type: NUCLEAR_MILK
+    speed: 10
+  - type: SNIPING_BULLET
+    speed: 13
+  - type: SNIPING_BONUS_BULLET
+    speed: 10
+  - type: BFG
+    speed: 10
+  - type: BFL
+    speed: 13
+  - type: TURRET_BULLET
+    speed: 10
 # }
 
 particles: # {  ###
@@ -4726,7 +4836,7 @@ stats: # {  ###
   # Gives projectiles additional Piercing
   - type: PIERCING
     is_secondary: true
-  # Increases or decreases the piercing damage falloff for projectile weapons.
+  # Values < 100 decrease the piercing damage falloff for projectile weapons.
   - type: PIERCING_DAMAGE
     player_value: 50
     is_percent: true
