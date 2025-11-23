@@ -315,6 +315,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         field_to_list(x, "cooldown", required_tier_values)
         field_to_list(x, "projectile_count", required_tier_values)
         field_to_list(x, "projectile_pierce", required_tier_values)
+        field_to_list(x, "projectile_piercing_damage_bonus_percent", required_tier_values)
         field_to_list(x, "projectile_bounce", required_tier_values)
         field_to_list(x, "range_meters", required_tier_values)
         field_to_list(x, "life_steal_percents", required_tier_values)
@@ -1054,8 +1055,8 @@ def process_images():
             "apple",
             "magical_bullet",
             "egg",
-            "missile",
-            "missile_milk",
+            "rocket",
+            "rocket_milk",
             "lightning",
         ],
         out_dir=ART_TEXTURES_DIR,

@@ -627,13 +627,14 @@ struct MakeCreatureData {  ///
 };
 
 struct PreSpawn {  ///
-  PreSpawnType      type           = {};
-  CreatureType      typeCreature   = {};
-  Vector2           pos            = {};
-  FrameGame         createdAt      = {};
-  int               damage         = {};
-  DamageScalingsFBT damageScalings = {};
-  f32               rotation       = {};
+  PreSpawnType      type                    = {};
+  CreatureType      typeCreature            = {};
+  Vector2           pos                     = {};
+  FrameGame         createdAt               = {};
+  int               damage                  = {};
+  DamageScalingsFBT damageScalings          = {};
+  f32               rotation                = {};
+  lframe            garden_spawnsAppleEvery = {};
 };
 
 struct Projectile {  ///
@@ -938,8 +939,9 @@ struct Landmine {  ///
 };
 
 struct Garden {  ///
-  Vector2   pos       = {};
-  FrameGame createdAt = {};
+  Vector2   pos              = {};
+  lframe    spawnsAppleEvery = {};
+  FrameGame createdAt        = {};
 };
 
 struct UIButtonState {  ///
@@ -1320,21 +1322,23 @@ struct GameData {
 } g = {};
 
 struct MakePreSpawnData {  ///
-  PreSpawnType      type           = {};
-  CreatureType      typeCreature   = {};
-  Vector2           pos            = {};
-  int               damage         = {};
-  DamageScalingsFBT damageScalings = {};
+  PreSpawnType      type                    = {};
+  CreatureType      typeCreature            = {};
+  Vector2           pos                     = {};
+  int               damage                  = {};
+  DamageScalingsFBT damageScalings          = {};
+  lframe            garden_spawnsAppleEvery = {};
 };
 
 void MakePreSpawn(MakePreSpawnData data) {  ///
   PreSpawn spawn{
-    .type           = data.type,
-    .typeCreature   = data.typeCreature,
-    .pos            = data.pos,
-    .damage         = data.damage,
-    .damageScalings = data.damageScalings,
-    .rotation       = GRAND.Angle() * ((GRAND.Rand() % 2) ? 1 : -1),
+    .type                    = data.type,
+    .typeCreature            = data.typeCreature,
+    .pos                     = data.pos,
+    .damage                  = data.damage,
+    .damageScalings          = data.damageScalings,
+    .rotation                = GRAND.Angle() * ((GRAND.Rand() % 2) ? 1 : -1),
+    .garden_spawnsAppleEvery = data.garden_spawnsAppleEvery,
   };
   spawn.createdAt.SetNow();
   *g.run.preSpawns.Add() = spawn;
@@ -2197,11 +2201,16 @@ void MakeLandmine(MakeLandmineData data) {  ///
 }
 
 struct MakeGardenData {  ///
-  Vector2 pos = {};
+  Vector2 pos              = {};
+  lframe  spawnsAppleEvery = {};
 };
 
 void MakeGarden(MakeGardenData data) {  ///
-  Garden v{.pos = data.pos};
+  ASSERT(data.spawnsAppleEvery.value > 0);
+  Garden v{
+    .pos              = data.pos,
+    .spawnsAppleEvery = data.spawnsAppleEvery,
+  };
   v.createdAt.SetNow();
   *g.run.gardens.Add() = v;
 }
@@ -11469,7 +11478,7 @@ void GameFixedUpdate() {
 
           // Spawning gardens.
           IterateOverEffects(
-            EffectConditionType_SPAWNS_GARDEN_EVERY__X__SECONDS,
+            EffectConditionType_SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_CONSUMABLE_EVERY__Y__SECONDS,
             -1,
             [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
               BF_FORCE_INLINE_LAMBDA {
@@ -11482,6 +11491,7 @@ void GameFixedUpdate() {
                   MakePreSpawn({
                     .type = PreSpawnType_GARDEN,
                     .pos  = CREATURES_WORLD_SPAWN_BOUNDS.GetRandomGamePosInside(),
+                    .garden_spawnsAppleEvery = lframe::FromSeconds(EFFECT_Y_FLOAT),
                   });
                 }
               }
@@ -11544,7 +11554,10 @@ void GameFixedUpdate() {
           } break;
 
           case PreSpawnType_GARDEN: {
-            MakeGarden({.pos = x.pos});
+            MakeGarden({
+              .pos              = x.pos,
+              .spawnsAppleEvery = x.garden_spawnsAppleEvery,
+            });
           } break;
 
           default:
@@ -12407,27 +12420,29 @@ void GameFixedUpdate() {
 
     // Gardens spawn fruits.
     {  ///
-      auto interval = GARDEN_FRUIT_SPAWNING_INTERVAL;
-      interval.value /= GetPlayerStatStructureAttackSpeedMultiplier();
-      interval.value = MAX(2, interval.value);
 
       for (const auto& garden : g.run.gardens) {
-        if ((garden.createdAt.Elapsed().value + 1) % interval.value == 0) {
-          Vector2 pos{};
-          do {
-            const f32 off = Lerp(
-              GARDEN_PICKUPABLE_SPAWN_RADIUS_MIN,
-              GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX,
-              GRAND.FRand()
-            );
-            pos = garden.pos + Vector2Rotate({off, 0}, GRAND.Angle());
-          } while (!CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(pos));
+        auto interval = garden.spawnsAppleEvery.value;
+        interval /= GetPlayerStatStructureAttackSpeedMultiplier();
+        interval = MAX(2, interval);
 
-          MakePickupable({
-            .type = PickupableType_CONSUMABLE,
-            .pos  = pos,
-          });
-        }
+        if ((garden.createdAt.Elapsed().value + 1) % interval != 0)
+          continue;
+
+        Vector2 pos{};
+        do {
+          const f32 off = Lerp(
+            GARDEN_PICKUPABLE_SPAWN_RADIUS_MIN,
+            GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX,
+            GRAND.FRand()
+          );
+          pos = garden.pos + Vector2Rotate({off, 0}, GRAND.Angle());
+        } while (!CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(pos));
+
+        MakePickupable({
+          .type = PickupableType_CONSUMABLE,
+          .pos  = pos,
+        });
       }
     }
 

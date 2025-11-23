@@ -21,9 +21,11 @@ x нарисовать projectile: SNIPING_BONUS_BULLET
 x нарисовать projectile: LIGHTNING
 x нарисовать projectile: FIRE
 x проставить везде, где надо, only_this_weapon: true
+x spritesheetify projectiles
+x spritesheetify fire
 
-* spritesheetify projectiles
-* spritesheetify fire
+* bullet gets squashed
+*
 * impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
 * impl weapon burning_damage, burning_times, burning_damage_scalings
@@ -36,6 +38,7 @@ x проставить везде, где надо, only_this_weapon: true
 * stats: LOOT_ALIENS_SPEED
 * stats: ENEMY_DAMAGE
 *
+* flamethrower fire projectiles
 * test flamethrower (without damage_scalings works good)
 *
 * реализовать оружия (без доработок)
