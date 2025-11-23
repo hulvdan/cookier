@@ -1,6 +1,27 @@
 WORKING SINCE 2025-09-07
 
 * забить данные эффектов оружий в gamelib
+* проставить везде this_weapon_only: true
+* test flamethrower (without damage_scalings works good)
+*
+* нарисовать projectile: CACTUS_NEEDLE
+* нарисовать projectile: CROSSBOW_BOLT
+* нарисовать projectile: GUN_BULLET
+* нарисовать projectile: APPLE
+* нарисовать projectile: MAGICAL_MILK
+* нарисовать projectile: LASER
+* нарисовать projectile: SEED
+* нарисовать projectile: FIREBALL
+* нарисовать projectile: EGG
+* нарисовать projectile: ROCKET
+* нарисовать projectile: MINI_BULLET
+* нарисовать projectile: NUCLEAR_MILK
+* нарисовать projectile: SNIPING_BULLET
+* нарисовать projectile: SNIPING_BONUS_BULLET
+* нарисовать projectile: BFG
+* нарисовать projectile: BFL
+* нарисовать projectile: TURRET_BULLET
+* fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
 *
 * impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
@@ -8,6 +29,11 @@ WORKING SINCE 2025-09-07
 * impl stat KNOCKBACK
 * impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
 * impl effectcondition_type YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
+* impl weapon projectile_piercing_damage_bonus_percent
+* impl STAT__DURING_NEXT_WAVE
+* stats: LOOT_ALIENS_CHANCE
+* stats: LOOT_ALIENS_SPEED
+* stats: ENEMY_DAMAGE
 *
 * реализовать оружия (без доработок)
 *
@@ -24,7 +50,6 @@ WORKING SINCE 2025-09-07
 *
 * жене билд
 *
-* game.py: crit_chance
 * impl: fb_weapon->projectiles_count()
 * fix: projectile_spawn_frame_factors
 * fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
@@ -73,12 +98,13 @@ WORKING SINCE 2025-09-07
 * polish:
 * polish:
 *
-* impl: STAT__DURING_NEXT_WAVE
-*
-* stats: knockback
-* stats: LOOT_ALIENS_CHANCE
-* stats: LOOT_ALIENS_SPEED
-* stats: ENEMY_DAMAGE
+* рисовка: улучшить: предмет мусорное ведро
+* рисовка: улучшить: предмет соты
+* рисовка: улучшить:
+* рисовка: улучшить:
+* рисовка: улучшить:
+* рисовка: улучшить:
+* рисовка: улучшить:
 *
 * better burning
 *

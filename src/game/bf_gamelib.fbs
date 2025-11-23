@@ -249,6 +249,7 @@ table Weapon {
     projectile_count: [int];
     projectile_spawn_frame_factors: [float];
     projectile_pierce: [int];
+    projectile_piercing_damage_bonus_percent: [int];
     projectile_bounce: [int];
     range_meters: [float];
     price: int;
