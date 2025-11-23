@@ -411,9 +411,10 @@ effect_conditions: # {  ###
   - type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
     x_signed: true
     x_is_percent: true
-  - type: SPAWNS_GARDEN_EVERY__X__SECONDS
+  - type: SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_CONSUMABLE_EVERY__Y__SECONDS
     x_condvar_type: FLOAT
     x_divided_by_times: true
+    y_condvar_type: FLOAT
   - type: SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
     x_condvar_type: FLOAT
     x_divided_by_times: true
@@ -1160,8 +1161,9 @@ items: # {  ###
     tier: 1
     limit: 3
     effects:
-      - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
+      - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_CONSUMABLE_EVERY__Y__SECONDS
         placeholders:
+          - floats: 15
           - floats: 15
   - type: GENTLE_ALIEN
     texture_id: ui_item_healthy_cracker
@@ -3891,14 +3893,13 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     effects:
       - stat_type: LIFE_STEAL
-        placeholders:
-          - ints: 2 2 3 4
-            # TODO: then remove upper
-            # - effectcondition_type: X__STAT_PER__Y__PERCENT_MISSING_HEALTH
-            #   stat_type: LIFE_STEAL
-            #   placeholders:
-            #     - ints: 1 1 1 1
-            #     - floats: 25 20 15 10
+        value: 2 2 3 4
+        # TODO: then remove upper
+        # - effectcondition_type: X__STAT_PER__Y__PERCENT_MISSING_HEALTH
+        #   stat_type: LIFE_STEAL
+        #   placeholders:
+        #     - ints: 1 1 1 1
+        #     - floats: 25 20 15 10
     melee_collider_height_px: 1
     price: 105
   - type: MELEE_0_SPIKY_SHIELD # shield of thorns
@@ -3963,12 +3964,12 @@ weapons: # {  ###
     range_meters: 175 175 175 175
     knockback_meters: 20 20 20 20
     effects:
-      - stat_type: TURRET_DEALING__X__DAMAGE
+      - effectcondition_type: TURRET_DEALING__X__DAMAGE
         placeholders:
-          - ints: 10
+          - ints: 10 10 10 10
         damage_scalings:
           - stat_type: ENGINEERING
-            percents_per_tier: 80
+            percents_per_tier: 80 80 80 80
     melee_collider_height_px: 1
     price: 173
   - type: MELEE_1_CIRCULAR_SAW # pizza cutter
@@ -4191,7 +4192,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     projectile_count: 4 4 4 6
     range_meters: 350 350 350 350
-    projectile_type: GUN_BULLET
+    projectile_type: BULLET
     projectile_pierce: 2 2 2 3
     projectile_piercing_damage_bonus_percent: 20 20 20 20
     knockback_meters: 8 8 8 8
@@ -4272,7 +4273,7 @@ weapons: # {  ###
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 5 10 15 20
     range_meters: 400 400 400 400
-    projectile_type: GUN_BULLET
+    projectile_type: BULLET
     knockback_meters: 15 15 15 15
     projectile_pierce: 1 1 1 1
     price: 91
@@ -4337,7 +4338,7 @@ weapons: # {  ###
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
     range_meters: 400 400 400 400
-    projectile_type: GUN_BULLET
+    projectile_type: BULLET
     projectile_spawn_frame_factors: 0.1 0.4 0.6
     knockback_meters: 0 0 0 0
     price: 149
@@ -4455,7 +4456,7 @@ weapons: # {  ###
     effects:
       - effectcondition_type: X__CHANCE_TO_EXPLODE
         placeholders:
-          - ints: 100 100 100
+          - ints: 100 100
         only_this_weapon: true
     price: 289
   - type: RANGED_2_SNIPER_GUN
@@ -4573,94 +4574,94 @@ projectiles: # {  ###
     texture_ids:
       - game_projectile_boss
   - type: BULLET
-    speed: 10
+    speed: 20
     texture_ids:
       - game_projectile_bullet
   - type: LASER
-    speed: 13
+    speed: 26
     texture_ids:
       - game_projectile_laser
   - type: NEEDLE_CACTUS
-    speed: 7
+    speed: 14
     color: 0xefcb84ff
     texture_ids:
       - game_projectile_needle
   - type: CROSSBOW_BOLT
-    speed: 10
+    speed: 20
     texture_ids:
       - game_projectile_bolt
   - type: APPLE
-    speed: 7
+    speed: 14
     texture_ids:
       - game_projectile_apple
   - type: MAGICAL_BULLET
-    speed: 7
+    speed: 14
     texture_ids:
       - game_projectile_magical_bullet
   - type: NEEDLE_SLINGSHOT # то же самое, что и кактус
-    speed: 7
+    speed: 14
     color: 0xefcb84ff
     texture_ids:
       - game_projectile_needle
   - type: FIREBALL # то же самое, что BULLET
-    speed: 5
+    speed: 12
     color: 0xc02931ff
     texture_ids:
       - game_projectile_bullet
   - type: EGG
-    speed: 7
+    speed: 14
     texture_ids:
       - game_projectile_egg
   - type: ROCKET
-    speed: 7
+    speed: 14
     texture_ids:
-      - game_projectile_missile
+      - game_projectile_rocket
   - type: MINI_BULLET
-    speed: 10
+    speed: 20
     texture_ids:
       - game_projectile_bullet
   - type: NUCLEAR_MILK
-    speed: 10
+    speed: 20
     texture_ids:
-      - game_projectile_
+      - game_projectile_rocket_milk
   - type: SNIPING_BULLET
-    speed: 13
+    speed: 26
     texture_ids:
       - game_projectile_bullet
   - type: SNIPING_BONUS_BULLET
-    speed: 10
+    speed: 20
     texture_ids:
       - game_projectile_bullet
   - type: BFG
-    speed: 10
+    speed: 20
     texture_ids:
       - game_projectile_bullet
   - type: BFL
-    speed: 13
+    speed: 26
     texture_ids:
       - game_projectile_laser
   - type: TURRET_BULLET
-    speed: 10
+    speed: 20
     texture_ids:
       - game_projectile_bullet
   - type: LIGHTNING
-    speed: 10
+    speed: 20
     texture_ids:
       - game_projectile_lightning
   - type: JAVELIN
-    speed: 10
+    speed: 20
     texture_ids:
       - game_weapon_33_javelin
   - type: EXPLOSIVE_CUNAI
-    speed: 10
+    speed: 20
     texture_ids:
       - game_weapon_36_shredder
   - type: CUNAI
-    speed: 10
+    speed: 20
     texture_ids:
       - game_weapon_37_shuriken
   - type: FIRE
-    speed: 7
+    speed: 20
     texture_ids:
       - game_particle_fire_1
       - game_particle_fire_2
