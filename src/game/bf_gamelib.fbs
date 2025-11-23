@@ -238,7 +238,7 @@ table Weapon {
     damage_scalings: [DamageScaling];
     burning_damage: [int];
     burning_times: [int];
-    buning_damage_scalings: [DamageScaling];
+    burning_damage_scalings: [DamageScaling];
     crit_damage_multiplier: [float];
     crit_chance: [int];
     knockback_meters: [float];

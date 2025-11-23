@@ -284,7 +284,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         elif weapon_type == "RANGED":
             assert "projectile_type" in x
             assert "melee_collider_height_px" not in x
-            assert "projectile_spawn_frame_factors" in x
+            if "projectile_spawn_frame_factors" not in x:
+                x["projectile_spawn_frame_factors"] = [0.3]
         else:
             assert False
 

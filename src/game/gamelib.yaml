@@ -421,8 +421,8 @@ effect_conditions: # {  ###
     x_condvar_type: FLOAT
     x_divided_by_times: true
     y_condvar_type: DAMAGE
-  - type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
-  - type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+  - type: STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+  - type: STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
   - type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
     y_is_percent: true
     y_signed: true
@@ -547,6 +547,9 @@ effect_conditions: # {  ###
   - type: START_THE_NEXT_WAVE_WITH_1_HP
   - type: CHANGE_BURNING_ACTIVATION_SPEED_BY__X__PERCENT
     x_signed: true
+  - type: YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
+    x_condvar_type: DAMAGE
+    x_multiplied_by_times: true
 # }
 
 build_effect_conditions: # { ###
@@ -3056,7 +3059,7 @@ weapons: # {  ###
   #     #   weaponproperty_type: DAMAGE
   #     #   value: 4 5 6 8
   #     #
-  #     # - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+  #     # - effectcondition_type: STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
   #     #   stat_type: DAMAGE
   #     #   value: 3 5 7 10
   #     #
@@ -3227,10 +3230,10 @@ weapons: # {  ###
   #       only_this_weapon: true
   #       placeholders:
   #         - ints: 100 100 100 100
-  #           #   - effectcondition_type: GET__STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+  #           #   - effectcondition_type: STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
   #           #     stat_type: DAMAGE
   #           #     value: 1 1 1 1
-  #           #   - effectcondition_type: GET__STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
+  #           #   - effectcondition_type: STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
   #           #     stat_type: DAMAGE
   #           #     value: 1 1 1 1
   #           #   - effectcondition_type: STAT__EVERY__X__SECONDS
@@ -3706,9 +3709,9 @@ weapons: # {  ###
       - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
         stat_type: DAMAGE
         value: 1 1 1 1
-        only_this_weapon: true
         placeholders:
           - ints: 20 18 16 12
+        only_this_weapon: true
     melee_collider_height_px: 1
     price: 149
   - type: MELEE_0_GHOST_FLINT # овощерезка
@@ -3725,9 +3728,9 @@ weapons: # {  ###
       - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
         stat_type: ATTACK_SPEED
         value: 1 1 1 1
-        only_this_weapon: true
         placeholders:
           - ints: 20 18 16 12
+        only_this_weapon: true
     melee_collider_height_px: 1
     price: 105
   - type: MELEE_0_JOUSTING_LANCE
@@ -3746,9 +3749,11 @@ weapons: # {  ###
       - effectcondition_type: STAT__WHEN_IDLE
         stat_type: SPEED
         value: 2 3 4 5
+        only_this_weapon: true
       - effectcondition_type: STAT__WHEN_IDLE
         stat_type: DAMAGE
         value: -8 -12 -16 -20
+        only_this_weapon: true
     melee_collider_height_px: 1
     price: 132
   - type: MELEE_0_LIGHTNING_SHIV # electrified gum
@@ -3762,8 +3767,6 @@ weapons: # {  ###
     range_meters: 150 150 150 150
     knockback_meters: 0 0 0 0
     projectile_pierce: 0 1 2 3
-    melee_collider_height_px: 1
-    price: 142
     effects:
       - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
         damage_scalings:
@@ -3775,6 +3778,8 @@ weapons: # {  ###
           - ints: 1 1 1 1
           - ints: 5 6 8 11
         only_this_weapon: true
+    melee_collider_height_px: 1
+    price: 142
   - type: MELEE_0_PLANK # динамит на палочке
     base_damage: 10 15 20 25
     damage_scalings:
@@ -3789,12 +3794,13 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 150 150 150 150
     knockback_meters: 5 5 5 5
-    melee_collider_height_px: 1
-    price: 122
     effects:
       - effectcondition_type: X__CHANCE_TO_EXPLODE
         placeholders:
           - ints: 25 30 35 40
+        only_this_weapon: true
+    melee_collider_height_px: 1
+    price: 122
   - type: MELEE_0_PRUNER # sunflower
     base_damage: 10 15 20 25
     damage_scalings:
@@ -3805,12 +3811,13 @@ weapons: # {  ###
     crit_chance: 3 6 9 12
     range_meters: 150 150 150 150
     knockback_meters: 2 2 2 2
-    melee_collider_height_px: 1
-    price: 95
     effects:
       - effectcondition_type: SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
         placeholders:
           - floats: 15 14 12 10
+        only_this_weapon: true
+    melee_collider_height_px: 1
+    price: 95
   - type: MELEE_0_QUATERSTAFF # ручка
     base_damage: 10 15 20 30
     damage_scalings:
@@ -3823,11 +3830,11 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
     knockback_meters: 0 0 0 0
-    melee_collider_height_px: 1
-    price: 130
     effects:
       - stat_type: XP_GAIN
         value: 2 5 9 15
+    melee_collider_height_px: 1
+    price: 130
   - type: MELEE_0_ROCK # barrel
     base_damage: 20 35 50 70
     damage_scalings:
@@ -3838,13 +3845,13 @@ weapons: # {  ###
     crit_chance: 10 15 20 25
     range_meters: 150 150 150 150
     knockback_meters: 5 5 5 5
-    melee_collider_height_px: 1
-    price: 91
     effects:
       - stat_type: ARMOR
         value: 0 1 2 2
       - stat_type: HP
         value: 0 0 2 2
+    melee_collider_height_px: 1
+    price: 91
   - type: MELEE_0_SCREWDRIVER # гаечный ключ
     base_damage: 8 12 16 20
     damage_scalings:
@@ -3857,8 +3864,6 @@ weapons: # {  ###
     crit_chance: 10 15 20 30
     range_meters: 125 125 125 125
     knockback_meters: 3 3 3 3
-    melee_collider_height_px: 1
-    price: 91
     effects:
       - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
         placeholders:
@@ -3867,6 +3872,9 @@ weapons: # {  ###
         damage_scalings:
           - stat_type: ENGINEERING
             percents_per_tier: 100
+        only_this_weapon: true
+    melee_collider_height_px: 1
+    price: 91
   - type: MELEE_0_SHARP_TOOTH # nail hollow knight / tooth
     base_damage: 5 8 11 15
     damage_scalings:
@@ -3879,8 +3887,6 @@ weapons: # {  ###
     crit_chance: 3 6 9 12
     range_meters: 150 160 170 180
     knockback_meters: 2 2 2 2
-    melee_collider_height_px: 1
-    price: 105
     effects:
       - stat_type: LIFE_STEAL
         placeholders:
@@ -3891,6 +3897,8 @@ weapons: # {  ###
             #   placeholders:
             #     - ints: 1 1 1 1
             #     - floats: 25 20 15 10
+    melee_collider_height_px: 1
+    price: 105
   - type: MELEE_0_SPIKY_SHIELD # shield of thorns
     base_damage: 10 15 20 30
     damage_scalings:
@@ -3913,12 +3921,13 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
     knockback_meters: 0 0 0 0
-    melee_collider_height_px: 1
-    price: 91
     effects:
       - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
         weaponproperty_type: DAMAGE
         value: 4 6 8 10
+        only_this_weapon: true
+    melee_collider_height_px: 1
+    price: 91
   - type: MELEE_0_TORCH
     base_damage: 1 1 1 1
     damage_scalings:
@@ -3936,11 +3945,11 @@ weapons: # {  ###
     crit_chance: 0 0 0 0
     range_meters: 175 175 175 175
     knockback_meters: 20 20 20 20
-    melee_collider_height_px: 1
-    price: 91
     effects:
       - stat_type: BURNING_SPREAD
         value: 0 0 1 1
+    melee_collider_height_px: 1
+    price: 91
   - type: MELEE_0_WRENCH # шестигранник
     base_damage: 12 16 20 24
     damage_scalings:
@@ -3951,8 +3960,6 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 175 175 175 175
     knockback_meters: 20 20 20 20
-    melee_collider_height_px: 1
-    price: 173
     effects:
       - stat_type: TURRET_DEALING__X__DAMAGE
         placeholders:
@@ -3960,6 +3967,8 @@ weapons: # {  ###
         damage_scalings:
           - stat_type: ENGINEERING
             percents_per_tier: 80
+    melee_collider_height_px: 1
+    price: 173
   - type: MELEE_1_CIRCULAR_SAW # pizza cutter
     base_damage: 10 15 25
     damage_scalings:
@@ -4000,11 +4009,11 @@ weapons: # {  ###
     crit_chance: 3 3 3
     range_meters: 175 175 175
     knockback_meters: 30 40 50
-    melee_collider_height_px: 1
-    price: 190
     effects:
       - stat_type: KNOCKBACK
         value: 2 4 6
+    melee_collider_height_px: 1
+    price: 190
   - type: MELEE_1_SWORD
     base_damage: 25 40 60
     damage_scalings:
@@ -4029,6 +4038,11 @@ weapons: # {  ###
     crit_chance: 3 3
     range_meters: 175 175
     knockback_meters: 30 30
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 25 50
+        only_this_weapon: true
     melee_collider_height_px: 1
     price: 272
   - type: MELEE_2_POWER_FIST # перчатка подрывника
@@ -4041,6 +4055,11 @@ weapons: # {  ###
     crit_chance: 1 1
     range_meters: 150 150
     knockback_meters: 15 15
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 25 50
+        only_this_weapon: true
     melee_collider_height_px: 1
     price: 221
   - type: MELEE_2_THUNDER_SWORD # recettear's "twisted dagger"
@@ -4055,6 +4074,17 @@ weapons: # {  ###
     crit_chance: 3 3
     range_meters: 200 200
     knockback_meters: 5 5
+    effects:
+      - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+        damage_scalings:
+          - stat_type: DAMAGE_ELEMENTAL
+            percents_per_tier: 100 100
+        projectile_type: LIGHTNING
+        projectile_range_meters: 200
+        placeholders:
+          - ints: 2 4
+          - ints: 0 0
+        only_this_weapon: true
     melee_collider_height_px: 1
     price: 238
   - type: MELEE_3_DEX_TROYER
@@ -4069,6 +4099,22 @@ weapons: # {  ###
     crit_chance: 3
     range_meters: 400
     knockback_meters: 10
+    projectile_bounce: 5
+    effects:
+      - effectcondition_type: X__CHANCE_TO_EXPLODE
+        placeholders:
+          - ints: 50
+        only_this_weapon: true
+      - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+        damage_scalings:
+          - stat_type: DAMAGE_ELEMENTAL
+            percents_per_tier: 100
+        projectile_type: LIGHTNING
+        projectile_range_meters: 200
+        placeholders:
+          - ints: 1
+          - ints: 30
+        only_this_weapon: true
     melee_collider_height_px: 1
     price: 315
   - type: MELEE_3_EXCALIBUR # terra sword
@@ -4083,6 +4129,10 @@ weapons: # {  ###
     crit_chance: 10
     range_meters: 200
     knockback_meters: 5
+    effects:
+      - effectcondition_type: STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
+        stat_type: ARMOR
+        value: -3
     melee_collider_height_px: 1
     price: 230
   - type: MELEE_3_SCYTHE
@@ -4098,6 +4148,11 @@ weapons: # {  ###
     life_steal_percents: 100
     range_meters: 250
     knockback_meters: 5
+    effects:
+      - effectcondition_type: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+        stat_type: DAMAGE
+        value: 3
+      - effectcondition_type: YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
     melee_collider_height_px: 1
     price: 285
   - type: RANGED_0_CROSSBOW
@@ -4111,10 +4166,13 @@ weapons: # {  ###
     crit_damage_multiplier: 1.5 1.75 2 2.25
     crit_chance: 30 35 40 45
     range_meters: 350 350 350 350
+    projectile_type: CROSSBOW_BOLT
+    effects:
+      - effectcondition_type: CRITS_PIERCE_UP_TO__X__TIMES
+        placeholders:
+          - ints: 1 2 3 4
     knockback_meters: 8 8 8 8
     price: 132
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_DOUBLE_BARREL_SHOTGUN
     base_damage: 3 6 9 9
     damage_scalings:
@@ -4125,10 +4183,10 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     projectile_count: 4 4 4 6
     range_meters: 350 350 350 350
+    projectile_type: GUN_BULLET
+    projectile_pierce: 2 2 2 3
     knockback_meters: 8 8 8 8
     price: 149
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_GHOST_SCEPTER # bowl of apples
     base_damage: 10 15 20 30
     damage_scalings:
@@ -4140,8 +4198,7 @@ weapons: # {  ###
     range_meters: 300 350 400 450
     knockback_meters: 2 2 2 2
     price: 122
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: APPLE
   - type: RANGED_0_ICICLE # grimoire of milk
     base_damage: 10 20 30 40
     damage_scalings:
@@ -4153,8 +4210,7 @@ weapons: # {  ###
     range_meters: 400 400 400 400
     knockback_meters: 5 5 5 5
     price: 140
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: MAGICAL_MILK
   - type: RANGED_0_JAVELIN
     base_damage: 8 12 16 20
     damage_scalings:
@@ -4167,7 +4223,7 @@ weapons: # {  ###
     knockback_meters: 0 0 0 0
     price: 140
     projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    shoots_itself: true
   - type: RANGED_0_LASER_GUN
     base_damage: 40 55 70 100
     damage_scalings:
@@ -4179,8 +4235,7 @@ weapons: # {  ###
     range_meters: 500 500 500 500
     knockback_meters: 0 0 0 0
     price: 122
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: LASER
   - type: RANGED_0_PISTOL
     base_damage: 12 20 30 50
     damage_scalings:
@@ -4192,8 +4247,7 @@ weapons: # {  ###
     range_meters: 400 400 400 400
     knockback_meters: 15 15 15 15
     price: 91
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: GUN_BULLET
   - type: RANGED_0_SHREDDER
     base_damage: 5 10 15 25
     damage_scalings:
@@ -4205,8 +4259,8 @@ weapons: # {  ###
     range_meters: 450 450 450 450
     knockback_meters: 0 0 0 0
     price: 122
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: EXPLOSIVE_CUNAI
+    shoots_itself: true
   - type: RANGED_0_SHURIKEN # кунай
     base_damage: 6 8 10 15
     damage_scalings:
@@ -4218,8 +4272,8 @@ weapons: # {  ###
     range_meters: 350 350 350 350
     knockback_meters: 0 0 0 0
     price: 105
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: CUNAI
+    shoots_itself: true
   - type: RANGED_0_SLINGSHOT
     # Оружие из терратии - дуть, чтобы стрельнуть семечкой.
     # Свёрнутая трубочкой бумага.
@@ -4233,8 +4287,7 @@ weapons: # {  ###
     range_meters: 300 300 300 300
     knockback_meters: 5 5 5 5
     price: 120
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: SEED
   - type: RANGED_0_SMG # автомат
     base_damage: 3 4 5 8
     damage_scalings:
@@ -4244,10 +4297,10 @@ weapons: # {  ###
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
     range_meters: 400 400 400 400
+    projectile_type: GUN_BULLET
+    projectile_spawn_frame_factors: 0.1 0.4 0.6
     knockback_meters: 0 0 0 0
     price: 149
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
   - type: RANGED_0_WAND # mushoku tensei, жезл ученика
     base_damage: 1 1 1 1
     damage_scalings:
@@ -4259,8 +4312,7 @@ weapons: # {  ###
     range_meters: 350 375 400 425
     knockback_meters: 10 10 10 10
     price: 105
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2 0.2
+    projectile_type: FIREBALL
   - type: RANGED_1_FIREBALL
     base_damage: 5 10 20
     damage_scalings:
@@ -4272,8 +4324,7 @@ weapons: # {  ###
     range_meters: 400 450 500
     knockback_meters: 0 0 0
     price: 140
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2
+    projectile_type: FIREBALL
   - type: RANGED_1_FLAMETHROWER
     base_damage: 1 1 1
     damage_scalings:
@@ -4285,8 +4336,7 @@ weapons: # {  ###
     range_meters: 250 300 400
     knockback_meters: 0 0 0
     price: 207
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2
+    projectile_type: FIRE
   - type: RANGED_1_POTATO_THROWER # egg thrower
     base_damage: 1 1 1
     damage_scalings:
@@ -4300,8 +4350,7 @@ weapons: # {  ###
     range_meters: 500 500 500
     knockback_meters: 20 25 30
     price: 139
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2
+    projectile_type: EGG
   - type: RANGED_1_ROCKER_LAUNCHER
     base_damage: 30 50 80
     damage_scalings:
@@ -4313,8 +4362,7 @@ weapons: # {  ###
     range_meters: 500 550 600
     knockback_meters: 15 15 15
     price: 207
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2 0.2
+    projectile_type: ROCKET
   - type: RANGED_2_MINIGUN
     base_damage: 1 3
     damage_scalings:
@@ -4326,8 +4374,7 @@ weapons: # {  ###
     range_meters: 400 450
     knockback_meters: 3 3
     price: 255
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2
+    projectile_type: MINI_BULLET
   - type: RANGED_2_NUCLEAR_LAUNCHER
     base_damage: 60 120
     damage_scalings:
@@ -4341,8 +4388,7 @@ weapons: # {  ###
     range_meters: 800 800
     knockback_meters: 15 15
     price: 289
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2
+    projectile_type: NUCLEAR_MILK
   - type: RANGED_2_SNIPER_GUN
     base_damage: 50 80
     damage_scalings:
@@ -4356,8 +4402,7 @@ weapons: # {  ###
     range_meters: 800 1000
     knockback_meters: 30 30
     price: 245
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2 0.2
+    projectile_type: SNIPING_BULLET
   - type: RANGED_3_CHAIN_GUN # BFG
     base_damage: 2
     damage_scalings:
@@ -4372,8 +4417,7 @@ weapons: # {  ###
     range_meters: 500
     knockback_meters: 5
     price: 300
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2
+    projectile_type: BFG
   - type: RANGED_3_GATLING_LASER
     base_damage: 10
     damage_scalings:
@@ -4385,8 +4429,7 @@ weapons: # {  ###
     range_meters: 500
     knockback_meters: 5
     price: 290
-    projectile_type: JAVELIN
-    projectile_spawn_frame_factors: 0.2
+    projectile_type: BFL
 # }
 
 projectiles: # {  ###

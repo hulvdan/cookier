@@ -6,6 +6,8 @@ WORKING SINCE 2025-09-07
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
 * impl weapon burning_damage, burning_times, burning_damage_scalings
 * impl stat KNOCKBACK
+* impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+* impl effectcondition_type YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
 *
 * реализовать оружия (без доработок)
 *
