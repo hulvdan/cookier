@@ -6099,7 +6099,7 @@ void DoUI() {
           auto& t = w.type;
 
           if ((IsKeyDown(SDL_SCANCODE_LCTRL) || IsKeyDown(SDL_SCANCODE_RCTRL)))
-            t = (WeaponType)(MIN((int)WeaponType_COUNT - 1, MAX(1, (int)t + wheel)));
+            t = (WeaponType)(MIN((int)WeaponType_COUNT - 1, MAX(1, (int)t - wheel)));
           else
             w.tier += wheel;
 
@@ -12351,10 +12351,8 @@ void GameFixedUpdate() {
                   projectile.weaponIndexOrMinus1,
                   [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
                     BF_FORCE_INLINE_LAMBDA {
-                      if (projectile.effectCritPierce < EFFECT_X_INT) {
-                        projectile.effectCritPierce += times;
-                        projectile.pierce += times;
-                      }
+                      if (projectile.effectCritPierce < EFFECT_X_INT)
+                        projectile.pierce += times * EFFECT_X_INT;
                     }
                 );
                 IterateOverEffects(
@@ -12362,12 +12360,13 @@ void GameFixedUpdate() {
                   projectile.weaponIndexOrMinus1,
                   [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
                     BF_FORCE_INLINE_LAMBDA {
-                      if (projectile.effectCritBounce < EFFECT_X_INT) {
-                        projectile.effectCritBounce += times;
+                      if (projectile.effectCritBounce < EFFECT_X_INT)
                         projectile.bounce += times;
-                      }
                     }
                 );
+
+                projectile.effectCritPierce++;
+                projectile.effectCritBounce++;
               }
 
               auto maxBounce = projectile.bounce;
@@ -13108,15 +13107,13 @@ void GameDraw() {
       color = ColorLerp(color, palRed, t);
     }
 
-    const auto flash = GetFlashingColor(
-      TRANSPARENT_BLACK,
-      WHITE,
-      creature.lastDamagedFlashAt,
-      DAMAGED_FLASHING_FRAMES,
-      DAMAGED_FLASHING_TIMES,
-      DAMAGED_FLASH_NOT_FLASH_RATIO,
-      DAMAGED_FLASH_PRECALC_X
-    );
+    auto flash = TRANSPARENT_WHITE;
+    if (creature.lastDamagedFlashAt.IsSet()) {
+      auto p
+        = MIN(1, creature.lastDamagedFlashAt.Elapsed().Progress(DAMAGED_FLASHING_FRAMES));
+      p     = EaseInQuad(p);
+      flash = Fade(WHITE, 1 - p);
+    }
 
     const f32 sy = (f32)glib->original_texture_sizes()->Get(texID)->y()
                    * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
@@ -13335,9 +13332,9 @@ void GameDraw() {
       if (fb->disable_rotation())
         rotation = 0;
 
-      if (fb->scales_in()) {
+      if (fb->scales_in() != 1.0f) {
         scale *= Lerp(
-          2.0f,
+          fb->scales_in(),
           1.0f,
           EaseInQuad(MIN(1, createdOrBouncedAt.Elapsed().Progress(ANIMATION_0_FRAMES)))
         );

@@ -4579,14 +4579,14 @@ projectiles: # {  ###
     rotation_speed: 4
     rotation_speed_plus_minus: 1
     fades_in: true
-    scales_in: true
+    scales_in: 2
     texture_ids:
       - game_projectile_mob
   - type: BOSS
     speed: 4
     rotation_speed: 5
     fades_in: true
-    scales_in: true
+    scales_in: 2
     texture_ids:
       - game_projectile_boss
   - type: BULLET
@@ -4602,19 +4602,27 @@ projectiles: # {  ###
   - type: NEEDLE_CACTUS
     speed: 14
     color: 0xefcb84ff
-    scales_in: true
+    scales_in: 2
     texture_ids:
       - game_projectile_needle
   - type: CROSSBOW_BOLT
     speed: 20
+    scales_in: 1.5
+    fades_in: true
     texture_ids:
       - game_projectile_bolt
   - type: APPLE
     speed: 14
+    scales_in: 1.5
+    fades_in: true
     texture_ids:
       - game_projectile_apple
   - type: MAGICAL_BULLET
-    speed: 14
+    speed: 30
+    scales_in: 2
+    color: 0xefcb84ff
+    squashes_in: true
+    fades_in: true
     texture_ids:
       - game_projectile_magical_bullet
   - type: NEEDLE_SLINGSHOT # то же самое, что и кактус
@@ -4641,7 +4649,7 @@ projectiles: # {  ###
       - game_projectile_rocket_milk
   - type: LIGHTNING
     fades_in: true
-    scales_in: true
+    scales_in: 2
     speed: 20
     texture_ids:
       - game_projectile_lightning

@@ -278,7 +278,7 @@ table Projectile {
     collider_radius: float = 0.4;
     aoe_on_travel_end: bool = true;
     fades_in: bool;
-    scales_in: bool;
+    scales_in: float = 1;
     squashes_in: bool;
     disable_rotation: bool;
     scale_x: float = 1;
