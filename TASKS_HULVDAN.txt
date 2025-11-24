@@ -76,13 +76,14 @@ x яблоко больше + scales_in + fades_in
 x магическая пуля glow
 x магическая пуля + scales_in + fades_in
 x creature damaged flashing should be eased
+x props small rotation
 
 * cheat: отдельный экран для выбора оружия / предмета
+* engine: reloading gamelib also reloads atlas
 * RANGED_0_WAND projectile looks good
 * RANGED_1_FIREBALL projectile looks good
 * egg squash fade scale
 * rocket looks good
-* engine: reloading gamelib also reloads atlas
 * melee weapons should have fixed swing time
   (MELEE_0_GHOST_AXE открывашка)
 * MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
