@@ -80,7 +80,10 @@ x props small rotation
 x cheat: отдельный экран для выбора оружия / предмета
 x load/unload file unmapping allocator
 
+* фикс туррели и gamelib
+  можно damage_scalings в один массив все пихнуть, а у себя хранить индекс
 * жене распасать по билду
+
 
 На те дебаг билд (волны тут в 3 раа короче)
 
