@@ -292,6 +292,9 @@ table ParticleVariation {
 table Particle {
     duration_seconds: float;
     duration_plus_minus: float;
+    disable_rotation: bool;
+    scale_x: float = 1;
+    scale_y: float = 1;
     color: uint = 0xffffffff;
     variations: [ParticleVariation];
 }

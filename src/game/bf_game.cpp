@@ -2550,7 +2550,7 @@ void MakeParticles(MakeParticlesData data) {  ///
                                 data.initialOffsetEasing(GRAND.FRand())
                               );
 
-    const f32 rotation = GRAND.Angle();
+    f32 rotation = (fb->disable_rotation() ? 0 : GRAND.Angle());
 
     f32 rotationSpeed = data.rotationSpeedPlusMinus * GRAND.FRand11();
 
@@ -12714,16 +12714,15 @@ void GameFixedUpdate() {
       pos += ToVector2(fb->emit_particle_offset_plus_minus())
              * Vector2(GRAND.FRand11(), GRAND.FRand11());
 
-      if ((ge.meta.frameGame % lframe::FromSeconds(fb->emit_particle_seconds()).value)
-          != 0)
+      const auto interval = lframe::FromSeconds(fb->emit_particle_seconds()).value;
+      if ((interval > 0) && ((ge.meta.frameGame % interval) != 0))
         continue;
 
       MakeParticles({
-        .type = (ParticleType)fb->emit_particle_type(),
-        // .count =1,
+        .type           = (ParticleType)fb->emit_particle_type(),
         .pos            = pos,
-        .scale          = 1.3f,
-        .scalePlusMinus = 0.15f,
+        .scale          = 1.0f,
+        .scalePlusMinus = 0.1f,
         .color          = Fade(WHITE, 0.5f),
       });
     }
@@ -12800,7 +12799,7 @@ void GameFixedUpdate() {
   ge.meta.frameVisual++;
 }
 
-int GetTextureIdByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
+int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
   ASSERT(p >= 0);
   int index = p * texs->size();
   index     = MIN(index, texs->size() - 1);
@@ -13065,7 +13064,7 @@ void GameDraw() {
 
     int texID = fb->texture_ids()->Get(0);
     if (!creature.idleStartedAt.IsSet()) {
-      texID = GetTextureIdByProgress(
+      texID = GetTextureIDByProgress(
         fb->texture_ids(),
         creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
       );
@@ -13364,7 +13363,7 @@ void GameDraw() {
         scale.y *= Lerp(1, 0.4f, p);
       }
 
-      int texID = GetTextureIdByProgress(
+      int texID = GetTextureIDByProgress(
         fb->texture_ids(), Clamp01(projectile.travelledDistance / projectile.range)
       );
 
@@ -13457,10 +13456,12 @@ void GameDraw() {
       const auto fb = fb_particles->Get(particle.type);
       const auto p  = Clamp01(particle.createdAt.Elapsed().Progress(particle.duration));
       DrawGroup_CommandTexture({
-        .texID    = fb->variations()->Get(particle.variation)->texture_ids()->Get(0),
+        .texID = GetTextureIDByProgress(
+          fb->variations()->Get(particle.variation)->texture_ids(), p
+        ),
         .rotation = particle.rotation,
         .pos      = particle.pos,
-        .scale    = Vector2One() * particle.scale,
+        .scale    = Vector2(fb->scale_x(), fb->scale_y()) * particle.scale,
         .color    = Fade(particle.color, EaseOutQuad(1 - p)),
       });
     }

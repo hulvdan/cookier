@@ -62,8 +62,8 @@ x cactus sword needles squashes_in scales_in fades_in
 x better projectiles fading
 x fix MELEE_0_PLANK explosion doesn't work
 x flamethrower fire projectiles
+x torch fire particles
 
-* torch fire particles
 * melee weapons should have fixed swing time
   (MELEE_0_GHOST_AXE открывашка)
 * шестигранник поменьше (менее широкий + менее высокий)

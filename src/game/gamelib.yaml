@@ -3957,11 +3957,11 @@ weapons: # {  ###
     emit_particle_type: FIRE
     emit_particle_offset:
       x: 0.26
-      y: 0
+      y: 0.1
     emit_particle_offset_plus_minus:
       x: 0.03
       y: 0.03
-    emit_particle_seconds: 0.04
+    emit_particle_seconds: 0.01
   - type: MELEE_0_WRENCH # шестигранник
     base_damage: 12 16 20 24
     damage_scalings:
@@ -4669,11 +4669,6 @@ projectiles: # {  ###
       - game_particle_fire_3
       - game_particle_fire_4
       - game_particle_fire_5
-      # - game_projectile_fire_1
-      # - game_projectile_fire_2
-      # - game_projectile_fire_3
-      # - game_projectile_fire_4
-      # - game_projectile_fire_5
 # }
 
 particles: # {  ###
@@ -4727,9 +4722,12 @@ particles: # {  ###
           # - texture_ids:
           #     - game_particle_4_6
   - type: FIRE
-    duration_seconds: 0.17
+    duration_seconds: 0.15
     duration_plus_minus: 0.05
     color: 0xdc9824ff
+    scale_x: 0.8
+    scale_y: 0.8
+    disable_rotation: true
     variations:
       - texture_ids:
           - game_particle_fire_1
@@ -4737,11 +4735,6 @@ particles: # {  ###
           - game_particle_fire_3
           - game_particle_fire_4
           - game_particle_fire_5
-          # - game_projectile_fire_1
-          # - game_projectile_fire_2
-          # - game_projectile_fire_3
-          # - game_projectile_fire_4
-          # - game_projectile_fire_5
 # }
 
 pickupables: # {  ###
