@@ -653,6 +653,7 @@ struct Projectile {  ///
   int                               effectCritBounce          = {};
   int                               bounce                    = {};
   FrameGame                         createdAt                 = {};
+  FrameGame                         lastBouncedAt             = {};
   Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIDs        = {};
   int                               damagedCount              = 0;
   int                               piercedCount              = 0;
@@ -12337,6 +12338,8 @@ void GameFixedUpdate() {
               if (canBounce) {
                 projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
                 projectile.bouncedCount++;
+                projectile.lastBouncedAt = {};
+                projectile.lastBouncedAt.SetNow();
                 projectile.travelledDistance = 0;
 
                 const Creature* found = nullptr;
@@ -13256,6 +13259,10 @@ void GameDraw() {
         drot *= -1;
       rotation += drot;
 
+      auto createdOrBouncedAt = projectile.createdAt;
+      if (projectile.lastBouncedAt.IsSet())
+        createdOrBouncedAt = projectile.lastBouncedAt;
+
       Vector2 scale{1, 1};
       if (projectile.dir.x < 0) {
         rotation += (f32)PI32;
@@ -13266,20 +13273,32 @@ void GameDraw() {
         scale *= Lerp(
           2.0f,
           1.0f,
-          EaseInQuad(MIN(1, projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES)))
+          EaseInQuad(MIN(1, createdOrBouncedAt.Elapsed().Progress(ANIMATION_0_FRAMES)))
         );
       }
 
       Color flash = TRANSPARENT_WHITE;
 
       f32 fade = 1;
+
+      {
+        auto willDieInSeconds
+          = (projectile.range - projectile.travelledDistance) / fb->speed();
+        if (willDieInSeconds < (f32)ANIMATION_0_FRAMES.value / (f32)_BF_LOGICAL_FPS_SCALE)
+        {
+          fade
+            *= Clamp01(lframe::FromSeconds(willDieInSeconds).Progress(ANIMATION_0_FRAMES)
+            );
+        }
+      }
+
       if (fb->fades_in()) {
-        auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
+        auto p = createdOrBouncedAt.Elapsed().Progress(ANIMATION_0_FRAMES);
         fade   = EaseOutQuad(MIN(1, p));
       }
 
       if (fb->squashes_in()) {
-        auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
+        auto p = createdOrBouncedAt.Elapsed().Progress(ANIMATION_0_FRAMES);
         p      = MIN(1, p);
         p      = EaseOutCubic(p);
         scale.x *= Lerp(1.0f, 3.5f, p);

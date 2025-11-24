@@ -4592,6 +4592,9 @@ projectiles: # {  ###
   - type: NEEDLE_CACTUS
     speed: 14
     color: 0xefcb84ff
+    # fades_in: true
+    scales_in: true
+    # squashes_in: true
     texture_ids:
       - game_projectile_needle
   - type: CROSSBOW_BOLT
