@@ -2593,6 +2593,29 @@ LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 sizeFsh) {  ///
   );
 }
 
+void* LoadFile(const char* filepath, size_t* outSize = nullptr) {  ///
+  size_t size{};
+  auto   data = SDL_LoadFile(filepath, &size);
+  if (outSize)
+    *outSize = size;
+#if BF_DEBUG
+  auto data2 = BF_ALLOC(size + 1);
+  memcpy(data2, data, size + 1);
+  SDL_free(data);
+  return data2;
+#else
+  return data;
+#endif
+}
+
+void UnloadFile(void* data) {  ///
+#if BF_DEBUG
+  BF_FREE(data);
+#else
+  SDL_free(data)
+#endif
+}
+
 Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
   ZoneScopedN("_LoadTexture()");
   LOGI("Loading texture '%s'...", filepath);
@@ -2604,8 +2627,8 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
 
   void* data = nullptr;
   {
-    ZoneScopedN("SDL_LoadFile()");
-    data = SDL_LoadFile(filepath, &dataSize);
+    ZoneScopedN("LoadFile()");
+    data = LoadFile(filepath, &dataSize);
   }
   ASSERT(data);
 
@@ -2731,7 +2754,7 @@ Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
 
   ASSERT(success);
 
-  SDL_free(data);
+  UnloadFile(data);
 
   LOGI("Loaded texture '%s'!", filepath);
 
@@ -2882,7 +2905,7 @@ void InitEngine() {  ///
 #  endif
 #endif
 
-  glibFile = SDL_LoadFile(glibPath, nullptr);
+  glibFile = LoadFile(glibPath, nullptr);
   glib     = BFGame::GetGameLibrary(glibFile);
 
   ge.meta.atlas = _LoadTexture(
@@ -3118,7 +3141,7 @@ void _UnloadFileDataFromFonts(View<Font> fonts, View<LoadFontData> data) {  ///
       if (!strcmp(data[k].filepath, data[i].filepath))
         fonts[k].fileData = nullptr;
     }
-    SDL_free((void*)font.fileData);
+    UnloadFile((void*)font.fileData);
   }
 }
 
@@ -3305,7 +3328,7 @@ LoadFontsResult LoadFonts(View<Font> outFonts, View<LoadFontData> data_) {  ///
       }
     }
     if (!fileData)
-      fileData = (u8*)SDL_LoadFile(data.filepath, nullptr);
+      fileData = (u8*)LoadFile(data.filepath, nullptr);
 
     font = Font{
       .FIXME_sizeScale = data.FIXME_sizeScale,
@@ -3769,8 +3792,8 @@ SDL_AppResult EngineUpdate() {  ///
     auto glibPeekResult = PeekFiletime(GAMELIB_DEBUG_PATH);
     if (glibPeekResult.filetime != glibTime) {
       glibTime = glibPeekResult.filetime;
-      SDL_free(glibFile);
-      glibFile = SDL_LoadFile(GAMELIB_DEBUG_PATH, nullptr);
+      UnloadFile(glibFile);
+      glibFile = LoadFile(GAMELIB_DEBUG_PATH, nullptr);
       glib     = BFGame::GetGameLibrary(glibFile);
       LOGI("Gamelib reloaded!");
     }
@@ -4026,7 +4049,7 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
 #if defined(SDL_PLATFORM_DESKTOP)
 
     // Desktop loads immediately.
-    ge.meta.savedata = (const u8*)SDL_LoadFile("save.bin", nullptr);
+    ge.meta.savedata = (const u8*)LoadFile("save.bin", nullptr);
     ge.meta.loading  = SavedataLoadingType_JUST_FISNIHED;
 
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
@@ -4054,7 +4077,7 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
     GameLoad(BFSave::GetSave(ge.meta.savedata));
 
 #if defined(SDL_PLATFORM_DESKTOP)
-    SDL_free((void*)ge.meta.savedata);
+    UnloadFile((void*)ge.meta.savedata);
 #endif
 
     ge.meta.savedata = nullptr;
