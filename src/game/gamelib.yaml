@@ -3956,9 +3956,12 @@ weapons: # {  ###
     price: 91
     emit_particle_type: FIRE
     emit_particle_offset:
-      x: 1
+      x: 0.2
       y: 0
-    emit_particle_seconds: 0.2
+    emit_particle_offset_plus_minus:
+      x: 0.03
+      y: 0.03
+    emit_particle_seconds: 0.05
   - type: MELEE_0_WRENCH # шестигранник
     base_damage: 12 16 20 24
     damage_scalings:
@@ -4655,8 +4658,8 @@ projectiles: # {  ###
   - type: FIRE
     speed: 8
     disable_rotation: true
-    scale_x: 1.4
-    scale_y: 1.4
+    scale_x: 0.9
+    scale_y: 0.9
     color: 0xdc9824ff
     fades_in: true
     texture_ids:
@@ -4718,8 +4721,8 @@ particles: # {  ###
           # - texture_ids:
           #     - game_particle_4_6
   - type: FIRE
-    duration_seconds: 0.3
-    duration_plus_minus: 0.15
+    duration_seconds: 0.2
+    duration_plus_minus: 0.03
     color: 0xdc9824ff
     variations:
       - texture_ids:
