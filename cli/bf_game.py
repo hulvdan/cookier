@@ -1037,6 +1037,8 @@ def process_images():
     # )
 
     # Spritesheetifying projectiles.
+    for f in (ART_TEXTURES_DIR / "projectiles").glob("*.png"):
+        f.unlink()
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_005.png",
         cell_size=160,
@@ -1082,16 +1084,35 @@ def process_images():
     ).save(ART_TEXTURES_DIR / "game_projectile_laser.png")
 
     # Spritesheetifying fire.
+    for f in ART_TEXTURES_DIR.glob("game_projectile_fire_*.png"):
+        f.unlink()
+    for f in (ART_TEXTURES_DIR / "fire").glob("game_projectile_fire_*.png"):
+        f.unlink()
     for f in ART_TEXTURES_DIR.glob("game_particle_fire_*.png"):
+        f.unlink()
+    for f in (ART_TEXTURES_DIR / "fire").glob("game_particle_fire_*.png"):
         f.unlink()
     bf_image.spritesheetify(
         ART_DIR / "src" / "main_005.png",
         cell_size=160,
-        size=(5, 5),
-        origin=(2610, 0),
+        size=(5, 1),
+        origin=(2610, 340),
         gap=10,
-        out_filename_prefix="game_particle_fire_",
-        out_dir=ART_TEXTURES_DIR,
+        out_filename_prefix="fire_",
+        out_dir=ART_TEXTURES_DIR / "fire",
+    )
+    bf_image.conveyor(
+        "fire",
+        "Making projectiles",
+        bf_image.conveyor_outline(radius=16, color=(255, 255, 255, 128), is_shadow=True),
+        bf_image.conveyor_prefix("game_projectile"),
+    )
+    bf_image.conveyor(
+        "fire",
+        "Making particles",
+        bf_image.conveyor_outline(radius=16, color=(255, 255, 255, 128), is_shadow=True),
+        bf_image.conveyor_white,
+        bf_image.conveyor_prefix("game_particle"),
     )
 
     # }

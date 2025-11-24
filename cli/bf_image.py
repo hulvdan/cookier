@@ -149,11 +149,27 @@ def replace_color(image: Image.Image, color: tuple[int, int, int]) -> Image.Imag
     # }
 
 
+def conveyor_replace_color(color: tuple[int, int, int]) -> ConveyorCallable:
+    # {  ###
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        image = replace_color(image_, color)
+        return image, path_
+
+    return inner
+    # }
+
+
 red = lambda image: replace_color(image, (255, 0, 0))
 green = lambda image: replace_color(image, (0, 255, 0))
 blue = lambda image: replace_color(image, (0, 0, 255))
 white = lambda image: replace_color(image, (255, 255, 255))
 black = lambda image: replace_color(image, (0, 0, 0))
+
+conveyor_red = conveyor_replace_color((255, 0, 0))
+conveyor_green = conveyor_replace_color((0, 255, 0))
+conveyor_blue = conveyor_replace_color((0, 0, 255))
+conveyor_white = conveyor_replace_color((255, 255, 255))
+conveyor_black = conveyor_replace_color((0, 0, 0))
 
 
 def invert(image: Image.Image) -> Image.Image:
@@ -207,6 +223,17 @@ def conveyor(folder_name: str, conveyor_name: str, *args: ConveyorCallable) -> N
             img = img2
         img.save(ART_TEXTURES_DIR / f.name)
     log.info(f"`{folder_name}`: {conveyor_name}... Success!")
+    # }
+
+
+def conveyor_prefix(prefix: str) -> ConveyorCallable:
+    # {  ###
+    def inner(image_: Image.Image, path_: Path) -> ConveyorDatum:
+        extension = path_.name.rsplit(".", 1)[-1]
+        path = path_.parent / "{}_{}.{}".format(prefix, path_.stem, extension)
+        return image_, path
+
+    return inner
     # }
 
 

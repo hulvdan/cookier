@@ -13292,11 +13292,14 @@ void GameDraw() {
       if (projectile.lastBouncedAt.IsSet())
         createdOrBouncedAt = projectile.lastBouncedAt;
 
-      Vector2 scale{1, 1};
+      Vector2 scale{fb->scale_x(), fb->scale_y()};
       if (projectile.dir.x < 0) {
         rotation += (f32)PI32;
-        scale.x = -1;
+        scale.x *= -1;
       }
+
+      if (fb->disable_rotation())
+        rotation = 0;
 
       if (fb->scales_in()) {
         scale *= Lerp(
@@ -13326,8 +13329,12 @@ void GameDraw() {
         scale.y *= Lerp(1, 0.4f, p);
       }
 
+      int texID = GetTextureIdByProgress(
+        fb->texture_ids(), Clamp01(projectile.travelledDistance / projectile.range)
+      );
+
       DrawGroup_CommandTexture({
-        .texID    = fb->texture_ids()->Get(0),
+        .texID    = texID,
         .rotation = rotation,
         .pos      = projectile.pos,
         .scale    = scale,

@@ -3954,6 +3954,11 @@ weapons: # {  ###
         value: 0 0 1 1
     melee_collider_height_px: 1
     price: 91
+    emit_particle_type: FIRE
+    emit_particle_offset:
+      x: 1
+      y: 0
+    emit_particle_seconds: 0.2
   - type: MELEE_0_WRENCH # шестигранник
     base_damage: 12 16 20 24
     damage_scalings:
@@ -4399,7 +4404,7 @@ weapons: # {  ###
     projectile_type: FIRE
     projectile_pierce: 100 100 100
     projectile_count: 3 3 3
-    accuracy_plus_minus: 0.5
+    accuracy_plus_minus: 0.4
     price: 207
   - type: RANGED_1_POTATO_THROWER # egg thrower
     base_damage: 1 1 1
@@ -4648,13 +4653,18 @@ projectiles: # {  ###
     texture_ids:
       - game_weapon_37_shuriken
   - type: FIRE
-    speed: 15
+    speed: 8
+    disable_rotation: true
+    scale_x: 1.4
+    scale_y: 1.4
+    color: 0xdc9824ff
+    fades_in: true
     texture_ids:
-      - game_particle_fire_1
-      - game_particle_fire_2
-      - game_particle_fire_3
-      - game_particle_fire_4
-      - game_particle_fire_5
+      - game_projectile_fire_1
+      - game_projectile_fire_2
+      - game_projectile_fire_3
+      - game_projectile_fire_4
+      - game_projectile_fire_5
 # }
 
 particles: # {  ###
@@ -4707,6 +4717,17 @@ particles: # {  ###
           - game_particle_4_5
           # - texture_ids:
           #     - game_particle_4_6
+  - type: FIRE
+    duration_seconds: 0.3
+    duration_plus_minus: 0.15
+    color: 0xdc9824ff
+    variations:
+      - texture_ids:
+          - game_particle_fire_1
+          - game_particle_fire_2
+          - game_particle_fire_3
+          - game_particle_fire_4
+          - game_particle_fire_5
 # }
 
 pickupables: # {  ###

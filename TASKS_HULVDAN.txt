@@ -61,6 +61,7 @@ x projectiles fade before death
 x cactus sword needles squashes_in scales_in fades_in
 x better projectiles fading
 x fix MELEE_0_PLANK explosion doesn't work
+x flamethrower fire projectiles
 
 * torch fire particles
 * melee weapons should have fixed swing time
@@ -88,6 +89,7 @@ x fix MELEE_0_PLANK explosion doesn't work
 * «this weapon» change to «». if no «this weapon» -> show «all weapons»
 * нужно что-то сделать с «пулевыми» оружиями (наример, RANGED_3_CHAIN_GUN)
   стрельба выглядит хреново
+* impl weapon burning_damage, burning_times, burning_damage_scalings
 *
 * scale weapon knockback
 *
@@ -103,7 +105,6 @@ x fix MELEE_0_PLANK explosion doesn't work
 *
 * impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
-* impl weapon burning_damage, burning_times, burning_damage_scalings
 * impl stat KNOCKBACK
 * impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
 * impl effectcondition_type YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
@@ -113,7 +114,6 @@ x fix MELEE_0_PLANK explosion doesn't work
 * stats: LOOT_ALIENS_SPEED
 * stats: ENEMY_DAMAGE
 *
-* flamethrower fire projectiles
 * test flamethrower (without damage_scalings works good)
 *
 * реализовать оружия (без доработок)
