@@ -285,7 +285,7 @@ def conveyor_brightness(factor: float) -> ConveyorCallable:
 
 def _shape(
     func_name: str,
-    size: tuple[int, int],
+    size: int | tuple[int, int],
     *,
     radius: int = 0,
     fill: tuple[int, int, int, int] = (255, 255, 255, 255),
@@ -293,6 +293,9 @@ def _shape(
     width: int = 0,
 ) -> Image.Image:
     # {  ###
+    if isinstance(size, int):
+        size = (size, size)
+
     assert size[0] > radius * 2
     assert size[1] > radius * 2
     assert radius >= 0
