@@ -1076,15 +1076,15 @@ def process_images():
     ).save(ART_TEXTURES_DIR / "game_projectile_lightning.png")
 
     bf_image.outline(
-        bf_image.ellipse((100, 100), width=6, outline=(207, 200, 178)),
-        radius=6,
+        bf_image.ellipse((80, 80), width=0, outline=(207, 200, 178)),
+        radius=28,
         color=(207, 200, 178),
         is_shadow=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_bullet.png")
 
     bf_image.outline(
-        bf_image.ellipse((100, 100), width=6, outline=(255, 123, 239)),
-        radius=6,
+        bf_image.ellipse((80, 80), width=0, outline=(255, 123, 239)),
+        radius=28,
         color=(255, 123, 239),
         is_shadow=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_laser.png")
