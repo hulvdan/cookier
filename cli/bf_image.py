@@ -211,7 +211,7 @@ def remap_grayscale(
 
 def conveyor(folder_name: str, conveyor_name: str, *args: ConveyorCallable) -> None:
     # {  ###
-    log.info(f"`{folder_name}`: {conveyor_name}...")
+    log.info(f"conveyor: `{folder_name}`: {conveyor_name}...")
     folder = ART_TEXTURES_DIR / folder_name
     assert folder.exists(), f"`{folder}` does not exist!"
 
@@ -222,7 +222,7 @@ def conveyor(folder_name: str, conveyor_name: str, *args: ConveyorCallable) -> N
             img2, f = func(img, f)  # noqa: PLW2901
             img = img2
         img.save(ART_TEXTURES_DIR / f.name)
-    log.info(f"`{folder_name}`: {conveyor_name}... Success!")
+    log.info(f"conveyor: `{folder_name}`: {conveyor_name}... Success!")
     # }
 
 
