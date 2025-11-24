@@ -89,7 +89,7 @@ EFFECT_X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT;{X} шанс выпад
 EFFECT_PROPERTY__WHEN_IDLE;{PROPERTY} {MODIFIER} при отсутствии движения;{PROPERTY} {MODIFIER} when idle;
 EFFECT_PROPERTY__WHEN_WALKING;{PROPERTY} {MODIFIER} при ходьбе;{PROPERTY} {MODIFIER} when walking;
 EFFECT_HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X;Атаки по горящим врагам дают {X} крит шанс;{X} crit chance when hitting burning enemies;
-EFFECT_EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y;Использования ({X}) дают {Y} крит шанс;{Y} crit chance every {X} attacks;
+EFFECT_EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y;Использование №{X} имеет {Y} крит шанс;{Y} crit chance every {X} attacks;
 EFFECT_BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES;Горение распространяется на доп. врагов ({X});Burning spreads to additional {X} enemies;
 EFFECT_STAT__DURING_NEXT_WAVE;{MODIFIER} {STAT} во время следующей волны;{MODIFIER} {STAT} during the next wave;
 EFFECT_STAT__UPON__PICKUPABLE__AT_MAX_HP;{PICKUPABLE} при поднятии при полном здоровье даёт {MODIFIER} {STAT};{MODIFIER} {STAT} after picking up {PICKUPABLE} while at max HP;

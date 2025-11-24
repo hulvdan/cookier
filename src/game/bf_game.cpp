@@ -13231,8 +13231,10 @@ void GameDraw() {
           auto p = weapon.lastShotAt.Elapsed().Progress(ANIMATION_0_FRAMES);
           p      = Clamp01(p);
           p      = EaseOutQuad(p);
-          scale *= Lerp(1.4f, 1.0f, p);
-          pos -= Vector2Lerp(weapon.targetDir * (1 / 4.0f), {}, p);
+          scale *= Lerp(1 + 0.4f * fb->shooting_feedback_scale(), 1.0f, p);
+          pos -= Vector2Lerp(
+            weapon.targetDir * (fb->shooting_feedback_scale() / 4.0f), {}, p
+          );
         }
 
         f32 weaponFade = fade;

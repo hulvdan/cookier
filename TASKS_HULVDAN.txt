@@ -63,12 +63,13 @@ x better projectiles fading
 x fix MELEE_0_PLANK explosion doesn't work
 x flamethrower fire projectiles
 x torch fire particles
+x flamethrower smaller feedback
+x сковорода медленнее, но больше урона
 
+* ghost_axe быстрее, но меньше урона
+* шестигранник поменьше (менее широкий + менее высокий)
 * melee weapons should have fixed swing time
   (MELEE_0_GHOST_AXE открывашка)
-* шестигранник поменьше (менее широкий + менее высокий)
-* сковорода медленнее, но больше урона
-* ghost_axe быстрее, но меньше урона
 * святая граната на палочке должна взрываться
 * power fist больше
 * MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
