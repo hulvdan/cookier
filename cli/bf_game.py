@@ -1068,6 +1068,17 @@ def process_images():
     bf_image.conveyor("projectiles", "Copying")
 
     bf_image.outline(
+        bf_image.white(
+            Image.open(
+                ART_TEXTURES_DIR / "projectiles" / "game_projectile_magical_bullet.png"
+            )
+        ),
+        radius=16,
+        color=(0, 0, 0),
+        is_shadow=True,
+    ).save(ART_TEXTURES_DIR / "game_projectile_magical_bullet.png")
+
+    bf_image.outline(
         Image.open(ART_TEXTURES_DIR / "projectiles" / "game_projectile_lightning.png"),
         radius=16,
         color=(255, 255, 72, int(255 * 2 / 5)),
