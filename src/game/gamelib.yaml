@@ -3641,7 +3641,7 @@ weapons: # {  ###
     cooldown: 1.66 1.58 1.51 1.36
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 200 200 200 200
+    range_meters: 4.7 4.7 4.7 4.7
     knockback_meters: 8 8 8 8
     melee_collider_height_px: 1
     effects:
@@ -3650,7 +3650,7 @@ weapons: # {  ###
           - stat_type: DAMAGE_RANGED
             percents_per_tier: 50 60 70 80
         projectile_type: NEEDLE_CACTUS
-        projectile_range_meters: 200
+        projectile_range_meters: 4.66
         placeholders:
           - ints: 3 4 5 6
           - ints: 0 0 0 0
@@ -3666,7 +3666,7 @@ weapons: # {  ###
     cooldown: 0.99 0.99 0.96 0.89
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 10 15 20 25
-    range_meters: 135 150 165 180
+    range_meters: 2.9 3.5 4.1 4.7
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     effects:
@@ -3683,7 +3683,7 @@ weapons: # {  ###
     cooldown: 0.78 0.73 0.69 0.59
     crit_damage_multiplier: 2 2.15 2.3 2.5
     crit_chance: 10 15 20 25
-    range_meters: 150 150 150 150
+    range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 1
     price: 110
@@ -3693,9 +3693,10 @@ weapons: # {  ###
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100 100
     cooldown: 0.78 0.73 0.69 0.59
+    attack_or_cooldown_ratio: 0.6
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
-    range_meters: 150 150 150 150
+    range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 15 15 15 15
     melee_collider_height_px: 1
     price: 91
@@ -3707,7 +3708,7 @@ weapons: # {  ###
     cooldown: 1.73 1.66 1.58 1.51
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 200 200 200 200
+    range_meters: 4.7 4.7 4.7 4.7
     knockback_meters: 2 2 2 2
     effects:
       - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
@@ -3726,7 +3727,7 @@ weapons: # {  ###
     cooldown: 1.23 1.17 1.10 1.04
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 150 160 170 180
+    range_meters: 3.5 3.8 4.1 4.4
     knockback_meters: 2 2 2 2
     effects:
       - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
@@ -3747,7 +3748,7 @@ weapons: # {  ###
     cooldown: 1.58 1.50 1.42 1.33
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 250 250 250 250
+    range_meters: 5.8 5.8 5.8 5.8
     knockback_meters: 0 0 0 0
     effects:
       - effectcondition_type: STAT__WHEN_IDLE
@@ -3768,7 +3769,7 @@ weapons: # {  ###
     cooldown: 1.01 0.93 0.86 0.78
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 4 6 8 10
-    range_meters: 150 150 150 150
+    range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 0 0 0 0
     projectile_pierce: 0 1 2 3
     effects:
@@ -3796,7 +3797,7 @@ weapons: # {  ###
     cooldown: 1.23 1.14 1.06 0.98
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 150 150 150 150
+    range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 5 5 5 5
     effects:
       - effectcondition_type: X__CHANCE_TO_EXPLODE
@@ -3813,7 +3814,7 @@ weapons: # {  ###
     cooldown: 1.14 1.06 0.98 0.89
     crit_damage_multiplier: 1.25 1.5 1.75 2
     crit_chance: 3 6 9 12
-    range_meters: 150 150 150 150
+    range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 2 2 2 2
     effects:
       - effectcondition_type: SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
@@ -3832,7 +3833,7 @@ weapons: # {  ###
     cooldown: 1.42 1.25 1.09 0.92
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 3 3 3 3
-    range_meters: 175 175 175 175
+    range_meters: 4.08 4.08 4.08 4.08
     knockback_meters: 0 0 0 0
     effects:
       - stat_type: XP_GAIN
@@ -3847,7 +3848,7 @@ weapons: # {  ###
     cooldown: 1.68 1.61 1.53 1.46
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 10 15 20 25
-    range_meters: 150 150 150 150
+    range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 5 5 5 5
     effects:
       - stat_type: ARMOR
@@ -3866,7 +3867,7 @@ weapons: # {  ###
     cooldown: 1.05 1.00 0.97 0.87
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 10 15 20 30
-    range_meters: 125 125 125 125
+    range_meters: 2.91 2.91 2.91 2.91
     knockback_meters: 3 3 3 3
     effects:
       - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
@@ -3889,7 +3890,7 @@ weapons: # {  ###
     cooldown: 1.14 1.07 1.00 0.93
     crit_damage_multiplier: 2 2.15 2.3 2.5
     crit_chance: 3 6 9 12
-    range_meters: 150 160 170 180
+    range_meters: 3.5 3.73 3.97 4.2
     knockback_meters: 2 2 2 2
     effects:
       - stat_type: LIFE_STEAL
@@ -3910,7 +3911,7 @@ weapons: # {  ###
     cooldown: 1.16 1.16 1.16 1.01
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 150 165 180 200
+    range_meters: 3.5 3.85 4.2 4.7
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 1
     price: 122
@@ -3922,7 +3923,7 @@ weapons: # {  ###
     cooldown: 1.29 1.22 1.15 1.09
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 3 3 3 3
-    range_meters: 175 175 175 175
+    range_meters: 4.08 4.08 4.08 4.08
     knockback_meters: 0 0 0 0
     effects:
       - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
@@ -3946,7 +3947,7 @@ weapons: # {  ###
     cooldown: 1.10 1.04 0.95 0.8
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 0 0 0 0
-    range_meters: 175 175 175 175
+    range_meters: 4.08 4.08 4.08 4.08
     knockback_meters: 20 20 20 20
     effects:
       - stat_type: BURNING_SPREAD
@@ -3961,7 +3962,7 @@ weapons: # {  ###
     cooldown: 1.70 1.64 1.55 1.49
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 175 175 175 175
+    range_meters: 4.08 4.08 4.08 4.08
     knockback_meters: 20 20 20 20
     effects:
       - effectcondition_type: TURRET_DEALING__X__DAMAGE
@@ -3981,7 +3982,7 @@ weapons: # {  ###
     crit_damage_multiplier: 2 2 2
     crit_chance: 5 10 20
     life_steal_percents: 45 50 60
-    range_meters: 175 175 175
+    range_meters: 4.08 4.08 4.08
     knockback_meters: 0 0 0
     melee_collider_height_px: 1
     price: 173
@@ -3998,7 +3999,7 @@ weapons: # {  ###
     cooldown: 0.73 0.69 0.59
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 1 1 1
-    range_meters: 150 150 150
+    range_meters: 3.5 3.5 3.5
     knockback_meters: 15 15 15
     melee_collider_height_px: 1
     price: 173
@@ -4010,7 +4011,7 @@ weapons: # {  ###
     cooldown: 1.67 1.59 1.50
     crit_damage_multiplier: 1.75 1.75 1.75
     crit_chance: 3 3 3
-    range_meters: 175 175 175
+    range_meters: 4.08 4.08 4.08
     knockback_meters: 30 40 50
     effects:
       - stat_type: KNOCKBACK
@@ -4025,7 +4026,7 @@ weapons: # {  ###
     cooldown: 1.28 1.13 0.98
     crit_damage_multiplier: 2 2 2
     crit_chance: 3 3 3
-    range_meters: 200 200 200
+    range_meters: 4.7 4.7 4.7
     knockback_meters: 5 5 5
     melee_collider_height_px: 1
     price: 190
@@ -4039,7 +4040,7 @@ weapons: # {  ###
     cooldown: 1.55 1.49
     crit_damage_multiplier: 1.75 1.75
     crit_chance: 3 3
-    range_meters: 175 175
+    range_meters: 4.08 4.08
     knockback_meters: 30 30
     effects:
       - effectcondition_type: X__CHANCE_TO_EXPLODE
@@ -4056,7 +4057,7 @@ weapons: # {  ###
     cooldown: 0.69 0.59
     crit_damage_multiplier: 1.5 1.5
     crit_chance: 1 1
-    range_meters: 150 150
+    range_meters: 3.5 3.5
     knockback_meters: 15 15
     effects:
       - effectcondition_type: X__CHANCE_TO_EXPLODE
@@ -4075,7 +4076,7 @@ weapons: # {  ###
     cooldown: 1.21 1.06
     crit_damage_multiplier: 2 2
     crit_chance: 3 3
-    range_meters: 200 200
+    range_meters: 4.7 4.7
     knockback_meters: 5 5
     effects:
       - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
@@ -4100,7 +4101,7 @@ weapons: # {  ###
     cooldown: 1.33
     crit_damage_multiplier: 2
     crit_chance: 3
-    range_meters: 400
+    range_meters: 9.33
     knockback_meters: 10
     projectile_bounce: 5
     effects:
@@ -4130,7 +4131,7 @@ weapons: # {  ###
     cooldown: 0.66
     crit_damage_multiplier: 2.5
     crit_chance: 10
-    range_meters: 200
+    range_meters: 4.7
     knockback_meters: 5
     effects:
       - effectcondition_type: STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
@@ -4150,7 +4151,7 @@ weapons: # {  ###
     crit_damage_multiplier: 2
     crit_chance: 3
     life_steal_percents: 100
-    range_meters: 250
+    range_meters: 5.8
     knockback_meters: 5
     effects:
       - effectcondition_type: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
@@ -4173,7 +4174,7 @@ weapons: # {  ###
     cooldown: 1.13 1.13 1.13 1.13
     crit_damage_multiplier: 1.5 1.75 2 2.25
     crit_chance: 30 35 40 45
-    range_meters: 350 350 350 350
+    range_meters: 8.2 8.2 8.2 8.2
     projectile_type: CROSSBOW_BOLT
     knockback_meters: 8 8 8 8
     effects:
@@ -4192,7 +4193,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     projectile_count: 4 4 4 6
     accuracy_plus_minus: 0.4
-    range_meters: 350 350 350 350
+    range_meters: 8.2 8.2 8.2 8.2
     projectile_type: BULLET
     projectile_pierce: 2 2 2 3
     projectile_piercing_damage_bonus_percent: 20 20 20 20
@@ -4206,7 +4207,7 @@ weapons: # {  ###
     cooldown: 0.98 0.93 0.88 0.83
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 300 350 400 450
+    range_meters: 7 8.2 9.3 10.5
     knockback_meters: 2 2 2 2
     projectile_type: APPLE
     effects:
@@ -4225,7 +4226,7 @@ weapons: # {  ###
     cooldown: 1.03 0.95 0.87 0.70
     crit_damage_multiplier: 2 2 2.5 3
     crit_chance: 5 10 15 20
-    range_meters: 400 400 400 400
+    range_meters: 9.3 9.3 9.3 9.3
     projectile_type: MAGICAL_BULLET
     projectile_pierce: 1 1 1 1
     knockback_meters: 5 5 5 5
@@ -4238,7 +4239,7 @@ weapons: # {  ###
     cooldown: 1.20 1.12 1.03 0.95
     crit_damage_multiplier: 2.5 2.75 3 3.25
     crit_chance: 0 0 0 0
-    range_meters: 350 375 400 425
+    range_meters: 8.2 8.7 9.3 9.9
     knockback_meters: 0 0 0 0
     projectile_type: JAVELIN
     projectile_pierce: 2 3 4 5
@@ -4259,7 +4260,7 @@ weapons: # {  ###
     cooldown: 1.98 1.90 1.82 1.65
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 500 500 500 500
+    range_meters: 11.7 11.7 11.7 11.7
     knockback_meters: 0 0 0 0
     projectile_type: LASER
     projectile_pierce: 1 1 1 1
@@ -4273,7 +4274,7 @@ weapons: # {  ###
     cooldown: 1.20 1.12 1.03 0.87
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 5 10 15 20
-    range_meters: 400 400 400 400
+    range_meters: 9.3 9.3 9.3 9.3
     projectile_type: BULLET
     knockback_meters: 15 15 15 15
     projectile_pierce: 1 1 1 1
@@ -4286,7 +4287,7 @@ weapons: # {  ###
     cooldown: 1.30 1.22 1.13 1.05
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 450 450 450 450
+    range_meters: 10.5 10.5 10.5 10.5
     projectile_type: EXPLOSIVE_CUNAI
     shoots_itself: true
     knockback_meters: 0 0 0 0
@@ -4306,7 +4307,7 @@ weapons: # {  ###
     cooldown: 0.87 0.83 0.80 0.70
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 35 38 41 45
-    range_meters: 350 350 350 350
+    range_meters: 8.2 8.2 8.2 8.2
     projectile_type: CUNAI
     shoots_itself: true
     knockback_meters: 0 0 0 0
@@ -4321,7 +4322,7 @@ weapons: # {  ###
     cooldown: 1.22 1.17 1.12 1.05
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 3 3 3 3
-    range_meters: 300 300 300 300
+    range_meters: 7 7 7 7
     projectile_type: NEEDLE_SLINGSHOT
     knockback_meters: 5 5 5 5
     effects:
@@ -4338,7 +4339,7 @@ weapons: # {  ###
     cooldown: 0.51 0.51 0.51 0.45
     crit_damage_multiplier: 1.5 1.5 1.5 1.5
     crit_chance: 1 1 1 1
-    range_meters: 400 400 400 400
+    range_meters: 9.3 9.3 9.3 9.3
     projectile_type: BULLET
     projectile_spawn_frame_factors: 0.2 0.6 0.10
     knockback_meters: 0 0 0 0
@@ -4356,7 +4357,7 @@ weapons: # {  ###
     cooldown: 0.87 0.78 0.70 0.53
     crit_damage_multiplier: 2 2 2 2
     crit_chance: 0 0 0 0
-    range_meters: 350 375 400 425
+    range_meters: 8.2 8.7 9.3 9.9
     knockback_meters: 10 10 10 10
     projectile_type: FIREBALL
     price: 105
@@ -4373,7 +4374,7 @@ weapons: # {  ###
     cooldown: 1.12 1.03 0.87
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 3 3 3
-    range_meters: 400 450 500
+    range_meters: 9.3 10.5 11.6
     knockback_meters: 0 0 0
     projectile_type: FIREBALL
     effects:
@@ -4392,7 +4393,7 @@ weapons: # {  ###
     cooldown: 0.12 0.12 0.09
     crit_damage_multiplier: 2 2 2
     crit_chance: 0 0 0
-    range_meters: 250 300 400
+    range_meters: 5.8 7 9.3
     knockback_meters: 0 0 0
     projectile_type: FIRE
     projectile_pierce: 100 100 100
@@ -4407,7 +4408,7 @@ weapons: # {  ###
     cooldown: 0.45 0.37 0.25
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 3 3 3
-    range_meters: 500 500 500
+    range_meters: 11.7 11.7 11.7
     knockback_meters: 20 25 30
     price: 139
     projectile_type: EGG
@@ -4419,7 +4420,7 @@ weapons: # {  ###
     cooldown: 1.78 1.37 1.03
     crit_damage_multiplier: 2 2 2
     crit_chance: 3 3 3
-    range_meters: 500 550 600
+    range_meters: 11.7 12.8 14.0
     knockback_meters: 15 15 15
     projectile_type: ROCKET
     effects:
@@ -4436,7 +4437,7 @@ weapons: # {  ###
     cooldown: 0.09 0.073
     crit_damage_multiplier: 1.75 2
     crit_chance: 1 3
-    range_meters: 400 450
+    range_meters: 9.3 10.5
     knockback_meters: 3 3
     projectile_type: BULLET
     projectile_pierce: 1 2
@@ -4451,7 +4452,7 @@ weapons: # {  ###
     cooldown: 2.12 2.12
     crit_damage_multiplier: 2 2
     crit_chance: 3 3
-    range_meters: 800 800
+    range_meters: 18.6 18.6
     knockback_meters: 15 15
     projectile_type: NUCLEAR_MILK
     effects:
@@ -4470,7 +4471,7 @@ weapons: # {  ###
     cooldown: 2.40 2.40
     crit_damage_multiplier: 3 4
     crit_chance: 20 20
-    range_meters: 800 1000
+    range_meters: 18.6 23.3
     knockback_meters: 30 30
     projectile_type: BULLET
     effects:
@@ -4497,7 +4498,7 @@ weapons: # {  ###
     crit_chance: 3
     projectile_count: 3
     accuracy_plus_minus: 0.4
-    range_meters: 500
+    range_meters: 11.7
     knockback_meters: 5
     projectile_type: BULLET
     projectile_pierce: 1
@@ -4516,7 +4517,7 @@ weapons: # {  ###
     cooldown: 0.073
     crit_damage_multiplier: 3
     crit_chance: 10
-    range_meters: 500
+    range_meters: 11.7
     knockback_meters: 5
     projectile_type: BFL
     projectile_pierce: 3
@@ -4973,13 +4974,15 @@ difficulties: # {  ###
   - type: D1
     effects:
       - stat_type: ENEMY_HP_SCALE
-        value: 5
+        value: 10
   - type: D2
     effects:
       - stat_type: ENEMY_HP_SCALE
-        value: 12
-      - stat_type: ENEMY_SPEED
+        value: 25
+      - stat_type: ENEMY_DAMAGE
         value: 20
+      - stat_type: ENEMY_SPEED
+        value: 12
         # - type: D3
         #   texture_id: ui_difficulty_3
         #   effects:

@@ -1066,16 +1066,16 @@ def process_images():
     )
 
     bf_image.outline(
-        bf_image.ellipse((100, 100), width=10, outline=(207, 200, 178)),
-        radius=10,
+        bf_image.ellipse((100, 100), width=6, outline=(207, 200, 178)),
+        radius=6,
         color=(207, 200, 178),
         is_shadow=True,
         blend_image_on_top=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_bullet.png")
 
     bf_image.outline(
-        bf_image.ellipse((100, 100), width=10, outline=(255, 123, 239)),
-        radius=10,
+        bf_image.ellipse((100, 100), width=6, outline=(255, 123, 239)),
+        radius=6,
         color=(255, 123, 239),
         is_shadow=True,
         blend_image_on_top=True,
