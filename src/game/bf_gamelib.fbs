@@ -257,6 +257,7 @@ table Weapon {
     melee_collider_height_px: float;
     emit_particle_type: int;
     emit_particle_offset: Posf;
+    emit_particle_offset_plus_minus: Posf;
     emit_particle_seconds: float;
     life_steal_percents: [float];
     effects: [Effect];

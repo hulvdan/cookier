@@ -346,6 +346,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         if "projectile_count" in x:
             assert "accuracy_plus_minus" in x
 
+        if "emit_particle_type" in x:
+            assert "emit_particle_seconds" in x
+        else:
+            assert "emit_particle_seconds" not in x
+
         process_effects_of(x, required_tier_values)
     # }
 
@@ -1104,13 +1109,13 @@ def process_images():
     bf_image.conveyor(
         "fire",
         "Making projectiles",
-        bf_image.conveyor_outline(radius=16, color=(255, 255, 255, 128), is_shadow=True),
+        bf_image.conveyor_outline(radius=24, color=(255, 255, 255, 128), is_shadow=True),
         bf_image.conveyor_prefix("game_projectile"),
     )
     bf_image.conveyor(
         "fire",
         "Making particles",
-        bf_image.conveyor_outline(radius=16, color=(255, 255, 255, 128), is_shadow=True),
+        bf_image.conveyor_outline(radius=24, color=(255, 255, 255, 128), is_shadow=True),
         bf_image.conveyor_white,
         bf_image.conveyor_prefix("game_particle"),
     )

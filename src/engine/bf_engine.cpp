@@ -59,6 +59,12 @@ f32 Vector2Angle(Vector2 v) {  ///
   return atan2f(v.y, v.x);
 }
 
+f32 Vector2AngleOrZero(Vector2 v) {  ///
+  if (v == Vector2Zero())
+    return 0;
+  return atan2f(v.y, v.x);
+}
+
 f32 Vector2Angle(Vector2 v1, Vector2 v2) {  ///
   auto a1 = atan2f(v1.y, v1.x);
   auto a2 = atan2f(v2.y, v2.x);

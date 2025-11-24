@@ -12682,6 +12682,38 @@ void GameFixedUpdate() {
       }
     }
 
+    // Player's weapons create particles.
+    FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {
+      const auto& weapon = g.run.state.weapons[weaponIndex];
+      if (!weapon.type)
+        continue;
+
+      const auto fb = fb_weapons->Get(weapon.type);
+      if (!fb->emit_particle_type())
+        continue;
+
+      auto pos = GetWeaponPos(weaponIndex);
+      auto off = ToVector2(fb->emit_particle_offset());
+      if (PLAYER_CREATURE.dir.x < 0)
+        off.x *= -1;
+      pos += Vector2Rotate(off, Vector2AngleOrZero(weapon.targetDir));
+      pos += ToVector2(fb->emit_particle_offset_plus_minus())
+             * Vector2(GRAND.FRand11(), GRAND.FRand11());
+
+      if ((ge.meta.frameGame % lframe::FromSeconds(fb->emit_particle_seconds()).value)
+          != 0)
+        continue;
+
+      MakeParticles({
+        .type = (ParticleType)fb->emit_particle_type(),
+        // .count =1,
+        .pos = pos,
+        // .scale          =1.0f,
+        .scalePlusMinus = 0.15f,
+        .color          = Fade(WHITE, 0.5f),
+      });
+    }
+
     // Updating particles.
     for (auto& p : g.run.particles) {  ///
       p.pos += p.velocity * FIXED_DT;
