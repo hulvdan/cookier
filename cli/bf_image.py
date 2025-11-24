@@ -4,7 +4,7 @@ from typing import Any, Callable, TypeAlias
 
 import cv2
 import numpy as np
-from bf_lib import ART_TEXTURES_DIR, log
+from bf_lib import ART_TEXTURES_DIR, log, recursive_mkdir
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance
 
 # }
@@ -340,6 +340,8 @@ def spritesheetify(
     out_filenames: list[str] | None = None,
 ) -> None:
     # {  ###
+    recursive_mkdir(out_dir)
+
     image = Image.open(image_path)
     X, Y = size
 

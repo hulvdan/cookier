@@ -36,6 +36,7 @@ from bf_lib import (
     transform_color,
 )
 from bf_typer import command, log, timing
+from PIL import Image
 
 # }
 
@@ -282,6 +283,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         if weapon_type == "MELEE":
             assert x.get("melee_collider_height_px", 0) > 0
             assert "projectile_spawn_frame_factors" not in x
+            x["attack_or_cooldown_ratio"] = 0.5
         elif weapon_type == "RANGED":
             assert "projectile_type" in x
             assert "melee_collider_height_px" not in x
@@ -1062,15 +1064,22 @@ def process_images():
             "rocket_milk",
             "lightning",
         ],
-        out_dir=ART_TEXTURES_DIR,
+        out_dir=ART_TEXTURES_DIR / "projectiles",
     )
+    bf_image.conveyor("projectiles", "Copying")
+
+    bf_image.outline(
+        Image.open(ART_TEXTURES_DIR / "projectiles" / "game_projectile_lightning.png"),
+        radius=16,
+        color=(255, 255, 72, int(255 * 2 / 5)),
+        is_shadow=True,
+    ).save(ART_TEXTURES_DIR / "game_projectile_lightning.png")
 
     bf_image.outline(
         bf_image.ellipse((100, 100), width=6, outline=(207, 200, 178)),
         radius=6,
         color=(207, 200, 178),
         is_shadow=True,
-        blend_image_on_top=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_bullet.png")
 
     bf_image.outline(
@@ -1078,7 +1087,6 @@ def process_images():
         radius=6,
         color=(255, 123, 239),
         is_shadow=True,
-        blend_image_on_top=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_laser.png")
 
     # Spritesheetifying fire.
