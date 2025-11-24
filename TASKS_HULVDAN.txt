@@ -57,11 +57,12 @@ x weapon shooting looks good: RANGED_2_NUCLEAR_LAUNCHER
 x weapon shooting looks good: RANGED_2_SNIPER_GUN
 x weapon shooting looks good: RANGED_3_CHAIN_GUN
 x weapon shooting looks good: RANGED_3_GATLING_LASER
+x projectiles fade before death
+x cactus sword needles squashes_in scales_in fades_in
 
-* cactus sword needles squashes_in scales_in fades_in
+* fix MELEE_0_PLANK explosion doesn't work
 * melee weapons should have fixed swing time
   (MELEE_0_GHOST_AXE открывашка)
-* fix MELEE_0_PLANK explosion doesn't work
 * torch fire particles
 * шестигранник поменьше (менее широкий + менее высокий)
 * сковорода медленнее, но больше урона
