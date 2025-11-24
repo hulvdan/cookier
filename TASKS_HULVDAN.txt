@@ -65,24 +65,24 @@ x flamethrower fire projectiles
 x torch fire particles
 x flamethrower smaller feedback
 x сковорода медленнее, но больше урона
+x ghost_axe быстрее, но меньше урона
+x святая граната на палочке должна взрываться
+- animate fire projectile
+x шестигранник поменьше (менее широкий + менее высокий)
+x power fist больше
 
-* ghost_axe быстрее, но меньше урона
-* шестигранник поменьше (менее широкий + менее высокий)
+* болт больше + лучше видно
+* яблоко больше + scales_in + fades_in
 * melee weapons should have fixed swing time
   (MELEE_0_GHOST_AXE открывашка)
-* святая граната на палочке должна взрываться
-* power fist больше
 * MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
 * MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
 * MELEE_3_EXCALIBUR спавнит projectile + меньше урон
-* болт больше + лучше видно
 * арбалет анимация
-* яблоко больше + scales_in + fades_in
 * магическая пуля + scales_in + fades_in
 * RANGED_0_SHREDDER взрыв один раз при нанесении урона
 * RANGED_0_WAND projectile looks good
 * RANGED_1_FIREBALL projectile looks good
-* animate fire projectile
 * egg squash fade scale
 * rocket looks good
 * projectile spawn pos y adjustment option in gamelib
