@@ -1081,6 +1081,7 @@ struct Prop {  ///
   int     variation = {};
   bool    right     = {};
   Vector2 pos       = {};
+  f32     rotation  = {};
 };
 
 struct TurretToSpawn {  ///
@@ -4229,6 +4230,7 @@ void RunInit() {
               .variation = (int)(VRAND.Rand() % variations),
               .right     = (bool)(VRAND.Rand() % 2),
               .pos       = propPos,
+              .rotation  = GRAND.FRand11() * PI32 / 24,
             };
           };
           break;
@@ -12981,8 +12983,9 @@ void GameDraw() {
       = glib->biomes()->Get(g.player.biome)->prop_texture_ids();
     for (const auto& prop : g.run.props) {
       DrawGroup_CommandTexture({
-        .texID = fb_prop_texture_ids->Get(prop.variation),
-        .pos   = prop.pos + Vector2(0, floorOffsetY),
+        .texID    = fb_prop_texture_ids->Get(prop.variation),
+        .rotation = prop.rotation,
+        .pos      = prop.pos + Vector2(0, floorOffsetY),
         .scale{(prop.right ? 1 : -1), 1},
       });
     }
