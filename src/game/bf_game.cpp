@@ -5367,7 +5367,7 @@ void DoUI() {
   int _wheel = 0;
   if (!draw) {
     _wheel = GetMouseWheel();
-    if (IsKeyDown(SDL_SCANCODE_LSHIFT))
+    if (IsKeyDown(SDL_SCANCODE_LSHIFT) || IsKeyDown(SDL_SCANCODE_RSHIFT))
       _wheel *= 10;
     if (draw)
       _wheel = 0;
@@ -5852,10 +5852,11 @@ void DoUI() {
     Clay_ElementId  id    = {};
     ControlsGroupID group = {};
 
-    DifficultyType difficulty = {};
-    BuildType      build      = {};
-    ItemType       item       = {};
-    WeaponType     weapon     = {};
+    DifficultyType difficulty  = {};
+    BuildType      build       = {};
+    ItemType       item        = {};
+    WeaponType     weapon      = {};
+    int            weaponIndex = -1;
 
     HiddenType hidden = HiddenType_HIDE_IF_EMPTY;
 
@@ -5973,6 +5974,30 @@ void DoUI() {
               result |= didActivate(SDL_SCANCODE_RETURN);
             }
           }
+        }
+
+        // Cheat. Changing hovered player's tier / weapon's type using mouse wheel.
+        if ((ge.meta.debugEnabled || BF_DEBUG)  //
+            && (data.weaponIndex >= 0)          //
+            && Clay_Hovered()                   //
+            && wheel)
+        {
+          auto& w = g.run.state.weapons[data.weaponIndex];
+          auto& t = w.type;
+
+          if ((IsKeyDown(SDL_SCANCODE_LCTRL) || IsKeyDown(SDL_SCANCODE_RCTRL)))
+            t = (WeaponType)(MIN((int)WeaponType_COUNT - 1, MAX(1, (int)t + wheel)));
+          else
+            w.tier += wheel;
+
+          auto fb = fb_weapons->Get(t);
+
+          if (w.tier < fb->min_tier_index())
+            w.tier = fb->min_tier_index();
+          else if (w.tier > TOTAL_TIERS - 1)
+            w.tier = TOTAL_TIERS - 1;
+
+          Save();
         }
 
         if (!onlyOneOrNone) {
@@ -7605,6 +7630,7 @@ void DoUI() {
             .id           = slotID,
             .group        = data.group,
             .weapon       = weapon.type,
+            .weaponIndex  = weaponIndex,
             .tier         = weapon.tier,
             .showsDetails = true,
             .uiBouncedAt  = weapon.uiBouncedAt,
@@ -10680,7 +10706,7 @@ void GameFixedUpdate() {
   if (ge.meta.debugEnabled || BF_DEBUG) {
     // F5 - add 10 coins.
     if (IsKeyPressed(SDL_SCANCODE_F5)) {  ///
-      if (IsKeyDown(SDL_SCANCODE_LSHIFT))
+      if (IsKeyDown(SDL_SCANCODE_LSHIFT) || IsKeyDown(SDL_SCANCODE_RSHIFT))
         ChangeCoins(int_max);
       else
         ChangeCoins(10);
@@ -10713,7 +10739,11 @@ void GameFixedUpdate() {
     // N - increase wave. Shift N - decrease wave.
     if (IsKeyPressed(SDL_SCANCODE_N)) {  ///
       g.run.state.waveIndex = MoveTowardsI(
-        g.run.state.waveIndex, (IsKeyDown(SDL_SCANCODE_LSHIFT) ? 0 : TOTAL_WAVES - 2), 1
+        g.run.state.waveIndex,
+        ((IsKeyDown(SDL_SCANCODE_LSHIFT) || IsKeyDown(SDL_SCANCODE_RSHIFT))
+           ? 0
+           : TOTAL_WAVES - 2),
+        1
       );
       RecalculateThisWaveMobs();
       g.run.random = GetRandomCumulativeChances(
@@ -13133,6 +13163,14 @@ void GameDraw() {
           rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
         }
 
+        if (weapon.lastShotAt.IsSet() && fb->projectile_type()) {
+          auto p = weapon.lastShotAt.Elapsed().Progress(ANIMATION_0_FRAMES);
+          p      = Clamp01(p);
+          p      = EaseOutQuad(p);
+          scale *= Lerp(1.4f, 1.0f, p);
+          pos -= Vector2Lerp(weapon.targetDir * (1 / 4.0f), {}, p);
+        }
+
         f32 weaponFade = fade;
 
         if (fb->shoots_itself() && weapon.lastShotAt.IsSet()) {
@@ -13238,13 +13276,12 @@ void GameDraw() {
       if (fb->fades_in()) {
         auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
         fade   = EaseOutQuad(MIN(1, p));
-        // flash  = Fade(flash, 1 - fade);
       }
 
       if (fb->squashes_in()) {
         auto p = projectile.createdAt.Elapsed().Progress(ANIMATION_0_FRAMES);
         p      = MIN(1, p);
-        p      = EaseOutQuad(p);
+        p      = EaseOutCubic(p);
         scale.x *= Lerp(1.0f, 3.5f, p);
         scale.y *= Lerp(1, 0.4f, p);
       }

@@ -2,11 +2,98 @@ WORKING SINCE 2025-09-07
 
 x a bit better bullet + laser projectiles
 x shotgun pellets count in weapon's card
+x lightning looks good
+x cheat: hovering on player's weapon + wheel -> changes tier
+x cheat: hovering on player's weapon + CTRL + wheel -> changes weapon
+x faster melee weapons
+x bflaser shoots good
+x ВЫПИСАТЬ СЮДА ВСЕ ОРУЖИЯ для проверки
+x weapon shooting looks good: MELEE_0_CACTI_CLUB
+x weapon shooting looks good: MELEE_0_CHOPPER
+x weapon shooting looks good: MELEE_0_CLAW
+x weapon shooting looks good: MELEE_0_FIST
+x weapon shooting looks good: MELEE_0_GHOST_AXE
+x weapon shooting looks good: MELEE_0_GHOST_FLINT
+x weapon shooting looks good: MELEE_0_JOUSTING_LANCE
+x weapon shooting looks good: MELEE_0_LIGHTNING_SHIV
+x weapon shooting looks good: MELEE_0_PLANK
+x weapon shooting looks good: MELEE_0_PRUNER
+x weapon shooting looks good: MELEE_0_QUATERSTAFF
+x weapon shooting looks good: MELEE_0_ROCK
+x weapon shooting looks good: MELEE_0_SCREWDRIVER
+x weapon shooting looks good: MELEE_0_SHARP_TOOTH
+x weapon shooting looks good: MELEE_0_SPIKY_SHIELD
+x weapon shooting looks good: MELEE_0_STICK
+x weapon shooting looks good: MELEE_0_TORCH
+x weapon shooting looks good: MELEE_0_WRENCH
+x weapon shooting looks good: MELEE_1_CIRCULAR_SAW
+x weapon shooting looks good: MELEE_1_FLAMING_BRASS_KNUCKLES
+x weapon shooting looks good: MELEE_1_HAMMER
+x weapon shooting looks good: MELEE_1_SWORD
+x weapon shooting looks good: MELEE_2_PLASMA_SLEDGE
+x weapon shooting looks good: MELEE_2_POWER_FIST
+x weapon shooting looks good: MELEE_2_THUNDER_SWORD
+x weapon shooting looks good: MELEE_3_DEX_TROYER
+x weapon shooting looks good: MELEE_3_EXCALIBUR
+x weapon shooting looks good: MELEE_3_SCYTHE
+x weapon shooting looks good: RANGED_0_CROSSBOW
+x weapon shooting looks good: RANGED_0_DOUBLE_BARREL_SHOTGUN
+x weapon shooting looks good: RANGED_0_GHOST_SCEPTER
+x weapon shooting looks good: RANGED_0_ICICLE
+x weapon shooting looks good: RANGED_0_JAVELIN
+x weapon shooting looks good: RANGED_0_LASER_GUN
+x weapon shooting looks good: RANGED_0_PISTOL
+x weapon shooting looks good: RANGED_0_SHREDDER
+x weapon shooting looks good: RANGED_0_SHURIKEN
+x weapon shooting looks good: RANGED_0_SLINGSHOT
+x weapon shooting looks good: RANGED_0_SMG
+x weapon shooting looks good: RANGED_0_WAND
+x weapon shooting looks good: RANGED_1_FIREBALL
+x weapon shooting looks good: RANGED_1_FLAMETHROWER
+x weapon shooting looks good: RANGED_1_POTATO_THROWER
+x weapon shooting looks good: RANGED_1_ROCKER_LAUNCHER
+x weapon shooting looks good: RANGED_2_MINIGUN
+x weapon shooting looks good: RANGED_2_NUCLEAR_LAUNCHER
+x weapon shooting looks good: RANGED_2_SNIPER_GUN
+x weapon shooting looks good: RANGED_3_CHAIN_GUN
+x weapon shooting looks good: RANGED_3_GATLING_LASER
 
-* lightning looks good
+* cactus sword needles squashes_in scales_in fades_in
+* melee weapons should have fixed swing time
+  (MELEE_0_GHOST_AXE открывашка)
+* fix MELEE_0_PLANK explosion doesn't work
+* torch fire particles
+* шестигранник поменьше (менее широкий + менее высокий)
+* сковорода медленнее, но больше урона
+* ghost_axe быстрее, но меньше урона
+* святая граната на палочке должна взрываться
+* power fist больше
+* MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
+* MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
+* MELEE_3_EXCALIBUR спавнит projectile + меньше урон
+* болт больше + лучше видно
+* арбалет анимация
+* яблоко больше + scales_in + fades_in
+* магическая пуля + scales_in + fades_in
+* RANGED_0_SHREDDER взрыв один раз при нанесении урона
+* RANGED_0_WAND projectile looks good
+* RANGED_1_FIREBALL projectile looks good
+* animate fire projectile
+* egg squash fade scale
+* rocket looks good
+* projectile spawn pos y adjustment option in gamelib
+* RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in gamelib + weapon's card
+* «this weapon» change to «». if no «this weapon» -> show «all weapons»
+* нужно что-то сделать с «пулевыми» оружиями (наример, RANGED_3_CHAIN_GUN)
+  стрельба выглядит хреново
+*
+* scale weapon knockback
+*
+* cheat: hovering on player's item + wheel -> changes count
+* cheat: hovering on player's item + CTRL + wheel -> changes item
+*
 * milk annihilator set bonus explosion radius
 * apprentice's wand projectile looks good
-* rocket looks good
 *
 * mob projectiles are always on top
 *
@@ -174,6 +261,7 @@ x shotgun pellets count in weapon's card
 *
 * RELEASED!
 =======================
+* engine: in debug build: don't compress atlas
 * containers shouldn't use begin / end.
   implement iterators so that upon reallocation
   in the middle of iterating on this container won't cause issues
