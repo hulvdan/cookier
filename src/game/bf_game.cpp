@@ -5153,7 +5153,21 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   const f32  movingDistance = MAX(1, GetWeaponRangeMeters(weapon.type, weapon.tier));
   const auto movedDistance  = p * movingDistance;
 
-  return PLAYER_CREATURE.pos + weapon.targetDir * movedDistance;
+  auto offset = weapon.targetDir * movedDistance;
+
+  const auto dur = ApplyAttackSpeedToDuration(
+    lframe::FromSeconds(fb->cooldown()->Get(tierOffset) * fb->attack_or_cooldown_ratio())
+  );
+  const f32 t = InOutLerp(
+    0,
+    1,
+    (f32)weapon.startedShootingAt.Elapsed().value,
+    (f32)dur.value,
+    (f32)dur.value / 6
+  );
+  offset = Vector2Lerp(GetPlayerWeaponOffset(weaponIndex), offset, t);
+
+  return PLAYER_CREATURE.pos + offset;
 }
 
 void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
@@ -12694,7 +12708,7 @@ void GameFixedUpdate() {
 
       auto pos = GetWeaponPos(weaponIndex);
       auto off = ToVector2(fb->emit_particle_offset());
-      if (PLAYER_CREATURE.dir.x < 0)
+      if ((weapon.targetDir == Vector2Zero()) && (PLAYER_CREATURE.dir.x < 0))
         off.x *= -1;
       pos += Vector2Rotate(off, Vector2AngleOrZero(weapon.targetDir));
       pos += ToVector2(fb->emit_particle_offset_plus_minus())
@@ -12707,8 +12721,8 @@ void GameFixedUpdate() {
       MakeParticles({
         .type = (ParticleType)fb->emit_particle_type(),
         // .count =1,
-        .pos = pos,
-        // .scale          =1.0f,
+        .pos            = pos,
+        .scale          = 1.3f,
         .scalePlusMinus = 0.15f,
         .color          = Fade(WHITE, 0.5f),
       });
@@ -13203,19 +13217,6 @@ void GameDraw() {
         const int  tierOffset = weapon.tier - fb->min_tier_index();
 
         auto pos = GetWeaponPos(i);
-        if (!fb->projectile_type() && weapon.startedShootingAt.IsSet()) {
-          const auto dur = ApplyAttackSpeedToDuration(lframe::FromSeconds(
-            fb->cooldown()->Get(tierOffset) * fb->attack_or_cooldown_ratio()
-          ));
-          const f32  t   = InOutLerp(
-            0,
-            1,
-            (f32)weapon.startedShootingAt.Elapsed().value,
-            (f32)dur.value,
-            (f32)dur.value / 6
-          );
-          pos = Vector2Lerp(PLAYER_CREATURE.pos + GetPlayerWeaponOffset(i), pos, t);
-        }
 
         f32     rotation = 0;
         Vector2 scale{0, 1};
@@ -13341,16 +13342,18 @@ void GameDraw() {
         );
       }
 
-      Color flash = TRANSPARENT_WHITE;
+      f32 fade = 1;
 
-      const auto willDieIn = lframe::FromSeconds(
-        (projectile.range - projectile.travelledDistance) / fb->speed()
-      );
-      f32 fade = EaseOutQuad(Clamp01(willDieIn.Progress(ANIMATION_0_FRAMES)));
+      if (projectile.range != f32_inf) {
+        const auto willDieIn = lframe::FromSeconds(
+          (projectile.range - projectile.travelledDistance) / fb->speed()
+        );
+        fade *= EaseOutCubic(Clamp01(willDieIn.Progress(ANIMATION_0_FRAMES)));
+      }
 
       if (fb->fades_in()) {
         auto p = createdOrBouncedAt.Elapsed().Progress(ANIMATION_0_FRAMES);
-        fade   = EaseOutQuad(MIN(1, p));
+        fade *= EaseOutQuad(MIN(1, p));
       }
 
       if (fb->squashes_in()) {
@@ -13371,7 +13374,7 @@ void GameDraw() {
         .pos      = projectile.pos,
         .scale    = scale,
         .color    = Fade(ColorFromRGBA(fb->color()), fade),
-        .flash    = flash,
+        .flash    = TRANSPARENT_WHITE,
       });
     }
 
