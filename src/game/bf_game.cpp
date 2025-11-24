@@ -5037,15 +5037,19 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
 
   const int tierOffset = weapon.tier - fb->min_tier_index();
 
-  const auto e = weapon.startedShootingAt.Elapsed();
-  const auto shootingDur
-    = ApplyAttackSpeedToDuration(lframe::FromSeconds(fb->cooldown()->Get(tierOffset)));
-  auto       p            = MIN(1, e.Progress(shootingDur) * 2);
-  const auto texID        = fb->texture_ids()->Get(0);
-  const auto colliderSize = (f32)glib->original_texture_sizes()->Get(texID)->x()
-                            * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
+  const auto shootingDur = ApplyAttackSpeedToDuration(
+    lframe::FromSeconds(fb->cooldown()->Get(tierOffset) * fb->attack_or_cooldown_ratio())
+  );
 
-  p = EaseInOutQuad(p);
+  const auto e = weapon.startedShootingAt.Elapsed();
+  auto       p = MIN(1, e.Progress(shootingDur));
+  if (p >= 0.5) {
+    p -= 0.5;
+    p *= 2;
+    p = EaseOutQuad(1 - p);
+  }
+  else
+    p = EaseOutQuad(p * 2);
 
   const f32  movingDistance = MAX(1, GetWeaponRangeMeters(weapon.type, weapon.tier));
   const auto movedDistance  = p * movingDistance;
@@ -6701,17 +6705,32 @@ void DoUI() {
           componentWeaponStatEntry(
             fb_stats->Get(StatType_DAMAGE)->name_locale(),
             [&]() BF_FORCE_INLINE_LAMBDA {
+              LAMBDA (void, showPelletsCount, (Color color)) {
+                if (fb->projectile_count()
+                    && (fb->projectile_count()->Get(tierOffset) > 1)) {
+                  BF_CLAY_TEXT(
+                    TextFormat("x%d", fb->projectile_count()->Get(tierOffset)),
+                    {.color = color}
+                  );
+                }
+              };
+
               const int baseDamage = fb->base_damage()->Get(tierOffset);
               if (data.affectedByGame) {
                 const int actualDamage
                   = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
                 BF_CLAY_TEXT(TextFormat("%d", actualDamage), {.color = palTextGreen});
+                showPelletsCount(palTextGreen);
                 BF_CLAY_TEXT(
-                  TextFormat(" (%d)", baseDamage), {.color = secondaryTextColor}
+                  TextFormat(" (%d", baseDamage), {.color = secondaryTextColor}
                 );
+                showPelletsCount(secondaryTextColor);
+                BF_CLAY_TEXT(")", {.color = secondaryTextColor});
               }
-              else
+              else {
                 BF_CLAY_TEXT(TextFormat("%d", baseDamage), {.color = palTextGreen});
+                showPelletsCount(palTextGreen);
+              }
 
               // Scalings.
               const auto fb_scalings = fb->damage_scalings();
@@ -11609,9 +11628,8 @@ void GameFixedUpdate() {
       if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
         ZoneScopedN("Picking up pickupables.");
 
-        int pickupableIndex = -1;
-        for (auto& pickupable : g.run.pickupables) {
-          pickupableIndex++;
+        FOR_RANGE (int, pickupableIndex, g.run.pickupables.count) {
+          const auto& pickupable = g.run.pickupables[pickupableIndex];
 
           if (pickupable.pickedUpAt.IsSet())
             continue;
@@ -11699,16 +11717,6 @@ void GameFixedUpdate() {
           }
       );
     }
-
-    // // Picked up pickupables fly towards player.
-    // for (auto& pickupable : g.run.pickupables) {  ///
-    //   ZoneScopedN("Picked up pickupables fly towards player.");
-    //
-    //   if (pickupable.pickedUpAt.IsSet()) {
-    //     pickupable.pos
-    //       = Vector2ExponentialDecay(pickupable.pos, PLAYER_CREATURE.pos, 3, FIXED_DT);
-    //   }
-    // }
 
     // Burning spread.
     {  ///

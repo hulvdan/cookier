@@ -1,34 +1,12 @@
 WORKING SINCE 2025-09-07
 
-x забить данные эффектов оружий в gamelib
-x нарисовать projectile: GUN_BULLET
-x нарисовать projectile: LASER
-x нарисовать projectile: CACTUS_NEEDLE
-x нарисовать projectile: CROSSBOW_BOLT
-x нарисовать projectile: APPLE
-x нарисовать projectile: MAGICAL_MILK
-x нарисовать projectile: SEED
-x нарисовать projectile: FIREBALL
-x нарисовать projectile: EGG
-x нарисовать projectile: ROCKET
-x нарисовать projectile: MINI_BULLET
-x нарисовать projectile: NUCLEAR_MILK
-x нарисовать projectile: TURRET_BULLET
-x нарисовать projectile: BFG
-x нарисовать projectile: BFL
-x нарисовать projectile: SNIPING_BULLET
-x нарисовать projectile: SNIPING_BONUS_BULLET
-x нарисовать projectile: LIGHTNING
-x нарисовать projectile: FIRE
-x проставить везде, где надо, only_this_weapon: true
-x spritesheetify projectiles
-x spritesheetify fire
-x bullet gets squashed
-x bullet looks good
-x shotgun accuracy + multiple pellets
+x shotgun pellets count in weapon's card
 
+* lightning looks good
+* milk annihilator set bonus explosion radius
 * apprentice's wand projectile looks good
 * rocket looks good
+*
 * mob projectiles are always on top
 *
 * correct ranged weapons projectile spawn y positions
@@ -195,6 +173,9 @@ x shotgun accuracy + multiple pellets
 *
 * RELEASED!
 =======================
+* containers shouldn't use begin / end.
+  implement iterators so that upon reallocation
+  in the middle of iterating on this container won't cause issues
 * AUDIO SET METADATA: ffmpeg -i test.wav -c copy -metadata artist="ABOBA" test2.wav
 * a way of automagically tracking used CC-BY-SA sounds in project
 * boss patterns: vertical/horizontal row sliding with projectiles accelerating
