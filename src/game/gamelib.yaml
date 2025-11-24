@@ -3995,7 +3995,7 @@ weapons: # {  ###
     melee_collider_height_px: 1
     price: 173
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES # frying pan, сковорода
-    base_damage: 16 32 64
+    base_damage: 18 36 75
     damage_scalings:
       - stat_type: DAMAGE_MELEE
         percents_per_tier: 100 100 100
@@ -4004,7 +4004,7 @@ weapons: # {  ###
     burning_damage_scalings:
       - stat_type: DAMAGE_ELEMENTAL
         percents_per_tier: 100 100 100
-    cooldown: 0.73 0.69 0.59
+    cooldown: 0.88 0.83 0.70
     crit_damage_multiplier: 1.5 1.5 1.5
     crit_chance: 1 1 1
     range_meters: 3.5 3.5 3.5
@@ -4408,6 +4408,7 @@ weapons: # {  ###
     projectile_pierce: 100 100 100
     projectile_count: 3 3 3
     accuracy_plus_minus: 0.4
+    shooting_feedback_scale: 0.6
     price: 207
   - type: RANGED_1_POTATO_THROWER # egg thrower
     base_damage: 1 1 1
