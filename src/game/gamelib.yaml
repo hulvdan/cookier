@@ -4637,6 +4637,8 @@ projectiles: # {  ###
       - game_projectile_bullet
   - type: EGG
     speed: 14
+    scales_in: 2
+    fades_in: true
     texture_ids:
       - game_projectile_egg
   - type: ROCKET

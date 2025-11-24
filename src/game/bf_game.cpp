@@ -1030,6 +1030,7 @@ enum ControlsContext {  ///
   ControlsContext_MODAL_CONFIRM_RESTART,
   ControlsContext_MODAL_CONFIRM_NEW_RUN,
   ControlsContext_MODAL_CONFIRM_QUIT,
+  ControlsContext_MODAL_CHEAT_WEAPON,
   ControlsContext_COUNT,
 };
 
@@ -1039,6 +1040,7 @@ const ControlsContext CONTROLS_CONTEXT_MODALS_[]{
   ControlsContext_MODAL_CONFIRM_RESTART,
   ControlsContext_MODAL_CONFIRM_NEW_RUN,
   ControlsContext_MODAL_CONFIRM_QUIT,
+  ControlsContext_MODAL_CHEAT_WEAPON,
 };
 VIEW_FROM_ARRAY_DANGER(CONTROLS_CONTEXT_MODALS);
 
@@ -1235,7 +1237,8 @@ struct GameData {
 
     int bossCreatureID = 0;
 
-    bool hideSlotDetails = false;
+    bool hideSlotDetails  = false;
+    int  cheatWeaponIndex = -1;
 
     int itemsScrollPause = 0;
     int itemsScrollShop  = 0;
@@ -6077,6 +6080,27 @@ void DoUI() {
         .uiBouncedAt             = data.uiBouncedAt,
       },
       [&]() BF_FORCE_INLINE_LAMBDA {
+        // Cheat. Opening changing weapon modal.
+        if (!draw  //
+            && isCurrentContextActive()  //
+            && (ge.meta.debugEnabled || BF_DEBUG)  //
+            && (data.weaponIndex >= 0)  //
+            && (
+              IsKeyDown(SDL_SCANCODE_LSHIFT) //
+              || IsKeyDown(SDL_SCANCODE_RSHIFT)
+              || IsKeyDown(SDL_SCANCODE_LCTRL)
+              || IsKeyDown(SDL_SCANCODE_RCTRL)
+            )
+            && clickOrTouchPressed())
+          g.run.cheatWeaponIndex = data.weaponIndex;
+
+        if (!onlyOneOrNone) {
+          if (data.hidden == HiddenType_SHOW_LOCK)
+            texID = glib->ui_item_locked_texture_id();
+          else
+            return;
+        }
+
         if (data.canHover) {
           ButtonSFX(draw, data.id, Clay_Hovered());
 
@@ -6113,13 +6137,6 @@ void DoUI() {
             w.tier = TOTAL_TIERS - 1;
 
           Save();
-        }
-
-        if (!onlyOneOrNone) {
-          if (data.hidden == HiddenType_SHOW_LOCK)
-            texID = glib->ui_item_locked_texture_id();
-          else
-            return;
         }
 
         CLAY({.layout{BF_CLAY_SIZING_GROW_XY, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
@@ -7859,7 +7876,7 @@ void DoUI() {
      = {.element = CLAY_ATTACH_POINT_RIGHT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER},
      Vector2 offset = {-GAP_SMALL, 0})
   )
-  {
+  {  ///
     CLAY({.floating{
       .offset{offset.x, offset.y},
       .zIndex             = zIndex,
@@ -7956,9 +7973,6 @@ void DoUI() {
       PlaySound(Sound_UI_CLICK);
       g.meta.showingStats.SetNow();
     }
-  };
-
-  LAMBDA (void, componentBuild, (BuildType build)) {
   };
 
   // Gameplay.
@@ -10224,6 +10238,64 @@ void DoUI() {
     }
 
     zIndex -= UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS;
+  }
+
+  // Cheat. Selecting weapon.
+  if ((BF_DEBUG || ge.meta.debugEnabled) && (g.run.cheatWeaponIndex >= 0)) {  ///
+    SCOPED_CONTEXT(ControlsContext_MODAL_CHEAT_WEAPON);
+
+    const int WEAPONS_X = 8;
+    const int WEAPONS_Y = CeilDivision((int)WeaponType_COUNT - 1, WEAPONS_X);
+
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
+        BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+      },
+      .floating{
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+      } BF_CLAY_CUSTOM_END,
+    }) {
+      componentOverlay([]() {});
+
+      CLAY({.layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM}})
+      FOR_RANGE (int, y, WEAPONS_Y) {
+        CLAY({.layout{.childGap = GAP_SMALL}})
+        FOR_RANGE (int, x, WEAPONS_X) {
+          const int t = y * WEAPONS_X + x;
+          if (t >= (int)WeaponType_COUNT - 1)
+            continue;
+
+          const bool clicked = componentUniversalSlot({
+            .id     = CLAY_IDI("cheat_weapon", t),
+            .weapon = (WeaponType)(t + 1),
+          });
+
+          if (clicked) {
+            auto& w = g.run.state.weapons[g.run.cheatWeaponIndex];
+            w.type  = (WeaponType)(t + 1);
+
+            auto fb = fb_weapons->Get(t + 1);
+            if (w.tier < fb->min_tier_index())
+              w.tier = fb->min_tier_index();
+
+            g.run.cheatWeaponIndex = -1;
+            Save();
+          }
+        }
+      }
+    }
   }
 
   ASSERT_FALSE(currentContext);
