@@ -4948,8 +4948,7 @@ int GetCreatureIndexByID(int id) {  ///
   return index;
 }
 
-void EffectSpawnProjectilesOnHit(const Creature& creature,
-                                 int             weaponIndex) {  ///
+void EffectSpawnProjectilesOnHit(const Creature& creature, int weaponIndex) {  ///
   ASSERT(weaponIndex >= 0);
 
   const auto& weapon = g.run.state.weapons[weaponIndex];
@@ -4986,6 +4985,84 @@ void EffectSpawnProjectilesOnHit(const Creature& creature,
   );
 }
 
+bool ShouldExplode(int weaponIndex) {  ///
+  ASSERT(weaponIndex >= 0);
+  f32 chanceToExplode = 0;
+
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_EXPLODE,
+    weaponIndex,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { chanceToExplode += (f32)(EFFECT_X_INT * times) / 100.0f; }
+  );
+  return (GRAND.FRand() < chanceToExplode);
+}
+
+void MakeAOE(
+  CreatureType damager,
+  Vector2      pos,
+  f32          baseRadius,
+  int          baseDamage,
+  f32          critDamageMultiplier,
+  int          weaponCritChance,
+  f32          knockbackMeters,
+  int          weaponIndexOrMinus1
+) {  ///
+  const f32 sizeMultiplier = GetExplosionSizeMultiplier();
+
+  const auto fb_damager = glib->creatures()->Get(damager);
+
+  int creatureIndex = -1;
+  for (const auto& creature : g.run.creatures) {
+    creatureIndex++;
+
+    if (creature.diedAt.IsSet())
+      continue;
+
+    const auto fb_creature = glib->creatures()->Get(creature.type);
+    if (fb_damager->hostility_type() == fb_creature->hostility_type())
+      continue;
+
+    if (Vector2DistanceSqr(creature.pos, pos) > SQR(
+          baseRadius * sizeMultiplier + MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
+        ))
+      continue;
+
+    int damage = Round((f32)baseDamage * GetExplosionDamageMultiplier());
+    if (damager == CreatureType_PLAYER) {
+      // Player damages mob.
+      damage = ApplyPlayerStatDamageMultiplier(damage);
+      damage = Round(
+        damage * ((f32)g.run.state.stats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
+      );
+    }
+
+    TryApplyDamage({
+      .creatureIndex                      = creatureIndex,
+      .damage                             = damage,
+      .directionOrZero                    = Vector2DirectionOrRandom(pos, creature.pos),
+      .knockbackMeters                    = knockbackMeters,
+      .damagerCreatureType                = damager,
+      .critDamageMultiplier               = critDamageMultiplier,
+      .weaponCritChance                   = weaponCritChance,
+      .indexOfWeaponThatDidDamageOrMinus1 = weaponIndexOrMinus1,
+    });
+  }
+
+  MakeParticles({
+    .type                   = ParticleType_EXPLOSION,
+    .count                  = Ceil(SQR(baseRadius + 1) * sizeMultiplier * 3),
+    .pos                    = pos,
+    .velocity               = 0.4f,
+    .velocityAnglePlusMinus = PI32,
+    .initialOffset          = baseRadius * sizeMultiplier / 2.0f,
+    .initialOffsetPlusMinus = baseRadius * sizeMultiplier / 2.0f,
+    .initialOffsetEasing    = EaseOutQuart,
+    .scale                  = 1.3f,
+    .scalePlusMinus         = 0.15f,
+  });
+}
+
 bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
   auto& weapon = g.run.state.weapons[*weaponIndex];
 
@@ -5006,25 +5083,46 @@ bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
   if (ArrayContains(weapon.piercedCreatureIDs.base, weapon.piercedCount, creature.id))
     return continueCollisions;
 
+  const int  tierOffset = weapon.tier - fb->min_tier_index();
+  const auto damage     = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier);
+  const auto knockbackMeters      = fb->knockback_meters()->Get(tierOffset);
+  const auto critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset);
+  const auto weaponCritChance     = fb->crit_chance()->Get(tierOffset);
+
+  bool hit = false;
+
   if (weapon.piercedCount < weapon.piercedCreatureIDs.count) {
     weapon.piercedCreatureIDs[weapon.piercedCount++] = creature.id;
 
-    const int tierOffset = weapon.tier - fb->min_tier_index();
-
-    const bool hit = TryApplyDamage({
-      .creatureIndex   = creatureIndex,
-      .damage          = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier),
-      .directionOrZero = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
-      .knockbackMeters = fb->knockback_meters()->Get(tierOffset),
-      .damagerCreatureType                = CreatureType_PLAYER,
-      .critDamageMultiplier               = fb->crit_damage_multiplier()->Get(tierOffset),
-      .weaponCritChance                   = fb->crit_chance()->Get(tierOffset),
+    hit = TryApplyDamage({
+      .creatureIndex        = creatureIndex,
+      .damage               = damage,
+      .directionOrZero      = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos),
+      .knockbackMeters      = knockbackMeters,
+      .damagerCreatureType  = CreatureType_PLAYER,
+      .critDamageMultiplier = critDamageMultiplier,
+      .weaponCritChance     = weaponCritChance,
       .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndex,
     });
-
-    if (hit)
-      EffectSpawnProjectilesOnHit(creature, *weaponIndex);
   }
+
+  if (hit) {
+    EffectSpawnProjectilesOnHit(creature, *weaponIndex);
+
+    if (ShouldExplode(*weaponIndex)) {
+      MakeAOE(
+        CreatureType_PLAYER,
+        creature.pos,
+        glib->explosion_radius(),
+        damage,
+        critDamageMultiplier,
+        weaponCritChance,
+        knockbackMeters,
+        *weaponIndex
+      );
+    }
+  }
+
   return continueCollisions;
 }
 
@@ -10544,69 +10642,6 @@ f32 GetCreatureSpeed(const Creature& creature) {  ///
   return speed;
 }
 
-void MakeAOE(
-  CreatureType damager,
-  Vector2      pos,
-  f32          baseRadius,
-  int          baseDamage,
-  f32          critDamageMultiplier,
-  f32          knockbackMeters,
-  int          weaponIndexOrMinus1
-) {  ///
-  const f32 sizeMultiplier = GetExplosionSizeMultiplier();
-
-  const auto fb_damager = glib->creatures()->Get(damager);
-
-  int creatureIndex = -1;
-  for (const auto& creature : g.run.creatures) {
-    creatureIndex++;
-
-    if (creature.diedAt.IsSet())
-      continue;
-
-    const auto fb_creature = glib->creatures()->Get(creature.type);
-    if (fb_damager->hostility_type() == fb_creature->hostility_type())
-      continue;
-
-    if (Vector2DistanceSqr(creature.pos, pos) > SQR(
-          baseRadius * sizeMultiplier + MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
-        ))
-      continue;
-
-    int damage = Round((f32)baseDamage * GetExplosionDamageMultiplier());
-    if (damager == CreatureType_PLAYER) {
-      // Player damages mob.
-      damage = ApplyPlayerStatDamageMultiplier(damage);
-      damage = Round(
-        damage * ((f32)g.run.state.stats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
-      );
-    }
-
-    TryApplyDamage({
-      .creatureIndex                      = creatureIndex,
-      .damage                             = damage,
-      .directionOrZero                    = Vector2DirectionOrRandom(pos, creature.pos),
-      .knockbackMeters                    = knockbackMeters,
-      .damagerCreatureType                = damager,
-      .critDamageMultiplier               = critDamageMultiplier,
-      .indexOfWeaponThatDidDamageOrMinus1 = weaponIndexOrMinus1,
-    });
-  }
-
-  MakeParticles({
-    .type                   = ParticleType_EXPLOSION,
-    .count                  = Ceil(SQR(baseRadius + 1) * sizeMultiplier * 3),
-    .pos                    = pos,
-    .velocity               = 0.4f,
-    .velocityAnglePlusMinus = PI32,
-    .initialOffset          = baseRadius * sizeMultiplier / 2.0f,
-    .initialOffsetPlusMinus = baseRadius * sizeMultiplier / 2.0f,
-    .initialOffsetEasing    = EaseOutQuart,
-    .scale                  = 1.3f,
-    .scalePlusMinus         = 0.15f,
-  });
-}
-
 int GetMobDamage(CreatureType type) {  ///
   auto fb = glib->creatures()->Get(type);
   ASSERT(fb->hostility_type() == HostilityType_MOB);
@@ -12403,25 +12438,18 @@ void GameFixedUpdate() {
           }
         }
 
-        f32 chanceToExplode = 0;
-
-        IterateOverEffects(
-          EffectConditionType_X__CHANCE_TO_EXPLODE,
-          projectile.weaponIndexOrMinus1,
-          [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
-            BF_FORCE_INLINE_LAMBDA {
-              chanceToExplode += (f32)(EFFECT_X_INT * times) / 100.0f;
-            }
-        );
-
-        // Creating AOE particle.
-        if (createAoe && (GRAND.FRand() < chanceToExplode)) {
+        // AOE.
+        if (createAoe                                 //
+            && (projectile.weaponIndexOrMinus1 >= 0)  //
+            && ShouldExplode(projectile.weaponIndexOrMinus1))
+        {
           MakeAOE(
             projectile.ownerCreatureType,
             projectile.pos,
             glib->explosion_radius(),
             projectile.damage,
             projectile.critDamageMultiplier,
+            projectile.weaponCritChance,
             projectile.knockbackMeters,
             projectile.weaponIndexOrMinus1
           );
@@ -12461,6 +12489,7 @@ void GameFixedUpdate() {
             glib->landmine_explosion_radius(),
             damage,
             glib->landmine_crit_damage_multiplier(),
+            0,
             glib->landmine_knockback_meters(),
             -1
           );
@@ -13279,18 +13308,10 @@ void GameDraw() {
 
       Color flash = TRANSPARENT_WHITE;
 
-      f32 fade = 1;
-
-      {
-        auto willDieInSeconds
-          = (projectile.range - projectile.travelledDistance) / fb->speed();
-        if (willDieInSeconds < (f32)ANIMATION_0_FRAMES.value / (f32)_BF_LOGICAL_FPS_SCALE)
-        {
-          fade
-            *= Clamp01(lframe::FromSeconds(willDieInSeconds).Progress(ANIMATION_0_FRAMES)
-            );
-        }
-      }
+      const auto willDieIn = lframe::FromSeconds(
+        (projectile.range - projectile.travelledDistance) / fb->speed()
+      );
+      f32 fade = EaseOutQuad(Clamp01(willDieIn.Progress(ANIMATION_0_FRAMES)));
 
       if (fb->fades_in()) {
         auto p = createdOrBouncedAt.Elapsed().Progress(ANIMATION_0_FRAMES);
