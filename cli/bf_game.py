@@ -610,7 +610,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 @timing
 def process_images():
     # {  ###
-    SLOT_SIZE = (200, 200)
+    SLOT_SIZE = 200
     UI_SLOT_OR_FRAME_RADIUS = 30
 
     # `ui_itemslot`.
@@ -619,7 +619,7 @@ def process_images():
 
     # `ui_frame`.
     bf_image.rectangle(
-        (112, 112),
+        112,
         radius=UI_SLOT_OR_FRAME_RADIUS,
         width=10,
         outline=hex_to_rgb_ints("969696"),
@@ -675,21 +675,13 @@ def process_images():
 
     # `ui_controls_touch_base`.
     bf_image.outline(
-        bf_image.ellipse(
-            (480, 480),
-            width=24,
-            outline=TOUCH_COLOR,
-            fill=(0, 0, 0, 0),
-        ),
+        bf_image.ellipse(480, width=24, outline=TOUCH_COLOR, fill=(0, 0, 0, 0)),
         radius=TOUCH_OUTLINE,
     ).save(ART_TEXTURES_DIR / "ui_controls_touch_base.png")
 
     # `ui_controls_touch_handle`.
     bf_image.outline(
-        bf_image.ellipse(
-            (128, 128),
-            fill=TOUCH_COLOR,
-        ),
+        bf_image.ellipse(128, fill=TOUCH_COLOR),
         radius=TOUCH_OUTLINE,
     ).save(ART_TEXTURES_DIR / "ui_controls_touch_handle.png")
 
@@ -1076,14 +1068,14 @@ def process_images():
     ).save(ART_TEXTURES_DIR / "game_projectile_lightning.png")
 
     bf_image.outline(
-        bf_image.ellipse((80, 80), width=0, outline=(207, 200, 178)),
+        bf_image.ellipse(80),
         radius=28,
         color=(207, 200, 178),
         is_shadow=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_bullet.png")
 
     bf_image.outline(
-        bf_image.ellipse((80, 80), width=0, outline=(255, 123, 239)),
+        bf_image.ellipse(80),
         radius=28,
         color=(255, 123, 239),
         is_shadow=True,
