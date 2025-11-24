@@ -1,5 +1,6 @@
 WORKING SINCE 2025-09-07
 
+x a bit better bullet + laser projectiles
 x shotgun pellets count in weapon's card
 
 * lightning looks good
