@@ -12166,8 +12166,7 @@ void GameFixedUpdate() {
               if (fb->projectile_type()) {
                 targetToPos = ForecastWhereProjectileWillHitCreature(
                   targetToPos,
-                  closestCreature.controller.move
-                    * (closestCreature.speed * closestCreature.speedModifier),
+                  closestCreature.controller.move * GetCreatureSpeed(closestCreature),
                   targetFromPos,
                   fb_projectiles->Get(fb->projectile_type())->speed()
                 );
@@ -12228,6 +12227,14 @@ void GameFixedUpdate() {
               int toSpawn = 1;
               if (fb->projectile_count())
                 toSpawn = fb->projectile_count()->Get(tierOffset);
+
+              auto spawnPos = pos;
+              if (fb->offset()) {
+                spawnPos += Vector2Rotate(
+                  {fb->offset()->x(), 0}, Vector2AngleOrZero(weapon.targetDir)
+                );
+              }
+
               FOR_RANGE (int, projectileIndex, toSpawn) {
                 auto dir = weapon.targetDir;
                 if (fb->accuracy_plus_minus() != 0)
@@ -12237,7 +12244,7 @@ void GameFixedUpdate() {
                   .type                = projectileType,
                   .ownerCreatureType   = PLAYER_CREATURE.type,
                   .weaponIndexOrMinus1 = weaponIndex,
-                  .pos                 = pos,
+                  .pos                 = spawnPos,
                   .dir                 = dir,
                   .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
                   .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
@@ -13376,6 +13383,9 @@ void GameDraw() {
           scale.x  = (weapon.targetDir.x >= 0 ? 1 : -1);
           rotation = Vector2Angle(weapon.targetDir) + ((scale.x < 0) ? (f32)PI32 : 0.0f);
         }
+
+        if (fb->offset())
+          pos += Vector2Rotate({0, fb->offset()->y() * scale.y}, rotation);
 
         if (weapon.lastShotAt.IsSet() && fb->projectile_type()) {
           auto p = weapon.lastShotAt.Elapsed().Progress(ANIMATION_0_FRAMES);

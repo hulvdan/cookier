@@ -21,9 +21,14 @@ x RANGED_0_WAND projectile looks good, fireball the same color as fire
 x RANGED_1_FIREBALL projectile looks good
 x explosive cunai (RANGED_0_SHREDDER) взрыв один раз при нанесении урона
 x корректное предсказание для стрельбы (к примеру, по ореху)
+x fix forecast
+x projectile spawn pos x/y adjustment option in gamelib
+x offset ranged оружий по Y меняет положение оружия
+x offset ranged оружий по X - положение пули вдоль оружия
+x crossbow projectile spawn offset X!
 
-* projectile spawn pos x/y adjustment option in gamelib
-* crossbow projectile spawn offset X!
+* проставить у всех оружий корректную точку спавна projectile
+  ВЫПИСАТЬ ВСЕ ОРУЖИЯ
 *
 * MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
 * MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия

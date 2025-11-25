@@ -274,6 +274,12 @@ table Weapon {
     shooting_feedback_scale: float = 1;
     effects: [Effect];
     color: uint = 0xffffffff;
+
+    // Intended for ranged weapons.
+    // X - changes bullet's spawn pos X.
+    // Y - changes weapons's pos Y.
+    offset: Posf;
+
     icon_texture_id: int;
     texture_ids: [int];
 }
