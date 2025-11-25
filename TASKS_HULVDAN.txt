@@ -79,9 +79,10 @@ x creature damaged flashing should be eased
 x props small rotation
 x cheat: отдельный экран для выбора оружия / предмета
 x load/unload file unmapping allocator
-
-* фикс туррели и gamelib
+x фикс туррели и gamelib
   можно damage_scalings в один массив все пихнуть, а у себя хранить индекс
+
+* fix: debug build можно перекинуть архивом и запустить
 * жене распасать по билду
 
 

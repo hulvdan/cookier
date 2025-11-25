@@ -275,7 +275,7 @@ def genenum(
     # }
 
 
-_recursive_replace_transform_stack: list[str | int] = []
+_call_stack: list[str | int] = []
 
 
 def recursive_replace_transform(
@@ -293,15 +293,13 @@ def recursive_replace_transform(
         return None
 
     for key, value in gamelib_recursed.items():
-        _recursive_replace_transform_stack.append(key)
+        _call_stack.append(key)
 
         added_type = False
 
         if isinstance(value, dict):
             if "type" in value:
-                _recursive_replace_transform_stack.append(
-                    "(type={})".format(value["type"])
-                )
+                _call_stack.append("(type={})".format(value["type"]))
                 added_type = True
 
             more_errors = recursive_replace_transform(
@@ -329,7 +327,7 @@ def recursive_replace_transform(
                         errors.append(v)
             else:
                 assert isinstance(value, str), "key: {}, value: {}, stack: {}".format(
-                    key, value, _recursive_replace_transform_stack
+                    key, value, _call_stack
                 )
                 try:
                     gamelib_recursed[key] = codename_to_index[value]
@@ -343,13 +341,11 @@ def recursive_replace_transform(
                 if not isinstance(v, dict):
                     continue
 
-                _recursive_replace_transform_stack.append(i)
+                _call_stack.append(i)
 
                 added_type2 = False
                 if "type" in v:
-                    _recursive_replace_transform_stack.append(
-                        "(type={})".format(v["type"])
-                    )
+                    _call_stack.append("(type={})".format(v["type"]))
                     added_type2 = True
 
                 more_errors = recursive_replace_transform(
@@ -366,13 +362,13 @@ def recursive_replace_transform(
                         errors.extend(more_errors)
 
                 if added_type2:
-                    _recursive_replace_transform_stack.pop()
+                    _call_stack.pop()
 
-                _recursive_replace_transform_stack.pop()
+                _call_stack.pop()
 
         if added_type:
-            _recursive_replace_transform_stack.pop()
-        _recursive_replace_transform_stack.pop()
+            _call_stack.pop()
+        _call_stack.pop()
 
     if root and errors:
         message = "recursive_replace_transform({}, {}):\nNot found:\n{}".format(
@@ -381,6 +377,64 @@ def recursive_replace_transform(
         raise AssertionError(message)
 
     return errors
+    # }
+
+
+def recursive_flattenizer(
+    gamelib_recursed,
+    key_postfix_single: str,
+    key_postfix_list: str,
+    root_list_field: str,
+    *,
+    list_to_fill: list | None = None,
+) -> None:
+    # {  ###
+    if not isinstance(gamelib_recursed, dict):
+        return
+
+    should_emplace_list_in_gamelib = False
+    if list_to_fill is None:
+        assert root_list_field not in gamelib_recursed
+        should_emplace_list_in_gamelib = True
+        list_to_fill = [{}]
+
+    for key, value in gamelib_recursed.items():
+        if isinstance(key, str) and (
+            key.endswith((key_postfix_single, key_postfix_list))
+        ):
+            if key.endswith(key_postfix_list):
+                assert isinstance(value, list)
+                start = len(list_to_fill)
+                list_to_fill.extend(value)
+                gamelib_recursed[key] = {"start": start, "end": len(list_to_fill)}
+            else:
+                list_to_fill.append(gamelib_recursed[key])
+                gamelib_recursed[key] = len(list_to_fill) - 1
+
+        elif isinstance(value, dict):
+            recursive_flattenizer(
+                value,
+                key_postfix_single,
+                key_postfix_list,
+                root_list_field,
+                list_to_fill=list_to_fill,
+            )
+
+        elif isinstance(value, list):
+            for v in value:
+                if not isinstance(v, dict):
+                    continue
+
+                recursive_flattenizer(
+                    v,
+                    key_postfix_single,
+                    key_postfix_list,
+                    root_list_field,
+                    list_to_fill=list_to_fill,
+                )
+
+    if should_emplace_list_in_gamelib:
+        gamelib_recursed[root_list_field] = list_to_fill
     # }
 
 

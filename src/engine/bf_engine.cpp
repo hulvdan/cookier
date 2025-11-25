@@ -4091,4 +4091,29 @@ bool IsEmulatingMobile() {
   return BF_DEBUG && (ge.meta.device == DeviceType_MOBILE);
 }
 
+struct FBFlattened {  ///
+  int start = 0;
+  int end   = 0;  // Exclusive.
+
+  FBFlattened() = default;
+
+  FBFlattened(const BFGame::Flattened* flattened) {
+    start = flattened->start();
+    end   = flattened->end();
+  }
+
+  RangeIterator Iter() const {
+    return {start, end};
+  }
+};
+
+FBFlattened ToFBFlattened(const BFGame::Flattened* fb) {  ///
+  FBFlattened result{};
+  if (fb) {
+    result.start = fb->start();
+    result.end   = fb->end();
+  }
+  return result;
+}
+
 ///

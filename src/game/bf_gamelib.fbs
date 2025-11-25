@@ -81,7 +81,7 @@ table Stat {
 
 table DamageScaling {
     stat_type: int;
-    percents_per_tier: [int] (required);
+    percents_per_tier: [int];
 }
 
 table Hostility {
@@ -191,6 +191,11 @@ table EffectPlaceholderValue {
     floats: [float];
 }
 
+table Flattened {
+  start: int;
+  end: int;
+}
+
 table Effect {
     stat_type: int;
     // stat_type_2: int;
@@ -210,7 +215,7 @@ table Effect {
     item_type: int;
     weapon_type: int;
 
-    damage_scalings: [DamageScaling];
+    damage_scalings: Flattened;
 
     all_weapons: bool;
     only_this_weapon: bool;
@@ -235,10 +240,10 @@ table Weapon {
     name_locale: int;
     min_tier_index: int;
     base_damage: [int];
-    damage_scalings: [DamageScaling];
+    damage_scalings: Flattened;
     burning_damage: [int];
     burning_times: [int];
-    burning_damage_scalings: [DamageScaling];
+    burning_damage_scalings: Flattened;
     crit_damage_multiplier: [float];
     crit_chance: [int];
     knockback_meters: [float];
@@ -425,7 +430,7 @@ table GameLibrary {
     game_garden_texture_id: int;
     ui_controls_touch_handle_margin: int;
 
-    // NOTE: «Table Gen» works in Python `bf_game.py`.
+    // NOTE: "Table Gen" works in Python `bf_game.py`.
     // It goes through the field names in the following TABLE_GEN_START/END region.
     // Then makes code generation magic (enums in `bf_codegen.cpp`, recursive replaces)
     // TABLE_GEN_START
@@ -450,6 +455,8 @@ table GameLibrary {
     achievements: [Achievement] (required);
     hats: [Hat] (required);
     // TABLE_GEN_END
+
+    damage_scalings: [DamageScaling];
 
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;

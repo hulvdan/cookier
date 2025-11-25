@@ -442,36 +442,36 @@ struct Vector {
 };
 
 template <typename T>
-struct VectorIterator : public IteratorFacade<VectorIterator<T>> {
+struct VectorIterator : public IteratorFacade<VectorIterator<T>> {  ///
   VectorIterator() = delete;
   explicit VectorIterator(Vector<T>* container)
       : VectorIterator(container, 0) {}
   VectorIterator(Vector<T>* container, int current)
       : _container(container)
       , _current(current)  //
-  {                        ///
+  {
     ASSERT(container != nullptr);
   }
 
-  [[nodiscard]] VectorIterator begin() const {  ///
+  [[nodiscard]] VectorIterator begin() const {
     return {_container, _current};
   }
 
-  [[nodiscard]] VectorIterator end() const {  ///
+  [[nodiscard]] VectorIterator end() const {
     return {_container, _container->count};
   }
 
-  [[nodiscard]] T* Dereference() const {  ///
+  [[nodiscard]] T* Dereference() const {
     ASSERT(_current >= 0);
     ASSERT(_current < _container->count);
     return _container->base + _current;
   }
 
-  void Increment() {  ///
+  void Increment() {
     _current++;
   }
 
-  [[nodiscard]] bool EqualTo(const VectorIterator& o) const {  ///
+  [[nodiscard]] bool EqualTo(const VectorIterator& o) const {
     return _current == o._current;
   }
 
@@ -484,5 +484,42 @@ template <typename T>
 auto Iter(Vector<T>* container) {  ///
   return VectorIterator(container);
 }
+
+struct RangeIterator : public IteratorFacade<RangeIterator> {  ///
+  RangeIterator() = delete;
+  explicit RangeIterator(int end)
+      : RangeIterator(0, end) {}
+  RangeIterator(int current, int end)
+      : _current(current)
+      , _end(end) {
+    ASSERT(current <= end);
+  }
+
+  [[nodiscard]] RangeIterator begin() const {
+    return {_current, _end};
+  }
+
+  [[nodiscard]] RangeIterator end() const {
+    return {_end, _end};
+  }
+
+  [[nodiscard]] int Dereference() const {
+    ASSERT(_current >= 0);
+    ASSERT(_current < _end);
+    return _current;
+  }
+
+  void Increment() {
+    _current++;
+  }
+
+  [[nodiscard]] bool EqualTo(const RangeIterator& o) const {
+    return _current == o._current;
+  }
+
+  private:
+  int _current = {};
+  int _end     = {};
+};
 
 ///

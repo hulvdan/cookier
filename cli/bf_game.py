@@ -30,6 +30,7 @@ from bf_lib import (
     genenum,
     hex_to_rgb_floats,
     hex_to_rgb_ints,
+    recursive_flattenizer,
     recursive_replace_transform,
     replace_double_spaces,
     rgb_floats_to_hex,
@@ -609,6 +610,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     for v in transforms:
         for x in gamelib[v[0]]:
             x.pop("type", None)
+
+    recursive_flattenizer(gamelib, "damage_scaling", "damage_scalings", "damage_scalings")
 
 
 @command

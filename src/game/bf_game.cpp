@@ -31,9 +31,6 @@
 
 #include "box2d/box2d.h"
 
-using DamageScalingsFBT = const flatbuffers::
-  Vector<flatbuffers::Offset<BFGame::DamageScaling>, flatbuffers::uoffset_t>*;
-
 // Clay.
 // ============================================================ {  ///
 #define CLAY_IMPLEMENTATION
@@ -553,10 +550,11 @@ struct Creature {  ///
 
   union {
     struct {
-      FrameGame         startedShootingAt;
-      lframe            cooldown;
-      Vector2           aimDirection;
-      DamageScalingsFBT damageScalings;
+      FrameGame   startedShootingAt;
+      lframe      cooldown;
+      Vector2     aimDirection;
+      int         damage;
+      FBFlattened damageScalings;
     } turret;
 
     struct {
@@ -621,20 +619,21 @@ struct Creature {  ///
 };
 
 struct MakeCreatureData {  ///
-  CreatureType      type           = {};
-  Vector2           pos            = {};
-  DamageScalingsFBT damageScalings = {};
+  CreatureType type           = {};
+  Vector2      pos            = {};
+  int          damage         = {};
+  FBFlattened  damageScalings = {};
 };
 
 struct PreSpawn {  ///
-  PreSpawnType      type                    = {};
-  CreatureType      typeCreature            = {};
-  Vector2           pos                     = {};
-  FrameGame         createdAt               = {};
-  int               damage                  = {};
-  DamageScalingsFBT damageScalings          = {};
-  f32               rotation                = {};
-  lframe            garden_spawnsAppleEvery = {};
+  PreSpawnType type                    = {};
+  CreatureType typeCreature            = {};
+  Vector2      pos                     = {};
+  FrameGame    createdAt               = {};
+  int          damage                  = {};
+  FBFlattened  damageScalings          = {};
+  f32          rotation                = {};
+  lframe       garden_spawnsAppleEvery = {};
 };
 
 struct Projectile {  ///
@@ -933,10 +932,10 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
 }
 
 struct Landmine {  ///
-  Vector2           pos                 = {};
-  FrameGame         startedDetonationAt = {};
-  int               damage              = {};
-  DamageScalingsFBT damageScalings      = {};
+  Vector2     pos                 = {};
+  FrameGame   startedDetonationAt = {};
+  int         damage              = {};
+  FBFlattened damageScalings      = {};
 };
 
 struct Garden {  ///
@@ -1087,8 +1086,8 @@ struct Prop {  ///
 };
 
 struct TurretToSpawn {  ///
-  int               baseDamage     = {};
-  DamageScalingsFBT damageScalings = {};
+  int         baseDamage     = {};
+  FBFlattened damageScalings = {};
 };
 
 struct GameData {
@@ -1327,12 +1326,12 @@ struct GameData {
 } g = {};
 
 struct MakePreSpawnData {  ///
-  PreSpawnType      type                    = {};
-  CreatureType      typeCreature            = {};
-  Vector2           pos                     = {};
-  int               damage                  = {};
-  DamageScalingsFBT damageScalings          = {};
-  lframe            garden_spawnsAppleEvery = {};
+  PreSpawnType type                    = {};
+  CreatureType typeCreature            = {};
+  Vector2      pos                     = {};
+  int          damage                  = {};
+  FBFlattened  damageScalings          = {};
+  lframe       garden_spawnsAppleEvery = {};
 };
 
 void MakePreSpawn(MakePreSpawnData data) {  ///
@@ -1511,17 +1510,18 @@ void Save() {  ///
 
 // NOTE: Doesn't apply `StatType_DAMAGE`.
 int ApplyDamageScalings(
-  int  baseDamage,
-  int  tier,
-  auto fb_damageScalings,
-  int  times
+  int         baseDamage,
+  int         tier,
+  FBFlattened damageScalings,
+  int         times
 ) {  ///
-  if (fb_damageScalings) {
-    for (auto scaling : *fb_damageScalings) {
-      auto statValue = g.run.state.stats[scaling->stat_type()];
-      auto percent   = scaling->percents_per_tier()->Get(tier) * times;
-      baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
-    }
+  for (auto scalingIndex : damageScalings.Iter()) {
+    auto       fb_scaling = glib->damage_scalings()->Get(scalingIndex);
+    const auto stat       = (StatType)fb_scaling->stat_type();
+    ASSERT(stat);
+    auto statValue = g.run.state.stats[stat];
+    auto percent   = fb_scaling->percents_per_tier()->Get(tier) * times;
+    baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
   }
   return baseDamage;
 }
@@ -2190,13 +2190,14 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
 }
 
 struct MakeLandmineData {  ///
-  Vector2           pos            = {};
-  int               damage         = {};
-  DamageScalingsFBT damageScalings = {};
+  Vector2     pos            = {};
+  int         damage         = {};
+  FBFlattened damageScalings = {};
 };
 
 void MakeLandmine(MakeLandmineData data) {  ///
-  ASSERT(data.damageScalings);
+  ASSERT(data.damageScalings.start);
+  ASSERT(data.damageScalings.start < data.damageScalings.end);
   Landmine v{
     .pos            = data.pos,
     .damage         = data.damage,
@@ -3713,6 +3714,7 @@ int MakeCreature(MakeCreatureData data) {  ///
   case CreatureType_TURRET: {
     creature.DataTurret() = {
       .aimDirection   = Vector2Rotate({1, 0}, GRAND.Angle()),
+      .damage         = data.damage,
       .damageScalings = data.damageScalings,
     };
   } break;
@@ -5433,6 +5435,7 @@ void DoUI() {
   const auto fb_builds              = glib->builds();
   const auto fb_effectConditions    = glib->effect_conditions();
   const auto fb_creatures           = glib->creatures();
+  const auto fb_damageScalings      = glib->damage_scalings();
 
   static int _disallowTouchNumber = {};
 
@@ -6416,8 +6419,9 @@ void DoUI() {
 
               int totalScalings = 0;
               if (scalings) {
-                for (auto s : *scalings) {
-                  const int v = s->percents_per_tier()->Get(tierOffset);
+                for (const int s : ToFBFlattened(scalings).Iter()) {
+                  const int v
+                    = fb_damageScalings->Get(s)->percents_per_tier()->Get(tierOffset);
                   if (v)
                     totalScalings++;
                 }
@@ -6435,8 +6439,10 @@ void DoUI() {
               }
 
               if (scalings) {
-                for (auto s : *scalings) {
-                  int v = s->percents_per_tier()->Get(tierOffset);
+                for (auto s : ToFBFlattened(scalings).Iter()) {
+                  auto fb_scaling = fb_damageScalings->Get(s);
+
+                  int v = fb_scaling->percents_per_tier()->Get(tierOffset);
                   if (fb_placeholder->multiplied_by_times())
                     v *= count;
                   if (fb_placeholder->divided_by_times())
@@ -6446,7 +6452,9 @@ void DoUI() {
                     continue;
 
                   PlaceholdString(TextFormat("%d%%", v));
-                  PlaceholdImage(fb_stats->Get(s->stat_type())->small_icon_texture_id());
+                  PlaceholdImage(
+                    fb_stats->Get(fb_scaling->stat_type())->small_icon_texture_id()
+                  );
                   totalScalings--;
 
                   if (totalScalings > 0) {
@@ -6890,17 +6898,22 @@ void DoUI() {
               }
 
               // Scalings.
-              const auto fb_scalings = fb->damage_scalings();
-              if (fb_scalings && fb_scalings->size()) {
+              const auto fb_scalingIndices = fb->damage_scalings();
+              if (fb_scalingIndices
+                  && (fb_scalingIndices->start() < fb_scalingIndices->end()))
+              {
                 BF_CLAY_TEXT(" (");
-                FOR_RANGE (int, scalingIndex, fb_scalings->size()) {
-                  const auto fb_scaling = fb_scalings->Get(scalingIndex);
+
+                const auto flattened = ToFBFlattened(fb_scalingIndices);
+
+                for (const int scalingIndex : flattened.Iter()) {
+                  const auto fb_scaling = fb_damageScalings->Get(scalingIndex);
                   const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
                   BF_CLAY_TEXT(
                     TextFormat("%d%%", fb_scaling->percents_per_tier()->Get(tierOffset))
                   );
                   BF_CLAY_IMAGE({.texID = fb_stat->small_icon_texture_id()});
-                  if (scalingIndex < fb_scalings->size() - 1)
+                  if (scalingIndex < flattened.end - 1)
                     BF_CLAY_TEXT(" + ");
                 }
                 BF_CLAY_TEXT(")");
@@ -11517,7 +11530,7 @@ void GameFixedUpdate() {
               const auto shotFrame
                 = ApplyStructureAttackSpeedToDuration(MOB_TURRET_SHOOT_FRAME);
               if (e == shotFrame) {
-                int damage = ApplyDamageScalings(0, 0, data.damageScalings, 1);
+                int damage = ApplyDamageScalings(data.damage, 0, data.damageScalings, 1);
                 damage     = ApplyPlayerStatDamageMultiplier(damage);
 
                 MakeProjectile({
@@ -11714,6 +11727,7 @@ void GameFixedUpdate() {
               MakeCreature({
                 .type           = x.typeCreature,
                 .pos            = x.pos,
+                .damage         = x.damage,
                 .damageScalings = x.damageScalings,
               });
             }
