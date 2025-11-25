@@ -4397,6 +4397,16 @@ weapons: # {  ###
         placeholders:
           - ints: 100 100 100
         only_this_weapon: true
+    particle_emitter:
+      particle_type: FIRE
+      offset:
+        x: 0.0
+        y: 0.0
+      offset_plus_minus:
+        x: 0.13
+        y: 0.13
+      interval_seconds: 0.01
+      fade: 0.5
     price: 140
   - type: RANGED_1_FLAMETHROWER
     base_damage: 1 1 1
@@ -4640,9 +4650,23 @@ projectiles: # {  ###
       - game_projectile_needle
   - type: FIREBALL # то же самое, что BULLET
     speed: 12
-    color: 0xc02931ff
+    # color: 0xc02931ff
+    color: 0xdc9824ff
+    scales_in: 1.9
+    collider_radius: 0.2
+    fades_in: true
+    # squashes_in: true
     texture_ids:
-      - game_projectile_bullet
+      - game_projectile_fireball
+    particle_emitter:
+      particle_type: FIRE
+      offset:
+        x: 0
+        y: 0
+      offset_plus_minus:
+        x: 0.05
+        y: 0.05
+      interval_seconds: 0.01
   - type: EGG
     speed: 14
     scales_in: 2
