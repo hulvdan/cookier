@@ -20,13 +20,14 @@ x engine: reloading gamelib also reloads atlas
 x RANGED_0_WAND projectile looks good, fireball the same color as fire
 x RANGED_1_FIREBALL projectile looks good
 x explosive cunai (RANGED_0_SHREDDER) взрыв один раз при нанесении урона
+x корректное предсказание для стрельбы (к примеру, по ореху)
 
+* projectile spawn pos x/y adjustment option in gamelib
+* crossbow projectile spawn offset X!
+*
 * MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
 * MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
 * MELEE_3_EXCALIBUR спавнит projectile + меньше урон
-* projectile spawn pos x/y adjustment option in gamelib
-* crossbow projectile spawn offset X!
-* RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in gamelib + weapon's card
 * «this weapon» change to «». if no «this weapon» -> show «all weapons»
 * нужно что-то сделать с «пулевыми» оружиями (наример, RANGED_3_CHAIN_GUN)
   стрельба выглядит хреново
@@ -204,6 +205,7 @@ x explosive cunai (RANGED_0_SHREDDER) взрыв один раз при нане
 *
 * RELEASED!
 =======================
+* RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in weapon's card
 * melee weapons should have fixed swing time
   (MELEE_0_GHOST_AXE открывашка)
 * cheat: weapon on change remove effect -> apply new weapon effects

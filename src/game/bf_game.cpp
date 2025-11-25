@@ -12160,8 +12160,20 @@ void GameFixedUpdate() {
               Vector2 targetFromPos = PLAYER_CREATURE.pos;
               if (fb->projectile_type())
                 targetFromPos += GetPlayerWeaponOffset(weaponIndex);
-              const auto dir
-                = Vector2DirectionOrRandom(targetFromPos, closestCreature.pos);
+
+              auto targetToPos = closestCreature.pos;
+
+              if (fb->projectile_type()) {
+                targetToPos = ForecastWhereProjectileWillHitCreature(
+                  targetToPos,
+                  closestCreature.controller.move
+                    * (closestCreature.speed * closestCreature.speedModifier),
+                  targetFromPos,
+                  fb_projectiles->Get(fb->projectile_type())->speed()
+                );
+              }
+
+              const auto dir = Vector2DirectionOrRandom(targetFromPos, targetToPos);
 
               // Only ranged weapons continue tracking target during shooting.
               if (fb->projectile_type())
