@@ -41,8 +41,8 @@ constexpr f32 CAMERA_MAX_WORLD_Y
 // 900 range = can shoot to corner using slingshot.
 // Half of our screen is {16 meters, 9 meters}.
 // meter/range = sqrt(9**2 + 16**2) / 900 = 0.0204f
-// Using higher value that "feels" good.
-constexpr f32 RANGE_TO_METER_SCALE = 0.04f;
+// Using value that "feels" good.
+constexpr f32 RANGE_TO_METER_SCALE = 0.02f;
 
 #define SQR(v) ((v) * (v))
 
@@ -336,5 +336,7 @@ VIEW_FROM_ARRAY_DANGER(KEYS_MOVE_DOWN);
 constexpr int SHOP_SELLING_ITEMS = 4;
 const int     DEFAULT_BUYING_INDICES_[SHOP_SELLING_ITEMS]{1, 2, 3, 0};
 VIEW_FROM_ARRAY_DANGER(DEFAULT_BUYING_INDICES);
+
+constexpr f32 KNOCKBACK_SCALE = 1 / 7.0f;
 
 ///

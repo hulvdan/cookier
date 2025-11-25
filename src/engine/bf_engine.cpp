@@ -4108,8 +4108,14 @@ struct FBFlattened {  ///
   FBFlattened() = default;
 
   FBFlattened(const BFGame::Flattened* flattened) {
-    start = flattened->start();
-    end   = flattened->end();
+    if (flattened) {
+      start = flattened->start();
+      end   = flattened->end();
+    }
+    else {
+      start = 0;
+      end   = 0;
+    }
   }
 
   RangeIterator Iter() const {
