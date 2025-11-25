@@ -3,11 +3,23 @@ WORKING SINCE 2025-09-07
 x load/unload file unmapping allocator
 x фикс туррели и gamelib
   можно damage_scalings в один массив все пихнуть, а у себя хранить индекс
+x fix: debug build можно перекинуть архивом и запустить
+x debug build по-умолчанию такая же длительность волны
+- barrel don't show +0 stats
+x smg тоже должно отображать, как и дробовик колво выстрелов
+x better weapon wave damage calculation
+x scale weapon knockback
+x better magical bullet
+x bigger cactus needles
+x egg squash fade scale
+x rocket looks good
+x exploded projectile explodes near enemy
+x NUCLEAR_MILK bigger explosion size
+x у мины большой радиус по умолчанию
 
-* fix: debug build можно перекинуть архивом и запустить
-* egg squash fade scale
-* rocket looks good
+* cheat: weapon on change remove effect -> apply new weapon effects
 * engine: reloading gamelib also reloads atlas
+* starting waves have less enemies
 * RANGED_0_WAND projectile looks good
 * RANGED_1_FIREBALL projectile looks good
 * melee weapons should have fixed swing time
@@ -24,7 +36,6 @@ x фикс туррели и gamelib
   стрельба выглядит хреново
 * impl weapon burning_damage, burning_times, burning_damage_scalings
 *
-* scale weapon knockback
 *
 * cheat: hovering on player's item + wheel -> changes count
 * cheat: hovering on player's item + CTRL + wheel -> changes item
@@ -103,6 +114,9 @@ x фикс туррели и gamelib
 *
 * effect works: xp gain DURING THE NEXT WAVE
 *
+* garden spawn easing
+* landmine spawn easing
+* landmine death easing
 * polish: turret easing
 * polish: garden easing
 * polish: mob cooravie shooting easing

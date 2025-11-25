@@ -70,7 +70,7 @@ EFFECT_STAT__FOR_EVERY_EMPTY_WEAPON_SLOT;{MODIFIER} {STAT} за каждый с�
 EFFECT_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING;{X} шанс вылечить {Y} здоровья после уворота;{X} chance to heal {Y} HP upon dodging;
 EFFECT_X__CHANCE_TO_HEAL__Y__HP_UPON__PICKUPABLE;{PICKUPABLE} при поднятии имеет {X} шанс вылечить {Y} здоровья;{X} chance to heal {Y} HP upon picking up a {PICKUPABLE};
 EFFECT_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE;{PICKUPABLE} при поднятии имеет {X} шанс нанести {Y} урона случайному врагу;{X} chance to deal {Y} damage to a random enemy upon picking up a {PICKUPABLE};
-EFFECT_X__PERCENT_MORE_COINS_FROM_RECYCLING;{X} печенег при переработке;{X} cookiens from recycling;
+EFFECT_X__PERCENT_MORE_COINS_FROM_RECYCLING;{X} печенег при продаже;{X} cookiens from selling;
 EFFECT_CRITS_PIERCE_UP_TO__X__TIMES;Криты дополнительно простреливают (до {X});Crits pierce up to {X} times;
 EFFECT_CRITS_BOUNCE_UP_TO__X__TIMES;Криты дополнительно отскакивают (до {X});Crits bounce up to {X} times;
 EFFECT_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE;Попадание по врагу создаёт пули ({X}), что наносят {Y} урона;Hitting an enemy makes {X} projectiles dealing {Y} damage;

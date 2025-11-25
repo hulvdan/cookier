@@ -236,6 +236,14 @@ table Ailment {
     duration_seconds: float;
 }
 
+table ParticleEmitter {
+    particle_type: int;
+    offset: Posf;
+    offset_plus_minus: Posf;
+    interval_seconds: float;
+    fade: float = 1;
+}
+
 table Weapon {
     name_locale: int;
     min_tier_index: int;
@@ -260,10 +268,7 @@ table Weapon {
     range_meters: [float];
     price: int;
     melee_collider_height_px: float;
-    emit_particle_type: int;
-    emit_particle_offset: Posf;
-    emit_particle_offset_plus_minus: Posf;
-    emit_particle_seconds: float;
+    particle_emitter: ParticleEmitter;
     life_steal_percents: [float];
     shooting_feedback_scale: float = 1;
     effects: [Effect];
@@ -282,12 +287,14 @@ table Projectile {
     ailment_value: int;
     collider_radius: float = 0.4;
     aoe_on_travel_end: bool = true;
+    particle_emitter: ParticleEmitter;
     fades_in: bool;
     scales_in: float = 1;
     squashes_in: bool;
     disable_rotation: bool;
     scale_x: float = 1;
     scale_y: float = 1;
+    explosion_size_scale: float = 1;
     texture_ids: [int];
 }
 
@@ -460,7 +467,7 @@ table GameLibrary {
 
     landmine_crit_damage_multiplier: float = 1.5;
     landmine_knockback_meters: float = 0;
-    landmine_explosion_radius: float = 1.5;
+    landmine_explosion_radius: float = 3;
 
     floor_segments: [FloorSegment] (required);
     floor_corners: [FloorSegment] (required);

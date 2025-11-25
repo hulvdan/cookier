@@ -1077,7 +1077,7 @@ def process_images():
             )
         ),
         radius=16,
-        color=(0, 0, 0),
+        color=(255, 255, 255),
         is_shadow=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_magical_bullet.png")
 

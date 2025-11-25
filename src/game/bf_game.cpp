@@ -735,13 +735,12 @@ lframe GetWaveDuration(int waveIndex) {  ///
                              60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
   VIEW_FROM_ARRAY_DANGER(durations);
   int seconds = durations[MIN(durations.count - 1, waveIndex)];
-#if BF_DEBUG
-  seconds /= 3;
+  if (BF_SHORT_WAVE_DURATION)
+    seconds /= 3;
   if (BF_VERY_SHORT_WAVE_DURATION)
     seconds = 2;
   if (BF_VERY_LONG_WAVE_DURATION)
     seconds = 9999;
-#endif
   return lframe::Unscaled(seconds * FIXED_FPS);
 }
 
@@ -2801,6 +2800,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         += (f32)MIN(data.damage, creature.health) / (f32)creature.health;
     }
 
+    int damaged = MAX(0, MIN(creature.health, data.damage));
+
     creature.health -= data.damage;
 
     int effectDroppedCoins = 0;
@@ -2842,7 +2843,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
     if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
       g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
-        += data.damage;
+        += damaged;
     }
 
     bool ailmentCanBeApplied = true;
@@ -3668,7 +3669,8 @@ int MakeCreature(MakeCreatureData data) {  ///
 
   f32 hurtboxRadius = PLAYER_HURTBOX_RADIUS;
   if (data.type != CreatureType_PLAYER)
-    hurtboxRadius = MOB_HURTBOX_RADIUS * fb->hurtbox_scale();
+    hurtboxRadius = MOB_HURTBOX_RADIUS;
+  hurtboxRadius *= fb->hurtbox_scale();
 
   int health = fb->health()
                + Round(
@@ -5098,7 +5100,7 @@ bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
 
   const int  tierOffset = weapon.tier - fb->min_tier_index();
   const auto damage     = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier);
-  const auto knockbackMeters      = fb->knockback_meters()->Get(tierOffset);
+  const auto knockbackMeters = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE;
   const auto critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset);
   const auto weaponCritChance     = fb->crit_chance()->Get(tierOffset);
 
@@ -6877,13 +6879,13 @@ void DoUI() {
             fb_stats->Get(StatType_DAMAGE)->name_locale(),
             [&]() BF_FORCE_INLINE_LAMBDA {
               LAMBDA (void, showPelletsCount, (Color color)) {
-                if (fb->projectile_count()
-                    && (fb->projectile_count()->Get(tierOffset) > 1)) {
-                  BF_CLAY_TEXT(
-                    TextFormat("x%d", fb->projectile_count()->Get(tierOffset)),
-                    {.color = color}
-                  );
-                }
+                int projectileCount = 1;
+                if (fb->projectile_spawn_frame_factors())
+                  projectileCount *= fb->projectile_spawn_frame_factors()->size();
+                if (fb->projectile_count())
+                  projectileCount *= fb->projectile_count()->Get(tierOffset);
+                if (projectileCount > 1)
+                  BF_CLAY_TEXT(TextFormat("x%d", projectileCount), {.color = color});
               };
 
               const int baseDamage = fb->base_damage()->Get(tierOffset);
@@ -6950,7 +6952,7 @@ void DoUI() {
 
           // Knockback.
           {
-            f32 value = fb->knockback_meters()->Get(tierOffset);
+            f32 value = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE;
             if (data.affectedByGame)
               value *= (f32)(100 + g.run.state.stats[StatType_KNOCKBACK]) / 100.0f;
             if (value > 0) {
@@ -10296,21 +10298,24 @@ void DoUI() {
           if (t >= (int)WeaponType_COUNT - 1)
             continue;
 
-          const bool clicked = componentUniversalSlot({
-            .id     = CLAY_IDI("cheat_weapon", t),
-            .weapon = (WeaponType)(t + 1),
-          });
+          CLAY({}) {
+            const bool clicked = componentUniversalSlot({
+              .id     = CLAY_IDI("cheat_weapon", t),
+              .weapon = (WeaponType)(t + 1),
+            });
 
-          if (clicked) {
-            auto& w = g.run.state.weapons[g.run.cheatWeaponIndex];
-            w.type  = (WeaponType)(t + 1);
+            if (Clay_Hovered()) {
+              auto& w = g.run.state.weapons[g.run.cheatWeaponIndex];
+              w.type  = (WeaponType)(t + 1);
 
-            auto fb = fb_weapons->Get(t + 1);
-            if (w.tier < fb->min_tier_index())
-              w.tier = fb->min_tier_index();
-
-            g.run.cheatWeaponIndex = -1;
-            Save();
+              auto fb = fb_weapons->Get(t + 1);
+              if (w.tier < fb->min_tier_index())
+                w.tier = fb->min_tier_index();
+            }
+            if (clicked) {
+              g.run.cheatWeaponIndex = -1;
+              Save();
+            }
           }
         }
       }
@@ -10757,6 +10762,35 @@ int GetMobDamage(CreatureType type) {  ///
            fb->contact_damage_increase_per_wave()
            * (f32)(g.run.state.waveIndex + 1 - fb->appearing_wave_number())
          );
+}
+
+struct EmitParticlesData {  ///
+  const BFGame::ParticleEmitter* fb_emitter     = {};
+  Vector2                        pos            = {};
+  Vector2                        offsetScale    = {1, 1};
+  f32                            offsetRotation = 0;
+};
+
+void EmitParticles(EmitParticlesData data) {  ///
+  if (!data.fb_emitter)
+    return;
+
+  const auto interval = lframe::FromSeconds(data.fb_emitter->interval_seconds()).value;
+  if ((interval > 0) && ((ge.meta.frameGame % interval) != 0))
+    return;
+
+  const auto off = ToVector2(data.fb_emitter->offset()) * data.offsetScale;
+  data.pos += Vector2Rotate(off, data.offsetRotation);
+  data.pos += ToVector2(data.fb_emitter->offset_plus_minus())
+              * Vector2(GRAND.FRand11(), GRAND.FRand11());
+
+  MakeParticles({
+    .type           = (ParticleType)data.fb_emitter->particle_type(),
+    .pos            = data.pos,
+    .scale          = 1.0f,
+    .scalePlusMinus = 0.1f,
+    .color          = Fade(WHITE, data.fb_emitter->fade()),
+  });
 }
 
 void GameFixedUpdate() {
@@ -12196,9 +12230,10 @@ void GameFixedUpdate() {
                   .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
                   .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
                   .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
-                  .knockbackMeters      = fb->knockback_meters()->Get(tierOffset),
-                  .pierce               = pierce,
-                  .bounce               = bounce,
+                  .knockbackMeters
+                  = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE,
+                  .pierce = pierce,
+                  .bounce = bounce,
                 });
               }
 
@@ -12334,7 +12369,8 @@ void GameFixedUpdate() {
         projectile.travelledDistance += distance;
         projectile.pos += projectile.dir * distance;
 
-        bool createAoe = false;
+        bool    createAoe = false;
+        Vector2 aoePos    = projectile.pos;
 
         // Removing projectiles that travelled far enough.
         if (projectile.travelledDistance >= projectile.range) {
@@ -12376,7 +12412,10 @@ void GameFixedUpdate() {
             continue;
 
           const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
-          const auto radius  = fb->collider_radius();
+
+          const auto radius
+            = fb->collider_radius() + fb_creature->hurtbox_scale() * MOB_HURTBOX_RADIUS;
+
           if (distSqr < SQR(radius)) {
             Vector2 knockbackDirection{};
 
@@ -12540,6 +12579,7 @@ void GameFixedUpdate() {
               else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
                 *g.run.projectilesToRemove.Add() = projectileIndex;
                 createAoe                        = true;
+                aoePos = Vector2Lerp(aoePos, creature.pos, 0.5f);
               }
             }
           }
@@ -12552,14 +12592,23 @@ void GameFixedUpdate() {
         {
           MakeAOE(
             projectile.ownerCreatureType,
-            projectile.pos,
-            glib->explosion_radius(),
+            aoePos,
+            glib->explosion_radius() * fb->explosion_size_scale(),
             projectile.damage,
             projectile.critDamageMultiplier,
             projectile.weaponCritChance,
             projectile.knockbackMeters,
             projectile.weaponIndexOrMinus1
           );
+        }
+
+        // Emitting particles.
+        if (fb->particle_emitter()) {
+          EmitParticles({
+            .fb_emitter     = fb->particle_emitter(),
+            .pos            = projectile.pos,
+            .offsetRotation = Vector2Angle(projectile.dir),
+          });
         }
       }
     }
@@ -12790,33 +12839,26 @@ void GameFixedUpdate() {
     }
 
     // Player's weapons create particles.
-    FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {
+    FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {  ///
       const auto& weapon = g.run.state.weapons[weaponIndex];
       if (!weapon.type)
         continue;
 
       const auto fb = fb_weapons->Get(weapon.type);
-      if (!fb->emit_particle_type())
+
+      auto fb_emitter = fb->particle_emitter();
+      if (!fb_emitter)
         continue;
 
-      auto pos = GetWeaponPos(weaponIndex);
-      auto off = ToVector2(fb->emit_particle_offset());
+      Vector2 offsetScale{1, 1};
       if ((weapon.targetDir == Vector2Zero()) && (PLAYER_CREATURE.dir.x < 0))
-        off.x *= -1;
-      pos += Vector2Rotate(off, Vector2AngleOrZero(weapon.targetDir));
-      pos += ToVector2(fb->emit_particle_offset_plus_minus())
-             * Vector2(GRAND.FRand11(), GRAND.FRand11());
+        offsetScale.x *= -1;
 
-      const auto interval = lframe::FromSeconds(fb->emit_particle_seconds()).value;
-      if ((interval > 0) && ((ge.meta.frameGame % interval) != 0))
-        continue;
-
-      MakeParticles({
-        .type           = (ParticleType)fb->emit_particle_type(),
-        .pos            = pos,
-        .scale          = 1.0f,
-        .scalePlusMinus = 0.1f,
-        .color          = Fade(WHITE, 0.5f),
+      EmitParticles({
+        .fb_emitter     = fb_emitter,
+        .pos            = GetWeaponPos(weaponIndex),
+        .offsetScale    = offsetScale,
+        .offsetRotation = Vector2AngleOrZero(weapon.targetDir),
       });
     }
 
