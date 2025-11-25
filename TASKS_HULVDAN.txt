@@ -19,8 +19,8 @@ x у мины большой радиус по умолчанию
 x engine: reloading gamelib also reloads atlas
 x RANGED_0_WAND projectile looks good, fireball the same color as fire
 x RANGED_1_FIREBALL projectile looks good
+x explosive cunai (RANGED_0_SHREDDER) взрыв один раз при нанесении урона
 
-* explosive cunai (RANGED_0_SHREDDER) взрыв один раз при нанесении урона
 * MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
 * MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
 * MELEE_3_EXCALIBUR спавнит projectile + меньше урон
