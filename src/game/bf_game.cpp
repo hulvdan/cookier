@@ -11648,8 +11648,12 @@ void GameFixedUpdate() {
         int  spawnEnemiesEvery = FIXED_FPS;
         auto multiplier        = 1 + (f32)g.run.state.stats[StatType_ENEMIES] / 100.0f;
         multiplier             = MAX(0.001f, multiplier);
-        spawnEnemiesEvery      = Round((f32)spawnEnemiesEvery / multiplier);
-        spawnEnemiesEvery      = MAX(1, spawnEnemiesEvery);
+        constexpr int WAVE_MAX_ENEMIES = 8;
+        multiplier *= Lerp(
+          0.4f, 1.25f, MIN(1, (f32)g.run.state.waveIndex / (f32)WAVE_MAX_ENEMIES)
+        );
+        spawnEnemiesEvery = Round((f32)spawnEnemiesEvery / multiplier);
+        spawnEnemiesEvery = MAX(1, spawnEnemiesEvery);
 
         if (CanSpawnMoreCreatures()) {
           if (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0) {
