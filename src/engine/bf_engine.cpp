@@ -3805,6 +3805,10 @@ SDL_AppResult EngineUpdate() {  ///
       UnloadFile(glibFile);
       glibFile = LoadFile(GAMELIB_DEBUG_PATH, nullptr);
       glib     = BFGame::GetGameLibrary(glibFile);
+      _UnloadTexture(&ge.meta.atlas);
+      ge.meta.atlas = _LoadTexture(
+        "../../../resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
+      );
       LOGI("Gamelib reloaded!");
     }
 #  endif

@@ -16,10 +16,8 @@ x rocket looks good
 x exploded projectile explodes near enemy
 x NUCLEAR_MILK bigger explosion size
 x у мины большой радиус по умолчанию
+x engine: reloading gamelib also reloads atlas
 
-* cheat: weapon on change remove effect -> apply new weapon effects
-* engine: reloading gamelib also reloads atlas
-* starting waves have less enemies
 * RANGED_0_WAND projectile looks good
 * RANGED_1_FIREBALL projectile looks good
 * melee weapons should have fixed swing time
@@ -36,6 +34,7 @@ x у мины большой радиус по умолчанию
   стрельба выглядит хреново
 * impl weapon burning_damage, burning_times, burning_damage_scalings
 *
+* starting waves have less enemies
 *
 * cheat: hovering on player's item + wheel -> changes count
 * cheat: hovering on player's item + CTRL + wheel -> changes item
@@ -210,6 +209,7 @@ x у мины большой радиус по умолчанию
 *
 * RELEASED!
 =======================
+* cheat: weapon on change remove effect -> apply new weapon effects
 * арбалет анимация
 * engine: in debug build: don't compress atlas
 * containers shouldn't use begin / end.
