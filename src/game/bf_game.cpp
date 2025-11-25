@@ -1137,7 +1137,7 @@ struct GameData {
   struct Player {  ///
     DifficultyType difficulty = DifficultyType_D0;
     BuildType      build      = BuildType_DEFAULT;
-    WeaponType     weapon     = WeaponType_MELEE_0_FIST;
+    WeaponType     weapon     = {};
     BiomeType      biome      = BiomeType_INVALID;
 
     Array<Achievement, AchievementType_COUNT> achievements = {};
@@ -4065,6 +4065,12 @@ void RunInit() {
   g.run.camera.pos = GetCameraTargetPos();
 
   {
+    if (!g.player.weapon) {
+      g.player.weapon = (WeaponType)glib->builds()
+                          ->Get(g.player.build)
+                          ->starting_weapon_types()
+                          ->Get(0);
+    }
     auto& weapon = g.run.state.weapons[0];
     weapon.type  = g.player.weapon;
     weapon.tier  = 0;
