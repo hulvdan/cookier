@@ -3752,10 +3752,8 @@ weapons: # {  ###
     range_meters: 5.8 5.8 5.8 5.8
     knockback_meters: 0 0 0 0
     effects:
-      - effectcondition_type: STAT__WHEN_IDLE
-        stat_type: SPEED
+      - stat_type: SPEED
         value: 2 3 4 5
-        only_this_weapon: true
       - effectcondition_type: STAT__WHEN_IDLE
         stat_type: DAMAGE
         value: -8 -12 -16 -20

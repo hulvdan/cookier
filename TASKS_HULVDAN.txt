@@ -26,7 +26,14 @@ x projectile spawn pos x/y adjustment option in gamelib
 x offset ranged оружий по Y меняет положение оружия
 x offset ranged оружий по X - положение пули вдоль оружия
 x crossbow projectile spawn offset X!
+x starting waves have less enemies
 
+* lightning is too yellow
+* in weapon card show bullet piercing debuff
+* gamelib can't set piercing debugg bonus is no piercing is specified
+* melee weapons should have fixed swing time
+  (MELEE_0_GHOST_AXE открывашка)
+*
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
 *
@@ -37,8 +44,6 @@ x crossbow projectile spawn offset X!
 * нужно что-то сделать с «пулевыми» оружиями (наример, RANGED_3_CHAIN_GUN)
   стрельба выглядит хреново
 * impl weapon burning_damage, burning_times, burning_damage_scalings
-*
-* starting waves have less enemies
 *
 * cheat: hovering on player's item + wheel -> changes count
 * cheat: hovering on player's item + CTRL + wheel -> changes item
@@ -211,8 +216,6 @@ x crossbow projectile spawn offset X!
 * RELEASED!
 =======================
 * RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in weapon's card
-* melee weapons should have fixed swing time
-  (MELEE_0_GHOST_AXE открывашка)
 * cheat: weapon on change remove effect -> apply new weapon effects
 * арбалет анимация
 * engine: in debug build: don't compress atlas
