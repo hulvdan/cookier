@@ -5055,6 +5055,8 @@ builds: # {  ###
     hat_type: GOPNIK
     hat_color: 0xcec7b1ff
     starting_weapon_types:
+      - RANGED_0_PISTOL
+      - RANGED_0_SMG
       - MELEE_0_FIST
     effects:
       - stat_type: HP
@@ -5066,20 +5068,12 @@ builds: # {  ###
       - effectcondition_type: STAT__WHEN_IDLE
         stat_type: DAMAGE
         value: 20
-      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        weapon_type: RANGED_0_PISTOL
-        placeholders:
-          - ints: 0
-      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        item_type: TURRET
-        placeholders:
-          - ints: 0
-            # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
-            # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
   - type: NINJA
     hat_type: BEANIE
     hat_color: 0x208cb2ff
     starting_weapon_types:
+      - RANGED_0_PISTOL
+      - RANGED_0_SMG
       - MELEE_0_FIST
     effects:
       - stat_type: DAMAGE
@@ -5093,6 +5087,8 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - RANGED_0_PISTOL
+      - RANGED_0_SMG
       - MELEE_0_FIST
     effects:
       - stat_type: HP
@@ -5110,6 +5106,16 @@ builds: # {  ###
       - effectcondition_type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
         placeholders:
           - ints: 8
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        weapon_type: RANGED_0_PISTOL
+        placeholders:
+          - ints: 0
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        item_type: TURRET
+        placeholders:
+          - ints: 0
+            # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
+            # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
 # }
 
 achievements: # {  ###

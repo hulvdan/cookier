@@ -2593,9 +2593,11 @@ LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 sizeFsh) {  ///
   );
 }
 
-void* LoadFile(const char* filepath, size_t* outSize = nullptr) {  ///
+void* TryLoadFile(const char* filepath, size_t* outSize = nullptr) {  ///
   size_t size{};
   auto   data = SDL_LoadFile(filepath, &size);
+  if (!data)
+    return nullptr;
   if (outSize)
     *outSize = size;
 #if BF_DEBUG
@@ -2608,7 +2610,14 @@ void* LoadFile(const char* filepath, size_t* outSize = nullptr) {  ///
 #endif
 }
 
+void* LoadFile(const char* filepath, size_t* outSize = nullptr) {  ///
+  auto data = TryLoadFile(filepath, outSize);
+  ASSERT(data);
+  return data;
+}
+
 void UnloadFile(void* data) {  ///
+  ASSERT(data);
 #if BF_DEBUG
   BF_FREE(data);
 #else
@@ -2898,15 +2907,16 @@ void InitEngine() {  ///
   auto glibPath = "resources/gamelib.bin";
 #ifdef SDL_PLATFORM_WINDOWS
 #  if BF_DEBUG
-  glibPath            = GAMELIB_DEBUG_PATH;
-  auto glibPeekResult = PeekFiletime(glibPath);
-  ASSERT(glibPeekResult.success);
-  glibTime = glibPeekResult.filetime;
+  auto glibPeekResult = PeekFiletime(GAMELIB_DEBUG_PATH);
+  if (glibPeekResult.success)
+    glibTime = glibPeekResult.filetime;
+  glibFile = TryLoadFile(GAMELIB_DEBUG_PATH);
 #  endif
+  if (!glibFile)
+    glibFile = LoadFile(glibPath, nullptr);
 #endif
 
-  glibFile = LoadFile(glibPath, nullptr);
-  glib     = BFGame::GetGameLibrary(glibFile);
+  glib = BFGame::GetGameLibrary(glibFile);
 
   ge.meta.atlas = _LoadTexture(
     "resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
@@ -3790,7 +3800,7 @@ SDL_AppResult EngineUpdate() {  ///
 #ifdef SDL_PLATFORM_WINDOWS
 #  if BF_DEBUG
     auto glibPeekResult = PeekFiletime(GAMELIB_DEBUG_PATH);
-    if (glibPeekResult.filetime != glibTime) {
+    if (glibPeekResult.success && (glibPeekResult.filetime != glibTime)) {
       glibTime = glibPeekResult.filetime;
       UnloadFile(glibFile);
       glibFile = LoadFile(GAMELIB_DEBUG_PATH, nullptr);
@@ -4049,7 +4059,7 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
 #if defined(SDL_PLATFORM_DESKTOP)
 
     // Desktop loads immediately.
-    ge.meta.savedata = (const u8*)LoadFile("save.bin", nullptr);
+    ge.meta.savedata = (const u8*)TryLoadFile("save.bin", nullptr);
     ge.meta.loading  = SavedataLoadingType_JUST_FISNIHED;
 
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
