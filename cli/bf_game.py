@@ -1102,6 +1102,13 @@ def process_images():
         is_shadow=True,
     ).save(ART_TEXTURES_DIR / "game_projectile_laser.png")
 
+    bf_image.outline(
+        bf_image.ellipse(80, fill=(255, 255, 255)),
+        radius=28,
+        color=(255, 255, 255),
+        is_shadow=True,
+    ).save(ART_TEXTURES_DIR / "game_projectile_fireball.png")
+
     # Spritesheetifying fire.
     for f in ART_TEXTURES_DIR.glob("game_particle_fire_*.png"):
         f.unlink()

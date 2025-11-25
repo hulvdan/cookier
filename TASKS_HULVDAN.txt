@@ -14,18 +14,16 @@ x bigger cactus needles
 x egg squash fade scale
 x rocket looks good
 x exploded projectile explodes near enemy
-x NUCLEAR_MILK bigger explosion size
+x NUCLEAR_MILK bigger explosion size (milk annihilator set bonus explosion radius)
 x у мины большой радиус по умолчанию
 x engine: reloading gamelib also reloads atlas
+x RANGED_0_WAND projectile looks good, fireball the same color as fire
+x RANGED_1_FIREBALL projectile looks good
 
-* RANGED_0_WAND projectile looks good
-* RANGED_1_FIREBALL projectile looks good
-* melee weapons should have fixed swing time
-  (MELEE_0_GHOST_AXE открывашка)
+* explosive cunai (RANGED_0_SHREDDER) взрыв один раз при нанесении урона
 * MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
 * MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
 * MELEE_3_EXCALIBUR спавнит projectile + меньше урон
-* RANGED_0_SHREDDER взрыв один раз при нанесении урона
 * projectile spawn pos x/y adjustment option in gamelib
 * crossbow projectile spawn offset X!
 * RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in gamelib + weapon's card
@@ -38,9 +36,6 @@ x engine: reloading gamelib also reloads atlas
 *
 * cheat: hovering on player's item + wheel -> changes count
 * cheat: hovering on player's item + CTRL + wheel -> changes item
-*
-* milk annihilator set bonus explosion radius
-* apprentice's wand projectile looks good
 *
 * mob projectiles are always on top
 *
@@ -209,6 +204,8 @@ x engine: reloading gamelib also reloads atlas
 *
 * RELEASED!
 =======================
+* melee weapons should have fixed swing time
+  (MELEE_0_GHOST_AXE открывашка)
 * cheat: weapon on change remove effect -> apply new weapon effects
 * арбалет анимация
 * engine: in debug build: don't compress atlas
