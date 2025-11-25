@@ -661,6 +661,7 @@ struct Projectile {  ///
   f32                               range                     = {};
   f32                               travelledDistance         = 0;
   bool                              dontSpawnProjectilesOnHit = false;
+  bool                              exploded                  = false;
 };
 
 int ProjectileCmp(const Projectile* v1, const Projectile* v2) {  ///
@@ -12578,18 +12579,21 @@ void GameFixedUpdate() {
               }
               else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
                 *g.run.projectilesToRemove.Add() = projectileIndex;
-                createAoe                        = true;
                 aoePos = Vector2Lerp(aoePos, creature.pos, 0.5f);
               }
+
+              createAoe = true;
             }
           }
         }
 
         // AOE.
         if (createAoe                                 //
+            && !projectile.exploded                   //
             && (projectile.weaponIndexOrMinus1 >= 0)  //
             && ShouldExplode(projectile.weaponIndexOrMinus1))
         {
+          projectile.exploded = true;
           MakeAOE(
             projectile.ownerCreatureType,
             aoePos,
