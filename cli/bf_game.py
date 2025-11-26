@@ -25,6 +25,7 @@ from bf_lib import (
     ART_TEXTURES_DIR,
     GAME_DIR,
     SRC_DIR,
+    check_duplicates,
     game_settings,
     gamelib_processor,
     genenum,
@@ -44,14 +45,6 @@ from PIL import Image
 game_settings.itch_target = "hulvdan/cookier"
 game_settings.languages = ["russian", "english"]
 game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
-
-
-def check_duplicates(values: list) -> None:
-    # {  ###
-    for i in range(len(values)):
-        for k in range(i + 1, len(values)):
-            assert values[i] != values[k], f"Found duplicate value: {values[i]}"
-    # }
 
 
 def field_to_list(container, field: str, ensure_length: int | None = None) -> None:
