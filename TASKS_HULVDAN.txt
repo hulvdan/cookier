@@ -12,83 +12,32 @@ x show melee weapon collider gizmos
 x correct melee weapon collider end size
 x added small phantom range for melee weapons
 x melee weapon collider widths
+x weapon icons
+x impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
+x рисовка: улучшить: torch
+x рисовка: улучшить: fire orb
+x рисовка: улучшить: предмет мусорное ведро
+x рисовка: улучшить: предмет соты
 
-* weapon icon: MELEE_0_CACTI_CLUB
-* weapon icon: MELEE_0_CHOPPER
-* weapon icon: MELEE_0_CLAW
-* weapon icon: MELEE_0_FIST
-* weapon icon: MELEE_0_GHOST_AXE
-* weapon icon: MELEE_0_GHOST_FLINT
-* weapon icon: MELEE_0_JOUSTING_LANCE
-* weapon icon: MELEE_0_LIGHTNING_SHIV
-* weapon icon: MELEE_0_PLANK
-* weapon icon: MELEE_0_PRUNER
-* weapon icon: MELEE_0_QUATERSTAFF
-* weapon icon: MELEE_0_ROCK
-* weapon icon: MELEE_0_SCREWDRIVER
-* weapon icon: MELEE_0_SHARP_TOOTH
-* weapon icon: MELEE_0_SPIKY_SHIELD
-* weapon icon: MELEE_0_STICK
-* weapon icon: MELEE_0_TORCH
-* weapon icon: MELEE_0_WRENCH
-* weapon icon: MELEE_1_CIRCULAR_SAW
-* weapon icon: MELEE_1_FLAMING_BRASS_KNUCKLES
-* weapon icon: MELEE_1_HAMMER
-* weapon icon: MELEE_1_SWORD
-* weapon icon: MELEE_2_PLASMA_SLEDGE
-* weapon icon: MELEE_2_POWER_FIST
-* weapon icon: MELEE_2_THUNDER_SWORD
-* weapon icon: MELEE_3_DEX_TROYER
-* weapon icon: MELEE_3_EXCALIBUR
-* weapon icon: MELEE_3_SCYTHE
-* weapon icon: RANGED_0_CROSSBOW
-* weapon icon: RANGED_0_DOUBLE_BARREL_SHOTGUN
-* weapon icon: RANGED_0_GHOST_SCEPTER
-* weapon icon: RANGED_0_ICICLE
-* weapon icon: RANGED_0_JAVELIN
-* weapon icon: RANGED_0_LASER_GUN
-* weapon icon: RANGED_0_PISTOL
-* weapon icon: RANGED_0_SHREDDER
-* weapon icon: RANGED_0_SHURIKEN
-* weapon icon: RANGED_0_SLINGSHOT
-* weapon icon: RANGED_0_SMG
-* weapon icon: RANGED_0_WAND
-* weapon icon: RANGED_1_FIREBALL
-* weapon icon: RANGED_1_FLAMETHROWER
-* weapon icon: RANGED_1_POTATO_THROWER
-* weapon icon: RANGED_1_ROCKER_LAUNCHER
-* weapon icon: RANGED_2_MINIGUN
-* weapon icon: RANGED_2_NUCLEAR_LAUNCHER
-* weapon icon: RANGED_2_SNIPER_GUN
-* weapon icon: RANGED_3_CHAIN_GUN
-* weapon icon: RANGED_3_GATLING_LASER
+* cooravie patrols
+*
+* проставить у всех оружий корректную точку спавна projectile
+  ВЫПИСАТЬ ВСЕ ОРУЖИЯ
 *
 * баланс количество сундуков
 * баланс количество chester-ов
 *
 * engine: show transient buffer arena
 *
-* cooravie patrols
-*
 * lance -% damage PROPERTY (NOT STAT)
 *
-* проставить у всех оружий корректную точку спавна projectile
-  ВЫПИСАТЬ ВСЕ ОРУЖИЯ
-*
-* MELEE_3_EXCALIBUR спавнит projectile + меньше урон
 * «this weapon» change to «». if no «this weapon» -> show «all weapons»
 * нужно что-то сделать с «пулевыми» оружиями (наример, RANGED_3_CHAIN_GUN)
   стрельба выглядит хреново
 * impl weapon burning_damage, burning_times, burning_damage_scalings
 *
-* cheat: hovering on player's item + wheel -> changes count
-* cheat: hovering on player's item + CTRL + wheel -> changes item
-*
 * mob projectiles are always on top
 *
-* correct ranged weapons projectile spawn y positions
-*
-* impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
 * impl stat KNOCKBACK
 * impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
@@ -103,52 +52,17 @@ x melee weapon collider widths
 *
 * fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
 *
-*
-* projectiles
-*
-* torch fire particles
-* crossbow animation
-*
-* нарисовать иконки оружий
-*
-* реализовать оружия (с доработками)
-*
-* жене билд
-*
-* impl: fb_weapon->projectiles_count()
-* fix: projectile_spawn_frame_factors
 * fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
-*
-*
-*
-* weapons
 *
 * 10 билдов
 * подредачить баффы сложностей
 *
-* prod: оружия
 * prod: билды
 * prod: сложности
 *
 * на старте рана не стартовать волну, пока не выйдешь за пределы области
   * скрыть hud
   * спрайты для разных стилей управления (* клава, * мышь, * пальцы)
-*
-*
-* Серёге по похудению
-  - ego depletion -> идёшь на поводу у стимулов (What's so great about self-control)
-  - оптимальные циферки (2 овоща, 1 фрукт, бобовые, цельнозерновые)
-  - разные цвета в тарелке
-*
-* письмо Гере про результат работы, дворников и т.п. + РБ
-*
-* написать статейку про трекинг сна, желания работать над игрой, ego depletion.
-  Чтобы её можно было скинуть Лене, Серёге, Гере, Ане
-*
-* fire particles
-* zap particles
-* sprites: weapons
-* sprites: projectiles
 *
 * effect works: xp gain DURING THE NEXT WAVE
 *
@@ -166,15 +80,6 @@ x melee weapon collider widths
 * polish:
 * polish:
 *
-* рисовка: улучшить: предмет мусорное ведро
-* рисовка: улучшить: предмет соты
-* рисовка: улучшить: torch
-* рисовка: улучшить: fire orb
-* рисовка: улучшить:
-* рисовка: улучшить:
-* рисовка: улучшить:
-*
-* better burning
 *
 * can open achievements on picked up item / upgrades / shop / end screens
 *
@@ -248,6 +153,10 @@ x melee weapon collider widths
 *
 * RELEASED!
 =======================
+* crossbow animation
+* cheat: hovering on player's item + wheel -> changes count
+* cheat: hovering on player's item + CTRL + wheel -> changes item
+* MELEE_3_EXCALIBUR спавнит projectile + меньше урон
 * lightning is too yellow
 * show weapon `explosion_size_scale` in card
 * RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in weapon's card
