@@ -193,6 +193,14 @@ def batched(list_: list[T], n: int) -> Iterator[list[T]]:
         yield list_[i : i + n]
 
 
+def check_duplicates(values: list) -> None:
+    # {  ###
+    for i in range(len(values)):
+        for k in range(i + 1, len(values)):
+            assert values[i] != values[k], f"Found duplicate value: {values[i]}"
+    # }
+
+
 # Codegen helpers.
 # ============================================================
 def generate_binary_file_header(genline, source_path: Path, variable_name: str) -> None:
