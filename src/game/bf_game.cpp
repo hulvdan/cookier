@@ -12395,7 +12395,8 @@ void GameFixedUpdate() {
 
               const auto texID = fb->texture_ids()->Get(0);
               Vector2    colliderSize{
-                (f32)glib->original_texture_sizes()->Get(texID)->x(),
+                (f32)glib->original_texture_sizes()->Get(texID)->x() / 2.0f
+                  + MELEE_WEAPON_COLLIDER_PHANTOM_RANGE_METERS,
                 (f32)fb->melee_collider_height_px(),
               };
               colliderSize *= ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;

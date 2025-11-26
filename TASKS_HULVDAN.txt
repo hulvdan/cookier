@@ -9,10 +9,63 @@ x MELEE_3_DEX_TROYER нож грома прописать отскок пуль 
 x electrified gum projectile targets random achievable enemy
 x fire can't bounce!
 x show melee weapon collider gizmos
+x correct melee weapon collider end size
+x added small phantom range for melee weapons
+x melee weapon collider widths
 
-* adjust melee weapon collider end size
-* melee weapon colliders
-* weapon icons
+* weapon icon: MELEE_0_CACTI_CLUB
+* weapon icon: MELEE_0_CHOPPER
+* weapon icon: MELEE_0_CLAW
+* weapon icon: MELEE_0_FIST
+* weapon icon: MELEE_0_GHOST_AXE
+* weapon icon: MELEE_0_GHOST_FLINT
+* weapon icon: MELEE_0_JOUSTING_LANCE
+* weapon icon: MELEE_0_LIGHTNING_SHIV
+* weapon icon: MELEE_0_PLANK
+* weapon icon: MELEE_0_PRUNER
+* weapon icon: MELEE_0_QUATERSTAFF
+* weapon icon: MELEE_0_ROCK
+* weapon icon: MELEE_0_SCREWDRIVER
+* weapon icon: MELEE_0_SHARP_TOOTH
+* weapon icon: MELEE_0_SPIKY_SHIELD
+* weapon icon: MELEE_0_STICK
+* weapon icon: MELEE_0_TORCH
+* weapon icon: MELEE_0_WRENCH
+* weapon icon: MELEE_1_CIRCULAR_SAW
+* weapon icon: MELEE_1_FLAMING_BRASS_KNUCKLES
+* weapon icon: MELEE_1_HAMMER
+* weapon icon: MELEE_1_SWORD
+* weapon icon: MELEE_2_PLASMA_SLEDGE
+* weapon icon: MELEE_2_POWER_FIST
+* weapon icon: MELEE_2_THUNDER_SWORD
+* weapon icon: MELEE_3_DEX_TROYER
+* weapon icon: MELEE_3_EXCALIBUR
+* weapon icon: MELEE_3_SCYTHE
+* weapon icon: RANGED_0_CROSSBOW
+* weapon icon: RANGED_0_DOUBLE_BARREL_SHOTGUN
+* weapon icon: RANGED_0_GHOST_SCEPTER
+* weapon icon: RANGED_0_ICICLE
+* weapon icon: RANGED_0_JAVELIN
+* weapon icon: RANGED_0_LASER_GUN
+* weapon icon: RANGED_0_PISTOL
+* weapon icon: RANGED_0_SHREDDER
+* weapon icon: RANGED_0_SHURIKEN
+* weapon icon: RANGED_0_SLINGSHOT
+* weapon icon: RANGED_0_SMG
+* weapon icon: RANGED_0_WAND
+* weapon icon: RANGED_1_FIREBALL
+* weapon icon: RANGED_1_FLAMETHROWER
+* weapon icon: RANGED_1_POTATO_THROWER
+* weapon icon: RANGED_1_ROCKER_LAUNCHER
+* weapon icon: RANGED_2_MINIGUN
+* weapon icon: RANGED_2_NUCLEAR_LAUNCHER
+* weapon icon: RANGED_2_SNIPER_GUN
+* weapon icon: RANGED_3_CHAIN_GUN
+* weapon icon: RANGED_3_GATLING_LASER
+*
+* engine: show transient buffer arena
+*
+* cooravie patrols
 *
 * lance -% damage PROPERTY (NOT STAT)
 *

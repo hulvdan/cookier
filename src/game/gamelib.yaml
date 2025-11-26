@@ -3031,609 +3031,6 @@ weapons: # {  ###
   #     It doesn't account for projectile's size.
   #
   - type: INVALID
-  # - type: SWORD
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 6 9 12 20
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 80 80 80 80
-  #   crit_damage_multiplier: 1.5
-  #   price: 122
-  #   cooldown_frames: 20
-  #   shooting_duration_frames: 10
-  #   range_meters: 3
-  #   knockback_meters: 5
-  #   life_steal_percents: 1.5 1.5 1.5 1.5
-  #   melee_collider_height_px: 76
-  #   icon_texture_id: game_weapon_sword
-  #   texture_ids:
-  #     - game_weapon_sword
-  #     # effects:
-  #     # - stat_type: HP
-  #     #   value: 1 2 3 4
-  #     #   value_multiplier: 1 1 1 1
-  #     #   value_multiplier: 0.5 0.5 0.5 0.5
-  #     #
-  #     # - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-  #     #   placeholders:
-  #     #     - ints: 20 20 20 20
-  #     #     - ints: 70 65 60 55
-  #     #
-  #     # - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
-  #     #   weaponproperty_type: DAMAGE
-  #     #   value: 4 5 6 8
-  #     #
-  #     # - effectcondition_type: STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
-  #     #   stat_type: DAMAGE
-  #     #   value: 3 5 7 10
-  #     #
-  #     # - effectcondition_type: PROPERTY__WHEN_WALKING
-  #     #   weaponproperty_type: DAMAGE
-  #     #   value: 100 100 100 100
-  #     #
-  #     # - effectcondition_type: STAT__EVERY__X__WALKED_METERS
-  #     #   stat_type: DAMAGE
-  #     #   value: 100 100 100 100
-  #     #   placeholders:
-  #     #     - ints: 4 3 2 1
-  #     #
-  #     # - effectcondition_type: STAT__EVERY__X__SECONDS
-  #     #   stat_type: DAMAGE
-  #     #   value: 100 100 100 100
-  #     #   placeholders:
-  #     #     - floats: 4 3 2 1
-  #     #
-  #     # - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
-  #     #   value: 100 100 100 100
-  #     #   damage_scalings:
-  #     #     - stat_type: DAMAGE_RANGED
-  #     #       percents_per_tier: 50 60 70 80
-  #     #   projectile_type: ARROW
-  #     #   projectile_range_meters: 5
-  #     #   placeholders:
-  #     #     - ints: 3 4 5 6
-  #     #     - ints: 0 0 0 0
-  #     #
-  #     # - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
-  #     #   only_other_weapons: true
-  #     #   placeholders:
-  #     #     - floats: 3 2.5 2 1.2
-  #     #     - ints: 5 5 5 5
-  #     #
-  #     # - effectcondition_type: HITTING_SPAWNS_X_PROJECTILES_THAT_BOUNCE_Y_TIMES_PIERCE_Z_TIMES_DEALING_W_DAMAGE
-  #     #   placeholders:
-  #     #     - ints: 3 4 5 6
-  #     #     - ints: 1 2 3 4
-  #     #     - ints: 0 0 1 2
-  #     #   damage_scalings:
-  #     #     - stat_type: DAMAGE_MELEE
-  #     #       percents_per_tier: 25 50 75 100
-  #     #     - stat_type: DAMAGE_RANGED
-  #     #       percents_per_tier: 50 60 70 80
-  #     #
-  # - type: GUN
-  #   min_tier_index: 0
-  #   base_damage: 6 9 12 20
-  #   weaponkind_type: RANGED
-  #   projectile_type: BULLET
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_RANGED
-  #       percents_per_tier: 85 90 95 100
-  #   price: 130
-  #   knockback_meters: 1
-  #   cooldown_frames: 10
-  #   shooting_duration_frames: 20
-  #   projectile_spawn_frames: 6
-  #   range_meters: 5
-  #   icon_texture_id: game_weapon_gun
-  #   texture_ids:
-  #     - game_weapon_gun
-  #     # effects:
-  #     #   - effectcondition_type: X__PERCENT_MORE_COINS_FROM_RECYCLING
-  #     #     placeholders:
-  #     #       - ints: 400 800 1200 1600
-  #     #
-  #     # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
-  #     #   all_weapons: true
-  #     #   placeholders:
-  #     #     - ints: 1 2 3 4
-  #     #
-  #     # - effectcondition_type: CRITS_PIERCE_UP_TO__X__TIMES
-  #     #   placeholders:
-  #     #     - ints: 1 2 3 4
-  #     #
-  #     # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
-  #     #   only_this_weapon: true
-  #     #   placeholders:
-  #     #     - ints: 1 2 3 4
-  #     #
-  #     # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
-  #     #   only_other_weapons: true
-  #     #   placeholders:
-  #     #     - ints: 1 2 3 4
-  #     #
-  #     # - effectcondition_type: CRITS_BOUNCE_UP_TO__X__TIMES
-  #     #   # all_weapons: true
-  #     #   # only_this_weapon: true
-  #     #   only_other_weapons: true
-  #     #   placeholders:
-  #     #     - ints: 1 2 3 4
-  #     #
-  #     # - effectcondition_type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
-  #     #   only_other_weapons: true
-  #     #   placeholders:
-  #     #     - ints: 3 3 3 3
-  #     #     - ints: 100 100 100 100
-  #     #
-  #     # - effectcondition_type: EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
-  #     #   only_this_weapon: true
-  #     #   placeholders:
-  #     #     - ints: 3 3 3 3
-  #     #     - ints: 100 100 100 100
-  #     #
-  #     # - effectcondition_type: STAT__EVERY__X__KILLED_ENEMIES
-  #     #   stat_type: ATTACK_SPEED
-  #     #   value: 1 1 1 1
-  #     #   only_this_weapon: true
-  #     #   placeholders:
-  #     #     - ints: 3 3 3 3
-  #     #
-  #     #   - effectcondition_type: MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY
-  #     #     weaponproperty_type: DAMAGE
-  #     #     value: 4 6 8 10
-  #     #
-  #     #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE_Y_PERCENT_HP
-  #     #     placeholders:
-  #     #       - ints: 20 20 20 20
-  #     #       - ints: 70 65 60 55
-  #     #
-  #     #   - effectcondition_type: X_PERCENT_MORE_DAMAGE_TO_ENEMIES_BELOW_Y_PERCENT_HP
-  #     #     placeholders:
-  #     #       - ints: 20 20 20 20
-  #     #       - ints: 75 80 85 90
-  #     #
-  #     #   - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
-  #     #     placeholders:
-  #     #       - floats: 2.0 1.6 1.2 0.8
-  #     #       - ints: 20 20 20 20
-  #     #
-  #     # - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
-  #     #   projectile_type: JAVELIN
-  #     #   projectile_range_meters: 5
-  #     #   placeholders:
-  #     #     - ints: 3 4 5 6
-  #     #     - ints: 0 0 0 0
-  #     #   damage_scalings:
-  #     #     - stat_type: DAMAGE_RANGED
-  #     #       percents_per_tier: 50 60 70 80
-  #     #
-  #     # - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
-  #     #   only_other_weapons: true
-  #     #   placeholders:
-  #     #     - floats: 3 3 3 3
-  #     #     - ints: 3 4 5 6
-  # - type: SMG
-  #   min_tier_index: 0
-  #   base_damage: 3 6 9 12
-  #   weaponkind_type: RANGED
-  #   projectile_type: BULLET_EXPLOSIVE
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_RANGED
-  #       percents_per_tier: 85 90 95 100
-  #   price: 130
-  #   knockback_meters: 1
-  #   cooldown_frames: 15
-  #   shooting_duration_frames: 15
-  #   projectile_spawn_frames: 2 14
-  #   range_meters: 7
-  #   icon_texture_id: game_weapon_smg
-  #   texture_ids:
-  #     - game_weapon_smg
-  #   effects:
-  #     - effectcondition_type: X__CHANCE_TO_EXPLODE
-  #       only_this_weapon: true
-  #       placeholders:
-  #         - ints: 100 100 100 100
-  #           #   - effectcondition_type: STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT
-  #           #     stat_type: DAMAGE
-  #           #     value: 1 1 1 1
-  #           #   - effectcondition_type: STAT__FOR_EVERY_EMPTY_WEAPON_SLOT
-  #           #     stat_type: DAMAGE
-  #           #     value: 1 1 1 1
-  #           #   - effectcondition_type: STAT__EVERY__X__SECONDS
-  #           #     stat_type: DAMAGE
-  #           #     value: 1 1 1 1
-  #           #     placeholders:
-  #           #       - floats: 29 19 14 11
-  #           #   - effectcondition_type: STAT__EVERY__X__WALKED_METERS
-  #           #     stat_type: DAMAGE
-  #           #     value: 1 1 1 1
-  #           #     placeholders:
-  #           #       - ints: 50 45 38 30
-  #           #   - effectcondition_type: STAT__EVERY__X__IDLE_SECONDS
-  #           #     stat_type: DAMAGE
-  #           #     value: 1 1 1 1
-  #           #     placeholders:
-  #           #       - floats: 7 6 5 4
-  #           #   - effectcondition_type: PROPERTY__WHEN_IDLE
-  #           #     weaponproperty_type: DAMAGE
-  #           #     value: 4 6 8 10
-  # - type: BOW
-  #   min_tier_index: 0
-  #   weaponkind_type: RANGED
-  #   base_damage: 6 9 12 20
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_RANGED
-  #       percents_per_tier: 70 85 100 115
-  #   knockback_meters: 2
-  #   cooldown_frames: 16
-  #   projectile_type: ARROW
-  #   projectile_spawn_frames: 4
-  #   projectile_pierce: 1
-  #   range_meters: 8
-  #   price: 140
-  #   shooting_duration_frames: 10
-  #   icon_texture_id: ui_weapon_bow
-  #   texture_ids:
-  #     - game_weapon_bow
-  #     # effects:
-  #     #   - effectcondition_type: PROPERTY__WHEN_WALKING
-  #     #     weaponproperty_type: DAMAGE
-  #     #     value: 4 6 8 10
-  #     #   - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS
-  #     #     placeholders:
-  #     #       - floats: 15 14 12 10
-  #     #   - effectcondition_type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
-  #     #     placeholders:
-  #     #       - floats: 12 9 6 3
-  #     #       - ints: 3 4 5 6
-  #     #     damage_scalings:
-  #     #       - stat_type: ENGINEERING
-  #     #         percents_per_tier: 100 125 150 200
-  #     #   - effectcondition_type: HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X
-  #     #EVERY__X__USE_CHANGES_CRIT_CHANCE_BY__Y
-  #     #   - effectcondition_type: BURNING_SPREADS_TO_ADDITIONAL__X__ENEMIES
-  #     #     placeholders:
-  #     #       - ints: 1 2 3 4
-  # - type: SLINGSHOT
-  #   min_tier_index: 0
-  #   weaponkind_type: RANGED
-  #   base_damage: 6 9 12 20
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_RANGED
-  #       percents_per_tier: 70 85 100 115
-  #   knockback_meters: 0.5
-  #   cooldown_frames: 20
-  #   projectile_type: STONE
-  #   projectile_spawn_frames: 7
-  #   projectile_bounce: 2
-  #   range_meters: 12
-  #   price: 120
-  #   shooting_duration_frames: 12
-  #   effects:
-  #     # - effectcondition_type: MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY
-  #     #   weaponproperty_type: DAMAGE
-  #     #   value: 4 6 8 10
-  #     # - effectcondition_type: DROP__X__COINS_ON_HIT_WITH__Y__CHANCE
-  #     #   placeholders:
-  #     #     - ints: 10 30 60 120
-  #     #     - ints: 3 3 3 3
-  #     # - effectcondition_type: DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
-  #     #   placeholders:
-  #     #     - ints: 2 5 12 20
-  #     #     - ints: 1 1 1 2
-  #     # - effectcondition_type: X__CHANCE_TO_EXPLODE
-  #     #   placeholders:
-  #     #     - ints: 10 20 30 40
-  #     - effectcondition_type: X__CHANCE_TO_GET__Y__COINS_UPON_KILLING_WITH_CRIT
-  #       only_this_weapon: true
-  #       placeholders:
-  #         - ints: 33 33 33 33
-  #         - ints: 3 4 5 6
-  #   icon_texture_id: game_weapon_slingshot
-  #   texture_ids:
-  #     - game_weapon_slingshot
-  # - type: WAND
-  #   min_tier_index: 0
-  #   weaponkind_type: RANGED
-  #   base_damage: 1 2 3 3
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_ELEMENTAL
-  #       percents_per_tier: 70 85 100 115
-  #   knockback_meters: 1
-  #   cooldown_frames: 20
-  #   projectile_type: FIRE
-  #   projectile_spawn_frames: 7
-  #   projectile_bounce: 2
-  #   range_meters: 12
-  #   price: 130
-  #   shooting_duration_frames: 12
-  #   icon_texture_id: game_weapon_wand
-  #   texture_ids:
-  #     - game_weapon_wand
-  # - type: WAND2
-  #   min_tier_index: 0
-  #   weaponkind_type: RANGED
-  #   base_damage: 1 1 1 1
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_ELEMENTAL
-  #       percents_per_tier: 70 85 100 115
-  #   knockback_meters: 1
-  #   cooldown_frames: 20
-  #   projectile_type: LIGHTNING
-  #   projectile_spawn_frames: 7
-  #   projectile_bounce: 2
-  #   range_meters: 4
-  #   price: 120
-  #   shooting_duration_frames: 12
-  #   icon_texture_id: game_weapon_wand2
-  #   texture_ids:
-  #     - game_weapon_wand2
-  # - type: JAVELIN
-  #   min_tier_index: 0
-  #   base_damage: 3 6 9 12
-  #   weaponkind_type: RANGED
-  #   projectile_type: JAVELIN
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_RANGED
-  #       percents_per_tier: 85 90 95 100
-  #   price: 130
-  #   knockback_meters: 1
-  #   cooldown_frames: 10
-  #   shooting_duration_frames: 15
-  #   shoots_itself: true
-  #   projectile_spawn_frames: 15
-  #   range_meters: 14
-  #   icon_texture_id: game_weapon_javelin
-  #   texture_ids:
-  #     - game_weapon_javelin
-  # - type: CARAMEL_CLUB
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 10 20 30 50
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 80 85 90 100
-  #   crit_damage_multiplier: 2.0
-  #   price: 130
-  #   cooldown_frames: 199
-  #   shooting_duration_frames: 15
-  #   melee_collider_height_px: 25
-  #   range_meters: 2.5
-  #   knockback_meters: 8
-  #   icon_texture_id: game_weapon_caramel_club
-  #   texture_ids:
-  #     - game_weapon_caramel_club
-  # - type: SUGAR_CHOPPER
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 6 12 18 30
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 50 50 50 50
-  #   crit_damage_multiplier: 2.0
-  #   cooldown_frames: 115
-  #   shooting_duration_frames: 12
-  #   range_meters: 2.0
-  #   melee_collider_height_px: 25
-  #   knockback_meters: 2
-  #   price: 130
-  #   icon_texture_id: game_weapon_sugar_chopper
-  #   texture_ids:
-  #     - game_weapon_sugar_chopper
-  # - type: PIZZA_CUTTER
-  #   min_tier_index: 1
-  #   weaponkind_type: MELEE
-  #   base_damage: 10 15 25
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100 100 100
-  #   cooldown_frames: 80
-  #   shooting_duration_frames: 10
-  #   range_meters: 2.2
-  #   knockback_meters: 0
-  #   life_steal_percents: 45 45 45
-  #   melee_collider_height_px: 25
-  #   price: 140
-  #   icon_texture_id: game_weapon_pizza_cutter
-  #   texture_ids:
-  #     - game_weapon_pizza_cutter
-  # - type: SPORK
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 5 10 15 25
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 50 50 50 50
-  #     - stat_type: ATTACK_SPEED
-  #       percents_per_tier: 15 20 25 30
-  #   crit_damage_multiplier: 2.25
-  #   cooldown_frames: 85
-  #   shooting_duration_frames: 8
-  #   range_meters: 1.9
-  #   knockback_meters: 2
-  #   price: 125
-  #   melee_collider_height_px: 25
-  #   icon_texture_id: game_weapon_spork
-  #   texture_ids:
-  #     - game_weapon_spork
-  # - type: GREAT_GRAIN_DIVIDER
-  #   min_tier_index: 3
-  #   weaponkind_type: MELEE
-  #   base_damage: 100
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100
-  #     - stat_type: ENGINEERING
-  #       percents_per_tier: 100
-  #   crit_damage_multiplier: 2.0
-  #   cooldown_frames: 160
-  #   shooting_duration_frames: 15
-  #   range_meters: 5.0
-  #   knockback_meters: 10
-  #   melee_collider_height_px: 25
-  #   price: 200
-  #   icon_texture_id: game_weapon_great_grain_divider
-  #   texture_ids:
-  #     - game_weapon_great_grain_divider
-  # - type: DRILL
-  #   min_tier_index: 3
-  #   weaponkind_type: MELEE
-  #   base_damage: 10
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100
-  #     - stat_type: ENGINEERING
-  #       percents_per_tier: 100
-  #   crit_damage_multiplier: 2.5
-  #   cooldown_frames: 54
-  #   shooting_duration_frames: 6
-  #   range_meters: 1.3
-  #   knockback_meters: 5
-  #   melee_collider_height_px: 25
-  #   price: 180
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: EXCALIBUR
-  #   min_tier_index: 3
-  #   weaponkind_type: MELEE
-  #   base_damage: 200
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 200
-  #   crit_damage_multiplier: 2.5
-  #   cooldown_frames: 79
-  #   shooting_duration_frames: 10
-  #   range_meters: 2.5
-  #   knockback_meters: 5
-  #   melee_collider_height_px: 25
-  #   price: 250
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: FIST
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 8 16 32 64
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100 100 100 100
-  #   crit_damage_multiplier: 1.5
-  #   cooldown_frames: 84
-  #   shooting_duration_frames: 8
-  #   range_meters: 1.9
-  #   knockback_meters: 15
-  #   melee_collider_height_px: 25
-  #   price: 100
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: FLAMING_BRASS_KNUCKLES
-  #   min_tier_index: 1
-  #   weaponkind_type: MELEE
-  #   base_damage: 16 32 64
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100 100 100
-  #   crit_damage_multiplier: 1.5
-  #   cooldown_frames: 80
-  #   shooting_duration_frames: 8
-  #   range_meters: 1.9
-  #   knockback_meters: 15
-  #   melee_collider_height_px: 25
-  #   price: 150
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: GHOST_AXE
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 12 18 24 40
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100 100 100 100
-  #   crit_damage_multiplier: 2.0
-  #   cooldown_frames: 194
-  #   shooting_duration_frames: 15
-  #   range_meters: 2.5
-  #   knockback_meters: 2
-  #   melee_collider_height_px: 90
-  #   price: 125
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: GHOST_FLINT
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 6 9 12 18
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100 100 100 100
-  #   crit_damage_multiplier: 2.0
-  #   cooldown_frames: 136
-  #   shooting_duration_frames: 8
-  #   range_meters: 2.1
-  #   knockback_meters: 2
-  #   melee_collider_height_px: 60
-  #   price: 120
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: HAMMER
-  #   min_tier_index: 1
-  #   weaponkind_type: MELEE
-  #   base_damage: 35 70 110
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 150 175 200
-  #   crit_damage_multiplier: 1.75
-  #   cooldown_frames: 190
-  #   shooting_duration_frames: 18
-  #   range_meters: 2.2
-  #   knockback_meters: 50
-  #   melee_collider_height_px: 100
-  #   price: 140
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: HAND
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 1 1 1 1
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 50 50 50 50
-  #   crit_damage_multiplier: 1.5
-  #   cooldown_frames: 105
-  #   shooting_duration_frames: 5
-  #   range_meters: 1.9
-  #   knockback_meters: 30
-  #   melee_collider_height_px: 50
-  #   price: 80
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
-  # - type: HATCHET
-  #   min_tier_index: 0
-  #   weaponkind_type: MELEE
-  #   base_damage: 5 10 20 40
-  #   damage_scalings:
-  #     - stat_type: DAMAGE_MELEE
-  #       percents_per_tier: 100 100 100 100
-  #     - stat_type: ATTACK_SPEED
-  #       percents_per_tier: 15 15 15 15
-  #   crit_damage_multiplier: 2.0
-  #   cooldown_frames: 76
-  #   shooting_duration_frames: 6
-  #   range_meters: 1.6
-  #   knockback_meters: 2
-  #   melee_collider_height_px: 70
-  #   price: 115
-  #   icon_texture_id: game_weapon_todo
-  #   texture_ids:
-  #     - game_weapon_todo
   - type: MELEE_0_CACTI_CLUB # кактусовый меч
     base_damage: 10 20 30 50
     damage_scalings:
@@ -3644,7 +3041,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 4.7 4.7 4.7 4.7
     knockback_meters: 8 8 8 8
-    melee_collider_height_px: 1
+    melee_collider_height_px: 54
     effects:
       - effectcondition_type: HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
         damage_scalings:
@@ -3669,7 +3066,7 @@ weapons: # {  ###
     crit_chance: 10 15 20 25
     range_meters: 2.9 3.5 4.1 4.7
     knockback_meters: 2 2 2 2
-    melee_collider_height_px: 1
+    melee_collider_height_px: 77
     effects:
       - stat_type: CONSUMABLE_HEAL
         value: 1 1 1 2
@@ -3686,7 +3083,7 @@ weapons: # {  ###
     crit_chance: 10 15 20 25
     range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 2 2 2 2
-    melee_collider_height_px: 1
+    melee_collider_height_px: 61
     price: 110
   - type: MELEE_0_FIST # перчатка молочника
     base_damage: 8 16 32 64
@@ -3699,7 +3096,7 @@ weapons: # {  ###
     crit_chance: 1 1 1 1
     range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 15 15 15 15
-    melee_collider_height_px: 1
+    melee_collider_height_px: 58
     price: 91
   - type: MELEE_0_GHOST_AXE # открывашка
     base_damage: 10 15 20 34
@@ -3718,7 +3115,7 @@ weapons: # {  ###
         placeholders:
           - ints: 20 18 16 12
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 52
     price: 149
   - type: MELEE_0_GHOST_FLINT # овощерезка
     base_damage: 6 9 12 18
@@ -3737,7 +3134,7 @@ weapons: # {  ###
         placeholders:
           - ints: 20 18 16 12
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 91
     price: 105
   - type: MELEE_0_JOUSTING_LANCE
     base_damage: 20 25 30 50
@@ -3758,7 +3155,7 @@ weapons: # {  ###
         stat_type: DAMAGE
         value: -8 -12 -16 -20
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 40
     price: 132
   - type: MELEE_0_LIGHTNING_SHIV # electrified gum
     base_damage: 3 6 9 16
@@ -3783,7 +3180,7 @@ weapons: # {  ###
           - ints: 1 1 1 1
           - ints: 5 6 8 11
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 44
     price: 142
   - type: MELEE_0_PLANK # динамит на палочке
     base_damage: 10 15 20 25
@@ -3804,7 +3201,7 @@ weapons: # {  ###
         placeholders:
           - ints: 25 30 35 40
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 85
     price: 122
   - type: MELEE_0_PRUNER # sunflower
     base_damage: 10 15 20 25
@@ -3821,7 +3218,7 @@ weapons: # {  ###
         placeholders:
           - floats: 15 14 12 10
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 78
     price: 95
   - type: MELEE_0_QUATERSTAFF # ручка
     base_damage: 10 15 20 30
@@ -3838,7 +3235,7 @@ weapons: # {  ###
     effects:
       - stat_type: XP_GAIN
         value: 2 5 9 15
-    melee_collider_height_px: 1
+    melee_collider_height_px: 34
     price: 130
   - type: MELEE_0_ROCK # barrel
     base_damage: 20 35 50 70
@@ -3855,7 +3252,7 @@ weapons: # {  ###
         value: 0 1 2 2
       - stat_type: HP
         value: 0 0 2 2
-    melee_collider_height_px: 1
+    melee_collider_height_px: 112
     price: 91
   - type: MELEE_0_SCREWDRIVER # гаечный ключ
     base_damage: 8 12 16 20
@@ -3878,7 +3275,7 @@ weapons: # {  ###
           - stat_type: ENGINEERING
             percents_per_tier: 100 100 100 100
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 64
     price: 91
   - type: MELEE_0_SHARP_TOOTH # nail hollow knight / tooth
     base_damage: 5 8 11 15
@@ -3901,7 +3298,7 @@ weapons: # {  ###
         #   placeholders:
         #     - ints: 1 1 1 1
         #     - floats: 25 20 15 10
-    melee_collider_height_px: 1
+    melee_collider_height_px: 42
     price: 105
   - type: MELEE_0_SPIKY_SHIELD # shield of thorns
     base_damage: 10 15 20 30
@@ -3913,7 +3310,7 @@ weapons: # {  ###
     crit_chance: 3 3 3 3
     range_meters: 3.5 3.85 4.2 4.7
     knockback_meters: 20 20 20 20
-    melee_collider_height_px: 1
+    melee_collider_height_px: 124
     price: 122
   - type: MELEE_0_STICK # ложка
     base_damage: 8 9 10 12
@@ -3930,7 +3327,7 @@ weapons: # {  ###
         weaponproperty_type: DAMAGE
         value: 4 6 8 10
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 49
     price: 91
   - type: MELEE_0_TORCH
     base_damage: 1 1 1 1
@@ -3952,7 +3349,7 @@ weapons: # {  ###
     effects:
       - stat_type: BURNING_SPREAD
         value: 0 0 1 1
-    melee_collider_height_px: 1
+    melee_collider_height_px: 35
     price: 91
     particle_emitter:
       particle_type: FIRE
@@ -3981,7 +3378,7 @@ weapons: # {  ###
         damage_scalings:
           - stat_type: ENGINEERING
             percents_per_tier: 80 80 80 80
-    melee_collider_height_px: 1
+    melee_collider_height_px: 74
     price: 173
   - type: MELEE_1_CIRCULAR_SAW # pizza cutter
     base_damage: 10 15 25
@@ -3994,7 +3391,7 @@ weapons: # {  ###
     life_steal_percents: 45 50 60
     range_meters: 4.08 4.08 4.08
     knockback_meters: 0 0 0
-    melee_collider_height_px: 1
+    melee_collider_height_px: 68
     price: 173
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES # frying pan, сковорода
     base_damage: 18 36 75
@@ -4011,7 +3408,7 @@ weapons: # {  ###
     crit_chance: 1 1 1
     range_meters: 3.5 3.5 3.5
     knockback_meters: 15 15 15
-    melee_collider_height_px: 1
+    melee_collider_height_px: 84
     price: 173
   - type: MELEE_1_HAMMER # кухонный молоток
     base_damage: 35 70 110
@@ -4026,7 +3423,7 @@ weapons: # {  ###
     effects:
       - stat_type: KNOCKBACK
         value: 2 4 6
-    melee_collider_height_px: 1
+    melee_collider_height_px: 99
     price: 190
   - type: MELEE_1_SWORD
     base_damage: 25 40 60
@@ -4038,7 +3435,7 @@ weapons: # {  ###
     crit_chance: 3 3 3
     range_meters: 4.7 4.7 4.7
     knockback_meters: 5 5 5
-    melee_collider_height_px: 1
+    melee_collider_height_px: 58
     price: 190
   - type: MELEE_2_PLASMA_SLEDGE # граната света на палочке
     base_damage: 80 120
@@ -4058,7 +3455,7 @@ weapons: # {  ###
         placeholders:
           - ints: 25 50
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 75
     price: 272
   - type: MELEE_2_POWER_FIST # перчатка подрывника
     base_damage: 40 60
@@ -4075,7 +3472,7 @@ weapons: # {  ###
         placeholders:
           - ints: 25 50
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 62
     price: 221
   - type: MELEE_2_THUNDER_SWORD # recettear's "twisted dagger"
     base_damage: 30 60
@@ -4100,7 +3497,7 @@ weapons: # {  ###
           - ints: 2 4
           - ints: 0 0
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 69
     price: 238
   - type: MELEE_3_DEX_TROYER
     base_damage: 100
@@ -4131,7 +3528,7 @@ weapons: # {  ###
           - ints: 30
         spawned_projectile_shoots_directly_at_random_enemy: true
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 70
     price: 315
   - type: MELEE_3_EXCALIBUR # terra sword
     base_damage: 200
@@ -4150,7 +3547,7 @@ weapons: # {  ###
         stat_type: ARMOR
         value: -3
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 75
     price: 230
   - type: MELEE_3_SCYTHE
     base_damage: 150
@@ -4174,7 +3571,7 @@ weapons: # {  ###
         placeholders:
           - ints: 3
         only_this_weapon: true
-    melee_collider_height_px: 1
+    melee_collider_height_px: 104
     price: 285
   - type: RANGED_0_CROSSBOW
     base_damage: 10 12 15 18

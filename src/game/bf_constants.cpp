@@ -57,6 +57,8 @@ constexpr auto GARDEN_FRUIT_SPAWNING_INTERVAL     = lframe::FromSeconds(10);
 constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MIN = 1;
 constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX = 2;
 
+constexpr f32 MELEE_WEAPON_COLLIDER_PHANTOM_RANGE_METERS = 0.12f;
+
 // Other.
 // ============================================================
 constexpr auto ANIMATION_0_FRAMES = lframe::FromSeconds(0.2f);
