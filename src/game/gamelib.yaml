@@ -4472,6 +4472,9 @@ weapons: # {  ###
     projectile_type: BULLET
     projectile_pierce: 1 2
     price: 255
+    effects:
+      - stat_type: SPEED
+        value: -7 -7
   - type: RANGED_2_NUCLEAR_LAUNCHER
     base_damage: 60 120
     damage_scalings:

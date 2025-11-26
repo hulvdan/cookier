@@ -636,54 +636,48 @@ struct PreSpawn {  ///
   lframe       garden_spawnsAppleEvery = {};
 };
 
+struct ProjectileFactoryCommonData {  ///
+  ProjectileType type                             = {};
+  CreatureType   ownerCreatureType                = {};
+  int            weaponIndexOrMinus1              = -1;
+  Vector2        pos                              = {};
+  Vector2        dir                              = {};
+  f32            range                            = {};
+  int            damage                           = {};
+  f32            critDamageMultiplier             = {};
+  int            weaponCritChance                 = 0;
+  f32            knockbackMeters                  = 0;
+  int            pierce                           = 0;
+  int            weaponPiercingDamageBonusPercent = 0;
+  int            bounce                           = 0;
+  bool           dontSpawnProjectilesOnHit        = false;
+};
+
 struct Projectile {  ///
-  int                               id                        = {};
-  ProjectileType                    type                      = {};
-  CreatureType                      ownerCreatureType         = {};
-  int                               weaponIndexOrMinus1       = -1;
-  Vector2                           pos                       = {};
-  Vector2                           dir                       = {};
-  f32                               rotationSpeed             = {};
-  int                               damage                    = {};
-  f32                               critDamageMultiplier      = {};
-  int                               weaponCritChance          = 0;
-  int                               pierce                    = {};
-  int                               effectCritPierce          = {};
-  int                               effectCritBounce          = {};
-  int                               bounce                    = {};
-  FrameGame                         createdAt                 = {};
-  FrameGame                         lastBouncedAt             = {};
-  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIDs        = {};
-  int                               damagedCount              = 0;
-  int                               piercedCount              = 0;
-  int                               bouncedCount              = 0;
-  f32                               knockbackMeters           = {};
-  f32                               range                     = {};
-  f32                               travelledDistance         = 0;
-  bool                              dontSpawnProjectilesOnHit = false;
-  bool                              exploded                  = false;
+  ProjectileFactoryCommonData       c                  = {};
+  int                               id                 = {};
+  f32                               rotationSpeed      = {};
+  Array<int, PROJECTILE_MAX_PIERCE> damagedCreatureIDs = {};
+  int                               damagedCount       = 0;
+
+  f32       travelledDistance = 0;
+  int       piercedCount      = 0;
+  int       bouncedCount      = 0;
+  FrameGame lastBouncedAt     = {};
+  FrameGame createdAt         = {};
+  bool      exploded          = false;
+  int       effectCritPierce  = 0;
+  int       effectCritBounce  = 0;
+};
+
+struct MakeProjectileData {  ///
+  ProjectileFactoryCommonData c                        = {};
+  int                         alreadyDamagedCreatureID = 0;
 };
 
 int ProjectileCmp(const Projectile* v1, const Projectile* v2) {  ///
   return IntCmp(&v1->id, &v2->id);
 }
-
-struct MakeProjectileData {  ///
-  ProjectileType type                      = {};
-  CreatureType   ownerCreatureType         = {};
-  int            weaponIndexOrMinus1       = -1;
-  Vector2        pos                       = {};
-  Vector2        dir                       = {};
-  f32            range                     = {};
-  int            damage                    = {};
-  f32            critDamageMultiplier      = {};
-  int            weaponCritChance          = 0;
-  f32            knockbackMeters           = {};
-  int            pierce                    = {};
-  int            bounce                    = {};
-  int            alreadyDamagedCreatureID  = 0;
-  bool           dontSpawnProjectilesOnHit = false;
-};
 
 struct Number {  ///
   NumberType type      = {};
@@ -3753,10 +3747,10 @@ int MakeCreature(MakeCreatureData data) {  ///
 }
 
 void MakeProjectile(MakeProjectileData data) {  ///
-  ASSERT(data.type);
-  ASSERT(data.dir != Vector2Zero());
-  if (data.ownerCreatureType == CreatureType_PLAYER)
-    ASSERT(data.weaponIndexOrMinus1 >= 0);
+  ASSERT(data.c.type);
+  ASSERT(data.c.dir != Vector2Zero());
+  if (data.c.ownerCreatureType == CreatureType_PLAYER)
+    ASSERT(data.c.weaponIndexOrMinus1 >= 0);
 
   *g.run.projectilesToMake.Add() = data;
 }
@@ -4984,17 +4978,19 @@ void EffectSpawnProjectilesOnHit(const Creature& creature, int weaponIndex) {  /
         const int toSpawn = EFFECT_X_INT * times;
         FOR_RANGE (int, i, toSpawn) {
           MakeProjectile({
-            .type                      = (ProjectileType)fb_effect->projectile_type(),
-            .ownerCreatureType         = CreatureType_PLAYER,
-            .weaponIndexOrMinus1       = weaponIndex,
-            .pos                       = creature.pos,
-            .dir                       = Vector2Rotate({1, 0}, GRAND.Angle()),
-            .range                     = fb_effect->projectile_range_meters(),
-            .damage                    = damage,
-            .critDamageMultiplier      = fb->crit_damage_multiplier()->Get(tierOffset),
-            .weaponCritChance          = fb->crit_chance()->Get(tierOffset),
-            .alreadyDamagedCreatureID  = creature.id,
-            .dontSpawnProjectilesOnHit = true,
+            .c{
+              .type                      = (ProjectileType)fb_effect->projectile_type(),
+              .ownerCreatureType         = CreatureType_PLAYER,
+              .weaponIndexOrMinus1       = weaponIndex,
+              .pos                       = creature.pos,
+              .dir                       = Vector2Rotate({1, 0}, GRAND.Angle()),
+              .range                     = fb_effect->projectile_range_meters(),
+              .damage                    = damage,
+              .critDamageMultiplier      = fb->crit_damage_multiplier()->Get(tierOffset),
+              .weaponCritChance          = fb->crit_chance()->Get(tierOffset),
+              .dontSpawnProjectilesOnHit = true,
+            },
+            .alreadyDamagedCreatureID = creature.id,
           });
         }
       }
@@ -11381,12 +11377,14 @@ void GameFixedUpdate() {
               const auto e = data.startedShootingAt.Elapsed();
               if (e == MOB_RANGER_SHOOTING_FRAME) {
                 MakeProjectile({
-                  .type              = ProjectileType_MOB,
-                  .ownerCreatureType = creature.type,
-                  .pos               = creature.pos,
-                  .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
-                  .range  = SQR(WORLD_X + WORLD_Y) * 2,
-                  .damage = GetMobDamage(creature.type),
+                  .c{
+                    .type              = ProjectileType_MOB,
+                    .ownerCreatureType = creature.type,
+                    .pos               = creature.pos,
+                    .dir    = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos),
+                    .range  = SQR(WORLD_X + WORLD_Y) * 2,
+                    .damage = GetMobDamage(creature.type),
+                  },
                 });
               }
               if (e >= MOB_RANGER_SHOOTING_FRAMES)
@@ -11469,16 +11467,18 @@ void GameFixedUpdate() {
                 auto projectilesToSpawn = pattern->projectiles_per_shot();
                 FOR_RANGE (int, shotIndex, projectilesToSpawn) {
                   MakeProjectile({
-                    .type              = ProjectileType_BOSS,
-                    .ownerCreatureType = creature.type,
-                    .pos               = creature.pos,
-                    .dir               = Vector2Rotate(
-                      {1, 0},
-                      2 * PI32 * (f32)shotIndex / (f32)projectilesToSpawn
-                        + data.shootingRotationOffset
-                    ),
-                    .range  = f32_inf,
-                    .damage = GetMobDamage(creature.type),
+                    .c{
+                      .type              = ProjectileType_BOSS,
+                      .ownerCreatureType = creature.type,
+                      .pos               = creature.pos,
+                      .dir               = Vector2Rotate(
+                        {1, 0},
+                        2 * PI32 * (f32)shotIndex / (f32)projectilesToSpawn
+                          + data.shootingRotationOffset
+                      ),
+                      .range  = f32_inf,
+                      .damage = GetMobDamage(creature.type),
+                    },
                   });
                 }
                 data.shootingRotationOffset
@@ -11575,17 +11575,19 @@ void GameFixedUpdate() {
                 damage     = ApplyPlayerStatDamageMultiplier(damage);
 
                 MakeProjectile({
-                  .type                 = projectileType,
-                  .ownerCreatureType    = creature.type,
-                  .weaponIndexOrMinus1  = -1,
-                  .pos                  = projectileSpawnPos,
-                  .dir                  = data.aimDirection,
-                  .range                = rangeMeters,
-                  .damage               = damage,
-                  .critDamageMultiplier = fb->turret_crit_damage_multiplier(),
-                  .knockbackMeters      = fb->turret_knockback_meters(),
-                  .pierce               = fb->turret_pierce(),
-                  .bounce               = fb->turret_bounce(),
+                  .c{
+                    .type                 = projectileType,
+                    .ownerCreatureType    = creature.type,
+                    .weaponIndexOrMinus1  = -1,
+                    .pos                  = projectileSpawnPos,
+                    .dir                  = data.aimDirection,
+                    .range                = rangeMeters,
+                    .damage               = damage,
+                    .critDamageMultiplier = fb->turret_crit_damage_multiplier(),
+                    .knockbackMeters      = fb->turret_knockback_meters(),
+                    .pierce               = fb->turret_pierce(),
+                    .bounce               = fb->turret_bounce(),
+                  },
                 });
               }
 
@@ -12244,20 +12246,30 @@ void GameFixedUpdate() {
                 if (fb->accuracy_plus_minus() != 0)
                   dir = Vector2Rotate(dir, GRAND.FRand11() * fb->accuracy_plus_minus());
 
+                int weaponPiercingDamageBonusPercent = 0;
+                if (fb->projectile_piercing_damage_bonus_percent()) {
+                  weaponPiercingDamageBonusPercent
+                    = fb->projectile_piercing_damage_bonus_percent()->Get(tierOffset);
+                }
+
                 MakeProjectile({
-                  .type                = projectileType,
-                  .ownerCreatureType   = PLAYER_CREATURE.type,
-                  .weaponIndexOrMinus1 = weaponIndex,
-                  .pos                 = spawnPos,
-                  .dir                 = dir,
-                  .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
-                  .damage = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
-                  .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
-                  .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
-                  .knockbackMeters
-                  = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE,
-                  .pierce = pierce,
-                  .bounce = bounce,
+                  .c{
+                    .type                = projectileType,
+                    .ownerCreatureType   = PLAYER_CREATURE.type,
+                    .weaponIndexOrMinus1 = weaponIndex,
+                    .pos                 = spawnPos,
+                    .dir                 = dir,
+                    .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
+                    .damage
+                    = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
+                    .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
+                    .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
+                    .knockbackMeters
+                    = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE,
+                    .pierce                           = pierce,
+                    .weaponPiercingDamageBonusPercent = weaponPiercingDamageBonusPercent,
+                    .bounce                           = bounce,
+                  },
                 });
               }
 
@@ -12333,26 +12345,15 @@ void GameFixedUpdate() {
       for (auto& data : g.run.projectilesToMake) {
         static int nextProjectileId = 1;
 
-        auto fb = fb_projectiles->Get(data.type);
+        auto fb = fb_projectiles->Get(data.c.type);
 
         f32 rotationSpeed
           = fb->rotation_speed() + fb->rotation_speed_plus_minus() * GRAND.FRand11();
 
         Projectile projectile{
-          .id                        = nextProjectileId++,
-          .type                      = data.type,
-          .ownerCreatureType         = data.ownerCreatureType,
-          .weaponIndexOrMinus1       = data.weaponIndexOrMinus1,
-          .pos                       = data.pos,
-          .dir                       = data.dir,
-          .rotationSpeed             = rotationSpeed,
-          .damage                    = data.damage,
-          .critDamageMultiplier      = data.critDamageMultiplier,
-          .pierce                    = data.pierce,
-          .bounce                    = data.bounce,
-          .knockbackMeters           = data.knockbackMeters,
-          .range                     = data.range,
-          .dontSpawnProjectilesOnHit = data.dontSpawnProjectilesOnHit,
+          .c             = data.c,
+          .id            = nextProjectileId++,
+          .rotationSpeed = rotationSpeed,
         };
         projectile.createdAt.SetNow();
 
@@ -12388,16 +12389,16 @@ void GameFixedUpdate() {
       for (auto& projectile : g.run.projectiles) {
         projectileIndex++;
 
-        const auto fb       = fb_projectiles->Get(projectile.type);
+        const auto fb       = fb_projectiles->Get(projectile.c.type);
         const auto distance = FIXED_DT * fb->speed();
         projectile.travelledDistance += distance;
-        projectile.pos += projectile.dir * distance;
+        projectile.c.pos += projectile.c.dir * distance;
 
         bool    createAoe = false;
-        Vector2 aoePos    = projectile.pos;
+        Vector2 aoePos    = projectile.c.pos;
 
         // Removing projectiles that travelled far enough.
-        if (projectile.travelledDistance >= projectile.range) {
+        if (projectile.travelledDistance >= projectile.c.range) {
           if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
             *g.run.projectilesToRemove.Add() = projectileIndex;
             if (fb->aoe_on_travel_end())
@@ -12406,7 +12407,7 @@ void GameFixedUpdate() {
         }
 
         // Removing projectiles that are outside the world.
-        if (!projectilesAliveBounds.ContainsInside(projectile.pos)) {
+        if (!projectilesAliveBounds.ContainsInside(projectile.c.pos)) {
           if (!g.run.projectilesToRemove.Contains(projectileIndex))
             *g.run.projectilesToRemove.Add() = projectileIndex;
         }
@@ -12414,7 +12415,7 @@ void GameFixedUpdate() {
         int start = 0;
         int end   = g.run.creatures.count;
 
-        auto fb_owner = fb_creatures->Get(projectile.ownerCreatureType);
+        auto fb_owner = fb_creatures->Get(projectile.c.ownerCreatureType);
         if (fb_owner->hostility_type() == HostilityType_FRIENDLY)
           start = 1;
         else
@@ -12435,7 +12436,7 @@ void GameFixedUpdate() {
           if (fb_owner->hostility_type() == fb_creature->hostility_type())
             continue;
 
-          const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.pos);
+          const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.c.pos);
 
           const auto radius
             = fb->collider_radius() + fb_creature->hurtbox_scale() * MOB_HURTBOX_RADIUS;
@@ -12443,8 +12444,8 @@ void GameFixedUpdate() {
           if (distSqr < SQR(radius)) {
             Vector2 knockbackDirection{};
 
-            int damage = projectile.damage;
-            if (projectile.ownerCreatureType == CreatureType_PLAYER) {
+            int damage = projectile.c.damage;
+            if (projectile.c.ownerCreatureType == CreatureType_PLAYER) {
               // Player damages mob.
               knockbackDirection
                 = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos);
@@ -12453,7 +12454,7 @@ void GameFixedUpdate() {
             const f32 piercingDamageMultiplier
               = (f32)g.run.state.stats[StatType_PIERCING_DAMAGE] / 100.0f;
 
-            f32 knockback = projectile.knockbackMeters;
+            f32 knockback = projectile.c.knockbackMeters;
 
             FOR_RANGE (int, i, projectile.piercedCount) {
               damage = Round((f32)damage * piercingDamageMultiplier);
@@ -12471,9 +12472,9 @@ void GameFixedUpdate() {
                   .damage                             = damage,
                   .directionOrZero                    = knockbackDirection,
                   .knockbackMeters                    = knockback,
-                  .damagerCreatureType                = projectile.ownerCreatureType,
-                  .critDamageMultiplier               = projectile.critDamageMultiplier,
-                  .indexOfWeaponThatDidDamageOrMinus1 = projectile.weaponIndexOrMinus1,
+                  .damagerCreatureType                = projectile.c.ownerCreatureType,
+                  .critDamageMultiplier               = projectile.c.critDamageMultiplier,
+                  .indexOfWeaponThatDidDamageOrMinus1 = projectile.c.weaponIndexOrMinus1,
                   .ailment{
                     .type   = (AilmentType)fb->ailment_type(),
                     .value  = fb->ailment_value(),
@@ -12483,42 +12484,44 @@ void GameFixedUpdate() {
                   .outWasCrit    = &wasCrit,
                 }))
             {
-              auto fb_weapon = ((projectile.weaponIndexOrMinus1 >= 0)
-                ? fb_weapons->Get(g.run.state.weapons[projectile.weaponIndexOrMinus1].type)
+              auto fb_weapon = ((projectile.c.weaponIndexOrMinus1 >= 0)
+                ? fb_weapons->Get(g.run.state.weapons[projectile.c.weaponIndexOrMinus1].type)
                 : nullptr);
 
-              if (!projectile.dontSpawnProjectilesOnHit
-                  && (projectile.weaponIndexOrMinus1 >= 0))
+              if (!projectile.c.dontSpawnProjectilesOnHit
+                  && (projectile.c.weaponIndexOrMinus1 >= 0))
               {
-                const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
-                const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
+                const auto& weapon
+                  = g.run.state.weapons[projectile.c.weaponIndexOrMinus1];
+                const int tierOffset = weapon.tier - fb_weapon->min_tier_index();
 
-                EffectSpawnProjectilesOnHit(creature, projectile.weaponIndexOrMinus1);
+                EffectSpawnProjectilesOnHit(creature, projectile.c.weaponIndexOrMinus1);
               }
 
               // Applying:
               // - EffectConditionType_CRITS_PIERCE_UP_TO__X__TIMES.
               // - EffectConditionType_CRITS_BOUNCE_UP_TO__X__TIMES.
-              if (wasCrit && (projectile.weaponIndexOrMinus1 >= 0)) {
-                const auto& weapon = g.run.state.weapons[projectile.weaponIndexOrMinus1];
-                const int   tierOffset = weapon.tier - fb_weapon->min_tier_index();
+              if (wasCrit && (projectile.c.weaponIndexOrMinus1 >= 0)) {
+                const auto& weapon
+                  = g.run.state.weapons[projectile.c.weaponIndexOrMinus1];
+                const int tierOffset = weapon.tier - fb_weapon->min_tier_index();
 
                 IterateOverEffects(
                   EffectConditionType_CRITS_PIERCE_UP_TO__X__TIMES,
-                  projectile.weaponIndexOrMinus1,
+                  projectile.c.weaponIndexOrMinus1,
                   [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
                     BF_FORCE_INLINE_LAMBDA {
                       if (projectile.effectCritPierce < EFFECT_X_INT)
-                        projectile.pierce += times * EFFECT_X_INT;
+                        projectile.c.pierce += times * EFFECT_X_INT;
                     }
                 );
                 IterateOverEffects(
                   EffectConditionType_CRITS_BOUNCE_UP_TO__X__TIMES,
-                  projectile.weaponIndexOrMinus1,
+                  projectile.c.weaponIndexOrMinus1,
                   [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
                     BF_FORCE_INLINE_LAMBDA {
                       if (projectile.effectCritBounce < EFFECT_X_INT)
-                        projectile.bounce += times;
+                        projectile.c.bounce += times;
                     }
                 );
 
@@ -12526,9 +12529,9 @@ void GameFixedUpdate() {
                 projectile.effectCritBounce++;
               }
 
-              auto maxBounce = projectile.bounce;
-              auto maxPierce = projectile.pierce;
-              if (projectile.ownerCreatureType == CreatureType_PLAYER) {
+              auto maxBounce = projectile.c.bounce;
+              auto maxPierce = projectile.c.pierce;
+              if (projectile.c.ownerCreatureType == CreatureType_PLAYER) {
                 maxBounce += g.run.state.stats[StatType_BOUNCES];
                 maxPierce += g.run.state.stats[StatType_PIERCING];
               }
@@ -12579,22 +12582,22 @@ void GameFixedUpdate() {
                     = ForecastWhereProjectileWillHitCreature(
                       c->pos,
                       c->controller.move * GetCreatureSpeed(*c),
-                      projectile.pos,
+                      projectile.c.pos,
                       fb->speed()
                     );
                   const auto d
-                    = Vector2DistanceSqr(forecastedCreaturePos, projectile.pos);
-                  if (d <= SQR(projectile.range)) {
+                    = Vector2DistanceSqr(forecastedCreaturePos, projectile.c.pos);
+                  if (d <= SQR(projectile.c.range)) {
                     found         = c;
                     forecastedPos = forecastedCreaturePos;
                     break;
                   }
                 }
                 if (found)
-                  projectile.dir
-                    = Vector2DirectionOrRandom(projectile.pos, forecastedPos);
+                  projectile.c.dir
+                    = Vector2DirectionOrRandom(projectile.c.pos, forecastedPos);
                 else
-                  projectile.dir = Vector2Rotate({1, 0}, GRAND.Angle());
+                  projectile.c.dir = Vector2Rotate({1, 0}, GRAND.Angle());
               }
               else if (canPierce) {
                 projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
@@ -12611,21 +12614,21 @@ void GameFixedUpdate() {
         }
 
         // AOE.
-        if (createAoe                                 //
-            && !projectile.exploded                   //
-            && (projectile.weaponIndexOrMinus1 >= 0)  //
-            && ShouldExplode(projectile.weaponIndexOrMinus1))
+        if (createAoe                                   //
+            && !projectile.exploded                     //
+            && (projectile.c.weaponIndexOrMinus1 >= 0)  //
+            && ShouldExplode(projectile.c.weaponIndexOrMinus1))
         {
           projectile.exploded = true;
           MakeAOE(
-            projectile.ownerCreatureType,
+            projectile.c.ownerCreatureType,
             aoePos,
             glib->explosion_radius() * fb->explosion_size_scale(),
-            projectile.damage,
-            projectile.critDamageMultiplier,
-            projectile.weaponCritChance,
-            projectile.knockbackMeters,
-            projectile.weaponIndexOrMinus1
+            projectile.c.damage,
+            projectile.c.critDamageMultiplier,
+            projectile.c.weaponCritChance,
+            projectile.c.knockbackMeters,
+            projectile.c.weaponIndexOrMinus1
           );
         }
 
@@ -12633,8 +12636,8 @@ void GameFixedUpdate() {
         if (fb->particle_emitter()) {
           EmitParticles({
             .fb_emitter     = fb->particle_emitter(),
-            .pos            = projectile.pos,
-            .offsetRotation = Vector2Angle(projectile.dir),
+            .pos            = projectile.c.pos,
+            .offsetRotation = Vector2Angle(projectile.c.dir),
           });
         }
       }
@@ -13476,9 +13479,9 @@ void GameDraw() {
     DrawGroup_SetSortY(0);
 
     for (const auto& projectile : g.run.projectiles) {
-      const auto fb = fb_projectiles->Get(projectile.type);
+      const auto fb = fb_projectiles->Get(projectile.c.type);
 
-      f32 rotation = Vector2Angle(projectile.dir);
+      f32 rotation = Vector2Angle(projectile.c.dir);
 
       f32 drot = projectile.rotationSpeed
                  * projectile.createdAt.Elapsed().Progress(lframe::Unscaled(FIXED_FPS));
@@ -13491,7 +13494,7 @@ void GameDraw() {
         createdOrBouncedAt = projectile.lastBouncedAt;
 
       Vector2 scale{fb->scale_x(), fb->scale_y()};
-      if (projectile.dir.x < 0) {
+      if (projectile.c.dir.x < 0) {
         rotation += (f32)PI32;
         scale.x *= -1;
       }
@@ -13509,9 +13512,9 @@ void GameDraw() {
 
       f32 fade = 1;
 
-      if (projectile.range != f32_inf) {
+      if (projectile.c.range != f32_inf) {
         const auto willDieIn = lframe::FromSeconds(
-          (projectile.range - projectile.travelledDistance) / fb->speed()
+          (projectile.c.range - projectile.travelledDistance) / fb->speed()
         );
         fade *= EaseOutCubic(Clamp01(willDieIn.Progress(ANIMATION_0_FRAMES)));
       }
@@ -13530,13 +13533,13 @@ void GameDraw() {
       }
 
       int texID = GetTextureIDByProgress(
-        fb->texture_ids(), Clamp01(projectile.travelledDistance / projectile.range)
+        fb->texture_ids(), Clamp01(projectile.travelledDistance / projectile.c.range)
       );
 
       DrawGroup_CommandTexture({
         .texID    = texID,
         .rotation = rotation,
-        .pos      = projectile.pos,
+        .pos      = projectile.c.pos,
         .scale    = scale,
         .color    = Fade(ColorFromRGBA(fb->color()), fade),
         .flash    = TRANSPARENT_WHITE,
@@ -13549,10 +13552,10 @@ void GameDraw() {
   // Drawing projectiles gizmos.
   if (ge.meta.debugEnabled) {  ///
     for (const auto& projectile : g.run.projectiles) {
-      auto fb = fb_projectiles->Get(projectile.type);
+      auto fb = fb_projectiles->Get(projectile.c.type);
 
       DrawGroup_OneShotCircleLines({
-        .pos    = projectile.pos,
+        .pos    = projectile.c.pos,
         .radius = fb->collider_radius(),
         .color  = YELLOW,
       });

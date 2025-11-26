@@ -1,5 +1,7 @@
 WORKING SINCE 2025-09-07
 
+x ref: merge common data of `Projectile` and `MakeProjectileData`
+
 * in weapon card show bullet piercing debuff
 * lightning is too yellow
 * gamelib can't set piercing debugg bonus is no piercing is specified
