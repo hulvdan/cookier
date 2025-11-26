@@ -650,6 +650,7 @@ struct ProjectileFactoryCommonData {  ///
   int            pierce                           = 0;
   int            weaponPiercingDamageBonusPercent = 0;
   int            bounce                           = 0;
+  bool           canExplode                       = true;
   bool           dontSpawnProjectilesOnHit        = false;
 };
 
@@ -665,7 +666,6 @@ struct Projectile {  ///
   int       bouncedCount      = 0;
   FrameGame lastBouncedAt     = {};
   FrameGame createdAt         = {};
-  bool      exploded          = false;
   int       effectCritPierce  = 0;
   int       effectCritBounce  = 0;
 };
@@ -4958,6 +4958,68 @@ int GetCreatureIndexByID(int id) {  ///
   return index;
 }
 
+f32 GetCreatureSpeed(const Creature& creature) {  ///
+  f32 speed = creature.speed * creature.speedModifier;
+  if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
+    speed *= (f32)(g.run.state.stats[StatType_ENEMY_SPEED] + 100) / 100.0f;
+    speed = MAX(0, speed);
+  }
+  return speed;
+}
+
+// NOTE: Current implementation assumes that `creatureSpeed` << `projectileSpeed`.
+Vector2 ForecastWhereProjectileWillHitCreature(
+  Vector2 creaturePos,
+  Vector2 creatureSpeed,
+  Vector2 projectilePos,
+  f32     projectileSpeed
+) {  ///
+  ASSERT(projectileSpeed > 0);
+  const auto dist = Vector2Distance(creaturePos, projectilePos);
+  return creaturePos + creatureSpeed * (dist / projectileSpeed);
+}
+
+Vector2 CalculatePlayerProjectileBounceDirection(
+  ProjectileType  type,
+  Vector2         pos,
+  f32             range,
+  const View<int> damagedCreatureIDs
+) {  ///
+  ASSERT(type);
+
+  auto fb                       = glib->projectiles()->Get(type);
+  auto projectileColliderRadius = fb->collider_radius();
+  auto fb_creatures             = glib->creatures();
+
+  FOR_RANGE (int, i, 16) {
+    const auto c = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
+    if (c->diedAt.IsSet())
+      continue;
+
+    if (damagedCreatureIDs.Contains(c->id))
+      continue;
+
+    auto fb_creature = fb_creatures->Get(c->type);
+    if (fb_creature->hostility_type() == HostilityType_FRIENDLY)
+      continue;
+
+    const auto forecastedCreaturePos = ForecastWhereProjectileWillHitCreature(
+      c->pos, c->controller.move * GetCreatureSpeed(*c), pos, fb->speed()
+    );
+    const auto d = Vector2DistanceSqr(forecastedCreaturePos, pos);
+
+    if (d <= SQR(
+          range + projectileColliderRadius
+          + MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
+        ))
+    {
+      return Vector2DirectionOrRandom(pos, forecastedCreaturePos);
+    }
+  }
+
+  return Vector2Rotate({1, 0}, GRAND.Angle());
+}
+
 void EffectSpawnProjectilesOnHit(const Creature& creature, int weaponIndex) {  ///
   ASSERT(weaponIndex >= 0);
 
@@ -4975,19 +5037,49 @@ void EffectSpawnProjectilesOnHit(const Creature& creature, int weaponIndex) {  /
         damage     = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
         damage     = ApplyPlayerStatDamageMultiplier(damage);
 
+        const auto projectileType = (ProjectileType)fb_effect->projectile_type();
+        ASSERT(projectileType);
+
+        int piercingDamageBonusPercent = 0;
+        if (fb->projectile_piercing_damage_bonus_percent())
+          piercingDamageBonusPercent
+            = fb->projectile_piercing_damage_bonus_percent()->Get(tierOffset);
+
+        int pierce = g.run.state.stats[StatType_PIERCING];
+        if (fb->projectile_pierce())
+          pierce += fb->projectile_pierce()->Get(tierOffset);
+
+        int bounce = g.run.state.stats[StatType_BOUNCES];
+        if (fb->projectile_bounce())
+          bounce += fb->projectile_bounce()->Get(tierOffset);
+
         const int toSpawn = EFFECT_X_INT * times;
         FOR_RANGE (int, i, toSpawn) {
+          Vector2 dir{};
+
+          if (fb_effect->spawned_projectile_shoots_directly_at_random_enemy()) {
+            dir = CalculatePlayerProjectileBounceDirection(
+              projectileType, creature.pos, fb_effect->projectile_range_meters(), {}
+            );
+          }
+          else
+            dir = Vector2Rotate({1, 0}, GRAND.Angle());
+
           MakeProjectile({
             .c{
-              .type                      = (ProjectileType)fb_effect->projectile_type(),
-              .ownerCreatureType         = CreatureType_PLAYER,
-              .weaponIndexOrMinus1       = weaponIndex,
-              .pos                       = creature.pos,
-              .dir                       = Vector2Rotate({1, 0}, GRAND.Angle()),
-              .range                     = fb_effect->projectile_range_meters(),
-              .damage                    = damage,
-              .critDamageMultiplier      = fb->crit_damage_multiplier()->Get(tierOffset),
-              .weaponCritChance          = fb->crit_chance()->Get(tierOffset),
+              .type                 = projectileType,
+              .ownerCreatureType    = CreatureType_PLAYER,
+              .weaponIndexOrMinus1  = weaponIndex,
+              .pos                  = creature.pos,
+              .dir                  = dir,
+              .range                = fb_effect->projectile_range_meters(),
+              .damage               = damage,
+              .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
+              .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
+              .pierce               = pierce,
+              .weaponPiercingDamageBonusPercent = piercingDamageBonusPercent,
+              .bounce                           = bounce,
+              .canExplode                = fb_effect->spawned_projectile_can_explode(),
               .dontSpawnProjectilesOnHit = true,
             },
             .alreadyDamagedCreatureID = creature.id,
@@ -5125,7 +5217,7 @@ bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
       MakeAOE(
         CreatureType_PLAYER,
         creature.pos,
-        glib->explosion_radius(),
+        glib->explosion_radius() * fb->explosion_size_scale(),
         damage,
         critDamageMultiplier,
         weaponCritChance,
@@ -5148,9 +5240,11 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
 
   const int tierOffset = weapon.tier - fb->min_tier_index();
 
-  const auto shootingDur = ApplyAttackSpeedToDuration(
+  auto shootingDur = ApplyAttackSpeedToDuration(
     lframe::FromSeconds(fb->cooldown()->Get(tierOffset) * fb->attack_or_cooldown_ratio())
   );
+  if (shootingDur.value > MELEE_WEAPON_MAX_ATTACK_DURATION.value)
+    shootingDur.value = MELEE_WEAPON_MAX_ATTACK_DURATION.value;
 
   const auto e = weapon.startedShootingAt.Elapsed();
   auto       p = MIN(1, e.Progress(shootingDur));
@@ -5167,16 +5261,9 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
 
   auto offset = weapon.targetDir * movedDistance;
 
-  const auto dur = ApplyAttackSpeedToDuration(
-    lframe::FromSeconds(fb->cooldown()->Get(tierOffset) * fb->attack_or_cooldown_ratio())
-  );
-  const f32 t = InOutLerp(
-    0,
-    1,
-    (f32)weapon.startedShootingAt.Elapsed().value,
-    (f32)dur.value,
-    (f32)dur.value / 6
-  );
+  f32 t
+    = InOutLerp(0, 1, (f32)e.value, (f32)shootingDur.value, (f32)shootingDur.value / 6);
+  t      = Clamp01(t);
   offset = Vector2Lerp(GetPlayerWeaponOffset(weaponIndex), offset, t);
 
   return PLAYER_CREATURE.pos + offset;
@@ -6974,7 +7061,9 @@ void DoUI() {
           });
 
           // Pierce.
-          if (fb->projectile_type()) {
+          if (fb->projectile_type()
+              || (fb->projectile_pierce() && fb->projectile_pierce()->Get(tierOffset)))
+          {
             int value = 0;
 
             auto pierces = fb->projectile_pierce();
@@ -7000,7 +7089,9 @@ void DoUI() {
           }
 
           // Bounce.
-          if (fb->projectile_type()) {
+          if (fb->projectile_type()
+              || (fb->projectile_bounce() && fb->projectile_bounce()->Get(tierOffset)))
+          {
             int value = 0;
 
             auto bounces = fb->projectile_bounce();
@@ -10738,27 +10829,6 @@ void DoUI() {
 #undef PADDING_OUTER_HORIZONTAL
 }
 
-// NOTE: Current implementation assumes that `creatureSpeed` << `projectileSpeed`.
-Vector2 ForecastWhereProjectileWillHitCreature(
-  Vector2 creaturePos,
-  Vector2 creatureSpeed,
-  Vector2 projectilePos,
-  f32     projectileSpeed
-) {  ///
-  ASSERT(projectileSpeed > 0);
-  const auto dist = Vector2Distance(creaturePos, projectilePos);
-  return creaturePos + creatureSpeed * (dist / projectileSpeed);
-}
-
-f32 GetCreatureSpeed(const Creature& creature) {  ///
-  f32 speed = creature.speed * creature.speedModifier;
-  if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
-    speed *= (f32)(g.run.state.stats[StatType_ENEMY_SPEED] + 100) / 100.0f;
-    speed = MAX(0, speed);
-  }
-  return speed;
-}
-
 int GetMobDamage(CreatureType type) {  ///
   auto fb = glib->creatures()->Get(type);
   ASSERT(fb->hostility_type() == HostilityType_MOB);
@@ -12119,7 +12189,7 @@ void GameFixedUpdate() {
         const auto fb  = fb_weapons->Get(weapon.type);
         const auto pos = PLAYER_CREATURE.pos + GetPlayerWeaponOffset(weaponIndex);
 
-        f32 minDistSqr           = f32_inf;
+        f32 minDist              = f32_inf;
         int closestCreatureIndex = -1;
 
         // Resetting cooldown.
@@ -12143,10 +12213,14 @@ void GameFixedUpdate() {
             if (fb_creature->hostility_type() == HostilityType_FRIENDLY)
               continue;
 
-            const auto distSqr = Vector2DistanceSqr(pos, creature.pos);
+            const auto dist = MAX(
+              0,
+              Vector2Distance(pos, creature.pos)
+                - MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
+            );
 
-            if (distSqr < minDistSqr) {
-              minDistSqr           = distSqr;
+            if (dist < minDist) {
+              minDist              = dist;
               closestCreatureIndex = creatureIndex;
             }
           }
@@ -12168,7 +12242,7 @@ void GameFixedUpdate() {
                        / METER_LOGICAL_SIZE / 2.0f;
             }
 
-            if (minDistSqr < SQR(range)) {
+            if (minDist < range) {
               // Melee weapons attack from center.
               // Ranged - from their offset positions.
               Vector2 targetFromPos = PLAYER_CREATURE.pos;
@@ -12290,12 +12364,13 @@ void GameFixedUpdate() {
             // Not projectile.
             ASSERT(!projectileSpawnFrameFactors);
 
-            const auto colliderActiveStart = shootingDur.value / 4;
-            const auto colliderActiveEnd   = shootingDur.value / 2;
+            auto dur = shootingDur;
+            if (dur.value > MELEE_WEAPON_MAX_ATTACK_DURATION.value)
+              dur.value = MELEE_WEAPON_MAX_ATTACK_DURATION.value;
 
-            const auto p = e.Progress(shootingDur);
+            const auto p = e.Progress(dur);
 
-            if ((0.25f <= p)
+            if ((0.125f <= p)
                 && ((p <= 0.5f) || ((weapon.lastCollisionCheckShootingProgress < 0.5f) && (p >= 0.5f))))
             {
               weapon.lastCollisionCheckShootingProgress = p;
@@ -12547,7 +12622,7 @@ void GameFixedUpdate() {
                 maxPierce += g.run.state.stats[StatType_PIERCING];
               }
 
-              bool canBounce = projectile.bouncedCount < maxBounce;
+              bool canBounce = fb->can_bounce() && (projectile.bouncedCount < maxBounce);
               bool canPierce = projectile.piercedCount < maxPierce;
               if (projectile.damagedCount >= projectile.damagedCreatureIDs.count) {
                 canBounce = false;
@@ -12561,54 +12636,13 @@ void GameFixedUpdate() {
                 projectile.lastBouncedAt.SetNow();
                 projectile.travelledDistance = 0;
 
-                const Creature* found = nullptr;
-                Vector2         forecastedPos{};
+                auto v = projectile.damagedCreatureIDs.ToView();
+                ASSERT(v.count >= projectile.damagedCount);
+                v.count = projectile.damagedCount;
 
-                FOR_RANGE (int, i, 16) {
-                  const auto c
-                    = g.run.creatures.base + GRAND.Rand() % g.run.creatures.count;
-                  if (c->diedAt.IsSet())
-                    continue;
-                  if (ArrayContains(
-                        projectile.damagedCreatureIDs.base, projectile.damagedCount, c->id
-                      ))
-                    continue;
-
-                  const auto ownerHost = (HostilityType)fb_owner->hostility_type();
-                  ASSERT(ownerHost);
-                  ASSERT(ownerHost != HostilityType_NEUTRAL);
-
-                  const bool ownerIsHostile = (ownerHost == HostilityType_MOB);
-                  bool       canDamage      = false;
-                  canDamage |= ownerIsHostile && (c->type == CreatureType_PLAYER);
-                  const auto otherIsFriendly
-                    = fb_creatures->Get(c->type)->hostility_type()
-                      == HostilityType_FRIENDLY;
-                  canDamage |= !ownerIsHostile && !otherIsFriendly;
-
-                  if (!canDamage)
-                    continue;
-
-                  const auto forecastedCreaturePos
-                    = ForecastWhereProjectileWillHitCreature(
-                      c->pos,
-                      c->controller.move * GetCreatureSpeed(*c),
-                      projectile.c.pos,
-                      fb->speed()
-                    );
-                  const auto d
-                    = Vector2DistanceSqr(forecastedCreaturePos, projectile.c.pos);
-                  if (d <= SQR(projectile.c.range)) {
-                    found         = c;
-                    forecastedPos = forecastedCreaturePos;
-                    break;
-                  }
-                }
-                if (found)
-                  projectile.c.dir
-                    = Vector2DirectionOrRandom(projectile.c.pos, forecastedPos);
-                else
-                  projectile.c.dir = Vector2Rotate({1, 0}, GRAND.Angle());
+                projectile.c.dir = CalculatePlayerProjectileBounceDirection(
+                  projectile.c.type, projectile.c.pos, projectile.c.range, v
+                );
               }
               else if (canPierce) {
                 projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
@@ -12626,11 +12660,11 @@ void GameFixedUpdate() {
 
         // AOE.
         if (createAoe                                   //
-            && !projectile.exploded                     //
+            && projectile.c.canExplode                  //
             && (projectile.c.weaponIndexOrMinus1 >= 0)  //
             && ShouldExplode(projectile.c.weaponIndexOrMinus1))
         {
-          projectile.exploded = true;
+          projectile.c.canExplode = false;
           MakeAOE(
             projectile.c.ownerCreatureType,
             aoePos,
@@ -13634,7 +13668,17 @@ void GameDraw() {
     for (const auto& particle : g.run.particles) {
       ASSERT(particle.type);
       const auto fb = fb_particles->Get(particle.type);
-      const auto p  = Clamp01(particle.createdAt.Elapsed().Progress(particle.duration));
+
+      auto       e = particle.createdAt.Elapsed();
+      const auto p = Clamp01(e.Progress(particle.duration));
+
+      f32 fade = EaseOutQuad(1 - p);
+      if (fb->fades_in())
+        fade *= MIN(1, EaseOutQuad(e.Progress(ANIMATION_0_FRAMES)));
+
+      if (fade < 0)
+        continue;
+
       DrawGroup_CommandTexture({
         .texID = GetTextureIDByProgress(
           fb->variations()->Get(particle.variation)->texture_ids(), p
@@ -13642,7 +13686,7 @@ void GameDraw() {
         .rotation = particle.rotation,
         .pos      = particle.pos,
         .scale    = Vector2(fb->scale_x(), fb->scale_y()) * particle.scale,
-        .color    = Fade(particle.color, EaseOutQuad(1 - p)),
+        .color    = Fade(particle.color, fade),
       });
     }
     DrawGroup_End();

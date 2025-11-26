@@ -207,6 +207,8 @@ table Effect {
 
     projectile_type: int;
     projectile_range_meters: float;
+    spawned_projectile_shoots_directly_at_random_enemy: bool;
+    spawned_projectile_can_explode: bool;
 
     pickupable_type: int;
 
@@ -267,6 +269,7 @@ table Weapon {
     projectile_piercing_damage_bonus_percent: [int];
     projectile_bounce: [int];
     range_meters: [float];
+    explosion_size_scale: float = 1;
     price: int;
     melee_collider_height_px: float;
     particle_emitter: ParticleEmitter;
@@ -299,6 +302,7 @@ table Projectile {
     scales_in: float = 1;
     squashes_in: bool;
     disable_rotation: bool;
+    can_bounce: bool = true;
     scale_x: float = 1;
     scale_y: float = 1;
     explosion_size_scale: float = 1;
@@ -315,6 +319,7 @@ table Particle {
     disable_rotation: bool;
     scale_x: float = 1;
     scale_y: float = 1;
+    fades_in: bool = false;
     color: uint = 0xffffffff;
     variations: [ParticleVariation];
 }
