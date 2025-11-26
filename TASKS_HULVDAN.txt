@@ -21,6 +21,13 @@ x рисовка: улучшить: предмет соты
 
 * cooravie patrols
 *
+* билды: слоёные рукава
+* билды: слоёные штаны
+* билды: слоёные усы
+* билды: слоёные руки
+* билды: слоёные ботинки
+*
+*
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
 *
@@ -32,8 +39,6 @@ x рисовка: улучшить: предмет соты
 * lance -% damage PROPERTY (NOT STAT)
 *
 * «this weapon» change to «». if no «this weapon» -> show «all weapons»
-* нужно что-то сделать с «пулевыми» оружиями (наример, RANGED_3_CHAIN_GUN)
-  стрельба выглядит хреново
 * impl weapon burning_damage, burning_times, burning_damage_scalings
 *
 * mob projectiles are always on top
@@ -48,13 +53,12 @@ x рисовка: улучшить: предмет соты
 * stats: LOOT_ALIENS_SPEED
 * stats: ENEMY_DAMAGE
 *
-* test flamethrower (without damage_scalings works good)
-*
 * fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
 *
 * fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
 *
-* 10 билдов
+* 10 билдов + (помним про подрывник из terraria)
+*
 * подредачить баффы сложностей
 *
 * prod: билды
@@ -153,6 +157,8 @@ x рисовка: улучшить: предмет соты
 *
 * RELEASED!
 =======================
+* нужно что-то сделать с «пулевыми» оружиями (например, RANGED_3_CHAIN_GUN)
+  стрельба выглядит хреново
 * crossbow animation
 * cheat: hovering on player's item + wheel -> changes count
 * cheat: hovering on player's item + CTRL + wheel -> changes item
