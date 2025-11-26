@@ -8,10 +8,13 @@ x MELEE_3_DEX_TROYER нож грома точно ли работает отск
 x MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
 x electrified gum projectile targets random achievable enemy
 x fire can't bounce!
+x show melee weapon collider gizmos
 
-* lance -% damage PROPERTY (NOT STAT)
+* adjust melee weapon collider end size
+* melee weapon colliders
+* weapon icons
 *
-* lightning is too yellow
+* lance -% damage PROPERTY (NOT STAT)
 *
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
@@ -42,11 +45,8 @@ x fire can't bounce!
 *
 * test flamethrower (without damage_scalings works good)
 *
-* реализовать оружия (без доработок)
-*
 * fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
 *
-* melee weapon colliders
 *
 * projectiles
 *
@@ -192,6 +192,7 @@ x fire can't bounce!
 *
 * RELEASED!
 =======================
+* lightning is too yellow
 * show weapon `explosion_size_scale` in card
 * RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in weapon's card
 * cheat: weapon on change remove effect -> apply new weapon effects

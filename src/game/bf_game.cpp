@@ -454,7 +454,17 @@ struct BodyShape {  ///
     return _u._circle;
   }
 
+  const auto& DataCircle() const {
+    ASSERT(type == BodyShapeType_CIRCLE);
+    return _u._circle;
+  }
+
   auto& DataRect() {
+    ASSERT(type == BodyShapeType_RECT);
+    return _u._rect;
+  }
+
+  const auto& DataRect() const {
     ASSERT(type == BodyShapeType_RECT);
     return _u._rect;
   }
@@ -1084,6 +1094,12 @@ struct TurretToSpawn {  ///
   FBFlattened damageScalings = {};
 };
 
+struct RotatedRect {
+  Vector2 pos      = {};
+  Vector2 size     = {};
+  f32     rotation = {};
+};
+
 struct GameData {
   struct Meta {  ///
     Arena trashArena         = {};
@@ -1268,7 +1284,8 @@ struct GameData {
   X(Number, numbers)                       \
   X(Pickupable, pickupables)               \
   X(Particle, particles)                   \
-  X(TurretToSpawn, turretsToSpawn)
+  X(TurretToSpawn, turretsToSpawn)         \
+  X(RotatedRect, meleeWeaponColliderGizmos)
 
 #define X(type_, name_) Vector<type_> name_ = {};
     VECTORS_TABLE;
@@ -10808,8 +10825,9 @@ void DoUI() {
           // UI elements' gizmos.
           if (ge.meta.debugEnabled && bb.width && bb.height) {
             DrawGroup_CommandRectLines({
-              .pos = Vector2(bb.x, bb.y) + Vector2(bb.width, bb.height) / 2.0f,
+              .pos{bb.x, bb.y},
               .size{bb.width, bb.height},
+              .anchor{0, 0},
               .color = GREEN,
             });
           }
@@ -12384,10 +12402,20 @@ void GameFixedUpdate() {
 
               colliderSize.x += GetWeaponRangeMeters(weapon.type, weapon.tier);
 
+              auto pos = PLAYER_CREATURE.pos + weapon.targetDir * colliderSize.x / 2.0f;
+
+              if (ge.meta.debugEnabled) {
+                *g.run.meleeWeaponColliderGizmos.Add() = {
+                  .pos      = pos,
+                  .size     = colliderSize,
+                  .rotation = Vector2AngleOrZero(weapon.targetDir),
+                };
+              }
+
               CheckCollisionsRect(
                 ShapeCategory_STATIC,
                 (u32)ShapeCategory_CREATURE,
-                PLAYER_CREATURE.pos + weapon.targetDir * colliderSize.x / 2.0f,
+                pos,
                 colliderSize,
                 weapon.targetDir,
                 OnWeaponCollided,
@@ -13694,7 +13722,10 @@ void GameDraw() {
 
   // Gizmos. Colliders.
   if (ge.meta.debugEnabled) {  ///
-    for (auto& shape : g.run.bodyShapes) {
+    DrawGroup_Begin(DrawZ_GIZMOS);
+    DrawGroup_SetSortY(0);
+
+    for (const auto& shape : g.run.bodyShapes) {
       if (!shape.active)
         continue;
 
@@ -13706,7 +13737,7 @@ void GameDraw() {
 
       switch (shape.type) {
       case BodyShapeType_CIRCLE: {
-        DrawGroup_OneShotCircleLines({
+        DrawGroup_CommandCircleLines({
           .pos    = pos,
           .radius = shape.DataCircle().radius,
           .color  = color,
@@ -13714,11 +13745,11 @@ void GameDraw() {
       } break;
 
       case BodyShapeType_RECT: {
-        DrawGroup_OneShotRectLines({
-          .pos    = pos,
-          .size   = shape.DataRect().size,
-          .anchor = Vector2Half(),
-          .color  = color,
+        DrawGroup_CommandRectLines({
+          .pos  = pos,
+          .size = shape.DataRect().size,
+          .anchor{0.5f, 0.5f},
+          .color = color,
         });
       } break;
 
@@ -13726,6 +13757,16 @@ void GameDraw() {
         INVALID_PATH;
       }
     }
+
+    for (const auto& rect : g.run.meleeWeaponColliderGizmos) {
+      DrawGroup_CommandRectLines({
+        .pos      = rect.pos,
+        .size     = rect.size,
+        .rotation = rect.rotation,
+      });
+    }
+
+    DrawGroup_End();
   }
 
   EndMode2D();
@@ -13950,6 +13991,8 @@ void GameDraw() {
     VECTORS_TABLE;
 #undef X
   }
+
+  g.run.meleeWeaponColliderGizmos.Reset();
 }
 
 ///

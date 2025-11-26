@@ -4519,7 +4519,7 @@ weapons: # {  ###
         only_this_weapon: true
     price: 245
   - type: RANGED_3_CHAIN_GUN # BFG
-    base_damage: 2
+    base_damage: 1
     damage_scalings:
       - stat_type: DAMAGE_RANGED
         percents_per_tier: 100
@@ -4531,7 +4531,7 @@ weapons: # {  ###
     projectile_count: 3
     accuracy_plus_minus: 0.4
     range_meters: 11.7
-    knockback_meters: 5
+    knockback_meters: 2
     projectile_type: BULLET
     projectile_pierce: 1
     effects:
