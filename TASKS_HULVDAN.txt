@@ -63,6 +63,9 @@ x melee weapon collider widths
 * weapon icon: RANGED_3_CHAIN_GUN
 * weapon icon: RANGED_3_GATLING_LASER
 *
+* баланс количество сундуков
+* баланс количество chester-ов
+*
 * engine: show transient buffer arena
 *
 * cooravie patrols

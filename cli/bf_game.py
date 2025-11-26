@@ -278,8 +278,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         texture_ids.insert(0, f"game_weapon_{i:02}_" + name.lower())
         x["texture_ids"] = texture_ids
 
-        # x["icon_texture_id"] = f"ui_weapon_{i:02}_" + name.lower()
-        x["icon_texture_id"] = f"game_weapon_{i:02}_{name.lower()}"
+        x["icon_texture_id"] = f"ui_weapon_{i:02}_" + name.lower()
 
         if weapon_type == "MELEE":
             assert x.get("melee_collider_height_px", 0) > 0
@@ -1019,6 +1018,8 @@ def process_images():
         "sniper_gun",
         "chain_gun",
         "gatling_laser",
+    ]
+    custom_weapon_parts = [
         "crossbow_string",
     ]
     bf_image.spritesheetify(
@@ -1027,22 +1028,24 @@ def process_images():
         size=(12, 6),
         gap=10,
         out_filename_prefix="game_weapon_",
-        out_filenames=[f"{i + 1:02}_{x}" for i, x in enumerate(weapon_names)],
+        out_filenames=[
+            f"{i + 1:02}_{x}" for i, x in enumerate(weapon_names + custom_weapon_parts)
+        ],
         out_dir=ART_TEXTURES_DIR,
     )
 
-    # # Weapon icons.
-    # for f in ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
-    #     f.unlink()
-    # bf_image.spritesheetify(
-    #     ART_DIR / "src" / "main_007.png",
-    #     cell_size=200,
-    #     size=(17, 8),
-    #     gap=24,
-    #     out_filename_prefix="ui_weapon_",
-    #     out_filenames=weapon_names,
-    #     out_dir=ART_TEXTURES_DIR,
-    # )
+    # Weapon icons.
+    for f in ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
+        f.unlink()
+    bf_image.spritesheetify(
+        ART_DIR / "src" / "main_007.png",
+        cell_size=200,
+        size=(17, 8),
+        gap=24,
+        out_filename_prefix="ui_weapon_",
+        out_filenames=[f"{i + 1:02}_{x}" for i, x in enumerate(weapon_names)],
+        out_dir=ART_TEXTURES_DIR,
+    )
 
     # Spritesheetifying projectiles.
     for f in (ART_TEXTURES_DIR / "projectiles").glob("*.png"):
