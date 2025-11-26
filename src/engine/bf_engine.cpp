@@ -1640,12 +1640,8 @@ void FlushDrawCommands() {
                       * ge.meta.screenScale * data.anchor.y,
               },
               .size{
-                (f32)tex->size_x()
-                  // * (1 - data.sourceMargins.left - data.sourceMargins.right)
-                  * abs(data.scale.x) * ge.meta.screenScale,
-                (f32)tex->size_y()
-                  // * (1 - data.sourceMargins.bottom - data.sourceMargins.top)
-                  * abs(data.scale.y) * ge.meta.screenScale,
+                (f32)tex->size_x() * abs(data.scale.x) * ge.meta.screenScale,
+                (f32)tex->size_y() * abs(data.scale.y) * ge.meta.screenScale,
               },
             };
             destRec.pos -= LOGICAL_RESOLUTION / 2;
@@ -2039,16 +2035,8 @@ void FlushDrawCommands() {
             const auto& data = command.DataRect();
 
             Rect destRec{
-              .pos{
-                // data.pos.x + data.size.x * abs(data.scale.x) * data.anchor.x,
-                // data.pos.y + data.size.y * abs(data.scale.y) * data.anchor.y,
-                data.pos.x,
-                data.pos.y,
-              },
-              .size{
-                data.size.x * abs(data.scale.x),
-                data.size.y * abs(data.scale.y),
-              },
+              .pos{data.pos.x, data.pos.y},
+              .size{data.size.x * abs(data.scale.x), data.size.y * abs(data.scale.y)},
             };
             destRec.pos -= LOGICAL_RESOLUTION / 2;
 
