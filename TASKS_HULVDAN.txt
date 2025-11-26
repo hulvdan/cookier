@@ -2,17 +2,20 @@ WORKING SINCE 2025-09-07
 
 x ref: merge common data of `Projectile` and `MakeProjectileData`
 x in weapon card show bullet piercing debuff
+- gamelib make it not possible to set piercing debugg bonus is no piercing is specified
+x melee weapons should have fixed swing time
+x MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
+x MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
+x electrified gum projectile targets random achievable enemy
+x fire can't bounce!
 
+* lance -% damage PROPERTY (NOT STAT)
+*
 * lightning is too yellow
-* gamelib can't set piercing debugg bonus is no piercing is specified
-* melee weapons should have fixed swing time
-  (MELEE_0_GHOST_AXE открывашка)
 *
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
 *
-* MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
-* MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
 * MELEE_3_EXCALIBUR спавнит projectile + меньше урон
 * «this weapon» change to «». if no «this weapon» -> show «all weapons»
 * нужно что-то сделать с «пулевыми» оружиями (наример, RANGED_3_CHAIN_GUN)
@@ -189,6 +192,7 @@ x in weapon card show bullet piercing debuff
 *
 * RELEASED!
 =======================
+* show weapon `explosion_size_scale` in card
 * RANGED_2_NUCLEAR_LAUNCHER explosion size bonus in weapon's card
 * cheat: weapon on change remove effect -> apply new weapon effects
 * арбалет анимация
