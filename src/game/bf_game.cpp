@@ -6985,8 +6985,16 @@ void DoUI() {
               value += g.run.state.stats[StatType_PIERCING];
 
             if (value > 0) {
+              int piercingDamageBonusPercent
+                = g.run.state.stats[StatType_PIERCING_DAMAGE];
+              if (fb->projectile_piercing_damage_bonus_percent())
+                piercingDamageBonusPercent
+                  += fb->projectile_piercing_damage_bonus_percent()->Get(tierOffset);
+
               componentWeaponStatEntry(Loc_UI_PIERCE, [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT(TextFormat("%d", value));
+                BF_CLAY_TEXT(TextFormat(
+                  "%d (-%d%%)", value, MAX(0, MIN(100, 100 - piercingDamageBonusPercent))
+                ));
               });
             }
           }
@@ -12451,13 +12459,16 @@ void GameFixedUpdate() {
                 = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, creature.pos);
             }
 
-            const f32 piercingDamageMultiplier
-              = (f32)g.run.state.stats[StatType_PIERCING_DAMAGE] / 100.0f;
+            f32 piercingDamageMultiplier
+              = (f32)(g.run.state.stats[StatType_PIERCING_DAMAGE]
+                      + projectile.c.weaponPiercingDamageBonusPercent)
+                / 100.0f;
+            piercingDamageMultiplier = Clamp01(piercingDamageMultiplier);
 
             f32 knockback = projectile.c.knockbackMeters;
 
             FOR_RANGE (int, i, projectile.piercedCount) {
-              damage = Round((f32)damage * piercingDamageMultiplier);
+              damage = Round((f32)damage * (piercingDamageMultiplier));
               knockback *= piercingDamageMultiplier;
             }
 
