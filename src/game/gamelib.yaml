@@ -1184,7 +1184,7 @@ items: # {  ###
     price: 75
     effects:
       - stat_type: DAMAGE
-        value: 25
+        value: 12
       - stat_type: ARMOR
         value: -3
   - type: GLASSES
@@ -1681,9 +1681,9 @@ items: # {  ###
     effects:
       - stat_type: DAMAGE
         effectcondition_type: STAT__EVERY__X__SECONDS
-        value: 5
+        value: 1
         placeholders:
-          - floats: 5
+          - floats: 15
       - stat_type: DAMAGE
         value: -15
   - type: WOLF_HELMET
