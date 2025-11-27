@@ -438,6 +438,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             process_effects_of(x, 1)
             x["name_locale"] = "BUILD_{}".format(x["type"])
             max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
+            check_duplicates(x["starting_weapon_types"])
 
         assert non_lockable_items
         assert non_lockable_weapons
@@ -1017,7 +1018,7 @@ def process_images():
         "fist",
         "ghost_axe",
         "ghost_flint",
-        "jousting_lance",
+        "lance",
         "lightning_shiv",
         "plank",
         "pruner",
@@ -1040,7 +1041,7 @@ def process_images():
         "excalibur",
         "scythe",
         "crossbow",
-        "double_barrel_shotgun",
+        "shotgun",
         "ghost_scepter",
         "icicle",
         "javelin",
