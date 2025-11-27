@@ -4604,6 +4604,9 @@ builds: # {  ###
         value: 50
       - stat_type: DAMAGE
         value: 25
+      - effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        stat_type: HARVESTING
+        value: -3
     unlocks_weapon_type: RANGED_0_SHREDDER
   - type: FAST
     hat_type: TOP
@@ -4789,33 +4792,34 @@ achievements: # {  ###
       - value: 1
         unlocks_build_type: NINJA
       - value: 2
+        unlocks_weapon_type: RANGED_2_MINIGUN
       - value: 3
         unlocks_weapon_type: MELEE_3_EXCALIBUR
   - type: KILLER
     steps:
-      - value: 40
-      - value: 100
-        unlocks_weapon_type: RANGED_0_SLINGSHOT
-      - value: 300
+      # - value: 100
+      #   unlocks_weapon_type: RANGED_0_SLINGSHOT
+      - value: 500
         unlocks_weapon_type: RANGED_0_CROSSBOW
+      - value: 3000
+        unlocks_build_type: LEARNER
   - type: WALKER
     steps:
-      - value: 100
       - value: 1000
       - value: 5000
       - value: 25000
   - type: IDLER
     steps:
-      - value: 10
+      - value: 30
         unlocks_item_type: TURRET
-      - value: 200
-      - value: 1000
+      - value: 400
+        unlocks_weapon_type: RANGED_3_CHAIN_GUN
   - type: COINS
     steps:
       - value: 1000
+        unlocks_item_type: RECYCLING_MACHINE
       - value: 5000
-      - value: 25000
-      - value: 100000
+        unlocks_item_type: PIGGY_BANK
   - type: FINISH_RUN_WITH_BUILD_DEFAULT
   - type: FINISH_RUN_WITH_BUILD_NINJA
   - type: FINISH_RUN_WITH_BUILD_VICTIM
@@ -4826,21 +4830,39 @@ achievements: # {  ###
   - type: FINISH_RUN_WITH_BUILD_GOLEM
   - type: FINISH_RUN_WITH_BUILD_LUCKY
   - type: FINISH_RUN_WITH_BUILD_LEARNER
+  - type: REACH_THIS_OR_MORE_STAT_SPEED
+    steps:
+      - value: 60
+        unlocks_build_type: FAST
+  - type: REACH_THIS_OR_MORE_STAT_LUCK
+    steps:
+      - value: 75
+        unlocks_build_type: LUCKY
+  - type: TURRETS_ON_THE_MAP
+    hide_progress: true
+    steps:
+      - value: 5
+        unlocks_build_type: ENGINEER
   - type: RECYCLE_X_WEAPONS_DURING_A_RUN
     hide_progress: true
     steps:
-      - value: 15
+      - value: 12
         unlocks_build_type: ARMS_DEALER
-  - type: HEAL_X_DURING_A_RUN
+  - type: REACH_THIS_OR_MORE_STAT_HP
     hide_progress: true
     steps:
-      - value: 200
+      - value: 100
         unlocks_build_type: LICH
   - type: FINISH_A_WAVE_WITH_1_HP
     hide_progress: true
     steps:
       - value: 1
         unlocks_build_type: GOLEM
+  - type: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
+    hide_progress: true
+    steps:
+      - value: 25
+        unlocks_build_type: VICTIM
   - type: TODO
     steps:
       #
@@ -4861,7 +4883,6 @@ achievements: # {  ###
       - value: 1
       - value: 1
       #
-      - value: 1
       - value: 1
       - value: 1
       - value: 1
