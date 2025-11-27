@@ -11,11 +11,11 @@ x impl achievement: FINISH_A_WAVE_WITH_1_HP
 x impl achievement: RECYCLE_X_WEAPONS_DURING_A_RUN
 x impl achievement: HEAL_X_DURING_A_RUN
 x impl achievement: TURRETS_ON_THE_MAP
+x impl achievement: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
 
 * impl achievement: REACH_THIS_OR_MORE_STAT_LUCK
 * impl achievement: REACH_THIS_OR_MORE_SPEED
 * impl achievement: REACH_THIS_OR_MORE_STAT_HP
-* impl achievement: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
 * impl achievement:
 * impl achievement:
 * impl achievement:
