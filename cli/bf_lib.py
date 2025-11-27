@@ -311,6 +311,9 @@ def genenum(
 _call_stack: list[str | int] = []
 
 
+_recursive_replace_transform_patterns: Any = None
+
+
 def recursive_replace_transform(
     gamelib_recursed,
     key_postfix_single: str,
@@ -320,10 +323,17 @@ def recursive_replace_transform(
     root: bool = True,
 ) -> list[str] | None:
     # {  ###
+    global _recursive_replace_transform_patterns
     errors = None
 
     if not isinstance(gamelib_recursed, dict):
         return None
+
+    if root:
+        _recursive_replace_transform_patterns = (
+            re.compile(f"(.*_)?{key_postfix_single}(_\\d+)?$"),
+            re.compile(f"(.*_)?{key_postfix_list}(_\\d+)?$"),
+        )
 
     for key, value in gamelib_recursed.items():
         _call_stack.append(key)
@@ -345,9 +355,10 @@ def recursive_replace_transform(
                     errors.extend(more_errors)
 
         elif isinstance(key, str) and (
-            key.endswith((key_postfix_single, key_postfix_list))
+            re.match(_recursive_replace_transform_patterns[0], key)
+            or re.match(_recursive_replace_transform_patterns[1], key)
         ):
-            if key.endswith(key_postfix_list):
+            if re.match(_recursive_replace_transform_patterns[1], key):
                 assert isinstance(value, list)
                 for i in range(len(value)):
                     assert isinstance(value[i], str), f"value: {value[i]}"
@@ -402,6 +413,9 @@ def recursive_replace_transform(
         if added_type:
             _call_stack.pop()
         _call_stack.pop()
+
+    if root:
+        _recursive_replace_transform_patterns = None
 
     if root and errors:
         message = "recursive_replace_transform({}, {}):\nNot found:\n{}".format(

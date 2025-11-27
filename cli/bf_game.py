@@ -479,8 +479,13 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     if 1:  # {  ###
         for _, x in enumerate_table("achievements"):
-            x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
-            x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
+            if x["type"].startswith("FINISH_RUN_WITH_BUILD_"):
+                t = x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
+                x["name_locale"] = f"BUILD_{t}"
+                x["description_locale"] = "ACHIEVEMENT_DESCRIPTION_FINISH_RUN_WITH_BUILD"
+            else:
+                x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
+                x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
 
             mandatory_fields = [
                 "steps",

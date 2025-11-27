@@ -4449,6 +4449,7 @@ void GameInit() {
         );
 
         ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
+        ASSERT(fb_cond->requires_stat2() == (bool)fb_effect->stat_type_2());
         ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
         ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
 

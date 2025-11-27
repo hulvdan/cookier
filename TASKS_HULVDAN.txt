@@ -19,6 +19,8 @@ x рисовка: улучшить: fire orb
 x рисовка: улучшить: предмет мусорное ведро
 x рисовка: улучшить: предмет соты
 x проставить starting weapons
+x assert build can't have locked item
+x можно указать stat_type_2 (численные постфиксы `recursive_replace_transform`)
 
 * билды 10 билдов
 
@@ -67,8 +69,8 @@ UNLOCKED BY XXX
 * impl: CANT_HEAL
 * impl: WEAPONS_PRICE
 * impl: ITEMS_PRICE
+* impl: XP_PERCENT_REQUIRED_FOR_LEVEL_UP
 *
-* assert build can't have locked item
 *
 * билды: слоёные усы
 * билды: слоёные рубашка
