@@ -4863,6 +4863,11 @@ achievements: # {  ###
     steps:
       - value: 25
         unlocks_build_type: VICTIM
+  # - type: HEAL_X_DURING_A_RUN
+  #   hide_progress: true
+  #   steps:
+  #   - value: 25
+  #     unlocks_build_type: VICTIM
   - type: TODO
     steps:
       #
