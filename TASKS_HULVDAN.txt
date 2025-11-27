@@ -21,40 +21,22 @@ x рисовка: улучшить: предмет соты
 x проставить starting weapons
 x assert build can't have locked item
 x можно указать stat_type_2 (численные постфиксы `recursive_replace_transform`)
+x фикс ассерт requires_stat()
 
-* фикс ассерт requires_stat()
+* assert: all builds (except DEFAULT) are locked
+* impl: FINISH RUN WITH PARTICULAR BUILD achievements
 * билды 10 билдов
 
-# 0 - UNLOCKS ITEM MILK
+# 1 NINJA - UNLOCKED BY XXX
+# 2 VICTIM - UNLOCKED BY XXX
+# 3 FAST - UNLOCKED BY XXX
+# 4 ENGINEER - UNLOCKED BY XXX
+# 5 arms dealer - UNLOCKED BY recycle 12 weapons during a run
+# 6 lich - UNLOCKED BY XXX
+# 7 golem - UNLOCKED BY XXX
+# 8 lucky - UNLOCKED BY XXX
+# 9 learner - UNLOCKED BY XXX
 
-# 1 NINJA - UNLOCKS ITEM XXX
-UNLOCKED BY XXX
-
-# 2 VICTIM - UNLOCKS ITEM XXX
-UNLOCKED BY XXX
-
-# 3 FAST - UNLOCKS ITEM XXX
-UNLOCKED BY XXX
-
-# 4 ENGINEER - UNLOCKS ITEM XXX
-UNLOCKED BY XXX
-
-# 5 arms dealer - UNLOCKS ITEM XXX
-UNLOCKED BY recycle 12 weapons during a run
-
-# 6 lich - UNLOCKS ITEM XXX
-UNLOCKED BY XXX
-
-# 7 golem - UNLOCKS ITEM XXX
-UNLOCKED BY XXX
-
-# 8 lucky - UNLOCKS ITEM клевекер
-UNLOCKED BY XXX
-
-# 9 learner - UNLOCKS ITEM XXX
-UNLOCKED BY XXX
-
-* FINISH RUN WITH PARTICULAR BUILD achievements
 *
 * cooravie patrols
 *
@@ -70,7 +52,7 @@ UNLOCKED BY XXX
 * impl: CANT_HEAL
 * impl: WEAPONS_PRICE
 * impl: ITEMS_PRICE
-* impl: XP_PERCENT_REQUIRED_FOR_LEVEL_UP
+* impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
 *
 *
 * билды: слоёные усы

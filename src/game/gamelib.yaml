@@ -557,8 +557,9 @@ effect_conditions: # {  ###
   - type: YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
     x_condvar_type: DAMAGE
     x_multiplied_by_times: true
-  - type: STAT__MODS_CHANGED_BY__X__PERCENT
+  - type: STAT_2__MODS_CHANGED_BY__X__PERCENT
     x_is_percent: true
+    x_color_by_stat_2: true
     x_multiplied_by_times: true
   - type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
   - type: SHOP_SELLS_AT_LEAST__X__WEAPONS
@@ -4477,21 +4478,30 @@ stats: # {  ###
     is_percent: true
     is_secondary: true
   - type: EXTRA_ITEM_IN_A_CRATE_CHANCE
+    is_percent: true
     is_secondary: true
     is_hidden: true
   - type: LOOT_ALIENS_CHANCE
+    is_percent: true
     is_secondary: true
     is_hidden: true
   - type: LOOT_ALIENS_SPEED
+    is_percent: true
     is_secondary: true
     is_hidden: true
   - type: WEAPONS_PRICE
+    negative_is_good: true
+    is_percent: true
     is_secondary: true
     is_hidden: true
   - type: ITEMS_PRICE
+    negative_is_good: true
+    is_percent: true
     is_secondary: true
     is_hidden: true
-  - type: XP_PERCENT_REQUIRED_FOR_LEVEL_UP
+  - type: XP_PERCENT_REQUIRED_TO_LEVEL_UP
+    negative_is_good: true
+    is_percent: true
     is_secondary: true
     is_hidden: true
 # }
@@ -4572,14 +4582,14 @@ builds: # {  ###
       - RANGED_0_SHREDDER
       - RANGED_0_SLINGSHOT
     effects:
-      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        weapon_type: RANGED_0_SHURIKEN
-        placeholders:
-          - ints: 1
       - stat_type: RANGE
         value: 30
       - stat_type: DODGE
         value: 3
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        weapon_type: RANGED_0_SHURIKEN
+        placeholders:
+          - ints: 1
       - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
     unlocks_item_type: STATUE
   - type: VICTIM
@@ -4630,16 +4640,16 @@ builds: # {  ###
     effects:
       - stat_type: ENGINEERING
         value: 10
-      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
-        stat_type: ENGINEERING
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: ENGINEERING
         placeholders:
           - ints: 25
       - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
         weapon_type: MELEE_0_WRENCH
         placeholders:
           - ints: 1
-      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
-        stat_type: DAMAGE
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: DAMAGE
         placeholders:
           - ints: -50
       - effectcondition_type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
@@ -4660,8 +4670,8 @@ builds: # {  ###
         value: -95
       - stat_type: HARVESTING
         value: 30
-      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
-        stat_type: DAMAGE
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: DAMAGE
         placeholders:
           - ints: 33
       - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
@@ -4694,8 +4704,8 @@ builds: # {  ###
         damage_scalings:
           - stat_type: HP
             percents_per_tier: 100
-      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
-        stat_type: DAMAGE
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: DAMAGE
         placeholders:
           - ints: -50
     unlocks_item_type: DECOMPOSING_FLESH
@@ -4710,12 +4720,12 @@ builds: # {  ###
     effects:
       - stat_type: HP
         value: 20
-      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
-        stat_type: HP
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: HP
         placeholders:
           - ints: 33
-      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
-        stat_type: ARMOR
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: ARMOR
         placeholders:
           - ints: 33
       - effectcondition_type: STAT__WHEN_BELOW__X__PERCENT_HP
@@ -4737,8 +4747,8 @@ builds: # {  ###
       - MELEE_0_FIST
       - RANGED_0_PISTOL
     effects:
-      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
-        stat_type: LUCK
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: LUCK
         placeholders:
           - ints: 25
       - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
@@ -4764,7 +4774,7 @@ builds: # {  ###
       - RANGED_0_ICICLE
       - RANGED_0_JAVELIN
     effects:
-      - stat_type: XP_PERCENT_REQUIRED_FOR_LEVEL_UP
+      - stat_type: XP_PERCENT_REQUIRED_TO_LEVEL_UP
         value: -66
       - stat_type: ITEMS_PRICE
         value: 50

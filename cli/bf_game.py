@@ -107,8 +107,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
         for i, x in enumerate(gamelib[field]):
             scoped_processing_args[1] = x["type"]
-            if i:
-                yield i, x
+            yield i, x
 
         scoped_processing_args[0] = "None"
         scoped_processing_args[1] = "None"
@@ -119,7 +118,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Pickupables.
     # ============================================================
     # {  ###
-    for _, x in enumerate_table("pickupables"):
+    for i, x in enumerate_table("pickupables"):
+        if not i:
+            continue
         x["name_locale"] = "PICKUPABLE_{}".format(x["type"])
     # }
 
@@ -143,8 +144,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         for _, x in enumerate_table("effect_conditions"):
             for cond in (
                 *(l.upper() for l in EFFECT_CONDITION_LETTERS),
-                # "STAT_2",
                 "STAT",
+                "STAT_2",
                 "PROPERTY",
                 "PICKUPABLE",
                 # "TIER",
@@ -176,6 +177,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                             f"{letter}_multiplied_by_times", False
                         ),
                         "divided_by_times": x.pop(f"{letter}_divided_by_times", False),
+                        "color_by_stat": x.pop(f"{letter}_color_by_stat", False),
+                        "color_by_stat_2": x.pop(f"{letter}_color_by_stat_2", False),
                     }
                 )
     # }
@@ -205,8 +208,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 assert len(e["value_multiplier"]) == required_tier_values, x["type"]
 
             for v in e.get("placeholders", []):
-                field_to_list(v, "ints")
-                field_to_list(v, "floats")
+                field_to_list(v, "ints", required_tier_values)
+                field_to_list(v, "floats", required_tier_values)
 
             if e.get("effectcondition_type") == "START_WITH__X__ITEM_OR_WEAPON":
                 for container, field in (
@@ -225,7 +228,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # {  ###
     items_per_tier = [0] * TOTAL_TIERS
 
-    for _, x in enumerate_table("items"):
+    for i, x in enumerate_table("items"):
+        if not i:
+            continue
+
         assert x.get("price", 0) > 0, "All items must have price > 0!"
         process_effects_of(x, 1)
 
@@ -254,6 +260,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     # {  ###
     for i, x in enumerate_table("difficulties"):
+        if not i:
+            continue
         process_effects_of(x, 1)
         x["name_locale"] = f"DIFFICULTY_{i}"
         x["texture_id"] = "ui_item_difficulty_{}".format(i)
@@ -264,6 +272,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # {  ###
     for i, x in enumerate_table("weapons"):
         assert "min_tier_index" not in x
+
+        if not i:
+            continue
 
         weapon_type, min_tier_index, name = x["type"].split("_", 2)
         min_tier_index = int(min_tier_index)
@@ -359,6 +370,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     # {  ###
     for i, x in enumerate_table("stats"):
+        if not i:
+            continue
+
         x["name_locale"] = "STAT_" + x["type"].upper()
         icon_texture = x.pop("icon_texture_id", None)
         if icon_texture is not None:
@@ -434,7 +448,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         assert not non_lockable_weapons
 
         max_weapons = 0
-        for _, x in enumerate_table("builds"):
+        for i, x in enumerate_table("builds"):
+            if not i:
+                continue
+
             process_effects_of(x, 1)
             x["name_locale"] = "BUILD_{}".format(x["type"])
             max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
@@ -443,7 +460,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         assert non_lockable_items
         assert non_lockable_weapons
 
-        for _, x in enumerate_table("builds"):
+        for i, x in enumerate_table("builds"):
+            if not i:
+                continue
+
             item = x.get("unlocks_item_type")
             weapon = x.get("unlocks_weapon_type")
 
@@ -458,7 +478,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 assert value not in non_lockable, f"{field}={value} can't be locked"
                 assert value not in locked, f"{field}={value} is already locked"
 
-        for _, x in enumerate_table("builds"):
+        for i, x in enumerate_table("builds"):
+            if not i:
+                continue
+
             assert x["type"] in build_achievements, (
                 "Build {} doesn't have respective achievemnt FINISH_RUN_WITH_BUILD_{}".format(
                     x["type"], x["type"]
@@ -478,7 +501,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Achievements.
     # ============================================================
     if 1:  # {  ###
-        for _, x in enumerate_table("achievements"):
+        for i, x in enumerate_table("achievements"):
+            if not i:
+                continue
+
             if x["type"].startswith("FINISH_RUN_WITH_BUILD_"):
                 t = x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
                 x["name_locale"] = f"BUILD_{t}"
