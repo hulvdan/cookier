@@ -199,7 +199,7 @@ table Flattened {
 
 table Effect {
     stat_type: int;
-    // stat_type_2: int;
+    stat_type_2: int;
     weaponproperty_type: int;
     effectcondition_type: int;
     value: [int];

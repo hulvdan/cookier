@@ -214,7 +214,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     (non_lockable_weapons, "weapon_type"),
                 ):
                     if e.get(field):
-                        container.append(e.get(field))
+                        container.append(e[field])
 
         # }
 
@@ -483,6 +483,17 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 t = x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
                 x["name_locale"] = f"BUILD_{t}"
                 x["description_locale"] = "ACHIEVEMENT_DESCRIPTION_FINISH_RUN_WITH_BUILD"
+                x["hide_progress"] = True
+                for build in gamelib["builds"]:
+                    if build["type"] == t:
+                        break
+                assert build
+                assert "steps" not in x
+                v = {"value": 1}
+                for f in ("unlocks_item_type", "unlocks_weapon_type"):
+                    if build.get(f):
+                        v[f] = build.pop(f)
+                x["steps"] = [v]
             else:
                 x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
                 x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
@@ -502,8 +513,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     "unlocks_weapon_type": locked_items,
                     "unlocks_item_type": locked_weapons,
                 }
-                c = sum(f in step for f in unlock_fields)
-                assert c <= 1
+                c = sum(f in step for f in unlock_fields if step.get(f))
+                assert c <= 1, unlock_fields
                 if c != 1:
                     log.warning(
                         "Achievement {}, stepIndex {} (value {}), should have either {} specified".format(
@@ -521,6 +532,12 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                             field, v
                         )
                         container.append(v)
+
+                        assert v not in {
+                            "unlocks_item_type": non_lockable_items,
+                            "unlocks_weapon_type": non_lockable_weapons,
+                        }.get(field, [])
+
     # }
 
     # Props.
