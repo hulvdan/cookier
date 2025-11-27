@@ -452,6 +452,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             if not i:
                 continue
 
+            x["finish_run_achievement_type"] = f"FINISH_RUN_WITH_BUILD_{x['type']}"
+
             process_effects_of(x, 1)
             x["name_locale"] = "BUILD_{}".format(x["type"])
             max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
