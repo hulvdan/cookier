@@ -4636,6 +4636,7 @@ builds: # {  ###
         placeholders:
           - ints: -50
       - effectcondition_type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
+    unlocks_weapon_type: RANGED_1_ROCKER_LAUNCHER
   - type: ARMS_DEALER
     hat_type: TOP
     hat_color: 0x7b7c74ff
