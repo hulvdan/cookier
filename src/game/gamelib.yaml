@@ -4826,6 +4826,21 @@ achievements: # {  ###
   - type: FINISH_RUN_WITH_BUILD_GOLEM
   - type: FINISH_RUN_WITH_BUILD_LUCKY
   - type: FINISH_RUN_WITH_BUILD_LEARNER
+  - type: RECYCLE_X_WEAPONS_DURING_A_RUN
+    hide_progress: true
+    steps:
+      - value: 15
+        unlocks_build_type: ARMS_DEALER
+  - type: HEAL_X_DURING_A_RUN
+    hide_progress: true
+    steps:
+      - value: 200
+        unlocks_build_type: LICH
+  - type: FINISH_A_WAVE_WITH_1_HP
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks_build_type: GOLEM
   - type: TODO
     steps:
       #
