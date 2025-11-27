@@ -31,6 +31,7 @@ from bf_lib import (
     genenum,
     hex_to_rgb_floats,
     hex_to_rgb_ints,
+    only_one_is_not_none,
     recursive_flattenizer,
     recursive_replace_transform,
     replace_double_spaces,
@@ -106,7 +107,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
         for i, x in enumerate(gamelib[field]):
             scoped_processing_args[1] = x["type"]
-            yield i, x
+            if i:
+                yield i, x
 
         scoped_processing_args[0] = "None"
         scoped_processing_args[1] = "None"
@@ -117,9 +119,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Pickupables.
     # ============================================================
     # {  ###
-    for i, x in enumerate_table("pickupables"):
-        if i > 0:
-            x["name_locale"] = "PICKUPABLE_{}".format(x["type"])
+    for _, x in enumerate_table("pickupables"):
+        x["name_locale"] = "PICKUPABLE_{}".format(x["type"])
     # }
 
     # Effect conditions.
@@ -179,6 +180,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 )
     # }
 
+    non_lockable_items: list[str] = []
+    non_lockable_weapons: list[str] = []
+
     def process_effects_of(x, required_tier_values: int) -> None:
         # {  ###
         for e in x.get("effects", []):
@@ -203,6 +207,15 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             for v in e.get("placeholders", []):
                 field_to_list(v, "ints")
                 field_to_list(v, "floats")
+
+            if e.get("effectcondition_type") == "START_WITH__X__ITEM_OR_WEAPON":
+                for container, field in (
+                    (non_lockable_items, "item_type"),
+                    (non_lockable_weapons, "weapon_type"),
+                ):
+                    if e.get(field):
+                        container.append(e.get(field))
+
         # }
 
     TOTAL_TIERS = 4
@@ -212,23 +225,22 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # {  ###
     items_per_tier = [0] * TOTAL_TIERS
 
-    for i, x in enumerate_table("items"):
-        if i > 0:
-            assert x.get("price", 0) > 0, "All items must have price > 0!"
-            process_effects_of(x, 1)
+    for _, x in enumerate_table("items"):
+        assert x.get("price", 0) > 0, "All items must have price > 0!"
+        process_effects_of(x, 1)
 
-            x["name_locale"] = "ITEM_" + x["type"].upper()
-            assert 0 <= x["tier"] < 4
+        x["name_locale"] = "ITEM_" + x["type"].upper()
+        assert 0 <= x["tier"] < 4
 
-            mandatory_fields = [
-                "price",
-            ]
-            for field in mandatory_fields:
-                assert field in x, "Item {} has to have '{}' specified".format(
-                    x["type"], field
-                )
+        mandatory_fields = [
+            "price",
+        ]
+        for field in mandatory_fields:
+            assert field in x, "Item {} has to have '{}' specified".format(
+                x["type"], field
+            )
 
-            items_per_tier[x.get("tier", 0)] += 1
+        items_per_tier[x.get("tier", 0)] += 1
 
     genline(
         "constexpr int ITEMS_PER_TIER_[] {{{}}};".format(
@@ -242,19 +254,15 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     # {  ###
     for i, x in enumerate_table("difficulties"):
-        if i > 0:
-            process_effects_of(x, 1)
-            x["name_locale"] = f"DIFFICULTY_{i}"
-            x["texture_id"] = "ui_item_difficulty_{}".format(i)
+        process_effects_of(x, 1)
+        x["name_locale"] = f"DIFFICULTY_{i}"
+        x["texture_id"] = "ui_item_difficulty_{}".format(i)
     # }
 
     # Weapons.
     # ============================================================
     # {  ###
     for i, x in enumerate_table("weapons"):
-        if i == 0:
-            continue
-
         assert "min_tier_index" not in x
 
         weapon_type, min_tier_index, name = x["type"].split("_", 2)
@@ -351,13 +359,12 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # ============================================================
     # {  ###
     for i, x in enumerate_table("stats"):
-        if i >= 1:
-            x["name_locale"] = "STAT_" + x["type"].upper()
-            icon_texture = x.pop("icon_texture_id", None)
-            if icon_texture is not None:
-                x["big_icon_texture_id"] = f"{icon_texture}_big"
-                if x["type"] != "COINS":
-                    x["small_icon_texture_id"] = f"{icon_texture}_small"
+        x["name_locale"] = "STAT_" + x["type"].upper()
+        icon_texture = x.pop("icon_texture_id", None)
+        if icon_texture is not None:
+            x["big_icon_texture_id"] = f"{icon_texture}_big"
+            if x["type"] != "COINS":
+                x["small_icon_texture_id"] = f"{icon_texture}_small"
 
         if i >= 4 and not x.get("is_secondary"):
             x["upgrade_name_locale"] = "UPGRADE_NAME_" + x["type"].upper()
@@ -410,62 +417,104 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         genline("")
     # }
 
+    locked_builds: list[str] = []
+    locked_items: list[str] = []
+    locked_weapons: list[str] = []
+
     # Builds.
     # ============================================================
     if 1:  # {  ###
+        build_achievements = [
+            x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
+            for x in gamelib["achievements"]
+            if x["type"].startswith("FINISH_RUN_WITH_BUILD_")
+        ]
+
+        assert not non_lockable_items
+        assert not non_lockable_weapons
+
         max_weapons = 0
-        for i, x in enumerate_table("builds"):
+        for _, x in enumerate_table("builds"):
             process_effects_of(x, 1)
-            if i > 0:
-                x["name_locale"] = "BUILD_{}".format(x["type"])
-                max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
+            x["name_locale"] = "BUILD_{}".format(x["type"])
+            max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
+
+        assert non_lockable_items
+        assert non_lockable_weapons
+
+        for _, x in enumerate_table("builds"):
+            item = x.get("unlocks_item_type")
+            weapon = x.get("unlocks_weapon_type")
+
+            assert only_one_is_not_none((item, weapon)), (
+                f"Build {x['type']} must have `unlocks_item_type` or `unlocks_weapon_type`"
+            )
+
+            for field, value, non_lockable, locked in (
+                ("item", item, non_lockable_items, locked_items),
+                ("weapon", weapon, non_lockable_weapons, locked_weapons),
+            ):
+                assert value not in non_lockable, f"{field}={value} can't be locked"
+                assert value not in locked, f"{field}={value} is already locked"
+
+        for _, x in enumerate_table("builds"):
+            assert x["type"] in build_achievements, (
+                "Build {} doesn't have respective achievemnt FINISH_RUN_WITH_BUILD_{}".format(
+                    x["type"], x["type"]
+                )
+            )
+            build_achievements.remove(x["type"])
+
+        assert not build_achievements, (
+            "Found extra achievements but not builds: achievements are {}".format(
+                build_achievements
+            )
+        )
+
         genline("constexpr int MAX_BUILD_WEAPONS = {};\n".format(max_weapons))
     # }
 
     # Achievements.
     # ============================================================
     if 1:  # {  ###
-        unlocked_builds: list[str] = []
-        unlocked_items: list[str] = []
-        unlocked_weapons: list[str] = []
+        for _, x in enumerate_table("achievements"):
+            x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
+            x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
 
-        for i, x in enumerate_table("achievements"):
-            if i > 0:
-                x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
-                x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
+            mandatory_fields = [
+                "steps",
+            ]
+            for field in mandatory_fields:
+                assert field in x, "Achievement {} has to have '{}' specified".format(
+                    x["type"], field
+                )
+            for stepIndex, step in enumerate(x["steps"]):
+                assert step["value"] > 0
 
-                mandatory_fields = [
-                    "steps",
-                ]
-                for field in mandatory_fields:
-                    assert field in x, "Achievement {} has to have '{}' specified".format(
-                        x["type"], field
-                    )
-                for stepIndex, step in enumerate(x["steps"]):
-                    assert step["value"] > 0
-
-                    unlock_fields = {
-                        "unlocks_build_type": unlocked_builds,
-                        "unlocks_weapon_type": unlocked_items,
-                        "unlocks_item_type": unlocked_weapons,
-                    }
-                    c = sum(f in step for f in unlock_fields)
-                    assert c <= 1
-                    if c != 1:
-                        log.warning(
-                            "Achievement {}, stepIndex {} (value {}), should have either {} specified".format(
-                                x["type"],
-                                stepIndex,
-                                step["value"],
-                                " or ".join(f"`{f}`" for f in unlock_fields),
-                            )
+                unlock_fields = {
+                    "unlocks_build_type": locked_builds,
+                    "unlocks_weapon_type": locked_items,
+                    "unlocks_item_type": locked_weapons,
+                }
+                c = sum(f in step for f in unlock_fields)
+                assert c <= 1
+                if c != 1:
+                    log.warning(
+                        "Achievement {}, stepIndex {} (value {}), should have either {} specified".format(
+                            x["type"],
+                            stepIndex,
+                            step["value"],
+                            " or ".join(f"`{f}`" for f in unlock_fields),
                         )
+                    )
 
-                    for field, container in unlock_fields.items():
-                        if field in step:
-                            v = step[field]
-                            assert v not in container, "{} {} duplicated".format(field, v)
-                            container.append(v)
+                for field, container in unlock_fields.items():
+                    if field in step:
+                        v = step[field]
+                        assert v not in container, "{} {} is already locked".format(
+                            field, v
+                        )
+                        container.append(v)
     # }
 
     # Props.
