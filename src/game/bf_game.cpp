@@ -1201,6 +1201,7 @@ struct GameData {
     } state = {};
 
     int runRecycledWeapons = 0;
+    int runHealed          = 0;
 
     int shopActivatedModalWeaponIndex = -1;
 
@@ -11446,6 +11447,8 @@ void GameFixedUpdate() {
           if (canRegen) {
             PLAYER_CREATURE.health
               = MIN(PLAYER_CREATURE.health + 1, PLAYER_CREATURE.maxHealth);
+            g.run.runHealed++;
+            // AchievementMax(AchiementType_HEAL_X_DURING_A_RUN, g.run.runHealed);
             g.run.playerLastRegenAt = {};
             g.run.playerLastRegenAt.SetNow();
           }
