@@ -7537,13 +7537,17 @@ void DoUI() {
         if (type) {
           if (g.player.achievements[type].value >= fb_step->value()) {
             BF_CLAY_TEXT_LOCALIZED(fb->name_locale(), {.color = nameColor});
-            static const char* romanNumbers_[]{
-              "",   "I",   "II",   "III", "IV", "V",   "VI",   "VII",   "VIII", "IX", "X",
-              "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX",  "XX",
-            };
-            VIEW_FROM_ARRAY_DANGER(romanNumbers);
-            BF_CLAY_TEXT(" ", {.color = nameColor});
-            BF_CLAY_TEXT(romanNumbers[stepIndex + 1], {.color = nameColor});
+
+            if (fb->steps()->size() > 1) {
+              static const char* const romanNumbers_[]{
+                "",    "I",    "II",  "III",  "IV",    "V",   "VI",
+                "VII", "VIII", "IX",  "X",    "XI",    "XII", "XIII",
+                "XIV", "XV",   "XVI", "XVII", "XVIII", "XIX", "XX",
+              };
+              VIEW_FROM_ARRAY_DANGER(romanNumbers);
+              BF_CLAY_TEXT(" ", {.color = nameColor});
+              BF_CLAY_TEXT(romanNumbers[stepIndex + 1], {.color = nameColor});
+            }
           }
           else
             BF_CLAY_TEXT("???", {.color = nameColor});
