@@ -1200,8 +1200,9 @@ struct GameData {
       } shop;
     } state = {};
 
-    int runRecycledWeapons = 0;
-    int runHealed          = 0;
+    int runRecycledWeapons   = 0;
+    int runHealed            = 0;
+    int turretsOnTheMapCount = 0;
 
     int shopActivatedModalWeaponIndex = -1;
 
@@ -1960,6 +1961,8 @@ void OnWaveStarted() {  ///
 
   g.run.random
     = GetRandomCumulativeChances(g.run.state.waveIndex, g.run.state.stats[StatType_LUCK]);
+
+  g.run.turretsOnTheMapCount = 0;
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -3741,6 +3744,8 @@ int MakeCreature(MakeCreatureData data) {  ///
       .damage         = data.damage,
       .damageScalings = data.damageScalings,
     };
+    g.run.turretsOnTheMapCount++;
+    AchievementMax(AchievementType_TURRETS_ON_THE_MAP, g.run.turretsOnTheMapCount);
   } break;
 
   case CreatureType_RANGER: {
