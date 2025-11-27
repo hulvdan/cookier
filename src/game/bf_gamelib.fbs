@@ -367,6 +367,8 @@ table Achievement {
     name_locale: int;
     description_locale: int;
     hide_progress: bool;
+    stat_type: int;
+    build_type: int;
     steps: [AchievementStep];
 }
 

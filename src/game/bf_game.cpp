@@ -6682,7 +6682,31 @@ void DoUI() {
       else
         PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
 
-      BF_CLAY_TEXT_BROKEN_LOCALIZED(fb->description_locale());
+      if (fb->stat_type()) {
+        PlaceholdGroupBegin("STAT");
+        auto fb_stat = fb_stats->Get(fb->stat_type());
+        PlaceholdImage(fb_stat->small_icon_texture_id());
+        PlaceholdString(" ");
+        PlaceholdBrokenLocale(fb_stat->name_locale());
+        PlaceholdGroupEnd();
+      }
+
+      int description = fb->description_locale();
+
+      if (fb->build_type()) {
+        if (g.player.lockedBuilds[fb->build_type()].achievement)
+          description = 0;
+        else {
+          PlaceholdBrokenLocale(
+            "BUILD", fb_builds->Get(fb->build_type())->name_locale(), palTextGreen
+          );
+        }
+      }
+
+      if (description)
+        BF_CLAY_TEXT_BROKEN_LOCALIZED(fb->description_locale());
+      else
+        BF_CLAY_TEXT("???");
 
       if (!fb->hide_progress()) {
         int percent = MIN(100, v * 100 / fb_step->value());
@@ -6949,9 +6973,9 @@ void DoUI() {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEAPON, {.color = secondaryTextColor});
               FontEnd();
             }
-            else {  ///
-              BF_CLAY_TEXT("???");
-            }
+            // else {  ///
+            //   BF_CLAY_TEXT("???");
+            // }
           }
         }
 
@@ -7449,7 +7473,7 @@ void DoUI() {
     }
 
     int tier = (isLocked ? 0 : 3);
-    if (isLocked && workingOnIt)
+    if (isLocked && workingOnIt && BF_SHOW_WORKING_ACHIEVEMENTS)
       tier = 1;
 
     CLAY({
@@ -8545,6 +8569,7 @@ void DoUI() {
               .difficulty     = difficulty,
               .build          = build,
               .weapon         = weapon,
+              .hidden         = HiddenType_SHOW_LOCK,
               .lockInfo       = lockInfo,
               .overrideTier   = overrideTier,
               .setFixedHeight = true,
@@ -9716,7 +9741,7 @@ void DoUI() {
 
                       if (isLocked) {
                         texID = glib->ui_item_locked_texture_id();
-                        if (workingOnIt)
+                        if (workingOnIt && BF_SHOW_WORKING_ACHIEVEMENTS)
                           tier = 1;
                       }
                       else
@@ -9727,11 +9752,13 @@ void DoUI() {
                       );
 
                       componentUniversalSlot({
-                        .id       = id,
-                        .group    = groupGrid,
-                        .build    = (BuildType)fb_step->unlocks_build_type(),
-                        .item     = (ItemType)fb_step->unlocks_item_type(),
-                        .weapon   = (WeaponType)fb_step->unlocks_weapon_type(),
+                        .id    = id,
+                        .group = groupGrid,
+                        .build
+                        = (BuildType)(isLocked ? 0 : fb_step->unlocks_build_type()),
+                        .item = (ItemType)(isLocked ? 0 : fb_step->unlocks_item_type()),
+                        .weapon
+                        = (WeaponType)(isLocked ? 0 : fb_step->unlocks_weapon_type()),
                         .hidden   = HiddenType_SHOW_LOCK,
                         .tier     = tier,
                         .canHover = canHover,
@@ -9784,11 +9811,13 @@ void DoUI() {
               // Achievement's reward.
               componentUniversalCard(ComponentUniversalCardData{
                 .build
-                = (BuildType)(fb_step && !isLocked ? fb_step->unlocks_build_type() : 0),
+                = (BuildType)((fb_step && !isLocked) ? fb_step->unlocks_build_type() : 0),
                 .item
-                = (ItemType)(fb_step && !isLocked ? fb_step->unlocks_item_type() : 0),
+                = (ItemType)((fb_step && !isLocked) ? fb_step->unlocks_item_type() : 0),
                 .weapon
-                = (WeaponType)(fb_step && !isLocked ? fb_step->unlocks_weapon_type() : 0),
+                = (WeaponType)((fb_step && !isLocked) ? fb_step->unlocks_weapon_type() : 0
+                ),
+                .hidden         = HiddenType_SHOW_LOCK,
                 .setFixedHeight = true,
               });
             }

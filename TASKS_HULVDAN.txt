@@ -5,29 +5,22 @@ x assert build can't have locked item
 x можно указать stat_type_2 (численные постфиксы `recursive_replace_transform`)
 x фикс ассерт requires_stat()
 x assert: all builds (except DEFAULT) are locked
-
-VICTIM
-FAST
-ENGINEER
-LUCKY
-LEARNER
-
-* lock all remaining builds
+x achievements that unlock builds work
 
 * impl achievement: FINISH RUN WITH PARTICULAR BUILD achievements
 * impl achievement: RECYCLE_X_WEAPONS_DURING_A_RUN
 * impl achievement: HEAL_X_DURING_A_RUN
-* impl achievement:
-* impl achievement:
-* impl achievement:
-* impl achievement:
-* impl achievement:
+* impl achievement: TURRETS_ON_THE_MAP
+* impl achievement: REACH_THIS_OR_MORE_STAT_LUCK
+* impl achievement: REACH_THIS_OR_MORE_SPEED
+* impl achievement: REACH_THIS_OR_MORE_STAT_HP
+* impl achievement: FINISH_A_WAVE_WITH_1_HP
+* impl achievement: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
 * impl achievement:
 * impl achievement:
 * impl achievement:
 * impl achievement:
 
-*
 * выписать предметы и оружия, что нужно залочить
   (билды нужно залочить все, кроме стартового)
 * придумать ачивки для всех локов и залочить предметы и оружия

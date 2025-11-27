@@ -505,13 +505,18 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             if not i:
                 continue
 
+            can_have_build = False
+            can_have_stat = False
+
             if x["type"].startswith("FINISH_RUN_WITH_BUILD_"):
-                t = x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
-                x["name_locale"] = f"BUILD_{t}"
+                can_have_build = True
+                build_name = x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
+                x["build_type"] = build_name
+                x["name_locale"] = f"BUILD_{build_name}"
                 x["description_locale"] = "ACHIEVEMENT_DESCRIPTION_FINISH_RUN_WITH_BUILD"
                 x["hide_progress"] = True
                 for build in gamelib["builds"]:
-                    if build["type"] == t:
+                    if build["type"] == build_name:
                         break
                 assert build
                 assert "steps" not in x
@@ -520,9 +525,21 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     if build.get(f):
                         v[f] = build.pop(f)
                 x["steps"] = [v]
+            elif x["type"].startswith("REACH_THIS_OR_MORE_STAT_"):
+                can_have_stat = True
+                stat_name = x["type"].removeprefix("REACH_THIS_OR_MORE_STAT_")
+                x["hide_progress"] = True
+                x["stat_type"] = stat_name
+                x["name_locale"] = f"STAT_{stat_name}"
+                x["description_locale"] = (
+                    "ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_MORE_STAT"
+                )
             else:
                 x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
                 x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
+
+            assert can_have_build == bool(x.get("build_type"))
+            assert can_have_stat == bool(x.get("stat_type"))
 
             mandatory_fields = [
                 "steps",
