@@ -1200,6 +1200,8 @@ struct GameData {
       } shop;
     } state = {};
 
+    int runRecycledWeapons = 0;
+
     int shopActivatedModalWeaponIndex = -1;
 
     Arena arena = {};
@@ -7449,6 +7451,10 @@ void DoUI() {
               RemoveImmediateWeaponEffects();
               StableRemoveWeapon(data.weaponIndexOrMinus1);
               ApplyImmediateWeaponEffects();
+              g.run.runRecycledWeapons++;
+              AchievementMax(
+                AchievementType_RECYCLE_X_WEAPONS_DURING_A_RUN, g.run.runRecycledWeapons
+              );
               Save();
 
               ResetFocus(ControlsContext_SHOP);

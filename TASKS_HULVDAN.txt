@@ -8,8 +8,8 @@ x assert: all builds (except DEFAULT) are locked
 x achievements that unlock builds work
 x impl achievement: FINISH RUN WITH PARTICULAR BUILD achievements
 x impl achievement: FINISH_A_WAVE_WITH_1_HP
+x impl achievement: RECYCLE_X_WEAPONS_DURING_A_RUN
 
-* impl achievement: RECYCLE_X_WEAPONS_DURING_A_RUN
 * impl achievement: HEAL_X_DURING_A_RUN
 * impl achievement: TURRETS_ON_THE_MAP
 * impl achievement: REACH_THIS_OR_MORE_STAT_LUCK
