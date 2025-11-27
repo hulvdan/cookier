@@ -6,26 +6,33 @@ x можно указать stat_type_2 (численные постфиксы `
 x фикс ассерт requires_stat()
 x assert: all builds (except DEFAULT) are locked
 
+VICTIM
+FAST
+ENGINEER
+LUCKY
+LEARNER
+
 * lock all remaining builds
-* impl: FINISH RUN WITH PARTICULAR BUILD achievements
-* билды 10 билдов
 
-# 1 NINJA - UNLOCKED BY XXX
-# 2 VICTIM - UNLOCKED BY XXX
-# 3 FAST - UNLOCKED BY XXX
-# 4 ENGINEER - UNLOCKED BY XXX
-# 5 arms dealer - UNLOCKED BY recycle 12 weapons during a run
-# 6 lich - UNLOCKED BY XXX
-# 7 golem - UNLOCKED BY XXX
-# 8 lucky - UNLOCKED BY XXX
-# 9 learner - UNLOCKED BY XXX
+* impl achievement: FINISH RUN WITH PARTICULAR BUILD achievements
+* impl achievement: RECYCLE_X_WEAPONS_DURING_A_RUN
+* impl achievement: HEAL_X_DURING_A_RUN
+* impl achievement:
+* impl achievement:
+* impl achievement:
+* impl achievement:
+* impl achievement:
+* impl achievement:
+* impl achievement:
+* impl achievement:
+* impl achievement:
 
-*
-* cooravie patrols
 *
 * выписать предметы и оружия, что нужно залочить
   (билды нужно залочить все, кроме стартового)
-* придумать ачивки для всех локов и залочить билды, предметы и оружия
+* придумать ачивки для всех локов и залочить предметы и оружия
+*
+* cooravie patrols
 *
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
 * impl: SHOP_SELLS_AT_LEAST__X__WEAPONS
