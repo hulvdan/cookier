@@ -4424,7 +4424,8 @@ void GameInit() {
       for (auto fb_effect : *fb_effects) {
         effectIndex++;
 
-        auto fb_cond = glib->effect_conditions()->Get(fb_effect->effectcondition_type());
+        auto condType = (EffectConditionType)fb_effect->effectcondition_type();
+        auto fb_cond  = glib->effect_conditions()->Get(condType);
 
         int allowedValues_[]{0, 0};
         VIEW_FROM_ARRAY_DANGER(allowedValues);
@@ -4448,8 +4449,12 @@ void GameInit() {
           <= 1
         );
 
+        auto a = fb_cond->requires_stat();
+        auto b = (StatType)fb_effect->stat_type();
+        ASSERT(a == (bool)b);
+
         ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
-        ASSERT(fb_cond->requires_stat2() == (bool)fb_effect->stat_type_2());
+        // ASSERT(fb_cond->requires_stat_2() == (bool)fb_effect->stat_type_2());
         ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
         ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
 
@@ -4594,11 +4599,11 @@ void GameInit() {
         ASSERT_FALSE(fb_cond->requires_property());
       }
 
-      if (fb_cond->requires_stat2()) {
-        ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT2"));
-        ASSERT(fb_cond->requires_stat());
-        ASSERT_FALSE(fb_cond->requires_property());
-      }
+      // if (fb_cond->requires_stat_2()) {
+      //   ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT_2"));
+      //   ASSERT(fb_cond->requires_stat());
+      //   ASSERT_FALSE(fb_cond->requires_property());
+      // }
 
       if (fb_cond->requires_property()) {
         ASSERT(checkPlaceholder(fb_cond->name_locale(), "PROPERTY"));

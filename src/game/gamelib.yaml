@@ -538,7 +538,7 @@ effect_conditions: # {  ###
     x_multiplied_by_times: true
   - type: ITEMS_WILL_BE_TIER_HIGHER_UPON_REROLL
   # - type: CAP__STAT
-  - type: STAT__EVERY_OTHER__X__STAT2
+  # - type: STAT__EVERY_OTHER__X__STAT_2
   - type: WEAPONS_CAN_NO_LONGER_BE_UPGRADED_OR_RECYCLED
   - type: RESTORE__X__HP_PER__Y__SECONDS_WITHOUT_ABILITY_TO_HEAL_ANY_OTHER_WAY
     x_multiplied_by_times: true
@@ -1725,7 +1725,7 @@ items: # {  ###
 # - type: BABY_WITH_A_BEARD
 # - type: BARNACLE
 # - type: BLACK_FLAG
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: BLOODY_HAND
 #   texture_id: ui_item_todo
 #   tier: 3
@@ -1748,7 +1748,7 @@ items: # {  ###
 #   limit: 1
 #   effects:
 #     - stat_type: DAMAGE
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: COIL
 #   texture_id: ui_item_todo
 #   tier: 2
@@ -1757,7 +1757,7 @@ items: # {  ###
 #   effects:
 #     - stat_type: KNOCKBACK
 #       value: 5
-#     - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#     - effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #       stat_type: HP
 #       value: 3
 # TODO: X__STAT__FOR_EVERY_LIVING_ENEMY
@@ -1790,7 +1790,7 @@ items: # {  ###
 #     - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING
 #       stat_type: HP
 #       value: 3
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: ESTYS_COUCH
 #   texture_id: ui_item_todo
 #   tier: 0
@@ -1928,14 +1928,14 @@ items: # {  ###
 #   effects:
 #     - stat_type:
 #       value: 0
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: LUCKY_COIN
 #   texture_id: ui_item_todo
 #   tier: 3
 #   price: 105
 #   limit: 1
 #   effects:
-#     - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#     - effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #       stat_type: LUCK
 #       stat_type_2: CRIT_CHANCE
 #       placeholders:
@@ -1994,7 +1994,7 @@ items: # {  ###
 #         -
 #     - stat_type: DAMAGE_RANGED
 #       value: 5
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # TODO: X__CHANCE_OF_FINDING_THE_SAME_ITEM
 # - type: PEARL
 #   texture_id: ui_item_todo
@@ -2004,7 +2004,7 @@ items: # {  ###
 #   effects:
 #     - stat_type: DAMAGE
 #       stat_type_2: LUCK
-#       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#       effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #       value: 0
 #     - effectcondition_type: X__CHANCE_OF_FINDING_THE_SAME_ITEM
 #       placeholders:
@@ -2021,7 +2021,7 @@ items: # {  ###
 #     - stat_type:
 #       effectcondition_type: STAT__UPON__PICKUPABLE__AT_MAX_HP_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
 #       value: 1
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: POWER_GENERATOR
 #   texture_id: ui_item_todo
 #   tier: 2
@@ -2030,20 +2030,20 @@ items: # {  ###
 #   effects:
 #     - stat_type: DAMAGE
 #       stat_type_2: SPEED
-#       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#       effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #       placeholders:
 #         - ints: 1
 #         - ints: 1
 #     - stat_type: DAMAGE
 #       value: -5
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: RETROMATION_HOODIE
 #   texture_id: ui_item_todo
 #   tier: 3
 #   price: 110
 #   limit: 1
 #   effects:
-#     - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#     - effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #       stat_type: ATTACK_SPEED
 #       stat_type_2: DODGE
 #       placeholders:
@@ -2144,7 +2144,7 @@ items: # {  ###
 #       value: -3
 #     - stat_type: HARVESTING
 #       value: -5
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: STRANGE_BOOK
 #   texture_id: ui_item_todo
 #   tier: 2
@@ -2153,7 +2153,7 @@ items: # {  ###
 #   effects:
 #     - stat_type: ENGINEERING
 #       stat_type_2: DAMAGE_ELEMENTAL
-#       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#       effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #       placeholders:
 #         - ints: 1
 #         - ints: 1
@@ -2161,7 +2161,7 @@ items: # {  ###
 #       value: -1
 #     - stat_type: DAMAGE_RANGED
 #       value: -1
-# TODO: STAT__EVERY_OTHER__X__STAT2
+# TODO: STAT__EVERY_OTHER__X__STAT_2
 # - type: STONE_SKIN
 #   texture_id: ui_item_todo
 #   tier: 2
@@ -2170,7 +2170,7 @@ items: # {  ###
 #   effects:
 #     - stat_type: HP
 #       stat_type_2: ARMOR
-#       effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#       effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #       placeholders:
 #         - ints: 1
 #         - ints: 1
@@ -2447,10 +2447,10 @@ items: # {  ###
 #   effects:
 #     - stat_type: ATTACK_SPEED
 #       value: 10
-#     # TODO: STAT__EVERY_OTHER__X__STAT2
+#     # TODO: STAT__EVERY_OTHER__X__STAT_2
 #     # - stat_type: ATTACK_SPEED
 #     #   stat_type_2: STRUCTURE_ATTACK_SPEED
-#     #   effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+#     #   effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
 #     #   placeholders:
 #     #     - ints: 1
 #     #     - ints: 2
@@ -4607,12 +4607,12 @@ builds: # {  ###
     effects:
       - stat_type: SPEED
         value: 30
-      - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
-        stat_type: DAMAGE_MELEE
-        stat_type_2: SPEED
-        value: 1
-        placeholders:
-          - ints: 2
+      # - effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
+      #   stat_type: DAMAGE_MELEE
+      #   stat_type_2: SPEED
+      #   value: 1
+      #   placeholders:
+      #     - ints: 2
       - stat_type: ARMOR
         value: -3
       - effectcondition_type: STAT__WHEN_IDLE

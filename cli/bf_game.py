@@ -10,7 +10,7 @@ USAGE:
     @gamelib_processor
     def process_gamelib(_genline, gamelib, _localization_codepoints: set[int]) -> None:
         for tile in gamelib["tiles"]:
-            tile.pop("type")  # DONT POP THOUGHT!
+            t = tile["type"]
 """
 
 # Imports.  {  ###
@@ -143,8 +143,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         for _, x in enumerate_table("effect_conditions"):
             for cond in (
                 *(l.upper() for l in EFFECT_CONDITION_LETTERS),
+                # "STAT_2",
                 "STAT",
-                "STAT2",
                 "PROPERTY",
                 "PICKUPABLE",
                 # "TIER",

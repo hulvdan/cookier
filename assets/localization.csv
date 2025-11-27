@@ -120,7 +120,7 @@ EFFECT_SHOP_SELLS_AT_LEAST__X__WEAPONS;Гарантия наличия в маг
 EFFECT_WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP;Оружия изнашиваются за одну волну;TODO Weapons break in one wave;
 EFFECT_STAT__WHEN_BELOW__X__PERCENT_HP;{MODIFIER} {STAT} при здоровье ниже {X};{MODIFIER} {STAT} when below {X} health;
 EFFECT_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING;Лечение имеет {X} шанс нанести {Y} урона случайному врагу;{X} chance to deal {Y} damage to a random enemy upon healing;
-EFFECT_STAT__EVERY_OTHER__X__STAT2;{MODIFIER} {STAT} за каждые {X} {STAT2};{MODIFIER} {STAT} for every {X} {STAT2};
+EFFECT_STAT__EVERY_OTHER__X__STAT_2;{MODIFIER} {STAT} за каждые {X} {STAT_2};{MODIFIER} {STAT} for every {X} {STAT_2};
 EFFECT_STAT__MODS_CHANGED_BY__X__PERCENT;{X} к изменениям {STAT};{STAT} modifications are changed by {X};
 BUILD_EFFECT_START_WITH__X__ITEM_OR_WEAPON;Имеет {X} на старте;Additionally starts with {X};
 BUILD_EFFECT_CANT_EQUIP_MELEE_WEAPONS;Не использует рукопашные оружия;Can't equip melee weapons;
