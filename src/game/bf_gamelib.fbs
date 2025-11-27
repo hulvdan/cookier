@@ -161,6 +161,9 @@ table EffectConditionPlaceholder {
 
     is_percent: bool;
 
+    color_by_stat: bool;
+    color_by_stat_2: bool;
+
     multiplied_by_times: bool;  // TODO: in bf_game.cpp assert that variable is FLOAT
     divided_by_times: bool;  // TODO: in bf_game.cpp assert that variable is FLOAT
 }
@@ -171,7 +174,7 @@ table EffectCondition {
     rectrict_only_ranged_weapons: bool;
     name_locale: int;
     requires_stat: bool;
-    // requires_stat_2: bool;
+    requires_stat_2: bool;
     requires_property: bool;
     requires_projectile: bool;
     requires_pickupable: bool;

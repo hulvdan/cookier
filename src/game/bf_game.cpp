@@ -4449,12 +4449,8 @@ void GameInit() {
           <= 1
         );
 
-        auto a = fb_cond->requires_stat();
-        auto b = (StatType)fb_effect->stat_type();
-        ASSERT(a == (bool)b);
-
         ASSERT(fb_cond->requires_stat() == (bool)fb_effect->stat_type());
-        // ASSERT(fb_cond->requires_stat_2() == (bool)fb_effect->stat_type_2());
+        ASSERT(fb_cond->requires_stat_2() == (bool)fb_effect->stat_type_2());
         ASSERT(fb_cond->requires_property() == (bool)fb_effect->weaponproperty_type());
         ASSERT(fb_cond->requires_projectile() == (bool)fb_effect->projectile_type());
 
@@ -4599,11 +4595,10 @@ void GameInit() {
         ASSERT_FALSE(fb_cond->requires_property());
       }
 
-      // if (fb_cond->requires_stat_2()) {
-      //   ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT_2"));
-      //   ASSERT(fb_cond->requires_stat());
-      //   ASSERT_FALSE(fb_cond->requires_property());
-      // }
+      if (fb_cond->requires_stat_2()) {
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT_2"));
+        ASSERT_FALSE(fb_cond->requires_property());
+      }
 
       if (fb_cond->requires_property()) {
         ASSERT(checkPlaceholder(fb_cond->name_locale(), "PROPERTY"));
@@ -6394,10 +6389,6 @@ void DoUI() {
 
           PlaceholdGroupBegin("STAT");
 
-          // if (fb_stat->small_icon_texture_id()) {
-          //   PlaceholdImage(fb_stat->small_icon_texture_id());
-          //   PlaceholdString(" ");
-          // }
           PlaceholdBrokenLocale(fb_stat->name_locale());
 
           PlaceholdGroupEnd();
@@ -6431,6 +6422,15 @@ void DoUI() {
             PlaceholdImage(fb_stat->small_icon_texture_id());
           }
 
+          PlaceholdGroupEnd();
+        }
+
+        if (fb_effect->stat_type_2()) {
+          const auto fb_stat = fb_stats->Get(fb_effect->stat_type_2());
+          PlaceholdGroupBegin("STAT_2");
+          PlaceholdImage(fb_stat->small_icon_texture_id());
+          PlaceholdString(" ");
+          PlaceholdBrokenLocale(fb_stat->name_locale());
           PlaceholdGroupEnd();
         }
 
@@ -6505,7 +6505,22 @@ void DoUI() {
               if (fb_placeholder->is_percent())
                 formatted = TextFormat("%s%%", formatted);
 
-              PlaceholdString(PushTextToArena(&g.meta.trashArena, formatted));
+              auto color = palTextGreen;
+
+              if (fb_placeholder->color_by_stat()) {
+                bool green = fb_stats->Get(fb_effect->stat_type())->negative_is_good()
+                             != (fb_effect->value()->Get(tierOffset) >= 0);
+                if (!green)
+                  color = palTextRed;
+              }
+              else if (fb_placeholder->color_by_stat_2()) {
+                bool green = fb_stats->Get(fb_effect->stat_type_2())->negative_is_good()
+                             != (cv >= 0);
+                if (!green)
+                  color = palTextRed;
+              }
+
+              PlaceholdString(PushTextToArena(&g.meta.trashArena, formatted), color);
             } break;
 
             case CondVarType_FLOAT: {
@@ -8644,7 +8659,7 @@ void DoUI() {
       // Selecting build.
       else if (g.ui.newRunStep == 1) {
         componentNewRunSelections([&]() BF_FORCE_INLINE_LAMBDA {
-          const int BUILDS_X = 8;
+          const int BUILDS_X = 5;
           const int BUILDS_Y = CeilDivision((int)fb_builds->size() - 1, BUILDS_X);
 
           FOR_RANGE (int, y, BUILDS_Y) {
