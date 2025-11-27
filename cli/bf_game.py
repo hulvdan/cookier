@@ -566,6 +566,13 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # }
 
+    # All builds must be locked.
+    not_locked_builds = []
+    for build in gamelib["builds"][2:]:
+        if build["type"] not in locked_builds:
+            not_locked_builds.append(build["type"])
+    assert not not_locked_builds, f"These builds must be locked: {not_locked_builds}"
+
     # Props.
     # ============================================================
     if 1:  # {  ###

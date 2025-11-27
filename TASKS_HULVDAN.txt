@@ -1,29 +1,12 @@
 WORKING SINCE 2025-09-07
 
-x ref: merge common data of `Projectile` and `MakeProjectileData`
-x in weapon card show bullet piercing debuff
-- gamelib make it not possible to set piercing debugg bonus is no piercing is specified
-x melee weapons should have fixed swing time
-x MELEE_3_DEX_TROYER нож грома точно ли работает отскок пуль
-x MELEE_3_DEX_TROYER нож грома прописать отскок пуль в карточке оружия
-x electrified gum projectile targets random achievable enemy
-x fire can't bounce!
-x show melee weapon collider gizmos
-x correct melee weapon collider end size
-x added small phantom range for melee weapons
-x melee weapon collider widths
-x weapon icons
-x impl projectile_bounce is set to new projectile upon spawning HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE
-x рисовка: улучшить: torch
-x рисовка: улучшить: fire orb
-x рисовка: улучшить: предмет мусорное ведро
-x рисовка: улучшить: предмет соты
 x проставить starting weapons
 x assert build can't have locked item
 x можно указать stat_type_2 (численные постфиксы `recursive_replace_transform`)
 x фикс ассерт requires_stat()
+x assert: all builds (except DEFAULT) are locked
 
-* assert: all builds (except DEFAULT) are locked
+* lock all remaining builds
 * impl: FINISH RUN WITH PARTICULAR BUILD achievements
 * билды 10 билдов
 
