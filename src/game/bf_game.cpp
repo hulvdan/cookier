@@ -4594,6 +4594,12 @@ void GameInit() {
         ASSERT_FALSE(fb_cond->requires_property());
       }
 
+      if (fb_cond->requires_stat2()) {
+        ASSERT(checkPlaceholder(fb_cond->name_locale(), "STAT2"));
+        ASSERT(fb_cond->requires_stat());
+        ASSERT_FALSE(fb_cond->requires_property());
+      }
+
       if (fb_cond->requires_property()) {
         ASSERT(checkPlaceholder(fb_cond->name_locale(), "PROPERTY"));
         ASSERT(checkPlaceholder(fb_cond->name_locale(), "MODIFIER"));

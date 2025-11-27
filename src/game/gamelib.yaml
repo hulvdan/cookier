@@ -4581,7 +4581,7 @@ builds: # {  ###
       - stat_type: DODGE
         value: 3
       - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
-    unlocks_item_type: POTATO
+    unlocks_item_type: STATUE
   - type: VICTIM
     hat_type: TOP
     hat_color: 0x7b7c74ff
@@ -4781,60 +4781,9 @@ achievements: # {  ###
       - value: 2
       - value: 3
         unlocks_weapon_type: MELEE_3_EXCALIBUR
-  - type: FINISH_RUN_WITH_BUILD_DEFAULT
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_NINJA
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_VICTIM
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_FAST
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_ENGINEER
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_ARMS_DEALER
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_LICH
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks_weapon_type: MELEE_3_SCYTHE
-  - type: FINISH_RUN_WITH_BUILD_GOLEM
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_LUCKY
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
-  - type: FINISH_RUN_WITH_BUILD_LEARNER
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks__type:
   - type: KILLER
     steps:
       - value: 40
-        unlocks__type:
       - value: 100
         unlocks_weapon_type: RANGED_0_SLINGSHOT
       - value: 300
@@ -4857,6 +4806,16 @@ achievements: # {  ###
       - value: 5000
       - value: 25000
       - value: 100000
+  - type: FINISH_RUN_WITH_BUILD_DEFAULT
+  - type: FINISH_RUN_WITH_BUILD_NINJA
+  - type: FINISH_RUN_WITH_BUILD_VICTIM
+  - type: FINISH_RUN_WITH_BUILD_FAST
+  - type: FINISH_RUN_WITH_BUILD_ENGINEER
+  - type: FINISH_RUN_WITH_BUILD_ARMS_DEALER
+  - type: FINISH_RUN_WITH_BUILD_LICH
+  - type: FINISH_RUN_WITH_BUILD_GOLEM
+  - type: FINISH_RUN_WITH_BUILD_LUCKY
+  - type: FINISH_RUN_WITH_BUILD_LEARNER
   - type: TODO
     steps:
       #
@@ -4877,17 +4836,6 @@ achievements: # {  ###
       - value: 1
       - value: 1
       #
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      #
-      - value: 1
-      - value: 1
       - value: 1
       - value: 1
       - value: 1
