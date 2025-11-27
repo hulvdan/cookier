@@ -530,6 +530,16 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             elif x["type"].startswith("REACH_THIS_OR_MORE_STAT_"):
                 can_have_stat = True
                 stat_name = x["type"].removeprefix("REACH_THIS_OR_MORE_STAT_")
+
+                found_stat = False
+                for stat in gamelib["stats"]:
+                    if stat_name != stat["type"]:
+                        continue
+                    stat["reach_this_or_more_stat_achievement_type"] = x["type"]
+                    found_stat = True
+                    break
+                assert found_stat
+
                 x["hide_progress"] = True
                 x["stat_type"] = stat_name
                 x["name_locale"] = f"STAT_{stat_name}"

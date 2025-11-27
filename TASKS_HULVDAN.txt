@@ -12,10 +12,8 @@ x impl achievement: RECYCLE_X_WEAPONS_DURING_A_RUN
 x impl achievement: HEAL_X_DURING_A_RUN
 x impl achievement: TURRETS_ON_THE_MAP
 x impl achievement: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
+x impl achievement: REACH_THIS_OR_MORE_STAT_LUCK REACH_THIS_OR_MORE_SPEED REACH_THIS_OR_MORE_STAT_HP
 
-* impl achievement: REACH_THIS_OR_MORE_STAT_LUCK
-* impl achievement: REACH_THIS_OR_MORE_SPEED
-* impl achievement: REACH_THIS_OR_MORE_STAT_HP
 * impl achievement:
 * impl achievement:
 * impl achievement:

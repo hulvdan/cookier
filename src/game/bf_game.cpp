@@ -1579,6 +1579,14 @@ void TriggerWaveCompleted(bool instant) {  ///
 
 void ChangeStat(StatType stat, int value) {  ///
   g.run.state.stats[stat] += value;
+
+  const auto fb_stat = glib->stats()->Get(stat);
+  if (fb_stat->reach_this_or_more_stat_achievement_type()) {
+    AchievementMax(
+      (AchievementType)fb_stat->reach_this_or_more_stat_achievement_type(),
+      g.run.state.stats[stat]
+    );
+  }
 }
 
 int GetAchievementsCompletedPercent() {  ///
