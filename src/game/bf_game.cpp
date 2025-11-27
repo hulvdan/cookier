@@ -1490,6 +1490,82 @@ void ControlsGroupConnect(
   }
 }
 
+#define PLAYER_CREATURE (g.run.creatures[0])
+
+void Save() {  ///
+  g.meta.scheduledSave = true;
+}
+
+void AchievementStepSetLock(
+  AchievementType                achievement,
+  int                            stepIndex,
+  const BFGame::AchievementStep* fb_step,
+  bool                           locked
+) {  ///
+  ASSERT(glib->achievements()->Get(achievement)->steps()->Get(stepIndex) == fb_step);
+
+  LockInfo lock{};
+  if (locked)
+    lock = {.achievement = achievement, .stepIndex = stepIndex};
+
+  if (fb_step->unlocks_build_type())
+    g.player.lockedBuilds[fb_step->unlocks_build_type()] = lock;
+  if (fb_step->unlocks_item_type())
+    g.player.lockedItems[fb_step->unlocks_item_type()] = lock;
+  if (fb_step->unlocks_weapon_type())
+    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = lock;
+
+  if (locked)
+    g.player.achievementStepsCompleted--;
+  else
+    g.player.achievementStepsCompleted++;
+
+  ASSERT(g.player.achievementStepsCompleted >= 0);
+  ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
+}
+
+void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue) {  ///
+  auto fb_steps = glib->achievements()->Get(type)->steps();
+  if (!fb_steps)
+    return;
+
+  int stepIndex = -1;
+  for (auto fb_step : *fb_steps) {
+    stepIndex++;
+    if ((oldValue < fb_step->value()) && (fb_step->value() <= newValue)) {
+      AchievementStepSetLock(type, stepIndex, fb_step, false);
+      *g.ui.justUnlockedAchievements.Add() = {.type = type, .stepIndex = stepIndex};
+    }
+  }
+}
+
+void AchievementAdd(AchievementType type, int value) {  ///
+  ASSERT(value >= 0);
+  if (value < 0)
+    return;
+
+  int oldValue = g.player.achievements[type].value;
+  g.player.achievements[type].value += value;
+  OnAchievementValueChanged(type, oldValue, g.player.achievements[type].value);
+  Save();
+}
+
+void AchievementMax(AchievementType type, int value) {  ///
+  ASSERT(value >= 0);
+  int oldValue = g.player.achievements[type].value;
+  if (value <= oldValue)
+    return;
+  g.player.achievements[type].value = value;
+  OnAchievementValueChanged(type, oldValue, value);
+  Save();
+}
+
+void SetWaveWonTrue() {  ///
+  g.run.state.waveWon = true;
+  if (PLAYER_CREATURE.health == 1)
+    AchievementMax(AchievementType_FINISH_A_WAVE_WITH_1_HP, 1);
+}
+
 void TriggerWaveCompleted(bool instant) {  ///
   ASSERT_FALSE(g.run.scheduledWaveCompleted.IsSet());
   g.run.scheduledWaveCompleted.SetNow();
@@ -1513,10 +1589,6 @@ int GetAchievementsCompletedPercent() {  ///
     percent = MAX(1, percent);
 
   return percent;
-}
-
-void Save() {  ///
-  g.meta.scheduledSave = true;
 }
 
 // NOTE: Doesn't apply `StatType_DAMAGE`.
@@ -1765,7 +1837,6 @@ Vector2 GetPlayerWeaponOffset(int weaponIndex) {  ///
   return Vector2Rotate(Vector2(1, 0), weaponIndex * angleDelta + startingAngle);
 }
 
-#define PLAYER_CREATURE (g.run.creatures[0])
 #define PLAYER_COINS (g.run.state.stats[StatType_COINS])
 
 void SanitizeCoins() {  ///
@@ -1886,70 +1957,6 @@ void OnWaveStarted() {  ///
 
   g.run.random
     = GetRandomCumulativeChances(g.run.state.waveIndex, g.run.state.stats[StatType_LUCK]);
-}
-
-void AchievementStepSetLock(
-  AchievementType                achievement,
-  int                            stepIndex,
-  const BFGame::AchievementStep* fb_step,
-  bool                           locked
-) {  ///
-  ASSERT(glib->achievements()->Get(achievement)->steps()->Get(stepIndex) == fb_step);
-
-  LockInfo lock{};
-  if (locked)
-    lock = {.achievement = achievement, .stepIndex = stepIndex};
-
-  if (fb_step->unlocks_build_type())
-    g.player.lockedBuilds[fb_step->unlocks_build_type()] = lock;
-  if (fb_step->unlocks_item_type())
-    g.player.lockedItems[fb_step->unlocks_item_type()] = lock;
-  if (fb_step->unlocks_weapon_type())
-    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = lock;
-
-  if (locked)
-    g.player.achievementStepsCompleted--;
-  else
-    g.player.achievementStepsCompleted++;
-
-  ASSERT(g.player.achievementStepsCompleted >= 0);
-  ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
-}
-
-void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue) {  ///
-  auto fb_steps = glib->achievements()->Get(type)->steps();
-  if (!fb_steps)
-    return;
-
-  int stepIndex = -1;
-  for (auto fb_step : *fb_steps) {
-    stepIndex++;
-    if ((oldValue < fb_step->value()) && (fb_step->value() <= newValue)) {
-      AchievementStepSetLock(type, stepIndex, fb_step, false);
-      *g.ui.justUnlockedAchievements.Add() = {.type = type, .stepIndex = stepIndex};
-    }
-  }
-}
-
-void AchievementAdd(AchievementType type, int value) {  ///
-  ASSERT(value >= 0);
-  if (value < 0)
-    return;
-
-  int oldValue = g.player.achievements[type].value;
-  g.player.achievements[type].value += value;
-  OnAchievementValueChanged(type, oldValue, g.player.achievements[type].value);
-  Save();
-}
-
-void AchievementMax(AchievementType type, int value) {  ///
-  ASSERT(value >= 0);
-  int oldValue = g.player.achievements[type].value;
-  if (value <= oldValue)
-    return;
-  g.player.achievements[type].value = value;
-  OnAchievementValueChanged(type, oldValue, value);
-  Save();
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -3012,7 +3019,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     // Wave gets set to completed upon killing boss.
     if (fb->is_boss() && !g.run.scheduledWaveCompleted.IsSet()) {
       TriggerWaveCompleted(false);
-      g.run.state.waveWon = true;
+      SetWaveWonTrue();
       Save();
     }
   }
@@ -11042,7 +11049,7 @@ void GameFixedUpdate() {
       // F6 - complete wave.
       if (IsKeyPressed(SDL_SCANCODE_F6)) {  ///
         TriggerWaveCompleted(false);
-        g.run.state.waveWon = true;
+        SetWaveWonTrue();
       }
 
       // F7 - show end screen.
@@ -11395,7 +11402,7 @@ void GameFixedUpdate() {
       if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.state.waveIndex)) {  ///
         if (!g.run.scheduledWaveCompleted.IsSet()) {
           TriggerWaveCompleted(false);
-          g.run.state.waveWon = true;
+          SetWaveWonTrue();
           Save();
         }
       }
