@@ -14,25 +14,25 @@ x impl achievement: TURRETS_ON_THE_MAP
 x impl achievement: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
 x impl achievement: REACH_THIS_OR_MORE_STAT_LUCK REACH_THIS_OR_MORE_SPEED REACH_THIS_OR_MORE_STAT_HP
 
-* lock item or weapon: achievement 1:
-* lock item or weapon: achievement 2:
-* lock item or weapon: achievement 3:
-* lock item or weapon: achievement 4:
-* lock item or weapon: achievement 5:
-* lock item or weapon: achievement 6:
-* lock item or weapon: achievement 7:
-* lock item or weapon: achievement 8:
-* lock item or weapon: achievement 9:
-* lock item or weapon: achievement 10:
-* lock item or weapon: achievement 11:
-* lock item or weapon: achievement 12:
-* lock item or weapon: achievement 13:
-* lock item or weapon: achievement 14:
-* lock item or weapon: achievement 15:
-* lock item or weapon: achievement 16:
-* lock item or weapon: achievement 17:
-* lock item or weapon: achievement 18:
-* lock item or weapon: achievement 19:
+* lock item or weapon: achievement 1: item ACID
+* lock item or weapon: achievement 2: item
+* lock item or weapon: achievement 3: item
+* lock item or weapon: achievement 4: item
+* lock item or weapon: achievement 5: item
+* lock item or weapon: achievement 6: item
+* lock item or weapon: achievement 7: item
+* lock item or weapon: achievement 8: item
+* lock item or weapon: achievement 9: item
+* lock item or weapon: achievement 10: item
+* lock item or weapon: achievement 11: item
+* lock item or weapon: achievement 12: item
+* lock item or weapon: achievement 13: weapon
+* lock item or weapon: achievement 14: weapon
+* lock item or weapon: achievement 15: weapon
+* lock item or weapon: achievement 16: weapon
+* lock item or weapon: achievement 17: weapon
+* lock item or weapon: achievement 18: weapon
+* lock item or weapon: achievement 19: weapon
 
 * выписать предметы и оружия, что нужно залочить
   (билды нужно залочить все, кроме стартового)
