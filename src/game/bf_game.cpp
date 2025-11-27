@@ -5155,6 +5155,8 @@ void MakeAOE(
 
   const auto fb_damager = glib->creatures()->Get(damager);
 
+  int killedCount = 0;
+
   int creatureIndex = -1;
   for (const auto& creature : g.run.creatures) {
     creatureIndex++;
@@ -5180,6 +5182,8 @@ void MakeAOE(
       );
     }
 
+    auto hadHealth = (creature.health > 0);
+
     TryApplyDamage({
       .creatureIndex                      = creatureIndex,
       .damage                             = damage,
@@ -5190,7 +5194,12 @@ void MakeAOE(
       .weaponCritChance                   = weaponCritChance,
       .indexOfWeaponThatDidDamageOrMinus1 = weaponIndexOrMinus1,
     });
+
+    if ((creature.health <= 0) && hadHealth)
+      killedCount++;
   }
+
+  AchievementMax(AchievementType_EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION, killedCount);
 
   MakeParticles({
     .type                   = ParticleType_EXPLOSION,
