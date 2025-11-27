@@ -3148,7 +3148,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 91
     price: 105
-  - type: MELEE_0_JOUSTING_LANCE
+  - type: MELEE_0_LANCE
     base_damage: 20 25 30 50
     damage_scalings:
       - stat_type: DAMAGE_MELEE
@@ -3607,7 +3607,7 @@ weapons: # {  ###
       x: -0.75
       y: -0.1
     price: 132
-  - type: RANGED_0_DOUBLE_BARREL_SHOTGUN
+  - type: RANGED_0_SHOTGUN
     base_damage: 3 6 9 9
     damage_scalings:
       - stat_type: DAMAGE_RANGED
@@ -4580,15 +4580,24 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_CACTI_CLUB
+      - MELEE_0_TORCH
+      - RANGED_0_SHOTGUN
     effects:
       - stat_type: ENEMIES
         value: 50
       - stat_type: DAMAGE
         value: 25
+    unlocks_weapon_type: RANGED_0_SHREDDER
   - type: FAST
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_LIGHTNING_SHIV
+      - MELEE_0_GHOST_FLINT
+      - MELEE_0_LANCE
+      - RANGED_0_SMG
+      - RANGED_0_SHURIKEN
     effects:
       - stat_type: SPEED
         value: 30
@@ -4602,10 +4611,15 @@ builds: # {  ###
       - effectcondition_type: STAT__WHEN_IDLE
         stat_type: ARMOR
         value: -100
+    unlocks_weapon_type: MELEE_0_CLAW
   - type: ENGINEER
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_WRENCH
+      - MELEE_0_PLANK
+      - MELEE_0_SCREWDRIVER
+      - RANGED_0_LASER_GUN
     effects:
       - stat_type: ENGINEERING
         value: 10
@@ -4626,6 +4640,13 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_FIST
+      - MELEE_0_GHOST_FLINT
+      - MELEE_0_CACTI_CLUB
+      - MELEE_0_STICK
+      - RANGED_0_CROSSBOW
+      - RANGED_0_SHOTGUN
+      - RANGED_0_SMG
     effects:
       - stat_type: WEAPONS_PRICE
         value: -95
@@ -4647,6 +4668,11 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_LIGHTNING_SHIV
+      - MELEE_0_STICK
+      - MELEE_0_SHARP_TOOTH
+      - RANGED_0_ICICLE
+      - RANGED_0_SHURIKEN
     effects:
       - stat_type: REGEN
         value: 10
@@ -4667,6 +4693,10 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_FIST
+      - MELEE_0_ROCK
+      - MELEE_0_PLANK
+      - RANGED_0_GHOST_SCEPTER
     effects:
       - stat_type: HP
         value: 20
@@ -4693,6 +4723,8 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_FIST
+      - RANGED_0_PISTOL
     effects:
       - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
         stat_type: LUCK
@@ -4714,11 +4746,17 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
+      - MELEE_0_STICK
+      - MELEE_0_GHOST_AXE
+      - MELEE_0_LIGHTNING_SHIV
+      - RANGED_0_ICICLE
+      - RANGED_0_JAVELIN
     effects:
       - stat_type: XP_FOR_LEVEL_UP
         value: -66
       - stat_type: ITEMS_PRICE
         value: 50
+    unlocks_weapon_type: MELEE_0_QUATERSTAFF
 # }
 
 achievements: # {  ###
