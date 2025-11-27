@@ -171,6 +171,7 @@ table EffectCondition {
     rectrict_only_ranged_weapons: bool;
     name_locale: int;
     requires_stat: bool;
+    requires_stat2: bool;
     requires_property: bool;
     requires_projectile: bool;
     requires_pickupable: bool;

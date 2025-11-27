@@ -538,7 +538,7 @@ effect_conditions: # {  ###
     x_multiplied_by_times: true
   - type: ITEMS_WILL_BE_TIER_HIGHER_UPON_REROLL
   # - type: CAP__STAT
-  # - type: STAT__EVERY_OTHER__X__STAT2
+  - type: STAT__EVERY_OTHER__X__STAT2
   - type: WEAPONS_CAN_NO_LONGER_BE_UPGRADED_OR_RECYCLED
   - type: RESTORE__X__HP_PER__Y__SECONDS_WITHOUT_ABILITY_TO_HEAL_ANY_OTHER_WAY
     x_multiplied_by_times: true
@@ -549,13 +549,16 @@ effect_conditions: # {  ###
     requires_projectile: true
     x_condvar_type: DAMAGE
   - type: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
+    x_is_percent: true
   - type: START_THE_NEXT_WAVE_WITH_1_HP
   - type: CHANGE_BURNING_ACTIVATION_SPEED_BY__X__PERCENT
+    x_is_percent: true
     x_signed: true
   - type: YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
     x_condvar_type: DAMAGE
     x_multiplied_by_times: true
   - type: STAT__MODS_CHANGED_BY__X__PERCENT
+    x_is_percent: true
     x_multiplied_by_times: true
   - type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
   - type: SHOP_SELLS_AT_LEAST__X__WEAPONS
@@ -4488,6 +4491,9 @@ stats: # {  ###
   - type: ITEMS_PRICE
     is_secondary: true
     is_hidden: true
+  - type: XP_PERCENT_REQUIRED_FOR_LEVEL_UP
+    is_secondary: true
+    is_hidden: true
 # }
 
 placeholders: # {  ###
@@ -4602,7 +4608,8 @@ builds: # {  ###
       - stat_type: SPEED
         value: 30
       - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
-        stat_type: SPEED
+        stat_type: DAMAGE_MELEE
+        stat_type_2: SPEED
         value: 1
         placeholders:
           - ints: 2
@@ -4651,7 +4658,7 @@ builds: # {  ###
     effects:
       - stat_type: WEAPONS_PRICE
         value: -95
-      - stat_type: INVESTMENTS
+      - stat_type: HARVESTING
         value: 30
       - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
         stat_type: DAMAGE
@@ -4665,6 +4672,7 @@ builds: # {  ###
         placeholders:
           - ints: 1
       - effectcondition_type: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
+    unlocks_item_type: RICOCHET
   - type: LICH
     hat_type: TOP
     hat_color: 0x7b7c74ff
@@ -4690,6 +4698,7 @@ builds: # {  ###
         stat_type: DAMAGE
         placeholders:
           - ints: -50
+    unlocks_item_type: DECOMPOSING_FLESH
   - type: GOLEM
     hat_type: TOP
     hat_color: 0x7b7c74ff
@@ -4720,6 +4729,7 @@ builds: # {  ###
         placeholders:
           - ints: 50
       - effectcondition_type: CANT_HEAL
+    unlocks_item_type: ALIEN_BABY
   - type: LUCKY
     hat_type: TOP
     hat_color: 0x7b7c74ff
@@ -4743,6 +4753,7 @@ builds: # {  ###
         value: -60
       - stat_type: XP_GAIN
         value: -50
+    unlocks_item_type: WOLF_HELMET
   - type: LEARNER
     hat_type: TOP
     hat_color: 0x7b7c74ff
@@ -4753,7 +4764,7 @@ builds: # {  ###
       - RANGED_0_ICICLE
       - RANGED_0_JAVELIN
     effects:
-      - stat_type: XP_FOR_LEVEL_UP
+      - stat_type: XP_PERCENT_REQUIRED_FOR_LEVEL_UP
         value: -66
       - stat_type: ITEMS_PRICE
         value: 50
@@ -4766,16 +4777,64 @@ achievements: # {  ###
     hide_progress: true
     steps:
       - value: 1
-        unlocks_build_type: WIZARD
+        unlocks_build_type: NINJA
       - value: 2
       - value: 3
-        # - value: 4
-        # - value: 5
-        # - value: 6
+        unlocks_weapon_type: MELEE_3_EXCALIBUR
+  - type: FINISH_RUN_WITH_BUILD_DEFAULT
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_NINJA
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_VICTIM
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_FAST
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_ENGINEER
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_ARMS_DEALER
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_LICH
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks_weapon_type: MELEE_3_SCYTHE
+  - type: FINISH_RUN_WITH_BUILD_GOLEM
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_LUCKY
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
+  - type: FINISH_RUN_WITH_BUILD_LEARNER
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks__type:
   - type: KILLER
     steps:
       - value: 40
-        unlocks_build_type: NINJA
+        unlocks__type:
       - value: 100
         unlocks_weapon_type: RANGED_0_SLINGSHOT
       - value: 300
