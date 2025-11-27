@@ -22,6 +22,7 @@ x проставить starting weapons
 x assert build can't have locked item
 x можно указать stat_type_2 (численные постфиксы `recursive_replace_transform`)
 
+* фикс ассерт requires_stat()
 * билды 10 билдов
 
 # 0 - UNLOCKS ITEM MILK
