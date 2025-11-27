@@ -523,6 +523,9 @@ effect_conditions: # {  ###
   - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING
     x_multiplied_by_times: true
     y_condvar_type: DAMAGE
+  - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
+    x_multiplied_by_times: true
+    y_condvar_type: DAMAGE
   - type: STAT__UPON__PICKUPABLE__AT_MAX_HP
     x_multiplied_by_times: true
   - type: STAT__UPON__PICKUPABLE__AT_MAX_HP_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
@@ -552,6 +555,15 @@ effect_conditions: # {  ###
   - type: YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
     x_condvar_type: DAMAGE
     x_multiplied_by_times: true
+  - type: STAT__MODS_CHANGED_BY__X__PERCENT
+    x_multiplied_by_times: true
+  - type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
+  - type: SHOP_SELLS_AT_LEAST__X__WEAPONS
+    x_multiplied_by_times: true
+  - type: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
+  - type: STAT__WHEN_BELOW__X__PERCENT_HP
+    x_is_percent: true
+  - type: CANT_HEAL
 # }
 
 build_effect_conditions: # { ###
@@ -4470,6 +4482,12 @@ stats: # {  ###
   - type: LOOT_ALIENS_SPEED
     is_secondary: true
     is_hidden: true
+  - type: WEAPONS_PRICE
+    is_secondary: true
+    is_hidden: true
+  - type: ITEMS_PRICE
+    is_secondary: true
+    is_hidden: true
 # }
 
 placeholders: # {  ###
@@ -4538,58 +4556,169 @@ builds: # {  ###
       - stat_type: CRIT_CHANCE
         value: 3
       - stat_type: LUCK
-        value: 5
-      - effectcondition_type: STAT__WHEN_IDLE
-        stat_type: DAMAGE
-        value: 20
+        value: 8
+    unlocks_item_type: POTATO
   - type: NINJA
     hat_type: BEANIE
     hat_color: 0x208cb2ff
     starting_weapon_types:
-      - RANGED_0_PISTOL
-      - RANGED_0_SMG
-      - MELEE_0_FIST
+      - RANGED_0_SHURIKEN
+      - RANGED_0_SHREDDER
+      - RANGED_0_SLINGSHOT
     effects:
-      - stat_type: DAMAGE
-        value: 15
-      - stat_type: DODGE
-        value: 7
-      - effectcondition_type: X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        weapon_type: RANGED_0_SHURIKEN
         placeholders:
-          - ints: 35
-  - type: WIZARD
+          - ints: 1
+      - stat_type: RANGE
+        value: 30
+      - stat_type: DODGE
+        value: 3
+      - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
+    unlocks_item_type: POTATO
+  - type: VICTIM
     hat_type: TOP
     hat_color: 0x7b7c74ff
     starting_weapon_types:
-      - RANGED_0_PISTOL
-      - RANGED_0_SMG
-      - MELEE_0_FIST
+    effects:
+      - stat_type: ENEMIES
+        value: 50
+      - stat_type: DAMAGE
+        value: 25
+  - type: FAST
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
+    starting_weapon_types:
+    effects:
+      - stat_type: SPEED
+        value: 30
+      - effectcondition_type: STAT__EVERY_OTHER__X__STAT2
+        stat_type: SPEED
+        value: 1
+        placeholders:
+          - ints: 2
+      - stat_type: ARMOR
+        value: -3
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: ARMOR
+        value: -100
+  - type: ENGINEER
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
+    starting_weapon_types:
+    effects:
+      - stat_type: ENGINEERING
+        value: 10
+      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
+        stat_type: ENGINEERING
+        placeholders:
+          - ints: 25
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        weapon_type: MELEE_0_WRENCH
+        placeholders:
+          - ints: 1
+      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
+        stat_type: DAMAGE
+        placeholders:
+          - ints: -50
+      - effectcondition_type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
+  - type: ARMS_DEALER
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
+    starting_weapon_types:
+    effects:
+      - stat_type: WEAPONS_PRICE
+        value: -95
+      - stat_type: INVESTMENTS
+        value: 30
+      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
+        stat_type: DAMAGE
+        placeholders:
+          - ints: 33
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        item_type: DANGEROUS_BUNNY
+        placeholders:
+          - ints: 1
+      - effectcondition_type: SHOP_SELLS_AT_LEAST__X__WEAPONS
+        placeholders:
+          - ints: 1
+      - effectcondition_type: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
+  - type: LICH
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
+    starting_weapon_types:
+    effects:
+      - stat_type: REGEN
+        value: 10
+      - stat_type: LIFE_STEAL
+        value: 10
+      - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
+        placeholders:
+          - ints: 100
+          - ints: 10
+        damage_scalings:
+          - stat_type: HP
+            percents_per_tier: 100
+      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
+        stat_type: DAMAGE
+        placeholders:
+          - ints: -50
+  - type: GOLEM
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
+    starting_weapon_types:
     effects:
       - stat_type: HP
-        value: -3
-      - stat_type: SPEED
-        value: 10
-      - stat_type: ARMOR
-        value: 6
-      - effectcondition_type: STAT__WHEN_WALKING
-        stat_type: DAMAGE
-        value: 1
-      - effectcondition_type: STAT__WHEN_IDLE
-        stat_type: DAMAGE
-        value: 1
-      - effectcondition_type: HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE
+        value: 20
+      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
+        stat_type: HP
         placeholders:
-          - ints: 8
-      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        weapon_type: RANGED_0_PISTOL
+          - ints: 33
+      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
+        stat_type: ARMOR
         placeholders:
-          - ints: 0
-      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        item_type: TURRET
+          - ints: 33
+      - effectcondition_type: STAT__WHEN_BELOW__X__PERCENT_HP
+        stat_type: ATTACK_SPEED
+        value: 40
         placeholders:
-          - ints: 0
-            # - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
-            # - effectcondition_type: CANT_EQUIP_RANGED_WEAPONS
+          - ints: 50
+      - effectcondition_type: STAT__WHEN_BELOW__X__PERCENT_HP
+        stat_type: SPEED
+        value: 20
+        placeholders:
+          - ints: 50
+      - effectcondition_type: CANT_HEAL
+  - type: LUCKY
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
+    starting_weapon_types:
+    effects:
+      - effectcondition_type: STAT__MODS_CHANGED_BY__X__PERCENT
+        stat_type: LUCK
+        placeholders:
+          - ints: 25
+      - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
+        pickupable_type: COIN
+        placeholders:
+          - ints: 75
+          - ints: 1
+        damage_scalings:
+          - stat_type: LUCK
+            percents_per_tier: 15
+      - stat_type: ATTACK_SPEED
+        value: -60
+      - stat_type: XP_GAIN
+        value: -50
+  - type: LEARNER
+    hat_type: TOP
+    hat_color: 0x7b7c74ff
+    starting_weapon_types:
+    effects:
+      - stat_type: XP_FOR_LEVEL_UP
+        value: -66
+      - stat_type: ITEMS_PRICE
+        value: 50
 # }
 
 achievements: # {  ###

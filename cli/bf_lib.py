@@ -201,6 +201,31 @@ def check_duplicates(values: list) -> None:
     # }
 
 
+def only_one_is_not_none(values: list) -> bool:
+    # {  ###
+    found = False
+    for v in values:
+        if v:
+            if found:
+                return False
+            found = True
+    return found
+    # }
+
+
+def test_only_one_is_not_none() -> None:
+    # {  ###
+    assert only_one_is_not_none([2, None, None])
+    assert only_one_is_not_none([2])
+    assert not only_one_is_not_none([])
+    assert not only_one_is_not_none([1, 2])
+    # }
+
+
+def all_are_not_none(values: list) -> bool:
+    return all(v is not None for v in values)
+
+
 # Codegen helpers.
 # ============================================================
 def generate_binary_file_header(genline, source_path: Path, variable_name: str) -> None:
