@@ -11169,6 +11169,9 @@ void GameFixedUpdate() {
 
           AchievementMax(AchievementType_DIFFICULTY, d);
 
+          auto fb_build = fb_builds->Get(g.player.build);
+          AchievementMax((AchievementType)fb_build->finish_run_achievement_type(), 1);
+
           auto& build               = g.player.builds[g.player.build];
           build.maxDifficultyBeaten = (DifficultyType)MAX(build.maxDifficultyBeaten, d);
         }

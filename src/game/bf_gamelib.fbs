@@ -354,6 +354,7 @@ table Build {
     hat_color: uint = 0xffffffff;
     starting_weapon_types: [int];
     effects: [Effect];
+    finish_run_achievement_type: int;
 }
 
 table AchievementStep {
