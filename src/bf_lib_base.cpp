@@ -127,12 +127,12 @@ constexpr f64 f64_inf = std::numeric_limits<f64>::infinity();
 #  if BF_ENABLE_ASSERTS
 #    define ASSERT(expr)    \
       STATEMENT({           \
-        if (expr)           \
+        if ((bool)(expr))   \
           *(int*)(nullptr); \
       })
 #    define ASSERT_FALSE(expr) \
       STATEMENT({              \
-        if (!expr)             \
+        if (!(bool)(expr))     \
           *(int*)(nullptr);    \
       })
 #  else
