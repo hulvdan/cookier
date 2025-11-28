@@ -459,6 +459,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
             check_duplicates(x["starting_weapon_types"])
 
+            assert len(x["layer_colors"]) == len(gamelib["player_layer_texture_ids"])
+
         assert non_lockable_items
         assert non_lockable_weapons
 
@@ -915,7 +917,9 @@ def process_images():
         bf_image.conveyor_suffix("small"),
     )
 
-    # Spritesheetifying hats.
+    # Spritesheetifying player parts and hats.
+    for f in ART_TEXTURES_DIR.glob("game_player_layer_*.png"):
+        f.unlink()
     for f in ART_TEXTURES_DIR.glob("game_hat_*.png"):
         f.unlink()
     bf_image.spritesheetify(
@@ -924,12 +928,18 @@ def process_images():
         size=(5, 5),
         origin=(870, 0),
         gap=10,
-        out_filename_prefix="game_hat_",
+        out_filename_prefix="game_",
         out_filenames=[
-            "gopnik",
-            "beanie",
-            "top",
-            "kepka",
+            "player_layer_head",
+            "player_layer_feet",
+            "player_layer_shirt",
+            "player_layer_phartuk",
+            "player_layer_beard",
+            "player_layer_arms",
+            "hat_gopnik",
+            "hat_beanie",
+            "hat_top",
+            "hat_kepka",
         ],
         out_dir=ART_TEXTURES_DIR,
     )

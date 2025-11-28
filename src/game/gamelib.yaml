@@ -195,12 +195,11 @@ creatures: # {  ###
   - type: PLAYER
     speed: 7.5
     hostility_type: FRIENDLY
-    texture_ids:
-      - game_creature_player
     offset_y: -0.1
     shadow_offset_y: -0.58
     hit_particles_color: 0x885a44ff
     hurtbox_scale: 0.5
+    original_height_px: 157
   - type: TURRET
     health: 1
     hostility_type: FRIENDLY
@@ -4562,6 +4561,13 @@ builds: # {  ###
   - type: DEFAULT
     hat_type: GOPNIK
     hat_color: 0xcec7b1ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - RANGED_0_PISTOL
       - RANGED_0_SMG
@@ -4577,6 +4583,13 @@ builds: # {  ###
   - type: NINJA
     hat_type: BEANIE
     hat_color: 0x208cb2ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - RANGED_0_SHURIKEN
       - RANGED_0_SHREDDER
@@ -4595,6 +4608,13 @@ builds: # {  ###
   - type: VICTIM
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_CACTI_CLUB
       - MELEE_0_TORCH
@@ -4611,6 +4631,13 @@ builds: # {  ###
   - type: FAST
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_LIGHTNING_SHIV
       - MELEE_0_GHOST_FLINT
@@ -4635,6 +4662,13 @@ builds: # {  ###
   - type: ENGINEER
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_WRENCH
       - MELEE_0_PLANK
@@ -4660,6 +4694,13 @@ builds: # {  ###
   - type: ARMS_DEALER
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_FIST
       - MELEE_0_GHOST_FLINT
@@ -4689,6 +4730,13 @@ builds: # {  ###
   - type: LICH
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_LIGHTNING_SHIV
       - MELEE_0_STICK
@@ -4715,6 +4763,13 @@ builds: # {  ###
   - type: GOLEM
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_FIST
       - MELEE_0_ROCK
@@ -4746,6 +4801,13 @@ builds: # {  ###
   - type: LUCKY
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_FIST
       - RANGED_0_PISTOL
@@ -4770,6 +4832,13 @@ builds: # {  ###
   - type: LEARNER
     hat_type: TOP
     hat_color: 0x7b7c74ff
+    layer_colors:
+      - 0xefcb84ff
+      - 0x885A44ff
+      - 0x208CB2ff
+      - 0xCEC7B1ff
+      - 0x885A44ff
+      - 0xefcb84ff
     starting_weapon_types:
       - MELEE_0_STICK
       - MELEE_0_GHOST_AXE
@@ -4963,6 +5032,13 @@ hats:
     anchor:
       x: 0.52
       y: -1.78
+player_layer_texture_ids:
+  - game_player_layer_head
+  - game_player_layer_feet
+  - game_player_layer_shirt
+  - game_player_layer_phartuk
+  - game_player_layer_beard
+  - game_player_layer_arms
 # }
 
 ###

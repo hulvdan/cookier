@@ -13403,13 +13403,16 @@ void GameDraw() {
     if (creature.diedAt.IsSet())
       fade *= Clamp01(1 - creature.diedAt.Elapsed().Progress(DIE_FRAMES));
 
-    int texID = fb->texture_ids()->Get(0);
-    if (!creature.idleStartedAt.IsSet()) {
-      texID = GetTextureIDByProgress(
-        fb->texture_ids(),
-        creature.movementAccumulator / fb->movement_accumulator_meters_cycle()
-      );
+    int texID = 0;
+    f32 sy    = 0;
+    if (creature.type == CreatureType_PLAYER)
+      sy = fb->original_height_px();
+    else {
+      texID = fb->texture_ids()->Get(0);
+      sy = (f32)glib->original_texture_sizes()->Get(texID)->y() * ASSETS_TO_LOGICAL_RATIO
+           / (f32)METER_LOGICAL_SIZE;
     }
+    ASSERT(sy > 0);
 
     Vector2 scale{1, 1};
     if (creature.dir.x < 0)
@@ -13457,9 +13460,6 @@ void GameDraw() {
       flash = Fade(WHITE, 1 - p);
     }
 
-    const f32 sy = (f32)glib->original_texture_sizes()->Get(texID)->y()
-                   * ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
-
     Vector2 movementScale{1, 1};
     f32     movementCycle = creature.movementAccumulatorVisual * PI32 * 3 / 4;
     f32     movementAmplitudeScale
@@ -13475,22 +13475,54 @@ void GameDraw() {
     const auto creatureRotation = -sinf(movementCycle * SIGN(creature.dir.x)) * PI32
                                   / (40 / 1.0f) * creature.movementVisualFactor;
 
-    DrawGroup_CommandTexture(
-      {
-        .texID    = texID,
-        .rotation = creatureRotation,
-        .pos      = basePos,
-        .anchor{0.5f, 0.5f + fb->shadow_offset_y() / sy},
-        .scale = scale * movementScale,
-        .color = Fade(color, fade),
-        .flash = flash,
-      },
-      DrawCommandSetSortY_SET_BASELINE
-    );
+    bool setBaseline = false;
+
+    const auto shadowPos
+      = creature.pos
+        + Vector2(fb->shadow_offset_x() * SIGN(scale.x), fb->shadow_offset_y());
+
+    if (texID) {
+      DrawGroup_CommandTexture(
+        {
+          .texID    = texID,
+          .rotation = creatureRotation,
+          .pos      = basePos,
+          .anchor{0.5f, 0.5f + fb->shadow_offset_y() / sy},
+          .scale = scale * movementScale,
+          .color = Fade(color, fade),
+          .flash = flash,
+        },
+        DrawCommandSetSortY_SET_BASELINE
+      );
+    }
+    else
+      DrawGroup_SetSortY(shadowPos.y * METER_LOGICAL_SIZE);
 
     if (creature.type == CreatureType_PLAYER) {
       const auto fb_build = fb_builds->Get(g.player.build);
       const auto hat      = glib->hats()->Get(fb_build->hat_type());
+
+      Vector2 layerAnchors_[]{
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+      };
+      VIEW_FROM_ARRAY_DANGER(layerAnchors);
+      ASSERT(layerAnchors.count == fb_build->layer_colors()->size());
+      FOR_RANGE (int, i, fb_builds->layer_colors()->size()) {
+        DrawGroup_CommandTexture({
+          .texID    = glib->player_layered_texture_ids()->Get(i),
+          .rotation = creatureRotation,
+          .pos      = basePos,
+          .anchor   = layerAnchors[i],
+          .scale    = scale * movementScale,
+          .color    = Fade(ColorFromRGBA(fb_build->layer_colors()->Get(i)), fade),
+          .flash    = flash,
+        });
+      }
 
       auto anchor = ToVector2(hat->anchor());
       if (scale.x < 0)
@@ -13529,8 +13561,7 @@ void GameDraw() {
       DrawGroup_OneShotTexture(
         {
           .texID = texID,
-          .pos   = creature.pos
-                 + Vector2(fb->shadow_offset_x() * SIGN(scale.x), fb->shadow_offset_y()),
+          .pos   = shadowPos,
           .scale = Vector2One() * (shadowScale * fb->shadow_scale()),
           .color = Fade(BLACK, fade * 0.33f),
         },

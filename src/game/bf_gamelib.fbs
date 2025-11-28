@@ -142,6 +142,7 @@ table Creature {
     idle_seconds: float = 0.75;
 
     texture_ids: [int];
+    original_height_px: int;
     offset_y: float;
     shadow_offset_x: float;
     shadow_offset_y: float = -0.5;
@@ -353,6 +354,7 @@ table Build {
     name_locale: int;
     hat_type: int;
     hat_color: uint = 0xffffffff;
+    layer_colors: [uint];
     starting_weapon_types: [int];
     effects: [Effect];
     finish_run_achievement_type: int;
@@ -482,6 +484,8 @@ table GameLibrary {
     achievements: [Achievement] (required);
     hats: [Hat] (required);
     // TABLE_GEN_END
+
+    player_layer_texture_ids: [int] (required);
 
     damage_scalings: [DamageScaling];
 
