@@ -13410,9 +13410,9 @@ void GameDraw() {
       sy = fb->original_height_px();
     else {
       texID = fb->texture_ids()->Get(0);
-      sy = (f32)glib->original_texture_sizes()->Get(texID)->y() * ASSETS_TO_LOGICAL_RATIO
-           / (f32)METER_LOGICAL_SIZE;
+      sy    = (f32)glib->original_texture_sizes()->Get(texID)->y();
     }
+    sy *= ASSETS_TO_LOGICAL_RATIO / (f32)METER_LOGICAL_SIZE;
     ASSERT(sy > 0);
 
     Vector2 scale{1, 1};
@@ -13465,6 +13465,8 @@ void GameDraw() {
     f32     movementCycle = creature.movementAccumulatorVisual * PI32 * 3 / 4;
     f32     movementAmplitudeScale
       = 0.07f * EaseInQuad(creature.movementVisualFactor) * 3 / 4 / sy * 2;
+    if (creature.type == CreatureType_PLAYER)
+      movementAmplitudeScale *= 0.75f;
     movementScale += Vector2(sinf(movementCycle) * 1.1f, cosf(movementCycle))
                      * movementAmplitudeScale;
 
