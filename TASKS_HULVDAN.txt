@@ -8,30 +8,32 @@ x билды: трисовать в игре слои чувачка
 x билды: отрисовать слои в clay
 x билды: цвета VICTIM
 x билды: ачивка улетает направо?
+x STARFISH (chocolate_coin, +double coin chance, +harvesting, +enemy damage) (collect 20000 coins)
 
 * придумать ачивки для всех локов и залочить предметы и оружия
 
-* ACID (+8 hp, -2 dodge) ()
-* ADRENALINE (5 dodge, 50% to heal 5 hp upon dodging) ()
-* ALIEN_BABY (13hp, 2dmg melee, +10% enemy hp) ()
-* ALLOY (greek nut, +damage (all), +crit, -dodge) ()
-* SHARP_BULLET (blueprint, +piercing) ()
-* STARFISH (chocolate_coin, +double coin chance, +harvesting, +enemy damage) ()
-* TRACTOR (harvesting_pact +40 harvesting, -8 damage) ()
-* WHEELBARROW (golden_ingot +16 harvesting, -1 armor) ()
 * WISDOM (book of damage, +1 damage every 15 seconds) ()
 * TRIANGLE_OF_POWER (pumpkin, +damage +armor) ()
 *
+* TRACTOR (harvesting_pact +40 harvesting, -8 damage) (reach -10 harvesting)
 * MELEE_0_CACTI_CLUB ()
-* MELEE_0_STICK ()
 * MELEE_2_THUNDER_SWORD (recettear) ()
-* RANGED_3_GATLING_LASER ()
 * RANGED_0_SLINGSHOT ()
 * RANGED_1_FLAMETHROWER ()
 * MELEE_1_FLAMING_BRASS_KNUCKLES (frying pan, сковорода) ()
 
+
+
+* RANGED_3_GATLING_LASER (pierce 6 enemies with 1 bullet)
+* MELEE_0_STICK (have 6 of the same weapon)
+* ADRENALINE (5 dodge, 50% to heal 5 hp upon dodging) (dodge 50 attacks during a run)
+* WHEELBARROW (golden_ingot +16 harvesting, -1 armor) (hold 3500 coins)
+* ALIEN_BABY (13hp, 2dmg melee, +10% enemy hp) (reach 70 enemies)
+* SHARP_BULLET (blueprint, +piercing) (pierce 3 enemies with 1 bullet)
+* ALLOY (greek nut, +damage (all), +crit, -dodge) (reach -10 damage)
+* ACID (+8 hp, -2 dodge) (die for the first time)
 * COUPON (reroll 15 times in a row)
-* TREE (убить деревья)
+* TREE (убить 80 деревьев)
 *
 * cooravie patrols
 *

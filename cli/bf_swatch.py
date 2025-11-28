@@ -82,7 +82,7 @@ def parse(filename):
     """
 
     with open(filename, "rb") as data:
-        header, v_major, v_minor, chunk_count = struct.unpack("!4sHHI", data.read(12))
+        header, v_major, v_minor, _ = struct.unpack("!4sHHI", data.read(12))
 
         assert header == b"ASEF"
         assert (v_major, v_minor) == (1, 0)

@@ -275,7 +275,7 @@ def genenum(
             genline_with_comment("  {}_{} = {},".format(name, value, hex(2**i)), i)
     elif override_values:
         i = 0
-        for value, value2 in zip(values, override_values):
+        for value, value2 in zip(values, override_values, strict=True):
             genline_with_comment("  {}_{} = {},".format(name, value, value2), i)
             i += 1
     else:
