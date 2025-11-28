@@ -6319,31 +6319,32 @@ void DoUI() {
 
               const auto fb_creaturePlayer = fb_creatures->Get(CreatureType_PLAYER);
 
-              const auto playerTex = fb_creaturePlayer->texture_ids()->Get(0);
-
-              const f32 off = 2;
-              oneMoreFloatingImageOfBuild([&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({
-                  .texID = playerTex,
-                  .offset{off, 0},
-                  .color = Fade(WHITE, Clamp01(unlockFadeItem)),
-                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
-                });
-              });
-
-              const auto fb_build = fb_builds->Get(data.build);
-              const auto fb_hat   = glib->hats()->Get(fb_build->hat_type());
-
-              oneMoreFloatingImageOfBuild([&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_IMAGE({
-                  .texID = fb_hat->texture_id(),
-                  .offset{off, 100.0f * 179 / 256},
-                  .anchor = ToVector2(fb_hat->anchor()) * Vector2(1, -1),
-                  .color
-                  = Fade(ColorFromRGBA(fb_build->hat_color()), Clamp01(unlockFadeItem)),
-                  .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
-                });
-              });
+              // const auto playerTex = fb_creaturePlayer->texture_ids()->Get(0);
+              //
+              // const f32 off = 2;
+              // oneMoreFloatingImageOfBuild([&]() BF_FORCE_INLINE_LAMBDA {
+              //   BF_CLAY_IMAGE({
+              //     .texID = playerTex,
+              //     .offset{off, 0},
+              //     .color = Fade(WHITE, Clamp01(unlockFadeItem)),
+              //     .flash = Fade(WHITE, Clamp01(unlockFlashWhiteItem)),
+              //   });
+              // });
+              //
+              // const auto fb_build = fb_builds->Get(data.build);
+              // const auto fb_hat   = glib->hats()->Get(fb_build->hat_type());
+              //
+              // oneMoreFloatingImageOfBuild([&]() BF_FORCE_INLINE_LAMBDA {
+              //   BF_CLAY_IMAGE({
+              //     .texID = fb_hat->texture_id(),
+              //     .offset{off, 100.0f * 179 / 256},
+              //     .anchor = ToVector2(fb_hat->anchor()) * Vector2(1, -1),
+              //     .color
+              //     = Fade(ColorFromRGBA(fb_build->hat_color()),
+              //     Clamp01(unlockFadeItem)), .flash = Fade(WHITE,
+              //     Clamp01(unlockFlashWhiteItem)),
+              //   });
+              // });
             }
           }
           else {
@@ -13502,22 +13503,16 @@ void GameDraw() {
       const auto fb_build = fb_builds->Get(g.player.build);
       const auto hat      = glib->hats()->Get(fb_build->hat_type());
 
-      Vector2 layerAnchors_[]{
-        {},
-        {},
-        {},
-        {},
-        {},
-        {},
-      };
-      VIEW_FROM_ARRAY_DANGER(layerAnchors);
-      ASSERT(layerAnchors.count == fb_build->layer_colors()->size());
-      FOR_RANGE (int, i, fb_builds->layer_colors()->size()) {
+      const auto texs = glib->player_layer_texture_ids();
+      FOR_RANGE (int, i, fb_build->layer_colors()->size()) {
+        auto anchor = ToVector2(glib->player_layer_texture_anchors()->Get(i));
+        if (scale.x < 0)
+          anchor.x = 1 - anchor.x;
         DrawGroup_CommandTexture({
-          .texID    = glib->player_layered_texture_ids()->Get(i),
+          .texID    = texs->Get(i),
           .rotation = creatureRotation,
           .pos      = basePos,
-          .anchor   = layerAnchors[i],
+          .anchor   = anchor,
           .scale    = scale * movementScale,
           .color    = Fade(ColorFromRGBA(fb_build->layer_colors()->Get(i)), fade),
           .flash    = flash,

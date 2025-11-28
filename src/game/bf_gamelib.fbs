@@ -486,6 +486,7 @@ table GameLibrary {
     // TABLE_GEN_END
 
     player_layer_texture_ids: [int] (required);
+    player_layer_texture_anchors: [Posf] (required);
 
     damage_scalings: [DamageScaling];
 
