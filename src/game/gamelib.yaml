@@ -4879,8 +4879,8 @@ achievements: # {  ###
       - value: 25000
   - type: IDLER
     steps:
-      - value: 30
-        unlocks_item_type: TURRET
+      - unlocks_item_type: TURRET
+        value: 30
       - value: 400
         unlocks_weapon_type: RANGED_3_CHAIN_GUN
   - type: COINS
@@ -5040,17 +5040,23 @@ player_layer_texture_ids:
   - game_player_layer_beard
   - game_player_layer_arms
 player_layer_texture_anchors:
-  - x: 0.59
+  - # head
+    x: 0.59
     y: -0.9
-  - x: 0.5
+  - # feet
+    x: 0.5
     y: 0
-  - x: 0.51
+  - # shirt
+    x: 0.51
     y: -0.52
-  - x: 0.5
+  - # phartuk
+    x: 0.5
     y: -0.19
-  - x: 0.45
-    y: -0.63
-  - x: 0.50
+  - # beard
+    x: 0.45
+    y: -0.67
+  - # arms
+    x: 0.50
     y: -0.75
 # }
 

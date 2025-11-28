@@ -7,8 +7,7 @@ x билды: трисовать в игре слои чувачка
   ПРАВИТЬ ЯКОРЯ В GAMELIB
 x билды: отрисовать слои в clay
 x билды: цвета VICTIM
-
-* билды: ачивка улетает направо?
+x билды: ачивка улетает направо?
 
 * lock item or weapon: achievement 1: item ACID
 * lock item or weapon: achievement 2: item
