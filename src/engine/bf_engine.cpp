@@ -2671,7 +2671,7 @@ void UnloadFile(void* data) {  ///
 #if BF_DEBUG
   BF_FREE(data);
 #else
-  SDL_free(data)
+  SDL_free(data);
 #endif
 }
 
