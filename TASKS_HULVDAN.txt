@@ -1,18 +1,9 @@
 WORKING SINCE 2025-09-07
 
-x проставить starting weapons
-x assert build can't have locked item
-x можно указать stat_type_2 (численные постфиксы `recursive_replace_transform`)
-x фикс ассерт requires_stat()
-x assert: all builds (except DEFAULT) are locked
-x achievements that unlock builds work
-x impl achievement: FINISH RUN WITH PARTICULAR BUILD achievements
-x impl achievement: FINISH_A_WAVE_WITH_1_HP
-x impl achievement: RECYCLE_X_WEAPONS_DURING_A_RUN
-x impl achievement: HEAL_X_DURING_A_RUN
-x impl achievement: TURRETS_ON_THE_MAP
-x impl achievement: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
-x impl achievement: REACH_THIS_OR_MORE_STAT_LUCK REACH_THIS_OR_MORE_SPEED REACH_THIS_OR_MORE_STAT_HP
+x билды: слои чувачка
+
+* билды: слои чувачка текстуры fbs
+* билды: трисовать в игре слои чувачка
 
 * lock item or weapon: achievement 1: item ACID
 * lock item or weapon: achievement 2: item
@@ -34,6 +25,7 @@ x impl achievement: REACH_THIS_OR_MORE_STAT_LUCK REACH_THIS_OR_MORE_SPEED REACH_
 * lock item or weapon: achievement 18: weapon
 * lock item or weapon: achievement 19: weapon
 
+*
 * выписать предметы и оружия, что нужно залочить
   (билды нужно залочить все, кроме стартового)
 * придумать ачивки для всех локов и залочить предметы и оружия
@@ -51,12 +43,6 @@ x impl achievement: REACH_THIS_OR_MORE_STAT_LUCK REACH_THIS_OR_MORE_SPEED REACH_
 * impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
 *
 *
-* билды: слоёные усы
-* билды: слоёные рубашка
-* билды: слоёные фартук
-* билды: слоёные ботинки
-* билды: слоёные руки
-* билды: слоёная голова
 *
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
