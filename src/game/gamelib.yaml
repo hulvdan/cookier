@@ -4562,12 +4562,12 @@ builds: # {  ###
     hat_type: GOPNIK
     hat_color: 0xcec7b1ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - RANGED_0_PISTOL
       - RANGED_0_SMG
@@ -4584,12 +4584,12 @@ builds: # {  ###
     hat_type: BEANIE
     hat_color: 0x208cb2ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - RANGED_0_SHURIKEN
       - RANGED_0_SHREDDER
@@ -4607,14 +4607,14 @@ builds: # {  ###
     unlocks_item_type: STATUE
   - type: VICTIM
     hat_type: TOP
-    hat_color: 0x7b7c74ff
+    hat_color: 0xc02931ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0xc02931ff # feet
+      - 0xc02931ff # shirt
+      - 0xc02931ff # phartuk
+      - 0xc02931ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_CACTI_CLUB
       - MELEE_0_TORCH
@@ -4632,12 +4632,12 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_LIGHTNING_SHIV
       - MELEE_0_GHOST_FLINT
@@ -4663,12 +4663,12 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_WRENCH
       - MELEE_0_PLANK
@@ -4695,12 +4695,12 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_FIST
       - MELEE_0_GHOST_FLINT
@@ -4731,12 +4731,12 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_LIGHTNING_SHIV
       - MELEE_0_STICK
@@ -4764,12 +4764,12 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_FIST
       - MELEE_0_ROCK
@@ -4802,12 +4802,12 @@ builds: # {  ###
     hat_type: TOP
     hat_color: 0x7b7c74ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0x885A44ff # feet
+      - 0x208CB2ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_FIST
       - RANGED_0_PISTOL
