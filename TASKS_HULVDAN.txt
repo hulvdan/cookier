@@ -1,9 +1,13 @@
 WORKING SINCE 2025-09-07
 
 x билды: слои чувачка
+x билды: слои чувачка текстуры fbs
 
-* билды: слои чувачка текстуры fbs
+
 * билды: трисовать в игре слои чувачка
+  ПРАВИТЬ ЯКОРЯ В GAMELIB
+* билды: отрисовать слои в clay
+* билды: ачивка улетает направо?
 
 * lock item or weapon: achievement 1: item ACID
 * lock item or weapon: achievement 2: item

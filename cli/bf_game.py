@@ -597,13 +597,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # }
 
-    # All builds must be locked.
-    not_locked_builds = []
-    for build in gamelib["builds"][2:]:
-        if build["type"] not in locked_builds:
-            not_locked_builds.append(build["type"])
-    assert not not_locked_builds, f"These builds must be locked: {not_locked_builds}"
-
     # Props.
     # ============================================================
     if 1:  # {  ###
@@ -703,6 +696,23 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             )
     # }
 
+    # Other stuff.
+    # ============================================================
+    # {  ###
+    assert len(gamelib["player_layer_texture_anchors"]) == len(
+        gamelib["player_layer_texture_ids"]
+    )
+
+    # Checking that all builds except DEFAULT (and INVALID) are locked.
+    not_locked_builds = []
+    for build in gamelib["builds"][2:]:
+        if build["type"] not in locked_builds:
+            not_locked_builds.append(build["type"])
+    assert not not_locked_builds, f"These builds must be locked: {not_locked_builds}"
+    assert "DEFAULT" not in locked_builds
+    assert "INVALID" not in locked_builds
+    # }
+
     # Codepoints.
     # ============================================================
     if 1:  # {  ###
@@ -733,6 +743,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     # Transforms.
     # ============================================================
+    # {  ###
     for v in transforms:
         recursive_replace_transform(gamelib, *(v[1:]))
     for v in transforms:
@@ -740,6 +751,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             x.pop("type", None)
 
     recursive_flattenizer(gamelib, "damage_scaling", "damage_scalings", "damage_scalings")
+    # }
 
 
 @command

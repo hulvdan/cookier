@@ -125,9 +125,16 @@ constexpr f64 f64_inf = std::numeric_limits<f64>::infinity();
 #  define ASSERT_FALSE(expr) CHECK_FALSE(expr)
 #else  // TESTS
 #  if BF_ENABLE_ASSERTS
-#    include <cassert>
-#    define ASSERT(expr) assert(expr)
-#    define ASSERT_FALSE(expr) assert(!((bool)(expr)))
+#    define ASSERT(expr)    \
+      STATEMENT({           \
+        if (expr)           \
+          *(int*)(nullptr); \
+      })
+#    define ASSERT_FALSE(expr) \
+      STATEMENT({              \
+        if (!expr)             \
+          *(int*)(nullptr);    \
+      })
 #  else
 #    define ASSERT(expr) EMPTY_STATEMENT
 #    define ASSERT_FALSE(expr) EMPTY_STATEMENT
