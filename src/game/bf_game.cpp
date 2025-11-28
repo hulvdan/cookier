@@ -6243,6 +6243,7 @@ void DoUI() {
         .hidden         = (!onlyOneOrNone && (data.hidden == HiddenType_HIDE_IF_EMPTY)),
         .canHover       = data.canHover,
         .tier           = tier,
+        .flashWhite     = MAX(unlockFlashWhiteLock, unlockFlashWhiteItem),
         .showsDetails   = data.showsDetails,
         .disallowsTouch = data.disallowsTouch,
         .touchPreservesSelection = data.touchPreservesSelection,
@@ -10434,13 +10435,15 @@ void DoUI() {
 
     if (e < ACHIEVEMENT_IN_FRAMES) {
       f32 p     = Clamp01(e.Progress(ACHIEVEMENT_IN_FRAMES));
-      translate = 100 * (1 - EaseOutQuad(p));
-      alpha     = EaseOutQuad(p);
+      translate = 100 * (1 - EaseBounceSmall(p));
+      alpha     = EaseInOutQuad(p);
     }
     if (e >= ACHIEVEMENT_TOTAL_FRAMES - ACHIEVEMENT_OUT_FRAMES) {
       f32 p = (e + ACHIEVEMENT_OUT_FRAMES - ACHIEVEMENT_TOTAL_FRAMES)
                 .Progress(ACHIEVEMENT_OUT_FRAMES);
-      alpha = Clamp01(1 - EaseOutQuad(p));
+      p         = Clamp01(p);
+      translate = 200 - 200 * EaseBounceSmall(1 - p);
+      alpha     = Clamp01(1 - EaseOutCubic(p));
     }
 
     zIndex += UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS;
