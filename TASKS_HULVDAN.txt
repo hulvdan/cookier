@@ -9,30 +9,29 @@ x билды: отрисовать слои в clay
 x билды: цвета VICTIM
 x билды: ачивка улетает направо?
 
-* lock item or weapon: achievement 1: item ACID
-* lock item or weapon: achievement 2: item
-* lock item or weapon: achievement 3: item
-* lock item or weapon: achievement 4: item
-* lock item or weapon: achievement 5: item
-* lock item or weapon: achievement 6: item
-* lock item or weapon: achievement 7: item
-* lock item or weapon: achievement 8: item
-* lock item or weapon: achievement 9: item
-* lock item or weapon: achievement 10: item
-* lock item or weapon: achievement 11: item
-* lock item or weapon: achievement 12: item
-* lock item or weapon: achievement 13: weapon
-* lock item or weapon: achievement 14: weapon
-* lock item or weapon: achievement 15: weapon
-* lock item or weapon: achievement 16: weapon
-* lock item or weapon: achievement 17: weapon
-* lock item or weapon: achievement 18: weapon
-* lock item or weapon: achievement 19: weapon
-
-*
-* выписать предметы и оружия, что нужно залочить
-  (билды нужно залочить все, кроме стартового)
 * придумать ачивки для всех локов и залочить предметы и оружия
+
+* ACID (+8 hp, -2 dodge) ()
+* ADRENALINE (5 dodge, 50% to heal 5 hp upon dodging) ()
+* ALIEN_BABY (13hp, 2dmg melee, +10% enemy hp) ()
+* ALLOY (greek nut, +damage (all), +crit, -dodge) ()
+* SHARP_BULLET (blueprint, +piercing) ()
+* STARFISH (chocolate_coin, +double coin chance, +harvesting, +enemy damage) ()
+* TRACTOR (harvesting_pact +40 harvesting, -8 damage) ()
+* WHEELBARROW (golden_ingot +16 harvesting, -1 armor) ()
+* WISDOM (book of damage, +1 damage every 15 seconds) ()
+* TRIANGLE_OF_POWER (pumpkin, +damage +armor) ()
+*
+* MELEE_0_CACTI_CLUB ()
+* MELEE_0_STICK ()
+* MELEE_2_THUNDER_SWORD (recettear) ()
+* RANGED_3_GATLING_LASER ()
+* RANGED_0_SLINGSHOT ()
+* RANGED_1_FLAMETHROWER ()
+* MELEE_1_FLAMING_BRASS_KNUCKLES (frying pan, сковорода) ()
+
+* COUPON (reroll 15 times in a row)
+* TREE (убить деревья)
 *
 * cooravie patrols
 *
