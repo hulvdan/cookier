@@ -5092,11 +5092,11 @@ void EffectSpawnProjectilesOnHit(const Creature& creature, int weaponIndex) {  /
           piercingDamageBonusPercent
             = fb->projectile_piercing_damage_bonus_percent()->Get(tierOffset);
 
-        int pierce = g.run.state.stats[StatType_PIERCING];
+        int pierce = g.run.state.stats[StatType_PIERCE];
         if (fb->projectile_pierce())
           pierce += fb->projectile_pierce()->Get(tierOffset);
 
-        int bounce = g.run.state.stats[StatType_BOUNCES];
+        int bounce = g.run.state.stats[StatType_BOUNCE];
         if (fb->projectile_bounce())
           bounce += fb->projectile_bounce()->Get(tierOffset);
 
@@ -7196,11 +7196,10 @@ void DoUI() {
               value += pierces->Get(tierOffset);
 
             if (data.affectedByGame)
-              value += g.run.state.stats[StatType_PIERCING];
+              value += g.run.state.stats[StatType_PIERCE];
 
             if (value > 0) {
-              int piercingDamageBonusPercent
-                = g.run.state.stats[StatType_PIERCING_DAMAGE];
+              int piercingDamageBonusPercent = g.run.state.stats[StatType_PIERCE_DAMAGE];
               if (fb->projectile_piercing_damage_bonus_percent())
                 piercingDamageBonusPercent
                   += fb->projectile_piercing_damage_bonus_percent()->Get(tierOffset);
@@ -7224,7 +7223,7 @@ void DoUI() {
               value += bounces->Get(tierOffset);
 
             if (data.affectedByGame)
-              value += g.run.state.stats[StatType_BOUNCES];
+              value += g.run.state.stats[StatType_BOUNCE];
 
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
@@ -12692,7 +12691,7 @@ void GameFixedUpdate() {
             }
 
             f32 piercingDamageMultiplier
-              = (f32)(g.run.state.stats[StatType_PIERCING_DAMAGE]
+              = (f32)(g.run.state.stats[StatType_PIERCE_DAMAGE]
                       + projectile.c.weaponPiercingDamageBonusPercent)
                 / 100.0f;
             piercingDamageMultiplier = Clamp01(piercingDamageMultiplier);
@@ -12775,8 +12774,8 @@ void GameFixedUpdate() {
               auto maxBounce = projectile.c.bounce;
               auto maxPierce = projectile.c.pierce;
               if (projectile.c.ownerCreatureType == CreatureType_PLAYER) {
-                maxBounce += g.run.state.stats[StatType_BOUNCES];
-                maxPierce += g.run.state.stats[StatType_PIERCING];
+                maxBounce += g.run.state.stats[StatType_BOUNCE];
+                maxPierce += g.run.state.stats[StatType_PIERCE];
               }
 
               bool canBounce = fb->can_bounce() && (projectile.bouncedCount < maxBounce);

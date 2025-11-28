@@ -711,7 +711,7 @@ items: # {  ###
     tier: 2
     price: 75
     effects:
-      - stat_type: PIERCING
+      - stat_type: PIERCE
         value: 1
       - stat_type: DAMAGE
         value: -10
@@ -1417,7 +1417,7 @@ items: # {  ###
     tier: 1
     price: 40
     effects:
-      - stat_type: PIERCING_DAMAGE
+      - stat_type: PIERCE_DAMAGE
         value: 15
       - stat_type: DAMAGE
         value: -2
@@ -1458,7 +1458,7 @@ items: # {  ###
     price: 110
     limit: 1
     effects:
-      - stat_type: BOUNCES
+      - stat_type: BOUNCE
         value: 1
       - stat_type: DAMAGE
         value: -25
@@ -1522,9 +1522,9 @@ items: # {  ###
     price: 45
     limit: 1
     effects:
-      - stat_type: PIERCING
+      - stat_type: PIERCE
         value: 1
-      - stat_type: PIERCING_DAMAGE
+      - stat_type: PIERCE_DAMAGE
         value: -20
       - stat_type: DAMAGE
         value: -5
@@ -1536,10 +1536,12 @@ items: # {  ###
     price: 30
     limit: 2
     effects:
-      # - stat_type: RANGE
-      #   value: 10
       - stat_type: REROLL_PRICE
         value: -25
+      - stat_type: LUCK
+        value: 4
+      - stat_type: DAMAGE
+        value: -4
   - type: STARFISH
     texture_id: ui_item_chocolate_coin
     tier: 2
@@ -4417,14 +4419,14 @@ stats: # {  ###
     is_secondary: true
   - type: EXPLOSION_SIZE
     is_secondary: true
-  # Gives projectiles additional Bounces
-  - type: BOUNCES
+  # Gives projectiles additional bounce
+  - type: BOUNCE
     is_secondary: true
-  # Gives projectiles additional Piercing
-  - type: PIERCING
+  # Gives projectiles additional pierce
+  - type: PIERCE
     is_secondary: true
   # Values < 100 decrease the piercing damage falloff for projectile weapons.
-  - type: PIERCING_DAMAGE
+  - type: PIERCE_DAMAGE
     player_value: 50
     is_percent: true
     is_secondary: true
@@ -4627,7 +4629,7 @@ builds: # {  ###
       - effectcondition_type: END_OF_THE_WAVE_GET__STAT
         stat_type: HARVESTING
         value: -3
-    unlocks_weapon_type: RANGED_0_SHREDDER
+    unlocks_weapon_type: RANGED_1_FIREBALL
   - type: FAST
     hat_type: TOP
     hat_color: 0x7b7c74ff
