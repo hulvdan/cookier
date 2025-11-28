@@ -7,8 +7,7 @@ vim.keymap.set("n", "<leader>C", "o  continue;<ESC>", opts)
 vim.keymap.set("n", "<leader>B", "o  break;<ESC>", opts)
 
 function cli_command(cmd)
-    return [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && .venv\Scripts\python.exe cli\bf_cli.py ]]
-        .. cmd
+    return [[uvx ruff check --output-format concise cli && uv run mypy cli && uv run cli\bf_cli.py ]] .. cmd
 end
 
 target = "game"

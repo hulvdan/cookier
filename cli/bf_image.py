@@ -183,7 +183,6 @@ def remap(
 ) -> Image.Image:
     # {  ###
     img = np.asarray(grayscale_image)
-    h, w, _ = img.shape
     img_r = img[:, :, 0]
     img_g = img[:, :, 1]
     img_b = img[:, :, 2]
@@ -217,7 +216,7 @@ def conveyor(folder_name: str, conveyor_name: str, *args: ConveyorCallable) -> N
 
     files = list(folder.glob("*.png"))
     for f in files:
-        img = Image.open(f)
+        img: Image.Image = Image.open(f)
         for func in args:
             img2, f = func(img, f)  # noqa: PLW2901
             img = img2
