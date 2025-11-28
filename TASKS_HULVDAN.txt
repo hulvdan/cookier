@@ -15,7 +15,6 @@ x STARFISH (chocolate_coin, +double coin chance, +harvesting, +enemy damage) (co
 * WISDOM (book of damage, +1 damage every 15 seconds) ()
 * TRIANGLE_OF_POWER (pumpkin, +damage +armor) ()
 *
-* TRACTOR (harvesting_pact +40 harvesting, -8 damage) (reach -10 harvesting)
 * MELEE_0_CACTI_CLUB ()
 * MELEE_2_THUNDER_SWORD (recettear) ()
 * RANGED_0_SLINGSHOT ()
@@ -24,6 +23,7 @@ x STARFISH (chocolate_coin, +double coin chance, +harvesting, +enemy damage) (co
 
 
 
+* TRACTOR (harvesting_pact +40 harvesting, -8 damage) (reach -10 harvesting)
 * RANGED_3_GATLING_LASER (pierce 6 enemies with 1 bullet)
 * MELEE_0_STICK (have 6 of the same weapon)
 * ADRENALINE (5 dodge, 50% to heal 5 hp upon dodging) (dodge 50 attacks during a run)

@@ -4891,8 +4891,6 @@ achievements: # {  ###
         unlocks_item_type: RECYCLING_MACHINE
       - value: 5000
         unlocks_item_type: PIGGY_BANK
-      - value: 25000
-        unlocks_item_type: PIGGY_BANK
   - type: FINISH_RUN_WITH_BUILD_DEFAULT
   - type: FINISH_RUN_WITH_BUILD_NINJA
   - type: FINISH_RUN_WITH_BUILD_VICTIM
