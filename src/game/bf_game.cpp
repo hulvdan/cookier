@@ -12251,6 +12251,8 @@ void GameFixedUpdate() {
             if (a.startedAt.IsSet()
                 && (a.startedAt.Elapsed().value % BURNING_RATE.value == 0))
             {
+              bool burned = (creature.health > 0);
+
               TryApplyDamage({
                 .creatureIndex                      = creatureIndex,
                 .damage                             = a.value,
@@ -12258,6 +12260,12 @@ void GameFixedUpdate() {
                 .critDamageMultiplier               = BURNING_CRIT_DAMAGE_MULTIPLIER,
                 .indexOfWeaponThatDidDamageOrMinus1 = a.weaponIndexOrMinus1,
               });
+
+              if (creature.health > 0)
+                burned = false;
+
+              if (burned)
+                AchievementAdd(AchievementType_ENEMIES_DIED_BECAUSE_OF_BURNING, 1);
             }
           }
 
