@@ -1597,6 +1597,7 @@ void ChangeStat(StatType stat, int value) {  ///
       g.run.state.stats[stat]
     );
   }
+
   if (fb_stat->reach_this_or_less_stat_achievement_type()) {
     AchievementMin(
       (AchievementType)fb_stat->reach_this_or_less_stat_achievement_type(),

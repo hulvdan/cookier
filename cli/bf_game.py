@@ -555,7 +555,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     x["description_locale"] = (
                         f"ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_{more_or_less.upper()}_STAT"
                     )
-                    gamelib["stats"][STAT_TYPES.index(stat_type)][
+                    gamelib["stats"][STAT_TYPES.index(stat_type) + 1][
                         f"reach_this_or_{more_or_less}_stat_achievement_type"
                     ] = x["type"]
             else:
