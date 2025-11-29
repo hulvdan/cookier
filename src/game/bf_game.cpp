@@ -13005,8 +13005,8 @@ void GameFixedUpdate() {
     {  ///
       ZoneScopedN("Processing `justDamagedCreatures`.");
 
-      // auto playerHurt = false;
-      // auto mobHurt    = false;
+      // bool playerHurt = false;
+      // bool mobHurt    = false;
 
       for (const auto index : g.run.justDamagedCreatures) {
         auto& creature = g.run.creatures[index];
