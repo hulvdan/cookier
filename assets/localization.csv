@@ -414,7 +414,7 @@ ACHIEVEMENT_NAME_HAVE_SAME_WEAPONS;Дубликатор;Duplicator;
 ACHIEVEMENT_NAME_DODGE_N_ATTACKS_DURING_A_RUN;Уклонист;Dodger;
 ACHIEVEMENT_NAME_HOLD_N_COINS;Хранитель;Keeper;
 ACHIEVEMENT_NAME_DIE_FOR_THE_FIRST_TIME;Познание в ошибках;TODO;
-ACHIEVEMENT_NAME_REROLL_N_TIMES_IN_A_ROW;Бросатель;Keep on rolling;
+ACHIEVEMENT_NAME_REROLL_N_TIMES_IN_A_ROW_IN_SHOP;Бросатель;Keep on rolling;
 ACHIEVEMENT_NAME_KILL_TREES;Лесоруб;Lumberjack;
 ACHIEVEMENT_NAME_HEAL_X_DURING_A_RUN;Излечение;TODO izlechenie;
 ACHIEVEMENT_NAME_REACH_THIS_OR_LESS_STAT_DAMAGE;Бессилие;TODO Bessilie;
@@ -446,7 +446,7 @@ ACHIEVEMENT_DESCRIPTION_HAVE_SAME_WEAPONS;Одинаковых оружий на
 ACHIEVEMENT_DESCRIPTION_DODGE_N_ATTACKS_DURING_A_RUN;Уклонено от {VALUE} атак за забег;Dodged {VALUE} attacks during a run;
 ACHIEVEMENT_DESCRIPTION_HOLD_N_COINS;Сбережено {VALUE} печенег;TODO совершенная форма Hold {VALUE} cookiens;
 ACHIEVEMENT_DESCRIPTION_DIE_FOR_THE_FIRST_TIME;Первое поражение;TODO The first loss;
-ACHIEVEMENT_DESCRIPTION_REROLL_N_TIMES_IN_A_ROW;Переброшено {VALUE} раз подряд в магазине;Rerolled {VALUE} times in a row in the shop;
+ACHIEVEMENT_DESCRIPTION_REROLL_N_TIMES_IN_A_ROW_IN_SHOP;Переброшено {VALUE} раз подряд в магазине;Rerolled {VALUE} times in a row in the shop;
 ACHIEVEMENT_DESCRIPTION_KILL_TREES;Среблено {VALUE} деревьев;Cut {VALUE} trees;
 ACHIEVEMENT_DESCRIPTION_HEAL_X_DURING_A_RUN;Вылечено {VALUE} здоровья за забег;Healed {VALUE} HP during a run;
 ACHIEVEMENT_DESCRIPTION_MAX_COUNT_OF_PROJECTILE_ON_SCREEN_LIGHTNING;В мире одновременно находились {VALUE} шт. молний;Had {VALUE} lightning projectiles in the world simultaneosly;

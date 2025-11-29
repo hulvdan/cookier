@@ -9295,6 +9295,13 @@ void DoUI() {
               if (canReroll) {
                 PlaySound(Sound_UI_CLICK);
                 g.run.state.shop.rerolls.Roll();
+
+                AchievementMax(
+                  AchievementType_REROLL_N_TIMES_IN_A_ROW_IN_SHOP,
+                  g.run.state.shop.rerolls.rerolledFreeTimes
+                    + g.run.state.shop.rerolls.rerolledTimes
+                );
+
                 RefillShopToPick();
                 Save();
               }
