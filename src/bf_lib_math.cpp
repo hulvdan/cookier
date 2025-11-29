@@ -433,6 +433,26 @@ TEST_CASE ("IsPowerOf2") {  ///
 #define POS_IS_IN_BOUNDS(pos, bounds) \
   (!((pos).x < 0 || (pos).x >= (bounds).x || (pos).y < 0 || (pos).y >= (bounds).y))
 
+BF_FORCE_INLINE Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, f32 amount) {  ///
+  return v1 + (v2 - v1) * amount;
+}
+
+BF_FORCE_INLINE Vector2
+Bezier(Vector2 v1, Vector2 v2, Vector2 v3, Vector2 v4, f32 t) {  ///
+  ASSERT(t >= 0);
+  ASSERT(t <= 1);
+
+  auto a1 = Vector2Lerp(v1, v2, t);
+  auto a2 = Vector2Lerp(v2, v3, t);
+  auto a3 = Vector2Lerp(v3, v4, t);
+
+  auto b1 = Vector2Lerp(a1, a2, t);
+  auto b2 = Vector2Lerp(a2, a3, t);
+
+  auto c = Vector2Lerp(b1, b2, t);
+  return c;
+}
+
 using Easing_function_t = f32 (*)(f32);
 
 f32 EaseLinear(f32 p) {  ///
@@ -675,6 +695,11 @@ f32 EaseBounceSmall(f32 p) {  ///
   ]]] */
   return -2.100000f * p * p + 3.100000f * p + 0.000000f;
   /* [[[end]]] */
+}
+
+BF_FORCE_INLINE f32 EaseBounceSmallSmooth(f32 p) {  ///
+  ASSERT_IS_NUMBER(p);
+  return Bezier({0, 0}, {0.8f, 1.8f}, {0.8f, 0.9f}, {1, 1}, p).y;
 }
 
 #define OFFSET_IN_DIRECTION_OF_ANGLE_RAD(offset, angleRad) \

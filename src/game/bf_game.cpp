@@ -1538,7 +1538,10 @@ void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue)
   int stepIndex = -1;
   for (auto fb_step : *fb_steps) {
     stepIndex++;
-    if ((oldValue < fb_step->value()) && (fb_step->value() <= newValue)) {
+    if ((!fb->negative_is_good() && (oldValue < fb_step->value())
+         && (fb_step->value() <= newValue))
+        || (fb->negative_is_good() && (oldValue > fb_step->value()) && (fb_step->value() >= newValue)))
+    {
       AchievementStepSetLock(type, stepIndex, fb_step, false);
       *g.ui.justUnlockedAchievements.Add() = {.type = type, .stepIndex = stepIndex};
     }
@@ -3868,21 +3871,6 @@ void MakeWalls(MakeWallsData data) {  ///
     if (data.outBodies.count)
       data.outBodies[i] = body;
   }
-}
-
-Vector2 Bezier(Vector2 v1, Vector2 v2, Vector2 v3, Vector2 v4, f32 t) {  ///
-  ASSERT(t >= 0);
-  ASSERT(t <= 1);
-
-  auto a1 = Vector2Lerp(v1, v2, t);
-  auto a2 = Vector2Lerp(v2, v3, t);
-  auto a3 = Vector2Lerp(v3, v4, t);
-
-  auto b1 = Vector2Lerp(a1, a2, t);
-  auto b2 = Vector2Lerp(a2, a3, t);
-
-  auto c = Vector2Lerp(b1, b2, t);
-  return c;
 }
 
 Vector2 GetCameraTargetPos() {  ///
@@ -10466,14 +10454,14 @@ void DoUI() {
 
     if (e < ACHIEVEMENT_IN_FRAMES) {
       f32 p     = Clamp01(e.Progress(ACHIEVEMENT_IN_FRAMES));
-      translate = 100 * (1 - EaseBounceSmall(p));
+      translate = 100 * (1 - EaseBounceSmallSmooth(p));
       alpha     = EaseInOutQuad(p);
     }
     if (e >= ACHIEVEMENT_TOTAL_FRAMES - ACHIEVEMENT_OUT_FRAMES) {
       f32 p = (e + ACHIEVEMENT_OUT_FRAMES - ACHIEVEMENT_TOTAL_FRAMES)
                 .Progress(ACHIEVEMENT_OUT_FRAMES);
       p         = Clamp01(p);
-      translate = 200 - 200 * EaseBounceSmall(1 - p);
+      translate = 200 - 200 * EaseBounceSmallSmooth(1 - p);
       alpha     = Clamp01(1 - EaseOutCubic(p));
     }
 
@@ -13429,7 +13417,7 @@ void GameDraw() {
         / (f32)SPAWN_FRAMES.value
       );
 
-      auto scale = Vector2One() * EaseBounceSmall(p);
+      auto scale = Vector2One() * EaseBounceSmallSmooth(p);
       if (spawn.rotation < 0)
         scale.x *= -1;
 

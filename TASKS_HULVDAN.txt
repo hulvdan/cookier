@@ -3,12 +3,11 @@ WORKING SINCE 2025-09-07
 x придумать ачивки для всех локов и залочить предметы и оружия
 x проставил ачивки и анлоки в gamelib
 x localize achievements
+x ещё одна ачивка
+x REACH_THIS_OR_LESS_STAT_XXX
+x заменить easing ачивки на bezier
 
 * прикрутить ачивки + анлок предметов и оружий
-
-* REACH_THIS_OR_LESS_STAT_XXX
-
-* ещё одна ачивка
 
 * ENEMIES_DIED_BECAUSE_OF_BURNING
 * MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN
@@ -25,7 +24,6 @@ x localize achievements
 
 * чит кнопка открытия всех ачивок
 * привести в порядок последовательность отображения ачивок
-* заменить easing ачивки на bezier
 * если есть warning-и в питоне, отображать [BUILT WITH WARNINGS]
 * move unlocks_item_type and unlocks_weapon_type from build
   to respective achievements and clean code
