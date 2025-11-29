@@ -4987,7 +4987,7 @@ achievements: # {  ###
     steps:
       - value: -10
         unlocks_item_type: ALLOY
-  - type: REROLL_N_TIMES_IN_A_ROW
+  - type: REROLL_N_TIMES_IN_A_ROW_IN_SHOP
     steps:
       - value: 15
         unlocks_item_type: COUPON
