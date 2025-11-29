@@ -366,6 +366,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         process_effects_of(x, required_tier_values)
     # }
 
+    STAT_TYPES = [x["type"] for x in gamelib["stats"][1:]]
+
     # Stats.
     # ============================================================
     # {  ###
@@ -531,22 +533,21 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 x["steps"] = [v]
             elif x["type"].startswith("REACH_THIS_OR_MORE_STAT_"):
                 can_have_stat = True
-                stat_name = x["type"].removeprefix("REACH_THIS_OR_MORE_STAT_")
-
-                found_stat = False
-                for stat in gamelib["stats"]:
-                    if stat_name != stat["type"]:
-                        continue
-                    stat["reach_this_or_more_stat_achievement_type"] = x["type"]
-                    found_stat = True
-                    break
-                assert found_stat
-
-                x["hide_progress"] = True
-                x["stat_type"] = stat_name
-                x["name_locale"] = f"STAT_{stat_name}"
+                stat_type = x["type"].removeprefix("REACH_THIS_OR_MORE_STAT_")
+                assert stat_type in STAT_TYPES
+                x["stat_type"] = stat_type
+                x["name_locale"] = f"STAT_{stat_type}"
                 x["description_locale"] = (
                     "ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_MORE_STAT"
+                )
+            elif x["type"].startswith("REACH_THIS_OR_LESS_STAT_"):
+                can_have_stat = True
+                stat_type = x["type"].removeprefix("REACH_THIS_OR_LESS_STAT_")
+                assert stat_type in STAT_TYPES
+                x["stat_type"] = stat_type
+                x["name_locale"] = f"STAT_{stat_type}"
+                x["description_locale"] = (
+                    "ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_LESS_STAT"
                 )
             else:
                 x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
@@ -563,7 +564,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     x["type"], field
                 )
             for stepIndex, step in enumerate(x["steps"]):
-                assert step["value"] > 0
+                assert step["value"] != 0
 
                 unlock_fields = {
                     "unlocks_build_type": locked_builds,
