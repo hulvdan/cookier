@@ -1202,6 +1202,7 @@ struct GameData {
 
     int runRecycledWeapons   = 0;
     int runHealed            = 0;
+    int runDodged            = 0;
     int turretsOnTheMapCount = 0;
 
     int shopActivatedModalWeaponIndex = -1;
@@ -2804,6 +2805,10 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         // TODO: lastInvincibilityTriggeredAt?
         creature.lastDamagedAt = {};
         creature.lastDamagedAt.SetNow();
+
+        g.run.runDodged++;
+        AchievementMax(AchievementType_DODGE_N_ATTACKS_DURING_A_RUN, g.run.runDodged);
+
         return false;
       }
 
