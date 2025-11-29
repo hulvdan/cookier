@@ -7403,6 +7403,12 @@ void DoUI() {
                     weapon.uiBouncedAt = {};
                     weapon.uiBouncedAt.SetNow();
                   }
+
+                  Array<int, WeaponType_COUNT> weaponCounts{};
+                  for (const auto& w : g.run.state.weapons)
+                    weaponCounts[w.type]++;
+                  for (int weaponCount : weaponCounts)
+                    AchievementMax(AchievementType_HAVE_SAME_WEAPONS, weaponCount);
                 }
                 else if (data.item)
                   AddItem(data.item);
