@@ -1529,7 +1529,9 @@ void AchievementStepSetLock(
 }
 
 void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue) {  ///
-  auto fb_steps = glib->achievements()->Get(type)->steps();
+  auto fb = glib->achievements()->Get(type);
+
+  auto fb_steps = fb->steps();
   if (!fb_steps)
     return;
 
@@ -1555,17 +1557,8 @@ void AchievementAdd(AchievementType type, int value) {  ///
 }
 
 void AchievementMax(AchievementType type, int value) {  ///
-  int oldValue = g.player.achievements[type].value;
+  const int oldValue = g.player.achievements[type].value;
   if (value <= oldValue)
-    return;
-  g.player.achievements[type].value = value;
-  OnAchievementValueChanged(type, oldValue, value);
-  Save();
-}
-
-void AchievementMin(AchievementType type, int value) {  ///
-  int oldValue = g.player.achievements[type].value;
-  if (value >= oldValue)
     return;
   g.player.achievements[type].value = value;
   OnAchievementValueChanged(type, oldValue, value);
@@ -1596,9 +1589,9 @@ void ChangeStat(StatType stat, int value) {  ///
     );
   }
   if (fb_stat->reach_this_or_less_stat_achievement_type()) {
-    AchievementMin(
+    AchievementMax(
       (AchievementType)fb_stat->reach_this_or_less_stat_achievement_type(),
-      g.run.state.stats[stat]
+      -g.run.state.stats[stat]
     );
   }
 }
@@ -4718,6 +4711,8 @@ void GameInitAfterLoadingSavedata() {
     int i = -1;
     for (const auto& x : g.player.achievements) {  ///
       i++;
+      const auto achievementType = (AchievementType)i;
+
       auto fb       = glib->achievements()->Get(i);
       auto fb_steps = fb->steps();
       if (!fb_steps)
@@ -4726,12 +4721,21 @@ void GameInitAfterLoadingSavedata() {
       g.player.achievementStepsTotal += fb_steps->size();
       g.player.achievementStepsCompleted += fb_steps->size();
 
-      int stepIndex = -1;
+      int  stepIndex = -1;
+      bool locked    = false;
       for (auto fb_step : *fb_steps) {
         stepIndex++;
-        if (fb_step->value() > x.value)
-          AchievementStepSetLock((AchievementType)i, stepIndex, fb_step, true);
+        if (!fb->negative_is_good() && (fb_step->value() > x.value)) {
+          AchievementStepSetLock(achievementType, stepIndex, fb_step, true);
+          locked = true;
+        }
+        if (fb->negative_is_good() && (fb_step->value() < x.value)) {
+          AchievementStepSetLock(achievementType, stepIndex, fb_step, true);
+          locked = true;
+        }
       }
+
+      ASSERT(locked);
     }
 
     ASSERT(g.player.achievementStepsCompleted >= 0);
@@ -5528,6 +5532,21 @@ void IterateOverBuildTextures(
       ToVector2(fb_anchors->Get(i)), ColorFromRGBA(fb_colors->Get(i)), texs->Get(i)
     );
   }
+}
+
+bool IsAchievementStepLocked(AchievementType type, int stepIndex) {  ///
+  ASSERT(type);
+
+  auto fb = glib->achievements()->Get(type);
+
+  ASSERT(stepIndex >= 0);
+  ASSERT(stepIndex < fb->steps()->size());
+
+  auto       fb_step     = fb->steps()->Get(stepIndex);
+  const auto playerValue = g.player.achievements[type].value;
+  const bool isLocked    = (!fb->negative_is_good() && (playerValue < fb_step->value()))
+                        || (fb->negative_is_good() && (playerValue > fb_step->value()));
+  return isLocked;
 }
 
 // NOTE: Logic must be executed only when `ge.meta._drawing` (`draw`) is false!
@@ -6756,8 +6775,10 @@ void DoUI() {
       if (fb->stat_type()) {
         PlaceholdGroupBegin("STAT");
         auto fb_stat = fb_stats->Get(fb->stat_type());
-        PlaceholdImage(fb_stat->small_icon_texture_id());
-        PlaceholdString(" ");
+        if (fb_stat->small_icon_texture_id()) {
+          PlaceholdImage(fb_stat->small_icon_texture_id());
+          PlaceholdString(" ");
+        }
         PlaceholdBrokenLocale(fb_stat->name_locale());
         PlaceholdGroupEnd();
       }
@@ -7539,16 +7560,9 @@ void DoUI() {
     auto fb      = fb_achievements->Get(type);
     auto fb_step = (type ? fb->steps()->Get(stepIndex) : nullptr);
 
-    const bool isLocked = !type || (g.player.achievements[type].value < fb_step->value());
-    bool       workingOnIt = type && true;
-    if (stepIndex > 0) {
-      workingOnIt
-        = g.player.achievements[type].value >= fb->steps()->Get(stepIndex - 1)->value();
-    }
+    const bool isLocked = type && IsAchievementStepLocked(type, stepIndex);
 
     int tier = (isLocked ? 0 : 3);
-    if (isLocked && workingOnIt && BF_SHOW_WORKING_ACHIEVEMENTS)
-      tier = 1;
 
     CLAY({
       .layout{
@@ -9800,16 +9814,12 @@ void DoUI() {
                     if (shownSlots >= totalSlots)
                       break;
 
-                    auto       fb      = fb_achievements->Get(currentAchievement);
-                    auto       fb_step = fb->steps()->Get(currentStep);
-                    const bool isLocked
-                      = (g.player.achievements[currentAchievement].value < fb_step->value());
+                    const bool isLocked = IsAchievementStepLocked(
+                      (AchievementType)currentAchievement, currentStep
+                    );
 
-                    bool workingOnIt = true;
-                    if (currentStep > 0) {
-                      workingOnIt = g.player.achievements[currentAchievement].value
-                                    >= fb->steps()->Get(currentStep - 1)->value();
-                    }
+                    const auto fb      = fb_achievements->Get(currentAchievement);
+                    const auto fb_step = fb->steps()->Get(currentStep);
 
                     bool canHover = true;
 
@@ -9817,11 +9827,8 @@ void DoUI() {
                       int texID = 0;
                       int tier  = 0;
 
-                      if (isLocked) {
+                      if (isLocked)
                         texID = glib->ui_item_locked_texture_id();
-                        if (workingOnIt && BF_SHOW_WORKING_ACHIEVEMENTS)
-                          tier = 1;
-                      }
                       else
                         tier = 3;
 
@@ -11506,15 +11513,15 @@ void GameFixedUpdate() {
 
         // Player HP regen.
         if (!PLAYER_CREATURE.diedAt.IsSet()
-            && PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth)
+            && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth))
         {  ///
-          const bool canRegen = g.run.playerLastRegenAt.Elapsed()
-                                >= GetFramesPerRegen(g.run.state.stats[StatType_REGEN]);
+          const bool canRegen
+            = (g.run.playerLastRegenAt.Elapsed() >= GetFramesPerRegen(g.run.state.stats[StatType_REGEN]));
+
           if (canRegen) {
-            PLAYER_CREATURE.health
-              = MIN(PLAYER_CREATURE.health + 1, PLAYER_CREATURE.maxHealth);
+            PLAYER_CREATURE.health++;
             g.run.runHealed++;
-            // AchievementMax(AchiementType_HEAL_X_DURING_A_RUN, g.run.runHealed);
+            AchievementMax(AchievementType_HEAL_X_DURING_A_RUN, g.run.runHealed);
             g.run.playerLastRegenAt = {};
             g.run.playerLastRegenAt.SetNow();
           }

@@ -3015,12 +3015,6 @@ items: # {  ###
 #       value: -2
 # }
 
-# weapon_kinds: # {  ###
-#   - type: INVALID
-#   - type: MELEE
-#   - type: RANGED
-#   - type: ELEMENTAL
-# # }
 weapons: # {  ###
   #
   # If a weapon doesn't have `projectile_type` specified,
@@ -4857,6 +4851,11 @@ builds: # {  ###
 
 achievements: # {  ###
   - type: INVALID
+  - type: DIE_FOR_THE_FIRST_TIME
+    hide_progress: true
+    steps:
+      - value: 1
+        unlocks_item_type: ACID
   - type: DIFFICULTY
     hide_progress: true
     steps:
@@ -4988,25 +4987,18 @@ achievements: # {  ###
     steps:
       - value: -10
         unlocks_item_type: ALLOY
-  - type: DIE_FOR_THE_FIRST_TIME
-    hide_progress: true
-    steps:
-      - value: 1
-        unlocks_item_type: ACID
   - type: REROLL_N_TIMES_IN_A_ROW
     steps:
       - value: 15
         unlocks_item_type: COUPON
   - type: KILL_TREES
-    hide_progress: true
     steps:
       - value: 80
         unlocks_item_type: TREE
-        # - type: HEAL_X_DURING_A_RUN
-        #   hide_progress: true
-        #   steps:
-        #   - value: 25
-        #     unlocks_build_type: VICTIM
+  - type: HEAL_X_DURING_A_RUN
+    steps:
+      - value: 500
+        unlocks_item_type: GRIND_MAGICAL_LEAF
         # - type: TODO
         #   steps:
         #     - value: 1
