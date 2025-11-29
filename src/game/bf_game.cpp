@@ -13020,6 +13020,7 @@ void GameFixedUpdate() {
             if (!g.run.scheduledWaveCompleted.IsSet()) {
               TriggerWaveCompleted(false);
               g.run.state.waveWon = false;
+              AchievementAdd(AchievementType_DIE_FOR_THE_FIRST_TIME, 1);
               Save();
             }
           }
