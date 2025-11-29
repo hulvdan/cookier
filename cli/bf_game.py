@@ -547,8 +547,11 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
                     stat_type = x["type"].removeprefix(prefix)
                     assert stat_type in STAT_TYPES
+
                     x["stat_type"] = stat_type
-                    x["name_locale"] = f"STAT_{stat_type}"
+                    x["name_locale"] = (
+                        f"ACHIEVEMENT_NAME_REACH_THIS_OR_{more_or_less.upper()}_STAT_{stat_type}"
+                    )
                     x["description_locale"] = (
                         f"ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_{more_or_less.upper()}_STAT"
                     )
