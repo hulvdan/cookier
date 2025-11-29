@@ -4936,9 +4936,9 @@ achievements: # {  ###
     steps:
       - value: 25
         unlocks_build_type: VICTIM
-  - type: MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN
+  - type: MAX_COUNT_OF_PROJECTILE_ON_SCREEN_LIGHTNING
     steps:
-      - value: 5
+      - value: 6
         unlocks_weapon_type: MELEE_2_THUNDER_SWORD
   - type: ENEMIES_DIED_BECAUSE_OF_BURNING
     steps:
