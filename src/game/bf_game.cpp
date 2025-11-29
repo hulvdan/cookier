@@ -10776,6 +10776,9 @@ void DoUI() {
 
       if (IsEmulatingMobile())
         BF_CLAY_TEXT("[EMULATING MOBILE]");
+
+      if (BUILD_WARNINGS)
+        BF_CLAY_TEXT(TextFormat("[WARNINGS: %d]", BUILD_WARNINGS));
     }
 
     FontEnd();

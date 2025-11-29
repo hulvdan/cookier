@@ -20,10 +20,10 @@ x SIMULTANEOUSLY_BURNING_ENEMIES
 x HAVE_SAME_WEAPONS
 - move unlocks_item_type and unlocks_weapon_type from build
   to respective achievements and clean code
+x если есть warning-и в питоне, отображать [BUILT WITH WARNINGS]
 
 * чит кнопка открытия всех ачивок
 * привести в порядок последовательность отображения ачивок
-* если есть warning-и в питоне, отображать [BUILT WITH WARNINGS]
 
 * cooravie patrols
 *

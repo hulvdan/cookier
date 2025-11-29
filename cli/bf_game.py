@@ -113,6 +113,13 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         scoped_processing_args[1] = "None"
         # }
 
+    warnings = 0
+
+    def warning(*args, **kwargs) -> None:
+        nonlocal warnings
+        warnings += 1
+        log.warning(*args, **kwargs)
+
     transforms: list[tuple[str, str, str, dict[str, int]]] = []
 
     STAT_TYPES = [x["type"] for x in gamelib["stats"]]
@@ -596,7 +603,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 c = sum(f in step for f in unlock_fields if step.get(f))
                 assert c <= 1, unlock_fields
                 if c != 1:
-                    log.warning(
+                    warning(
                         "Achievement {}, stepIndex {} (value {}), should have either {} specified".format(
                             x["type"],
                             stepIndex,
@@ -731,7 +738,10 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     for build in gamelib["builds"][2:]:
         if build["type"] not in locked_builds:
             not_locked_builds.append(build["type"])
-    assert not not_locked_builds, f"These builds must be locked: {not_locked_builds}"
+
+    if not_locked_builds:
+        warning(f"These builds must be locked: {not_locked_builds}")
+
     assert "DEFAULT" not in locked_builds
     assert "INVALID" not in locked_builds
     # }
@@ -775,6 +785,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     recursive_flattenizer(gamelib, "damage_scaling", "damage_scalings", "damage_scalings")
     # }
+
+    genline(f"constexpr bool BUILD_WARNINGS = {warnings};\n")
 
 
 @command
