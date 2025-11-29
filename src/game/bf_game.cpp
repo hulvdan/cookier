@@ -12258,6 +12258,8 @@ void GameFixedUpdate() {
     {  ///
       ZoneScopedN("Creatures ailments.");
 
+      int burningEnemies = 0;
+
       int creatureIndex = -1;
       for (auto& creature : g.run.creatures) {
         creatureIndex++;
@@ -12270,6 +12272,13 @@ void GameFixedUpdate() {
                 && (a.startedAt.Elapsed().value % BURNING_RATE.value == 0))
             {
               bool burned = (creature.health > 0);
+
+              auto fb = fb_creatures->Get(creature.type);
+
+              if ((creature.health > 0)        //
+                  && !creature.diedAt.IsSet()  //
+                  && (fb->hostility_type() != HostilityType_FRIENDLY))
+                burningEnemies++;
 
               TryApplyDamage({
                 .creatureIndex                      = creatureIndex,
@@ -12295,6 +12304,8 @@ void GameFixedUpdate() {
           }
         }
       }
+
+      AchievementMax(AchievementType_SIMULTANEOUSLY_BURNING_ENEMIES, burningEnemies);
     }
 
     // Creatures moving.
