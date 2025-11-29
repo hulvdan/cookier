@@ -419,7 +419,7 @@ def recursive_replace_transform(
 
     if root and errors:
         message = "recursive_replace_transform({}, {}):\nNot found:\n{}".format(
-            key_postfix_single, key_postfix_list, "\n".join(errors)
+            key_postfix_single, key_postfix_list, "\n".join(sorted(set(errors)))
         )
         raise AssertionError(message)
 

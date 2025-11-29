@@ -1565,6 +1565,15 @@ void AchievementMax(AchievementType type, int value) {  ///
   Save();
 }
 
+void AchievementMin(AchievementType type, int value) {  ///
+  const int oldValue = g.player.achievements[type].value;
+  if (value >= oldValue)
+    return;
+  g.player.achievements[type].value = value;
+  OnAchievementValueChanged(type, oldValue, value);
+  Save();
+}
+
 void SetWaveWonTrue() {  ///
   g.run.state.waveWon = true;
   if (PLAYER_CREATURE.health == 1)
@@ -1589,9 +1598,9 @@ void ChangeStat(StatType stat, int value) {  ///
     );
   }
   if (fb_stat->reach_this_or_less_stat_achievement_type()) {
-    AchievementMax(
+    AchievementMin(
       (AchievementType)fb_stat->reach_this_or_less_stat_achievement_type(),
-      -g.run.state.stats[stat]
+      g.run.state.stats[stat]
     );
   }
 }
@@ -6759,7 +6768,7 @@ void DoUI() {
     auto fb_previousStep = ((stepIndex > 0) ? fb->steps()->Get(stepIndex - 1) : nullptr);
 
     if (!requiresPreviousToBeCompletedToShowDetails
-        || (!fb_previousStep || (v >= fb_previousStep->value())))
+        || (!fb_previousStep || (!fb->negative_is_good() &&( v >= fb_previousStep->value())||fb->negative_is_good() &&( v <= fb_previousStep->value()))))
     {
       FlexBegin(ACHIEVEMENT_WIDTH, 0);
       if (type == AchievementType_DIFFICULTY) {
@@ -6802,7 +6811,7 @@ void DoUI() {
 
       if (!fb->hide_progress()) {
         int percent = MIN(100, v * 100 / fb_step->value());
-        if ((percent < 100) && (fb_step->value() > 1)) {
+        if ((percent < 100) && (fb_step->value() != 1)) {
           BF_CLAY_TEXT(" ");
           BF_CLAY_TEXT(
             TextFormat("(%d / %d)", v, fb_step->value()),
@@ -7560,7 +7569,7 @@ void DoUI() {
     auto fb      = fb_achievements->Get(type);
     auto fb_step = (type ? fb->steps()->Get(stepIndex) : nullptr);
 
-    const bool isLocked = type && IsAchievementStepLocked(type, stepIndex);
+    const bool isLocked = !type || IsAchievementStepLocked(type, stepIndex);
 
     int tier = (isLocked ? 0 : 3);
 
@@ -7587,7 +7596,9 @@ void DoUI() {
         const auto nameColor = textColorsPerTier[tier];
 
         if (type) {
-          if (g.player.achievements[type].value >= fb_step->value()) {
+          if (IsAchievementStepLocked(type, stepIndex))
+            BF_CLAY_TEXT("???", {.color = nameColor});
+          else {
             BF_CLAY_TEXT_LOCALIZED(fb->name_locale(), {.color = nameColor});
 
             if (fb->steps()->size() > 1) {
@@ -7601,8 +7612,6 @@ void DoUI() {
               BF_CLAY_TEXT(romanNumbers[stepIndex + 1], {.color = nameColor});
             }
           }
-          else
-            BF_CLAY_TEXT("???", {.color = nameColor});
         }
       }
 
@@ -9881,9 +9890,10 @@ void DoUI() {
                 fb = fb_achievements->Get(g.meta.pausedAchievementsHoveredAchievement);
                 fb_step
                   = fb->steps()->Get(g.meta.pausedAchievementsHoveredAchievementStep);
-                const auto achievementValue
-                  = g.player.achievements[g.meta.pausedAchievementsHoveredAchievement];
-                isLocked = fb_step && (achievementValue.value < fb_step->value());
+                isLocked = IsAchievementStepLocked(
+                  (AchievementType)g.meta.pausedAchievementsHoveredAchievement,
+                  g.meta.pausedAchievementsHoveredAchievementStep
+                );
               }
 
               // Achievement's name and description.
