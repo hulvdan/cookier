@@ -4868,21 +4868,24 @@ achievements: # {  ###
         unlocks_weapon_type: MELEE_3_EXCALIBUR
   - type: KILLER
     steps:
-      # - value: 100
-      #   unlocks_weapon_type: RANGED_0_SLINGSHOT
       - value: 500
         unlocks_weapon_type: RANGED_0_CROSSBOW
       - value: 3000
+        unlocks_item_type: TRIANGLE_OF_POWER
+      - value: 10000
         unlocks_build_type: LEARNER
   - type: WALKER
     steps:
       - value: 1000
+        unlocks_item_type: CLOCKWORK_WASP
       - value: 5000
+        unlocks_item_type: CLOVER
       - value: 25000
+        unlocks_item_type: JET_PACK
   - type: IDLER
     steps:
-      - unlocks_item_type: TURRET
-        value: 30
+      - value: 30
+        unlocks_item_type: TURRET
       - value: 400
         unlocks_weapon_type: RANGED_3_CHAIN_GUN
   - type: COINS
@@ -4909,18 +4912,19 @@ achievements: # {  ###
     steps:
       - value: 75
         unlocks_build_type: LUCKY
+  - type: REACH_THIS_OR_LESS_STAT_HARVESTING
+    steps:
+      - value: -13
+        unlocks_item_type: TRACTOR
   - type: TURRETS_ON_THE_MAP
-    hide_progress: true
     steps:
       - value: 5
         unlocks_build_type: ENGINEER
   - type: RECYCLE_X_WEAPONS_DURING_A_RUN
-    hide_progress: true
     steps:
       - value: 12
         unlocks_build_type: ARMS_DEALER
   - type: REACH_THIS_OR_MORE_STAT_HP
-    hide_progress: true
     steps:
       - value: 100
         unlocks_build_type: LICH
@@ -4930,39 +4934,82 @@ achievements: # {  ###
       - value: 1
         unlocks_build_type: GOLEM
   - type: EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION
-    hide_progress: true
     steps:
       - value: 25
         unlocks_build_type: VICTIM
-  # - type: HEAL_X_DURING_A_RUN
-  #   hide_progress: true
-  #   steps:
-  #   - value: 25
-  #     unlocks_build_type: VICTIM
-  - type: TODO
+  - type: MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN
     steps:
-      #
+      - value: 5
+        unlocks_weapon_type: MELEE_2_THUNDER_SWORD
+  - type: ENEMIES_DIED_BECAUSE_OF_BURNING
+    steps:
+      - value: 150
+        unlocks_weapon_type: MELEE_1_FLAMING_BRASS_KNUCKLES
+  # Только 2 3 4 (склонение: раз раза раз)
+  - type: MAX_SINGLE_PROJECTILE_BOUNCED_TIMES
+    steps:
+      - value: 3
+        unlocks_weapon_type: RANGED_0_SLINGSHOT
+  - type: MAX_SINGLE_MELEE_HIT_KILLED_ENEMIES
+    steps:
+      - value: 12
+        unlocks_weapon_type: MELEE_0_CACTI_CLUB
+  - type: SINGLE_WEAPON_MAX_WAVE_DAMAGE
+    steps:
+      - value: 6000
+        unlocks_item_type: WISDOM
+  - type: SIMULTANEOUSLY_BURNING_ENEMIES
+    steps:
+      - value: 10
+        unlocks_weapon_type: RANGED_1_FLAMETHROWER
+  - type: MAX_SINGLE_PROJECTILE_PIERCED_ENEMIES
+    steps:
+      - value: 3
+        unlocks_item_type: SHARP_BULLET
+      - value: 6
+        unlocks_weapon_type: RANGED_3_GATLING_LASER
+  - type: HAVE_SAME_WEAPONS
+    steps:
+      - value: 6
+        unlocks_weapon_type: MELEE_0_STICK
+  - type: DODGE_N_ATTACKS_DURING_A_RUN
+    steps:
+      - value: 50
+        unlocks_item_type: ADRENALINE
+  - type: HOLD_N_COINS
+    steps:
+      - value: 3500
+        unlocks_item_type: WHEELBARROW
+  - type: REACH_THIS_OR_MORE_STAT_ENEMIES
+    steps:
+      - value: 70
+        unlocks_item_type: CELERY_TEA
+  - type: REACH_THIS_OR_LESS_STAT_DAMAGE
+    steps:
+      - value: -10
+        unlocks_item_type: ALLOY
+  - type: DIE_FOR_THE_FIRST_TIME
+    hide_progress: true
+    steps:
       - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      #
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
-      #
-      - value: 1
-      - value: 1
-      - value: 1
-      - value: 1
+        unlocks_item_type: ACID
+  - type: REROLL_N_TIMES_IN_A_ROW
+    steps:
+      - value: 15
+        unlocks_item_type: COUPON
+  - type: KILL_TREES
+    hide_progress: true
+    steps:
+      - value: 80
+        unlocks_item_type: TREE
+        # - type: HEAL_X_DURING_A_RUN
+        #   hide_progress: true
+        #   steps:
+        #   - value: 25
+        #     unlocks_build_type: VICTIM
+        # - type: TODO
+        #   steps:
+        #     - value: 1
 # }
 
 floor_segments: # {  ###

@@ -1,40 +1,33 @@
 WORKING SINCE 2025-09-07
 
-x BETTER ASSERT - IMMEDIATE DROP INTO DEBUGGER
-x билды: слои чувачка
-x билды: слои чувачка текстуры fbs
-x билды: трисовать в игре слои чувачка
-  ПРАВИТЬ ЯКОРЯ В GAMELIB
-x билды: отрисовать слои в clay
-x билды: цвета VICTIM
-x билды: ачивка улетает направо?
-x STARFISH (chocolate_coin, +double coin chance, +harvesting, +enemy damage) (collect 20000 coins)
+x придумать ачивки для всех локов и залочить предметы и оружия
+x проставил ачивки и анлоки в gamelib
+x localize achievements
 
-* придумать ачивки для всех локов и залочить предметы и оружия
+* прикрутить ачивки + анлок предметов и оружий
 
-* WISDOM (book of damage, +1 damage every 15 seconds) ()
-* TRIANGLE_OF_POWER (pumpkin, +damage +armor) ()
-*
-* MELEE_0_CACTI_CLUB ()
-* MELEE_2_THUNDER_SWORD (recettear) ()
-* RANGED_0_SLINGSHOT ()
-* RANGED_1_FLAMETHROWER ()
-* MELEE_1_FLAMING_BRASS_KNUCKLES (frying pan, сковорода) ()
+* ENEMIES_DIED_BECAUSE_OF_BURNING
+* MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN
+* MAX_SINGLE_PROJECTILE_BOUNCED_TIMES
+* SINGLE_WEAPON_MAX_WAVE_DAMAGE
+* SIMULTANEOUSLY_BURNING_ENEMIES
+* REACH_THIS_OR_LESS_STAT_XXX
+* MAX_SINGLE_PROJECTILE_PIERCED_ENEMIES
+* HAVE_SAME_WEAPONS
+* DODGE_N_ATTACKS_DURING_A_RUN
+* HOLD_N_COINS
+* REROLL_N_TIMES_IN_A_ROW
+* DIE_FOR_THE_FIRST_TIME
+* KILL_TREES
+
+* чит кнопка открытия всех ачивок
+* привести в порядок последовательность отображения ачивок
+* заменить easing ачивки на bezier
+* если есть warning-и в питоне, отображать [BUILT WITH WARNINGS]
+* move unlocks_item_type and unlocks_weapon_type from build
+  to respective achievements and clean code
 
 
-
-* TRACTOR (harvesting_pact +40 harvesting, -8 damage) (reach -10 harvesting)
-* RANGED_3_GATLING_LASER (pierce 6 enemies with 1 bullet)
-* MELEE_0_STICK (have 6 of the same weapon)
-* ADRENALINE (5 dodge, 50% to heal 5 hp upon dodging) (dodge 50 attacks during a run)
-* WHEELBARROW (golden_ingot +16 harvesting, -1 armor) (hold 3500 coins)
-* ALIEN_BABY (13hp, 2dmg melee, +10% enemy hp) (reach 70 enemies)
-* SHARP_BULLET (blueprint, +piercing) (pierce 3 enemies with 1 bullet)
-* ALLOY (greek nut, +damage (all), +crit, -dodge) (reach -10 damage)
-* ACID (+8 hp, -2 dodge) (die for the first time)
-* COUPON (reroll 15 times in a row)
-* TREE (убить 80 деревьев)
-*
 * cooravie patrols
 *
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
