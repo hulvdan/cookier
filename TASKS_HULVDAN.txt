@@ -6,12 +6,15 @@ x localize achievements
 
 * прикрутить ачивки + анлок предметов и оружий
 
+* REACH_THIS_OR_LESS_STAT_XXX
+
+* ещё одна ачивка
+
 * ENEMIES_DIED_BECAUSE_OF_BURNING
 * MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN
 * MAX_SINGLE_PROJECTILE_BOUNCED_TIMES
 * SINGLE_WEAPON_MAX_WAVE_DAMAGE
 * SIMULTANEOUSLY_BURNING_ENEMIES
-* REACH_THIS_OR_LESS_STAT_XXX
 * MAX_SINGLE_PROJECTILE_PIERCED_ENEMIES
 * HAVE_SAME_WEAPONS
 * DODGE_N_ATTACKS_DURING_A_RUN
@@ -172,6 +175,7 @@ x localize achievements
 *
 * RELEASED!
 =======================
+* переписать достижения в совершенном виде (не "kill 500", а "500 killed")
 * улучшить рисовку: предмет куравье (как куравье моб)
 * нужно что-то сделать с «пулевыми» оружиями (например, RANGED_3_CHAIN_GUN)
   стрельба выглядит хреново

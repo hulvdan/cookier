@@ -78,6 +78,7 @@ table Stat {
     upgrade_name_locale: int;
     upgrade_values: [int];
     reach_this_or_more_stat_achievement_type: int;
+    reach_this_or_less_stat_achievement_type: int;
 }
 
 table DamageScaling {

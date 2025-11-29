@@ -507,6 +507,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     # Achievements.
     # ============================================================
     if 1:  # {  ###
+        more_less = ("more", "less")
+
         for i, x in enumerate_table("achievements"):
             if not i:
                 continue
@@ -531,24 +533,25 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     if build.get(f):
                         v[f] = build.pop(f)
                 x["steps"] = [v]
-            elif x["type"].startswith("REACH_THIS_OR_MORE_STAT_"):
+            elif x["type"].startswith(
+                (f"REACH_THIS_OR_{x.upper()}_STAT_" for x in more_less)
+            ):
                 can_have_stat = True
-                stat_type = x["type"].removeprefix("REACH_THIS_OR_MORE_STAT_")
-                assert stat_type in STAT_TYPES
-                x["stat_type"] = stat_type
-                x["name_locale"] = f"STAT_{stat_type}"
-                x["description_locale"] = (
-                    "ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_MORE_STAT"
-                )
-            elif x["type"].startswith("REACH_THIS_OR_LESS_STAT_"):
-                can_have_stat = True
-                stat_type = x["type"].removeprefix("REACH_THIS_OR_LESS_STAT_")
-                assert stat_type in STAT_TYPES
-                x["stat_type"] = stat_type
-                x["name_locale"] = f"STAT_{stat_type}"
-                x["description_locale"] = (
-                    "ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_LESS_STAT"
-                )
+                for more_or_less in more_less:
+                    prefix = f"REACH_THIS_OR_{more_or_less.upper()}_STAT_"
+                    if not x["type"].startswith(prefix):
+                        continue
+
+                    stat_type = x["type"].removeprefix(prefix)
+                    assert stat_type in STAT_TYPES
+                    x[f"this_or_{more_or_less}_than_stat_type"] = stat_type
+                    x["name_locale"] = f"STAT_{stat_type}"
+                    x["description_locale"] = (
+                        f"ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_{more_or_less.upper()}_STAT"
+                    )
+                    gamelib["stats"][STAT_TYPES.index(stat_type)][
+                        f"reach_this_or_{more_or_less}_stat_achievement_type"
+                    ] = x["type"]
             else:
                 x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
                 x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"

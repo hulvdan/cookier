@@ -1555,9 +1555,17 @@ void AchievementAdd(AchievementType type, int value) {  ///
 }
 
 void AchievementMax(AchievementType type, int value) {  ///
-  ASSERT(value >= 0);
   int oldValue = g.player.achievements[type].value;
   if (value <= oldValue)
+    return;
+  g.player.achievements[type].value = value;
+  OnAchievementValueChanged(type, oldValue, value);
+  Save();
+}
+
+void AchievementMin(AchievementType type, int value) {  ///
+  int oldValue = g.player.achievements[type].value;
+  if (value >= oldValue)
     return;
   g.player.achievements[type].value = value;
   OnAchievementValueChanged(type, oldValue, value);
@@ -1584,6 +1592,12 @@ void ChangeStat(StatType stat, int value) {  ///
   if (fb_stat->reach_this_or_more_stat_achievement_type()) {
     AchievementMax(
       (AchievementType)fb_stat->reach_this_or_more_stat_achievement_type(),
+      g.run.state.stats[stat]
+    );
+  }
+  if (fb_stat->reach_this_or_less_stat_achievement_type()) {
+    AchievementMin(
+      (AchievementType)fb_stat->reach_this_or_less_stat_achievement_type(),
       g.run.state.stats[stat]
     );
   }
