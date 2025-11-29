@@ -75,10 +75,6 @@ Vector2 Vector2Normalize(Vector2 v) {  ///
   return glm::normalize(v);
 }
 
-Vector2 Vector2Lerp(Vector2 v1, Vector2 v2, f32 amount) {  ///
-  return v1 + (v2 - v1) * amount;
-}
-
 Vector2 Vector2Reflect(Vector2 v, Vector2 normal) {  ///
   return glm::reflect(v, normal);
 }

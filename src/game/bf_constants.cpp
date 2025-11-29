@@ -65,7 +65,8 @@ constexpr auto ANIMATION_0_FRAMES = lframe::FromSeconds(0.2f);
 constexpr auto ANIMATION_1_FRAMES = lframe::FromSeconds(0.5f);
 constexpr auto ANIMATION_2_FRAMES = lframe::FromSeconds(1.2f);
 constexpr auto ANIMATION_3_FRAMES = lframe::FromSeconds(3.2f);
-constexpr auto ANIMATION_4_FRAMES = lframe::FromSeconds(5.0f);
+constexpr auto ANIMATION_4_FRAMES = lframe::FromSeconds(4.5f);
+constexpr auto ANIMATION_5_FRAMES = lframe::FromSeconds(7.0f);
 
 constexpr auto MELEE_WEAPON_MAX_ATTACK_DURATION = lframe::FromSeconds(0.5f);
 
@@ -319,7 +320,7 @@ constexpr f32  DAMAGED_FLASH_PRECALC_X       = _PrecalcFlashingX(
   DAMAGED_FLASH_NOT_FLASH_RATIO
 );
 
-constexpr auto ACHIEVEMENT_TOTAL_FRAMES = ANIMATION_3_FRAMES;
+constexpr auto ACHIEVEMENT_TOTAL_FRAMES = ANIMATION_4_FRAMES;
 constexpr auto ACHIEVEMENT_IN_FRAMES    = ANIMATION_1_FRAMES;
 constexpr auto ACHIEVEMENT_OUT_FRAMES   = ANIMATION_1_FRAMES;
 
