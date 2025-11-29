@@ -6,10 +6,10 @@ x localize achievements
 x ещё одна ачивка
 x REACH_THIS_OR_LESS_STAT_XXX
 x заменить easing ачивки на bezier
+x ENEMIES_DIED_BECAUSE_OF_BURNING
 
 * прикрутить ачивки + анлок предметов и оружий
 
-* ENEMIES_DIED_BECAUSE_OF_BURNING
 * MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN
 * MAX_SINGLE_PROJECTILE_BOUNCED_TIMES
 * SINGLE_WEAPON_MAX_WAVE_DAMAGE
