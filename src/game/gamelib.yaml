@@ -4945,7 +4945,7 @@ achievements: # {  ###
       - value: 150
         unlocks_weapon_type: MELEE_1_FLAMING_BRASS_KNUCKLES
   # Только 2 3 4 (склонение: раз раза раз)
-  - type: MAX_SINGLE_PROJECTILE_BOUNCED_TIMES
+  - type: MAX_SINGLE_PROJECTILE_BOUNCED
     steps:
       - value: 3
         unlocks_weapon_type: RANGED_0_SLINGSHOT
@@ -4961,7 +4961,7 @@ achievements: # {  ###
     steps:
       - value: 10
         unlocks_weapon_type: RANGED_1_FLAMETHROWER
-  - type: MAX_SINGLE_PROJECTILE_PIERCED_ENEMIES
+  - type: MAX_SINGLE_PROJECTILE_PIERCED
     steps:
       - value: 3
         unlocks_item_type: SHARP_BULLET
