@@ -13022,6 +13022,9 @@ void GameFixedUpdate() {
           DestroyBody(&creature.body);
           creature.diedAt.SetNow();
 
+          if (creature.type == CreatureType_TREE)
+            AchievementAdd(AchievementType_KILL_TREES, 1);
+
           if (!index) {
             // Player died.
             if (!g.run.scheduledWaveCompleted.IsSet()) {
