@@ -13,14 +13,14 @@ x MAX_SINGLE_PROJECTILE_PIERCED
 x SINGLE_WEAPON_MAX_WAVE_DAMAGE
 x DODGE_N_ATTACKS_DURING_A_RUN
 x HOLD_N_COINS
+x DIE_FOR_THE_FIRST_TIME
 
 * прикрутить ачивки + анлок предметов и оружий
 
+* KILL_TREES
+* REROLL_N_TIMES_IN_A_ROW
 * HAVE_SAME_WEAPONS
 * SIMULTANEOUSLY_BURNING_ENEMIES
-* REROLL_N_TIMES_IN_A_ROW
-* DIE_FOR_THE_FIRST_TIME
-* KILL_TREES
 
 * чит кнопка открытия всех ачивок
 * привести в порядок последовательность отображения ачивок
