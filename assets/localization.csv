@@ -75,7 +75,7 @@ EFFECT_CRITS_PIERCE_UP_TO__X__TIMES;Криты дополнительно про
 EFFECT_CRITS_BOUNCE_UP_TO__X__TIMES;Криты дополнительно отскакивают (до {X});Crits bounce up to {X} times;
 EFFECT_HIT_SPAWNS__X__PROJECTILES_DEALING__Y__DAMAGE;Попадание по врагу создаёт пули ({X}), что наносят {Y} урона;Hitting an enemy makes {X} projectiles dealing {Y} damage;
 EFFECT_X__CHANCE_OF_EXPLOSION_ON_HIT;{X} шанс взрыва при попадании ;{X} chance to explode on hit;
-EFFECT_MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY;{PROPERTY} {MODIFIER} за каждое такое же оружие ;{PROPERTY} {MODIFIER} for each of the same weapon;
+EFFECT_MORE_OF_THE_SAME_WEAPON_MORE__PROPERTY;{PROPERTY} {MODIFIER} за каждое такое же оружие;{PROPERTY} {MODIFIER} for each of this weapon;
 EFFECT_MORE_EMPTY_WEAPON_SLOTS_MORE__PROPERTY;{PROPERTY} {MODIFIER} за каждый пустой оружейный слот;{PROPERTY} {MODIFIER} for each empty weapon slot;
 EFFECT_X__COOLDOWN_SECONDS_EVERY__Y__HITS;Задержка {X}с после {Y} использований;{X}s cooldown after {Y} uses;
 EFFECT_X__PERCENT_MORE_DAMAGE_TO_ENEMIES_ABOVE__Y__PERCENT_HP;{X} урона по врагам с здоровьем больше {Y};{X} damage against enemies above {Y} health;
