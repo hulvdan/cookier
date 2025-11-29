@@ -2322,6 +2322,9 @@ void ChangeCoins(int amount) {  ///
     else
       PLAYER_COINS = MAX(0, PLAYER_COINS);
   }
+
+  AchievementMax(AchievementType_HOLD_N_COINS, PLAYER_COINS);
+
   Save();
 }
 
