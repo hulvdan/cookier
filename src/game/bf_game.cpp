@@ -12827,6 +12827,9 @@ void GameFixedUpdate() {
               if (canBounce) {
                 projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
                 projectile.bouncedCount++;
+                AchievementMax(
+                  AchievementType_MAX_SINGLE_PROJECTILE_BOUNCED, projectile.bouncedCount
+                );
                 projectile.lastBouncedAt = {};
                 projectile.lastBouncedAt.SetNow();
                 projectile.travelledDistance = 0;
@@ -12842,6 +12845,9 @@ void GameFixedUpdate() {
               else if (canPierce) {
                 projectile.damagedCreatureIDs[projectile.damagedCount++] = creature.id;
                 projectile.piercedCount++;
+                AchievementMax(
+                  AchievementType_MAX_SINGLE_PROJECTILE_PIERCED, projectile.piercedCount
+                );
               }
               else if (!g.run.projectilesToRemove.Contains(projectileIndex)) {
                 *g.run.projectilesToRemove.Add() = projectileIndex;
