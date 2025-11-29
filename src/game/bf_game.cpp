@@ -2897,8 +2897,9 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     }
 
     if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0) {
-      g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].thisWaveDamage
-        += damaged;
+      auto& w = g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1];
+      w.thisWaveDamage += damaged;
+      AchievementMax(AchievementType_SINGLE_WEAPON_MAX_WAVE_DAMAGE, w.thisWaveDamage);
     }
 
     bool ailmentCanBeApplied = true;
