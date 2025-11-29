@@ -534,7 +534,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                         v[f] = build.pop(f)
                 x["steps"] = [v]
             elif x["type"].startswith(
-                (f"REACH_THIS_OR_{x.upper()}_STAT_" for x in more_less)
+                tuple(f"REACH_THIS_OR_{x.upper()}_STAT_" for x in more_less)
             ):
                 can_have_stat = True
                 for more_or_less in more_less:
@@ -542,9 +542,12 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     if not x["type"].startswith(prefix):
                         continue
 
+                    if more_or_less == "less":
+                        x["negative_is_good"] = True
+
                     stat_type = x["type"].removeprefix(prefix)
                     assert stat_type in STAT_TYPES
-                    x[f"this_or_{more_or_less}_than_stat_type"] = stat_type
+                    x["stat_type"] = stat_type
                     x["name_locale"] = f"STAT_{stat_type}"
                     x["description_locale"] = (
                         f"ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_{more_or_less.upper()}_STAT"

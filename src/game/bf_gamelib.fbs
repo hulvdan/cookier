@@ -375,6 +375,7 @@ table Achievement {
     stat_type: int;
     build_type: int;
     steps: [AchievementStep];
+    negative_is_good: bool;
 }
 
 table FloorSegment {

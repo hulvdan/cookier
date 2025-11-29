@@ -8,8 +8,6 @@
 #define BF_VERY_SHORT_WAVE_DURATION (BF_DEBUG && 0)
 #define BF_VERY_LONG_WAVE_DURATION (BF_DEBUG && 0)
 
-#define BF_SHOW_WORKING_ACHIEVEMENTS (BF_DEBUG && 0)
-
 // Other stuff.
 // ============================================================
 
