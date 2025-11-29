@@ -314,6 +314,7 @@ table Projectile {
     scale_y: float = 1;
     explosion_size_scale: float = 1;
     texture_ids: [int];
+    max_simultaneous_count_achievement_type: int;
 }
 
 table ParticleVariation {

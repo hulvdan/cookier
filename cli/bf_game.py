@@ -115,6 +115,9 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     transforms: list[tuple[str, str, str, dict[str, int]]] = []
 
+    STAT_TYPES = [x["type"] for x in gamelib["stats"]]
+    PROJECTILE_TYPES = [x["type"] for x in gamelib["projectiles"]]
+
     # Pickupables.
     # ============================================================
     # {  ###
@@ -366,8 +369,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         process_effects_of(x, required_tier_values)
     # }
 
-    STAT_TYPES = [x["type"] for x in gamelib["stats"][1:]]
-
     # Stats.
     # ============================================================
     # {  ###
@@ -533,6 +534,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     if build.get(f):
                         v[f] = build.pop(f)
                 x["steps"] = [v]
+
             elif x["type"].startswith(
                 tuple(f"REACH_THIS_OR_{x.upper()}_STAT_" for x in more_less)
             ):
@@ -549,17 +551,28 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                     assert stat_type in STAT_TYPES
 
                     x["stat_type"] = stat_type
-                    x["name_locale"] = (
-                        f"ACHIEVEMENT_NAME_REACH_THIS_OR_{more_or_less.upper()}_STAT_{stat_type}"
-                    )
                     x["description_locale"] = (
                         f"ACHIEVEMENT_DESCRIPTION_REACH_THIS_OR_{more_or_less.upper()}_STAT"
                     )
-                    gamelib["stats"][STAT_TYPES.index(stat_type) + 1][
-                        f"reach_this_or_{more_or_less}_stat_achievement_type"
-                    ] = x["type"]
-            else:
+
+                    stat = gamelib["stats"][STAT_TYPES.index(stat_type)]
+                    stat_field = f"reach_this_or_{more_or_less}_stat_achievement_type"
+                    assert stat_field not in stat
+                    stat[stat_field] = x["type"]
+
+            elif x["type"].startswith("MAX_COUNT_OF_PROJECTILE_ON_SCREEN_"):
+                projectile_type = x["type"].removeprefix(
+                    "MAX_COUNT_OF_PROJECTILE_ON_SCREEN_"
+                )
+                projectile = gamelib["projectiles"][
+                    PROJECTILE_TYPES.index(projectile_type)
+                ]
+                assert "max_simultaneous_count_achievement_type" not in projectile
+                projectile["max_simultaneous_count_achievement_type"] = x["type"]
+
+            if "name_locale" not in x:
                 x["name_locale"] = f"ACHIEVEMENT_NAME_{x['type']}"
+            if "description_locale" not in x:
                 x["description_locale"] = f"ACHIEVEMENT_DESCRIPTION_{x['type']}"
 
             assert can_have_build == bool(x.get("build_type"))

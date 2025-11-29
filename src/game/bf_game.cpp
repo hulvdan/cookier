@@ -1273,6 +1273,8 @@ struct GameData {
     Array<Prop, PROPS_COUNT> propsData = {};
     View<Prop>               props     = {};
 
+    Array<int, ProjectileType_COUNT> projectileCounts = {};
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -12630,6 +12632,15 @@ void GameFixedUpdate() {
         }
 
         *g.run.projectiles.Add() = projectile;
+
+        g.run.projectileCounts[data.c.type]++;
+
+        if (fb->max_simultaneous_count_achievement_type()) {
+          AchievementMax(
+            (AchievementType)fb->max_simultaneous_count_achievement_type(),
+            g.run.projectileCounts[data.c.type]
+          );
+        }
       }
       g.run.projectilesToMake.Reset();
     }
@@ -12955,6 +12966,7 @@ void GameFixedUpdate() {
       FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
         const auto projectileIndex
           = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
+        g.run.projectileCounts[g.run.projectiles[projectileIndex].c.type]--;
         g.run.projectiles.UnstableRemoveAt(projectileIndex);
       }
       g.run.projectilesToRemove.Reset();

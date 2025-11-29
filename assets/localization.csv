@@ -403,7 +403,7 @@ ACHIEVEMENT_NAME_TURRETS_ON_THE_MAP;Непреступный Тыл;TODO Neprest
 ACHIEVEMENT_NAME_RECYCLE_X_WEAPONS_DURING_A_RUN;Продажник;Dealer;
 ACHIEVEMENT_NAME_FINISH_A_WAVE_WITH_1_HP;Даже не близко;Not even close;
 ACHIEVEMENT_NAME_EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION;Подрыв;Demolition;
-ACHIEVEMENT_NAME_MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN;Гром;Thunder;
+ACHIEVEMENT_NAME_MAX_COUNT_OF_PROJECTILE_ON_SCREEN_LIGHTNING;Гром и молния;Thunder And Lightning;
 ACHIEVEMENT_NAME_ENEMIES_DIED_BECAUSE_OF_BURNING;Поджигание;TODO;
 ACHIEVEMENT_NAME_MAX_SINGLE_PROJECTILE_BOUNCED_TIMES;Упругость;TODO;
 ACHIEVEMENT_NAME_MAX_SINGLE_MELEE_HIT_KILLED_ENEMIES;Рукопашник;Hero;
@@ -436,7 +436,6 @@ ACHIEVEMENT_DESCRIPTION_TURRETS_ON_THE_MAP;{VALUE} туррелей одновр
 ACHIEVEMENT_DESCRIPTION_RECYCLE_X_WEAPONS_DURING_A_RUN;Продано {VALUE} оружий за время забега;Sold {VALUE} weapons during a run;
 ACHIEVEMENT_DESCRIPTION_FINISH_A_WAVE_WITH_1_HP;Волна была завершена с {VALUE} здоровья;Finished a wave with {VALUE} HP;
 ACHIEVEMENT_DESCRIPTION_EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION;Подорвано {VALUE} врагов разом;Exploded {VALUE} enemies simultaneously;
-ACHIEVEMENT_DESCRIPTION_MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN;В мире одновременно находились {VALUE} шт. молний;Had {VALUE} lightning projectiles in the world simultaneosly;
 ACHIEVEMENT_DESCRIPTION_ENEMIES_DIED_BECAUSE_OF_BURNING;{VALUE} врагов сгорело;{VALUE} enemies burned;
 ACHIEVEMENT_DESCRIPTION_MAX_SINGLE_PROJECTILE_BOUNCED_TIMES;Одна пуля отскочила {VALUE} раза подряд;Single projectile bounced {VALUE} times in a row;
 ACHIEVEMENT_DESCRIPTION_MAX_SINGLE_MELEE_HIT_KILLED_ENEMIES;Один рукопашный удар разом поверг {VALUE} врагов;Single melee hit killed {VALUE} enemies;
@@ -450,6 +449,7 @@ ACHIEVEMENT_DESCRIPTION_DIE_FOR_THE_FIRST_TIME;Первое поражение;T
 ACHIEVEMENT_DESCRIPTION_REROLL_N_TIMES_IN_A_ROW;Переброшено {VALUE} раз подряд в магазине;Rerolled {VALUE} times in a row in the shop;
 ACHIEVEMENT_DESCRIPTION_KILL_TREES;Среблено {VALUE} деревьев;Cut {VALUE} trees;
 ACHIEVEMENT_DESCRIPTION_HEAL_X_DURING_A_RUN;Вылечено {VALUE} здоровья за забег;Healed {VALUE} HP during a run;
+ACHIEVEMENT_DESCRIPTION_MAX_COUNT_OF_PROJECTILE_ON_SCREEN_LIGHTNING;В мире одновременно находились {VALUE} шт. молний;Had {VALUE} lightning projectiles in the world simultaneosly;
 PICKUPABLE_COIN;Печеньга;Cookien;
 PICKUPABLE_CONSUMABLE;Яблоко;Apple;
 PICKUPABLE_CRATE;Сундук;Chest;
