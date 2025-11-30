@@ -28,7 +28,7 @@
         "step_index": 2
     },
     {
-        "achievement_type": "WALKER",
+        "achievement_type": "SINGLE_WEAPON_MAX_WAVE_DAMAGE",
         "step_index": 0
     },
     {
@@ -124,7 +124,7 @@
         "step_index": 0
     },
     {
-        "achievement_type": "EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION",
+        "achievement_type": "HEAL_X_DURING_A_RUN",
         "step_index": 0
     },
     {
@@ -144,7 +144,7 @@
         "step_index": 0
     },
     {
-        "achievement_type": "SINGLE_WEAPON_MAX_WAVE_DAMAGE",
+        "achievement_type": "WALKER",
         "step_index": 0
     },
     {
@@ -188,7 +188,7 @@
         "step_index": 0
     },
     {
-        "achievement_type": "HEAL_X_DURING_A_RUN",
+        "achievement_type": "EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION",
         "step_index": 0
     }
 ]
