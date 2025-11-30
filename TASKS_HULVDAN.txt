@@ -19,10 +19,27 @@ x impl: ITEMS_PRICE
 x impl: CANT_HEAL
 x impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
 x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
+x перекачать туториалы reaper
+x найти хорошую прогу для качания плейлиста youtube
+x watch: Reaper for Game Audio Part 1 - Intro and Setup
+x watch: Reaper for Game Audio Part 2 - Bonus Setup
+x watch: Reaper for Game Audio Part 3 - Media Explorer & Sound Effect Library Setup
+x посмотреть: Reaper for Game Audio Part 4 - Working With Tracks
+x reaper explorer should close upon pressing ESC
+x посмотреть: Reaper for Game Audio Part 5 - Aux Tracks
 
-* перекапчать туториалы reaper
-* найти хорошую прогу для качания плейлиста youtube
-* посмотреть туториалы reaper
+* посмотреть: Reaper for Game Audio Part 6 - Plugins
+* посмотреть: Reaper for Game Audio Part 7 - Virtual Instruments
+* посмотреть: Reaper for Game Audio Part 8 - MIDI Basics
+* посмотреть: Reaper for Game Audio Part 9 - Bounce In Place, Fades, Strip Silence & More!
+* посмотреть: Reaper for Game Audio Part 10 - Exporting
+* посмотреть: Reaper for Game Audio Part 11 - Sub-Projects
+* посмотреть: Reaper for Game Audio Part 12 - Reaper & FMOD
+* посмотреть: These Reaper Plugins Completely Changed My Sound Design Workflow
+* посмотреть: Tutorial Hidden Reaper Workflows with Akash Thakkar
+
+* скачать fabfilter
+* накачать клёвых vst от разработчиков игр
 
 * prod sfx: steps
 * prod sfx: player hurt
