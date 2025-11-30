@@ -1,28 +1,16 @@
 WORKING SINCE 2025-09-07
 
-x придумать ачивки для всех локов и залочить предметы и оружия
-x проставил ачивки и анлоки в gamelib
-x localize achievements
-x ещё одна ачивка
-x REACH_THIS_OR_LESS_STAT_XXX
-x заменить easing ачивки на bezier
-x ENEMIES_DIED_BECAUSE_OF_BURNING
-x MAX_COUNT_OF_PROJECTILE_LIGHTNING_ON_SCREEN
-x MAX_SINGLE_PROJECTILE_BOUNCED
-x MAX_SINGLE_PROJECTILE_PIERCED
-x SINGLE_WEAPON_MAX_WAVE_DAMAGE
-x DODGE_N_ATTACKS_DURING_A_RUN
-x HOLD_N_COINS
-x DIE_FOR_THE_FIRST_TIME
-x REROLL_N_TIMES_IN_A_ROW_IN_SHOP
-x KILL_TREES
-x SIMULTANEOUSLY_BURNING_ENEMIES
-x HAVE_SAME_WEAPONS
-- move unlocks_item_type and unlocks_weapon_type from build
-  to respective achievements and clean code
-x если есть warning-и в питоне, отображать [BUILT WITH WARNINGS]
+x чит кнопка открытия всех ачивок
 
-* чит кнопка открытия всех ачивок
+* подумать над способами того, как можно сделать понятной кнопку reroll-а
+  - изменить цвет
+  - изменить расположение
+  - ...
+
+* кнопки покупок ярче?
+
+* когда оружие может быть улучшено, подсвечивать его у игрока
+
 * привести в порядок последовательность отображения ачивок
 
 * cooravie patrols
@@ -36,8 +24,6 @@ x если есть warning-и в питоне, отображать [BUILT WITH
 * impl: WEAPONS_PRICE
 * impl: ITEMS_PRICE
 * impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
-*
-*
 *
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
@@ -69,8 +55,6 @@ x если есть warning-и в питоне, отображать [BUILT WITH
 *
 * fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
 *
-* 10 билдов + (помним про подрывник из terraria)
-*
 * подредачить баффы сложностей
 *
 * prod: билды
@@ -96,7 +80,6 @@ x если есть warning-и в питоне, отображать [BUILT WITH
 * polish:
 * polish:
 *
-*
 * can open achievements on picked up item / upgrades / shop / end screens
 *
 * impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
@@ -120,8 +103,6 @@ x если есть warning-и в питоне, отображать [BUILT WITH
 * impl: STAT__WHEN_IDLE
 *
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
-*
-* better ui sounds from those that require credit
 *
 * prod sfx: steps
 * prod sfx: player hurt
@@ -151,7 +132,6 @@ x если есть warning-и в питоне, отображать [BUILT WITH
 * prod sfx:
 * prod sfx:
 * prod sfx:
-* prod sfx:
 *
 * норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
 *
@@ -162,13 +142,18 @@ x если есть warning-и в питоне, отображать [BUILT WITH
 * prod: MUSIC
 * prod: SFX
 * prod: сакутиновая отправка event-ов аналитики
-* prod: больше ачивок?
-* prod: награды ачивок
 * prod: аналитика
-* prod:
+*
+* описания статов
 *
 * RELEASED!
 =======================
+* удалять body существа после его смерти, а не в момент достижение hp == 0
+  (чтобы существо чуть-чуть двигалось после с смерти)
+* bulletproof загрузки сохранения
+  (проверки всех enum-ов, рестарт рана в случае ошибки (но сохраняем данные по ачивкам))
+* bulletproof сохранения
+  (в дебаге 3 последовательных сохранения обязательно должны быть одинаковыми по контенту)
 * переписать достижения в совершенном виде (не "kill 500", а "500 killed")
 * улучшить рисовку: предмет куравье (как куравье моб)
 * нужно что-то сделать с «пулевыми» оружиями (например, RANGED_3_CHAIN_GUN)

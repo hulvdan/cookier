@@ -11175,6 +11175,35 @@ void GameFixedUpdate() {
       }
     }
 
+    // F10 - unlock all achievements.
+    if (IsKeyPressed(SDL_SCANCODE_F10)) {  ///
+      int achievementIndex = -1;
+      for (const auto fb : *glib->achievements()) {
+        achievementIndex++;
+
+        const auto fb_steps = fb->steps();
+        if (!fb_steps)
+          continue;
+
+        int stepIndex = -1;
+        for (const auto fb_step : *fb_steps) {
+          stepIndex++;
+
+          auto& v = g.player.achievements[achievementIndex].value;
+          if (fb->negative_is_good())
+            v = MIN(v, fb_step->value());
+          else
+            v = MAX(v, fb_step->value());
+
+          AchievementStepSetLock(
+            (AchievementType)achievementIndex, stepIndex, fb_step, false
+          );
+        }
+      }
+
+      Save();
+    }
+
     // N - increase wave. Shift N - decrease wave.
     if (IsKeyPressed(SDL_SCANCODE_N)) {  ///
       g.run.state.waveIndex = MoveTowardsI(
@@ -14212,7 +14241,7 @@ void GameDraw() {
       DebugText("F8 add level");
       DebugText("F9 add crate");
     }
-
+    DebugText("F10 unlock all achievements");
     DebugText("N - increase wave. Shift N - decrease wave");
 
     DebugText(TextFormat("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x));
