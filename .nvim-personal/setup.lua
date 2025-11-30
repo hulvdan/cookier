@@ -54,7 +54,7 @@ function rebuild_tasks()
         { "t_test", cli_command("test") },
         {
             "y_test_python",
-            [[.venv\Scripts\ruff.exe check cli && .venv\Scripts\mypy.exe cli && poetry run pytest -x -vv]],
+            [[uvx ruff check --output-format concise cli && uv run mypy --check-untyped-defs cli && uv run pytest -x -vv]],
         },
         { "r_build_all_and_test", cli_command("build_all_and_test") },
         {
@@ -83,7 +83,6 @@ function rebuild_tasks()
         { "l_process_images", cli_command("process_images") },
         { "s_credit_sfx", cli_command("credit_sfx") },
         { "g_codegen", cli_command("codegen Win Debug") },
-        -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         { "l_lint_cpp", cli_command("lint") },
         {
@@ -92,7 +91,6 @@ function rebuild_tasks()
                 vim.fn.execute([[term ]] .. cli_command("reorder_achievements"))
             end,
         },
-        -- { "k_lint_python", [[.venv\Scripts\ruff.exe check cli]] },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },
         -- ----------
