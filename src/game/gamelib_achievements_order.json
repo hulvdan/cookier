@@ -33,6 +33,10 @@
     },
     {
         "achievement_type": "WALKER",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "WALKER",
         "step_index": 1
     },
     {
@@ -40,12 +44,8 @@
         "step_index": 2
     },
     {
-        "achievement_type": "IDLER",
+        "achievement_type": "TURRETS_ON_THE_MAP",
         "step_index": 0
-    },
-    {
-        "achievement_type": "IDLER",
-        "step_index": 1
     },
     {
         "achievement_type": "COINS",
@@ -100,24 +100,24 @@
         "step_index": 0
     },
     {
-        "achievement_type": "REACH_THIS_OR_MORE_STAT_LUCK",
-        "step_index": 0
-    },
-    {
         "achievement_type": "REACH_THIS_OR_LESS_STAT_HARVESTING",
         "step_index": 0
     },
     {
-        "achievement_type": "TURRETS_ON_THE_MAP",
+        "achievement_type": "REACH_THIS_OR_MORE_STAT_LUCK",
         "step_index": 0
     },
     {
-        "achievement_type": "RECYCLE_X_WEAPONS_DURING_A_RUN",
+        "achievement_type": "REACH_THIS_OR_MORE_STAT_ENEMIES",
         "step_index": 0
     },
     {
-        "achievement_type": "REACH_THIS_OR_MORE_STAT_HP",
+        "achievement_type": "IDLER",
         "step_index": 0
+    },
+    {
+        "achievement_type": "IDLER",
+        "step_index": 1
     },
     {
         "achievement_type": "FINISH_A_WAVE_WITH_1_HP",
@@ -144,7 +144,7 @@
         "step_index": 0
     },
     {
-        "achievement_type": "WALKER",
+        "achievement_type": "RECYCLE_X_WEAPONS_DURING_A_RUN",
         "step_index": 0
     },
     {
@@ -164,15 +164,15 @@
         "step_index": 0
     },
     {
+        "achievement_type": "REACH_THIS_OR_MORE_STAT_HP",
+        "step_index": 0
+    },
+    {
         "achievement_type": "DODGE_N_ATTACKS_DURING_A_RUN",
         "step_index": 0
     },
     {
         "achievement_type": "HOLD_N_COINS",
-        "step_index": 0
-    },
-    {
-        "achievement_type": "REACH_THIS_OR_MORE_STAT_ENEMIES",
         "step_index": 0
     },
     {
