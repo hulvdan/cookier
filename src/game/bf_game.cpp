@@ -2499,7 +2499,11 @@ void MakeNumber(MakeNumberData data) {  ///
 }
 
 int GetNextLevelXp(int currentLevel) {  ///
-  return SQR(currentLevel + 3);
+  currentLevel = MAX(1, currentLevel);
+  int value    = SQR(currentLevel + 3);
+  f32 scale    = 1 + g.run.state.stats[StatType_XP_PERCENT_REQUIRED_TO_LEVEL_UP] / 100.0f;
+  value        = Round((f32)value * scale);
+  return MAX(1, value);
 }
 
 void AddXP(f32 xp) {  ///
