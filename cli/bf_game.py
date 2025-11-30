@@ -40,6 +40,8 @@ from bf_lib import (
 )
 from bf_typer import command, log, timing
 from PIL import Image
+from rich.console import Console
+from rich.table import Table
 
 # }
 
@@ -1463,46 +1465,46 @@ def reorder_achievements():
         for step_index in range(len(ach.get("steps", []))):
             entries.append((ach_index, step_index))
 
+    console = Console()
+
     # TODO:
-    # * upon user input save order to file
-    # * achievement order gets read from file
-    #   and gets set during codegen in _process_gamelib
     # * launch codegen in thread in `dump_order_to_file`.
     #   upon new input, if thread is still alive, kill it and relaunch a new one
     # * it shouldn't break upon adding new achievement + removing old one
-    # * clear screen from print_all_achievements
     # * print as table
+    # * all steps of one achievement are required to be present on the same row
 
     error = None
-    ERROR_INCORRECT_VALUE_PROVIDED = "\nIncorrect value provided!"
+    ERROR_INCORRECT_VALUE_PROVIDED = "Incorrect value provided!"
     while True:
         # Printing all achievements.
+        table = Table("I", "POS", "TYPE", "STEP", "VALUE", "UNLOCKS")
         for entry_index, d in enumerate(entries):
             ach = achs[d[0] + 1]
             step_index = d[1]
             step = ach["steps"][step_index]
-            print(
-                "{}\t{}x{}\t{}\t{}\t(value: {})\tunl: {}".format(
-                    entry_index,
-                    entry_index % ACHIEVEMENTS_X,
-                    entry_index // ACHIEVEMENTS_X,
-                    ach["type"],
-                    step_index,
-                    step.get("value"),
-                    (
-                        step.get("unlocks_build_type")
-                        or step.get("unlocks_weapon_type")
-                        or step.get("unlocks_item_type")
-                    ),
-                )
+            table.add_row(
+                str(entry_index),
+                "{}x{}".format(
+                    entry_index % ACHIEVEMENTS_X, entry_index // ACHIEVEMENTS_X
+                ),
+                ach["type"],
+                str(step_index),
+                str(step.get("value")),
+                str(
+                    step.get("unlocks_build_type")
+                    or step.get("unlocks_weapon_type")
+                    or step.get("unlocks_item_type")
+                ),
             )
+        console.print(table)
 
         if error:
             print(error)
             error = None
 
         # User inputs value.
-        user_value = input("\nEnter q to quit, or 2 indices to swap them: ").strip()
+        user_value = input("Enter q to quit, or 2 indices to swap them: ").strip()
 
         # Processing user's input.
         if user_value == "q":
