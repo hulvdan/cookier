@@ -1,5 +1,5 @@
 [project]
-name = "cookier"
+name = "cli"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -29,9 +29,10 @@ dependencies = [
 packages = [
     { include = "cli" },
 ]
+package-root = "."
 
 [project.scripts]
-cookier = "cookier:main"
+cli = "cli:main"
 
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]
@@ -107,6 +108,7 @@ ignore = [
     "T201",
     "TD002",
     "TD003",
+    "TD005",
     "TRY300",
     "UP032",
     "UP035",
