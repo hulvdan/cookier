@@ -4910,8 +4910,32 @@ void RefillShopToPick() {  ///
     }
   } filled{};
 
+  Array<bool, g.run.state.shop.toPick.count> forceWeapons      = {};
+  int                                        forceWeaponsCount = 0;
+
+  IterateOverEffects(
+    EffectConditionType_SHOP_SELLS_AT_LEAST__X__WEAPONS,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { forceWeaponsCount += EFFECT_X_INT * times; }
+  );
+
+  forceWeaponsCount = MIN(forceWeaponsCount, forceWeapons.count);
+
+  while (forceWeaponsCount > 0) {
+    auto& v = forceWeapons[GRAND.Rand() % forceWeapons.count];
+    if (v)
+      continue;
+    v = true;
+    forceWeaponsCount--;
+  }
+
+  int cardIndex = -1;
   for (auto& x : g.run.state.shop.toPick) {
-    const bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
+    cardIndex++;
+    bool setToItem = (GRAND.FRand() <= SHOP_ITEM_RATIO);
+    if (forceWeapons[cardIndex])
+      setToItem = false;
 
     x = {};
 
