@@ -1,3 +1,5 @@
+*.reapeaks
+*.rpp-bak
 /.cache/
 /.cmake/
 /.idea/
@@ -17,5 +19,3 @@
 /vendor/gameanalytics-sdk-cpp/gtest_build/
 CMakeFiles/
 __pycache__/
-*.rpp-bak
-*.reapeaks
