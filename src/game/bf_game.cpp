@@ -2498,6 +2498,18 @@ void MakeNumber(MakeNumberData data) {  ///
   *g.run.numbers.Add() = number;
 }
 
+f32 GetStatModificationScale() {  ///
+  f32 scaleStats = 1;
+  IterateOverEffects(
+    EffectConditionType_STAT__MODS_CHANGED_BY__X__PERCENT,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        scaleStats += (1 + (f32)EFFECT_X_INT / 100.0f) * (f32)times;
+      }
+  );
+}
+
 int GetNextLevelXp(int currentLevel) {  ///
   currentLevel = MAX(1, currentLevel);
   int value    = SQR(currentLevel + 3);
@@ -2586,9 +2598,8 @@ void HealPlayer(int amount = 1) {  ///
 
           f32 critDamageMultiplier = 1.5f;
           if (w) {
-            auto fb_weapon       = glib->weapons()->Get(w->type);
-            auto tierOffset      = w->tier - fb_weapon->min_tier_index();
-            critDamageMultiplier = fb_weapon->crit_damage_multiplier()->Get(tierOffset);
+            critDamageMultiplier
+              = glib->weapons()->Get(w->type)->crit_damage_multiplier()->Get(tierOffset);
           }
 
           int damage = EFFECT_Y_INT * times;
@@ -6599,6 +6610,7 @@ void DoUI() {
             v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
+          v = Round((f32)v * GetStatModificationScale());
           v *= count;
 
           const bool  isPositive = v >= 0;

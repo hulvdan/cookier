@@ -1,5 +1,14 @@
 WORKING SINCE 2025-09-07
 
+ПЛАН
+- ЗВУКИ
+- ПРИКРУТ АНАЛИТИКИ (+ САКУТИНОВСКАЯ ШТУКА)
+- ДОПИЛКА ЭФФЕКТОВ
+- БАЛАНС
+- ФИКСЫ ТОЛЬКО НУЖНОГО ДЛЯ РЕЛИЗА
+- РЕЛИЗ
+- ЧИНИМ
+
 x чит кнопка открытия всех ачивок
 x привести в порядок последовательность отображения ачивок
 x cooravie patrols
@@ -11,14 +20,51 @@ x impl: CANT_HEAL
 x impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
 x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 
-* impl: STAT__WHEN_BELOW__X__PERCENT_HP
+* prod sfx: steps
+* prod sfx: player hurt
+* prod sfx: mob hurt
+* prod sfx: explosion
+* prod sfx: level up
+* prod sfx: button click
+* prod sfx: button hover
+* prod sfx: wave complete/died whoosh
+* prod sfx: pickup coin
+* prod sfx: pickup crate
+* prod sfx: pickup apple
+* prod sfx: got achievement + item unlocked
+* prod sfx: turret shot
+* prod sfx: mob/boss shoots
+* prod sfx: steps
+* prod sfx: run won
+* prod sfx: run lost
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+*
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
+* impl: STAT__WHEN_BELOW__X__PERCENT_HP
+*
+* проверить все effect conditions на immediate
+  мб даже проставить это в gamelib.fbs, а не хардкодить
+  + требование указания в gamelib.yaml как обязательное поле
 *
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
 *
 * баланс количество сундуков
 * баланс количество chester-ов
+* баланс прирост здоровья врагов
+  + какие-то мобы должны прожить
+    2 секунд в начале, 3 в конце
+    5 секунд в начале, 7 в конце
 * ограничить количество живых chester-ов
 *
 * engine: show transient buffer arena
@@ -92,35 +138,6 @@ x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 * impl: STAT__WHEN_IDLE
 *
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
-*
-* prod sfx: steps
-* prod sfx: player hurt
-* prod sfx: mob hurt
-* prod sfx: explosion
-* prod sfx: level up
-* prod sfx: button click
-* prod sfx: button hover
-* prod sfx: wave complete/died whoosh
-* prod sfx: pickup coin
-* prod sfx: pickup crate
-* prod sfx: pickup apple
-* prod sfx: got achievement + item unlocked
-* prod sfx: turret shot
-* prod sfx: mob/boss shoots
-* prod sfx: steps
-* prod sfx: run won
-* prod sfx: run lost
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
 *
 * норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
 *
