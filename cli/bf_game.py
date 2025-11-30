@@ -1470,8 +1470,6 @@ def reorder_achievements():
     process = None
 
     # TODO:
-    # * launch codegen in thread in `dump_order_to_file`.
-    #   upon new input, if thread is still alive, kill it and relaunch a new one
     # * all steps of one achievement are required to be present on the same row
     # * it shouldn't break upon adding new achievement + removing old one
 
@@ -1479,19 +1477,22 @@ def reorder_achievements():
     ERROR_INCORRECT_VALUE_PROVIDED = "Incorrect value provided!"
     while True:
         # Printing all achievements.
-        table = Table("I", "POS", "TYPE", "STEP", "VALUE", "UNLOCKS")
+        table = Table("I", "POS", "TYPE", "UNLOCKS")
         for entry_index, d in enumerate(entries):
             ach = achs[d[0] + 1]
             step_index = d[1]
             step = ach["steps"][step_index]
+
+            t = ach["type"]
+            if len(gamelib["achievements"][d[0] + 1]["steps"]) > 1:
+                t += f" ({d[1]})"
+
             table.add_row(
                 str(entry_index),
                 "{}x{}".format(
                     entry_index % ACHIEVEMENTS_X, entry_index // ACHIEVEMENTS_X
                 ),
-                ach["type"],
-                str(step_index),
-                str(step.get("value")),
+                t,
                 str(
                     step.get("unlocks_build_type")
                     or step.get("unlocks_weapon_type")
