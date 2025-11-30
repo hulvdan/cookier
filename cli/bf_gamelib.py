@@ -14,7 +14,6 @@ from typing import Any, TypeAlias
 
 import pydub
 import pytest
-import yaml
 from bf_game import *  # noqa
 from bf_lib import (
     ART_DIR,
@@ -37,6 +36,7 @@ from bf_lib import (
     game_settings,
     gamelib_processing_functions,
     genenum,
+    load_gamelib_cached,
     log,
     recursive_mkdir,
     recursive_replace_transform,
@@ -541,7 +541,7 @@ def convert_gamelib_json_to_binary(
     texture_name_2_id: dict[str, int], genline, atlas_data, original_texture_sizes
 ) -> None:
     # {  ###
-    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+    gamelib = load_gamelib_cached()
 
     gamelib["original_texture_sizes"] = original_texture_sizes
 

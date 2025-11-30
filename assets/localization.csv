@@ -442,7 +442,7 @@ ACHIEVEMENT_DESCRIPTION_MAX_SINGLE_MELEE_HIT_KILLED_ENEMIES;Один рукоп�
 ACHIEVEMENT_DESCRIPTION_SINGLE_WEAPON_MAX_WAVE_DAMAGE;Какое-либо оружие нанесло {VALUE} урона за волну;TODO проверить правописание (dealed) Any weapon dealed {VALUE} damage during a wave;
 ACHIEVEMENT_DESCRIPTION_SIMULTANEOUSLY_BURNING_ENEMIES;{VALUE} одновременно горящих врагов;Had {VALUE} enemies burning simultaneously;
 ACHIEVEMENT_DESCRIPTION_MAX_SINGLE_PROJECTILE_PIERCED;Прострелено врагов одной пулей: {VALUE};Single projectile pierced {VALUE} enemies;
-ACHIEVEMENT_DESCRIPTION_HAVE_SAME_WEAPONS;Одинаковых оружий на игроке: {VALUE};Had {VALUE} of the same weapon;
+ACHIEVEMENT_DESCRIPTION_HAVE_SAME_WEAPONS;{VALUE} одинаковых оружий у игрока;Had {VALUE} of the same weapon;
 ACHIEVEMENT_DESCRIPTION_DODGE_N_ATTACKS_DURING_A_RUN;Уклонено от {VALUE} атак за забег;Dodged {VALUE} attacks during a run;
 ACHIEVEMENT_DESCRIPTION_HOLD_N_COINS;Сбережено {VALUE} печенег;TODO совершенная форма Hold {VALUE} cookiens;
 ACHIEVEMENT_DESCRIPTION_DIE_FOR_THE_FIRST_TIME;Первое поражение;TODO The first loss;

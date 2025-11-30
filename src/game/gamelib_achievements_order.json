@@ -1,0 +1,194 @@
+[
+    {
+        "achievement_type": "DIE_FOR_THE_FIRST_TIME",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "DIFFICULTY",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "DIFFICULTY",
+        "step_index": 1
+    },
+    {
+        "achievement_type": "DIFFICULTY",
+        "step_index": 2
+    },
+    {
+        "achievement_type": "KILLER",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "KILLER",
+        "step_index": 1
+    },
+    {
+        "achievement_type": "KILLER",
+        "step_index": 2
+    },
+    {
+        "achievement_type": "WALKER",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "WALKER",
+        "step_index": 1
+    },
+    {
+        "achievement_type": "WALKER",
+        "step_index": 2
+    },
+    {
+        "achievement_type": "IDLER",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "IDLER",
+        "step_index": 1
+    },
+    {
+        "achievement_type": "COINS",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "COINS",
+        "step_index": 1
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_DEFAULT",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_NINJA",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_VICTIM",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_FAST",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_ENGINEER",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_ARMS_DEALER",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_LICH",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_GOLEM",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_LUCKY",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_RUN_WITH_BUILD_LEARNER",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "REACH_THIS_OR_MORE_STAT_SPEED",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "REACH_THIS_OR_MORE_STAT_LUCK",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "REACH_THIS_OR_LESS_STAT_HARVESTING",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "TURRETS_ON_THE_MAP",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "RECYCLE_X_WEAPONS_DURING_A_RUN",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "REACH_THIS_OR_MORE_STAT_HP",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "FINISH_A_WAVE_WITH_1_HP",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "EXPLODE_ENEMIES_IN_A_SINGLE_EXPLOSION",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "MAX_COUNT_OF_PROJECTILE_ON_SCREEN_LIGHTNING",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "ENEMIES_DIED_BECAUSE_OF_BURNING",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "MAX_SINGLE_PROJECTILE_BOUNCED",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "MAX_SINGLE_MELEE_HIT_KILLED_ENEMIES",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "SINGLE_WEAPON_MAX_WAVE_DAMAGE",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "SIMULTANEOUSLY_BURNING_ENEMIES",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "MAX_SINGLE_PROJECTILE_PIERCED",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "MAX_SINGLE_PROJECTILE_PIERCED",
+        "step_index": 1
+    },
+    {
+        "achievement_type": "HAVE_SAME_WEAPONS",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "DODGE_N_ATTACKS_DURING_A_RUN",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "HOLD_N_COINS",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "REACH_THIS_OR_MORE_STAT_ENEMIES",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "REACH_THIS_OR_LESS_STAT_DAMAGE",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "REROLL_N_TIMES_IN_A_ROW_IN_SHOP",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "KILL_TREES",
+        "step_index": 0
+    },
+    {
+        "achievement_type": "HEAL_X_DURING_A_RUN",
+        "step_index": 0
+    }
+]

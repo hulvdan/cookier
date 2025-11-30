@@ -9763,24 +9763,25 @@ void DoUI() {
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          int totalSlots = 0;
+          const auto fb_order   = glib->achievements_order();
+          int        totalSlots = fb_order->size();
 
-          int currentAchievement = 1;
-          int currentStep        = 0;
-          int shownSlots         = 0;
+          // int currentAchievement = 1;
+          // int currentStep        = 0;
+          int shownSlots = 0;
 
-          {
-            int achievementIndex = -1;
-            for (auto fb : *fb_achievements) {
-              achievementIndex++;
-
-              auto fb_steps = fb->steps();
-              if (fb_steps) {
-                auto stepsCount = (int)fb_steps->size();
-                totalSlots += stepsCount;
-              }
-            }
-          }
+          // {
+          //   int achievementIndex = -1;
+          //   for (auto fb : *fb_achievements) {
+          //     achievementIndex++;
+          //
+          //     auto fb_steps = fb->steps();
+          //     if (fb_steps) {
+          //       auto stepsCount = (int)fb_steps->size();
+          //       totalSlots += stepsCount;
+          //     }
+          //   }
+          // }
 
           // "Achievements" label.
           componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
@@ -9801,8 +9802,7 @@ void DoUI() {
 
           BF_CLAY_SPACER_VERTICAL;
 
-          const int achievementsX = 8;
-          const int achievementsY = CeilDivision((int)totalSlots, achievementsX);
+          const int achievementsY = CeilDivision((int)totalSlots, ACHIEVEMENTS_X);
 
           // Columns.
           CLAY({.layout{
@@ -9832,13 +9832,18 @@ void DoUI() {
                   ControlsGroupNewRow(groupGrid);
 
                   CLAY({.layout{.childGap = GAP_SMALL}})
-                  FOR_RANGE (int, x, achievementsX) {
+                  FOR_RANGE (int, x, ACHIEVEMENTS_X) {
                     if (shownSlots >= totalSlots)
                       break;
 
-                    const bool isLocked = IsAchievementStepLocked(
-                      (AchievementType)currentAchievement, currentStep
-                    );
+                    const auto t   = y * ACHIEVEMENTS_X + x;
+                    const auto fb_ = fb_order->Get(t);
+                    const auto currentAchievement
+                      = (AchievementType)fb_->achievement_type();
+                    const int currentStep = fb_->step_index();
+
+                    const bool isLocked
+                      = IsAchievementStepLocked(currentAchievement, currentStep);
 
                     const auto fb      = fb_achievements->Get(currentAchievement);
                     const auto fb_step = fb->steps()->Get(currentStep);
@@ -9855,7 +9860,7 @@ void DoUI() {
                         tier = 3;
 
                       auto id = CLAY_IDI(
-                        "paused_achievement", 100 * currentAchievement + currentStep
+                        "paused_achievement", 100 * (int)currentAchievement + currentStep
                       );
 
                       componentUniversalSlot({
@@ -9879,11 +9884,6 @@ void DoUI() {
                       }
                     }
 
-                    currentStep++;
-                    if (currentStep >= fb->steps()->size()) {
-                      currentAchievement++;
-                      currentStep = 0;
-                    }
                     shownSlots++;
                   }
                 }
