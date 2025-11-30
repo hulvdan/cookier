@@ -179,7 +179,7 @@ def _dict_for_chunk(fd):
 
         output.update(
             {
-                "data": {"mode": color_mode.decode("utf-8"), "values": color_values},
+                "data": {"mode": color_mode.decode("utf-8"), "values": color_values},  # type: ignore[dict-item]
                 "type": str(swatch_type),
             }
         )
