@@ -1469,10 +1469,6 @@ def reorder_achievements():
     console = Console()
     process = None
 
-    # TODO:
-    # * all steps of one achievement are required to be present on the same row
-    # * it shouldn't break upon adding new achievement + removing old one
-
     error = None
     ERROR_INCORRECT_VALUE_PROVIDED = "Incorrect value provided!"
     while True:
