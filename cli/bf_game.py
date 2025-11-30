@@ -15,6 +15,7 @@ USAGE:
 
 # Imports.  {  ###
 import json
+import subprocess
 from itertools import groupby
 from typing import Any, TypeAlias
 
@@ -1466,13 +1467,13 @@ def reorder_achievements():
             entries.append((ach_index, step_index))
 
     console = Console()
+    process = None
 
     # TODO:
     # * launch codegen in thread in `dump_order_to_file`.
     #   upon new input, if thread is still alive, kill it and relaunch a new one
-    # * it shouldn't break upon adding new achievement + removing old one
-    # * print as table
     # * all steps of one achievement are required to be present on the same row
+    # * it shouldn't break upon adding new achievement + removing old one
 
     error = None
     ERROR_INCORRECT_VALUE_PROVIDED = "Incorrect value provided!"
@@ -1554,6 +1555,15 @@ def reorder_achievements():
                 }
             )
         ACHIEVEMENTS_ORDER_FILEPATH.write_text(json.dumps(data, indent=4))
+
+        if process is not None and process.returncode is None:
+            process.kill()
+        process = subprocess.Popen(
+            r"uv run python cli\bf_cli.py codegen Win Debug",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
     # }
 
 
