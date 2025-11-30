@@ -11437,6 +11437,20 @@ void GameFixedUpdate() {
       g.run.scheduledShopReset = false;
       g.run.state.shop.rerolls = {};
       RefillShopToPick();
+
+      bool destroyWeapons = false;
+
+      IterateOverEffects(
+        EffectConditionType_WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP,
+        -1,
+        [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+          BF_FORCE_INLINE_LAMBDA { destroyWeapons = true; }
+      );
+
+      if (destroyWeapons) {
+        for (auto& w : g.run.state.weapons)
+          w.type = {};
+      }
     }
 
     Save();
