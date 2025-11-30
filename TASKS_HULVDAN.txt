@@ -20,6 +20,10 @@ x impl: CANT_HEAL
 x impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
 x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 
+* перекапчать туториалы reaper
+* найти хорошую прогу для качания плейлиста youtube
+* посмотреть туториалы reaper
+
 * prod sfx: steps
 * prod sfx: player hurt
 * prod sfx: mob hurt
@@ -71,10 +75,7 @@ x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 *
 * lance -% damage PROPERTY (NOT STAT)
 *
-* «this weapon» change to «». if no «this weapon» -> show «all weapons»
 * impl weapon burning_damage, burning_times, burning_damage_scalings
-*
-* mob projectiles are always on top
 *
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
 * impl stat KNOCKBACK
@@ -90,10 +91,7 @@ x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 *
 * fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
 *
-* подредачить баффы сложностей
-*
 * prod: билды
-* prod: сложности
 *
 * на старте рана не стартовать волну, пока не выйдешь за пределы области
   * скрыть hud
@@ -139,9 +137,6 @@ x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 *
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
 *
-* норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
-*
-* landmine easings: on create
 * show controls before starting the first wave
   (show circle around center of the map -> player has to go away from it)
 *
@@ -150,17 +145,18 @@ x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 * prod: сакутиновая отправка event-ов аналитики
 * prod: аналитика
 *
-* описания статов
-*
+* RELEASED!
+=======================
+* «this weapon» change to «». if no «this weapon» -> show «all weapons»
+* mob projectiles are always on top
+* норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»
 * подумать над способами того, как можно сделать понятной кнопку reroll-а
   - изменить цвет
   - изменить расположение
   - ...
 * кнопки покупок ярче?
 * когда оружие может быть улучшено, подсвечивать его у игрока
-*
-* RELEASED!
-=======================
+* описания статов
 * reorder_achievements: ачивки подгружают указанный в файле порядок
 * reorder_achievements: валидация, что все steps ачивки указаны на одном ряду (зелёным подсвечивать)
 * reorder_achievements: добавление новых не должно ломать тулзу
