@@ -1245,7 +1245,8 @@ struct GameData {
     int       playerContinuousIdleFrames        = 0;
     int       playerContinuousWalkingFrames     = 0;
 
-    int cratesDroppedThisWave = 0;
+    int  cratesDroppedThisWave = 0;
+    bool cantHeal              = false;
 
     FrameGame waveStartedAt = {};
 
@@ -1994,6 +1995,14 @@ void OnWaveStarted() {  ///
     = GetRandomCumulativeChances(g.run.state.waveIndex, g.run.state.stats[StatType_LUCK]);
 
   g.run.turretsOnTheMapCount = 0;
+
+  g.run.cantHeal = false;
+  IterateOverEffects(
+    EffectConditionType_CANT_HEAL,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA { g.run.cantHeal = true; }
+  );
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -2541,6 +2550,8 @@ void AddXP(f32 xp) {  ///
 }
 
 void HealPlayer(int amount = 1) {  ///
+  if (g.run.cantHeal)
+    return;
   if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
     PLAYER_CREATURE.health
       = MoveTowardsF(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
@@ -7319,6 +7330,7 @@ void DoUI() {
           // Life Steal.
           {
             auto chance = GetLifestealChance(data.weapon, tier, data.affectedByGame);
+
             if (chance > 0) {
               componentWeaponStatEntry(
                 fb_stats->Get(StatType_LIFE_STEAL)->name_locale(),
