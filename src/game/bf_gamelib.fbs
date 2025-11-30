@@ -107,7 +107,8 @@ table Creature {
     contact_damage_increase_per_wave: float;
 
     speed: float;
-    not_aggroed_speed: float = 1;
+    not_aggroed_speed: float;
+    acting_speed_modifier_scale: float;
     speed_plus_minus: float;
     hostility_type: int = 1;
     knockback_resistance: float;
