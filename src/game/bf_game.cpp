@@ -2556,10 +2556,57 @@ void AddXP(f32 xp) {  ///
 void HealPlayer(int amount = 1) {  ///
   if (g.run.cantHeal)
     return;
+
   if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
     PLAYER_CREATURE.health
       = MoveTowardsF(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
   }
+
+  IterateOverEffects(
+    EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING,
+    data.indexOfWeaponThatDidDamageOrMinus1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        const f32 chance = EFFECT_X_FLOAT * (f32)times;
+        if (GRAND.FRand() >= chance)
+          return;
+
+        FOR_RANGE (int, i, 12) {
+          const int   creatureIndex = GRAND.Rand() % g.run.creatures.count;
+          const auto& creature      = g.run.creatures[creatureIndex];
+
+          if (creature.health <= 0)
+            continue;
+          if (creature.diedAt.IsSet())
+            continue;
+
+          auto fb = glib->creatures()->Get(creature.type);
+          if (fb->hostility_type() == HostilityType_FRIENDLY)
+            continue;
+
+          f32 critDamageMultiplier = 1.5f;
+          if (w) {
+            auto fb_weapon       = glib->weapons()->Get(w->type);
+            auto tierOffset      = w->tier - fb_weapon->min_tier_index();
+            critDamageMultiplier = fb_weapon->crit_damage_multiplier()->Get(tierOffset);
+          }
+
+          int damage = EFFECT_Y_INT * times;
+          damage = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
+          damage = ApplyPlayerStatDamageMultiplier(damage);
+
+          TryApplyDamage({
+            .creatureIndex                      = creatureIndex,
+            .damage                             = ApplyDamageScalings(),
+            .damagerCreatureType                = CreatureType_PLAYER,
+            .critDamageMultiplier               = critDamageMultiplier,
+            .indexOfWeaponThatDidDamageOrMinus1 = wi,
+          });
+          break;
+        }
+      }
+  );
+
   Save();
 }
 
