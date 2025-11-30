@@ -159,14 +159,14 @@ constexpr f32   MODAL_OVERLAY_COLOR_FADE = 0.75f;
 
 constexpr f32 CRIT_DAMAGE_MULTIPLIER = 1.5f;
 
-constexpr auto MOB_RANGER_SHOOTING_FRAMES      = lframe::Scaled(40);
-constexpr auto MOB_RANGER_SHOOTING_FRAME       = lframe::Scaled(36);
-constexpr f32  MOB_RANGER_MOVEMENT_SPEED_SCALE = 0.3f;
+constexpr auto MOB_RANGER_SHOOTING_FRAMES  = lframe::Scaled(40);
+constexpr auto MOB_RANGER_SHOOTING_FRAME   = lframe::Scaled(36);
+constexpr f32  MOB_RANGER_THRESHOLD_METERS = 0.5f;
+constexpr f32  MOB_RANGER_SHOOT_METERS     = 8;
 
 constexpr auto MOB_RUSHER_RUSH_PRE_FRAMES   = lframe::Scaled(10);
 constexpr auto MOB_RUSHER_RUSH_TOTAL_FRAMES = lframe::Scaled(60);
 constexpr auto MOB_RUSHER_RUSH_POST_FRAMES  = lframe::Scaled(20);
-constexpr auto MOB_RUSHER_RUSH_SPEED_SCALE  = 2.0f;
 constexpr auto MOB_RUSHER_COOLDOWN_MIN      = lframe::Unscaled(2.5f * FIXED_FPS);
 constexpr auto MOB_RUSHER_COOLDOWN_MAX      = lframe::Unscaled(3.5f * FIXED_FPS);
 

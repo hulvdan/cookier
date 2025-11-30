@@ -249,6 +249,7 @@ creatures: # {  ###
     shadow_scale: 1.15
     hit_particles_color: 0xefcb84ff
   - type: RANGER
+    aggroed_by_default: false
     appearing_wave_number: 4
     spawn_factor: 25
     health: 8
@@ -256,8 +257,11 @@ creatures: # {  ###
     contact_damage: 1
     contact_damage_increase_per_wave: 0.6
     knockback_resistance: 0.95
-    speed: 7
+    speed: 4
     speed_plus_minus: 0.8
+    not_aggroed_speed: 3
+    aggro_distance: 10
+    acting_speed_modifier_scale: 0.66
     texture_ids:
       - game_creature_ranger
     shadow_offset_y: -0.68
@@ -274,10 +278,11 @@ creatures: # {  ###
     hurtbox_scale: 1.1
     collider_scale: 1.15
     speed: 5
+    acting_speed_modifier_scale: 2.0
     not_aggroed_speed: 3.75
     speed_plus_minus: 0.8
     coins_dropped: 3
-    aggro_distance: 7
+    aggro_distance: 8
     texture_ids:
       - game_creature_rusher
     shadow_offset_x: 0.1

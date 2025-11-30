@@ -11654,23 +11654,19 @@ void GameFixedUpdate() {
           }
 
           if (creature.aggroed && (creature.type == CreatureType_RANGER)) {
-            constexpr f32 thresholdMeters = 0.5f;
-            constexpr f32 shootMeters     = 8;
-            const auto    distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
+            const auto distSqr = Vector2DistanceSqr(creature.pos, PLAYER_CREATURE.pos);
 
             bool canShoot = true;
 
-            if (distSqr < SQR(shootMeters - thresholdMeters))
+            if (distSqr < SQR(MOB_RANGER_SHOOT_METERS - MOB_RANGER_THRESHOLD_METERS))
               creature.controller.move *= -1.0f;
-            else if (distSqr < SQR(shootMeters + thresholdMeters))
+            else if (distSqr < SQR(MOB_RANGER_SHOOT_METERS + MOB_RANGER_THRESHOLD_METERS))
               creature.controller.move = {};
             else
               canShoot = false;
 
             auto& data = creature.DataRanger();
             if (data.startedShootingAt.IsSet()) {
-              creature.controller.move *= MOB_RANGER_MOVEMENT_SPEED_SCALE;
-
               creature.dir.x = ((PLAYER_CREATURE.pos.x - creature.pos.x >= 0) ? 1 : -1);
 
               const auto e = data.startedShootingAt.Elapsed();
@@ -11686,11 +11682,15 @@ void GameFixedUpdate() {
                   },
                 });
               }
-              if (e >= MOB_RANGER_SHOOTING_FRAMES)
+              if (e >= MOB_RANGER_SHOOTING_FRAMES) {
+                creature.speedModifier /= fb->acting_speed_modifier_scale();
                 data.startedShootingAt = {};
+              }
             }
-            else if (canShoot)
+            else if (canShoot) {
               data.startedShootingAt.SetNow();
+              creature.speedModifier *= fb->acting_speed_modifier_scale();
+            }
           }
           else if (creature.aggroed && (creature.type == CreatureType_RUSHER)) {
             auto& data = creature.DataRusher();
@@ -11710,7 +11710,7 @@ void GameFixedUpdate() {
                 data.finishedRushingAt.SetNow();
                 data.rushingDir = {};
                 data.cooldown.SetRand(MOB_RUSHER_COOLDOWN_MIN, MOB_RUSHER_COOLDOWN_MAX);
-                creature.speedModifier /= MOB_RUSHER_RUSH_SPEED_SCALE;
+                creature.speedModifier /= fb->acting_speed_modifier_scale();
               }
             }
             else {
@@ -11728,14 +11728,15 @@ void GameFixedUpdate() {
                                         - MOB_RUSHER_RUSH_POST_FRAMES;
                 const auto durSeconds   = (f32)rushingDur.value / FIXED_FPS;
                 const auto rushDistance = creature.speed * creature.speedModifier
-                                          * MOB_RUSHER_RUSH_SPEED_SCALE * durSeconds;
+                                          * fb->acting_speed_modifier_scale()
+                                          * durSeconds;
 
                 if (dist <= rushDistance) {
                   data.startedRushingAt.SetNow();
                   data.finishedRushingAt = {};
                   data.rushingDir
                     = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
-                  creature.speedModifier *= MOB_RUSHER_RUSH_SPEED_SCALE;
+                  creature.speedModifier *= fb->acting_speed_modifier_scale();
                 }
               }
             }

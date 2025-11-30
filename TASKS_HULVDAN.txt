@@ -2,10 +2,8 @@ WORKING SINCE 2025-09-07
 
 x чит кнопка открытия всех ачивок
 x привести в порядок последовательность отображения ачивок
+x cooravie patrols
 
-*
-* cooravie patrols
-*
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
 * impl: SHOP_SELLS_AT_LEAST__X__WEAPONS
 * impl: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
