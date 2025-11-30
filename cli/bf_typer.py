@@ -141,6 +141,7 @@ def print_timings():
 
     log.info(timings_string)
 
+    assert _started_at is not None
     log.info("RUNNING TOOK: {:.2f} SEC".format(time() - _started_at))
     # }
 
@@ -186,7 +187,7 @@ globals()["exit"] = timed_exit
 
 def hook_exit():
     global exit
-    exit = timed_exit  # noqa: A001
+    exit = timed_exit  # type: ignore[name-defined]  # noqa: A001
 
 
 app = typer.Typer(

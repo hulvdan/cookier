@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator, Sequence, TypeVar
 
 import fnvhash
+import yaml
 from bf_typer import log
 
 # }
@@ -21,12 +22,15 @@ T = TypeVar("T")
 
 @dataclass(slots=True)
 class _GameSettings:
+    # {  ###
     itch_target: str = "hulvdan/game-template"
     languages: list[str] = field(default_factory=lambda: ["russian", "english"])
     generate_flatbuffers_api_for: list[str] = field(default_factory=list)
+    # }
 
 
 game_settings = _GameSettings()
+
 
 gamelib_processing_functions = []
 
@@ -34,6 +38,19 @@ gamelib_processing_functions = []
 def gamelib_processor(func):
     gamelib_processing_functions.append(func)
     return func
+
+
+_gamelib = None
+
+
+def load_gamelib_cached() -> dict:
+    # {  ###
+    global _gamelib
+    if _gamelib is not None:
+        return _gamelib
+    _gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+    return _gamelib  # type: ignore[return-value]
+    # }
 
 
 class StrEnum(str, Enum):
@@ -58,7 +75,7 @@ class BuildTarget(StrEnum):
     tests = "tests"
 
 
-ALLOWED_BUILDS = (
+ALLOWED_BUILDS = (  ###
     (BuildTarget.game, BuildPlatform.Win, BuildType.Debug),
     (BuildTarget.game, BuildPlatform.Win, BuildType.RelWithDebInfo),
     (BuildTarget.game, BuildPlatform.Win, BuildType.Release),

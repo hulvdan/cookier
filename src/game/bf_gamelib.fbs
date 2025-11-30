@@ -367,6 +367,7 @@ table AchievementStep {
     unlocks_build_type: int;
     unlocks_weapon_type: int;
     unlocks_item_type: int;
+    order: int;
 }
 
 table Achievement {

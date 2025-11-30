@@ -15,7 +15,7 @@ USAGE:
 
 # Imports.  {  ###
 from itertools import groupby
-from typing import Any
+from typing import Any, TypeAlias
 
 import bf_image
 import bf_swatch
@@ -1407,8 +1407,8 @@ def make_swatch():
     with open("aboba.aco", "wb") as out_file:
         bf_swatch.save_aco_file([process_color2(c) for c in new_colors], out_file)
 
-    with open("aboba.pal", "w") as out_file:
-        out_file.write(
+    with open("aboba.pal", "w") as out_file_2:
+        out_file_2.write(
             "JASC-PAL\n0100\n{}\n".format(
                 len(new_colors),
             )
@@ -1418,8 +1418,74 @@ def make_swatch():
             r, g, b = hex_to_rgb_ints(color)
             color_lines.append(f"{r} {g} {b}")
         color_lines = color_lines[2:] + color_lines[:2]
-        out_file.write("\n".join(color_lines))
+        out_file_2.write("\n".join(color_lines))
     # }
+
+
+@command
+def reorder_achievements():
+    # {  ###
+    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+
+    AchievementIndex: TypeAlias = int
+    StepIndex: TypeAlias = int
+    Entry: TypeAlias = tuple[AchievementIndex, StepIndex]
+    entries: list[Entry] = []
+
+    achs = gamelib["achievements"]
+    for ach_index, ach in enumerate(achs[1:]):
+        for step_index in range(len(ach.get("steps", []))):
+            entries.append((ach_index, step_index))
+
+    def print_all_achievements():
+        for entry_index, d in enumerate(entries):
+            ach = achs[d[0] + 1]
+            step_index = d[1]
+            step = ach["steps"][step_index]
+            print(
+                "{} - {}\t{}\t(value: {})\tunl: {}".format(
+                    entry_index,
+                    ach["type"],
+                    step_index,
+                    step.get("value"),
+                    (
+                        step.get("unlocks_build_type")
+                        or step.get("unlocks_weapon_type")
+                        or step.get("unlocks_item_type")
+                    ),
+                )
+            )
+
+    # TODO:
+    # * clear screen from print_all_achievements
+    # * upon user input save order to file
+    # * load order from file
+    # * it shouldn't break upon adding new achievement + removing old one
+
+    print_all_achievements()
+    while True:
+        user_value = input("\nEnter q to quit, or 2 indices to swap them: ").strip()
+        if user_value == "q":
+            break
+
+        values = user_value.split()
+        if len(values) != 2:
+            print_all_achievements()
+            print("\nIncorrect value provided!")
+            continue
+
+        i1 = min(values)
+        i2 = max(values)
+        if (
+            (i1 == i2)
+            or (i1 < 0)
+            or (i2 < 0)
+            or (i1 >= len(entries))
+            or (i2 >= len(entries))
+        ):
+            print_all_achievements()
+            print("\nIncorrect value provided!")
+            continue
 
 
 ###

@@ -7,7 +7,8 @@ vim.keymap.set("n", "<leader>C", "o  continue;<ESC>", opts)
 vim.keymap.set("n", "<leader>B", "o  break;<ESC>", opts)
 
 function cli_command(cmd)
-    return [[uvx ruff check --output-format concise cli && uv run mypy cli && uv run cli\bf_cli.py ]] .. cmd
+    return [[uvx ruff check --output-format concise cli && uv run mypy --check-untyped-defs cli && uv run cli\bf_cli.py ]]
+        .. cmd
 end
 
 target = "game"
@@ -85,6 +86,12 @@ function rebuild_tasks()
         -- { "p_test_python", [[.venv\Scripts\pytest.exe]] },
         -- -- { "killall", [[start .nvim-personal\cli.ahk killall]] },
         { "l_lint_cpp", cli_command("lint") },
+        {
+            "m_reorder_achievements",
+            function()
+                vim.fn.execute([[term ]] .. cli_command("reorder_achievements"))
+            end,
+        },
         -- { "k_lint_python", [[.venv\Scripts\ruff.exe check cli]] },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },
