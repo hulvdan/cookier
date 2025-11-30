@@ -9,10 +9,10 @@ x impl: WEAPONS_PRICE
 x impl: ITEMS_PRICE
 x impl: CANT_HEAL
 x impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
+x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 
-* impl: STAT__MODS_CHANGED_BY__X__PERCENT
-* impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 * impl: STAT__WHEN_BELOW__X__PERCENT_HP
+* impl: STAT__MODS_CHANGED_BY__X__PERCENT
 *
 * проставить у всех оружий корректную точку спавна projectile
   ВЫПИСАТЬ ВСЕ ОРУЖИЯ
