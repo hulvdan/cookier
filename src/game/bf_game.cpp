@@ -4001,7 +4001,14 @@ int GetNumberOfTreesToSpawn() {  ///
   return 0;
 }
 
-f32 CalculateItemOrWeaponPrice(f32 price, int tier) {  ///
+enum ItemOrWeaponType {
+  ItemOrWeaponType_INVALID,
+  ItemOrWeaponType_ITEM,
+  ItemOrWeaponType_WEAPON,
+};
+
+f32 CalculateItemOrWeaponPrice(f32 price, int tier, ItemOrWeaponType type) {  ///
+  ASSERT(type);
   ASSERT(tier >= 0);
   ASSERT(tier < TOTAL_TIERS);
   price *= PRICE_SCALINGS_PER_TIER[tier];
@@ -4009,6 +4016,12 @@ f32 CalculateItemOrWeaponPrice(f32 price, int tier) {  ///
   const int wave = g.run.state.waveIndex + 1;
   price          = (price + wave + (price * wave * 0.1f));
 
+  if (type == ItemOrWeaponType_ITEM)
+    price *= 1 + (f32)g.run.state.stats[StatType_ITEMS_PRICE] / 100.0f;
+  else if (type == ItemOrWeaponType_WEAPON)
+    price *= 1 + (f32)g.run.state.stats[StatType_WEAPONS_PRICE] / 100.0f;
+
+  price = MAX(price, 1);
   return price;
 }
 
@@ -6917,11 +6930,14 @@ void DoUI() {
     f32 price_       = 0;
     int recyclePrice = 0;
     if (fb_weapon) {
-      price_       = CalculateItemOrWeaponPrice(fb_weapon->price(), tier);
+      price_
+        = CalculateItemOrWeaponPrice(fb_weapon->price(), tier, ItemOrWeaponType_WEAPON);
       recyclePrice = ToRecyclePrice(price_);
     }
     if (fb_item) {
-      price_       = CalculateItemOrWeaponPrice(fb_item->price(), fb_item->tier());
+      price_ = CalculateItemOrWeaponPrice(
+        fb_item->price(), fb_item->tier(), ItemOrWeaponType_ITEM
+      );
       recyclePrice = ToRecyclePrice(price_);
     }
     const int price = MAX(1, Round(_ApplyStatPrice(StatType_SHOP_PRICE, price_)));
@@ -9025,8 +9041,9 @@ void DoUI() {
           );
           markControlAsDefault(tookID);
 
-          const int recyclePrice
-            = ToRecyclePrice(CalculateItemOrWeaponPrice(fb->price(), fb->tier()));
+          const int recyclePrice = ToRecyclePrice(
+            CalculateItemOrWeaponPrice(fb->price(), fb->tier(), ItemOrWeaponType_ITEM)
+          );
 
           const bool recycled = componentButtonRecycle({
             .id    = CLAY_ID("button_picked_up_item_recycle"),

@@ -5,13 +5,13 @@ x привести в порядок последовательность ото
 x cooravie patrols
 x impl: SHOP_SELLS_AT_LEAST__X__WEAPONS
 x impl: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
+x impl: WEAPONS_PRICE
+x impl: ITEMS_PRICE
 
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
 * impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
 * impl: STAT__WHEN_BELOW__X__PERCENT_HP
 * impl: CANT_HEAL
-* impl: WEAPONS_PRICE
-* impl: ITEMS_PRICE
 * impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
 *
 * проставить у всех оружий корректную точку спавна projectile
