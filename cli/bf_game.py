@@ -14,16 +14,15 @@ USAGE:
 """
 
 # Imports.  {  ###
+import json
 from itertools import groupby
 from typing import Any, TypeAlias
 
 import bf_image
 import bf_swatch
-import yaml
 from bf_lib import (
     ART_DIR,
     ART_TEXTURES_DIR,
-    GAME_DIR,
     SRC_DIR,
     check_duplicates,
     game_settings,
@@ -31,6 +30,7 @@ from bf_lib import (
     genenum,
     hex_to_rgb_floats,
     hex_to_rgb_ints,
+    load_gamelib_cached,
     only_one_is_not_none,
     recursive_flattenizer,
     recursive_replace_transform,
@@ -46,6 +46,10 @@ from PIL import Image
 game_settings.itch_target = "hulvdan/cookier"
 game_settings.languages = ["russian", "english"]
 game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
+
+
+ACHIEVEMENTS_X = 8
+ACHIEVEMENTS_ORDER_FILEPATH = SRC_DIR / "game" / "gamelib_achievements_order.json"
 
 
 def field_to_list(container, field: str, ensure_length: int | None = None) -> None:
@@ -97,6 +101,32 @@ def process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None
     except Exception:
         print("ERROR HAPPENED DURING PROCESSING:", ", ".join(scoped_processing_args))
         raise
+    # }
+
+
+def explode_achievements(gamelib: dict) -> None:
+    # {  ###
+    for i, x in enumerate(gamelib["achievements"]):
+        if not i:
+            continue
+
+        if x["type"].startswith("FINISH_RUN_WITH_BUILD_"):
+            build_name = x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
+            x["build_type"] = build_name
+            x["name_locale"] = f"BUILD_{build_name}"
+            x["description_locale"] = "ACHIEVEMENT_DESCRIPTION_FINISH_RUN_WITH_BUILD"
+            x["hide_progress"] = True
+
+            for build in gamelib["builds"]:
+                if build["type"] == build_name:
+                    break
+            assert build
+            assert "steps" not in x
+            v = {"value": 1}
+            for f in ("unlocks_item_type", "unlocks_weapon_type"):
+                if build.get(f):
+                    v[f] = build.pop(f)
+            x["steps"] = [v]
     # }
 
 
@@ -517,6 +547,14 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
     if 1:  # {  ###
         more_less = ("more", "less")
 
+        genline(f"constexpr int ACHIEVEMENTS_X = {ACHIEVEMENTS_X};\n")
+
+        explode_achievements(gamelib)
+
+        gamelib["achievements_order"] = json.loads(
+            ACHIEVEMENTS_ORDER_FILEPATH.read_text()
+        )
+
         for i, x in enumerate_table("achievements"):
             if not i:
                 continue
@@ -525,22 +563,8 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
             can_have_stat = False
 
             if x["type"].startswith("FINISH_RUN_WITH_BUILD_"):
+                # NOTE: Gets filled during `explode_achievements`.
                 can_have_build = True
-                build_name = x["type"].removeprefix("FINISH_RUN_WITH_BUILD_")
-                x["build_type"] = build_name
-                x["name_locale"] = f"BUILD_{build_name}"
-                x["description_locale"] = "ACHIEVEMENT_DESCRIPTION_FINISH_RUN_WITH_BUILD"
-                x["hide_progress"] = True
-                for build in gamelib["builds"]:
-                    if build["type"] == build_name:
-                        break
-                assert build
-                assert "steps" not in x
-                v = {"value": 1}
-                for f in ("unlocks_item_type", "unlocks_weapon_type"):
-                    if build.get(f):
-                        v[f] = build.pop(f)
-                x["steps"] = [v]
 
             elif x["type"].startswith(
                 tuple(f"REACH_THIS_OR_{x.upper()}_STAT_" for x in more_less)
@@ -594,6 +618,7 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
                 )
             for stepIndex, step in enumerate(x["steps"]):
                 assert step["value"] != 0
+                # step["order"] = achievements_order[x["type"]][stepIndex]
 
                 unlock_fields = {
                     "unlocks_build_type": locked_builds,
@@ -906,7 +931,7 @@ def process_images():
     # Biomefying props.
     for f in ART_TEXTURES_DIR.glob("game_prop_*.png"):
         f.unlink()
-    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+    gamelib = load_gamelib_cached()
     get_color = lambda biome, x: hex_to_rgb_ints(hex(biome[x])[2:-2])
     for biome in gamelib["biomes"][1:]:
         t = biome["type"]
@@ -1425,7 +1450,8 @@ def make_swatch():
 @command
 def reorder_achievements():
     # {  ###
-    gamelib = yaml.safe_load((GAME_DIR / "gamelib.yaml").read_text(encoding="utf-8"))
+    gamelib = load_gamelib_cached()
+    explode_achievements(gamelib)
 
     AchievementIndex: TypeAlias = int
     StepIndex: TypeAlias = int
@@ -1437,14 +1463,29 @@ def reorder_achievements():
         for step_index in range(len(ach.get("steps", []))):
             entries.append((ach_index, step_index))
 
-    def print_all_achievements():
+    # TODO:
+    # * upon user input save order to file
+    # * achievement order gets read from file
+    #   and gets set during codegen in _process_gamelib
+    # * launch codegen in thread in `dump_order_to_file`.
+    #   upon new input, if thread is still alive, kill it and relaunch a new one
+    # * it shouldn't break upon adding new achievement + removing old one
+    # * clear screen from print_all_achievements
+    # * print as table
+
+    error = None
+    ERROR_INCORRECT_VALUE_PROVIDED = "\nIncorrect value provided!"
+    while True:
+        # Printing all achievements.
         for entry_index, d in enumerate(entries):
             ach = achs[d[0] + 1]
             step_index = d[1]
             step = ach["steps"][step_index]
             print(
-                "{} - {}\t{}\t(value: {})\tunl: {}".format(
+                "{}\t{}x{}\t{}\t{}\t(value: {})\tunl: {}".format(
                     entry_index,
+                    entry_index % ACHIEVEMENTS_X,
+                    entry_index // ACHIEVEMENTS_X,
                     ach["type"],
                     step_index,
                     step.get("value"),
@@ -1456,26 +1497,33 @@ def reorder_achievements():
                 )
             )
 
-    # TODO:
-    # * clear screen from print_all_achievements
-    # * upon user input save order to file
-    # * load order from file
-    # * it shouldn't break upon adding new achievement + removing old one
+        if error:
+            print(error)
+            error = None
 
-    print_all_achievements()
-    while True:
+        # User inputs value.
         user_value = input("\nEnter q to quit, or 2 indices to swap them: ").strip()
+
+        # Processing user's input.
         if user_value == "q":
             break
 
-        values = user_value.split()
-        if len(values) != 2:
-            print_all_achievements()
-            print("\nIncorrect value provided!")
+        value_strings = user_value.split()
+        if len(value_strings) != 2:
+            error = ERROR_INCORRECT_VALUE_PROVIDED
             continue
 
-        i1 = min(values)
-        i2 = max(values)
+        for v in value_strings:
+            if not v.isdigit():
+                error = ERROR_INCORRECT_VALUE_PROVIDED
+                break
+        if error:
+            continue
+
+        values = [int(x) for x in value_strings]
+
+        i1: int = min(values)
+        i2: int = max(values)
         if (
             (i1 == i2)
             or (i1 < 0)
@@ -1483,9 +1531,28 @@ def reorder_achievements():
             or (i1 >= len(entries))
             or (i2 >= len(entries))
         ):
-            print_all_achievements()
-            print("\nIncorrect value provided!")
+            error = ERROR_INCORRECT_VALUE_PROVIDED
             continue
+
+        # Swapping entries.
+        entries.append(entries[i1])
+        entries[i1] = entries[i2]
+        entries[i2] = entries.pop()
+
+        # Dumping to file.
+        steps_per_achievement: list[int] = [0] * (len(gamelib["achievements"]) - 1)
+        for ach_index, _ in entries:
+            steps_per_achievement[ach_index] += 1
+        data = []
+        for ach_index, step_index in entries:
+            data.append(
+                {
+                    "achievement_type": gamelib["achievements"][ach_index + 1]["type"],
+                    "step_index": step_index,
+                }
+            )
+        ACHIEVEMENTS_ORDER_FILEPATH.write_text(json.dumps(data, indent=4))
+    # }
 
 
 ###

@@ -367,7 +367,8 @@ table AchievementStep {
     unlocks_build_type: int;
     unlocks_weapon_type: int;
     unlocks_item_type: int;
-    order: int;
+    // nocheckin
+    // order: int;
 }
 
 table Achievement {
@@ -403,6 +404,11 @@ table ShootingPattern {
 table Hat {
     texture_id: int;
     anchor: Posf;
+}
+
+table AchievementOrder {
+    achievement_type: int;
+    step_index: int;
 }
 // GAME STUFF END
 
@@ -507,6 +513,8 @@ table GameLibrary {
     boss_cooldown_max_seconds: float = 4;
     boss_pre_shot_seconds: float = 0.1;
     boss_post_shot_seconds: float = 0.1;
+
+    achievements_order: [AchievementOrder] (required);
     // GAME STUFF END
 }
 
