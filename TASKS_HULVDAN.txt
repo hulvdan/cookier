@@ -27,18 +27,23 @@ x watch: Reaper for Game Audio Part 3 - Media Explorer & Sound Effect Library Se
 x посмотреть: Reaper for Game Audio Part 4 - Working With Tracks
 x reaper explorer should close upon pressing ESC
 x посмотреть: Reaper for Game Audio Part 5 - Aux Tracks
+x посмотреть: Reaper for Game Audio Part 6 - Plugins
+x посмотреть: Reaper for Game Audio Part 7 - Virtual Instruments
+x посмотреть: Reaper for Game Audio Part 8 - MIDI Basics
+x посмотреть: Reaper for Game Audio Part 9 - Bounce In Place, Fades, Strip Silence & More!
+x посмотреть: Reaper for Game Audio Part 10 - Exporting
+x export end-trimmed ogg + gamelib.py just copies them
 
-* посмотреть: Reaper for Game Audio Part 6 - Plugins
-* посмотреть: Reaper for Game Audio Part 7 - Virtual Instruments
-* посмотреть: Reaper for Game Audio Part 8 - MIDI Basics
-* посмотреть: Reaper for Game Audio Part 9 - Bounce In Place, Fades, Strip Silence & More!
-* посмотреть: Reaper for Game Audio Part 10 - Exporting
 * посмотреть: Reaper for Game Audio Part 11 - Sub-Projects
 * посмотреть: Reaper for Game Audio Part 12 - Reaper & FMOD
 * посмотреть: These Reaper Plugins Completely Changed My Sound Design Workflow
 * посмотреть: Tutorial Hidden Reaper Workflows with Akash Thakkar
 
-* скачать fabfilter
+* vst: скачать fabfilter
+* vst: скачать spring reverb (выглядел как деревянная педаль)
+* vst:
+* vst:
+* vst:
 * накачать клёвых vst от разработчиков игр
 
 * подумать о том, как нормально сделать сохранение в вебе
