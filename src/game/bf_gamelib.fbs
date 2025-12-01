@@ -65,6 +65,13 @@ struct Pos {
     y: int;
 }
 
+table Sound {
+    enum_value_id: uint (key);
+    variations: [string];
+    pitch_max: float = 1.1;
+    pitch_min: float = 0.9;
+}
+
 // GAME STUFF
 table Stat {
     big_icon_texture_id: int;
@@ -422,6 +429,8 @@ table GameLibrary {
 
     localization_debug_strings: [string] (required);
     localizations: [Localization] (required);
+
+    sounds: [Sound];
 
     // GAME STUFF
     ui_modal_fade: float;

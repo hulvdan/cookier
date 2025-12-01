@@ -9,24 +9,6 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x чит кнопка открытия всех ачивок
-x привести в порядок последовательность отображения ачивок
-x cooravie patrols
-x impl: SHOP_SELLS_AT_LEAST__X__WEAPONS
-x impl: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
-x impl: WEAPONS_PRICE
-x impl: ITEMS_PRICE
-x impl: CANT_HEAL
-x impl: XP_PERCENT_REQUIRED_TO_LEVEL_UP
-x impl: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
-x перекачать туториалы reaper
-x найти хорошую прогу для качания плейлиста youtube
-x watch: Reaper for Game Audio Part 1 - Intro and Setup
-x watch: Reaper for Game Audio Part 2 - Bonus Setup
-x watch: Reaper for Game Audio Part 3 - Media Explorer & Sound Effect Library Setup
-x посмотреть: Reaper for Game Audio Part 4 - Working With Tracks
-x reaper explorer should close upon pressing ESC
-x посмотреть: Reaper for Game Audio Part 5 - Aux Tracks
 x посмотреть: Reaper for Game Audio Part 6 - Plugins
 x посмотреть: Reaper for Game Audio Part 7 - Virtual Instruments
 x посмотреть: Reaper for Game Audio Part 8 - MIDI Basics
@@ -181,6 +163,8 @@ x посмотреть: Tutorial Hidden Reaper Workflows with Akash Thakkar
 * prod: SFX
 * prod: сакутиновая отправка event-ов аналитики
 * prod: аналитика
+*
+* fix расположение ховер карточек
 *
 * RELEASED!
 =======================
