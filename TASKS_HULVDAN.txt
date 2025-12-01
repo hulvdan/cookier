@@ -34,10 +34,16 @@ x посмотреть: Reaper for Game Audio Part 9 - Bounce In Place, Fades, S
 x посмотреть: Reaper for Game Audio Part 10 - Exporting
 x export end-trimmed ogg + gamelib.py just copies them
 x посмотреть: Reaper for Game Audio Part 11 - Sub-Projects
+x посмотреть: Reaper for Game Audio Part 12 - Reaper & FMOD
+x посмотреть: These Reaper Plugins Completely Changed My Sound Design Workflow
+x посмотреть: Tutorial Hidden Reaper Workflows with Akash Thakkar
 
-* посмотреть: Reaper for Game Audio Part 12 - Reaper & FMOD
-* посмотреть: These Reaper Plugins Completely Changed My Sound Design Workflow
-* посмотреть: Tutorial Hidden Reaper Workflows with Akash Thakkar
+* sfx: убрать необходимость прописывать всё в gamelib.yml
+* sfx: когда приходит ещё один эффект,
+  увеличиваем громкость такого же запущенного в течение 4-х кадров
+* скачать плагин folder items
+* reaper: сделать так, чтобы можно было использовать variations
+  (через регионы) + опробовать folder items
 
 * vst: скачать fabfilter
 * vst: скачать spring reverb (выглядел как деревянная педаль)
