@@ -12,7 +12,6 @@ from math import radians
 from pathlib import Path
 from typing import Any, TypeAlias
 
-import pydub
 import pytest
 from bf_game import *  # noqa
 from bf_lib import (
@@ -1006,79 +1005,63 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
 
 
 @timing
-def convert_audio() -> None:
+def do_audio() -> None:
     # {  ###
     AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
     AUDIO_DST_DIR = RESOURCES_DIR
 
-    src_files = {
-        p
-        for p in AUDIO_SRC_DIR.glob("*")
-        if p.suffix.lower() in AUDIO_EXTENSIONS and p.is_file()
-    }
+    src_files = {p for p in AUDIO_SRC_DIR.glob("*.ogg") if p.is_file()}
 
-    # Checking no duplicated names.
     if 1:
-        src_files_without_extensions_and_options: set[str] = set()
-        duplicated_filenames: list[str] = []
+        # Making symlinks.
         for src_file in src_files:
-            if src_file.stem in src_files_without_extensions_and_options:
-                duplicated_filenames.append(src_file.stem.split("__", 1)[0])
-            else:
-                src_files_without_extensions_and_options.add(src_file.stem)
-        if duplicated_filenames:
-            assert False, f"Found duplicated audio filenames: {duplicated_filenames}"
+            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
+            if dst_file.exists():
+                if dst_file.is_symlink():
+                    continue
+                else:
+                    dst_file.unlink()
+            dst_file.symlink_to(src_file)
 
-    # Converting.
-    for src_file in src_files:
-        dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
+        log.info(f"Make symlinks for {len(src_files)} audio files")
 
-        if dst_file.exists():
-            src_mtime = src_file.stat().st_mtime_ns
-            dst_mtime = dst_file.stat().st_mtime_ns
-            if dst_mtime == src_mtime:
-                continue
+    else:
+        # Copying.
+        copied = 0
+        for src_file in src_files:
+            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
 
-        log.info(f"Converting {src_file} -> {dst_file}")
+            if dst_file.exists():
+                src_mtime = src_file.stat().st_mtime_ns
+                dst_mtime = dst_file.stat().st_mtime_ns
+                if dst_mtime == src_mtime:
+                    continue
 
-        audio = pydub.AudioSegment.from_file(src_file)
-        audio = pydub.effects.normalize(audio)
+            copied += 1
+            log.info(f"Copying {src_file} -> {dst_file}")
 
-        # Trimming of audio start and end.
-        silent_ranges = pydub.silence.detect_silence(
-            audio, min_silence_len=40, silence_thresh=audio.dBFS - 14
+            shutil.copyfile(src_file, dst_file)
+            shutil.copystat(src_file, dst_file)
+
+        log.info(
+            f"Found {len(src_files)} total files. (copied {copied}, others have the same modified time)"
         )
-        start_trim = 0
-        len_audio = len(audio)
-        end_trim = len_audio
-        if silent_ranges:
-            if silent_ranges[0][0] == 0:
-                start_trim = silent_ranges[0][1]
-            if silent_ranges[-1][1] == len(audio):
-                end_trim = silent_ranges[-1][0]
 
-        audio = audio[start_trim:end_trim]
-        if start_trim:
-            audio = audio.fade_in(40)
-        if end_trim != len_audio:
-            audio = audio.fade_out(40)
-        audio.export(dst_file, format="ogg")
-
-        mtime = src_file.stat().st_mtime_ns
-        os.utime(dst_file, ns=(mtime, mtime))
-
-    # Removing orphan audio files from resources/.
+    # Removing orphan audio files from `resources` dir.
+    orphans = []
     for dst_file in AUDIO_DST_DIR.glob("*.ogg"):
         src_file = AUDIO_SRC_DIR / dst_file.relative_to(AUDIO_DST_DIR)
-        found = False
-        for ext in AUDIO_EXTENSIONS:
-            candidate = AUDIO_SRC_DIR / (dst_file.stem + ext)
-            if candidate.exists():
-                found = True
-                break
-        if not found:
-            log.info(f"Removing orphaned audio file: {dst_file}")
+        if not src_file.exists():
+            orphans.append(dst_file.name)
             dst_file.unlink()
+
+    if orphans:
+        log.info(
+            "Removed {} orphan audio files:\n{}".format(
+                len(orphans), "\n".join(x for x in orphans)
+            )
+        )
+
     # }
 
 
@@ -1086,7 +1069,7 @@ def convert_audio() -> None:
 def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     # {  ###
     remove_orphan_resources_files(platform, build_type)
-    convert_audio()
+    do_audio()
 
     if build_type == BuildType.Release and platform in (
         BuildPlatform.Web,
