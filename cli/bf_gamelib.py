@@ -546,29 +546,11 @@ def convert_gamelib_json_to_binary(
     # Enriching gamelib with sounds.
     if 1:
         sound_paths = list(RESOURCES_DIR.glob("*.ogg"))
-        genenum(
-            genline,
-            "Sound",
-            sorted(
-                {sound_path.stem.split("__", 1)[0].upper() for sound_path in sound_paths}
-            ),
-            add_count=True,
+        sound_types = sorted(
+            {sound_path.stem.split("__", 1)[0].upper() for sound_path in sound_paths}
         )
-        gamelib_sound_types: list[str] = [
-            i.pop("type") for i in gamelib.get("sounds", [])
-        ]
-        sound_types_from_files = {i.stem.split("__", 1)[0].upper() for i in sound_paths}
-        excessive_gamelib_sound_types: list[str] = []
-        for sound_type in gamelib_sound_types:
-            if sound_type not in sound_types_from_files:
-                excessive_gamelib_sound_types.append(sound_type)
+        genenum(genline, "Sound", sound_types, add_count=True)
 
-        if excessive_gamelib_sound_types:
-            assert False, "Found excessive sound types in gamelib: {}".format(
-                excessive_gamelib_sound_types
-            )
-
-        not_found_sounds: list[str] = []
         sound_variations_per_type: dict[str, list[Path]] = defaultdict(list)
         for sound_path in sound_paths:
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
@@ -577,63 +559,34 @@ def convert_gamelib_json_to_binary(
 
         genline("// Sound variations. {  ///")
         for sound_type, variations in sound_variations_per_type.items():
-            params_index = gamelib_sound_types.index(sound_type)
-            if params_index < 0:
-                not_found_sounds.append(sound_type)
-                continue
-
             genline("const char* const _soundVariations_{}[] {{".format(sound_type))
             for sound_path in variations:
                 genline('  "{}",'.format(sound_path.relative_to(PROJECT_DIR).as_posix()))
             genline("};")
         genline("// }")
 
-        if not_found_sounds:
-            assert False, f"Couldn't find {not_found_sounds} in gamelib"
-
         genline("""\nconst struct {
   const char* const * pathVariations = {};
   int variations = {};
-  int pool = {};
-  f32 volume = {};
   f32 pitchMin = {};
   f32 pitchMax = {};
 } g_sounds[] = {  ///""")
 
-        if not gamelib_sound_types:
+        if not sound_types:
             genline("  {},")
 
         for sound_type in sound_variations_per_type:
-            params = gamelib["sounds"][gamelib_sound_types.index(sound_type)]
-
-            pitch_min = params.get("pitch_min", 1)
-            pitch_max = params.get("pitch_max", 1)
-            if sound_type.startswith(("GAME_", "UI_")) and (
-                pitch_min == 1 and pitch_max == 1
-            ):
-                pitch_min = 0.90
-                pitch_max = 1.10
-
-            assert pitch_min > 0
-            assert pitch_max > 0
-            assert pitch_min <= pitch_max
-
-            pool = params.get("pool", 1)
-            assert pool >= 1
-
-            volume = params.get("volume", 1)
+            pitch_min = 0.90
+            pitch_max = 1.10
 
             variations_var = "_soundVariations_{}".format(sound_type)
             genline("  {")
             genline("    .pathVariations = {},".format(variations_var))
             genline("    .variations = ARRAY_COUNT({}),".format(variations_var))
-            genline("    .pool = {},".format(pool))
-            genline("    .volume = {},".format(volume))
             genline("    .pitchMin = {},".format(pitch_min))
             genline("    .pitchMax = {},".format(pitch_max))
             genline("  },")
 
-        gamelib.pop("sounds", None)
         genline("};\n")
 
     gamelib |= atlas_data
