@@ -545,49 +545,49 @@ def convert_gamelib_json_to_binary(
 
     # Enriching gamelib with sounds.
     if 1:
+        do_audio()
+
         sound_paths = list(RESOURCES_DIR.glob("*.ogg"))
-        sound_types = sorted(
-            {sound_path.stem.split("__", 1)[0].upper() for sound_path in sound_paths}
+
+        m = 2**32
+        sound_types_ = [
+            (t, (stable_hash(t) % m))
+            for t in {
+                sound_path.stem.split("__", 1)[0].upper() for sound_path in sound_paths
+            }
+        ]
+        sound_types_.sort(key=lambda x: x[1])
+        sound_types = [x[0] for x in sound_types_]
+        sound_enum_values = [x[1] for x in sound_types_]
+
+        genenum(
+            genline,
+            "Sound",
+            sound_types,
+            override_values=sound_enum_values,
+            enum_type="u32",
         )
-        genenum(genline, "Sound", sound_types, add_count=True)
+        genline("constexpr int SOUNDS_COUNT = {};\n".format(len(sound_enum_values)))
+        genline("constexpr int INDEX_TO_SOUND_[]{  ///")
+        for t in sound_types:
+            genline(f"  Sound_{t},")
+        genline("};")
+        genline("VIEW_FROM_ARRAY_DANGER(INDEX_TO_SOUND);\n")
 
         sound_variations_per_type: dict[str, list[Path]] = defaultdict(list)
         for sound_path in sound_paths:
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
-                sound_path
+                sound_path.name
             )
 
-        genline("// Sound variations. {  ///")
-        for sound_type, variations in sound_variations_per_type.items():
-            genline("const char* const _soundVariations_{}[] {{".format(sound_type))
-            for sound_path in variations:
-                genline('  "{}",'.format(sound_path.relative_to(PROJECT_DIR).as_posix()))
-            genline("};")
-        genline("// }")
-
-        genline("""\nconst struct {
-  const char* const * pathVariations = {};
-  int variations = {};
-  f32 pitchMin = {};
-  f32 pitchMax = {};
-} g_sounds[] = {  ///""")
-
-        if not sound_types:
-            genline("  {},")
-
-        for sound_type in sound_variations_per_type:
-            pitch_min = 0.90
-            pitch_max = 1.10
-
-            variations_var = "_soundVariations_{}".format(sound_type)
-            genline("  {")
-            genline("    .pathVariations = {},".format(variations_var))
-            genline("    .variations = ARRAY_COUNT({}),".format(variations_var))
-            genline("    .pitchMin = {},".format(pitch_min))
-            genline("    .pitchMax = {},".format(pitch_max))
-            genline("  },")
-
-        genline("};\n")
+        sounds: list[Any] = []
+        gamelib["sounds"] = sounds
+        for sound_type, enum_value_id in sound_types_:
+            x = {
+                "enum_value_id": enum_value_id,
+                "variations": sound_variations_per_type[sound_type],
+            }
+            sounds.append(x)
 
     gamelib |= atlas_data
     genenum(genline, "DrawZ", gamelib.pop("draw_z"), add_count=True)
@@ -1021,7 +1021,6 @@ def do_audio() -> None:
 def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     # {  ###
     remove_orphan_resources_files(platform, build_type)
-    do_audio()
 
     if build_type == BuildType.Release and platform in (
         BuildPlatform.Web,

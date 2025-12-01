@@ -851,6 +851,120 @@ struct _ReceivedEvents {  ///
   }
 };
 
+struct lframe {  ///
+  i64 value = i64_max;
+
+  constexpr static lframe Scaled(i64 v) {
+    return {.value = v * _BF_LOGICAL_FPS_SCALE};
+  }
+
+  constexpr static lframe Unscaled(i64 v) {
+    return {.value = v};
+  }
+
+  constexpr static lframe FromSeconds(f32 seconds) {
+    return {.value = (i64)(seconds * (f32)FIXED_FPS)};
+  }
+
+  f32 Progress(const lframe duration) const {
+    return (f32)value / (f32)duration.value;
+  }
+
+  bool operator==(const lframe& other) const {
+    return value == other.value;
+  }
+
+  bool operator>(const lframe& other) const {
+    return value > other.value;
+  }
+
+  bool operator<(const lframe& other) const {
+    return value < other.value;
+  }
+
+  bool operator>=(const lframe& other) const {
+    return value >= other.value;
+  }
+
+  bool operator<=(const lframe& other) const {
+    return value <= other.value;
+  }
+
+  const lframe operator+(const lframe& other) const {
+    return lframe::Unscaled(value + other.value);
+  }
+
+  const lframe operator-(const lframe& other) const {
+    return lframe::Unscaled(value - other.value);
+  }
+
+  void SetRand(lframe v);
+  void SetRand(lframe v1, lframe v2);
+  void SetRandSeconds(f32 v);
+  void SetRandSeconds(f32 v1, f32 v2);
+};
+
+struct FrameGame {
+  i64 _value = i64_max;
+
+  [[nodiscard]] static FrameGame Now() {  ///
+    FrameGame frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {  ///
+    return _value != i64_max;
+  }
+
+  void SetNow();
+
+  lframe Elapsed() const;
+};
+
+struct FrameVisual {
+  i64 _value = i64_max;
+
+  [[nodiscard]] static FrameVisual Now() {  ///
+    FrameVisual frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {  ///
+    return _value != i64_max;
+  }
+
+  void SetNow();
+
+  lframe Elapsed() const;
+};
+
+struct _LoadedSound {  ///
+  const char* gamelib_filepath = {};
+  ma_sound    ma_sound         = {};
+  Sound       type             = {};
+  int         variation        = {};
+};
+
+int _CmpLoadedSound(_LoadedSound* v1, _LoadedSound* v2) {  ///
+  if (v1->type > v2->type)
+    return 1;
+  if (v1->type < v2->type)
+    return -1;
+  if (v1->variation > v2->variation)
+    return 1;
+  if (v1->variation < v2->variation)
+    return -1;
+  return 0;
+}
+
+struct _LaunchedSound {  ///
+  FrameVisual frame        = {};
+  int         variation    = -1;
+  int         timesBoosted = 0;
+};
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -897,10 +1011,18 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
-      ma_sound* sounds[ARRAY_COUNT(g_sounds)];
-      int*      soundPlayedIndicesPerVariation[ARRAY_COUNT(g_sounds)];
+      Array<_LaunchedSound, SOUNDS_COUNT> launchedSounds   = {};
+      Vector<_LoadedSound>                loadedFileSounds = {};
+
+      Array<ma_sound, 512> playingSounds      = {};
+      int                  playingSoundsCount = 0;
+
+      // int*      soundPlayedIndicesPerVariation[ARRAY_COUNT(g_sounds)]  = {};
+
+      bool      works  = false;
       ma_engine engine = {};
-      f32       volume = 0.75f;
+
+      f32 volume = 0.75f;
     } _soundManager = {};
 
     bool ysdkLoaded       = false;
@@ -958,6 +1080,27 @@ struct EngineData {
   } draw;
 } ge = {};
 
+#define GRAND (ge.meta.logicRand)
+#define VRAND (ge.meta.visualRand)
+
+void lframe::SetRand(lframe v) {  ///
+  value = ge.meta.logicRand.Rand() % v.value;
+}
+
+void lframe::SetRand(lframe v1, lframe v2) {  ///
+  ASSERT(v2.value >= v1.value);
+  value = v1.value + ge.meta.logicRand.Rand() % (v2.value - v1.value);
+}
+
+void lframe::SetRandSeconds(f32 v) {  ///
+  value = (f32)FIXED_FPS * v * GRAND.FRand();
+}
+
+void lframe::SetRandSeconds(f32 v1, f32 v2) {  ///
+  ASSERT(v2 >= v1);
+  value = Round((f32)FIXED_FPS * Lerp(v1, v2, GRAND.FRand()));
+}
+
 Vector2 ScreenPosToLogical(Vector2 pos) {  ///
   return pos * ge.meta._screenToLogicalScale + ge.meta._screenToLogicalAdd;
 }
@@ -965,9 +1108,6 @@ Vector2 ScreenPosToLogical(Vector2 pos) {  ///
 Vector2 LogicalPosToScreen(Vector2 pos) {  ///
   return (pos - ge.meta._screenToLogicalAdd) / ge.meta._screenToLogicalScale;
 }
-
-#define GRAND (ge.meta.logicRand)
-#define VRAND (ge.meta.visualRand)
 
 Vector2 GetRandomPosInside(Random* random, const Rect* rect) {  ///
   Vector2 result{};
@@ -1025,30 +1165,38 @@ void GameReady() {  ///
 ma_sound* PlaySound(Sound sound) {  ///
   ASSERT_FALSE(ge.meta._drawing);
 
-  auto& params = g_sounds[sound];
+  if (!ge.meta._soundManager.works)
+    return;
 
-  auto  variation = GRAND.Rand() % params.variations;
-  auto& varIndex = ge.meta._soundManager.soundPlayedIndicesPerVariation[sound][variation];
-  auto  index    = variation * params.pool + varIndex;
-  ASSERT(index < params.variations * params.pool);
-  auto& s = ge.meta._soundManager.sounds[sound][index];
+  auto fb_sound = glib->sounds()->LookupByKey((u32)sound);
+  if (!fb_sound)
+    return;
 
-  if (ma_sound_is_playing(&s))
-    return nullptr;
+  // use ma_sound_init_from_data_source
 
-  ma_sound_seek_to_pcm_frame(&s, 0);
-
-  if (params.volume != 1.0f)
-    ma_sound_set_volume(&s, params.volume);
-
-  if (params.pitchMin != 1.0f) {
-    auto t = GRAND.FRand();
-    t      = EaseInOutQuad(t);
-    ma_sound_set_pitch(&s, Lerp(params.pitchMin, params.pitchMax, t));
-  }
-
-  ma_sound_start(&s);
-  IncrementSetZeroOn(&varIndex, params.pool);
+  // auto  variation = GRAND.Rand() % params.variations;
+  // auto& varIndex =
+  // ge.meta._soundManager.soundPlayedIndicesPerVariation[sound][variation];
+  // auto  index = variation * params.pool + varIndex;
+  // ASSERT(index < params.variations * params.pool);
+  // auto& s = ge.meta._soundManager.sounds[sound][index];
+  //
+  // if (ma_sound_is_playing(&s))
+  //   return nullptr;
+  //
+  // ma_sound_seek_to_pcm_frame(&s, 0);
+  //
+  // if (params.volume != 1.0f)
+  //   ma_sound_set_volume(&s, params.volume);
+  //
+  // if (params.pitchMin != 1.0f) {
+  //   auto t = GRAND.FRand();
+  //   t      = EaseInOutQuad(t);
+  //   ma_sound_set_pitch(&s, Lerp(params.pitchMin, params.pitchMax, t));
+  // }
+  //
+  // ma_sound_start(&s);
+  // IncrementSetZeroOn(&varIndex, params.pool);
 
   return &ge.meta._soundManager.sounds[sound][index];
 }
@@ -2847,34 +2995,95 @@ PeekFiletimeResult PeekFiletime(const char* filename) {  ///
 
 #endif
 
+void ReloadSounds() {  ///
+  m.works          = false;
+  auto& m          = ge.meta._soundManager;
+  m.launchedSounds = {};
+
+  for (auto& sound : m.playingSounds)
+    ma_sound_uninit(&sound);
+  m.playingSounds      = {};
+  m.playingSoundsCount = 0;
+
+  for (auto& sound : m.loadedFileSounds)
+    ma_sound_uninit(sound.ma_sound);
+  m.loadedFileSounds.Reset();
+
+  ma_fence fence{};
+  auto     fenceRes = ma_fence_init(&fence);
+  ASSERT(fenceRes == MA_SUCCESS);
+
+  if (fenceRes != MA_SUCCESS) {
+    LOGE("Error during ma_fence_init");
+    return;
+  }
+
+  int filesToLoad = 0;
+  for (auto fb : *glib->sounds())
+    filesToLoad += fb->variations()->size();
+
+  m.loadedFileSounds.Reserve(filesToLoad);
+
+  int index = -1;
+  for (auto fb : *glib->sounds()) {
+    auto flags = MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC;
+    if (params.pitchMin == params.pitchMax)
+      flags |= MA_SOUND_FLAG_NO_PITCH;
+
+    int variationIndex = -1;
+    for (auto fb_variation : *fb->variations()) {
+      index++;
+      variationIndex++;
+
+      m.loadedFileSounds[index] = {
+        .gamelib_filepath = fb_variation->c_str(),
+        .type             = (Sound)fb->enum_value_id(),
+        .variation        = variationIndex,
+      };
+
+      ma_sound_init_from_file_w(
+        &m.engine,
+        (const wchar_t*)fb_variation->c_str(),
+        flags,
+        nullptr,
+        &fence,
+        &(m.loadedFileSounds.base + index)->ma_sound
+      );
+    }
+  }
+
+  ma_fence_wait(&fence);
+  m.works = true;
+}
+
 void InitEngine() {  ///
   ZoneScopedN("InitEngine");
 
   ge.meta._keyboardState.base = SDL_GetKeyboardState(&ge.meta._keyboardState.count);
 
   size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardState.count;
-  for (auto& params : g_sounds) {
-    arenaSize += sizeof(ma_sound) * params.pool * params.variations;
-    arenaSize += sizeof(int) * params.variations;
-  }
+  // for (auto& params : g_sounds) {
+  //   arenaSize += sizeof(ma_sound) * params.pool * params.variations;
+  //   arenaSize += sizeof(int) * params.variations;
+  // }
   ge.meta._arena = MakeArena(arenaSize + ge.settings.additionalArenaSize);
 
-  if (Sound_COUNT) {  // Not initializing audio if there is no sounds in project.
+  if (SOUNDS_COUNT) {  // Not initializing audio if there is no sounds in project.
     auto config = ma_engine_config_init();
     if (ma_engine_init(&config, &ge.meta._soundManager.engine) != MA_SUCCESS)
       LOGW("Failed to init miniaudio engine");
     else {
       LOGI("miniaudio engine initialized");
 
-      FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
-        ge.meta._soundManager.sounds[i] = ALLOCATE_ZEROS_ARRAY(
-          &ge.meta._arena, ma_sound, g_sounds[i].pool * g_sounds[i].variations
-        );
-      }
-      FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
-        ge.meta._soundManager.soundPlayedIndicesPerVariation[i]
-          = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, int, g_sounds[i].variations);
-      }
+      // FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
+      //   ge.meta._soundManager.sounds[i] = ALLOCATE_ZEROS_ARRAY(
+      //     &ge.meta._arena, ma_sound, g_sounds[i].pool * g_sounds[i].variations
+      //   );
+      // }
+      // FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
+      //   ge.meta._soundManager.soundPlayedIndicesPerVariation[i]
+      //     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, int, g_sounds[i].variations);
+      // }
 
       int soundTypeIndex = 0;
       for (const auto params : g_sounds) {
@@ -2884,34 +3093,34 @@ void InitEngine() {  ///
 
         FOR_RANGE (int, variation, params.variations) {
           FOR_RANGE (int, poolInnerIndex, params.pool) {
-            if (!poolInnerIndex) {
-              // Loading original.
-              auto soundPath = params.pathVariations[variation];
-              auto error     = ma_sound_init_from_file(
-                &ge.meta._soundManager.engine,
-                soundPath,
-                flags,
-                nullptr,
-                nullptr,
-                &ge.meta._soundManager
-                   .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
-              );
-              if (error != MA_SUCCESS) {
-                LOGE("Failed to load sound %s: error code %d", soundPath, error);
-                break;
-              }
+            // if (!poolInnerIndex) {
+            // Loading original.
+            auto soundPath = params.pathVariations[variation];
+            auto error     = ma_sound_init_from_file(
+              &ge.meta._soundManager.engine,
+              soundPath,
+              flags,
+              nullptr,
+              nullptr,
+              &ge.meta._soundManager
+                 .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
+            );
+            if (error != MA_SUCCESS) {
+              LOGE("Failed to load sound %s: error code %d", soundPath, error);
+              break;
             }
-            else {
-              // Loading copies.
-              ma_sound_init_copy(
-                &ge.meta._soundManager.engine,
-                &ge.meta._soundManager.sounds[soundTypeIndex][variation * params.pool],
-                flags,
-                nullptr,
-                &ge.meta._soundManager
-                   .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
-              );
-            }
+            // }
+            // else {
+            //   // Loading copies.
+            //   ma_sound_init_copy(
+            //     &ge.meta._soundManager.engine,
+            //     &ge.meta._soundManager.sounds[soundTypeIndex][variation * params.pool],
+            //     flags,
+            //     nullptr,
+            //     &ge.meta._soundManager
+            //        .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
+            //   );
+            // }
           }
         }
 
@@ -2994,6 +3203,8 @@ void InitEngine() {  ///
     .end();
 
   ge.meta.uniformTexture = bgfx::createUniform("u_texture", bgfx::UniformType::Sampler);
+
+  ReloadSounds();
 
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
 
@@ -3680,119 +3891,25 @@ const char* PushTextToArena(Arena* arena, const char* text, int* outLen = nullpt
   return (const char*)s;
 }
 
-struct lframe {  ///
-  i64 value = i64_max;
+void FrameGame::SetNow() {  ///
+  ASSERT_FALSE(IsSet());
+  _value = ge.meta.frameGame;
+}
 
-  constexpr static lframe Scaled(i64 v) {
-    return {.value = v * _BF_LOGICAL_FPS_SCALE};
-  }
+lframe FrameGame::Elapsed() const {  ///
+  ASSERT(IsSet());
+  return lframe::Unscaled(ge.meta.frameGame - _value);
+}
 
-  constexpr static lframe Unscaled(i64 v) {
-    return {.value = v};
-  }
+void FrameVisual::SetNow() {  ///
+  ASSERT_FALSE(IsSet());
+  _value = ge.meta.frameVisual;
+}
 
-  constexpr static lframe FromSeconds(f32 seconds) {
-    return {.value = (i64)(seconds * (f32)FIXED_FPS)};
-  }
-
-  f32 Progress(const lframe duration) const {
-    return (f32)value / (f32)duration.value;
-  }
-
-  bool operator==(const lframe& other) const {
-    return value == other.value;
-  }
-
-  bool operator>(const lframe& other) const {
-    return value > other.value;
-  }
-
-  bool operator<(const lframe& other) const {
-    return value < other.value;
-  }
-
-  bool operator>=(const lframe& other) const {
-    return value >= other.value;
-  }
-
-  bool operator<=(const lframe& other) const {
-    return value <= other.value;
-  }
-
-  const lframe operator+(const lframe& other) const {
-    return lframe::Unscaled(value + other.value);
-  }
-
-  const lframe operator-(const lframe& other) const {
-    return lframe::Unscaled(value - other.value);
-  }
-
-  void SetRand(lframe v) {
-    value = ge.meta.logicRand.Rand() % v.value;
-  }
-
-  void SetRand(lframe v1, lframe v2) {
-    ASSERT(v2.value >= v1.value);
-    value = v1.value + ge.meta.logicRand.Rand() % (v2.value - v1.value);
-  }
-
-  void SetRandSeconds(f32 v) {
-    value = (f32)FIXED_FPS * v;
-  }
-
-  void SetRandSeconds(f32 v1, f32 v2) {
-    ASSERT(v2 >= v1);
-    value = Round((f32)FIXED_FPS * Lerp(v1, v2, GRAND.FRand()));
-  }
-};
-
-struct FrameGame {
-  i64 _value = i64_max;
-
-  [[nodiscard]] static FrameGame Now() {  ///
-    FrameGame frame{};
-    frame.SetNow();
-    return frame;
-  }
-
-  bool IsSet() const {  ///
-    return _value != i64_max;
-  }
-
-  void SetNow() {  ///
-    ASSERT_FALSE(IsSet());
-    _value = ge.meta.frameGame;
-  }
-
-  lframe Elapsed() const {  ///
-    ASSERT(IsSet());
-    return lframe::Unscaled(ge.meta.frameGame - _value);
-  }
-};
-
-struct FrameVisual {
-  i64 _value = i64_max;
-
-  [[nodiscard]] static FrameVisual Now() {  ///
-    FrameVisual frame{};
-    frame.SetNow();
-    return frame;
-  }
-
-  bool IsSet() const {  ///
-    return _value != i64_max;
-  }
-
-  void SetNow() {  ///
-    ASSERT_FALSE(IsSet());
-    _value = ge.meta.frameVisual;
-  }
-
-  lframe Elapsed() const {  ///
-    ASSERT(IsSet());
-    return lframe::Unscaled(ge.meta.frameVisual - _value);
-  }
-};
+lframe FrameVisual::Elapsed() const {  ///
+  ASSERT(IsSet());
+  return lframe::Unscaled(ge.meta.frameVisual - _value);
+}
 
 SDL_AppResult EngineUpdate() {  ///
   ZoneScoped;
@@ -3860,6 +3977,7 @@ SDL_AppResult EngineUpdate() {  ///
           "../../../resources/atlas_d2.basis",
           {glib->atlas_size_x(), glib->atlas_size_y()}
         );
+        ReloadSounds();
         LOGI("Gamelib reloaded!");
       }
     }
