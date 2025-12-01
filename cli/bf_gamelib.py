@@ -18,7 +18,6 @@ from bf_lib import (
     ART_DIR,
     ART_TEXTURES_DIR,
     ASSETS_DIR,
-    AUDIO_EXTENSIONS,
     FLATBUFFERS_GENERATED_DIR,
     FLATC_PATH,
     GAME_DIR,
