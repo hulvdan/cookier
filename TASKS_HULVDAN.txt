@@ -33,8 +33,8 @@ x посмотреть: Reaper for Game Audio Part 8 - MIDI Basics
 x посмотреть: Reaper for Game Audio Part 9 - Bounce In Place, Fades, Strip Silence & More!
 x посмотреть: Reaper for Game Audio Part 10 - Exporting
 x export end-trimmed ogg + gamelib.py just copies them
+x посмотреть: Reaper for Game Audio Part 11 - Sub-Projects
 
-* посмотреть: Reaper for Game Audio Part 11 - Sub-Projects
 * посмотреть: Reaper for Game Audio Part 12 - Reaper & FMOD
 * посмотреть: These Reaper Plugins Completely Changed My Sound Design Workflow
 * посмотреть: Tutorial Hidden Reaper Workflows with Akash Thakkar
