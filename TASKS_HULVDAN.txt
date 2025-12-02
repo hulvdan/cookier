@@ -13,9 +13,9 @@ x sfx: загуглить старую библу fmod
 x sfx: загружаются из файлов
 x sfx: проигрываются
 x sfx: uninit engine on exiting game
+x sfx: проигрываются копии (и отрабатывает uninit)
 
-* sfx: проигрываются копии (и отрабатывает uninit)
-* sfx: hot reload работает (reloadsounds должны текущие проигрываемые файлы дропнуть)
+* sfx: hot reload работает
 * sfx: проверить web build с RELOAD_SOUNDS_FENCE
        -> затем решить: убрать или оставить RELOAD_SOUNDS_FENCE
 * sfx: volume увеличивается
