@@ -17,8 +17,12 @@ x sfx: проигрываются копии (и отрабатывает uninit
 x sfx: fix web
 x sfx: проверить web build с RELOAD_SOUNDS_FENCE
        -> затем решить: убрать или оставить RELOAD_SOUNDS_FENCE
+x sfx: ещё раз попробовал init_from_data_source
 
 * sfx: pitch
+* sfx: музыка заглушка
+* sfx: music / sfx группы
+* sfx: можно сменить громкость звука / музыки
 * sfx: volume увеличивается
 * sfx: hot reload работает
 * sfx: variations (добавить какие-либо вариации звукам)
