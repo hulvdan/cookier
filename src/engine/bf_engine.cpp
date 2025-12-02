@@ -1222,20 +1222,26 @@ void PlaySound(Sound sound) {  ///
   if (index < 0)
     return;
 
-  const auto& original = m.soundsLoadedFromFiles[index];
+  auto& original = m.soundsLoadedFromFiles[index];
 
+#if 1
   const auto dataSource = ma_sound_get_data_source(&original.ma_sound);
   ASSERT(dataSource);
 
-  ma_sound   s;
-  const auto result
-    = ma_sound_init_from_data_source(&m.engine, dataSource, original.flags, nullptr, &s);
-  if (result == MA_SUCCESS) {
+  ma_sound s;
+  if (ma_sound_init_from_data_source(
+        &m.engine, dataSource, original.flags | MA_SOUND_FLAG_WAIT_INIT, nullptr, &s
+      )
+      == MA_SUCCESS)
+  {
+    // ma_sound_set_end_callback(&s, _OnSoundEnd, nullptr);
     ma_sound_start(&s);
-    ma_sound_set_end_callback(&s, _OnSoundEnd, nullptr);
   }
   else
     INVALID_PATH;
+#else
+  ma_sound_start(&original.ma_sound);
+#endif
 }
 
 BF_FORCE_INLINE void DrawGroup_Begin(DrawZ z) {  ///
@@ -3025,7 +3031,7 @@ PeekFiletimeResult PeekFiletime(const char* filename) {  ///
 
 #endif
 
-#define RELOAD_SOUNDS_FENCE (0)
+#define RELOAD_SOUNDS_FENCE (1)
 
 void ReloadSounds() {  ///
   auto& m = ge.meta._soundManager;
@@ -3043,18 +3049,20 @@ void ReloadSounds() {  ///
     return;
 
   auto config = ma_engine_config_init();
-  if (ma_engine_init(&config, &ge.meta._soundManager.engine) != MA_SUCCESS) {
+  if (ma_engine_init(&config, &m.engine) != MA_SUCCESS) {
     LOGW("Failed to init miniaudio engine");
     INVALID_PATH;
     return;
   }
 
+  if (ma_engine_set_volume(&m.engine, m.volume) != MA_SUCCESS)
+    INVALID_PATH;
+
   LOGI("miniaudio engine initialized");
 
-  ma_fence fence{};
-
 #if RELOAD_SOUNDS_FENCE
-  auto fenceRes = ma_fence_init(&fence);
+  ma_fence fence{};
+  auto     fenceRes = ma_fence_init(&fence);
   ASSERT(fenceRes == MA_SUCCESS);
 
   if (fenceRes != MA_SUCCESS) {
@@ -3069,11 +3077,13 @@ void ReloadSounds() {  ///
     filesToLoad += fb->variations()->size();
 
   m.soundsLoadedFromFiles.Reserve(filesToLoad);
-  auto oldBase = m.soundsLoadedFromFiles.base;
+  const auto oldBase = m.soundsLoadedFromFiles.base;
+
+  bool errored = false;
 
   int index = -1;
   for (auto fb : *fb_sounds) {
-    u32 customFlags = 0;
+    u32 customFlags = MA_SOUND_FLAG_NO_SPATIALIZATION;
     if (fb->pitch_min() == fb->pitch_max())
       customFlags |= MA_SOUND_FLAG_NO_PITCH;
 
@@ -3089,33 +3099,43 @@ void ReloadSounds() {  ///
       index++;
       variationIndex++;
 
-      *m.soundsLoadedFromFiles.Add() = {
+      auto slot = m.soundsLoadedFromFiles.Add();
+
+      *slot = {
         .gamelib_filepath = fb_variation->c_str(),
         .type             = (Sound)fb->enum_value_id(),
         .variation        = variationIndex,
         .flags            = customFlags,
       };
 
-      auto f = (RELOAD_SOUNDS_FENCE ? &fence : nullptr);
-
-      ma_sound_init_from_file(
-        &m.engine,
-        fb_variation->c_str(),
-        flags,
-        nullptr,
-        f,
-        &(m.soundsLoadedFromFiles.base + index)->ma_sound
-      );
+      if (ma_sound_init_from_file(
+            &m.engine,
+            fb_variation->c_str(),
+            flags,
+            nullptr,
+#if RELOAD_SOUNDS_FENCE
+            &fence,
+#else
+            nullptr,
+#endif
+            &slot->ma_sound
+          )
+          != MA_SUCCESS)
+      {
+        errored = true;
+        INVALID_PATH;
+      }
     }
   }
 
   ASSERT(oldBase == m.soundsLoadedFromFiles.base);
 
 #if RELOAD_SOUNDS_FENCE
-  ma_fence_wait(&fence);
+  if (ma_fence_wait(&fence) != MA_SUCCESS)
+    INVALID_PATH;
 #endif
 
-  m.works = true;
+  m.works = !errored;
 }
 
 void InitEngine() {  ///

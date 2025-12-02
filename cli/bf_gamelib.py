@@ -577,7 +577,7 @@ def convert_gamelib_json_to_binary(
         sound_variations_per_type: dict[str, list[Path]] = defaultdict(list)
         for sound_path in sound_paths:
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
-                sound_path.name
+                "resources/" + sound_path.name
             )
 
         sounds: list[Any] = []

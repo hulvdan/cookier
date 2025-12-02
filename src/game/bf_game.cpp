@@ -4831,8 +4831,6 @@ void GameInitAfterLoadingSavedata() {
           locked = true;
         }
       }
-
-      ASSERT(locked);
     }
 
     ASSERT(g.player.achievementStepsCompleted >= 0);
