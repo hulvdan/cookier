@@ -365,21 +365,6 @@ if ("${PLATFORM}" STREQUAL "Win")
     )
 endif()
 
-# Copying resources.
-#-----------------------------------------------------------------------------------
-add_custom_command(
-    TARGET game PRE_BUILD
-    COMMAND ${CMAKE_COMMAND}
-      -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:game>/resources
-    DEPENDS GameAnalytics
-)
-add_custom_command(
-    TARGET tests PRE_BUILD
-    COMMAND ${CMAKE_COMMAND}
-      -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:tests>/resources
-    DEPENDS GameAnalytics
-)
-
 # Enabling Linting On Windows.
 #-----------------------------------------------------------------------------------
 if(WIN32 AND CMAKE_GENERATOR STREQUAL Ninja)
