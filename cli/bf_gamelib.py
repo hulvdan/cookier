@@ -1191,6 +1191,27 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
             texture_name_2_id, genline, atlases_data[0], original_texture_sizes
         )
         genline("///")
+
+    symlink_resources_for = (
+        (BuildPlatform.Win, BuildType.Debug),
+        (BuildPlatform.Web, BuildType.Debug),
+    )
+    path = {
+        (BuildPlatform.Win, BuildType.Debug): ".cmake/vs17/Debug",
+        (BuildPlatform.Win, BuildType.RelWithDebInfo): ".cmake/vs17/RelWithDebugInfo",
+        (BuildPlatform.Win, BuildType.Release): ".cmake/vs17/Release",
+        (BuildPlatform.Web, BuildType.Debug): ".cmake/Web_Debug",
+        (BuildPlatform.Web, BuildType.Release): ".cmake/Web_Release",
+        (BuildPlatform.WebYandex, BuildType.Release): ".cmake/WebYandex_Release",
+    }[(platform, build_type)]
+
+    if (platform, build_type) in symlink_resources_for:
+        recursive_mkdir(path)
+        p = Path(path + "/resources")
+        if not p.exists():
+            p.symlink_to(RESOURCES_DIR, target_is_directory=True)
+    else:
+        shutil.copytree(RESOURCES_DIR, path)
     # }
 
 

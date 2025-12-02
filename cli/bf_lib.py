@@ -194,15 +194,8 @@ def run_command(
     # }
 
 
-def recursive_mkdir(path: Path) -> None:
-    # {  ###
-    parents = list(path.parents)
-    parents.insert(0, path)
-    count = len(parents)
-
-    for i in range(count):
-        parents[-i - 1].mkdir(exist_ok=True)
-    # }
+def recursive_mkdir(path: Path | str) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
 
 
 def batched(list_: list[T], n: int) -> Iterator[list[T]]:
