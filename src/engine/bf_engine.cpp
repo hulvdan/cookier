@@ -1045,7 +1045,10 @@ struct EngineData {
       bool      works  = false;
       ma_engine engine = {};
 
-      f32 volume = 0.75f;
+      f32                            volume             = 0.75f;
+      Array<ma_sound, BF_MAX_SOUNDS> playingSounds      = {};
+      Array<bool, BF_MAX_SOUNDS>     playingSoundsBools = {};
+      int                            playingSoundsCount = 0;
     } _soundManager = {};
 
     bool ysdkLoaded       = false;
@@ -1185,7 +1188,7 @@ void GameReady() {  ///
 #endif
 }
 
-void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
+void _OnSoundEnd(void* _userData, ma_sound* sound) {  ///
   auto& m = ge.meta._soundManager;
   ASSERT(m.works);
   *m.soundsToUninitialize.Add() = sound;
@@ -1198,14 +1201,17 @@ void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
 // * ma_sound_set_stop_time_in_milliseconds()
 void PlaySound(Sound sound) {  ///
   ASSERT_FALSE(ge.meta._drawing);
-  if (!ge.meta._soundManager.works)
+  auto& m = ge.meta._soundManager;
+
+  if (!m.works)
+    return;
+
+  if (m.playingSoundsCount >= m.playingSounds.count)
     return;
 
   // const auto fb_sound = glib->sounds()->LookupByKey((u32)sound);
   // if (!fb_sound)
   //   return;
-
-  auto& m = ge.meta._soundManager;
 
   int index          = -1;
   int iterationIndex = -1;
@@ -1224,24 +1230,47 @@ void PlaySound(Sound sound) {  ///
 
   auto& original = m.soundsLoadedFromFiles[index];
 
-#if 1
-  const auto dataSource = ma_sound_get_data_source(&original.ma_sound);
-  ASSERT(dataSource);
+  // const auto dataSource = ma_sound_get_data_source(&original.ma_sound);
+  // ASSERT(dataSource);
 
-  ma_sound s;
-  if (ma_sound_init_from_data_source(
-        &m.engine, dataSource, original.flags | MA_SOUND_FLAG_WAIT_INIT, nullptr, &s
-      )
-      == MA_SUCCESS)
-  {
-    // ma_sound_set_end_callback(&s, _OnSoundEnd, nullptr);
-    ma_sound_start(&s);
+  // TODO:
+  // * freelist (pool?) allocator
+  ma_sound* s = nullptr;
+  FOR_RANGE (int, i, m.playingSoundsBools.count) {
+    auto& v = m.playingSoundsBools[i];
+    if (v)
+      continue;
+    s = m.playingSounds.base + i;
+    v = true;
+    break;
   }
-  else
+  if (!s)
+    return;
+
+  if (ma_sound_init_copy(
+        &m.engine,
+        &original.ma_sound,
+        original.flags | MA_SOUND_FLAG_WAIT_INIT,
+        nullptr,
+        s
+      )
+      != MA_SUCCESS)
+  {
     INVALID_PATH;
-#else
-  ma_sound_start(&original.ma_sound);
-#endif
+    return;
+  }
+
+  if (ma_sound_set_end_callback(s, _OnSoundEnd, nullptr) != MA_SUCCESS) {
+    INVALID_PATH;
+    return;
+  }
+
+  if (ma_sound_start(s) != MA_SUCCESS) {
+    INVALID_PATH;
+    return;
+  }
+
+  m.playingSoundsCount++;
 }
 
 BF_FORCE_INLINE void DrawGroup_Begin(DrawZ z) {  ///
@@ -4001,8 +4030,14 @@ SDL_AppResult EngineUpdate() {  ///
     // Uninitializing ended sounds.
     {
       auto& m = ge.meta._soundManager;
-      for (auto sound : m.soundsToUninitialize)
+      for (auto sound : m.soundsToUninitialize) {
         ma_sound_uninit(sound);
+        auto index = sound - m.playingSounds.base;
+        ASSERT(sound == m.playingSounds.base + index);
+        ASSERT(m.playingSoundsBools[index]);
+        m.playingSoundsBools[index] = false;
+        m.playingSoundsCount--;
+      }
       m.soundsToUninitialize.Reset();
     }
 

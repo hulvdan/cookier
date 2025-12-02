@@ -72,6 +72,11 @@ table Sound {
     pitch_min: float = 0.9;
 }
 
+table Flattened {
+  start: int;
+  end: int;
+}
+
 // GAME STUFF
 table Stat {
     big_icon_texture_id: int;
@@ -204,11 +209,6 @@ table WeaponProperty {
 table EffectPlaceholderValue {
     ints: [int];
     floats: [float];
-}
-
-table Flattened {
-  start: int;
-  end: int;
 }
 
 table Effect {
@@ -375,8 +375,6 @@ table AchievementStep {
     unlocks_build_type: int;
     unlocks_weapon_type: int;
     unlocks_item_type: int;
-    // nocheckin
-    // order: int;
 }
 
 table Achievement {
