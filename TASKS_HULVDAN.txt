@@ -14,11 +14,13 @@ x sfx: загружаются из файлов
 x sfx: проигрываются
 x sfx: uninit engine on exiting game
 x sfx: проигрываются копии (и отрабатывает uninit)
-
-* sfx: hot reload работает
-* sfx: проверить web build с RELOAD_SOUNDS_FENCE
+x sfx: fix web
+x sfx: проверить web build с RELOAD_SOUNDS_FENCE
        -> затем решить: убрать или оставить RELOAD_SOUNDS_FENCE
+
+* sfx: pitch
 * sfx: volume увеличивается
+* sfx: hot reload работает
 * sfx: variations (добавить какие-либо вариации звукам)
 * sfx: какая-либо проверка на peak REAPER / PYTHON
 * sfx:
