@@ -170,6 +170,8 @@ x sfx: uninit engine on exiting game
 *
 * RELEASED!
 =======================
+* sfx: использовать девайс от SDL?
+  https://miniaud.io/docs/examples/engine_sdl.html
 * HASH MAP for loaded sounds
 * «this weapon» change to «». if no «this weapon» -> show «all weapons»
 * mob projectiles are always on top

@@ -11,3 +11,5 @@ constexpr f32 FIXED_DT  = 1.0f / (f32)FIXED_FPS;
 constexpr int _BF_MIN_TARGET_FPS = 20;
 
 constexpr int BF_MAX_FONT_ATLAS_SIZE = 4096;
+
+constexpr int BF_MAX_SOUNDS = 200;
