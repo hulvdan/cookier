@@ -3,7 +3,7 @@ UI_WAVE;Волна;Wave;
 UI_STATS;Характеристики;Stats;
 UI_DODGE;Уворот;Dodged;
 UI_LEVEL_UP;Новый Уровень;Level Up;
-UI_LEVEL_UP_NUMBER;+Уровень;Level Up;
+UI_LEVEL_UP_NUMBER;Уровень;Level Up;
 UI_SHOP;Магазин;Shop;
 UI_ITEM;Предмет;Item;
 UI_ITEMS;Предметы;Items;
