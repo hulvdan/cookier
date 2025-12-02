@@ -1023,7 +1023,7 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
-      ReaderWriterQueue<ma_sound*> soundsToUninitialize;
+      ReaderWriterQueue<ma_sound*> soundsToUninitialize{};
       Vector<_SoundLoadedFromFile> soundsLoadedFromFiles = {};
 
       bool      works  = false;
@@ -1175,8 +1175,7 @@ void GameReady() {  ///
 void _OnSoundEnd(void* _userData, ma_sound* sound) {  ///
   auto& m = ge.meta._soundManager;
   ASSERT(m.works);
-
-  *m.soundsToUninitialize.Add() = sound;
+  m.soundsToUninitialize.enqueue(sound);
 }
 
 // TODO: Options struct to support
@@ -3199,9 +3198,10 @@ void InitEngine() {  ///
     glibTime = glibPeekResult.filetime;
   glibFile = TryLoadFile(GAMELIB_DEBUG_PATH);
 #  endif
+#endif
+
   if (!glibFile)
     glibFile = LoadFile(glibPath, nullptr);
-#endif
 
   glib = BFGame::GetGameLibrary(glibFile);
 
@@ -4017,7 +4017,9 @@ SDL_AppResult EngineUpdate() {  ///
     {
       auto& m = ge.meta._soundManager;
 
-      for (auto sound : m.soundsToUninitialize) {
+      ma_sound* sound = nullptr;
+
+      while (m.soundsToUninitialize.try_dequeue(sound)) {
         ma_sound_uninit(sound);
 
         auto index = sound - m.playingSounds.base;
