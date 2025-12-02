@@ -9,6 +9,17 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
+x sfx: загуглить старую библу fmod
+
+* sfx: загружаются из файлов
+* sfx: проигрываются
+* sfx: hot reload работает (reloadsounds должны текущие проигрываемые файлы дропнуть)
+* sfx: RELOAD_SOUNDS_FENCE
+* sfx: uninit engine on exiting game
+* sfx: volume увеличивается
+* sfx: variations
+* sfx: какая-либо проверка на peak где-угодно
+* sfx:
 * sfx: проигрывание звуков (init через копирование data, array сейчас проигрываемых звуков ... )
 * sfx: когда приходит ещё один эффект,
   увеличиваем громкость такого же запущенного в течение 4-х кадров
@@ -157,6 +168,7 @@ WORKING SINCE 2025-09-07
 *
 * RELEASED!
 =======================
+* HASH MAP for loaded sounds
 * «this weapon» change to «». if no «this weapon» -> show «all weapons»
 * mob projectiles are always on top
 * норм иконка паузы. Игрок должен сразу понять, что это «кнопка паузы»

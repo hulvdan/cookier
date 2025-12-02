@@ -904,16 +904,16 @@ struct lframe {  ///
   void SetRandSeconds(f32 v1, f32 v2);
 };
 
-struct FrameGame {
+struct FrameGame {  ///
   i64 _value = i64_max;
 
-  [[nodiscard]] static FrameGame Now() {  ///
+  [[nodiscard]] static FrameGame Now() {
     FrameGame frame{};
     frame.SetNow();
     return frame;
   }
 
-  bool IsSet() const {  ///
+  bool IsSet() const {
     return _value != i64_max;
   }
 
@@ -922,16 +922,16 @@ struct FrameGame {
   lframe Elapsed() const;
 };
 
-struct FrameVisual {
+struct FrameVisual {  ///
   i64 _value = i64_max;
 
-  [[nodiscard]] static FrameVisual Now() {  ///
+  [[nodiscard]] static FrameVisual Now() {
     FrameVisual frame{};
     frame.SetNow();
     return frame;
   }
 
-  bool IsSet() const {  ///
+  bool IsSet() const {
     return _value != i64_max;
   }
 
@@ -940,14 +940,32 @@ struct FrameVisual {
   lframe Elapsed() const;
 };
 
-struct _LoadedSound {  ///
+struct _SoundLoadedFromFile;
+int _CmpSoundLoadedFromFile(  ///
+  const _SoundLoadedFromFile* v1,
+  const _SoundLoadedFromFile* v2
+);
+
+struct _SoundLoadedFromFile {  ///
   const char* gamelib_filepath = {};
   ma_sound    ma_sound         = {};
   Sound       type             = {};
   int         variation        = {};
+  u32         flags            = {};
+
+  bool operator==(const _SoundLoadedFromFile& other) const {
+    return _CmpSoundLoadedFromFile(this, &other) == 0;
+  }
+
+  bool operator<=(const _SoundLoadedFromFile& other) const {
+    return _CmpSoundLoadedFromFile(this, &other) != 1;
+  }
 };
 
-int _CmpLoadedSound(_LoadedSound* v1, _LoadedSound* v2) {  ///
+int _CmpSoundLoadedFromFile(
+  const _SoundLoadedFromFile* v1,
+  const _SoundLoadedFromFile* v2
+) {  ///
   if (v1->type > v2->type)
     return 1;
   if (v1->type < v2->type)
@@ -959,11 +977,21 @@ int _CmpLoadedSound(_LoadedSound* v1, _LoadedSound* v2) {  ///
   return 0;
 }
 
-struct _LaunchedSound {  ///
-  FrameVisual frame        = {};
-  int         variation    = -1;
-  int         timesBoosted = 0;
-};
+// struct SoundHandle {  ///
+//   i64   id    = {};
+//   Sound sound = {};
+// };
+
+// struct _SoundPlaying {  ///
+//   i64      id    = {};
+//   ma_sound sound = {};
+// };
+
+// struct _SoundMeta {  ///
+//   FrameVisual frame        = {};
+//   int         variation    = -1;
+//   int         timesBoosted = 0;
+// };
 
 struct EngineData {
   struct Meta {
@@ -1011,13 +1039,8 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
-      Array<_LaunchedSound, SOUNDS_COUNT> launchedSounds   = {};
-      Vector<_LoadedSound>                loadedFileSounds = {};
-
-      Array<ma_sound, 512> playingSounds      = {};
-      int                  playingSoundsCount = 0;
-
-      // int*      soundPlayedIndicesPerVariation[ARRAY_COUNT(g_sounds)]  = {};
+      Vector<ma_sound*>            soundsToUninitialize  = {};
+      Vector<_SoundLoadedFromFile> soundsLoadedFromFiles = {};
 
       bool      works  = false;
       ma_engine engine = {};
@@ -1162,50 +1185,57 @@ void GameReady() {  ///
 #endif
 }
 
-ma_sound* PlaySound(Sound sound) {  ///
-  ASSERT_FALSE(ge.meta._drawing);
+void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
+  auto& m = ge.meta._soundManager;
+  ASSERT(m.works);
+  *m.soundsToUninitialize.Add() = sound;
+}
 
+// TODO: Options struct to support
+// * increasing volume of recently started sounds
+// * variations
+// * ma_sound_set_stop_time_in_pcm_frames()
+// * ma_sound_set_stop_time_in_milliseconds()
+void PlaySound(Sound sound) {  ///
+  ASSERT_FALSE(ge.meta._drawing);
   if (!ge.meta._soundManager.works)
     return;
 
-  auto fb_sound = glib->sounds()->LookupByKey((u32)sound);
-  if (!fb_sound)
+  // const auto fb_sound = glib->sounds()->LookupByKey((u32)sound);
+  // if (!fb_sound)
+  //   return;
+
+  auto& m = ge.meta._soundManager;
+
+  int index          = -1;
+  int iterationIndex = -1;
+  for (const auto& x : m.soundsLoadedFromFiles) {
+    iterationIndex++;
+    if (x.type != sound)
+      continue;
+
+    index = iterationIndex;
+    break;
+  }
+
+  ASSERT(index >= 0);
+  if (index < 0)
     return;
 
-  // use ma_sound_init_from_data_source
+  const auto& original = m.soundsLoadedFromFiles[index];
 
-  // auto  variation = GRAND.Rand() % params.variations;
-  // auto& varIndex =
-  // ge.meta._soundManager.soundPlayedIndicesPerVariation[sound][variation];
-  // auto  index = variation * params.pool + varIndex;
-  // ASSERT(index < params.variations * params.pool);
-  // auto& s = ge.meta._soundManager.sounds[sound][index];
-  //
-  // if (ma_sound_is_playing(&s))
-  //   return nullptr;
-  //
-  // ma_sound_seek_to_pcm_frame(&s, 0);
-  //
-  // if (params.volume != 1.0f)
-  //   ma_sound_set_volume(&s, params.volume);
-  //
-  // if (params.pitchMin != 1.0f) {
-  //   auto t = GRAND.FRand();
-  //   t      = EaseInOutQuad(t);
-  //   ma_sound_set_pitch(&s, Lerp(params.pitchMin, params.pitchMax, t));
-  // }
-  //
-  // ma_sound_start(&s);
-  // IncrementSetZeroOn(&varIndex, params.pool);
+  const auto dataSource = ma_sound_get_data_source(&original.ma_sound);
+  ASSERT(dataSource);
 
-  return &ge.meta._soundManager.sounds[sound][index];
-}
-
-void StopSound(ma_sound* sound) {  ///
-  ASSERT_FALSE(ge.meta._drawing);
-
-  if (sound)
-    ma_sound_stop(sound);
+  ma_sound   s;
+  const auto result
+    = ma_sound_init_from_data_source(&m.engine, dataSource, original.flags, nullptr, &s);
+  if (result == MA_SUCCESS) {
+    ma_sound_start(&s);
+    ma_sound_set_end_callback(&s, _OnSoundEnd, nullptr);
+  }
+  else
+    INVALID_PATH;
 }
 
 BF_FORCE_INLINE void DrawGroup_Begin(DrawZ z) {  ///
@@ -2995,64 +3025,96 @@ PeekFiletimeResult PeekFiletime(const char* filename) {  ///
 
 #endif
 
+#define RELOAD_SOUNDS_FENCE (0)
+
 void ReloadSounds() {  ///
-  m.works          = false;
-  auto& m          = ge.meta._soundManager;
-  m.launchedSounds = {};
+  auto& m = ge.meta._soundManager;
 
-  for (auto& sound : m.playingSounds)
-    ma_sound_uninit(&sound);
-  m.playingSounds      = {};
-  m.playingSoundsCount = 0;
+  ma_engine_uninit(&m.engine);
+  m.engine = {};
 
-  for (auto& sound : m.loadedFileSounds)
-    ma_sound_uninit(sound.ma_sound);
-  m.loadedFileSounds.Reset();
+  m.works = false;
+
+  // Initializing audio only if there are sounds in project.
+  const auto fb_sounds = glib->sounds();
+  if (!fb_sounds)
+    return;
+  if (!fb_sounds->size())
+    return;
+
+  auto config = ma_engine_config_init();
+  if (ma_engine_init(&config, &ge.meta._soundManager.engine) != MA_SUCCESS) {
+    LOGW("Failed to init miniaudio engine");
+    INVALID_PATH;
+    return;
+  }
+
+  LOGI("miniaudio engine initialized");
 
   ma_fence fence{};
-  auto     fenceRes = ma_fence_init(&fence);
+
+#if RELOAD_SOUNDS_FENCE
+  auto fenceRes = ma_fence_init(&fence);
   ASSERT(fenceRes == MA_SUCCESS);
 
   if (fenceRes != MA_SUCCESS) {
     LOGE("Error during ma_fence_init");
+    INVALID_PATH;
     return;
   }
+#endif
 
   int filesToLoad = 0;
-  for (auto fb : *glib->sounds())
+  for (auto fb : *fb_sounds)
     filesToLoad += fb->variations()->size();
 
-  m.loadedFileSounds.Reserve(filesToLoad);
+  m.soundsLoadedFromFiles.Reserve(filesToLoad);
+  auto oldBase = m.soundsLoadedFromFiles.base;
 
   int index = -1;
-  for (auto fb : *glib->sounds()) {
-    auto flags = MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC;
-    if (params.pitchMin == params.pitchMax)
-      flags |= MA_SOUND_FLAG_NO_PITCH;
+  for (auto fb : *fb_sounds) {
+    u32 customFlags = 0;
+    if (fb->pitch_min() == fb->pitch_max())
+      customFlags |= MA_SOUND_FLAG_NO_PITCH;
+
+    static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
+    u32 flags = MA_SOUND_FLAG_DECODE | customFlags;
+
+#if RELOAD_SOUNDS_FENCE
+    flags |= MA_SOUND_FLAG_ASYNC;
+#endif
 
     int variationIndex = -1;
     for (auto fb_variation : *fb->variations()) {
       index++;
       variationIndex++;
 
-      m.loadedFileSounds[index] = {
+      *m.soundsLoadedFromFiles.Add() = {
         .gamelib_filepath = fb_variation->c_str(),
         .type             = (Sound)fb->enum_value_id(),
         .variation        = variationIndex,
+        .flags            = customFlags,
       };
 
-      ma_sound_init_from_file_w(
+      auto f = (RELOAD_SOUNDS_FENCE ? &fence : nullptr);
+
+      ma_sound_init_from_file(
         &m.engine,
-        (const wchar_t*)fb_variation->c_str(),
+        fb_variation->c_str(),
         flags,
         nullptr,
-        &fence,
-        &(m.loadedFileSounds.base + index)->ma_sound
+        f,
+        &(m.soundsLoadedFromFiles.base + index)->ma_sound
       );
     }
   }
 
+  ASSERT(oldBase == m.soundsLoadedFromFiles.base);
+
+#if RELOAD_SOUNDS_FENCE
   ma_fence_wait(&fence);
+#endif
+
   m.works = true;
 }
 
@@ -3062,72 +3124,7 @@ void InitEngine() {  ///
   ge.meta._keyboardState.base = SDL_GetKeyboardState(&ge.meta._keyboardState.count);
 
   size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardState.count;
-  // for (auto& params : g_sounds) {
-  //   arenaSize += sizeof(ma_sound) * params.pool * params.variations;
-  //   arenaSize += sizeof(int) * params.variations;
-  // }
-  ge.meta._arena = MakeArena(arenaSize + ge.settings.additionalArenaSize);
-
-  if (SOUNDS_COUNT) {  // Not initializing audio if there is no sounds in project.
-    auto config = ma_engine_config_init();
-    if (ma_engine_init(&config, &ge.meta._soundManager.engine) != MA_SUCCESS)
-      LOGW("Failed to init miniaudio engine");
-    else {
-      LOGI("miniaudio engine initialized");
-
-      // FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
-      //   ge.meta._soundManager.sounds[i] = ALLOCATE_ZEROS_ARRAY(
-      //     &ge.meta._arena, ma_sound, g_sounds[i].pool * g_sounds[i].variations
-      //   );
-      // }
-      // FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
-      //   ge.meta._soundManager.soundPlayedIndicesPerVariation[i]
-      //     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, int, g_sounds[i].variations);
-      // }
-
-      int soundTypeIndex = 0;
-      for (const auto params : g_sounds) {
-        auto flags = MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC;
-        if (params.pitchMin == params.pitchMax)
-          flags |= MA_SOUND_FLAG_NO_PITCH;
-
-        FOR_RANGE (int, variation, params.variations) {
-          FOR_RANGE (int, poolInnerIndex, params.pool) {
-            // if (!poolInnerIndex) {
-            // Loading original.
-            auto soundPath = params.pathVariations[variation];
-            auto error     = ma_sound_init_from_file(
-              &ge.meta._soundManager.engine,
-              soundPath,
-              flags,
-              nullptr,
-              nullptr,
-              &ge.meta._soundManager
-                 .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
-            );
-            if (error != MA_SUCCESS) {
-              LOGE("Failed to load sound %s: error code %d", soundPath, error);
-              break;
-            }
-            // }
-            // else {
-            //   // Loading copies.
-            //   ma_sound_init_copy(
-            //     &ge.meta._soundManager.engine,
-            //     &ge.meta._soundManager.sounds[soundTypeIndex][variation * params.pool],
-            //     flags,
-            //     nullptr,
-            //     &ge.meta._soundManager
-            //        .sounds[soundTypeIndex][variation * params.pool + poolInnerIndex]
-            //   );
-            // }
-          }
-        }
-
-        soundTypeIndex++;
-      }
-    }
-  }
+  ge.meta._arena   = MakeArena(arenaSize + ge.settings.additionalArenaSize);
 
 #if !defined(SDL_PLATFORM_EMSCRIPTEN)
   if (ge.settings.gameanalytics.setup) {
@@ -3212,11 +3209,6 @@ void InitEngine() {  ///
 }
 
 void DeinitEngine() {  ///
-  FOR_RANGE (int, i, ARRAY_COUNT(g_sounds)) {
-    FOR_RANGE (int, k, g_sounds[i].pool) {
-      ma_sound_uninit(&ge.meta._soundManager.sounds[i][k]);
-    }
-  }
   ma_engine_uninit(&ge.meta._soundManager.engine);
 }
 
@@ -3985,6 +3977,14 @@ SDL_AppResult EngineUpdate() {  ///
 #endif
 
     GameFixedUpdate();
+
+    // Uninitializing ended sounds.
+    {
+      auto& m = ge.meta._soundManager;
+      for (auto sound : m.soundsToUninitialize)
+        ma_sound_uninit(sound);
+      m.soundsToUninitialize.Reset();
+    }
 
     if (ge.meta.quitScheduled)
       return SDL_APP_SUCCESS;

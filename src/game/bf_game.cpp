@@ -2501,13 +2501,14 @@ void MakeNumber(MakeNumberData data) {  ///
 f32 GetStatModificationScale() {  ///
   f32 scaleStats = 1;
   IterateOverEffects(
-    EffectConditionType_STAT__MODS_CHANGED_BY__X__PERCENT,
+    EffectConditionType_STAT_2__MODS_CHANGED_BY__X__PERCENT,
     -1,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
         scaleStats += (1 + (f32)EFFECT_X_INT / 100.0f) * (f32)times;
       }
   );
+  return scaleStats;
 }
 
 int GetNextLevelXp(int currentLevel) {  ///
@@ -2565,6 +2566,22 @@ void AddXP(f32 xp) {  ///
   Save();
 }
 
+struct TryApplyDamageData {  ///
+  int              creatureIndex                      = {};
+  int              damage                             = {};
+  Vector2          directionOrZero                    = {0, 0};
+  f32              knockbackMeters                    = 0;
+  CreatureType     damagerCreatureType                = CreatureType_INVALID;
+  f32              critDamageMultiplier               = 1;
+  int              weaponCritChance                   = 0;
+  int              indexOfWeaponThatDidDamageOrMinus1 = -1;
+  ApplyAilmentData ailment                            = {};
+  f32              ailmentChance                      = 0;
+  bool*            outWasCrit                         = nullptr;
+  bool*            outJustKilled                      = nullptr;
+};
+bool TryApplyDamage(TryApplyDamageData data);
+
 void HealPlayer(int amount = 1) {  ///
   if (g.run.cantHeal)
     return;
@@ -2576,7 +2593,7 @@ void HealPlayer(int amount = 1) {  ///
 
   IterateOverEffects(
     EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING,
-    data.indexOfWeaponThatDidDamageOrMinus1,
+    -1,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
         const f32 chance = EFFECT_X_FLOAT * (f32)times;
@@ -2608,7 +2625,7 @@ void HealPlayer(int amount = 1) {  ///
 
           TryApplyDamage({
             .creatureIndex                      = creatureIndex,
-            .damage                             = ApplyDamageScalings(),
+            .damage                             = damage,
             .damagerCreatureType                = CreatureType_PLAYER,
             .critDamageMultiplier               = critDamageMultiplier,
             .indexOfWeaponThatDidDamageOrMinus1 = wi,
@@ -2620,21 +2637,6 @@ void HealPlayer(int amount = 1) {  ///
 
   Save();
 }
-
-struct TryApplyDamageData {  ///
-  int              creatureIndex                      = {};
-  int              damage                             = {};
-  Vector2          directionOrZero                    = {0, 0};
-  f32              knockbackMeters                    = 0;
-  CreatureType     damagerCreatureType                = CreatureType_INVALID;
-  f32              critDamageMultiplier               = 1;
-  int              weaponCritChance                   = 0;
-  int              indexOfWeaponThatDidDamageOrMinus1 = -1;
-  ApplyAilmentData ailment                            = {};
-  f32              ailmentChance                      = 0;
-  bool*            outWasCrit                         = nullptr;
-  bool*            outJustKilled                      = nullptr;
-};
 
 f32 GetLifestealChance(
   WeaponType typeOrInvalid,
