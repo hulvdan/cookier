@@ -549,7 +549,7 @@ def convert_gamelib_json_to_binary(
 
         sound_paths = list(RESOURCES_DIR.glob("*.ogg"))
 
-        m = 2**32
+        m = 2**31
         sound_types_ = [
             (t, (stable_hash(t) % m))
             for t in {

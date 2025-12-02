@@ -53,6 +53,12 @@
 
 #define BF_RELEASE (BF_DEBUG == 0)
 
+#if defined(__clang__) && defined(__clang_minor__) && defined(__clang_patchlevel__)
+#  define BF_COMPILER_CLANG (1)
+#else
+#  define BF_COMPILER_CLANG (0)
+#endif
+
 #define PTR_FROM_UINT(value) ((void*)((u8*)(nullptr) + (value)))
 #define UINT_FROM_PTR(value) ((uintptr_t)((u8*)(value)))
 
@@ -126,21 +132,23 @@ constexpr f64 f64_inf = std::numeric_limits<f64>::infinity();
 #else  // TESTS
 #  if BF_ENABLE_ASSERTS
 static volatile int _g_enable_asserts_work = 0;
-#    include <assert.h>
-#    define ASSERT(expr)                             \
-      STATEMENT({                                    \
-        if (!(bool)(expr)) {                         \
-          _g_enable_asserts_work = *(int*)(nullptr); \
-          assert(false);                             \
-        }                                            \
-      })
-#    define ASSERT_FALSE(expr)                       \
-      STATEMENT({                                    \
-        if ((bool)(expr)) {                          \
-          _g_enable_asserts_work = *(int*)(nullptr); \
-          assert(false);                             \
-        }                                            \
-      })
+#    if BF_COMPILER_CLANG
+#      define ASSERT(expr)    \
+        STATEMENT({           \
+          if (!(bool)(expr))  \
+            __builtin_trap(); \
+        })
+#    else
+#      include <assert.h>
+#      define ASSERT(expr)                             \
+        STATEMENT({                                    \
+          if (!(bool)(expr)) {                         \
+            _g_enable_asserts_work = *(int*)(nullptr); \
+            assert(false);                             \
+          }                                            \
+        })
+#    endif
+#    define ASSERT_FALSE(expr) ASSERT(!(bool)(expr))
 #  else
 #    define ASSERT(expr) EMPTY_STATEMENT
 #    define ASSERT_FALSE(expr) EMPTY_STATEMENT

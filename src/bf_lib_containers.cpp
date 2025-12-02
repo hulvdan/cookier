@@ -522,4 +522,31 @@ struct RangeIterator : public IteratorFacade<RangeIterator> {  ///
   int _end     = {};
 };
 
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+
+template <typename T>
+struct ReaderWriterQueue {  ///
+  Vector<T> _values = {};
+
+  void enqueue(T value) {
+    *_values.Add() = value;
+  }
+
+  bool try_dequeue(T& out) {
+    if (_values.count) {
+      out = _values[_values.count - 1];
+      _values.count--;
+      return true;
+    }
+    return false;
+  }
+};
+
+#else
+
+#  include "readerwriterqueue.h"
+using moodycamel::ReaderWriterQueue;
+
+#endif
+
 ///
