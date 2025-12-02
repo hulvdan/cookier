@@ -9,18 +9,7 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x посмотреть: Reaper for Game Audio Part 6 - Plugins
-x посмотреть: Reaper for Game Audio Part 7 - Virtual Instruments
-x посмотреть: Reaper for Game Audio Part 8 - MIDI Basics
-x посмотреть: Reaper for Game Audio Part 9 - Bounce In Place, Fades, Strip Silence & More!
-x посмотреть: Reaper for Game Audio Part 10 - Exporting
-x export end-trimmed ogg + gamelib.py just copies them
-x посмотреть: Reaper for Game Audio Part 11 - Sub-Projects
-x посмотреть: Reaper for Game Audio Part 12 - Reaper & FMOD
-x посмотреть: These Reaper Plugins Completely Changed My Sound Design Workflow
-x посмотреть: Tutorial Hidden Reaper Workflows with Akash Thakkar
-
-* sfx: убрать необходимость прописывать всё в gamelib.yml
+* sfx: проигрывание звуков (init через копирование data, array сейчас проигрываемых звуков ... )
 * sfx: когда приходит ещё один эффект,
   увеличиваем громкость такого же запущенного в течение 4-х кадров
 * скачать плагин folder items
