@@ -792,26 +792,38 @@ def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dic
     # }
 
 
+def remove_excessive_files_by_pattern(
+    src_dir: str | Path, dst_dir: str | Path, pattern: str
+) -> None:
+    # {  ###
+    dst_filepaths = [
+        filepath.relative_to(dst_dir) for filepath in Path(dst_dir).glob(pattern)
+    ]
+    src_filepaths = [
+        filepath.relative_to(src_dir) for filepath in Path(src_dir).glob(pattern)
+    ]
+
+    excessive_files = []
+
+    for dst_filepath in dst_filepaths:
+        if dst_filepath not in src_filepaths:
+            p = Path(dst_dir) / dst_filepath
+            p.unlink()
+            excessive_files.append(str(p))
+
+    if excessive_files:
+        log.info("Removed excessive files: {}".format(", ".join(excessive_files)))
+    # }
+
+
 @timing
-def check_no_excessive_images_in_temp_art_dir(downscale_factors: list[int]) -> None:
+def remove_excessive_images_in_temp_art_dir(downscale_factors: list[int]) -> None:
     # {  ###
     for factor in downscale_factors:
         TEMP_ART_DOWNSCALED_DIR = TEMP_ART_DIR / f"d{factor}"
-
-        temp_filepaths = [
-            filepath.relative_to(TEMP_ART_DOWNSCALED_DIR)
-            for filepath in TEMP_ART_DOWNSCALED_DIR.rglob("*.png")
-        ]
-        art_filepaths = [
-            filepath.relative_to(ART_TEXTURES_DIR)
-            for filepath in ART_TEXTURES_DIR.glob("*.png")
-        ]
-
-        for temp_filepath in temp_filepaths:
-            if temp_filepath not in art_filepaths:
-                p = TEMP_ART_DOWNSCALED_DIR / temp_filepath
-                log.info("Removing excessive image '{}'...".format(p))
-                p.unlink()
+        remove_excessive_files_by_pattern(
+            ART_TEXTURES_DIR, TEMP_ART_DOWNSCALED_DIR, "*.png"
+        )
     # }
 
 
@@ -1171,7 +1183,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         # TODO: downscale_factors = [1, 2, 4]
         downscale_factors = [2, 1]
 
-        check_no_excessive_images_in_temp_art_dir(downscale_factors)
+        remove_excessive_images_in_temp_art_dir(downscale_factors)
         downscale_images(downscale_factors)
         downscale_factors.pop()
 
@@ -1195,23 +1207,31 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     symlink_resources_for = (
         (BuildPlatform.Win, BuildType.Debug),
         (BuildPlatform.Web, BuildType.Debug),
+        (BuildPlatform.Win, BuildType.Debug),
+        (BuildPlatform.Win, BuildType.RelWithDebInfo),
+        (BuildPlatform.Win, BuildType.Release),
+        (BuildPlatform.Web, BuildType.Debug),
+        (BuildPlatform.Web, BuildType.Release),
+        (BuildPlatform.WebYandex, BuildType.Release),
     )
-    path = {
-        (BuildPlatform.Win, BuildType.Debug): ".cmake/vs17/Debug",
-        (BuildPlatform.Win, BuildType.RelWithDebInfo): ".cmake/vs17/RelWithDebugInfo",
-        (BuildPlatform.Win, BuildType.Release): ".cmake/vs17/Release",
-        (BuildPlatform.Web, BuildType.Debug): ".cmake/Web_Debug",
-        (BuildPlatform.Web, BuildType.Release): ".cmake/Web_Release",
-        (BuildPlatform.WebYandex, BuildType.Release): ".cmake/WebYandex_Release",
+    dist_dir = {
+        (BuildPlatform.Win, BuildType.Debug): ".cmake/vs17/Debug/",
+        (BuildPlatform.Win, BuildType.RelWithDebInfo): ".cmake/vs17/RelWithDebugInfo/",
+        (BuildPlatform.Win, BuildType.Release): ".cmake/vs17/Release/",
+        (BuildPlatform.Web, BuildType.Debug): ".cmake/Web_Debug/",
+        (BuildPlatform.Web, BuildType.Release): ".cmake/Web_Release/",
+        (BuildPlatform.WebYandex, BuildType.Release): ".cmake/WebYandex_Release/",
     }[(platform, build_type)]
 
     if (platform, build_type) in symlink_resources_for:
-        recursive_mkdir(path)
-        p = Path(path + "/resources")
+        recursive_mkdir(dist_dir)
+        p = Path(dist_dir + "resources")
         if not p.exists():
             p.symlink_to(RESOURCES_DIR, target_is_directory=True)
     else:
-        shutil.copytree(RESOURCES_DIR, path)
+        dst_resources = dist_dir + "resources/"
+        remove_excessive_files_by_pattern(RESOURCES_DIR, dst_resources, "*")
+        shutil.copytree(RESOURCES_DIR, dst_resources, dirs_exist_ok=True)
     # }
 
 
