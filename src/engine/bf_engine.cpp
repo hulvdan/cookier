@@ -1214,9 +1214,6 @@ void PlaySound(Sound sound) {  ///
 
   auto& original = m.soundsLoadedFromFiles[index];
 
-  // const auto dataSource = ma_sound_get_data_source(&original.ma_sound);
-  // ASSERT(dataSource);
-
   // TODO:
   // * freelist (pool?) allocator
   ma_sound* s = nullptr;
