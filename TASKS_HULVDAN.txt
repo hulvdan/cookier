@@ -22,9 +22,8 @@ x sfx: pitch
 x sfx: variations
 x sfx: fix hot reload
 x sfx: hot reload работает
+x sfx: HOT RELOAD FROM REAPER BOYEEEEEEEEE
 
-* sfx: reaper запускает uv run python codegen Debug Win
-  НО ЕМУ НУЖНО ДАТЬ ЗНАТЬ О CMAKE
 * sfx: музыка заглушка
 * sfx: music / sfx miniaudio группы
 *
