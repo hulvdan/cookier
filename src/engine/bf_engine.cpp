@@ -977,22 +977,6 @@ int _CmpSoundLoadedFromFile(
   return 0;
 }
 
-// struct SoundHandle {  ///
-//   i64   id    = {};
-//   Sound sound = {};
-// };
-
-// struct _SoundPlaying {  ///
-//   i64      id    = {};
-//   ma_sound sound = {};
-// };
-
-// struct _SoundMeta {  ///
-//   FrameVisual frame        = {};
-//   int         variation    = -1;
-//   int         timesBoosted = 0;
-// };
-
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
