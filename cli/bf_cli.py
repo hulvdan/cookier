@@ -3,6 +3,7 @@ import os
 import zipfile
 from pathlib import Path
 
+import bf_lib
 from bf_game import *  # noqa
 from bf_gamelib import do_generate
 from bf_lib import (
@@ -304,11 +305,14 @@ def build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
 @command
 def build_all_and_test():
     # {  ###
+
     test()
     for target, platform, build_type in ALLOWED_BUILDS:
         if target != BuildTarget.game:
             continue
+        do_generate(platform, build_type)
         build(BuildTarget.game, platform, build_type)
+        bf_lib._gamelib = None  # noqa: SLF001
     # }
 
 
