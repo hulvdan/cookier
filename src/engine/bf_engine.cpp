@@ -3044,8 +3044,6 @@ PeekFiletimeResult PeekFiletime(const char* filename) {  ///
 
 #endif
 
-#define RELOAD_SOUNDS_FENCE (1)
-
 void ReloadSounds() {  ///
   auto& m = ge.meta._soundManager;
 
@@ -3074,17 +3072,15 @@ void ReloadSounds() {  ///
 
   LOGI("miniaudio engine initialized");
 
-#if RELOAD_SOUNDS_FENCE
   ma_fence fence{};
-  auto     fenceRes = ma_fence_init(&fence);
-  ASSERT(fenceRes == MA_SUCCESS);
-
-  if (fenceRes != MA_SUCCESS) {
-    LOGE("Error during ma_fence_init");
+  if (ma_fence_init(&fence) != MA_SUCCESS) {
+    LOGW("Error during ma_fence_init");
     INVALID_PATH;
     return;
   }
-#endif
+  DEFER {
+    ma_fence_uninit(&fence);
+  };
 
   int filesToLoad = 0;
   for (auto fb : *fb_sounds)
@@ -3102,11 +3098,7 @@ void ReloadSounds() {  ///
       customFlags |= MA_SOUND_FLAG_NO_PITCH;
 
     static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
-    u32 flags = MA_SOUND_FLAG_DECODE | customFlags;
-
-#if RELOAD_SOUNDS_FENCE
-    flags |= MA_SOUND_FLAG_ASYNC;
-#endif
+    u32 flags = MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC | customFlags;
 
     int variationIndex = -1;
     for (auto fb_variation : *fb->variations()) {
@@ -3123,16 +3115,7 @@ void ReloadSounds() {  ///
       };
 
       if (ma_sound_init_from_file(
-            &m.engine,
-            fb_variation->c_str(),
-            flags,
-            nullptr,
-#if RELOAD_SOUNDS_FENCE
-            &fence,
-#else
-            nullptr,
-#endif
-            &slot->ma_sound
+            &m.engine, fb_variation->c_str(), flags, nullptr, &fence, &slot->ma_sound
           )
           != MA_SUCCESS)
       {
@@ -3144,10 +3127,8 @@ void ReloadSounds() {  ///
 
   ASSERT(oldBase == m.soundsLoadedFromFiles.base);
 
-#if RELOAD_SOUNDS_FENCE
   if (ma_fence_wait(&fence) != MA_SUCCESS)
     INVALID_PATH;
-#endif
 
   m.works = !errored;
 }
