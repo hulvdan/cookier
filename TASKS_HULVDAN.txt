@@ -12,15 +12,15 @@ WORKING SINCE 2025-09-07
 x sfx: загуглить старую библу fmod
 x sfx: загружаются из файлов
 x sfx: проигрываются
+x sfx: uninit engine on exiting game
 
 * sfx: проигрываются копии (и отрабатывает uninit)
 * sfx: hot reload работает (reloadsounds должны текущие проигрываемые файлы дропнуть)
 * sfx: проверить web build с RELOAD_SOUNDS_FENCE
        -> затем решить: убрать или оставить RELOAD_SOUNDS_FENCE
-* sfx: uninit engine on exiting game
 * sfx: volume увеличивается
 * sfx: variations (добавить какие-либо вариации звукам)
-* sfx: какая-либо проверка на peak где-угодно
+* sfx: какая-либо проверка на peak REAPER / PYTHON
 * sfx:
 * sfx: проигрывание звуков (init через копирование data, array сейчас проигрываемых звуков ... )
 * sfx: когда приходит ещё один эффект,
