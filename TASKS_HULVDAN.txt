@@ -18,14 +18,15 @@ x sfx: fix web
 x sfx: проверить web build с RELOAD_SOUNDS_FENCE
        -> затем решить: убрать или оставить RELOAD_SOUNDS_FENCE
 x sfx: ещё раз попробовал init_from_data_source
+x sfx: pitch
+x sfx: variations
+x sfx: fix hot reload
 
-* sfx: pitch
-* sfx: музыка заглушка
-* sfx: music / sfx группы
-* sfx: можно сменить громкость звука / музыки
-* sfx: volume увеличивается
 * sfx: hot reload работает
-* sfx: variations (добавить какие-либо вариации звукам)
+* sfx: музыка заглушка
+* sfx: music / sfx miniaudio группы
+*
+* sfx: настройки для игрока: можно сменить громкость звука / музыки
 * sfx: какая-либо проверка на peak REAPER / PYTHON
 * sfx:
 * sfx: проигрывание звуков (init через копирование data, array сейчас проигрываемых звуков ... )

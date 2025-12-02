@@ -549,7 +549,7 @@ def convert_gamelib_json_to_binary(
 
         sound_paths = list(RESOURCES_DIR.glob("*.ogg"))
 
-        m = 2**31
+        m = 2**32
         sound_types_ = [
             (t, (stable_hash(t) % m))
             for t in {
@@ -560,19 +560,13 @@ def convert_gamelib_json_to_binary(
         sound_types = [x[0] for x in sound_types_]
         sound_enum_values = [x[1] for x in sound_types_]
 
-        genenum(
-            genline,
-            "Sound",
-            sound_types,
-            override_values=sound_enum_values,
-            enum_type="u32",
-        )
+        genenum(genline, "Sound", sound_types)
         genline("constexpr int SOUNDS_COUNT = {};\n".format(len(sound_enum_values)))
-        genline("constexpr int INDEX_TO_SOUND_[]{  ///")
-        for t in sound_types:
-            genline(f"  Sound_{t},")
+        genline("constexpr u32 INDEX_TO_SOUND_HASH_VALUE_[]{  ///")
+        for t in sound_enum_values:
+            genline(f"  {t},")
         genline("};")
-        genline("VIEW_FROM_ARRAY_DANGER(INDEX_TO_SOUND);\n")
+        genline("VIEW_FROM_ARRAY_DANGER(INDEX_TO_SOUND_HASH_VALUE);\n")
 
         sound_variations_per_type: dict[str, list[Path]] = defaultdict(list)
         for sound_path in sound_paths:

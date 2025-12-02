@@ -69,7 +69,7 @@ table Sound {
     enum_value_id: uint (key);
     variations: [string];
     pitch_max: float = 1.1;
-    pitch_min: float = 0.9;
+    pitch_min: float = 0.95;
 }
 
 table Flattened {
