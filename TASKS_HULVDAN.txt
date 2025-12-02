@@ -21,10 +21,17 @@ x sfx: ещё раз попробовал init_from_data_source
 x sfx: pitch
 x sfx: variations
 x sfx: fix hot reload
+x sfx: hot reload работает
 
-* sfx: hot reload работает
+* sfx: reaper запускает uv run python codegen Debug Win
+  НО ЕМУ НУЖНО ДАТЬ ЗНАТЬ О CMAKE
 * sfx: музыка заглушка
 * sfx: music / sfx miniaudio группы
+*
+* itch билд почему-то прогресс неправильно отображается
+  Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
+  (есть скрин в screenshots)
+* firefox itch билд почему-то не запускается, а хром работает
 *
 * sfx: настройки для игрока: можно сменить громкость звука / музыки
 * sfx: какая-либо проверка на peak REAPER / PYTHON
