@@ -193,6 +193,10 @@ target_link_libraries(miniaudio
         stb_vorbis
 )
 
+# readerwriterqueue.
+#-----------------------------------------------------------------------------------
+add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/readerwriterqueue")
+
 # game.
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
@@ -205,6 +209,7 @@ target_link_libraries(game
         basisu_transcoder
         GameAnalytics
         miniaudio
+        readerwriterqueue
 )
 if ("${PLATFORM}" STREQUAL "Win")
     target_link_libraries(game
@@ -318,6 +323,7 @@ target_link_libraries(tests
         basisu_transcoder
         GameAnalytics
         miniaudio
+        readerwriterqueue
 )
 target_link_libraries(tests
     PRIVATE

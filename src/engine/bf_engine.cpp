@@ -1023,7 +1023,7 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
-      Vector<ma_sound*>            soundsToUninitialize  = {};
+      ReaderWriterQueue<ma_sound*> soundsToUninitialize;
       Vector<_SoundLoadedFromFile> soundsLoadedFromFiles = {};
 
       bool      works  = false;
@@ -1175,6 +1175,7 @@ void GameReady() {  ///
 void _OnSoundEnd(void* _userData, ma_sound* sound) {  ///
   auto& m = ge.meta._soundManager;
   ASSERT(m.works);
+
   *m.soundsToUninitialize.Add() = sound;
 }
 
@@ -3050,9 +3051,10 @@ void ReloadSounds() {  ///
   auto& m = ge.meta._soundManager;
 
   ma_engine_uninit(&m.engine);
-  m.engine = {};
-
-  m.works = false;
+  m.engine             = {};
+  m.playingSoundsBools = {};
+  m.playingSoundsCount = 0;
+  m.works              = false;
 
   // Initializing audio only if there are sounds in project.
   const auto fb_sounds = glib->sounds();
@@ -4014,15 +4016,17 @@ SDL_AppResult EngineUpdate() {  ///
     // Uninitializing ended sounds.
     {
       auto& m = ge.meta._soundManager;
+
       for (auto sound : m.soundsToUninitialize) {
         ma_sound_uninit(sound);
+
         auto index = sound - m.playingSounds.base;
         ASSERT(sound == m.playingSounds.base + index);
         ASSERT(m.playingSoundsBools[index]);
+
         m.playingSoundsBools[index] = false;
         m.playingSoundsCount--;
       }
-      m.soundsToUninitialize.Reset();
     }
 
     if (ge.meta.quitScheduled)
