@@ -38,6 +38,7 @@ using Vector4Int = glm::ivec4;
 #endif
 
 #include "miniaudio.h"
+#include "readerwriterqueue.h"
 
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/bf_gamelib_generated.h"
