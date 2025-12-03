@@ -9,21 +9,23 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x sfx: загуглить старую библу fmod
-x sfx: загружаются из файлов
-x sfx: проигрываются
-x sfx: uninit engine on exiting game
-x sfx: проигрываются копии (и отрабатывает uninit)
-x sfx: fix web
-x sfx: проверить web build с RELOAD_SOUNDS_FENCE
-       -> затем решить: убрать или оставить RELOAD_SOUNDS_FENCE
-x sfx: ещё раз попробовал init_from_data_source
-x sfx: pitch
-x sfx: variations
-x sfx: fix hot reload
-x sfx: hot reload работает
-x sfx: HOT RELOAD FROM REAPER BOYEEEEEEEEE
+x clean: убрать debug пути загрузки gamelib
 
+* bf_image: возможность rectangle не скруглять какие-либо углы
+* ОБУЧЕНИЕ: золотые окантовки вокруг кнопок, на которые игрок не кликал раньше
+* sfx: codegen: при появлении ошибки и наличии аргумента "--dont_close_on_exception",
+  скрипт использует input("Press enter to exit... ")
+  Так, я смогу увидеть ошибку reaper
+* vst: скачать штуку для проверки звучания в смартфоне / планшете / машине и т.п.
+* reaper export only changed
+* vst: скачать fabfilter
+* vst: скачать spring reverb (выглядел как деревянная педаль)
+* sfx: codegen watcher, чтобы reaper быстрее срабатывал?
+  Какие ещё есть варианты ускорения?
+  * sfx: partial codegen для ускорения работы с reaper?
+    (скрипт бы вычитывать gamelib.intermediate.json и заменял "sounds")
+* sfx: miniaudio playsound volume easing
+* sfx: навести порядок у reaper в скриптах (убрать абсолютные пути)
 * sfx: музыка заглушка
 * sfx: music / sfx miniaudio группы
 *
@@ -42,8 +44,6 @@ x sfx: HOT RELOAD FROM REAPER BOYEEEEEEEEE
 * reaper: сделать так, чтобы можно было использовать variations
   (через регионы) + опробовать folder items
 
-* vst: скачать fabfilter
-* vst: скачать spring reverb (выглядел как деревянная педаль)
 * vst:
 * vst:
 * vst:
@@ -183,6 +183,7 @@ x sfx: HOT RELOAD FROM REAPER BOYEEEEEEEEE
 *
 * RELEASED!
 =======================
+* sfx: обработка звуков: trim left -> прописать это в gamelib -> PlaySound будет докидывать задержку
 * sfx: использовать девайс от SDL?
   https://miniaud.io/docs/examples/engine_sdl.html
 * HASH MAP for loaded sounds
