@@ -1,4 +1,5 @@
 *.reapeaks
+*.rpp-PROX
 *.rpp-bak
 /.cache/
 /.cmake/
