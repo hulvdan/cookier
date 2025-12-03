@@ -592,10 +592,10 @@ struct Texture2D {
   bgfx::TextureHandle handle = {};
 };
 
-void*                      glibFile           = nullptr;
-const BFGame::GameLibrary* glib               = nullptr;
-const auto                 GAMELIB_DEBUG_PATH = "../../../resources/gamelib.bin";
-SDL_Time                   glibTime           = {};
+constexpr auto             GAMELIB_PATH = "resources/gamelib.bin";
+void*                      glibFile     = nullptr;
+const BFGame::GameLibrary* glib         = nullptr;
+SDL_Time                   glibTime     = {};
 
 struct _PosColorFlashTexVertex {  ///
   f32 x, y, z;
@@ -3237,24 +3237,22 @@ void InitEngine() {  ///
     = ALLOCATE_ZEROS_ARRAY(&ge.meta._arena, bool, ge.meta._keyboardState.count);
 #endif
 
-  auto glibPath = "resources/gamelib.bin";
 #ifdef SDL_PLATFORM_WINDOWS
 #  if BF_DEBUG
-  auto glibPeekResult = PeekFiletime(GAMELIB_DEBUG_PATH);
+  auto glibPeekResult = PeekFiletime(GAMELIB_PATH);
   if (glibPeekResult.success)
     glibTime = glibPeekResult.filetime;
-  glibFile = TryLoadFile(GAMELIB_DEBUG_PATH);
 #  endif
 #endif
 
-  if (!glibFile)
-    glibFile = LoadFile(glibPath, nullptr);
-
-  glib = BFGame::GetGameLibrary(glibFile);
+  glibFile = LoadFile(GAMELIB_PATH, nullptr);
+  glib     = BFGame::GetGameLibrary(glibFile);
 
   ge.meta.atlas = _LoadTexture(
     "resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
   );
+  ReloadSounds();
+
   ge.meta.programDefaultTexture = LoadProgram(
     quad_tex_vs_100_es,
     ARRAY_COUNT(quad_tex_vs_100_es),
@@ -3282,8 +3280,6 @@ void InitEngine() {  ///
     .end();
 
   ge.meta.uniformTexture = bgfx::createUniform("u_texture", bgfx::UniformType::Sampler);
-
-  ReloadSounds();
 
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
 
@@ -4036,9 +4032,9 @@ SDL_AppResult EngineUpdate() {  ///
 
 #ifdef SDL_PLATFORM_WINDOWS
 #  if BF_DEBUG
-    auto glibPeekResult = PeekFiletime(GAMELIB_DEBUG_PATH);
+    auto glibPeekResult = PeekFiletime(GAMELIB_PATH);
     if (glibPeekResult.success && (glibPeekResult.filetime != glibTime)) {
-      auto newGlibFile = TryLoadFile(GAMELIB_DEBUG_PATH, nullptr);
+      auto newGlibFile = TryLoadFile(GAMELIB_PATH, nullptr);
       if (newGlibFile) {
         UnloadFile(glibFile);
 
