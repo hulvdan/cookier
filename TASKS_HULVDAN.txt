@@ -14,6 +14,10 @@ x reaper: сделать так, чтобы можно было использо
 x PlaySound по sound hash value
 x fix coins look, feel and sound good now
 
+* prod sfx: ui hover
+* prod sfx: ui click
+* prod sfx: ui error
+* prod sfx: shotgun
 * prod sfx: gunshot
 * prod sfx: flamethrower
 * prod sfx: steps
@@ -38,9 +42,8 @@ x fix coins look, feel and sound good now
 * prod sfx:
 * prod sfx:
 * prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
+*
+* sfx: удалять те файлы, которые reaper бы не создавал
 *
 * сортировка по Y игрока сбилась - нужно правильно поставить нижнюю точку
 *
