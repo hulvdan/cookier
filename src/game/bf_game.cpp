@@ -5358,6 +5358,7 @@ void MakeAOE(
     .scale                  = 1.3f,
     .scalePlusMinus         = 0.15f,
   });
+  PlaySound(Sound_GAME_EXPLOSION);
 }
 
 bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
@@ -13185,18 +13186,18 @@ void GameFixedUpdate() {
     {  ///
       ZoneScopedN("Processing `justDamagedCreatures`.");
 
-      // bool playerHurt = false;
-      // bool mobHurt    = false;
+      bool playerHurt = false;
+      bool mobHurt    = false;
 
       for (const auto index : g.run.justDamagedCreatures) {
         auto& creature = g.run.creatures[index];
 
         const auto fb = fb_creatures->Get(creature.type);
 
-        // if (index == 0)
-        //   playerHurt = true;
-        // else
-        //   mobHurt = true;
+        if (index == 0)
+          playerHurt = true;
+        else
+          mobHurt = true;
 
         if (creature.health <= 0) {
           DestroyBody(&creature.body);
@@ -13217,10 +13218,10 @@ void GameFixedUpdate() {
         }
       }
 
-      // if (playerHurt)
-      //   PlaySound(Sound_GAME_PLAYER_HURT);
-      // if (mobHurt)
-      //   PlaySound(Sound_GAME_HURT);
+      if (playerHurt)
+        PlaySound(Sound_GAME_PLAYER_HURT);
+      if (mobHurt)
+        PlaySound(Sound_GAME_MOB_HURT);
 
       g.run.justDamagedCreatures.Reset();
     }
