@@ -556,17 +556,24 @@ def convert_gamelib_json_to_binary(
                 sound_path.stem.split("__", 1)[0].upper() for sound_path in sound_paths
             }
         ]
+        sound_types_for_humans = sorted(x[0] for x in sound_types_)
         sound_types_.sort(key=lambda x: x[1])
-        sound_types = [x[0] for x in sound_types_]
+        sound_types_sorted_by_enum_value: list[str] = [x[0] for x in sound_types_]
         sound_enum_values = [x[1] for x in sound_types_]
+        genenum(
+            genline,
+            "Sound",
+            sound_types_for_humans,
+            override_values=[
+                sound_types_sorted_by_enum_value.index(x) for x in sound_types_for_humans
+            ],
+        )
 
-        genenum(genline, "Sound", sound_types)
-        genline("constexpr int SOUNDS_COUNT = {};\n".format(len(sound_enum_values)))
-        genline("constexpr u32 INDEX_TO_SOUND_HASH_VALUE_[]{  ///")
+        genline("constexpr u32 SOUND_TO_HASH_VALUE_[]{  ///")
         for t in sound_enum_values:
             genline(f"  {t},")
         genline("};")
-        genline("VIEW_FROM_ARRAY_DANGER(INDEX_TO_SOUND_HASH_VALUE);\n")
+        genline("VIEW_FROM_ARRAY_DANGER(SOUND_TO_HASH_VALUE);\n")
 
         sound_variations_per_type: dict[str, list[Path]] = defaultdict(list)
         for sound_path in sound_paths:
@@ -576,8 +583,12 @@ def convert_gamelib_json_to_binary(
 
         sounds: list[Any] = []
         gamelib["sounds"] = sounds
+        sound_index = -1
         for sound_type, enum_value_id in sound_types_:
+            assert enum_value_id > 0
+            sound_index += 1
             x = {
+                "index": sound_index,
                 "enum_value_id": enum_value_id,
                 "variations": sound_variations_per_type[sound_type],
             }
@@ -617,6 +628,7 @@ def convert_gamelib_json_to_binary(
     degrees_to_radians_recursive_transform(gamelib)
 
     recursive_replace_transform(gamelib, "locale", "locales", locale_to_index)
+    recursive_replace_transform(gamelib, "sound_hash", "sound_hashes", dict(sound_types_))
 
     # Creation of `gamelib.bin`.
     intermediate_path = TEMP_DIR / "gamelib.intermediate.jsonc"

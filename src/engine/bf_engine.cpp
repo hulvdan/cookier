@@ -940,35 +940,33 @@ struct FrameVisual {  ///
   lframe Elapsed() const;
 };
 
-struct _SoundLoadedFromFile;
-int _CmpSoundLoadedFromFile(  ///
-  const _SoundLoadedFromFile* v1,
-  const _SoundLoadedFromFile* v2
+struct _SoundVariation;
+int _CmpSoundVariation(  ///
+  const _SoundVariation* v1,
+  const _SoundVariation* v2
 );
 
-struct _SoundLoadedFromFile {  ///
+struct _SoundVariation {  ///
   const char* gamelib_filepath = {};
   ma_sound    ma_sound         = {};
-  Sound       type             = {};
+  u32         soundHashValue   = {};
   int         variation        = {};
   u32         flags            = {};
 
-  bool operator==(const _SoundLoadedFromFile& other) const {
-    return _CmpSoundLoadedFromFile(this, &other) == 0;
+  bool operator==(const _SoundVariation& other) const {
+    return _CmpSoundVariation(this, &other) == 0;
   }
 
-  bool operator<=(const _SoundLoadedFromFile& other) const {
-    return _CmpSoundLoadedFromFile(this, &other) != 1;
+  bool operator<=(const _SoundVariation& other) const {
+    return _CmpSoundVariation(this, &other) != 1;
   }
 };
 
-int _CmpSoundLoadedFromFile(
-  const _SoundLoadedFromFile* v1,
-  const _SoundLoadedFromFile* v2
-) {  ///
-  if (v1->type > v2->type)
+int _CmpSoundVariation(const _SoundVariation* v1,
+                       const _SoundVariation* v2) {  ///
+  if (v1->soundHashValue > v2->soundHashValue)
     return 1;
-  if (v1->type < v2->type)
+  if (v1->soundHashValue < v2->soundHashValue)
     return -1;
   if (v1->variation > v2->variation)
     return 1;
@@ -1035,9 +1033,9 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
-      ReaderWriterQueue<ma_sound*>               soundsToUninitialize{};
-      Vector<_SoundLoadedFromFile>               soundsLoadedFromFiles = {};
-      Array<_SoundVariationRange, BF_MAX_SOUNDS> soundVariationRanges  = {};
+      ReaderWriterQueue<ma_sound*> soundsToUninitialize{};
+      Vector<_SoundVariation>      soundVariationsLoadedFromFiles = {};
+      Vector<_SoundVariationRange> soundVariationRanges           = {};
 
       bool      works  = false;
       ma_engine engine = {};
@@ -1047,7 +1045,7 @@ struct EngineData {
       Array<bool, BF_MAX_SOUNDS>     playingSoundsBools = {};
       int                            playingSoundsCount = 0;
 
-      Array<_LaunchedSound, SOUNDS_COUNT> launchedSounds = {};
+      Vector<_LaunchedSound> launchedSounds = {};
     } _soundManager = {};
 
     bool ysdkLoaded       = false;
@@ -1198,7 +1196,10 @@ void _OnSoundEnd(void* _userData, ma_sound* sound) {  ///
 // * variations
 // * ma_sound_set_stop_time_in_pcm_frames()
 // * ma_sound_set_stop_time_in_milliseconds()
-void PlaySound(Sound sound) {  ///
+void PlaySound(u32 soundHashValue) {  ///
+  if (!soundHashValue)
+    return;
+
   static f32 BF_BOOST_VOLUME_MAX = 0;
   if (BF_BOOST_VOLUME_MAX == 0)
     BF_BOOST_VOLUME_MAX = ma_volume_db_to_linear(-3) / ma_volume_db_to_linear(-6);
@@ -1209,9 +1210,16 @@ void PlaySound(Sound sound) {  ///
   if (!m.works)
     return;
 
+  const auto fb_sounds = glib->sounds();
+  const auto fb_sound  = fb_sounds->LookupByKey(soundHashValue);
+
+  const int soundIndex = fb_sound->index();
+  ASSERT(soundIndex >= 0);
+  ASSERT(soundIndex < fb_sounds->size());
+
   // Playing the same sound during the next short time doesn't spawn a new sound.
   // We're boosting previously launched one.
-  auto& launchedSound = m.launchedSounds[sound];
+  auto& launchedSound = m.launchedSounds[soundIndex];
 
   if (launchedSound.frame.IsSet()
       && (launchedSound.frame.Elapsed().value < BF_SOUND_VOLUME_BOOST_MAX_LATENCY_FRAMES))
@@ -1232,14 +1240,12 @@ void PlaySound(Sound sound) {  ///
   if (m.playingSoundsCount >= m.playingSounds.count)
     return;
 
-  const auto& variationRange = m.soundVariationRanges[sound];
+  const auto& variationRange = m.soundVariationRanges[soundIndex];
   if (variationRange.start == -1)
     return;
 
   ASSERT(variationRange.start >= 0);
   ASSERT(variationRange.end > variationRange.start);
-
-  const auto fb_sound = glib->sounds()->LookupByKey(INDEX_TO_SOUND_HASH_VALUE[sound]);
 
   int loadedFileIndex = launchedSound.loadedFileIndex;
   ASSERT(loadedFileIndex >= -1);
@@ -1249,7 +1255,7 @@ void PlaySound(Sound sound) {  ///
   }
   if (loadedFileIndex <= -1)
     loadedFileIndex = variationRange.start;
-  auto& original = m.soundsLoadedFromFiles[loadedFileIndex];
+  auto& original = m.soundVariationsLoadedFromFiles[loadedFileIndex];
 
   // TODO:
   // * freelist (pool?) allocator
@@ -1304,6 +1310,10 @@ void PlaySound(Sound sound) {  ///
   m.playingSoundsCount++;
 }
 
+void PlaySound(Sound sound) {  ///
+  PlaySound(SOUND_TO_HASH_VALUE[sound]);
+}
+
 BF_FORCE_INLINE void DrawGroup_Begin(DrawZ z) {  ///
   ASSERT(ge.meta._drawing);
 
@@ -1321,7 +1331,8 @@ BF_FORCE_INLINE void DrawGroup_SetSortY(f32 value) {  ///
     INVALID_PATH;
 }
 
-Vector2 WorldToLogical(Vector2 pos, Camera* camera) {  ///
+Vector2 WorldPosToLogical(Vector2 pos, Camera* camera) {  ///
+  ASSERT(camera);
   ASSERT(camera->zoom > 0);
   pos -= camera->pos;
   pos *= camera->zoom;
@@ -3098,10 +3109,13 @@ void ReloadSounds() {  ///
   m.engine             = {};
   m.playingSoundsBools = {};
   m.playingSoundsCount = 0;
-  m.works              = false;
 
-  for (auto& x : m.launchedSounds)
-    x = {};
+  // Resetting soundsToUninitialize.
+  ma_sound* sound_ = nullptr;
+  while (m.soundsToUninitialize.try_dequeue(sound_))
+    continue;
+
+  m.works = false;
 
   // Initializing audio only if there are sounds in project.
   const auto fb_sounds = glib->sounds();
@@ -3122,6 +3136,15 @@ void ReloadSounds() {  ///
 
   LOGI("miniaudio engine initialized");
 
+  m.soundVariationRanges.Reset();
+  m.soundVariationRanges.Reserve(fb_sounds->size());
+
+  m.launchedSounds.Reset();
+  m.launchedSounds.Reserve(fb_sounds->size());
+  FOR_RANGE (int, i, fb_sounds->size()) {
+    *m.launchedSounds.Add() = {};
+  }
+
   ma_fence fence{};
   if (ma_fence_init(&fence) != MA_SUCCESS) {
     LOGW("Error during ma_fence_init");
@@ -3136,21 +3159,13 @@ void ReloadSounds() {  ///
   for (auto fb : *fb_sounds)
     filesToLoad += fb->variations()->size();
 
-  m.soundsLoadedFromFiles.Reset();
-  m.soundsLoadedFromFiles.Reserve(filesToLoad);
-  const auto oldBase = m.soundsLoadedFromFiles.base;
+  m.soundVariationsLoadedFromFiles.Reset();
+  m.soundVariationsLoadedFromFiles.Reserve(filesToLoad);
+  const auto oldBase = m.soundVariationsLoadedFromFiles.base;
 
   bool errored = false;
 
-  for (auto& x : m.soundVariationRanges)
-    x = {};
-
-  int soundType = 0;
   for (auto fb : *fb_sounds) {
-    int index = INDEX_TO_SOUND_HASH_VALUE.IndexOf(fb->enum_value_id());
-    if (index < 0)
-      continue;
-
     u32 customFlags = MA_SOUND_FLAG_NO_SPATIALIZATION;
     if (fb->pitch_min() == fb->pitch_max())
       customFlags |= MA_SOUND_FLAG_NO_PITCH;
@@ -3158,24 +3173,20 @@ void ReloadSounds() {  ///
     static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
     u32 flags = MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC | customFlags;
 
-    m.soundVariationRanges[index] = {
-      .start = m.soundsLoadedFromFiles.count,
-      .end   = m.soundsLoadedFromFiles.count + (int)fb->variations()->size(),
+    *m.soundVariationRanges.Add() = {
+      .start = m.soundVariationsLoadedFromFiles.count,
+      .end   = m.soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
     };
 
     int variationIndex = -1;
     for (auto fb_variation : *fb->variations()) {
-      index++;
       variationIndex++;
 
-      auto slot = m.soundsLoadedFromFiles.Add();
-
-      auto ind = INDEX_TO_SOUND_HASH_VALUE.IndexOf(fb->enum_value_id());
-      ASSERT(ind >= 0);
+      auto slot = m.soundVariationsLoadedFromFiles.Add();
 
       *slot = {
         .gamelib_filepath = fb_variation->c_str(),
-        .type             = (Sound)ind,
+        .soundHashValue   = fb->enum_value_id(),
         .variation        = variationIndex,
         .flags            = customFlags,
       };
@@ -3191,7 +3202,7 @@ void ReloadSounds() {  ///
     }
   }
 
-  ASSERT(oldBase == m.soundsLoadedFromFiles.base);
+  ASSERT(oldBase == m.soundVariationsLoadedFromFiles.base);
 
   if (ma_fence_wait(&fence) != MA_SUCCESS)
     INVALID_PATH;

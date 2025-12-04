@@ -66,6 +66,7 @@ struct Pos {
 }
 
 table Sound {
+    index: int;
     enum_value_id: uint (key);
     variations: [string];
     pitch_max: float = 1.1;
@@ -289,7 +290,7 @@ table Weapon {
     melee_collider_height_px: float;
     particle_emitter: ParticleEmitter;
     life_steal_percents: [float];
-    use_sound_hash_value: uint;
+    use_sound_hash: uint;
     shooting_feedback_scale: float = 1;
     effects: [Effect];
     color: uint = 0xffffffff;
@@ -344,6 +345,7 @@ table Particle {
 table Pickupable {
     name_locale: int;
     variation_texture_ids: [int];
+    pickup_sound_hash: uint;
 }
 
 table Number {
