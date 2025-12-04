@@ -13,9 +13,20 @@ x reaper: сделать так, чтобы можно было использо
   (через регионы) + опробовать folder items
 x PlaySound по sound hash value
 x fix coins look, feel and sound good now
+x prod sfx: ui click
 
+https://www.youtube.com/watch?v=3AToV1uoqqY
+https://www.youtube.com/watch?v=m_0xUKejd_U
+https://www.youtube.com/watch?v=m0A-x2onjjc&list=PLM0xHqxaiT68BAxf6fvIOdIrGKdYxoDBN
+https://www.youtube.com/watch?v=434b6LsH_6g
+https://www.youtube.com/watch?v=djfvU5aDpQE
+https://www.youtube.com/watch?v=ZB_-6DeaVQk
+
+* sfx: удаление ненужных звуков
+  еси есть, к примеру, 03, но его дата < 02 => я удалил в reaper вариацию 3 и жкспортировал те две.
+  Всё что больше 02 должно быть удалено
 * prod sfx: ui hover
-* prod sfx: ui click
+  WHOOSH
 * prod sfx: ui error
 * prod sfx: shotgun
 * prod sfx: gunshot
@@ -37,11 +48,13 @@ x fix coins look, feel and sound good now
 * prod sfx: run won
 * prod sfx: run lost
 * prod sfx: grimoire of milk
+* prod sfx: pickup chest
+* prod sfx: pickup apple
+* prod sfx: emscripten старт звука после key / mouse / touch press
 * prod sfx:
 * prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
+*
+* цветовое кодирование кнопок зелёные - брать, красные - продавать, reroll - ???
 *
 * sfx: удалять те файлы, которые reaper бы не создавал
 *
