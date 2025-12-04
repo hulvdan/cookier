@@ -3563,6 +3563,7 @@ weapons: # {  ###
     projectile_pierce: 2 2 2 3
     projectile_piercing_damage_bonus_percent: 20 20 20 20
     knockback_meters: 8 8 8 8
+    use_sound_hash: GAME_SHOTGUN
     price: 149
   - type: RANGED_0_GHOST_SCEPTER # bowl of apples
     base_damage: 10 15 20 30
