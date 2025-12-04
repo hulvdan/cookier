@@ -11,8 +11,37 @@ WORKING SINCE 2025-09-07
 
 x reaper: сделать так, чтобы можно было использовать variations
   (через регионы) + опробовать folder items
+x PlaySound по sound hash value
+x fix coins look, feel and sound good now
 
-* тучу placeholder звуков бахнуть
+* prod sfx: gunshot
+* prod sfx: flamethrower
+* prod sfx: steps
+* prod sfx: player hurt
+* prod sfx: mob hurt
+* prod sfx: explosion
+* prod sfx: level up
+* prod sfx: button click
+* prod sfx: button hover
+* prod sfx: wave complete/died whoosh
+* prod sfx: pickup coin
+* prod sfx: pickup crate
+* prod sfx: pickup apple
+* prod sfx: got achievement + item unlocked
+* prod sfx: turret shot
+* prod sfx: mob/boss shoots
+* prod sfx: run won
+* prod sfx: run lost
+* prod sfx: grimoire of milk
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+*
 * сортировка по Y игрока сбилась - нужно правильно поставить нижнюю точку
 *
 * bf_image: возможность rectangle не скруглять какие-либо углы
@@ -53,34 +82,6 @@ x reaper: сделать так, чтобы можно было использо
 * загуглить способ clang-ом забилдить игру cmake
 * написать PLAYTEST.txt заготовку письма, чтобы людям рассылать для тестов (как установить игру, как использовать читы)
 *
-* prod sfx: steps
-* prod sfx: player hurt
-* prod sfx: mob hurt
-* prod sfx: explosion
-* prod sfx: level up
-* prod sfx: button click
-* prod sfx: button hover
-* prod sfx: wave complete/died whoosh
-* prod sfx: pickup coin
-* prod sfx: pickup crate
-* prod sfx: pickup apple
-* prod sfx: got achievement + item unlocked
-* prod sfx: turret shot
-* prod sfx: mob/boss shoots
-* prod sfx: steps
-* prod sfx: run won
-* prod sfx: run lost
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
 *
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
 * impl: STAT__WHEN_BELOW__X__PERCENT_HP

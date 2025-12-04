@@ -3708,6 +3708,7 @@ weapons: # {  ###
     range_meters: 9.3 9.3 9.3 9.3
     projectile_type: BULLET
     knockback_meters: 0 0 0 0
+    use_sound_hash: GAME_GUN_SHOT
     price: 149
   - type: RANGED_0_WAND # mushoku tensei, жезл ученика
     base_damage: 1 1 1 1
@@ -4112,8 +4113,8 @@ particles: # {  ###
           - game_particle_4_5
   - type: COIN
     color: 0xf3bc5eff
-    duration_seconds: 0.4
-    duration_plus_minus: 0.15
+    duration_seconds: 0.22
+    duration_plus_minus: 0.12
     variations:
       - texture_ids:
           - game_particle_3_1
@@ -4176,6 +4177,7 @@ particles: # {  ###
 pickupables: # {  ###
   - type: INVALID
   - type: COIN
+    pickup_sound_hash: GAME_COIN
     variation_texture_ids:
       - game_pickupable_coin_1
       - game_pickupable_coin_2

@@ -3148,9 +3148,11 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 }
 
 void Pickup(int pickupableIndex) {  ///
-#define PICKUPABLE (g.run.pickupables[pickupableIndex])
+  g.run.pickupables[pickupableIndex].pickedUpAt.SetNow();
+}
 
-  PICKUPABLE.pickedUpAt.SetNow();
+void OnPickedUp(int pickupableIndex) {  ///
+#define PICKUPABLE (g.run.pickupables[pickupableIndex])
 
   auto fb_creatures = glib->creatures();
 
@@ -3266,8 +3268,6 @@ void Pickup(int pickupableIndex) {  ///
     auto healChance = (f32)g.run.state.stats[StatType_COINS_HEAL] / 100.0f;
     if (GRAND.FRand() < healChance)
       HealPlayer();
-
-    PlaySound(Sound_GAME_COIN);
   } break;
 
   case PickupableType_CONSUMABLE: {
@@ -11192,6 +11192,7 @@ void GameFixedUpdate() {
   // Setup. {  ///
   ReloadFontsIfNeeded();
 
+  const auto fb_pickupables    = glib->pickupables();
   const auto fb_preSpawns      = glib->pre_spawns();
   const auto fb_atlas_textures = glib->atlas_textures();
   const auto fb_creatures      = glib->creatures();
@@ -12364,6 +12365,62 @@ void GameFixedUpdate() {
       );
     }
 
+    // Removing old picked up pickupables.
+    {  ///
+      ZoneScopedN("Removing old picked up pickupables.");
+
+      const auto total = g.run.pickupables.count;
+      int        off   = 0;
+      FOR_RANGE (int, i, total) {
+        const auto& pickupable = g.run.pickupables[i - off];
+
+        bool needsRemoving = false;
+
+        const auto fb = fb_pickupables->Get(pickupable.type);
+
+        if (pickupable.pickedUpAt.IsSet()
+            && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
+        {
+          if (pickupable.type == PickupableType_COIN) {
+            MakeParticles({
+              .type                   = ParticleType_COIN,
+              .count                  = GRAND.RandInt(3, 6),
+              .pos                    = PLAYER_CREATURE.pos,
+              .velocity               = 4.0f,
+              .velocityPlusMinus      = 0.5f,
+              .velocityAngle          = 0,
+              .velocityAnglePlusMinus = PI32,
+              .initialOffset          = 0.25f,
+              .initialOffsetPlusMinus = 0.1f,
+            });
+          }
+
+          needsRemoving = true;
+        }
+        else if (pickupable.startedFlyingAt.IsSet()
+                 && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
+        {
+          const auto& d = pickupable.DataCoin();
+
+          g.run.state.notPickedUpCoinsVisual += d.amount;
+          g.ui.changedNotPickedUpCoinsAt = {};
+          g.ui.changedNotPickedUpCoinsAt.SetNow();
+
+          needsRemoving = true;
+        }
+
+        if (needsRemoving) {
+          PlaySound(fb->pickup_sound_hash());
+          if (pickupable.startedFlyingAt.IsSet()) {
+          }
+          else
+            OnPickedUp(i - off);
+          g.run.pickupables.UnstableRemoveAt(i - off);
+          off++;
+        }
+      }
+    }
+
     // Burning spread.
     {  ///
       ZoneScopedN("Burning spread.");
@@ -12642,6 +12699,7 @@ void GameFixedUpdate() {
                 weapon.targetDir = dir;
                 weapon.startedShootingAt.SetNow();
                 weapon.thisWaveUseCount++;
+                PlaySound(fb->use_sound_hash());
               }
               targetSet = true;
             }
@@ -13267,55 +13325,6 @@ void GameFixedUpdate() {
     if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
       ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
 
-    // Removing old picked up pickupables.
-    {  ///
-      ZoneScopedN("Removing old picked up pickupables.");
-
-      const auto total = g.run.pickupables.count;
-      int        off   = 0;
-      FOR_RANGE (int, i, total) {
-        const auto& pickupable = g.run.pickupables[i - off];
-
-        bool needsRemoving = false;
-
-        if (pickupable.pickedUpAt.IsSet()
-            && (pickupable.pickedUpAt.Elapsed() >= PICKUPABLE_FADE_FRAMES))
-        {
-          if (pickupable.type == PickupableType_COIN) {
-            MakeParticles({
-              .type                   = ParticleType_COIN,
-              .count                  = GRAND.RandInt(3, 6),
-              .pos                    = PLAYER_CREATURE.pos,
-              .velocity               = 4.0f,
-              .velocityPlusMinus      = 0.5f,
-              .velocityAngle          = 0,
-              .velocityAnglePlusMinus = PI32,
-              .initialOffset          = 0.25f,
-              .initialOffsetPlusMinus = 0.1f,
-            });
-          }
-
-          needsRemoving = true;
-        }
-        else if (pickupable.startedFlyingAt.IsSet()
-                 && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
-        {
-          const auto& d = pickupable.DataCoin();
-
-          g.run.state.notPickedUpCoinsVisual += d.amount;
-          g.ui.changedNotPickedUpCoinsAt = {};
-          g.ui.changedNotPickedUpCoinsAt.SetNow();
-
-          needsRemoving = true;
-        }
-
-        if (needsRemoving) {
-          g.run.pickupables.UnstableRemoveAt(i - off);
-          off++;
-        }
-      }
-    }
-
     // Player's weapons create particles.
     FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {  ///
       const auto& weapon = g.run.state.weapons[weaponIndex];
@@ -13771,7 +13780,7 @@ void GameDraw() {
       );
     }
     else
-      DrawGroup_SetSortY(shadowPos.y * METER_LOGICAL_SIZE);
+      DrawGroup_SetSortY(WorldPosToLogical(shadowPos, &g.run.camera).y);
 
     if (creature.type == CreatureType_PLAYER) {
       const auto fb_build = fb_builds->Get(g.player.build);
@@ -14202,7 +14211,7 @@ void GameDraw() {
 
     fade = EaseOutCubic(fade);
 
-    pos = WorldToLogical(pos, &g.run.camera);
+    pos = WorldPosToLogical(pos, &g.run.camera);
     if (pickupable.startedFlyingAt.IsSet()) {
       auto p
         = pickupable.startedFlyingAt.Elapsed().Progress(WAVE_COMPLETED_COINS_FLYING_FRAMES
