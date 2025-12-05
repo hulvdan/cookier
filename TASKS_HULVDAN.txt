@@ -16,9 +16,9 @@ x prod sfx: ui hover
 x prod sfx: pickup coin
 x prod sfx: shotgun
 x prod sfx: swing
+x prod sfx: weapon damage sound
+x prod sfx: bonk (barrel)
 
-* prod sfx: weapon damage sound
-* prod sfx: bonk (barrel)
 * prod sfx: blade knife (for swords)
 * prod sfx: steps
 * prod sfx: throw (e.g. javelin)
@@ -51,6 +51,8 @@ x prod sfx: swing
 * prod sfx:
 * prod sfx:
 * prod sfx:
+*
+* сковородку поменьше нарисовать
 *
 * cli команда для сравнения пиков звуков
 *

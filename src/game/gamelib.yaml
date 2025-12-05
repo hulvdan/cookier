@@ -1573,8 +1573,6 @@ items: # {  ###
     tier: 0
     price: 25
     limit: 1
-    use_sound_hash: GAME_SWING
-    damage_sound_hash: GAME_BONK
     effects:
       # TODO: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
       # - effectcondition_type: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
@@ -3220,6 +3218,7 @@ weapons: # {  ###
         value: 0 0 2 2
     melee_collider_height_px: 112
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK
     price: 91
   - type: MELEE_0_SCREWDRIVER # гаечный ключ
     base_damage: 8 12 16 20
