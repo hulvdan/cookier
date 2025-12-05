@@ -39,12 +39,20 @@
             "args": "process_images",
         },
         {
-            "name": "python hulvdan credit_sfx",
+            "name": "python credit_sfx",
             "type": "debugpy",
             "request": "launch",
             "program": "cli/bf_cli.py",
             "console": "integratedTerminal",
             "args": "credit_sfx",
+        },
+        {
+            "name": "python temp",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli/bf_cli.py",
+            "console": "integratedTerminal",
+            "args": "temp",
         },
     ],
 }

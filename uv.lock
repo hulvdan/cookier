@@ -20,6 +20,15 @@ wheels = [
 ]
 
 [[package]]
+name = "attrs"
+version = "25.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/5c/685e6633917e101e5dcb62b9dd76946cbb57c26e133bae9e0cd36033c0a9/attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11", size = 934251, upload-time = "2025-10-06T13:54:44.725Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373", size = 67615, upload-time = "2025-10-06T13:54:43.17Z" },
+]
+
+[[package]]
 name = "cli"
 version = "0.1.0"
 source = { editable = "." }
@@ -39,6 +48,7 @@ dependencies = [
     { name = "pytest" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "rpp" },
     { name = "ruff" },
     { name = "typer" },
     { name = "types-pyyaml" },
@@ -61,6 +71,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=14.2.0" },
+    { name = "rpp", specifier = ">=0.5" },
     { name = "ruff", specifier = ">=0.14.6" },
     { name = "typer", specifier = ">=0.20.0" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
@@ -518,6 +529,15 @@ wheels = [
 ]
 
 [[package]]
+name = "ply"
+version = "3.11"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e5/69/882ee5c9d017149285cab114ebeab373308ef0f874fcdac9beb90e0ac4da/ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3", size = 159130, upload-time = "2018-02-15T19:01:31.097Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce", size = 49567, upload-time = "2018-02-15T19:01:27.172Z" },
+]
+
+[[package]]
 name = "pydantic"
 version = "2.12.5"
 source = { registry = "https://pypi.org/simple" }
@@ -837,6 +857,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fb/d2/8920e102050a0de7bfabeb4c4614a49248cf8d5d7a8d01885fbb24dc767a/rich-14.2.0.tar.gz", hash = "sha256:73ff50c7c0c1c77c8243079283f4edb376f0f6442433aecb8ce7e6d0b92d1fe4", size = 219990, upload-time = "2025-10-09T14:16:53.064Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/25/7a/b0178788f8dc6cafce37a212c99565fa1fe7872c70c6c9c1e1a372d9d88f/rich-14.2.0-py3-none-any.whl", hash = "sha256:76bc51fe2e57d2b1be1f96c524b890b816e334ab4c1e45888799bfaab0021edd", size = 243393, upload-time = "2025-10-09T14:16:51.245Z" },
+]
+
+[[package]]
+name = "rpp"
+version = "0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "ply" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f6/36/6534b9c984718b3a26fcd42e6d21d6f3a6d95bddf014df0c8f2ba30555e0/rpp-0.5.tar.gz", hash = "sha256:2b8dfdcef4b2c51ed107e5acfac0c88c21aefc941c42072387bb894c607d3f58", size = 11044, upload-time = "2023-04-29T18:48:44.182Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/37/7338baf9c7b1b8a41cc8ae2cc88c8a6b92d8ef131c02e50232c60b291887/rpp-0.5-py3-none-any.whl", hash = "sha256:ccf54131ee1b5601225583572c38392673e798db35a3ab695d252d5167937d9a", size = 6421, upload-time = "2023-04-29T18:48:40.477Z" },
 ]
 
 [[package]]

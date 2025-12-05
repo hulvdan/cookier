@@ -17,13 +17,16 @@ USAGE:
 import json
 import subprocess
 from itertools import groupby
+from pathlib import Path
 from typing import Any, TypeAlias
 
 import bf_image
 import bf_swatch
+import rpp
 from bf_lib import (
     ART_DIR,
     ART_TEXTURES_DIR,
+    ASSETS_DIR,
     SRC_DIR,
     check_duplicates,
     game_settings,
@@ -1562,6 +1565,25 @@ def reorder_achievements():
             stderr=subprocess.DEVNULL,
         )
     # }
+
+
+@command
+def temp():
+    allowed_sounds: set[str] = set()
+
+    project = rpp.loads((ASSETS_DIR / "sfx" / "src" / "sfx.rpp").read_text())
+    for t in project.findall(".//TRACK"):
+        for f in t.findall(".//FILE"):
+            subproject_name_with_extension = Path(f[1]).name
+            print(subproject_name_with_extension)
+            subproject = rpp.loads(
+                (
+                    ASSETS_DIR / "sfx" / "src" / "_sfx" / subproject_name_with_extension
+                ).read_text()
+            )
+            for marker in subproject.findall('.//MARKER'):
+                marker_name = marker[3]
+                print(marker_name)
 
 
 ###
