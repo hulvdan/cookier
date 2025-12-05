@@ -2575,6 +2575,7 @@ struct TryApplyDamageData {  ///
   f32              critDamageMultiplier               = 1;
   int              weaponCritChance                   = 0;
   int              indexOfWeaponThatDidDamageOrMinus1 = -1;
+  bool             weaponSound                        = false;
   ApplyAilmentData ailment                            = {};
   f32              ailmentChance                      = 0;
   bool*            outWasCrit                         = nullptr;
@@ -2943,6 +2944,12 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     creature.health -= data.damage;
 
     int effectDroppedCoins = 0;
+
+    if (data.weaponSound && (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)) {
+      PlaySound(glib->weapons()
+                  ->Get(g.run.state.weapons[data.indexOfWeaponThatDidDamageOrMinus1].type)
+                  ->damage_sound_hash());
+    }
 
     if (creature.health <= 0) {
       if (data.outJustKilled)
@@ -5401,6 +5408,7 @@ bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
       .critDamageMultiplier = critDamageMultiplier,
       .weaponCritChance     = weaponCritChance,
       .indexOfWeaponThatDidDamageOrMinus1 = *weaponIndex,
+      .weaponSound                        = true,
     });
   }
 
