@@ -64,6 +64,8 @@ livereload = "^2.7.1"
 pydub = "^0.25.1"
 
 [tool.ruff]
+line-length = 90
+
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
