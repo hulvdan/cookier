@@ -3007,6 +3007,7 @@ weapons: # {  ###
           - ints: 0 0 0 0
         only_this_weapon: true
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 149
   - type: MELEE_0_CHOPPER # боевой саженец
     base_damage: 6 12 18 30
@@ -3074,6 +3075,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 52
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 149
   - type: MELEE_0_GHOST_FLINT # овощерезка
     base_damage: 6 9 12 18
@@ -3094,6 +3096,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 91
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 105
   - type: MELEE_0_LANCE
     base_damage: 20 25 30 50
@@ -3116,6 +3119,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 40
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 132
   - type: MELEE_0_LIGHTNING_SHIV # electrified gum
     base_damage: 3 6 9 16
@@ -3200,6 +3204,7 @@ weapons: # {  ###
         value: 2 5 9 15
     melee_collider_height_px: 34
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 130
   - type: MELEE_0_ROCK # barrel
     base_damage: 20 35 50 70
@@ -3267,6 +3272,7 @@ weapons: # {  ###
         #     - floats: 25 20 15 10
     melee_collider_height_px: 42
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 105
   - type: MELEE_0_SPIKY_SHIELD # shield of thorns
     base_damage: 10 15 20 30
@@ -3365,6 +3371,7 @@ weapons: # {  ###
     knockback_meters: 0 0 0
     melee_collider_height_px: 68
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 173
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES # frying pan, сковорода
     base_damage: 18 36 75
@@ -3413,6 +3420,7 @@ weapons: # {  ###
     knockback_meters: 5 5 5
     melee_collider_height_px: 58
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 190
   - type: MELEE_2_PLASMA_SLEDGE # граната света на палочке
     base_damage: 80 120
@@ -3478,6 +3486,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 69
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 238
   - type: MELEE_3_DEX_TROYER
     base_damage: 100
@@ -3510,6 +3519,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 70
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 315
   - type: MELEE_3_EXCALIBUR # terra sword
     base_damage: 200
@@ -3530,6 +3540,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 75
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 230
   - type: MELEE_3_SCYTHE
     base_damage: 150
@@ -3555,6 +3566,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 104
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     price: 285
   - type: RANGED_0_CROSSBOW
     base_damage: 10 12 15 18
