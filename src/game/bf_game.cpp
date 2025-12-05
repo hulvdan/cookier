@@ -530,6 +530,8 @@ struct ApplyAilmentData {  ///
   int         spread = {};
 };
 
+constexpr f32 MOVEMENT_CYCLE_METERS = PI32 * 3 / 4;
+
 struct Creature {  ///
   int                id                             = {};
   CreatureType       type                           = {};
@@ -2553,6 +2555,8 @@ void AddXP(f32 xp) {  ///
   }
 
   if (addedLevels > 0) {
+    PlaySound(Sound_GAME_LEVEL_UP);
+
     IterateOverEffects(
       EffectConditionType_STAT__UPON_LEVEL_UP,
       -1,
@@ -12595,11 +12599,20 @@ void GameFixedUpdate() {
 
           creature.movementVisualFactor
             = MoveTowardsF(creature.movementVisualFactor, 0, FIXED_DT * 5);
+          if (creature.movementVisualFactor <= 0)
+            creature.movementAccumulator = 0;
         }
         else {
           auto v = Vector2Length(velocity) * FIXED_DT;
           creature.movementAccumulator += v;
           creature.movementAccumulatorVisual += v;
+
+          while (creature.movementAccumulatorVisual * MOVEMENT_CYCLE_METERS >= 2 * PI32) {
+            creature.movementAccumulatorVisual -= 2 * PI32 / MOVEMENT_CYCLE_METERS;
+            if (creature.type == CreatureType_PLAYER)
+              PlaySound(Sound_GAME_STEPS_GRASS);
+          }
+
           if (creature.idleStartedAt.IsSet())
             creature.idleStartedAt = {};
 
@@ -13751,7 +13764,7 @@ void GameDraw() {
     }
 
     Vector2 movementScale{1, 1};
-    f32     movementCycle = creature.movementAccumulatorVisual * PI32 * 3 / 4;
+    f32     movementCycle = creature.movementAccumulatorVisual * MOVEMENT_CYCLE_METERS;
     f32     movementAmplitudeScale
       = 0.07f * EaseInQuad(creature.movementVisualFactor) * 3 / 4 / sy * 2;
     if (creature.type == CreatureType_PLAYER)

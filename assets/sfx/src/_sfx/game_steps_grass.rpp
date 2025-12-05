@@ -1,4 +1,4 @@
-<REAPER_PROJECT 0.1 "7.52/win64" 1764935783
+<REAPER_PROJECT 0.1 "7.52/win64" 1764936906
   <NOTES 0 2
   >
   RIPPLE 0 0
@@ -20,7 +20,7 @@
   PANMODE 3
   PANLAWFLAGS 3
   CURSOR 0
-  ZOOM 38.51638621431985 0 0
+  ZOOM 38.51638621431989 0 0
   VZOOMEX 6 0
   USE_REC_CFG 0
   RECMODE 1
@@ -116,7 +116,7 @@
     BEAT -1
     AUTOMODE 0
     PANLAWFLAGS 3
-    VOLPAN 3.98107170553497 0 -1 -1 1
+    VOLPAN 1 0 -1 -1 1
     MUTESOLO 0 0 0
     IPHASE 0
     PLAYOFFS 0 1
@@ -139,7 +139,7 @@
       SHOW 0
       LASTSEL 0
       DOCKED 0
-      BYPASS 0 0 0
+      BYPASS 1 0 0
       <VST "VST3: Pro-R 2 (FabFilter)" "FabFilter Pro-R 2.vst3" 0 "" 585842631{6070873C802A4B078FC06AB5459154E9} ""
         xz/rIu5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAmwIAAAEAAAAAAAAA
         OAIAAAEAAABGRkJTAQAAAIgAAADKwog8cKwGPo/CdT0AAIA/AAAAAAAAAAAAAAAA16MwPwAAAAC0ohFBAAAAAAAAAAAAAHpDAAAAAAAAAAAAAAAA61G4PQAAAAAAAAAA
@@ -185,89 +185,89 @@
     <ITEM
       POSITION 0
       SNAPOFFS 0
-      LENGTH 0.75
+      LENGTH 0.3466875
       LOOP 1
       ALLTAKES 0
       FADEIN 1 0.005 0 1 0 0 0
-      FADEOUT 1 0.005 0 1 0 0 0
+      FADEOUT 1 0.22872775733255 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {2AE6E482-9E4A-45BE-904E-9B75AB1DC732}
-      IID 2
-      NAME S_Grass_Mono_Without_Hitting_Boot_4.wav
+      IGUID {3DA456CC-BA26-4675-B5A8-65FC442BBEAA}
+      IID 6
+      NAME Footsteps_Iceland_Run_Grass_Mono_06.wav
       VOLPAN 1 0 1 -1
       SOFFS 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {B83BCE56-1ABD-41D4-B100-BEA7F8AAE365}
+      GUID {D3B82549-4FA9-4E5C-9A56-922981BAA05F}
       <SOURCE WAVE
-        FILE "Media\S_Grass_Mono_Without_Hitting_Boot_4.wav"
+        FILE "Media\Footsteps_Iceland_Run_Grass_Mono_06.wav"
       >
     >
     <ITEM
-      POSITION 1.99190390226431
+      POSITION 1.99351965107987
       SNAPOFFS 0
-      LENGTH 0.75
+      LENGTH 0.378375
       LOOP 1
       ALLTAKES 0
       FADEIN 1 0.005 0 1 0 0 0
-      FADEOUT 1 0.005 0 1 0 0 0
+      FADEOUT 1 0.23241997498072 0 1 0 0 0
+      MUTE 0 0
+      SEL 0
+      IGUID {9751C97E-E299-4034-B18B-2C1818D95108}
+      IID 7
+      NAME Footsteps_Iceland_Run_Grass_Mono_07.wav
+      VOLPAN 1 0 1 -1
+      SOFFS 0
+      PLAYRATE 1 1 0 -1 0 0.0025
+      CHANMODE 0
+      GUID {5179D1FD-B7FF-404C-BA9F-303F524F19AB}
+      <SOURCE WAVE
+        FILE "Media\Footsteps_Iceland_Run_Grass_Mono_07.wav"
+      >
+    >
+    <ITEM
+      POSITION 4.06455570448407
+      SNAPOFFS 0
+      LENGTH 0.42977083333333
+      LOOP 1
+      ALLTAKES 0
+      FADEIN 1 0.005 0 1 0 0 0
+      FADEOUT 1 0.2326095491606 0 1 0 0 0
+      MUTE 0 0
+      SEL 0
+      IGUID {898BDB8C-C579-4A78-8200-505F746BF6BF}
+      IID 8
+      NAME Footsteps_Iceland_Run_Snow_Grass_Mono_01.wav
+      VOLPAN 1 0 1 -1
+      SOFFS 0
+      PLAYRATE 1 1 0 -1 0 0.0025
+      CHANMODE 0
+      GUID {ADA431A0-F09C-42BC-8C94-6DEA32E4B042}
+      <SOURCE WAVE
+        FILE "Media\Footsteps_Iceland_Run_Snow_Grass_Mono_01.wav"
+      >
+    >
+    <ITEM
+      POSITION 6.0507077601473
+      SNAPOFFS 0
+      LENGTH 0.42333333333333
+      LOOP 1
+      ALLTAKES 0
+      FADEIN 1 0.005 0 1 0 0 0
+      FADEOUT 1 0.24299899357769 0 1 0 0 0
       MUTE 0 0
       SEL 1
-      IGUID {EE7F5AC5-2042-4724-970B-B26F904B73B2}
-      IID 3
-      NAME S_Grass_Mono_Without_Hitting_Boot_3.wav
+      IGUID {0D65B5A8-DC55-49A5-ABF2-1CD9B5E40F39}
+      IID 9
+      NAME Footsteps_Iceland_Run_Snow_Grass_Mono_02.wav
       VOLPAN 1 0 1 -1
       SOFFS 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {B7865FC5-87AA-4C39-B6A9-09E08CFD78B1}
+      GUID {DE2D73C3-B56E-4E2A-A39F-688F1D52E3DA}
       <SOURCE WAVE
-        FILE "Media\S_Grass_Mono_Without_Hitting_Boot_3.wav"
-      >
-    >
-    <ITEM
-      POSITION 4.0624355901964
-      SNAPOFFS 0
-      LENGTH 0.75
-      LOOP 1
-      ALLTAKES 0
-      FADEIN 1 0.005 0 1 0 0 0
-      FADEOUT 1 0.005 0 1 0 0 0
-      MUTE 0 0
-      SEL 0
-      IGUID {D07AFF7C-8FAA-43E9-9814-389232957232}
-      IID 4
-      NAME S_Grass_Mono_Without_Hitting_Boot_2.wav
-      VOLPAN 1 0 1 -1
-      SOFFS 0
-      PLAYRATE 1 1 0 -1 0 0.0025
-      CHANMODE 0
-      GUID {9BE094BE-CC3F-4F66-ACF9-B2A395430085}
-      <SOURCE WAVE
-        FILE "Media\S_Grass_Mono_Without_Hitting_Boot_2.wav"
-      >
-    >
-    <ITEM
-      POSITION 6.04937334207352
-      SNAPOFFS 0
-      LENGTH 0.75
-      LOOP 1
-      ALLTAKES 0
-      FADEIN 1 0.005 0 1 0 0 0
-      FADEOUT 1 0.005 0 1 0 0 0
-      MUTE 0 0
-      SEL 0
-      IGUID {F9FBEB6B-C815-49B3-A1A1-7E58BD9BF58C}
-      IID 5
-      NAME S_Grass_Mono_Without_Hitting_Boot_1.wav
-      VOLPAN 1 0 1 -1
-      SOFFS 0
-      PLAYRATE 1 1 0 -1 0 0.0025
-      CHANMODE 0
-      GUID {B11C1602-4A40-4FDD-B36B-9C85FF81F5E6}
-      <SOURCE WAVE
-        FILE "Media\S_Grass_Mono_Without_Hitting_Boot_1.wav"
+        FILE "Media\Footsteps_Iceland_Run_Snow_Grass_Mono_02.wav"
       >
     >
   >
