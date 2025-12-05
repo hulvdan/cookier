@@ -1573,6 +1573,8 @@ items: # {  ###
     tier: 0
     price: 25
     limit: 1
+    use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK
     effects:
       # TODO: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
       # - effectcondition_type: HITTING_ENEMY_REMOVES__X__PERCENT_OF_THEIR_SPEED_MAX__Y
@@ -3006,6 +3008,7 @@ weapons: # {  ###
           - ints: 3 4 5 6
           - ints: 0 0 0 0
         only_this_weapon: true
+    use_sound_hash: GAME_SWING
     price: 149
   - type: MELEE_0_CHOPPER # боевой саженец
     base_damage: 6 12 18 30
@@ -3020,6 +3023,7 @@ weapons: # {  ###
     range_meters: 2.9 3.5 4.1 4.7
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 77
+    use_sound_hash: GAME_SWING
     effects:
       - stat_type: CONSUMABLE_HEAL
         value: 1 1 1 2
@@ -3037,6 +3041,7 @@ weapons: # {  ###
     range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 61
+    use_sound_hash: GAME_SWING
     price: 110
   - type: MELEE_0_FIST # перчатка молочника
     base_damage: 8 16 32 64
@@ -3050,6 +3055,7 @@ weapons: # {  ###
     range_meters: 3.5 3.5 3.5 3.5
     knockback_meters: 15 15 15 15
     melee_collider_height_px: 58
+    use_sound_hash: GAME_SWING
     price: 91
   - type: MELEE_0_GHOST_AXE # открывашка
     base_damage: 10 15 20 34
@@ -3069,6 +3075,7 @@ weapons: # {  ###
           - ints: 20 18 16 12
         only_this_weapon: true
     melee_collider_height_px: 52
+    use_sound_hash: GAME_SWING
     price: 149
   - type: MELEE_0_GHOST_FLINT # овощерезка
     base_damage: 6 9 12 18
@@ -3088,6 +3095,7 @@ weapons: # {  ###
           - ints: 20 18 16 12
         only_this_weapon: true
     melee_collider_height_px: 91
+    use_sound_hash: GAME_SWING
     price: 105
   - type: MELEE_0_LANCE
     base_damage: 20 25 30 50
@@ -3109,6 +3117,7 @@ weapons: # {  ###
         value: -8 -12 -16 -20
         only_this_weapon: true
     melee_collider_height_px: 40
+    use_sound_hash: GAME_SWING
     price: 132
   - type: MELEE_0_LIGHTNING_SHIV # electrified gum
     base_damage: 3 6 9 16
@@ -3134,6 +3143,7 @@ weapons: # {  ###
           - ints: 5 6 8 11
         only_this_weapon: true
     melee_collider_height_px: 44
+    use_sound_hash: GAME_SWING
     price: 142
   - type: MELEE_0_PLANK # динамит на палочке
     base_damage: 10 15 20 25
@@ -3155,6 +3165,7 @@ weapons: # {  ###
           - ints: 25 30 35 40
         only_this_weapon: true
     melee_collider_height_px: 85
+    use_sound_hash: GAME_SWING
     price: 122
   - type: MELEE_0_PRUNER # sunflower
     base_damage: 10 15 20 25
@@ -3172,6 +3183,7 @@ weapons: # {  ###
           - floats: 15 14 12 10
         only_this_weapon: true
     melee_collider_height_px: 78
+    use_sound_hash: GAME_SWING
     price: 95
   - type: MELEE_0_QUATERSTAFF # ручка
     base_damage: 10 15 20 30
@@ -3189,6 +3201,7 @@ weapons: # {  ###
       - stat_type: XP_GAIN
         value: 2 5 9 15
     melee_collider_height_px: 34
+    use_sound_hash: GAME_SWING
     price: 130
   - type: MELEE_0_ROCK # barrel
     base_damage: 20 35 50 70
@@ -3206,6 +3219,7 @@ weapons: # {  ###
       - stat_type: HP
         value: 0 0 2 2
     melee_collider_height_px: 112
+    use_sound_hash: GAME_SWING
     price: 91
   - type: MELEE_0_SCREWDRIVER # гаечный ключ
     base_damage: 8 12 16 20
@@ -3229,6 +3243,7 @@ weapons: # {  ###
             percents_per_tier: 100 100 100 100
         only_this_weapon: true
     melee_collider_height_px: 64
+    use_sound_hash: GAME_SWING
     price: 91
   - type: MELEE_0_SHARP_TOOTH # nail hollow knight / tooth
     base_damage: 5 8 11 15
@@ -3252,6 +3267,7 @@ weapons: # {  ###
         #     - ints: 1 1 1 1
         #     - floats: 25 20 15 10
     melee_collider_height_px: 42
+    use_sound_hash: GAME_SWING
     price: 105
   - type: MELEE_0_SPIKY_SHIELD # shield of thorns
     base_damage: 10 15 20 30
@@ -3264,6 +3280,7 @@ weapons: # {  ###
     range_meters: 3.5 3.85 4.2 4.7
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 124
+    use_sound_hash: GAME_SWING
     price: 122
   - type: MELEE_0_STICK # ложка
     base_damage: 8 9 10 12
@@ -3281,6 +3298,7 @@ weapons: # {  ###
         value: 4 6 8 10
         only_this_weapon: true
     melee_collider_height_px: 49
+    use_sound_hash: GAME_SWING
     price: 91
   - type: MELEE_0_TORCH
     base_damage: 1 1 1 1
@@ -3303,6 +3321,7 @@ weapons: # {  ###
       - stat_type: BURNING_SPREAD
         value: 0 0 1 1
     melee_collider_height_px: 35
+    use_sound_hash: GAME_SWING
     price: 91
     particle_emitter:
       particle_type: FIRE
@@ -3332,6 +3351,7 @@ weapons: # {  ###
           - stat_type: ENGINEERING
             percents_per_tier: 80 80 80 80
     melee_collider_height_px: 74
+    use_sound_hash: GAME_SWING
     price: 173
   - type: MELEE_1_CIRCULAR_SAW # pizza cutter
     base_damage: 10 15 25
@@ -3345,6 +3365,7 @@ weapons: # {  ###
     range_meters: 4.08 4.08 4.08
     knockback_meters: 0 0 0
     melee_collider_height_px: 68
+    use_sound_hash: GAME_SWING
     price: 173
   - type: MELEE_1_FLAMING_BRASS_KNUCKLES # frying pan, сковорода
     base_damage: 18 36 75
@@ -3362,6 +3383,8 @@ weapons: # {  ###
     range_meters: 3.5 3.5 3.5
     knockback_meters: 15 15 15
     melee_collider_height_px: 84
+    use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_METALLIC_BONK
     price: 173
   - type: MELEE_1_HAMMER # кухонный молоток
     base_damage: 35 70 110
@@ -3377,6 +3400,7 @@ weapons: # {  ###
       - stat_type: KNOCKBACK
         value: 2 4 6
     melee_collider_height_px: 99
+    use_sound_hash: GAME_SWING
     price: 190
   - type: MELEE_1_SWORD
     base_damage: 25 40 60
@@ -3389,6 +3413,7 @@ weapons: # {  ###
     range_meters: 4.7 4.7 4.7
     knockback_meters: 5 5 5
     melee_collider_height_px: 58
+    use_sound_hash: GAME_SWING
     price: 190
   - type: MELEE_2_PLASMA_SLEDGE # граната света на палочке
     base_damage: 80 120
@@ -3409,6 +3434,7 @@ weapons: # {  ###
           - ints: 25 50
         only_this_weapon: true
     melee_collider_height_px: 75
+    use_sound_hash: GAME_SWING
     price: 272
   - type: MELEE_2_POWER_FIST # перчатка подрывника
     base_damage: 40 60
@@ -3426,6 +3452,7 @@ weapons: # {  ###
           - ints: 25 50
         only_this_weapon: true
     melee_collider_height_px: 62
+    use_sound_hash: GAME_SWING
     price: 221
   - type: MELEE_2_THUNDER_SWORD # recettear's "twisted dagger"
     base_damage: 30 60
@@ -3451,6 +3478,7 @@ weapons: # {  ###
           - ints: 0 0
         only_this_weapon: true
     melee_collider_height_px: 69
+    use_sound_hash: GAME_SWING
     price: 238
   - type: MELEE_3_DEX_TROYER
     base_damage: 100
@@ -3482,6 +3510,7 @@ weapons: # {  ###
         spawned_projectile_shoots_directly_at_random_enemy: true
         only_this_weapon: true
     melee_collider_height_px: 70
+    use_sound_hash: GAME_SWING
     price: 315
   - type: MELEE_3_EXCALIBUR # terra sword
     base_damage: 200
@@ -3501,6 +3530,7 @@ weapons: # {  ###
         value: -3
         only_this_weapon: true
     melee_collider_height_px: 75
+    use_sound_hash: GAME_SWING
     price: 230
   - type: MELEE_3_SCYTHE
     base_damage: 150
@@ -3525,6 +3555,7 @@ weapons: # {  ###
           - ints: 3
         only_this_weapon: true
     melee_collider_height_px: 104
+    use_sound_hash: GAME_SWING
     price: 285
   - type: RANGED_0_CROSSBOW
     base_damage: 10 12 15 18
@@ -3644,6 +3675,7 @@ weapons: # {  ###
     projectile_type: BULLET
     knockback_meters: 15 15 15 15
     projectile_pierce: 1 1 1 1
+    use_sound_hash: GAME_GUN_SHOT
     price: 91
   - type: RANGED_0_SHREDDER
     base_damage: 5 10 15 25
@@ -3822,10 +3854,11 @@ weapons: # {  ###
     accuracy_plus_minus: 0.17
     projectile_type: BULLET
     projectile_pierce: 1 2
-    price: 255
+    use_sound_hash: GAME_GUN_SHOT
     effects:
       - stat_type: SPEED
         value: -7 -7
+    price: 255
   - type: RANGED_2_NUCLEAR_LAUNCHER
     base_damage: 60 120
     damage_scalings:
@@ -3869,6 +3902,7 @@ weapons: # {  ###
           - ints: 5 8
           - ints: 5 5
         only_this_weapon: true
+    use_sound_hash: GAME_GUN_SHOT
     price: 245
   - type: RANGED_3_CHAIN_GUN # BFG
     base_damage: 1
@@ -3886,6 +3920,7 @@ weapons: # {  ###
     knockback_meters: 2
     projectile_type: BULLET
     projectile_pierce: 1
+    use_sound_hash: GAME_GUN_SHOT
     effects:
       - effectcondition_type: X__COOLDOWN_SECONDS_EVERY__Y__HITS
         placeholders:

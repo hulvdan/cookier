@@ -10,35 +10,64 @@ WORKING SINCE 2025-09-07
 - ЧИНИМ
 
 x sfx: удаление ненужных звуков
-
-* prod sfx: ui hover
+x prod sfx: ui error
+x prod sfx: ui hover
   WHOOSH
-* prod sfx: ui error
-* prod sfx: shotgun
-* prod sfx: gunshot
-* prod sfx: flamethrower
+x prod sfx: pickup coin
+x prod sfx: shotgun
+x prod sfx: swing
+
+* prod sfx: weapon damage sound
+* prod sfx: bonk (barrel)
+* prod sfx: blade knife (for swords)
 * prod sfx: steps
+* prod sfx: throw (e.g. javelin)
+* prod sfx: flamethrower
 * prod sfx: player hurt
 * prod sfx: mob hurt
-* prod sfx: explosion
 * prod sfx: level up
 * prod sfx: button click
 * prod sfx: button hover
 * prod sfx: wave complete/died whoosh
-* prod sfx: pickup coin
 * prod sfx: pickup crate
 * prod sfx: pickup apple
 * prod sfx: got achievement + item unlocked
 * prod sfx: turret shot
-* prod sfx: mob/boss shoots
+* prod sfx: ranger shot (cooravie)
+* prod sfx: boss shoots
 * prod sfx: run won
-* prod sfx: run lost
+* prod sfx: run lost / died
 * prod sfx: grimoire of milk
 * prod sfx: pickup chest
 * prod sfx: pickup apple
+* prod sfx: sniper rifle other projectiles
+* prod sfx: lightning
+* prod sfx: torch flame
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+* prod sfx:
+*
+* cli команда для сравнения пиков звуков
+*
 * prod sfx: emscripten старт звука после key / mouse / touch press
-* prod sfx:
-* prod sfx:
+* prod sfx: ease engine volume change on focus / defocus
+*
+* better sfx: ui hover
+* better sfx: shotgun less reverb?
+* better sfx: mob hit sound
+* better sfx:
+* better sfx:
+* better sfx:
+* better sfx:
+* better sfx:
+* better sfx:
+* better sfx:
+* better sfx:
 *
 * цветовое кодирование кнопок зелёные - брать, красные - продавать, reroll - ???
 *

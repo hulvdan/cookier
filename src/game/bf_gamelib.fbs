@@ -291,6 +291,7 @@ table Weapon {
     particle_emitter: ParticleEmitter;
     life_steal_percents: [float];
     use_sound_hash: uint;
+    damage_sound_hash: uint;
     shooting_feedback_scale: float = 1;
     effects: [Effect];
     color: uint = 0xffffffff;
