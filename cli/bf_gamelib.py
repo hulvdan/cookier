@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, TypeAlias
 
 import pytest
+import rpp
 from bf_game import *  # noqa
 from bf_lib import (
     ART_DIR,
@@ -975,12 +976,42 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
 
 
 @timing
+def get_sounds_that_reaper_would_export() -> set[str]:
+    sounds: set[str] = set()
+
+    project = rpp.loads((ASSETS_DIR / "sfx" / "src" / "sfx.rpp").read_text())
+    for t in project.findall(".//TRACK"):
+        for f in t.findall(".//FILE"):
+            subproject_path = Path(f[1])
+            subproject = rpp.loads(
+                (ASSETS_DIR / "sfx" / "src" / "_sfx" / subproject_path.name).read_text()
+            )
+
+            for marker in subproject.findall(".//MARKER"):
+                marker_name = marker[3]
+                marker_number = marker[1]
+                if marker_name not in ("=START", "=END"):
+                    sounds.add(
+                        "{}__{:02}".format(subproject_path.stem, int(marker_number))
+                    )
+
+    return sounds
+
+
+@timing
 def do_audio() -> None:
     # {  ###
     AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
     AUDIO_DST_DIR = RESOURCES_DIR
 
     src_files = {p for p in AUDIO_SRC_DIR.glob("*.ogg") if p.is_file()}
+
+    # Removing sounds files that wouldn't be exported by reaper.
+    allowed_sounds = get_sounds_that_reaper_would_export()
+    for src_file in src_files:
+        if src_file.stem not in allowed_sounds:
+            src_file.unlink()
+    src_files = {x for x in src_files if x.stem in allowed_sounds}
 
     if 1:
         # Making symlinks.
@@ -1024,14 +1055,12 @@ def do_audio() -> None:
         if not src_file.exists():
             orphans.append(dst_file.name)
             dst_file.unlink()
-
     if orphans:
         log.info(
             "Removed {} orphan audio files:\n{}".format(
                 len(orphans), "\n".join(x for x in orphans)
             )
         )
-
     # }
 
 
