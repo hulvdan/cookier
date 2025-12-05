@@ -20,15 +20,14 @@ x prod sfx: weapon damage sound
 x prod sfx: bonk (barrel)
 x prod sfx: blade knife (for swords)
 x prod sfx: steps
+x prod sfx: level up
+- prod sfx: button hover
 
-* prod sfx: level up
 * prod sfx: stab for cunai
 * prod sfx: throw (e.g. javelin)
 * prod sfx: flamethrower
 * prod sfx: player hurt
 * prod sfx: mob hurt
-* prod sfx: button click
-* prod sfx: button hover
 * prod sfx: wave complete/died whoosh
 * prod sfx: pickup crate
 * prod sfx: pickup apple
@@ -52,6 +51,8 @@ x prod sfx: steps
 * prod sfx:
 * prod sfx:
 * prod sfx:
+*
+* disable SDL repeat key
 *
 * сковородку поменьше нарисовать
 *

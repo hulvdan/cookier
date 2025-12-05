@@ -3707,6 +3707,7 @@ weapons: # {  ###
         only_this_weapon: true
     projectile_pierce: 3 3 3 3
     projectile_piercing_damage_bonus_percent: 50 50 50 50
+    use_sound_hash: GAME_THROW
     price: 122
   - type: RANGED_0_SHURIKEN # кунай
     base_damage: 6 8 10 15
@@ -3725,6 +3726,7 @@ weapons: # {  ###
         placeholders:
           - ints: 1 2 3 4
         only_this_weapon: true
+    use_sound_hash: GAME_THROW
     price: 105
   - type: RANGED_0_SLINGSHOT
     # Оружие из терратии - дуть, чтобы стрельнуть семечкой.
@@ -4118,10 +4120,12 @@ projectiles: # {  ###
       - game_weapon_33_javelin
   - type: EXPLOSIVE_CUNAI
     speed: 20
+    damage_sound_hash: GAME_KNIFE_STAB
     texture_ids:
       - game_weapon_36_shredder
   - type: CUNAI
     speed: 20
+    damage_sound_hash: GAME_KNIFE_STAB
     texture_ids:
       - game_weapon_37_shuriken
   - type: FIRE

@@ -13130,6 +13130,8 @@ void GameFixedUpdate() {
                 aoePos = Vector2Lerp(aoePos, creature.pos, 0.5f);
               }
 
+              PlaySound(fb->damage_sound_hash());
+
               createAoe = true;
             }
           }
