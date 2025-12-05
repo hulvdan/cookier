@@ -17,4 +17,4 @@ constexpr int BF_MAX_SOUNDS = 200;
 constexpr f32 BF_SOUND_VOLUME_BOOST_FROM_DB            = -6;
 constexpr f32 BF_SOUND_VOLUME_BOOST_TO_DB              = -3;
 constexpr int BF_SOUND_VOLUME_BOOST_STEPS              = 3;
-constexpr int BF_SOUND_VOLUME_BOOST_MAX_LATENCY_FRAMES = 3;
+constexpr int BF_SOUND_VOLUME_BOOST_MAX_LATENCY_FRAMES = 2;

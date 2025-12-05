@@ -220,13 +220,13 @@ def do_compile_commands_json() -> None:
 
 @timing
 def do_stop_debugger_ahk() -> None:
-    run_command(r".nvim-personal\cli.ahk stop_debugger")
+    run_command(r"autohotkey .nvim-personal\cli.ahk stop_debugger")
 
 
 @timing
 def do_run_in_debugger_ahk(target: BuildTarget, build_type: BuildType) -> None:
     exe_path = f".cmake/vs17/{build_type}/{target}.exe"
-    run_command(rf".nvim-personal\cli.ahk run_in_debugger {exe_path}")
+    run_command(rf"autohotkey .nvim-personal\cli.ahk run_in_debugger {exe_path}")
 
 
 # @command
@@ -283,7 +283,7 @@ def do_run_in_debugger_ahk(target: BuildTarget, build_type: BuildType) -> None:
 
 @timing
 def do_activate_game_ahk() -> None:
-    run_command(r".nvim-personal\cli.ahk activate_game")
+    run_command(r"autohotkey .nvim-personal\cli.ahk activate_game")
 
 
 @command
