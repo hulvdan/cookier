@@ -15,16 +15,6 @@ x PlaySound по sound hash value
 x fix coins look, feel and sound good now
 x prod sfx: ui click
 
-https://www.youtube.com/watch?v=3AToV1uoqqY
-https://www.youtube.com/watch?v=m_0xUKejd_U
-https://www.youtube.com/watch?v=m0A-x2onjjc&list=PLM0xHqxaiT68BAxf6fvIOdIrGKdYxoDBN
-https://www.youtube.com/watch?v=434b6LsH_6g
-https://www.youtube.com/watch?v=djfvU5aDpQE
-https://www.youtube.com/watch?v=ZB_-6DeaVQk
-
-* sfx: удаление ненужных звуков
-  еси есть, к примеру, 03, но его дата < 02 => я удалил в reaper вариацию 3 и жкспортировал те две.
-  Всё что больше 02 должно быть удалено
 * prod sfx: ui hover
   WHOOSH
 * prod sfx: ui error
@@ -53,6 +43,15 @@ https://www.youtube.com/watch?v=ZB_-6DeaVQk
 * prod sfx: emscripten старт звука после key / mouse / touch press
 * prod sfx:
 * prod sfx:
+*
+* sfx: удаление ненужных звуков
+  (1) ПРОБЕГАТЬСЯ ПО ТРЕКАМ REAPER - ДОСТАВАТЬ ПОДПРОЕКТЫ - ДОСТАВАТЬ НАЗВАНИЕ + РЕГИОНЫ
+  Работает идеально
+  ИЛИ
+  (2) если есть, к примеру, 03, но его дата < 02 => я удалил в reaper вариацию 3 и жкспортировал те две.
+  Всё что больше 02 должно быть удалено
+  Проблема с тем, что я захочу какие-то звуки отрубить.
+  Или я отрублю какие-то звуки, а они всё ещё будут прикручены к игре
 *
 * цветовое кодирование кнопок зелёные - брать, красные - продавать, reroll - ???
 *

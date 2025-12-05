@@ -90,6 +90,7 @@ function rebuild_tasks()
                 vim.fn.execute([[term ]] .. cli_command("reorder_achievements"))
             end,
         },
+        { "h_temp", cli_command("temp") },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },
         -- ----------
