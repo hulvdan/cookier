@@ -23,6 +23,7 @@ x when music ends start a new track
 x music start delay works
 
 * the same music track can't be started
+* remove stripped versions? (move them to src)
 * music: high pass filter when not in gameplay / wave_completed, or when paused
 *
 * prod sfx: mob ranger shot (cooravie)
