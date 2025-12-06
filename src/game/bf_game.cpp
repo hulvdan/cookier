@@ -2875,6 +2875,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       {
         MakeNumber({.type = NumberType_DODGE, .pos = creature.pos});
 
+        PlaySound(Sound_GAME_PLAYER_DODGE);
+
         IterateOverEffects(
           EffectConditionType_X__CHANCE_TO_HEAL__Y__HP_UPON_DODGING,
           -1,
@@ -13298,8 +13300,10 @@ void GameFixedUpdate() {
         }
       }
 
-      if (playerHurt)
+      if (playerHurt) {
         PlaySound(Sound_GAME_PLAYER_HURT);
+        PlaySound(Sound_GAME_PLAYER_HURT_KICK);
+      }
       if (mobHurt)
         PlaySound(Sound_GAME_MOB_HURT);
 
