@@ -25,14 +25,14 @@ x prod sfx: level up
 x prod sfx: stab for cunai
 x prod sfx: throw (e.g. javelin)
 x prod sfx: javelin less mellic knife stab
+x prod sfx: bowl of apples apple hit sound
+x prod sfx: pickup apple
 
-* prod sfx: bowl of apples apple hit sound
 * prod sfx: flamethrower
 * prod sfx: player hurt
 * prod sfx: mob hurt
 * prod sfx: wave complete/died whoosh
 * prod sfx: pickup crate
-* prod sfx: pickup apple
 * prod sfx: got achievement + item unlocked
 * prod sfx: turret shot
 * prod sfx: mob ranger shot (cooravie)
