@@ -9,29 +9,19 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x sfx: удаление ненужных звуков
-x prod sfx: ui error
-x prod sfx: ui hover
-  WHOOSH
-x prod sfx: pickup coin
-x prod sfx: shotgun
-x prod sfx: swing
-x prod sfx: weapon damage sound
-x prod sfx: bonk (barrel)
-x prod sfx: blade knife (for swords)
-x prod sfx: steps
-x prod sfx: level up
-- prod sfx: button hover
-x prod sfx: stab for cunai
 x prod sfx: throw (e.g. javelin)
 x prod sfx: javelin less mellic knife stab
 x prod sfx: bowl of apples apple hit sound
 x prod sfx: pickup apple
+x prod sfx: player hurt
+x prod sfx: player dodge
 
+* prod sfx: pickup chest
+* prod sfx: wave complete whoosh
+* prod sfx: lightning
+* prod sfx: died whoosh
 * prod sfx: flamethrower
-* prod sfx: player hurt
 * prod sfx: mob hurt
-* prod sfx: wave complete/died whoosh
 * prod sfx: pickup crate
 * prod sfx: got achievement + item unlocked
 * prod sfx: turret shot
@@ -40,10 +30,7 @@ x prod sfx: pickup apple
 * prod sfx: run won
 * prod sfx: run lost / died
 * prod sfx: grimoire of milk
-* prod sfx: pickup chest
-* prod sfx: pickup apple
 * prod sfx: sniper rifle other projectiles
-* prod sfx: lightning
 * prod sfx: torch flame
 * prod sfx: bonk for punch (glove) weapons
 * prod sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
