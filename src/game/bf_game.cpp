@@ -4539,7 +4539,7 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
-  PlayMusic(Music_BATTLE);
+  PlaySound(Sound_MUSIC_BATTLE);
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
