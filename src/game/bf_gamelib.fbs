@@ -71,6 +71,7 @@ table Sound {
     variations: [string];
     pitch_max: float = 1.1;
     pitch_min: float = 0.95;
+    is_music: bool;
 }
 
 table Flattened {
@@ -164,6 +165,7 @@ table Creature {
     shadow_scale: float = 1;
 
     hit_particles_color: uint;
+    mob_action_sound_hash: uint;
 }
 
 table CondVar {
