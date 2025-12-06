@@ -648,10 +648,10 @@ def convert_gamelib_json_to_binary(
         genline("};")
         genline("VIEW_FROM_ARRAY_DANGER(SOUND_TO_HASH_VALUE);\n")
 
-        sound_variations_per_type: dict[str, list[Path]] = defaultdict(list)
+        sound_variations_per_type: dict[str, list[Any]] = defaultdict(list)
         for sound_path in sound_paths:
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
-                "resources/" + sound_path.name
+                {"filepath": "resources/" + sound_path.name}
             )
 
         sounds: list[Any] = []

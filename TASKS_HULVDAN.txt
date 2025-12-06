@@ -19,8 +19,10 @@ x prod sfx: pickup chest
 x prod sfx: game bonk fist
 x found music
 x play music
+x when music ends start a new track
+x music start delay works
 
-* when music ends start a new track
+* the same music track can't be started
 * music: high pass filter when not in gameplay / wave_completed, or when paused
 *
 * prod sfx: mob ranger shot (cooravie)
