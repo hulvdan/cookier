@@ -15,8 +15,13 @@ x prod sfx: bowl of apples apple hit sound
 x prod sfx: pickup apple
 x prod sfx: player hurt
 x prod sfx: player dodge
+x prod sfx: pickup chest
+x prod sfx: game bonk fist
 
-* prod sfx: pickup chest
+* placeholder music
+* prod sfx: mob ranger shot (cooravie)
+* prod sfx: boss shot
+* prod sfx: turret shot
 * prod sfx: wave complete whoosh
 * prod sfx: lightning
 * prod sfx: died whoosh
@@ -24,9 +29,6 @@ x prod sfx: player dodge
 * prod sfx: mob hurt
 * prod sfx: pickup crate
 * prod sfx: got achievement + item unlocked
-* prod sfx: turret shot
-* prod sfx: mob ranger shot (cooravie)
-* prod sfx: boss shot
 * prod sfx: run won
 * prod sfx: run lost / died
 * prod sfx: grimoire of milk

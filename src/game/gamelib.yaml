@@ -3055,6 +3055,7 @@ weapons: # {  ###
     knockback_meters: 15 15 15 15
     melee_collider_height_px: 58
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 91
   - type: MELEE_0_GHOST_AXE # открывашка
     base_damage: 10 15 20 34
@@ -4027,6 +4028,7 @@ projectiles: # {  ###
     speed: 14
     color: 0xefcb84ff
     scales_in: 2
+    damage_sound_hash: GAME_HIT_BLADE
     texture_ids:
       - game_projectile_needle
   - type: CROSSBOW_BOLT
@@ -4054,6 +4056,7 @@ projectiles: # {  ###
   - type: NEEDLE_SLINGSHOT # то же самое, что и кактус
     speed: 14
     color: 0xefcb84ff
+    damage_sound_hash: GAME_HIT_BLADE
     texture_ids:
       - game_projectile_needle
   - type: FIREBALL # то же самое, что BULLET

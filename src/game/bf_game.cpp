@@ -4539,6 +4539,8 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
+  PlayMusic(Music_BATTLE);
+
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
 
@@ -13276,9 +13278,9 @@ void GameFixedUpdate() {
 
         const auto fb = fb_creatures->Get(creature.type);
 
-        if (index == 0)
+        if (creature.type == CreatureType_PLAYER)
           playerHurt = true;
-        else
+        else if (creature.health <= 0)
           mobHurt = true;
 
         if (creature.health <= 0) {

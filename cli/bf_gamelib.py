@@ -536,6 +536,78 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
 
 
 @timing
+def do_audio() -> None:
+    # {  ###
+    AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
+    AUDIO_DST_DIR = RESOURCES_DIR
+
+    src_files = {p for p in AUDIO_SRC_DIR.glob("*.ogg") if p.is_file()}
+
+    # Removing sounds files that wouldn't be exported by reaper.
+    allowed_sounds = get_sounds_that_reaper_would_export()
+    for src_file in src_files:
+        if src_file.stem.startswith("music_"):
+            continue
+        if src_file.stem not in allowed_sounds:
+            src_file.unlink()
+    src_files = {
+        x
+        for x in src_files
+        if (x.stem in allowed_sounds) or (x.stem.startswith("music_"))
+    }
+
+    if 1:
+        # Making symlinks.
+        for src_file in src_files:
+            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
+            if dst_file.exists():
+                if dst_file.is_symlink():
+                    continue
+                else:
+                    dst_file.unlink()
+            dst_file.symlink_to(src_file)
+
+        log.info(f"Make symlinks for {len(src_files)} audio files")
+
+    else:
+        # Copying.
+        copied = 0
+        for src_file in src_files:
+            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
+
+            if dst_file.exists():
+                src_mtime = src_file.stat().st_mtime_ns
+                dst_mtime = dst_file.stat().st_mtime_ns
+                if dst_mtime == src_mtime:
+                    continue
+
+            copied += 1
+            log.info(f"Copying {src_file} -> {dst_file}")
+
+            shutil.copyfile(src_file, dst_file)
+            shutil.copystat(src_file, dst_file)
+
+        log.info(
+            f"Found {len(src_files)} total files. (copied {copied}, others have the same modified time)"
+        )
+
+    # Removing orphan audio files from `resources` dir.
+    orphans = []
+    for dst_file in AUDIO_DST_DIR.glob("*.ogg"):
+        src_file = AUDIO_SRC_DIR / dst_file.relative_to(AUDIO_DST_DIR)
+        if not src_file.exists():
+            orphans.append(dst_file.name)
+            dst_file.unlink()
+    if orphans:
+        log.info(
+            "Removed {} orphan audio files:\n{}".format(
+                len(orphans), "\n".join(x for x in orphans)
+            )
+        )
+    # }
+
+
+@timing
 def convert_gamelib_json_to_binary(
     texture_name_2_id: dict[str, int], genline, atlas_data, original_texture_sizes
 ) -> None:
@@ -588,10 +660,17 @@ def convert_gamelib_json_to_binary(
         for sound_type, enum_value_id in sound_types_:
             assert enum_value_id > 0
             sound_index += 1
+            is_music = sound_type.startswith("MUSIC_")
+            kwargs = {}
+            if is_music:
+                kwargs["pitch_min"] = 0
+                kwargs["pitch_max"] = 0
             x = {
                 "index": sound_index,
                 "enum_value_id": enum_value_id,
                 "variations": sound_variations_per_type[sound_type],
+                "is_music": is_music,
+                **kwargs,
             }
             sounds.append(x)
 
@@ -996,72 +1075,6 @@ def get_sounds_that_reaper_would_export() -> set[str]:
                     )
 
     return sounds
-
-
-@timing
-def do_audio() -> None:
-    # {  ###
-    AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
-    AUDIO_DST_DIR = RESOURCES_DIR
-
-    src_files = {p for p in AUDIO_SRC_DIR.glob("*.ogg") if p.is_file()}
-
-    # Removing sounds files that wouldn't be exported by reaper.
-    allowed_sounds = get_sounds_that_reaper_would_export()
-    for src_file in src_files:
-        if src_file.stem not in allowed_sounds:
-            src_file.unlink()
-    src_files = {x for x in src_files if x.stem in allowed_sounds}
-
-    if 1:
-        # Making symlinks.
-        for src_file in src_files:
-            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
-            if dst_file.exists():
-                if dst_file.is_symlink():
-                    continue
-                else:
-                    dst_file.unlink()
-            dst_file.symlink_to(src_file)
-
-        log.info(f"Make symlinks for {len(src_files)} audio files")
-
-    else:
-        # Copying.
-        copied = 0
-        for src_file in src_files:
-            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
-
-            if dst_file.exists():
-                src_mtime = src_file.stat().st_mtime_ns
-                dst_mtime = dst_file.stat().st_mtime_ns
-                if dst_mtime == src_mtime:
-                    continue
-
-            copied += 1
-            log.info(f"Copying {src_file} -> {dst_file}")
-
-            shutil.copyfile(src_file, dst_file)
-            shutil.copystat(src_file, dst_file)
-
-        log.info(
-            f"Found {len(src_files)} total files. (copied {copied}, others have the same modified time)"
-        )
-
-    # Removing orphan audio files from `resources` dir.
-    orphans = []
-    for dst_file in AUDIO_DST_DIR.glob("*.ogg"):
-        src_file = AUDIO_SRC_DIR / dst_file.relative_to(AUDIO_DST_DIR)
-        if not src_file.exists():
-            orphans.append(dst_file.name)
-            dst_file.unlink()
-    if orphans:
-        log.info(
-            "Removed {} orphan audio files:\n{}".format(
-                len(orphans), "\n".join(x for x in orphans)
-            )
-        )
-    # }
 
 
 @timing
