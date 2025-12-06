@@ -398,11 +398,11 @@ int _CmpSoundVariation(  ///
 );
 
 struct _SoundVariation {  ///
-  const char* gamelib_filepath = {};
-  ma_sound    ma_sound         = {};
-  u32         soundHashValue   = {};
-  int         variation        = {};
-  u32         flags            = {};
+  const char* filepath       = {};
+  ma_sound    ma_sound       = {};
+  u32         soundHashValue = {};
+  int         variation      = {};
+  u32         flags          = {};
 
   bool operator==(const _SoundVariation& other) const {
     return _CmpSoundVariation(this, &other) == 0;
@@ -436,6 +436,11 @@ struct _LaunchedSound {  ///
   int         loadedFileIndex = -1;
   int         boostCount      = 0;
   FrameVisual frame           = {};
+};
+
+struct _EndedSound {  ///
+  ma_sound* ma_sound        = {};
+  int       loadedFileIndex = {};
 };
 
 struct EngineData {
@@ -484,9 +489,9 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
-      ReaderWriterQueue<ma_sound*> soundsToUninitialize{};
-      Vector<_SoundVariation>      soundVariationsLoadedFromFiles = {};
-      Vector<_SoundVariationRange> soundVariationRanges           = {};
+      ReaderWriterQueue<_EndedSound> soundsToUninitialize{};
+      Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
+      Vector<_SoundVariationRange>   soundVariationRanges           = {};
 
       bool      works  = false;
       ma_engine engine = {};
@@ -637,18 +642,30 @@ void GameReady() {  ///
 #endif
 }
 
-void _OnSoundEnd(void* _userData, ma_sound* sound) {  ///
+void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
+  ASSERT(sound);
+
   auto& m = ge.meta._soundManager;
   ASSERT(m.works);
-  m.soundsToUninitialize.enqueue(sound);
+
+  const auto loadedFileIndex = *(size_t*)&userData;
+
+  m.soundsToUninitialize.enqueue({
+    .ma_sound        = sound,
+    .loadedFileIndex = (int)loadedFileIndex,
+  });
 }
+
+struct PlaySoundData {
+  u64 delayMilliseconds = 0;
+};
 
 // TODO: Options struct to support
 // * increasing volume of recently started sounds
 // * variations
 // * ma_sound_set_stop_time_in_pcm_frames()
 // * ma_sound_set_stop_time_in_milliseconds()
-void PlaySound(u32 soundHashValue) {  ///
+void PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   if (!soundHashValue)
     return;
 
@@ -711,6 +728,9 @@ void PlaySound(u32 soundHashValue) {  ///
   }
   if (loadedFileIndex <= -1)
     loadedFileIndex = variationRange.start;
+  ASSERT(loadedFileIndex >= 0);
+  const int variationIndex = loadedFileIndex - variationRange.start;
+  ASSERT(variationIndex >= 0);
   auto& original = m.soundVariationsLoadedFromFiles[loadedFileIndex];
 
   ma_sound* s = nullptr;
@@ -755,7 +775,11 @@ void PlaySound(u32 soundHashValue) {  ///
 
   ASSERT_FALSE(ma_sound_is_playing(s));
 
-  if (ma_sound_set_end_callback(s, _OnSoundEnd, nullptr) != MA_SUCCESS) {
+  static_assert(sizeof(void*) == sizeof(size_t));
+  const auto soundEndUserData = (size_t)loadedFileIndex;
+
+  if (ma_sound_set_end_callback(s, _OnSoundEnd, *(void**)&soundEndUserData) != MA_SUCCESS)
+  {
     INVALID_PATH;
     return;
   }
@@ -764,6 +788,21 @@ void PlaySound(u32 soundHashValue) {  ///
     ASSERT(fb_sound->pitch_min() <= fb_sound->pitch_max());
     ma_sound_set_pitch(
       s, Lerp(fb_sound->pitch_min(), fb_sound->pitch_max(), VRAND.FRand11())
+    );
+  }
+
+  auto fb_variation = fb_sound->variations()->Get(variationIndex);
+
+  ASSERT_FALSE(strcmp(
+    fb_variation->filepath()->c_str(),
+    m.soundVariationsLoadedFromFiles[loadedFileIndex].filepath
+  ));
+
+  const u64 delayMilliseconds
+    = fb_variation->delay_milliseconds() + data.delayMilliseconds;
+  if (delayMilliseconds) {
+    ma_sound_set_start_time_in_milliseconds(
+      s, ma_engine_get_time_in_milliseconds(&m.engine) + delayMilliseconds
     );
   }
 
@@ -2467,7 +2506,7 @@ void ReloadSounds() {  ///
   m.playingSoundsCount = 0;
 
   // Resetting soundsToUninitialize.
-  ma_sound* sound_ = nullptr;
+  _EndedSound sound_{};
   while (m.soundsToUninitialize.try_dequeue(sound_))
     continue;
 
@@ -2546,10 +2585,10 @@ void ReloadSounds() {  ///
       auto slot = m.soundVariationsLoadedFromFiles.Add();
 
       *slot = {
-        .gamelib_filepath = fb_variation->c_str(),
-        .soundHashValue   = fb->enum_value_id(),
-        .variation        = variationIndex,
-        .flags            = customFlags,
+        .filepath       = fb_variation->filepath()->c_str(),
+        .soundHashValue = fb->enum_value_id(),
+        .variation      = variationIndex,
+        .flags          = customFlags,
       };
 
       auto fencePtr = &fence;
@@ -2557,7 +2596,7 @@ void ReloadSounds() {  ///
         fencePtr = nullptr;
 
       if (ma_sound_init_from_file(
-            &m.engine, fb_variation->c_str(), flags, nullptr, fencePtr, &slot->ma_sound
+            &m.engine, slot->filepath, flags, nullptr, fencePtr, &slot->ma_sound
           )
           != MA_SUCCESS)
       {
@@ -3327,17 +3366,30 @@ SDL_AppResult EngineUpdate() {  ///
     {
       auto& m = ge.meta._soundManager;
 
-      ma_sound* sound = nullptr;
+      _EndedSound sound{};
 
       while (m.soundsToUninitialize.try_dequeue(sound)) {
-        ma_sound_uninit(sound);
+        const auto& s = m.soundVariationsLoadedFromFiles[sound.loadedFileIndex];
 
-        auto index = sound - m.playingSounds.base;
-        ASSERT(sound == m.playingSounds.base + index);
-        ASSERT(m.playingSoundsBools[index]);
+        const auto fb = glib->sounds()->LookupByKey(
+          m.soundVariationsLoadedFromFiles[sound.loadedFileIndex].soundHashValue
+        );
+        ASSERT(fb);
 
-        m.playingSoundsBools[index] = false;
-        m.playingSoundsCount--;
+        if (fb->is_music()) {
+          m.playingMusic = nullptr;
+          PlaySound(fb->enum_value_id(), {.delayMilliseconds = 20000});
+        }
+        else {
+          ma_sound_uninit(sound.ma_sound);
+
+          auto index = sound.ma_sound - m.playingSounds.base;
+          ASSERT(sound.ma_sound == m.playingSounds.base + index);
+          ASSERT(m.playingSoundsBools[index]);
+
+          m.playingSoundsBools[index] = false;
+          m.playingSoundsCount--;
+        }
       }
     }
 
