@@ -16,6 +16,7 @@
 /resources/*.wav
 /resources/atlas.png
 /resources/gamelib.bin
+/src/bf_lib.cpp
 /vendor/basis_universal/bin/
 /vendor/gameanalytics-sdk-cpp/gtest_build/
 CMakeFiles/
