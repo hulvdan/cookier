@@ -493,6 +493,7 @@ struct EngineData {
 
       f32                            volume             = 0.75f;
       Array<ma_sound, BF_MAX_SOUNDS> playingSounds      = {};
+      ma_sound*                      playingMusic       = nullptr;
       Array<bool, BF_MAX_SOUNDS>     playingSoundsBools = {};
       int                            playingSoundsCount = 0;
 
@@ -663,6 +664,10 @@ void PlaySound(u32 soundHashValue) {  ///
 
   const auto fb_sounds = glib->sounds();
   const auto fb_sound  = fb_sounds->LookupByKey(soundHashValue);
+  ASSERT(fb_sound);
+
+  if (fb_sound->is_music())
+    ASSERT_FALSE(ma_sound_is_playing(m.playingMusic));
 
   const int soundIndex = fb_sound->index();
   ASSERT(soundIndex >= 0);
@@ -708,57 +713,73 @@ void PlaySound(u32 soundHashValue) {  ///
     loadedFileIndex = variationRange.start;
   auto& original = m.soundVariationsLoadedFromFiles[loadedFileIndex];
 
-  // TODO:
-  // * freelist (pool?) allocator
   ma_sound* s = nullptr;
-  FOR_RANGE (int, i, m.playingSoundsBools.count) {
-    auto& v = m.playingSoundsBools[i];
-    if (v)
-      continue;
-    s = m.playingSounds.base + i;
 
-    launchedSound = {
-      .index           = i,
-      .loadedFileIndex = loadedFileIndex,
-    };
-    launchedSound.frame.SetNow();
-
-    v = true;
-    break;
+  if (fb_sound->is_music()) {
+    s = &original.ma_sound;
   }
-  if (!s)
-    return;
+  else {
+    // TODO:
+    // * freelist + pool allocator?
+    FOR_RANGE (int, i, m.playingSoundsBools.count) {
+      auto& v = m.playingSoundsBools[i];
+      if (v)
+        continue;
+      s = m.playingSounds.base + i;
 
-  if (ma_sound_init_copy(
-        &m.engine,
-        &original.ma_sound,
-        original.flags | MA_SOUND_FLAG_WAIT_INIT,
-        nullptr,
-        s
-      )
-      != MA_SUCCESS)
-  {
-    INVALID_PATH;
-    return;
+      launchedSound = {
+        .index           = i,
+        .loadedFileIndex = loadedFileIndex,
+      };
+      launchedSound.frame.SetNow();
+
+      v = true;
+      break;
+    }
+    if (!s)
+      return;
+
+    if (ma_sound_init_copy(
+          &m.engine,
+          &original.ma_sound,
+          original.flags | MA_SOUND_FLAG_WAIT_INIT,
+          nullptr,
+          s
+        )
+        != MA_SUCCESS)
+    {
+      INVALID_PATH;
+      return;
+    }
   }
+
+  ASSERT_FALSE(ma_sound_is_playing(s));
 
   if (ma_sound_set_end_callback(s, _OnSoundEnd, nullptr) != MA_SUCCESS) {
     INVALID_PATH;
     return;
   }
 
-  if (fb_sound) {
+  if (fb_sound->pitch_min() != 1) {
+    ASSERT(fb_sound->pitch_min() <= fb_sound->pitch_max());
     ma_sound_set_pitch(
       s, Lerp(fb_sound->pitch_min(), fb_sound->pitch_max(), VRAND.FRand11())
     );
   }
 
-  if (ma_sound_start(s) != MA_SUCCESS) {
+  if (ma_sound_start(s) == MA_SUCCESS) {
+    if (fb_sound->is_music()) {
+      ASSERT_FALSE(m.playingMusic);
+      m.playingMusic = s;
+    }
+  }
+  else {
     INVALID_PATH;
     return;
   }
 
-  m.playingSoundsCount++;
+  if (!fb_sound->is_music())
+    m.playingSoundsCount++;
 }
 
 void PlaySound(Sound sound) {  ///
@@ -2506,7 +2527,12 @@ void ReloadSounds() {  ///
       customFlags |= MA_SOUND_FLAG_NO_PITCH;
 
     static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
-    u32 flags = MA_SOUND_FLAG_DECODE | MA_SOUND_FLAG_ASYNC | customFlags;
+    u32 flags = MA_SOUND_FLAG_ASYNC | customFlags;
+
+    if (fb->is_music())
+      flags |= MA_SOUND_FLAG_STREAM;
+    else
+      flags |= MA_SOUND_FLAG_DECODE;
 
     *m.soundVariationRanges.Add() = {
       .start = m.soundVariationsLoadedFromFiles.count,
@@ -2526,8 +2552,12 @@ void ReloadSounds() {  ///
         .flags            = customFlags,
       };
 
+      auto fencePtr = &fence;
+      if (fb->is_music())
+        fencePtr = nullptr;
+
       if (ma_sound_init_from_file(
-            &m.engine, fb_variation->c_str(), flags, nullptr, &fence, &slot->ma_sound
+            &m.engine, fb_variation->c_str(), flags, nullptr, fencePtr, &slot->ma_sound
           )
           != MA_SUCCESS)
       {
