@@ -736,7 +736,8 @@ void PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   ma_sound* s = nullptr;
 
   if (fb_sound->is_music()) {
-    s = &original.ma_sound;
+    s                             = &original.ma_sound;
+    launchedSound.loadedFileIndex = loadedFileIndex;
   }
   else {
     // TODO:
