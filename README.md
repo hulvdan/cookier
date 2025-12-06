@@ -85,7 +85,9 @@ git add a.txt
 git commit -m "f"
 git remote add template https://github.com/Hulvdan/game-template.git
 git fetch template
-git rebase template/template
+git merge template/template
+rm src/bf_lib.cpp
+mklink /h bf_lib.cpp c:\Users\user\dev\.dotfiles\bf_lib\bf_lib.cpp
 poetry install
 pre-commit install
 pre-commit install --install-hooks
