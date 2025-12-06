@@ -10532,7 +10532,7 @@ void DoUI() {
           BF_CLAY_SPACER_VERTICAL;
 
           CLAY({}) {
-            const bool quit = componentTextButton(
+            const bool confirmed = componentTextButton(
               {.id = confirmID, .group = group},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
@@ -10550,13 +10550,12 @@ void DoUI() {
 
             markControlAsDefault(cancelID);
 
-            if (quit)
+            if (confirmed)
               result = ConfirmModalResultType_CONFIRMED;
-
-            if (cancelled) {
-              PlaySound(Sound_UI_CLICK);
+            if (cancelled)
               result = ConfirmModalResultType_CANCELLED;
-            }
+            if (confirmed || cancelled)
+              PlaySound(Sound_UI_CLICK);
           }
         }
       }

@@ -22,9 +22,11 @@ x prod sfx: blade knife (for swords)
 x prod sfx: steps
 x prod sfx: level up
 - prod sfx: button hover
+x prod sfx: stab for cunai
+x prod sfx: throw (e.g. javelin)
+x prod sfx: javelin less mellic knife stab
 
-* prod sfx: stab for cunai
-* prod sfx: throw (e.g. javelin)
+* prod sfx: bowl of apples apple hit sound
 * prod sfx: flamethrower
 * prod sfx: player hurt
 * prod sfx: mob hurt

@@ -3625,6 +3625,7 @@ weapons: # {  ###
         placeholders:
           - ints: 20 18 16 12
         only_this_weapon: true
+    use_sound_hash: GAME_THROW
     price: 122
   - type: RANGED_0_ICICLE # grimoire of milk
     base_damage: 10 20 30 40
@@ -3659,6 +3660,7 @@ weapons: # {  ###
           - ints: 5 4 3 2
           - ints: 100 100 100 100
         only_this_weapon: true
+    use_sound_hash: GAME_THROW
     price: 140
   - type: RANGED_0_LASER_GUN
     base_damage: 40 55 70 100
@@ -3804,6 +3806,7 @@ weapons: # {  ###
         y: 0.13
       interval_seconds: 0.01
       fade: 0.5
+    use_sound_hash: GAME_THROW
     price: 140
   - type: RANGED_1_FLAMETHROWER
     base_damage: 1 1 1
@@ -4037,6 +4040,7 @@ projectiles: # {  ###
     speed: 14
     scales_in: 1.5
     fades_in: true
+    damage_sound_hash: GAME_BONK_APPLE
     texture_ids:
       - game_projectile_apple
   - type: MAGICAL_BULLET
@@ -4116,6 +4120,7 @@ projectiles: # {  ###
       - game_projectile_lightning
   - type: JAVELIN
     speed: 20
+    damage_sound_hash: GAME_HIT_BLADE
     texture_ids:
       - game_weapon_33_javelin
   - type: EXPLOSIVE_CUNAI
@@ -4228,7 +4233,7 @@ particles: # {  ###
 pickupables: # {  ###
   - type: INVALID
   - type: COIN
-    pickup_sound_hash: GAME_COIN
+    pickup_sound_hash: GAME_PICKUP_COIN
     variation_texture_ids:
       - game_pickupable_coin_1
       - game_pickupable_coin_2
@@ -4236,9 +4241,11 @@ pickupables: # {  ###
       - game_pickupable_coin_4
       - game_pickupable_coin_5
   - type: CONSUMABLE
+    pickup_sound_hash: GAME_PICKUP_APPLE
     variation_texture_ids:
       - game_pickupable_consumable
   - type: CRATE
+    pickup_sound_hash: GAME_PICKUP_CHEST
     variation_texture_ids:
       - game_pickupable_crate
 # }
