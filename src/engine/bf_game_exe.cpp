@@ -10,8 +10,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#if defined(SDL_PLATFORM_WIN32)  /**/ \
-  || defined(SDL_PLATFORM_MACOS) /**/ \
+#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_MACOS) \
   || defined(SDL_PLATFORM_LINUX)
 #  define SDL_PLATFORM_DESKTOP
 #endif

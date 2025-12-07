@@ -21,10 +21,16 @@ x found music
 x play music
 x when music ends start a new track
 x music start delay works
+x the same music track can't be started
+x remove stripped versions? (move them to src)
 
-* the same music track can't be started
-* remove stripped versions? (move them to src)
+* достать параметры
+
+MA_API ma_biquad_node_config ma_biquad_node_config_init(ma_uint32 channels, float b0, float b1, float b2, float a0, float a1, float a2);
+online biquad parameters
+
 * music: high pass filter when not in gameplay / wave_completed, or when paused
+* sfx: deesser на музыку по частотам звуков
 *
 * prod sfx: mob ranger shot (cooravie)
 * prod sfx: boss shot
@@ -216,6 +222,7 @@ x music start delay works
 *
 * RELEASED!
 =======================
+* imgui прикрутить
 * sfx: обработка звуков: trim left -> прописать это в gamelib -> PlaySound будет докидывать задержку
 * sfx: использовать девайс от SDL?
   https://miniaud.io/docs/examples/engine_sdl.html

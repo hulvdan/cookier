@@ -502,6 +502,8 @@ struct EngineData {
       Array<bool, BF_MAX_SOUNDS>     playingSoundsBools = {};
       int                            playingSoundsCount = 0;
 
+      ma_biquad_node musicBiquad = {};
+
       Vector<_LaunchedSound> launchedSounds = {};
     } _soundManager = {};
 
@@ -806,6 +808,9 @@ void PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
       s, ma_engine_get_time_in_milliseconds(&m.engine) + delayMilliseconds
     );
   }
+
+  if (fb_sound->is_music())
+    ma_node_attach_output_bus(s, 0, &m.musicLpf, 0);
 
   if (ma_sound_start(s) == MA_SUCCESS) {
     if (fb_sound->is_music()) {
@@ -2611,6 +2616,28 @@ void ReloadSounds() {  ///
 
   if (ma_fence_wait(&fence) != MA_SUCCESS)
     INVALID_PATH;
+
+  const auto cfg = ma_biquad_node_config_init_lowpass(
+    ma_engine_get_channels(&m.engine),
+    // sampleRate, 1000.0f, 0
+  );
+  ma_biquad_node_init(&nodeGraph, &cfg, NULL, &filterNode);
+
+  const auto cfg = ma_lpf_node_config_init(
+    ma_engine_get_channels(&m.engine), ma_engine_get_sample_rate(&m.engine), 1000, 0
+  );
+  if (ma_lpf_node_init(ma_engine_get_node_graph(&m.engine), &cfg, nullptr, &m.musicLpf)
+      != MA_SUCCESS)
+  {
+    errored = true;
+    INVALID_PATH;
+  }
+  if (ma_node_attach_output_bus(&m.musicLpf, 0, ma_engine_get_endpoint(&m.engine), 0)
+      != MA_SUCCESS)
+  {
+    errored = true;
+    INVALID_PATH;
+  }
 
   m.works = !errored;
 }
