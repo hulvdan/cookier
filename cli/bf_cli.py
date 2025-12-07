@@ -4,6 +4,7 @@ import zipfile
 from pathlib import Path
 
 import bf_lib
+import pyfiglet
 from bf_game import *  # noqa
 from bf_gamelib import do_generate
 from bf_lib import (
@@ -421,6 +422,11 @@ def _credit_sfx(_folder: Path, _credit: str = "") -> None:
 #         p = stack.pop(0)
 #         stack = stack[1:]
 # }
+
+
+@command
+def banner() -> None:
+    print(pyfiglet.figlet_format(input("Enter banner: "), font="ansi_shadow", width=90))
 
 
 def main() -> None:

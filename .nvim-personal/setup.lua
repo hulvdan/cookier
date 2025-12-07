@@ -2,6 +2,7 @@ local opts = { remap = false, silent = true }
 
 vim.keymap.set("n", "gD", "<C-w>o:vs<CR>gd", opts)
 vim.keymap.set("n", "<leader>fc", ":e codegen/hands/bf_codegen.cpp<CR>", opts)
+vim.keymap.set("n", "<leader>fl", ":e src/bf_lib.cpp<CR>", opts)
 
 vim.keymap.set("n", "<leader>C", "o  continue;<ESC>", opts)
 vim.keymap.set("n", "<leader>B", "o  break;<ESC>", opts)
@@ -88,6 +89,12 @@ function rebuild_tasks()
             "m_reorder_achievements",
             function()
                 vim.fn.execute([[term ]] .. cli_command("reorder_achievements"))
+            end,
+        },
+        {
+            "b_banner",
+            function()
+                vim.fn.execute([[term uv run python cli\bf_cli.py banner]])
             end,
         },
         { "h_temp", cli_command("temp") },
