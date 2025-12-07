@@ -11,32 +11,30 @@ WORKING SINCE 2025-09-07
 
 x music: low pass
 x sfx: set other fists
+x sfx: mob ranger shot (cooravie)
+x sfx: boss shot
+x sfx: lightning
 
-* cooravie shots cooldown + doesn't walk towards player when aggroed
-* sfx: mob ranger shot (cooravie)
-* sfx: boss shot
+* sfx: grimoire of milk
+* sfx: flamethrower
+* sfx: got achievement + item unlocked
 * sfx: turret shot
 * sfx: wave complete whoosh
-* sfx: lightning
 * sfx: died whoosh
-* sfx: flamethrower
-* sfx: mob hurt
-* sfx: pickup crate
-* sfx: got achievement + item unlocked
 * sfx: run won
 * sfx: run lost / died
-* sfx: grimoire of milk
 * sfx: sniper rifle other projectiles
 * sfx: torch flame
-* sfx: bonk for punch (glove) weapons
 * sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
-* sfx: blow (slingshot -> blowgun)
+* sfx: blow (blowgun (slingshot))
 * sfx: laser shot
 * sfx: turret spatial sound
 * sfx:
 * sfx:
 * sfx:
 * sfx:
+*
+* cooravie shots cooldown + doesn't walk towards player when aggroed
 *
 * disable SDL repeat key
 *

@@ -334,6 +334,7 @@ table Projectile {
     texture_ids: [int];
     max_simultaneous_count_achievement_type: int;
     damage_sound_hash: uint;
+    spawn_sound_hash: uint;
 }
 
 table ParticleVariation {
