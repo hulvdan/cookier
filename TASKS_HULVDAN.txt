@@ -12,6 +12,7 @@ WORKING SINCE 2025-09-07
 x music: low pass
 x sfx: set other fists
 
+* cooravie shots cooldown + doesn't walk towards player when aggroed
 * sfx: mob ranger shot (cooravie)
 * sfx: boss shot
 * sfx: turret shot
