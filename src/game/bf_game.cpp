@@ -13447,6 +13447,16 @@ void GameFixedUpdate() {
     = MoveTowardsF(g.run.dangerHPLevelOverlayValue, 0, FIXED_DT / 3);
 
   ge.meta.frameVisual++;
+
+  {
+    const int interval = FIXED_FPS * 2;
+    const f32 p        = (f32)(ge.meta.frameVisual % interval) / (f32)interval;
+    ASSERT(p >= 0);
+    ASSERT(p <= 1);
+    SetMusicLowpassFrequency(
+      Lerp(BF_BIQUAD_DEFAULT_FREQ, 1, Clamp01((sinf(p * 2 * PI32) + 1) / 2))
+    );
+  }
 }
 
 int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
