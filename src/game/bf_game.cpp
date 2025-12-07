@@ -1144,6 +1144,8 @@ struct GameData {
 
     bool confirmingRestart = false;
     bool confirmingNewRun  = false;
+
+    f32 musicLowpassFactor = 1.0f;
   } meta;
 
   struct Player {  ///
@@ -4539,6 +4541,7 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
+  SetVolumeMusic(0.5f);
   PlaySound(Sound_MUSIC_BATTLE);
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
@@ -13446,17 +13449,18 @@ void GameFixedUpdate() {
   g.run.dangerHPLevelOverlayValue
     = MoveTowardsF(g.run.dangerHPLevelOverlayValue, 0, FIXED_DT / 3);
 
-  ge.meta.frameVisual++;
+  g.meta.musicLowpassFactor = MoveTowardsF(
+    g.meta.musicLowpassFactor,
+    ((((g.run.state.screen == ScreenType_GAMEPLAY)
+       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
+      && !g.meta.paused)
+       ? 1
+       : 0.6f),
+    FIXED_DT
+  );
+  SetMusicLowpassFactor(g.meta.musicLowpassFactor);
 
-  {
-    const int interval = FIXED_FPS * 2;
-    const f32 p        = (f32)(ge.meta.frameVisual % interval) / (f32)interval;
-    ASSERT(p >= 0);
-    ASSERT(p <= 1);
-    SetMusicLowpassFrequency(
-      Lerp(BF_BIQUAD_DEFAULT_FREQ, 1, Clamp01((sinf(p * 2 * PI32) + 1) / 2))
-    );
-  }
+  ge.meta.frameVisual++;
 }
 
 int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///

@@ -443,9 +443,6 @@ struct _EndedSound {  ///
   int       loadedFileIndex = {};
 };
 
-constexpr f32 BF_BIQUAD_DEFAULT_FREQ = 25000;
-constexpr f32 BF_BIQUAD_DEFAULT_Q    = 0.7071f;
-
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -492,7 +489,7 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
-      ma_sound_group groupSfx   = {};
+      ma_sound_group groupSFX   = {};
       ma_sound_group groupMusic = {};
 
       ReaderWriterQueue<_EndedSound> soundsToUninitialize{};
@@ -511,7 +508,7 @@ struct EngineData {
       Array<bool, BF_MAX_SOUNDS>     playingSoundsBools = {};
       int                            playingSoundsCount = 0;
 
-      ma_biquad_node musicBiquad = {};
+      ma_lpf_node musicLpf = {};
 
       Vector<_LaunchedSound> launchedSounds = {};
     } _soundManager = {};
@@ -671,6 +668,26 @@ struct PlaySoundData {
   u64 delayMilliseconds = 0;
 };
 
+void SetVolumeMaster(f32 v) {  ///
+  ASSERT(v >= 0);
+  ASSERT(v <= 1);
+  auto& m  = ge.meta._soundManager;
+  m.volume = Clamp01(v);
+  ma_engine_set_volume(&m.engine, m.volume);
+}
+
+void SetVolumeSFX(f32 v) {  ///
+  ASSERT(v >= 0);
+  ASSERT(v <= 1);
+  ma_sound_set_volume(&ge.meta._soundManager.groupSFX, Clamp01(v));
+}
+
+void SetVolumeMusic(f32 v) {  ///
+  ASSERT(v >= 0);
+  ASSERT(v <= 1);
+  ma_sound_set_volume(&ge.meta._soundManager.groupMusic, Clamp01(v));
+}
+
 // TODO: Options struct to support
 // * increasing volume of recently started sounds
 // * variations
@@ -775,7 +792,7 @@ void PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
           &m.engine,
           &original.ma_sound,
           original.flags | MA_SOUND_FLAG_WAIT_INIT,
-          &m.groupSfx,
+          &m.groupSFX,
           s
         )
         != MA_SUCCESS)
@@ -817,11 +834,6 @@ void PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
       s, ma_engine_get_time_in_milliseconds(&m.engine) + delayMilliseconds
     );
   }
-
-  // if (fb_sound->is_music())
-  //   ma_node_attach_output_bus(s, 0, &m.musicBiquad, 0);
-  // else
-  //   ma_node_attach_output_bus(s, 0, ma_engine_get_endpoint(&m.engine), 0);
 
   if (ma_sound_start(s) == MA_SUCCESS) {
     if (fb_sound->is_music()) {
@@ -2514,21 +2526,24 @@ void _UnloadTexture(Texture2D* texture) {  ///
   *texture = {};
 }
 
-void SetMusicLowpassFrequency(f32 freq) {  ///
-  auto& m = ge.meta._soundManager;
-  auto  biquad
-    = BiquadLowpass(ma_engine_get_sample_rate(&m.engine), freq, BF_BIQUAD_DEFAULT_Q);
-  const auto cfg = ma_biquad_config_init(
-    ma_format_f32,
-    ma_engine_get_channels(&m.engine),
-    biquad.b0,
-    biquad.b1,
-    biquad.b2,
-    biquad.a0,
-    biquad.a1,
-    biquad.a2
+void SetMusicLowpassFactor(f32 factor) {  ///
+  ASSERT(factor >= 0);
+  ASSERT(factor <= 1);
+
+  auto&      m          = ge.meta._soundManager;
+  const auto sampleRate = ma_engine_get_sample_rate(&m.engine);
+
+  const auto minFreq    = 40.0f;
+  const auto maxFreq    = (f32)sampleRate / 2.01f;
+  const auto cutoffFreq = minFreq * powf(maxFreq / minFreq, Clamp01(factor));
+
+  ASSERT(cutoffFreq >= minFreq);
+  ASSERT(cutoffFreq <= maxFreq);
+
+  const auto cfg = ma_lpf_config_init(
+    ma_format_f32, ma_engine_get_channels(&m.engine), sampleRate, cutoffFreq, 8
   );
-  if (ma_biquad_node_reinit(&cfg, &m.musicBiquad) != MA_SUCCESS)
+  if (ma_lpf_node_reinit(&cfg, &m.musicLpf) != MA_SUCCESS)
     INVALID_PATH;
 }
 
@@ -2576,16 +2591,14 @@ void ReloadSounds() {  ///
     *m.launchedSounds.Add() = {};
   }
 
-  m.groupSfx   = {};
+  m.groupSFX   = {};
   m.groupMusic = {};
   ma_sound_group_init(
-    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupSfx
+    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupSFX
   );
   ma_sound_group_init(
     &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupMusic
   );
-
-  m.musicBiquad = {};
 
   ma_fence fence{};
   if (ma_fence_init(&fence) != MA_SUCCESS) {
@@ -2616,34 +2629,20 @@ void ReloadSounds() {  ///
   };
 
   {
-    auto biquad = BiquadLowpass(
-      ma_engine_get_sample_rate(&m.engine), BF_BIQUAD_DEFAULT_FREQ, BF_BIQUAD_DEFAULT_Q
-    );
-    const auto cfg = ma_biquad_node_config_init(
-      ma_engine_get_channels(&m.engine),
-      biquad.b0,
-      biquad.b1,
-      biquad.b2,
-      biquad.a0,
-      biquad.a1,
-      biquad.a2
-    );
-    checkErr(ma_biquad_node_init(&m.engineg, &cfg, nullptr, &m.musicBiquad));
+    {
+      const auto cfg = ma_lpf_node_config_init(
+        ma_engine_get_channels(&m.engine), ma_engine_get_sample_rate(&m.engine), 2000, 8
+      );
+      checkErr(ma_lpf_node_init(&m.engineg, &cfg, nullptr, &m.musicLpf));
+    }
 
-    if (1)
-      checkErr(ma_node_attach_output_bus(
-        &m.musicBiquad, 0, ma_node_graph_get_endpoint(&m.engineg), 0
-      ));
-    if (1)
-      checkErr(ma_node_attach_output_bus(&m.groupMusic, 0, &m.musicBiquad, 0));
-    if (0)
-      checkErr(ma_node_attach_output_bus(
-        &m.groupMusic, 0, ma_node_graph_get_endpoint(&m.engineg), 0
-      ));
-    if (1)
-      checkErr(ma_node_attach_output_bus(
-        &m.groupSfx, 0, ma_node_graph_get_endpoint(&m.engineg), 0
-      ));
+    checkErr(ma_node_attach_output_bus(&m.groupMusic, 0, &m.musicLpf, 0));
+    checkErr(
+      ma_node_attach_output_bus(&m.musicLpf, 0, ma_node_graph_get_endpoint(&m.engineg), 0)
+    );
+    checkErr(
+      ma_node_attach_output_bus(&m.groupSFX, 0, ma_node_graph_get_endpoint(&m.engineg), 0)
+    );
   }
 
   for (auto fb : *fb_sounds) {
@@ -2662,7 +2661,7 @@ void ReloadSounds() {  ///
     }
     else {
       flags |= MA_SOUND_FLAG_DECODE;
-      group = &m.groupSfx;
+      group = &m.groupSFX;
     }
 
     *m.soundVariationRanges.Add() = {
@@ -2689,11 +2688,6 @@ void ReloadSounds() {  ///
       checkErr(ma_sound_init_from_file(
         &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
       ));
-
-      // if (fb->is_music()) {
-      //   checkErr(ma_node_detach_all_output_buses(&slot->ma_sound));
-      //   checkErr(ma_node_attach_output_bus(&slot->ma_sound, 0, &m.musicBiquad, 0));
-      // }
     }
   }
 
