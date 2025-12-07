@@ -204,6 +204,7 @@ creatures: # {  ###
     shadow_offset_y: -0.68
     shadow_scale: 1.1
     hit_particles_color: 0xdc9824ff
+    action_sound_hash: GAME_MOB_COORAVIE_SHOOT
   - type: RUSHER
     appearing_wave_number: 8
     spawn_factor: 16
@@ -288,6 +289,7 @@ creatures: # {  ###
     shadow_offset_y: -0.95
     shadow_scale: 2.1
     hit_particles_color: 0xdc9824ff
+    action_sound_hash: GAME_MOB_BOSS_SHOOT
   - type: TREE
     spawn_factor: 0
     health: 10
@@ -3023,6 +3025,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 77
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_HIT_BLADE
     effects:
       - stat_type: CONSUMABLE_HEAL
         value: 1 1 1 2
@@ -3041,6 +3044,7 @@ weapons: # {  ###
     knockback_meters: 2 2 2 2
     melee_collider_height_px: 61
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 110
   - type: MELEE_0_FIST # перчатка молочника
     base_damage: 8 16 32 64
@@ -3461,6 +3465,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 62
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 221
   - type: MELEE_2_THUNDER_SWORD # recettear's "twisted dagger"
     base_damage: 30 60

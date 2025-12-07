@@ -4542,7 +4542,7 @@ void GameInit() {
   ZoneScoped;
 
   SetVolumeMusic(0.5f);
-  PlaySound(Sound_MUSIC_BATTLE);
+  // PlaySound(Sound_MUSIC_BATTLE);
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
@@ -11831,6 +11831,7 @@ void GameFixedUpdate() {
                     .damage = GetMobDamage(creature.type),
                   },
                 });
+                PlaySound(fb->action_sound_hash());
               }
               if (e >= MOB_RANGER_SHOOTING_FRAMES) {
                 creature.speedModifier /= fb->acting_speed_modifier_scale();
@@ -11887,6 +11888,7 @@ void GameFixedUpdate() {
                   data.rushingDir
                     = Vector2DirectionOrRandom(creature.pos, PLAYER_CREATURE.pos);
                   creature.speedModifier *= fb->acting_speed_modifier_scale();
+                  PlaySound(fb->action_sound_hash());
                 }
               }
             }
@@ -11930,6 +11932,7 @@ void GameFixedUpdate() {
                       .damage = GetMobDamage(creature.type),
                     },
                   });
+                  PlaySound(fb->action_sound_hash());
                 }
                 data.shootingRotationOffset
                   += pattern->rotation_offset()
@@ -12039,6 +12042,7 @@ void GameFixedUpdate() {
                     .bounce               = fb->turret_bounce(),
                   },
                 });
+                PlaySound(fb->action_sound_hash());
               }
 
               const auto dur

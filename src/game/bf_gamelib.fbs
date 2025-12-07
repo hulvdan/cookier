@@ -170,7 +170,7 @@ table Creature {
     shadow_scale: float = 1;
 
     hit_particles_color: uint;
-    mob_action_sound_hash: uint;
+    action_sound_hash: uint;
 }
 
 table CondVar {
