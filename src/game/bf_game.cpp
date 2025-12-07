@@ -12901,6 +12901,7 @@ void GameFixedUpdate() {
         static int nextProjectileId = 1;
 
         auto fb = fb_projectiles->Get(data.c.type);
+        PlaySound(fb->spawn_sound_hash());
 
         f32 rotationSpeed
           = fb->rotation_speed() + fb->rotation_speed_plus_minus() * GRAND.FRand11();

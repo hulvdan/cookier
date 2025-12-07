@@ -4126,6 +4126,7 @@ projectiles: # {  ###
     speed: 20
     texture_ids:
       - game_projectile_lightning
+    spawn_sound_hash: GAME_LIGHTNING
   - type: JAVELIN
     speed: 20
     damage_sound_hash: GAME_HIT_BLADE
