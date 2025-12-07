@@ -1096,7 +1096,7 @@ struct TurretToSpawn {  ///
   FBFlattened damageScalings = {};
 };
 
-struct RotatedRect {
+struct RotatedRect {  ///
   Vector2 pos      = {};
   Vector2 size     = {};
   f32     rotation = {};
@@ -4089,7 +4089,7 @@ int GetNumberOfTreesToSpawn() {  ///
   return 0;
 }
 
-enum ItemOrWeaponType {
+enum ItemOrWeaponType {  ///
   ItemOrWeaponType_INVALID,
   ItemOrWeaponType_ITEM,
   ItemOrWeaponType_WEAPON,
