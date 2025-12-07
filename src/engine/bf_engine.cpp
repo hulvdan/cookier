@@ -443,6 +443,9 @@ struct _EndedSound {  ///
   int       loadedFileIndex = {};
 };
 
+constexpr f32 BF_BIQUAD_DEFAULT_FREQ = 25000;
+constexpr f32 BF_BIQUAD_DEFAULT_Q    = 0.7071f;
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -489,12 +492,18 @@ struct EngineData {
     int localization = 1;  // 0 - ru. 1 - en.
 
     struct SoundManager {
+      ma_sound_group groupSfx   = {};
+      ma_sound_group groupMusic = {};
+
       ReaderWriterQueue<_EndedSound> soundsToUninitialize{};
       Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
       Vector<_SoundVariationRange>   soundVariationRanges           = {};
 
-      bool      works  = false;
-      ma_engine engine = {};
+      bool works = false;
+      union {
+        ma_engine     engine;
+        ma_node_graph engineg;
+      };
 
       f32                            volume             = 0.75f;
       Array<ma_sound, BF_MAX_SOUNDS> playingSounds      = {};
@@ -766,7 +775,7 @@ void PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
           &m.engine,
           &original.ma_sound,
           original.flags | MA_SOUND_FLAG_WAIT_INIT,
-          nullptr,
+          &m.groupSfx,
           s
         )
         != MA_SUCCESS)
@@ -809,8 +818,10 @@ void PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
     );
   }
 
-  if (fb_sound->is_music())
-    ma_node_attach_output_bus(s, 0, &m.musicLpf, 0);
+  // if (fb_sound->is_music())
+  //   ma_node_attach_output_bus(s, 0, &m.musicBiquad, 0);
+  // else
+  //   ma_node_attach_output_bus(s, 0, ma_engine_get_endpoint(&m.engine), 0);
 
   if (ma_sound_start(s) == MA_SUCCESS) {
     if (fb_sound->is_music()) {
@@ -2503,6 +2514,24 @@ void _UnloadTexture(Texture2D* texture) {  ///
   *texture = {};
 }
 
+void SetMusicLowpassFrequency(f32 freq) {  ///
+  auto& m = ge.meta._soundManager;
+  auto  biquad
+    = BiquadLowpass(ma_engine_get_sample_rate(&m.engine), freq, BF_BIQUAD_DEFAULT_Q);
+  const auto cfg = ma_biquad_config_init(
+    ma_format_f32,
+    ma_engine_get_channels(&m.engine),
+    biquad.b0,
+    biquad.b1,
+    biquad.b2,
+    biquad.a0,
+    biquad.a1,
+    biquad.a2
+  );
+  if (ma_biquad_node_reinit(&cfg, &m.musicBiquad) != MA_SUCCESS)
+    INVALID_PATH;
+}
+
 void ReloadSounds() {  ///
   auto& m = ge.meta._soundManager;
 
@@ -2525,6 +2554,7 @@ void ReloadSounds() {  ///
   if (!fb_sounds->size())
     return;
 
+  m.engine    = {};
   auto config = ma_engine_config_init();
   if (ma_engine_init(&config, &m.engine) != MA_SUCCESS) {
     LOGW("Failed to init miniaudio engine");
@@ -2546,6 +2576,17 @@ void ReloadSounds() {  ///
     *m.launchedSounds.Add() = {};
   }
 
+  m.groupSfx   = {};
+  m.groupMusic = {};
+  ma_sound_group_init(
+    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupSfx
+  );
+  ma_sound_group_init(
+    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupMusic
+  );
+
+  m.musicBiquad = {};
+
   ma_fence fence{};
   if (ma_fence_init(&fence) != MA_SUCCESS) {
     LOGW("Error during ma_fence_init");
@@ -2564,20 +2605,65 @@ void ReloadSounds() {  ///
   m.soundVariationsLoadedFromFiles.Reserve(filesToLoad);
   const auto oldBase = m.soundVariationsLoadedFromFiles.base;
 
-  bool errored = false;
+  bool _errored = false;
+  LAMBDA (bool, checkErr, (ma_result res)) {
+    if (res != MA_SUCCESS) {
+      _errored = true;
+      INVALID_PATH;
+      return true;
+    }
+    return false;
+  };
+
+  {
+    auto biquad = BiquadLowpass(
+      ma_engine_get_sample_rate(&m.engine), BF_BIQUAD_DEFAULT_FREQ, BF_BIQUAD_DEFAULT_Q
+    );
+    const auto cfg = ma_biquad_node_config_init(
+      ma_engine_get_channels(&m.engine),
+      biquad.b0,
+      biquad.b1,
+      biquad.b2,
+      biquad.a0,
+      biquad.a1,
+      biquad.a2
+    );
+    checkErr(ma_biquad_node_init(&m.engineg, &cfg, nullptr, &m.musicBiquad));
+
+    if (1)
+      checkErr(ma_node_attach_output_bus(
+        &m.musicBiquad, 0, ma_node_graph_get_endpoint(&m.engineg), 0
+      ));
+    if (1)
+      checkErr(ma_node_attach_output_bus(&m.groupMusic, 0, &m.musicBiquad, 0));
+    if (0)
+      checkErr(ma_node_attach_output_bus(
+        &m.groupMusic, 0, ma_node_graph_get_endpoint(&m.engineg), 0
+      ));
+    if (1)
+      checkErr(ma_node_attach_output_bus(
+        &m.groupSfx, 0, ma_node_graph_get_endpoint(&m.engineg), 0
+      ));
+  }
 
   for (auto fb : *fb_sounds) {
-    u32 customFlags = MA_SOUND_FLAG_NO_SPATIALIZATION;
+    u32 customFlags
+      = MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
     if (fb->pitch_min() == fb->pitch_max())
       customFlags |= MA_SOUND_FLAG_NO_PITCH;
 
     static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
-    u32 flags = MA_SOUND_FLAG_ASYNC | customFlags;
+    u32             flags = MA_SOUND_FLAG_ASYNC | customFlags;
+    ma_sound_group* group = nullptr;
 
-    if (fb->is_music())
+    if (fb->is_music()) {
       flags |= MA_SOUND_FLAG_STREAM;
-    else
+      group = &m.groupMusic;
+    }
+    else {
       flags |= MA_SOUND_FLAG_DECODE;
+      group = &m.groupSfx;
+    }
 
     *m.soundVariationRanges.Add() = {
       .start = m.soundVariationsLoadedFromFiles.count,
@@ -2600,46 +2686,22 @@ void ReloadSounds() {  ///
       auto fencePtr = &fence;
       if (fb->is_music())
         fencePtr = nullptr;
+      checkErr(ma_sound_init_from_file(
+        &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
+      ));
 
-      if (ma_sound_init_from_file(
-            &m.engine, slot->filepath, flags, nullptr, fencePtr, &slot->ma_sound
-          )
-          != MA_SUCCESS)
-      {
-        errored = true;
-        INVALID_PATH;
-      }
+      // if (fb->is_music()) {
+      //   checkErr(ma_node_detach_all_output_buses(&slot->ma_sound));
+      //   checkErr(ma_node_attach_output_bus(&slot->ma_sound, 0, &m.musicBiquad, 0));
+      // }
     }
   }
 
   ASSERT(oldBase == m.soundVariationsLoadedFromFiles.base);
 
-  if (ma_fence_wait(&fence) != MA_SUCCESS)
-    INVALID_PATH;
+  checkErr(ma_fence_wait(&fence));
 
-  const auto cfg = ma_biquad_node_config_init_lowpass(
-    ma_engine_get_channels(&m.engine),
-    // sampleRate, 1000.0f, 0
-  );
-  ma_biquad_node_init(&nodeGraph, &cfg, NULL, &filterNode);
-
-  const auto cfg = ma_lpf_node_config_init(
-    ma_engine_get_channels(&m.engine), ma_engine_get_sample_rate(&m.engine), 1000, 0
-  );
-  if (ma_lpf_node_init(ma_engine_get_node_graph(&m.engine), &cfg, nullptr, &m.musicLpf)
-      != MA_SUCCESS)
-  {
-    errored = true;
-    INVALID_PATH;
-  }
-  if (ma_node_attach_output_bus(&m.musicLpf, 0, ma_engine_get_endpoint(&m.engine), 0)
-      != MA_SUCCESS)
-  {
-    errored = true;
-    INVALID_PATH;
-  }
-
-  m.works = !errored;
+  m.works = !_errored;
 }
 
 void InitEngine() {  ///
