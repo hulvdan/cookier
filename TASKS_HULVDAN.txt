@@ -10,30 +10,32 @@ WORKING SINCE 2025-09-07
 - ЧИНИМ
 
 x music: low pass
+x sfx: set other fists
 
-* prod sfx: mob ranger shot (cooravie)
-* prod sfx: boss shot
-* prod sfx: turret shot
-* prod sfx: wave complete whoosh
-* prod sfx: lightning
-* prod sfx: died whoosh
-* prod sfx: flamethrower
-* prod sfx: mob hurt
-* prod sfx: pickup crate
-* prod sfx: got achievement + item unlocked
-* prod sfx: run won
-* prod sfx: run lost / died
-* prod sfx: grimoire of milk
-* prod sfx: sniper rifle other projectiles
-* prod sfx: torch flame
-* prod sfx: bonk for punch (glove) weapons
-* prod sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
-* prod sfx: blow (slingshot -> blowgun)
-* prod sfx: laser shot
-* prod sfx:
-* prod sfx:
-* prod sfx:
-* prod sfx:
+* sfx: mob ranger shot (cooravie)
+* sfx: boss shot
+* sfx: turret shot
+* sfx: wave complete whoosh
+* sfx: lightning
+* sfx: died whoosh
+* sfx: flamethrower
+* sfx: mob hurt
+* sfx: pickup crate
+* sfx: got achievement + item unlocked
+* sfx: run won
+* sfx: run lost / died
+* sfx: grimoire of milk
+* sfx: sniper rifle other projectiles
+* sfx: torch flame
+* sfx: bonk for punch (glove) weapons
+* sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
+* sfx: blow (slingshot -> blowgun)
+* sfx: laser shot
+* sfx: turret spatial sound
+* sfx:
+* sfx:
+* sfx:
+* sfx:
 *
 * disable SDL repeat key
 *
@@ -41,8 +43,8 @@ x music: low pass
 *
 * cli команда для сравнения пиков звуков
 *
-* prod sfx: emscripten старт звука после key / mouse / touch press
-* prod sfx: ease engine volume change on focus / defocus
+* sfx: emscripten старт звука после key / mouse / touch press
+* sfx: ease engine volume change on focus / defocus
 *
 * better sfx: ui hover
 * better sfx: shotgun less reverb?
