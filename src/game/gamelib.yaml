@@ -5002,7 +5002,7 @@ achievements: # {  ###
         unlocks_weapon_type: RANGED_1_FLAMETHROWER
   - type: MAX_SINGLE_PROJECTILE_PIERCED
     steps:
-      - value: 3
+      - value: 5
         unlocks_item_type: SHARP_BULLET
       - value: 6
         unlocks_weapon_type: RANGED_3_GATLING_LASER
@@ -5144,5 +5144,8 @@ sounds:
   - type: GAME_ACHIEVEMENT
     pitch_min: 1
     pitch_max: 1
+  - type: GAME_PLAYER_DIED
+    pitch_min: 0.98
+    pitch_max: 1.02
 
 ###

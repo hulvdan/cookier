@@ -410,7 +410,11 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_DOWN: {  ///
+    if (event->key.repeat)
+      break;
+
     if (event->key.scancode == SDL_SCANCODE_F11) {
+      
       auto window     = SDL_GetWindowFromID(event->key.windowID);
       auto mode       = SDL_GetWindowFullscreenMode(window);
       auto fullscreen = SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN;
@@ -424,6 +428,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
+    if (event->key.repeat)
+      break;
+
     ge.meta._keyboardStateReleased[event->key.scancode] = true;
 
     ge.events.thisFrame.keyReleased = true;

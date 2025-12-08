@@ -13304,6 +13304,16 @@ void GameFixedUpdate() {
       );
     }
 
+    if (g.run.state.screen == ScreenType_GAMEPLAY) {
+      // 0 - die.
+      if (IsKeyPressed(SDL_SCANCODE_0)) {  ///
+        TryApplyDamage({
+          .creatureIndex = 0,
+          .damage        = int_max,
+        });
+      }
+    }
+
     // Processing `justDamagedCreatures`.
     {  ///
       ZoneScopedN("Processing `justDamagedCreatures`.");
@@ -14458,6 +14468,7 @@ void GameDraw() {
     DebugText("F4 change device");
     DebugText("F5 +10 coins");
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
+      DebugText("0 die");
       DebugText("F6 complete wave");
       DebugText("F7 show end screen");
       DebugText("F8 add level");
