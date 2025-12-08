@@ -299,6 +299,7 @@ table Weapon {
     life_steal_percents: [float];
     use_sound_hash: uint;
     damage_sound_hash: uint;
+    trailsound_type: int;
     shooting_feedback_scale: float = 1;
     effects: [Effect];
     color: uint = 0xffffffff;
@@ -335,8 +336,7 @@ table Projectile {
     max_simultaneous_count_achievement_type: int;
     damage_sound_hash: uint;
     spawn_sound_hash: uint;
-    trail_sound_hash: uint;
-    trail_sound_repeat_seconds: float;
+    trailsound_type: int;
 }
 
 table ParticleVariation {
@@ -431,6 +431,11 @@ table AchievementOrder {
     achievement_type: int;
     step_index: int;
 }
+
+table TrailSound {
+    sound_hash: uint;
+    repeat_seconds: float;
+}
 // GAME STUFF END
 
 table GameLibrary {
@@ -516,6 +521,7 @@ table GameLibrary {
     builds: [Build] (required);
     achievements: [Achievement] (required);
     hats: [Hat] (required);
+    trail_sounds: [TrailSound] (required);
     // TABLE_GEN_END
 
     player_layer_texture_ids: [int] (required);

@@ -266,6 +266,15 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     TOTAL_TIERS = 4
 
+    # Trail sounds.
+    # ============================================================
+    # {  ###
+    for i, x in enumerate_table("trail_sounds"):
+        if not i:
+            continue
+        assert x["repeat_seconds"] > 0
+    # }
+
     # Items.
     # ============================================================
     # {  ###

@@ -493,7 +493,8 @@ struct Weapon {  ///
   int thisWaveKilledEnemies = 0;
   int thisWaveUseCount      = 0;
 
-  FrameGame lastShotAt = {};
+  FrameGame lastShotAt                = {};
+  i64       nextTrailSoundVisualFrame = {};
 
   FrameVisual uiBouncedAt = {};
 };
@@ -1995,6 +1996,14 @@ void OnWaveStarted() {  ///
   for (auto& weapon : g.run.state.weapons) {
     weapon.thisWaveDamage   = 0;
     weapon.thisWaveUseCount = 0;
+
+    if (weapon.type) {
+      auto fb = glib->weapons()->Get(weapon.type);
+      if (fb->trail_sound_hash()) {
+        ASSERT(fb->trail_sound_repeat_seconds() > 0);
+        weapon.nextTrailSoundVisualFrame = ge.meta.frameVisual + 1;
+      }
+    }
   }
 
   g.run.random
@@ -11212,17 +11221,18 @@ void GameFixedUpdate() {
   // Setup. {  ///
   ReloadFontsIfNeeded();
 
-  const auto fb_pickupables    = glib->pickupables();
-  const auto fb_preSpawns      = glib->pre_spawns();
-  const auto fb_atlas_textures = glib->atlas_textures();
-  const auto fb_creatures      = glib->creatures();
-  const auto fb_items          = glib->items();
-  const auto fb_weapons        = glib->weapons();
-  const auto fb_projectiles    = glib->projectiles();
-  const auto fb_particles      = glib->particles();
-  const auto fb_difficulties   = glib->difficulties();
-  const auto fb_achievements   = glib->achievements();
-  const auto fb_builds         = glib->builds();
+  const auto fb_pickupables   = glib->pickupables();
+  const auto fb_preSpawns     = glib->pre_spawns();
+  const auto fb_atlasTextures = glib->atlas_textures();
+  const auto fb_creatures     = glib->creatures();
+  const auto fb_items         = glib->items();
+  const auto fb_weapons       = glib->weapons();
+  const auto fb_projectiles   = glib->projectiles();
+  const auto fb_particles     = glib->particles();
+  const auto fb_difficulties  = glib->difficulties();
+  const auto fb_achievements  = glib->achievements();
+  const auto fb_builds        = glib->builds();
+  const auto fb_trailSounds   = glib->builds();
   // }
 
   // `g.meta.playerUsesKeyboardOrController`.
@@ -12897,6 +12907,22 @@ void GameFixedUpdate() {
       }
     }
 
+    // Updating player weapons. Playing trail sounds.
+    for (auto& w : g.run.state.weapons) {  ///
+      if (!w.type)
+        continue;
+
+      if (w.nextTrailSoundVisualFrame
+          && (w.nextTrailSoundVisualFrame <= ge.meta.frameVisual))
+      {
+        const auto fb       = fb_weapons->Get(w.type);
+        const auto fb_sound = fb_trailSounds->Get(fb->trailsound_type());
+        w.nextTrailSoundVisualFrame
+          = ge.meta.frameVisual + lframe::FromSeconds(fb_sound->repeat_seconds()).value;
+        PlaySound(fb_sound->sound_hash());
+      }
+    }
+
     // Making projectiles.
     {  ///
       for (auto& data : g.run.projectilesToMake) {
@@ -12913,9 +12939,11 @@ void GameFixedUpdate() {
           .id            = nextProjectileId++,
           .rotationSpeed = rotationSpeed,
         };
-        if (fb->trail_sound_hash()) {
-          ASSERT(fb->trail_sound_repeat_seconds() > 0);
-          projectile.nextTrailSoundVisualFrame = ge.meta.frameVisual + 1;
+        if (fb->trailsound_type()) {
+          const auto fb_sound = fb_trailSounds->Get(fb->trailsound_type());
+          projectile.nextTrailSoundVisualFrame
+            = ge.meta.frameVisual + lframe::FromSeconds(fb_sound->repeat_seconds()).value;
+          PlaySound(fb_sound->sound_hash());
         }
         projectile.createdAt.SetNow();
 
@@ -13509,16 +13537,16 @@ void GameDraw() {
   const auto localization         = glib->localizations()->Get(ge.meta.localization);
   const auto localization_strings = localization->strings();
 
-  const auto fb_atlas_textures = glib->atlas_textures();
-  const auto fb_hostilities    = glib->hostilities();
-  const auto fb_preSpawns      = glib->pre_spawns();
-  const auto fb_creatures      = glib->creatures();
-  const auto fb_weapons        = glib->weapons();
-  const auto fb_projectiles    = glib->projectiles();
-  const auto fb_pickupables    = glib->pickupables();
-  const auto fb_numbers        = glib->numbers();
-  const auto fb_particles      = glib->particles();
-  const auto fb_builds         = glib->builds();
+  const auto fb_atlasTextures = glib->atlas_textures();
+  const auto fb_hostilities   = glib->hostilities();
+  const auto fb_preSpawns     = glib->pre_spawns();
+  const auto fb_creatures     = glib->creatures();
+  const auto fb_weapons       = glib->weapons();
+  const auto fb_projectiles   = glib->projectiles();
+  const auto fb_pickupables   = glib->pickupables();
+  const auto fb_numbers       = glib->numbers();
+  const auto fb_particles     = glib->particles();
+  const auto fb_builds        = glib->builds();
   // }
 
   BeginMode2D(&g.run.camera);
