@@ -17,9 +17,10 @@ x sfx: got achievement + item unlocked
 x sfx: sniper rifle other projectiles
 x sfx: sniper rifle big shot
 x fix время спавна пуль
+x disable sdl repeat
 
+* starts with different music (initialize random to different value)
 * sfx: died whoosh
-*
 *
 * sfx: flamethrower
 * sfx: burn tick
