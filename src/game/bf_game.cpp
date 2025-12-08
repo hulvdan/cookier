@@ -1599,6 +1599,8 @@ void TriggerWaveCompleted(bool instant) {  ///
   g.run.scheduledWaveCompleted.SetNow();
   if (instant)
     g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
+  else
+    PlaySound(Sound_GAME_BIG_TEXT_WHOOSH);
 }
 
 void ChangeStat(StatType stat, int value) {  ///
@@ -2010,6 +2012,8 @@ void OnWaveStarted() {  ///
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA { g.run.cantHeal = true; }
   );
+
+  PlaySound(Sound_GAME_WAVE_START);
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -3160,6 +3164,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
     if (fb->is_boss() && !g.run.scheduledWaveCompleted.IsSet()) {
       TriggerWaveCompleted(false);
       SetWaveWonTrue();
+      PlaySound(Sound_GAME_WAVE_WON);
       Save();
     }
   }
@@ -11311,6 +11316,7 @@ void GameFixedUpdate() {
       if (IsKeyPressed(SDL_SCANCODE_F6)) {  ///
         TriggerWaveCompleted(false);
         SetWaveWonTrue();
+        PlaySound(Sound_GAME_WAVE_WON);
       }
 
       // F7 - show end screen.
@@ -11589,6 +11595,11 @@ void GameFixedUpdate() {
 
   // Advancing to ScreenType_END.
   if (g.run.scheduledEnd) {  ///
+    if (g.run.state.won)
+      PlaySound(Sound_GAME_RUN_WON);
+    else
+      PlaySound(Sound_GAME_RUN_LOST);
+
     g.run.scheduledEnd = false;
     g.run.state.screen = ScreenType_END;
 
@@ -11707,6 +11718,7 @@ void GameFixedUpdate() {
         if (!g.run.scheduledWaveCompleted.IsSet()) {
           TriggerWaveCompleted(false);
           SetWaveWonTrue();
+          PlaySound(Sound_GAME_WAVE_WON);
           Save();
         }
       }
