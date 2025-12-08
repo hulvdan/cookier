@@ -3174,6 +3174,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 85
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 122
   - type: MELEE_0_PRUNER # sunflower
     base_damage: 10 15 20 25
@@ -3254,6 +3255,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 64
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 91
   - type: MELEE_0_SHARP_TOOTH # nail hollow knight / tooth
     base_damage: 5 8 11 15
@@ -3365,6 +3367,7 @@ weapons: # {  ###
             percents_per_tier: 80 80 80 80
     melee_collider_height_px: 74
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 173
   - type: MELEE_1_CIRCULAR_SAW # pizza cutter
     base_damage: 10 15 25
@@ -3415,6 +3418,7 @@ weapons: # {  ###
         value: 2 4 6
     melee_collider_height_px: 99
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 190
   - type: MELEE_1_SWORD
     base_damage: 25 40 60
@@ -3647,6 +3651,7 @@ weapons: # {  ###
     range_meters: 9.3 9.3 9.3 9.3
     projectile_type: MAGICAL_BULLET
     projectile_pierce: 1 1 1 1
+    use_sound_hash: GAME_MAGICAL_MISSILE
     knockback_meters: 5 5 5 5
     price: 140
   - type: RANGED_0_JAVELIN

@@ -22,6 +22,7 @@ x sfx: torch flame + fireball
 * sfx: grimoire of milk
 * sfx: got achievement + item unlocked
 * sfx: turret spatial shot sound
+* fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * sfx: wave complete whoosh
 * sfx: died whoosh
 * sfx: run won
