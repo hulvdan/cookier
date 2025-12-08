@@ -3921,6 +3921,8 @@ weapons: # {  ###
     crit_damage_multiplier: 3 4
     crit_chance: 20 20
     range_meters: 18.6 23.3
+    projectile_spawn_frame_factors:
+      - 0
     knockback_meters: 30 30
     projectile_type: BULLET
     effects:
@@ -3928,13 +3930,14 @@ weapons: # {  ###
         damage_scalings:
           - stat_type: RANGE
             percents_per_tier: 10 15
-        projectile_type: BULLET
+        projectile_type: LASER
         projectile_range_meters: 200
         placeholders:
           - ints: 5 8
           - ints: 5 5
+        sound_hash: GAME_LASER_SHOT
         only_this_weapon: true
-    use_sound_hash: GAME_GUN_SHOT
+    use_sound_hash: GAME_SNIPER_SHOT
     price: 245
   - type: RANGED_3_CHAIN_GUN # BFG
     base_damage: 1

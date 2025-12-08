@@ -14,6 +14,8 @@ x sfx: torch flame + fireball
 x sfx: grimoire of milk
 x sfx: laser shot
 x sfx: got achievement + item unlocked
+x sfx: sniper rifle other projectiles
+x sfx: sniper rifle big shot
 
 * sfx: flamethrower
 * sfx: burn tick
@@ -23,7 +25,6 @@ x sfx: got achievement + item unlocked
 * sfx: died whoosh
 * sfx: run won
 * sfx: run lost / died
-* sfx: sniper rifle other projectiles
 * sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
 * sfx: blow (blowgun (slingshot))
 * sfx:

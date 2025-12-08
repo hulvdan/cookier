@@ -245,6 +245,8 @@ table Effect {
     all_weapons: bool;
     only_this_weapon: bool;
     only_other_weapons: bool;
+
+    sound_hash: uint;
 }
 
 table Item {

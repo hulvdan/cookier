@@ -5238,6 +5238,8 @@ void EffectSpawnProjectilesOnHit(const Creature& creature, int weaponIndex) {  /
     weaponIndex,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
+        PlaySound(fb_effect->sound_hash());
+
         int damage = EFFECT_Y_INT * times;
         damage     = ApplyDamageScalings(damage, 0, fb_effect->damage_scalings(), times);
         damage     = ApplyPlayerStatDamageMultiplier(damage);
