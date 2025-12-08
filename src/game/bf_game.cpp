@@ -2593,6 +2593,8 @@ struct TryApplyDamageData {  ///
 bool TryApplyDamage(TryApplyDamageData data);
 
 void HealPlayer(int amount = 1) {  ///
+  if (g.run.state.screen != ScreenType_GAMEPLAY)
+    return;
   if (g.run.cantHeal)
     return;
 
