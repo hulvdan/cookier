@@ -5147,5 +5147,11 @@ sounds:
   - type: GAME_PLAYER_DIED
     pitch_min: 0.98
     pitch_max: 1.02
+  - type: GAME_BIG_TEXT_WHOOSH
+    pitch_min: 1
+    pitch_max: 1
+  - type: GAME_RUN_WON
+    pitch_min: 1
+    pitch_max: 1
 
 ###

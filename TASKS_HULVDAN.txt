@@ -18,20 +18,17 @@ x sfx: sniper rifle other projectiles
 x sfx: sniper rifle big shot
 x fix время спавна пуль
 x disable sdl repeat
+x sfx: died
 
+* sfx: wave complete whoosh
 * starts with different music (initialize random to different value)
-* sfx: died whoosh
-*
 * sfx: flamethrower
 * sfx: burn tick
 * sfx: turret spatial shot sound
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
-* sfx: wave complete whoosh
-* sfx: run won
-* sfx: run lost / died
-* sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
+* sfx: bonk for metallic punch (wrench / hammer / spoon / hexdriver) weapons
 * sfx: blow (blowgun (slingshot))
-* sfx:
+* sfx: просмотреть все оружия ВЫПИШИ ВСЕ ОРУЖИЯ
 * sfx:
 * sfx:
 * sfx:
