@@ -13471,8 +13471,10 @@ void GameFixedUpdate() {
   // Removing old unlocked achievements.
   if (g.ui.justUnlockedAchievements.count > 0) {  ///
     auto& x = g.ui.justUnlockedAchievements[0];
-    if (!x.shownAt.IsSet())
+    if (!x.shownAt.IsSet()) {
       x.shownAt.SetNow();
+      PlaySound(Sound_GAME_ACHIEVEMENT);
+    }
     else if (x.shownAt.Elapsed() >= ACHIEVEMENT_TOTAL_FRAMES)
       g.ui.justUnlockedAchievements.RemoveAt(0);
   }

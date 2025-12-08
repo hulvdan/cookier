@@ -9,19 +9,14 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x music: low pass
-x sfx: set other fists
-x sfx: mob ranger shot (cooravie)
-x sfx: boss shot
-x sfx: lightning
 x sfx: missile
 x sfx: torch flame + fireball
 x sfx: grimoire of milk
 x sfx: laser shot
+x sfx: got achievement + item unlocked
 
 * sfx: flamethrower
 * sfx: burn tick
-* sfx: got achievement + item unlocked
 * sfx: turret spatial shot sound
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * sfx: wave complete whoosh
@@ -175,6 +170,8 @@ x sfx: laser shot
 *
 * RELEASED!
 =======================
+* правильный подсчёт монеток сундуков при завершении волны
+  (т.к. pickup может отработать после wave completed - забить хрен на правильную загрузку при  wave completed?)
 * sfx: codegen: при появлении ошибки и наличии аргумента "--dont_close_on_exception",
   скрипт использует input("Press enter to exit... ")
   Так, я смогу увидеть ошибку reaper

@@ -5139,4 +5139,9 @@ player_layer_texture_anchors:
     y: -0.75
 # }
 
+sounds:
+  - type: GAME_ACHIEVEMENT
+    pitch_min: 1
+    pitch_max: 1
+
 ###

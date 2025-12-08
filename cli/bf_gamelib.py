@@ -654,6 +654,8 @@ def convert_gamelib_json_to_binary(
                 {"filepath": "resources/" + sound_path.name}
             )
 
+        existing_sounds_by_type = {x.pop("type"): x for x in gamelib.get("sounds", [])}
+
         sounds: list[Any] = []
         gamelib["sounds"] = sounds
         sound_index = -1
@@ -671,16 +673,33 @@ def convert_gamelib_json_to_binary(
                 "variations": sound_variations_per_type[sound_type],
                 "is_music": is_music,
                 **kwargs,
+                **existing_sounds_by_type.pop(sound_type, {}),
             }
             sounds.append(x)
+
+        if existing_sounds_by_type:
+            log.warning(
+                "gamelib.yml `sounds` contain those that aren't bound to any exported sounds: {}".format(
+                    ", ".join(existing_sounds_by_type)
+                )
+            )
 
     gamelib |= atlas_data
     genenum(genline, "DrawZ", gamelib.pop("draw_z"), add_count=True)
 
     localization_codepoints, locale_to_index = _do_localization(genline, gamelib)
 
+    warnings = 0
+
+    def warning(*args, **kwargs) -> None:
+        nonlocal warnings
+        warnings += 1
+        log.warning(*args, **kwargs)
+
     for gamelib_processing_function in gamelib_processing_functions:
-        gamelib_processing_function(genline, gamelib, localization_codepoints)
+        gamelib_processing_function(genline, gamelib, localization_codepoints, warning)
+
+    genline(f"constexpr bool BUILD_WARNINGS = {warnings};\n")
 
     # Asserting on not found textures.
     if 1:
@@ -1256,6 +1275,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         convert_gamelib_json_to_binary(
             texture_name_2_id, genline, atlases_data[0], original_texture_sizes
         )
+
         genline("///")
 
     symlink_resources_for = (

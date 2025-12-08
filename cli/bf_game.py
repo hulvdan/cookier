@@ -39,7 +39,7 @@ from bf_lib import (
     rgb_floats_to_hex,
     transform_color,
 )
-from bf_typer import command, log, timing
+from bf_typer import command, timing
 from PIL import Image
 from rich.console import Console
 from rich.table import Table
@@ -97,10 +97,10 @@ scoped_processing_args = ["None", "None"]
 
 
 @gamelib_processor
-def process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+def process_gamelib(*args, **kwargs) -> None:
     # {  ###
     try:
-        _process_gamelib(genline, gamelib, localization_codepoints)
+        _process_gamelib(*args, **kwargs)
     except Exception:
         print("ERROR HAPPENED DURING PROCESSING:", ", ".join(scoped_processing_args))
         raise
@@ -133,7 +133,9 @@ def explode_achievements(gamelib: dict) -> None:
     # }
 
 
-def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> None:
+def _process_gamelib(
+    genline, gamelib, localization_codepoints: set[int], warning
+) -> None:
     def enumerate_table(field: str):
         # {  ###
         scoped_processing_args[0] = field
@@ -145,13 +147,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
         scoped_processing_args[0] = "None"
         scoped_processing_args[1] = "None"
         # }
-
-    warnings = 0
-
-    def warning(*args, **kwargs) -> None:
-        nonlocal warnings
-        warnings += 1
-        log.warning(*args, **kwargs)
 
     transforms: list[tuple[str, str, str, dict[str, int]]] = []
 
@@ -822,8 +817,6 @@ def _process_gamelib(genline, gamelib, localization_codepoints: set[int]) -> Non
 
     recursive_flattenizer(gamelib, "damage_scaling", "damage_scalings", "damage_scalings")
     # }
-
-    genline(f"constexpr bool BUILD_WARNINGS = {warnings};\n")
 
 
 @command
