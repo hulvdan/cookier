@@ -14,9 +14,10 @@ x sfx: set other fists
 x sfx: mob ranger shot (cooravie)
 x sfx: boss shot
 x sfx: lightning
+x sfx: missile
 
-* sfx: grimoire of milk
 * sfx: flamethrower
+* sfx: grimoire of milk
 * sfx: got achievement + item unlocked
 * sfx: turret shot
 * sfx: wave complete whoosh

@@ -4104,6 +4104,9 @@ projectiles: # {  ###
         x: 0.03
         y: 0.03
       interval_seconds: 0.01
+    spawn_sound_hash: GAME_FIRE_MISSILE
+    trail_sound_hash: GAME_FIRE_MISSILE_TRAIL
+    trail_sound_repeat_seconds: 0.163
   - type: NUCLEAR_MILK
     speed: 20
     scales_in: 2
@@ -4120,6 +4123,9 @@ projectiles: # {  ###
         x: 0.03
         y: 0.03
       interval_seconds: 0.01
+    spawn_sound_hash: GAME_FIRE_MISSILE
+    trail_sound_hash: GAME_FIRE_MISSILE_TRAIL
+    trail_sound_repeat_seconds: 0.163
   - type: LIGHTNING
     fades_in: true
     scales_in: 2

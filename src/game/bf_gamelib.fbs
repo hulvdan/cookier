@@ -335,6 +335,8 @@ table Projectile {
     max_simultaneous_count_achievement_type: int;
     damage_sound_hash: uint;
     spawn_sound_hash: uint;
+    trail_sound_hash: uint;
+    trail_sound_repeat_seconds: float;
 }
 
 table ParticleVariation {
