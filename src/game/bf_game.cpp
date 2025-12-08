@@ -2012,8 +2012,6 @@ void OnWaveStarted() {  ///
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA { g.run.cantHeal = true; }
   );
-
-  PlaySound(Sound_GAME_WAVE_START);
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -9649,6 +9647,8 @@ void DoUI() {
             if (nextWavePressed) {
               g.run.scheduledNextWave = true;
               PlaySound(Sound_UI_CLICK);
+              PlaySound(Sound_GAME_WAVE_START);
+
               for (auto& x : g.run.state.shop.toPick)
                 x = {};
             }
@@ -12926,13 +12926,6 @@ void GameFixedUpdate() {
       }
     }
 
-    // Updating player weapons. Playing trail sounds.
-    for (auto& w : g.run.state.weapons) {  ///
-      UpdateTrailSound(
-        &w.nextTrailSoundVisualFrame, fb_weapons->Get(w.type)->trailsound_type()
-      );
-    }
-
     // Making projectiles.
     {  ///
       for (auto& data : g.run.projectilesToMake) {
@@ -13415,28 +13408,32 @@ void GameFixedUpdate() {
     if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
       ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
 
-    // Player's weapons create particles.
-    FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {  ///
-      const auto& weapon = g.run.state.weapons[weaponIndex];
-      if (!weapon.type)
-        continue;
+    // Player's weapons create particles and play trail sounds.
+    if (!PLAYER_CREATURE.diedAt.IsSet()) {
+      FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {  ///
+        auto& weapon = g.run.state.weapons[weaponIndex];
+        if (!weapon.type)
+          continue;
 
-      const auto fb = fb_weapons->Get(weapon.type);
+        const auto fb = fb_weapons->Get(weapon.type);
 
-      auto fb_emitter = fb->particle_emitter();
-      if (!fb_emitter)
-        continue;
+        UpdateTrailSound(&weapon.nextTrailSoundVisualFrame, fb->trailsound_type());
 
-      Vector2 offsetScale{1, 1};
-      if ((weapon.targetDir == Vector2Zero()) && (PLAYER_CREATURE.dir.x < 0))
-        offsetScale.x *= -1;
+        auto fb_emitter = fb->particle_emitter();
+        if (!fb_emitter)
+          continue;
 
-      EmitParticles({
-        .fb_emitter     = fb_emitter,
-        .pos            = GetWeaponPos(weaponIndex),
-        .offsetScale    = offsetScale,
-        .offsetRotation = Vector2AngleOrZero(weapon.targetDir),
-      });
+        Vector2 offsetScale{1, 1};
+        if ((weapon.targetDir == Vector2Zero()) && (PLAYER_CREATURE.dir.x < 0))
+          offsetScale.x *= -1;
+
+        EmitParticles({
+          .fb_emitter     = fb_emitter,
+          .pos            = GetWeaponPos(weaponIndex),
+          .offsetScale    = offsetScale,
+          .offsetRotation = Vector2AngleOrZero(weapon.targetDir),
+        });
+      }
     }
 
     // Updating particles.

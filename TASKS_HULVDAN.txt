@@ -20,6 +20,7 @@ x fix время спавна пуль
 x disable sdl repeat
 x sfx: died
 
+* sfx: lightning hit sfx
 * sfx: wave complete whoosh
 * starts with different music (initialize random to different value)
 * sfx: flamethrower
