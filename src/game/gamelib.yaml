@@ -3332,6 +3332,8 @@ weapons: # {  ###
         value: 0 0 1 1
     melee_collider_height_px: 35
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
+    trailsound_type: TORCH
     price: 91
     particle_emitter:
       particle_type: FIRE
@@ -3966,6 +3968,16 @@ weapons: # {  ###
     price: 290
 # }
 
+trail_sounds: # {  ###
+  - type: INVALID
+  - type: TORCH
+    sound_hash: GAME_FLAME
+    repeat_seconds: 0.237
+  - type: MISSILE
+    sound_hash: GAME_FIRE_MISSILE_TRAIL
+    repeat_seconds: 0.163
+# }
+
 projectiles: # {  ###
   - type: INVALID
   # - type: ARROW
@@ -4105,8 +4117,7 @@ projectiles: # {  ###
         y: 0.03
       interval_seconds: 0.01
     spawn_sound_hash: GAME_FIRE_MISSILE
-    trail_sound_hash: GAME_FIRE_MISSILE_TRAIL
-    trail_sound_repeat_seconds: 0.163
+    trailsound_type: MISSILE
   - type: NUCLEAR_MILK
     speed: 20
     scales_in: 2
@@ -4124,8 +4135,7 @@ projectiles: # {  ###
         y: 0.03
       interval_seconds: 0.01
     spawn_sound_hash: GAME_FIRE_MISSILE
-    trail_sound_hash: GAME_FIRE_MISSILE_TRAIL
-    trail_sound_repeat_seconds: 0.163
+    trailsound_type: MISSILE
   - type: LIGHTNING
     fades_in: true
     scales_in: 2
