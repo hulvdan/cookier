@@ -15,13 +15,13 @@ x sfx: mob ranger shot (cooravie)
 x sfx: boss shot
 x sfx: lightning
 x sfx: missile
+x sfx: torch flame + fireball
 
 * sfx: flamethrower
-* sfx: torch flame
 * sfx: burn tick
 * sfx: grimoire of milk
 * sfx: got achievement + item unlocked
-* sfx: turret shot
+* sfx: turret spatial shot sound
 * sfx: wave complete whoosh
 * sfx: died whoosh
 * sfx: run won
@@ -30,7 +30,6 @@ x sfx: missile
 * sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
 * sfx: blow (blowgun (slingshot))
 * sfx: laser shot
-* sfx: turret spatial sound
 * sfx:
 * sfx:
 * sfx:
@@ -50,7 +49,7 @@ x sfx: missile
 * better sfx: ui hover
 * better sfx: shotgun less reverb?
 * better sfx: mob hit sound
-* better sfx:
+* better sfx: add higher layer to barrel
 * better sfx:
 * better sfx:
 * better sfx:
