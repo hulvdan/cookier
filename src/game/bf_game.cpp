@@ -680,6 +680,8 @@ struct Projectile {  ///
   FrameGame createdAt         = {};
   int       effectCritPierce  = 0;
   int       effectCritBounce  = 0;
+
+  i64 nextTrailSoundVisualFrame = {};
 };
 
 struct MakeProjectileData {  ///
@@ -12901,16 +12903,20 @@ void GameFixedUpdate() {
         static int nextProjectileId = 1;
 
         auto fb = fb_projectiles->Get(data.c.type);
-        PlaySound(fb->spawn_sound_hash());
 
         f32 rotationSpeed
           = fb->rotation_speed() + fb->rotation_speed_plus_minus() * GRAND.FRand11();
 
+        PlaySound(fb->spawn_sound_hash());
         Projectile projectile{
           .c             = data.c,
           .id            = nextProjectileId++,
           .rotationSpeed = rotationSpeed,
         };
+        if (fb->trail_sound_hash()) {
+          ASSERT(fb->trail_sound_repeat_seconds() > 0);
+          projectile.nextTrailSoundVisualFrame = ge.meta.frameVisual + 1;
+        }
         projectile.createdAt.SetNow();
 
         if (data.alreadyDamagedCreatureID) {
@@ -12937,6 +12943,7 @@ void GameFixedUpdate() {
     // - Marking to remove because of travel distance.
     // - Mob collisions.
     // - Marking to remove because of pierce count.
+    // - Playing trail sounds.
     {  ///
       ZoneScopedN("Updating projectiles.");
 
@@ -12958,6 +12965,15 @@ void GameFixedUpdate() {
         const auto distance = FIXED_DT * fb->speed();
         projectile.travelledDistance += distance;
         projectile.c.pos += projectile.c.dir * distance;
+
+        if (projectile.nextTrailSoundVisualFrame
+            && (projectile.nextTrailSoundVisualFrame <= ge.meta.frameVisual))
+        {
+          projectile.nextTrailSoundVisualFrame
+            = ge.meta.frameVisual
+              + lframe::FromSeconds(fb->trail_sound_repeat_seconds()).value;
+          PlaySound(fb->trail_sound_hash());
+        }
 
         bool    createAoe = false;
         Vector2 aoePos    = projectile.c.pos;
@@ -13261,7 +13277,8 @@ void GameFixedUpdate() {
       FOR_RANGE (int, i, g.run.projectilesToRemove.count) {
         const auto projectileIndex
           = g.run.projectilesToRemove[g.run.projectilesToRemove.count - i - 1];
-        g.run.projectileCounts[g.run.projectiles[projectileIndex].c.type]--;
+        auto& projectile = g.run.projectiles[projectileIndex];
+        g.run.projectileCounts[projectile.c.type]--;
         g.run.projectiles.UnstableRemoveAt(projectileIndex);
       }
       g.run.projectilesToRemove.Reset();
