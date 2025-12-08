@@ -204,7 +204,8 @@ creatures: # {  ###
     shadow_offset_y: -0.68
     shadow_scale: 1.1
     hit_particles_color: 0xdc9824ff
-    action_sound_hash: GAME_MOB_COORAVIE_SHOOT
+    action_sound_hash: GAME_MOB_BOSS_SHOOT
+    # action_sound_hash: GAME_MOB_COORAVIE_SHOOT
   - type: RUSHER
     appearing_wave_number: 8
     spawn_factor: 16
@@ -3814,6 +3815,7 @@ weapons: # {  ###
         y: 0.13
       interval_seconds: 0.01
       fade: 0.5
+    trailsound_type: TORCH
     use_sound_hash: GAME_THROW
     price: 140
   - type: RANGED_1_FLAMETHROWER
@@ -4095,6 +4097,8 @@ projectiles: # {  ###
         x: 0.05
         y: 0.05
       interval_seconds: 0.01
+    spawn_sound_hash: GAME_FIRE_MISSILE
+    # trailsound_type: MISSILE
   - type: EGG
     speed: 14
     scales_in: 2

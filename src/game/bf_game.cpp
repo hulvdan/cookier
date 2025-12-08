@@ -1996,14 +1996,6 @@ void OnWaveStarted() {  ///
   for (auto& weapon : g.run.state.weapons) {
     weapon.thisWaveDamage   = 0;
     weapon.thisWaveUseCount = 0;
-
-    if (weapon.type) {
-      auto fb = glib->weapons()->Get(weapon.type);
-      if (fb->trail_sound_hash()) {
-        ASSERT(fb->trail_sound_repeat_seconds() > 0);
-        weapon.nextTrailSoundVisualFrame = ge.meta.frameVisual + 1;
-      }
-    }
   }
 
   g.run.random
@@ -4553,7 +4545,7 @@ void GameInit() {
   ZoneScoped;
 
   SetVolumeMusic(0.5f);
-  // PlaySound(Sound_MUSIC_BATTLE);
+  PlaySound(Sound_MUSIC_BATTLE);
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
@@ -11201,6 +11193,17 @@ void EmitParticles(EmitParticlesData data) {  ///
   });
 }
 
+void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
+  if (!trailSoundType)
+    return;
+  if (*nextTrailSoundVisualFrame <= ge.meta.frameVisual) {
+    const auto fb_sound = glib->trail_sounds()->Get(trailSoundType);
+    *nextTrailSoundVisualFrame
+      = ge.meta.frameVisual + lframe::FromSeconds(fb_sound->repeat_seconds()).value;
+    PlaySound(fb_sound->sound_hash());
+  }
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -12909,18 +12912,9 @@ void GameFixedUpdate() {
 
     // Updating player weapons. Playing trail sounds.
     for (auto& w : g.run.state.weapons) {  ///
-      if (!w.type)
-        continue;
-
-      if (w.nextTrailSoundVisualFrame
-          && (w.nextTrailSoundVisualFrame <= ge.meta.frameVisual))
-      {
-        const auto fb       = fb_weapons->Get(w.type);
-        const auto fb_sound = fb_trailSounds->Get(fb->trailsound_type());
-        w.nextTrailSoundVisualFrame
-          = ge.meta.frameVisual + lframe::FromSeconds(fb_sound->repeat_seconds()).value;
-        PlaySound(fb_sound->sound_hash());
-      }
+      UpdateTrailSound(
+        &w.nextTrailSoundVisualFrame, fb_weapons->Get(w.type)->trailsound_type()
+      );
     }
 
     // Making projectiles.
@@ -12939,12 +12933,6 @@ void GameFixedUpdate() {
           .id            = nextProjectileId++,
           .rotationSpeed = rotationSpeed,
         };
-        if (fb->trailsound_type()) {
-          const auto fb_sound = fb_trailSounds->Get(fb->trailsound_type());
-          projectile.nextTrailSoundVisualFrame
-            = ge.meta.frameVisual + lframe::FromSeconds(fb_sound->repeat_seconds()).value;
-          PlaySound(fb_sound->sound_hash());
-        }
         projectile.createdAt.SetNow();
 
         if (data.alreadyDamagedCreatureID) {
@@ -12994,14 +12982,7 @@ void GameFixedUpdate() {
         projectile.travelledDistance += distance;
         projectile.c.pos += projectile.c.dir * distance;
 
-        if (projectile.nextTrailSoundVisualFrame
-            && (projectile.nextTrailSoundVisualFrame <= ge.meta.frameVisual))
-        {
-          projectile.nextTrailSoundVisualFrame
-            = ge.meta.frameVisual
-              + lframe::FromSeconds(fb->trail_sound_repeat_seconds()).value;
-          PlaySound(fb->trail_sound_hash());
-        }
+        UpdateTrailSound(&projectile.nextTrailSoundVisualFrame, fb->trailsound_type());
 
         bool    createAoe = false;
         Vector2 aoePos    = projectile.c.pos;
