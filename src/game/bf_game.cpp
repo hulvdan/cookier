@@ -13330,6 +13330,8 @@ void GameFixedUpdate() {
 
           if (!index) {
             // Player died.
+            PlaySound(Sound_GAME_PLAYER_DIED);
+
             if (!g.run.scheduledWaveCompleted.IsSet()) {
               TriggerWaveCompleted(false);
               g.run.state.waveWon = false;

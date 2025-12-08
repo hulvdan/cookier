@@ -3921,8 +3921,6 @@ weapons: # {  ###
     crit_damage_multiplier: 3 4
     crit_chance: 20 20
     range_meters: 18.6 23.3
-    projectile_spawn_frame_factors:
-      - 0
     knockback_meters: 30 30
     projectile_type: BULLET
     effects:
