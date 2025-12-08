@@ -16,13 +16,16 @@ x sfx: laser shot
 x sfx: got achievement + item unlocked
 x sfx: sniper rifle other projectiles
 x sfx: sniper rifle big shot
+x fix время спавна пуль
 
+* sfx: died whoosh
+*
+*
 * sfx: flamethrower
 * sfx: burn tick
 * sfx: turret spatial shot sound
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * sfx: wave complete whoosh
-* sfx: died whoosh
 * sfx: run won
 * sfx: run lost / died
 * sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons

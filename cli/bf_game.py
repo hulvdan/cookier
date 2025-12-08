@@ -347,7 +347,7 @@ def _process_gamelib(
             assert "projectile_type" in x
             assert "melee_collider_height_px" not in x
             if "projectile_spawn_frame_factors" not in x:
-                x["projectile_spawn_frame_factors"] = [0.3]
+                x["projectile_spawn_frame_factors"] = [0]
         else:
             assert False
 
