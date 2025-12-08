@@ -3689,6 +3689,7 @@ weapons: # {  ###
     projectile_type: LASER
     projectile_pierce: 1 1 1 1
     projectile_piercing_damage_bonus_percent: 25 25 25 25
+    use_sound_hash: GAME_LASER_SHOT
     price: 122
   - type: RANGED_0_PISTOL
     base_damage: 12 20 30 50
@@ -3959,7 +3960,7 @@ weapons: # {  ###
           - ints: 100
         only_this_weapon: true
     price: 300
-  - type: RANGED_3_GATLING_LASER
+  - type: RANGED_3_GATLING_LASER # BFLaser
     base_damage: 10
     damage_scalings:
       - stat_type: DAMAGE_RANGED
@@ -3972,6 +3973,7 @@ weapons: # {  ###
     projectile_type: LASER
     projectile_pierce: 3
     projectile_piercing_damage_bonus_percent: 25
+    use_sound_hash: GAME_LASER_SHOT
     price: 290
 # }
 

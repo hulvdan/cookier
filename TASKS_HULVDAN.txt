@@ -16,10 +16,11 @@ x sfx: boss shot
 x sfx: lightning
 x sfx: missile
 x sfx: torch flame + fireball
+x sfx: grimoire of milk
+x sfx: laser shot
 
 * sfx: flamethrower
 * sfx: burn tick
-* sfx: grimoire of milk
 * sfx: got achievement + item unlocked
 * sfx: turret spatial shot sound
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
@@ -30,7 +31,6 @@ x sfx: torch flame + fireball
 * sfx: sniper rifle other projectiles
 * sfx: bonk for metallic punch (wrench / hammer / shield of thorns / spoon / hexdriver) weapons
 * sfx: blow (blowgun (slingshot))
-* sfx: laser shot
 * sfx:
 * sfx:
 * sfx:
