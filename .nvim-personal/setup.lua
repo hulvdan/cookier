@@ -94,7 +94,7 @@ function rebuild_tasks()
         {
             "b_banner",
             function()
-                vim.fn.execute([[term uv run python cli\bf_cli.py banner]])
+                vim.fn.execute([[term uv run python cli\bf_cli.py banner ]] .. vim.fn.expand("%"))
             end,
         },
         { "h_temp", cli_command("temp") },

@@ -2610,7 +2610,7 @@ void HealPlayer(int amount = 1) {  ///
     -1,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
-        const f32 chance = EFFECT_X_FLOAT * (f32)times;
+        const f32 chance = EFFECT_X_INT * (f32)times;
         if (GRAND.FRand() >= chance)
           return;
 

@@ -1,29 +1,12 @@
-#include "basisu_transcoder.h"
-
-#include "doctest.h"
-
-#if !defined(SDL_PLATFORM_EMSCRIPTEN)
-#  include "GameAnalytics/GameAnalytics.h"
-#endif
-
 #define SDL_MAIN_USE_CALLBACKS
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include "bf_lib.cpp"
+
+#include "basisu_transcoder.h"
 
 #if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_MACOS) \
   || defined(SDL_PLATFORM_LINUX)
 #  define SDL_PLATFORM_DESKTOP
 #endif
-
-#include <bgfx/bgfx.h>
-#include "glm/glm.hpp"
-
-using Vector2    = glm::vec2;
-using Vector3    = glm::vec3;
-using Vector4    = glm::vec4;
-using Vector2Int = glm::ivec2;
-using Vector3Int = glm::ivec3;
-using Vector4Int = glm::ivec4;
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -31,10 +14,6 @@ using Vector4Int = glm::ivec4;
 #include "stb_rect_pack.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
-
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-#  include <emscripten.h>
-#endif
 
 #include "miniaudio.h"
 
@@ -46,20 +25,10 @@ using Vector4Int = glm::ivec4;
 #include "shaders/quad_tex_fs_100_es.bin"
 #include "shaders/quad_tex_vs_100_es.bin"
 
-#define LOGI(...) SDL_Log(__VA_ARGS__)
-#define LOGW(...) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
-#define LOGE(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+#include <bgfx/bgfx.h>
 
-#include "bf_lib.cpp"
-
-#if BF_PROFILING && defined(DOCTEST_CONFIG_DISABLE)
-#  define TRACY_ONLY_LOCALHOST
-#  define TRACY_NO_BROADCAST
-#  include "tracy/Tracy.hpp"
-#else
-#  define ZoneScoped
-#  define ZoneScopedN(_)
-#  define FrameMark
+#if !defined(SDL_PLATFORM_EMSCRIPTEN)
+#  include "GameAnalytics/GameAnalytics.h"
 #endif
 
 #include "bf_version.cpp"
@@ -414,7 +383,6 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       break;
 
     if (event->key.scancode == SDL_SCANCODE_F11) {
-      
       auto window     = SDL_GetWindowFromID(event->key.windowID);
       auto mode       = SDL_GetWindowFullscreenMode(window);
       auto fullscreen = SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN;
