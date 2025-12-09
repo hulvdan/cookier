@@ -54,5 +54,13 @@
             "console": "integratedTerminal",
             "args": "temp",
         },
+        {
+            "name": "python bannerify aboba.txt",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cli/bf_cli.py",
+            "console": "integratedTerminal",
+            "args": "bannerify aboba.txt",
+        },
     ],
 }

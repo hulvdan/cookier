@@ -2372,38 +2372,6 @@ LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 sizeFsh) {  ///
   );
 }
 
-void* TryLoadFile(const char* filepath, size_t* outSize = nullptr) {  ///
-  size_t size{};
-  auto   data = SDL_LoadFile(filepath, &size);
-  if (!data)
-    return nullptr;
-  if (outSize)
-    *outSize = size;
-#if BF_DEBUG
-  auto data2 = BF_ALLOC(size + 1);
-  memcpy(data2, data, size + 1);
-  SDL_free(data);
-  return data2;
-#else
-  return data;
-#endif
-}
-
-void* LoadFile(const char* filepath, size_t* outSize = nullptr) {  ///
-  auto data = TryLoadFile(filepath, outSize);
-  ASSERT(data);
-  return data;
-}
-
-void UnloadFile(void* data) {  ///
-  ASSERT(data);
-#if BF_DEBUG
-  BF_FREE(data);
-#else
-  SDL_free(data);
-#endif
-}
-
 Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
   ZoneScopedN("_LoadTexture()");
   LOGI("Loading texture '%s'...", filepath);
