@@ -306,6 +306,12 @@ Vector2Int ToVector2Int(const BFGame::Pos* value) {  ///
   return {value->x(), value->y()};
 }
 
+f32 Vector2AngleOrRandom(Vector2 v) {  ///
+  if (v == Vector2Zero())
+    return GRAND.Angle();
+  return Vector2Angle(v);
+}
+
 Vector2 Vector2DirectionOrRandom(Vector2 from, Vector2 to) {  ///
   if (from == to)
     return Vector2Rotate({1, 0}, GRAND.Angle());
@@ -522,22 +528,29 @@ struct CreatureController {  ///
   Vector2 move = {};
 };
 
-struct Ailment {  ///
-  CreatureType ownerCreatureType   = {};
-  int          weaponIndexOrMinus1 = {};
-
-  int       spread    = {};
-  FrameGame startedAt = {};
-  lframe    duration  = {};
-
-  int value = {};
+struct AilmentCommonData {  ///
+  AilmentType type            = AilmentType_INVALID;
+  int         weaponIndex     = -1;
+  int         initialTimes    = {};
+  int         remainingTimes  = {};
+  int         remainingSpread = {};
+  int         damage          = {};
+  FBFlattened damageScalings  = {};
 };
+
+struct Ailment {  ///
+  AilmentCommonData c         = {};
+  FrameGame         startedAt = {};
+};
+
+struct Creature;
 
 struct ApplyAilmentData {  ///
-  AilmentType type   = AilmentType_INVALID;
-  int         value  = 0;
-  int         spread = {};
+  AilmentCommonData c        = {};
+  Creature*         creature = {};
 };
+
+constexpr int MAX_SIMULTANEOUS_AILMENTS = 12;
 
 constexpr f32 MOVEMENT_CYCLE_METERS = PI32 * 3 / 4;
 
@@ -563,9 +576,8 @@ struct Creature {  ///
   bool               killedBecauseOfTheEndOfTheWave = false;
   bool               aggroed                        = false;
 
-  // WARN: Note -1! To get burning ailment,
-  // index into it using `AilmentType_BURN - 1`.
-  Array<Ailment, AilmentType_COUNT - 1> ailments = {};
+  PushableArray<Ailment, MAX_SIMULTANEOUS_AILMENTS> ailments      = {};
+  int                                               ailmentsCount = 0;
 
   int lastDamagedWeaponIndex = -1;
 
@@ -1647,7 +1659,7 @@ int GetAchievementsCompletedPercent() {  ///
 // NOTE: Doesn't apply `StatType_DAMAGE`.
 int ApplyDamageScalings(
   int         baseDamage,
-  int         tier,
+  int         tierOffset,
   FBFlattened damageScalings,
   int         times
 ) {  ///
@@ -1656,7 +1668,7 @@ int ApplyDamageScalings(
     const auto stat       = (StatType)fb_scaling->stat_type();
     ASSERT(stat);
     auto statValue = g.run.state.stats[stat];
-    auto percent   = fb_scaling->percents_per_tier()->Get(tier) * times;
+    auto percent   = fb_scaling->percents_per_tier()->Get(tierOffset) * times;
     baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
   }
   return baseDamage;
@@ -1664,7 +1676,7 @@ int ApplyDamageScalings(
 
 int ApplyPlayerStatDamageMultiplier(int damage) {  ///
   auto v = (f32)(100 + g.run.state.stats[StatType_DAMAGE]) / 100.0f;
-  return Round((f32)damage * v);
+  return MAX(1, Round((f32)damage * v));
 }
 
 void IterateOverWeaponEffects(
@@ -2302,34 +2314,16 @@ void MakeGarden(MakeGardenData data) {  ///
   *g.run.gardens.Add() = v;
 }
 
-void ApplyAilment(
-  Creature*        creature,
-  CreatureType     damagerCreatureType,
-  ApplyAilmentData data
-) {  ///
-  ASSERT(data.type);
+void ApplyAilment(ApplyAilmentData data) {  ///
+  ASSERT(data.creature);
+  ASSERT(data.c.weaponIndex >= 0);
 
-  auto fb_ailment = glib->ailments()->Get(data.type);
+  if (data.creature->ailments.count >= data.creature->ailments.maxCount)
+    return;
 
-  auto& a             = creature->ailments[data.type - 1];
-  a.ownerCreatureType = damagerCreatureType;
-  if ((data.type == AilmentType_ZAP) && !a.startedAt.IsSet())
-    creature->speedModifier *= ZAP_SPEED_SCALE;
-
-  bool wasSetPreviously = a.startedAt.IsSet();
-
-  a.startedAt = {};
+  Ailment a{.c = data.c};
   a.startedAt.SetNow();
-  a.duration = lframe::Unscaled((int)(FIXED_FPS * fb_ailment->duration_seconds()));
-
-  if (wasSetPreviously) {
-    a.value  = MAX(a.value, data.value);
-    a.spread = MAX(a.spread, data.spread);
-  }
-  else {
-    a.value  = data.value;
-    a.spread = data.spread;
-  }
+  *data.creature->ailments.Add() = a;
 }
 
 void ChangeCoins(int amount) {  ///
@@ -2585,20 +2579,52 @@ void AddXP(f32 xp) {  ///
   Save();
 }
 
+AilmentCommonData GetAilmentFromWeapon(int weaponIndex) {  ///
+  auto& w = g.run.state.weapons[weaponIndex];
+  ASSERT(w.type);
+
+  auto fb = glib->weapons()->Get(w.type);
+  if (!fb->burning_damage())
+    return {};
+
+  const int tierOffset = w.tier - fb->min_tier_index();
+  const int damage     = fb->burning_damage()->Get(tierOffset);
+  if (damage <= 0)
+    return {};
+
+  int times = 0;
+  if (fb->burning_times())
+    times = fb->burning_times()->Get(tierOffset);
+  if (times <= 0)
+    return {};
+
+  AilmentCommonData result{
+    .type            = AilmentType_BURN,
+    .weaponIndex     = weaponIndex,
+    .initialTimes    = times,
+    .remainingTimes  = times,
+    .remainingSpread = MAX(0, g.run.state.stats[StatType_BURNING_SPREAD]),
+    .damage          = damage,
+    .damageScalings{fb->burning_damage_scalings()},
+  };
+  return result;
+}
+
 struct TryApplyDamageData {  ///
-  int              creatureIndex                      = {};
-  int              damage                             = {};
-  Vector2          directionOrZero                    = {0, 0};
-  f32              knockbackMeters                    = 0;
-  CreatureType     damagerCreatureType                = CreatureType_INVALID;
-  f32              critDamageMultiplier               = 1;
-  int              weaponCritChance                   = 0;
-  int              indexOfWeaponThatDidDamageOrMinus1 = -1;
-  bool             weaponSound                        = false;
-  ApplyAilmentData ailment                            = {};
-  f32              ailmentChance                      = 0;
-  bool*            outWasCrit                         = nullptr;
-  bool*            outJustKilled                      = nullptr;
+  int          creatureIndex                      = {};
+  int          damage                             = {};
+  int          burningDamage                      = {};
+  int          burningTimes                       = {};
+  Vector2      directionOrZero                    = {0, 0};
+  f32          knockbackMeters                    = 0;
+  CreatureType damagerCreatureType                = CreatureType_INVALID;
+  f32          critDamageMultiplier               = 1;
+  int          weaponCritChance                   = 0;
+  int          indexOfWeaponThatDidDamageOrMinus1 = -1;
+  bool         weaponCanApplyAilment              = true;
+  bool         weaponSound                        = false;
+  bool*        outWasCrit                         = nullptr;
+  bool*        outJustKilled                      = nullptr;
 };
 bool TryApplyDamage(TryApplyDamageData data);
 
@@ -2824,7 +2850,15 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           }
       );
 
-      if (creature.ailments[AilmentType_BURN - 1].startedAt.IsSet()) {
+      bool isBurning = false;
+      for (auto& ailment : creature.ailments) {
+        if (ailment.c.type == AilmentType_BURN) {
+          isBurning = true;
+          break;
+        }
+      }
+
+      if (isBurning) {
         IterateOverEffects(
           EffectConditionType_HITTING_BURNING_ENEMIES_CHANGES_CRIT_CHANCE_BY__X,
           data.indexOfWeaponThatDidDamageOrMinus1,
@@ -3015,26 +3049,42 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       AchievementMax(AchievementType_SINGLE_WEAPON_MAX_WAVE_DAMAGE, w.thisWaveDamage);
     }
 
-    bool ailmentCanBeApplied = true;
-    auto resists             = fb->resists_ailment_types();
-    if (resists) {
-      for (auto v : *resists) {
-        if (v == data.ailment.type) {
-          ailmentCanBeApplied = false;
-          break;
+    if (data.weaponCanApplyAilment) {
+      AilmentCommonData ailment{};
+      if (data.indexOfWeaponThatDidDamageOrMinus1 >= 0)
+        ailment = GetAilmentFromWeapon(data.indexOfWeaponThatDidDamageOrMinus1);
+
+      if (ailment.type) {
+        bool ailmentCanBeApplied = true;
+
+        auto resists = fb->resists_ailment_types();
+        if (resists) {
+          for (auto v : *resists) {
+            if (v == ailment.type) {
+              ailmentCanBeApplied = false;
+              break;
+            }
+          }
         }
-      }
-    }
 
-    if (ailmentCanBeApplied && data.ailment.type && (GRAND.FRand() < data.ailmentChance))
-    {
-      auto damage = data.ailment.value;
-      if (data.damagerCreatureType == CreatureType_PLAYER)
-        damage += g.run.state.stats[StatType_DAMAGE_ELEMENTAL];
+        // Same weapon can't apply ailment very fast.
+        for (auto& a : creature.ailments) {
+          if (a.c.type != ailment.type)
+            continue;
+          if (a.c.weaponIndex != ailment.weaponIndex)
+            continue;
+          if (a.startedAt.Elapsed() < WEAPON_BURNING_APPLICATION_DEBOUNCE_FRAMES) {
+            ailmentCanBeApplied = false;
+            break;
+          }
+        }
 
-      if ((data.ailment.value == 0) || (damage > 0)) {
-        data.ailment.value = damage;
-        ApplyAilment(&creature, data.damagerCreatureType, data.ailment);
+        if (ailmentCanBeApplied) {
+          ApplyAilment({
+            .c        = ailment,
+            .creature = &creature,
+          });
+        }
       }
     }
   }
@@ -4785,6 +4835,11 @@ void GameInit() {
       const auto id = glib->localization_debug_strings()->Get(fb->name_locale())->c_str();
       if (fb->shoots_itself())
         ASSERT(fb->projectile_type());
+
+      if (fb->burning_times())
+        ASSERT(fb->burning_damage());
+      if (fb->burning_damage())
+        ASSERT(fb->burning_times());
     }
 
     int particleIndex = -1;
@@ -9388,8 +9443,6 @@ void DoUI() {
           g.ui.errorGold = {};
           g.ui.errorGold.SetNow();
 
-          g.run.state.upgrades.toPick = {};
-
           PlaySound(Sound_UI_ERROR);
         }
       }
@@ -11186,6 +11239,8 @@ struct EmitParticlesData {  ///
   Vector2                        pos            = {};
   Vector2                        offsetScale    = {1, 1};
   f32                            offsetRotation = 0;
+  f32                            velocity       = 0;
+  f32                            velocityAngle  = 0;
 };
 
 void EmitParticles(EmitParticlesData data) {  ///
@@ -11196,7 +11251,9 @@ void EmitParticles(EmitParticlesData data) {  ///
   if ((interval > 0) && ((ge.meta.frameGame % interval) != 0))
     return;
 
-  const auto off = ToVector2(data.fb_emitter->offset()) * data.offsetScale;
+  Vector2 off{};
+  if (data.fb_emitter->offset())
+    off = ToVector2(data.fb_emitter->offset()) * data.offsetScale;
   data.pos += Vector2Rotate(off, data.offsetRotation);
   data.pos += ToVector2(data.fb_emitter->offset_plus_minus())
               * Vector2(GRAND.FRand11(), GRAND.FRand11());
@@ -11204,6 +11261,8 @@ void EmitParticles(EmitParticlesData data) {  ///
   MakeParticles({
     .type           = (ParticleType)data.fb_emitter->particle_type(),
     .pos            = data.pos,
+    .velocity       = data.velocity,
+    .velocityAngle  = data.velocityAngle,
     .scale          = 1.0f,
     .scalePlusMinus = 0.1f,
     .color          = Fade(WHITE, data.fb_emitter->fade()),
@@ -12487,57 +12546,66 @@ void GameFixedUpdate() {
       ZoneScopedN("Burning spread.");
 
       for (auto& creature : g.run.creatures) {
-        auto& a = creature.ailments[AilmentType_BURN - 1];
-        if (!a.startedAt.IsSet())
-          continue;
-        if ((a.spread <= 0))
-          continue;
+        for (auto& ailment : creature.ailments) {
+          ASSERT(ailment.c.type);
+          ASSERT(ailment.c.type == AilmentType_BURN);
 
-        auto       fb         = fb_creatures->Get(creature.type);
-        const auto isFriendly = (fb->hostility_type() == HostilityType_FRIENDLY);
-
-        for (auto& otherCreature : g.run.creatures) {
-          if (creature.id == otherCreature.id)
-            continue;
-          if (otherCreature.diedAt.IsSet())
+          if ((ailment.c.remainingSpread <= 0))
             continue;
 
-          auto       fb_other = fb_creatures->Get(otherCreature.type);
-          const auto otherIsFriendly
-            = (fb_other->hostility_type() == HostilityType_FRIENDLY);
-          if (isFriendly == otherIsFriendly)
-            continue;
+          auto       fb         = fb_creatures->Get(creature.type);
+          const auto isFriendly = (fb->hostility_type() == HostilityType_FRIENDLY);
 
-          bool canBurn = true;
-          auto resists = fb_other->resists_ailment_types();
-          if (resists) {
-            for (auto x : *resists) {
-              if (x == AilmentType_BURN) {
-                canBurn = false;
+          for (auto& otherCreature : g.run.creatures) {
+            if (creature.id == otherCreature.id)
+              continue;
+            if (otherCreature.diedAt.IsSet())
+              continue;
+
+            auto fb_other = fb_creatures->Get(otherCreature.type);
+            if (fb_other->hostility_type() == HostilityType_FRIENDLY)
+              continue;
+
+            bool sameWeaponAppliedAilment = false;
+
+            for (auto& a : otherCreature.ailments) {
+              if (a.c.weaponIndex == ailment.c.weaponIndex) {
+                sameWeaponAppliedAilment = true;
                 break;
               }
             }
+
+            if (sameWeaponAppliedAilment)
+              continue;
+
+            bool canBurn = true;
+            auto resists = fb_other->resists_ailment_types();
+            if (resists) {
+              for (auto x : *resists) {
+                if (x == AilmentType_BURN) {
+                  canBurn = false;
+                  break;
+                }
+              }
+            }
+            if (!canBurn)
+              continue;
+
+            const auto d = Vector2DistanceSqr(creature.pos, otherCreature.pos);
+            if (d > SQR(BURNING_SPREAD_DISTANCE))
+              continue;
+
+            AilmentCommonData otherAilment = ailment.c;
+            otherAilment.remainingSpread   = 0;
+            ApplyAilment({
+              .c        = otherAilment,
+              .creature = &otherCreature,
+            });
+            ailment.c.remainingSpread--;
+
+            if (ailment.c.remainingSpread <= 0)
+              break;
           }
-          if (!canBurn)
-            continue;
-
-          const auto& aa = otherCreature.ailments[AilmentType_BURN - 1];
-          if (aa.startedAt.IsSet())
-            continue;
-
-          const auto d = Vector2DistanceSqr(creature.pos, otherCreature.pos);
-          if (d > SQR(BURNING_SPREAD_DISTANCE))
-            continue;
-
-          ApplyAilment(
-            &otherCreature,
-            a.ownerCreatureType,
-            {.type = AilmentType_BURN, .value = a.value, .spread = 0}
-          );
-          a.spread--;
-
-          if (a.spread <= 0)
-            break;
         }
       }
     }
@@ -12551,45 +12619,70 @@ void GameFixedUpdate() {
       int creatureIndex = -1;
       for (auto& creature : g.run.creatures) {
         creatureIndex++;
-        for (int i = 1; i < AilmentType_COUNT; i++) {
-          auto& a = creature.ailments[i - 1];
 
-          // Burning damage over time.
-          if (i == AilmentType_BURN) {
-            if (a.startedAt.IsSet()
-                && (a.startedAt.Elapsed().value % BURNING_RATE.value == 0))
-            {
-              bool burned = (creature.health > 0);
+        int ailmentsTotal = creature.ailments.count;
+        int off           = 0;
 
-              auto fb = fb_creatures->Get(creature.type);
+        bool emitFire = false;
 
-              if ((creature.health > 0)        //
-                  && !creature.diedAt.IsSet()  //
-                  && (fb->hostility_type() != HostilityType_FRIENDLY))
-                burningEnemies++;
+        FOR_RANGE (int, ailmentIndex, ailmentsTotal) {
+          auto& a = creature.ailments[ailmentIndex - off];
+          ASSERT(a.c.type);
+          ASSERT(a.c.type == AilmentType_BURN);
+          ASSERT(a.startedAt.IsSet());
 
-              TryApplyDamage({
-                .creatureIndex                      = creatureIndex,
-                .damage                             = a.value,
-                .damagerCreatureType                = a.ownerCreatureType,
-                .critDamageMultiplier               = BURNING_CRIT_DAMAGE_MULTIPLIER,
-                .indexOfWeaponThatDidDamageOrMinus1 = a.weaponIndexOrMinus1,
-              });
+          if (a.c.type == AilmentType_BURN)
+            emitFire = true;
 
-              if (creature.health > 0)
-                burned = false;
+          // Burning DoT (damage over time).
+          if ((a.c.type == AilmentType_BURN)
+              && (((a.startedAt.Elapsed().value + 1) % BURNING_RATE.value) == 0))
+          {
+            a.c.remainingTimes--;
+            bool burned = (creature.health > 0);
 
-              if (burned)
-                AchievementAdd(AchievementType_ENEMIES_DIED_BECAUSE_OF_BURNING, 1);
-            }
+            auto fb = fb_creatures->Get(creature.type);
+
+            if ((creature.health > 0)        //
+                && !creature.diedAt.IsSet()  //
+                && (fb->hostility_type() != HostilityType_FRIENDLY))
+              burningEnemies++;
+
+            const auto& w          = g.run.state.weapons[a.c.weaponIndex];
+            const int   tierOffset = w.tier - fb_weapons->Get(w.type)->min_tier_index();
+
+            TryApplyDamage({
+              .creatureIndex = creatureIndex,
+              .damage
+              = ApplyDamageScalings(a.c.damage, tierOffset, a.c.damageScalings, 1),
+              .damagerCreatureType                = CreatureType_PLAYER,
+              .critDamageMultiplier               = BURNING_CRIT_DAMAGE_MULTIPLIER,
+              .indexOfWeaponThatDidDamageOrMinus1 = a.c.weaponIndex,
+              .weaponCanApplyAilment              = false,
+            });
+
+            if (creature.health > 0)
+              burned = false;
+
+            if (burned)
+              AchievementAdd(AchievementType_ENEMIES_DIED_BECAUSE_OF_BURNING, 1);
           }
 
           // Decay.
-          if (a.startedAt.IsSet() && (a.startedAt.Elapsed() >= a.duration)) {
-            if (i == AilmentType_ZAP)
-              creature.speedModifier /= ZAP_SPEED_SCALE;
-            a = {};
+          ASSERT(a.c.remainingTimes >= 0);
+          if (a.c.remainingTimes <= 0) {
+            creature.ailments.UnstableRemoveAt(ailmentIndex - off);
+            off++;
           }
+        }
+
+        if (emitFire) {
+          EmitParticles({
+            .fb_emitter    = glib->burning_creature_particle_emitter(),
+            .pos           = creature.pos,
+            .velocity      = GetCreatureSpeed(creature),
+            .velocityAngle = Vector2AngleOrRandom(creature.controller.move),
+          });
         }
       }
 
@@ -13071,10 +13164,6 @@ void GameFixedUpdate() {
               knockback *= piercingDamageMultiplier;
             }
 
-            int ailmentSpread = 0;
-            if (fb->ailment_type() == AilmentType_BURN)
-              ailmentSpread = MAX(0, g.run.state.stats[StatType_BURNING_SPREAD]);
-
             bool wasCrit = false;
 
             if (TryApplyDamage({
@@ -13085,13 +13174,7 @@ void GameFixedUpdate() {
                   .damagerCreatureType                = projectile.c.ownerCreatureType,
                   .critDamageMultiplier               = projectile.c.critDamageMultiplier,
                   .indexOfWeaponThatDidDamageOrMinus1 = projectile.c.weaponIndexOrMinus1,
-                  .ailment{
-                    .type   = (AilmentType)fb->ailment_type(),
-                    .value  = fb->ailment_value(),
-                    .spread = ailmentSpread,
-                  },
-                  .ailmentChance = fb->ailment_chance(),
-                  .outWasCrit    = &wasCrit,
+                  .outWasCrit                         = &wasCrit,
                 }))
             {
               auto fb_weapon = ((projectile.c.weaponIndexOrMinus1 >= 0)
