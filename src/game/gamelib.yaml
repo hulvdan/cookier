@@ -3602,6 +3602,7 @@ weapons: # {  ###
     offset:
       x: -0.75
       y: -0.1
+    use_sound_hash: GAME_CROSSBOW_SHOT
     price: 132
   - type: RANGED_0_SHOTGUN
     base_damage: 3 6 9 9
@@ -3759,6 +3760,7 @@ weapons: # {  ###
     projectile_type: NEEDLE_SLINGSHOT
     projectile_bounce: 1 2 3 4
     knockback_meters: 5 5 5 5
+    use_sound_hash: GAME_BLOW
     price: 120
   - type: RANGED_0_SMG # автомат rifle
     base_damage: 3 4 5 8
@@ -4063,6 +4065,7 @@ projectiles: # {  ###
     speed: 20
     scales_in: 1.5
     fades_in: true
+    damage_sound_hash: GAME_HIT_BLADE
     texture_ids:
       - game_projectile_bolt
   - type: APPLE
@@ -4081,7 +4084,7 @@ projectiles: # {  ###
     texture_ids:
       - game_projectile_magical_bullet
   - type: NEEDLE_SLINGSHOT # то же самое, что и кактус
-    speed: 14
+    speed: 24
     color: 0xefcb84ff
     damage_sound_hash: GAME_HIT_BLADE
     texture_ids:

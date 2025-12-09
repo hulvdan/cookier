@@ -9,18 +9,23 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-* sfx: lightning hit sfx
-* starts with different music (initialize random to different value)
+x sfx: lightning hit sfx
+x sfx: blow (blowgun (slingshot))
+x sfx: crossbow
+
 * sfx: flamethrower
+*
 * sfx: burn tick
 * sfx: turret spatial shot sound
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
+*
 * sfx: bonk for metallic punch (wrench / hammer / spoon / hexdriver) weapons
-* sfx: blow (blowgun (slingshot))
 * sfx: просмотреть все оружия ВЫПИШИ ВСЕ ОРУЖИЯ
 * sfx:
 * sfx:
 * sfx:
+*
+* starts with different music (initialize random to different value)
 *
 * cooravie shots cooldown + doesn't walk towards player when aggroed
 *
@@ -161,6 +166,8 @@ WORKING SINCE 2025-09-07
 *
 * RELEASED!
 =======================
+* iskeypressedrepeat
+  iskeyreleasedrepeat
 * sfx: export all sounds as mono
 * engine: skip spritesheetify, когда
   (1) out_file не найден
