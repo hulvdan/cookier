@@ -773,11 +773,11 @@ def bannerify(lines: list[str]) -> str:
 
 
 def test_bannerify():
-    assert _bannerify([]) == ""
-    assert _bannerify(["a"]) == "a\n"
-    assert _bannerify(["a", " b"]) == "a\n b\n"
+    assert bannerify([]) == ""
+    assert bannerify(["a"]) == "a\n"
+    assert bannerify(["a", " b"]) == "a\n b\n"
 
-    got = _bannerify(
+    got = bannerify(
         [
             f"// {BANNERIFY_PATTERN}a",
             "// ASDASAD",
