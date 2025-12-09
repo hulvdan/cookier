@@ -260,7 +260,7 @@ table Item {
 }
 
 table Ailment {
-    duration_seconds: float;
+    // duration_seconds: float;
 }
 
 table ParticleEmitter {
@@ -545,6 +545,8 @@ table GameLibrary {
     boss_cooldown_max_seconds: float = 4;
     boss_pre_shot_seconds: float = 0.1;
     boss_post_shot_seconds: float = 0.1;
+
+    burning_creature_particle_emitter: ParticleEmitter;
 
     achievements_order: [AchievementOrder] (required);
     // GAME STUFF END

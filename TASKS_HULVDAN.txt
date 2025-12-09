@@ -13,13 +13,24 @@ x sfx: lightning hit sfx
 x sfx: blow (blowgun (slingshot))
 x sfx: crossbow
 x sfx: flamethrower nextUseTrailSoundVisualFrame
+x impl weapon burning_damage, burning_times, burning_damage_scalings
+x FIRE WORKS :)
 
-* sfx: загуглить, как не перегрузить master?
-* sfx: debug отображение master пика
+* fix: show weapon card burning damage
+* fix: flamethrower не может слишком быстро бить врагов
+*
+* fix: почему burning spread 0 ?
+  Его же факел даёт
+*
+* restrict max enemies to 100
+  died enemies don't drop coins (apply int_max damage)
 *
 * sfx: burn tick
 * sfx: turret spatial shot sound
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
+*
+* sfx: загуглить, как не перегрузить master?
+* sfx: debug отображение master пика
 *
 * sfx: bonk for metallic punch (wrench / hammer / spoon / hexdriver) weapons
 * sfx: просмотреть все оружия ВЫПИШИ ВСЕ ОРУЖИЯ
@@ -92,8 +103,6 @@ x sfx: flamethrower nextUseTrailSoundVisualFrame
 * engine: show transient buffer arena
 *
 * lance -% damage PROPERTY (NOT STAT)
-*
-* impl weapon burning_damage, burning_times, burning_damage_scalings
 *
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
 * impl stat KNOCKBACK

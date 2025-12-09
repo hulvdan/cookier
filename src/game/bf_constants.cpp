@@ -68,7 +68,8 @@ constexpr auto ANIMATION_3_FRAMES = lframe::FromSeconds(3.2f);
 constexpr auto ANIMATION_4_FRAMES = lframe::FromSeconds(4.5f);
 constexpr auto ANIMATION_5_FRAMES = lframe::FromSeconds(7.0f);
 
-constexpr auto MELEE_WEAPON_MAX_ATTACK_DURATION = lframe::FromSeconds(0.5f);
+constexpr auto MELEE_WEAPON_MAX_ATTACK_DURATION           = lframe::FromSeconds(0.5f);
+constexpr auto WEAPON_BURNING_APPLICATION_DEBOUNCE_FRAMES = lframe::FromSeconds(0.5f);
 
 constexpr auto DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS        = lframe::Scaled(10);
 constexpr auto SPAWN_FRAMES                             = lframe::Scaled(60);

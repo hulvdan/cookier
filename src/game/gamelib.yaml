@@ -311,9 +311,9 @@ creatures: # {  ###
 ailments: # {  ###
   - type: INVALID
   - type: BURN
-    duration_seconds: 2
-  - type: ZAP
-    duration_seconds: 3
+    # duration_seconds: 2
+# - type: ZAP
+#   duration_seconds: 3
 # }
 
 weapon_properties: # {  ###
@@ -4488,6 +4488,7 @@ stats: # {  ###
     is_secondary: true
   # Increases the amount of times Burn spreads.
   - type: BURNING_SPREAD
+    player_value: 5
     is_secondary: true
   - type: KNOCKBACK
     is_secondary: true
@@ -5148,6 +5149,13 @@ player_layer_texture_anchors:
     y: -0.75
 # }
 
+burning_creature_particle_emitter:
+  particle_type: FIRE
+  offset_plus_minus:
+    x: 0.3
+    y: 0.3
+  interval_seconds: 0.1
+  fade: 0.5
 sounds:
   - type: GAME_ACHIEVEMENT
     pitch_min: 1
