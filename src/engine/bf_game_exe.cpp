@@ -1,7 +1,10 @@
+#include "basisu_transcoder.h"
+
+#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/bf_gamelib_generated.h"
+
 #define SDL_MAIN_USE_CALLBACKS
 #include "bf_lib.cpp"
-
-#include "basisu_transcoder.h"
 
 #if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_MACOS) \
   || defined(SDL_PLATFORM_LINUX)
@@ -16,9 +19,6 @@
 #include "stb_truetype.h"
 
 #include "miniaudio.h"
-
-#include "flatbuffers/flatbuffers.h"
-#include "flatbuffers/bf_gamelib_generated.h"
 
 #include "shaders/quad_fs_100_es.bin"
 #include "shaders/quad_vs_100_es.bin"
@@ -379,8 +379,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_DOWN: {  ///
-    if (event->key.repeat)
-      break;
+    // if (event->key.repeat)
+    //   break;
 
     if (event->key.scancode == SDL_SCANCODE_F11) {
       auto window     = SDL_GetWindowFromID(event->key.windowID);
@@ -396,8 +396,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
-    if (event->key.repeat)
-      break;
+    // if (event->key.repeat)
+    //   break;
 
     ge.meta._keyboardStateReleased[event->key.scancode] = true;
 
