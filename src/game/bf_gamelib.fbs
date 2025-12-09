@@ -300,6 +300,7 @@ table Weapon {
     particle_emitter: ParticleEmitter;
     life_steal_percents: [float];
     use_sound_hash: uint;
+    use_trailsound_type: int;
     damage_sound_hash: uint;
     trailsound_type: int;
     shooting_feedback_scale: float = 1;

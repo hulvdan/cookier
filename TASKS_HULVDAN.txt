@@ -12,8 +12,10 @@ WORKING SINCE 2025-09-07
 x sfx: lightning hit sfx
 x sfx: blow (blowgun (slingshot))
 x sfx: crossbow
+x sfx: flamethrower nextUseTrailSoundVisualFrame
 
-* sfx: flamethrower
+* sfx: загуглить, как не перегрузить master?
+* sfx: debug отображение master пика
 *
 * sfx: burn tick
 * sfx: turret spatial shot sound

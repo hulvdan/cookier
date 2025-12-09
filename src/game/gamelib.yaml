@@ -3843,6 +3843,7 @@ weapons: # {  ###
     projectile_count: 3 3 3
     accuracy_plus_minus: 0.4
     shooting_feedback_scale: 0.6
+    use_trailsound_type: FLAMETHROWER
     price: 207
   - type: RANGED_1_POTATO_THROWER # egg thrower
     base_damage: 1 1 1
@@ -3988,6 +3989,9 @@ trail_sounds: # {  ###
   - type: MISSILE
     sound_hash: GAME_FIRE_MISSILE_TRAIL
     repeat_seconds: 0.163
+  - type: FLAMETHROWER
+    sound_hash: GAME_FLAMETHROWER
+    repeat_seconds: 0.225
 # }
 
 projectiles: # {  ###

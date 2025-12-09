@@ -500,8 +500,9 @@ struct Weapon {  ///
   int thisWaveKilledEnemies = 0;
   int thisWaveUseCount      = 0;
 
-  FrameGame lastShotAt                = {};
-  i64       nextTrailSoundVisualFrame = {};
+  FrameGame lastShotAt                   = {};
+  i64       nextTrailSoundVisualFrame    = {};
+  i64       nextUseTrailSoundVisualFrame = {};
 
   FrameVisual uiBouncedAt = {};
 };
@@ -13425,6 +13426,11 @@ void GameFixedUpdate() {
         const auto fb = fb_weapons->Get(weapon.type);
 
         UpdateTrailSound(&weapon.nextTrailSoundVisualFrame, fb->trailsound_type());
+        if (weapon.startedShootingAt.IsSet() || weapon.cooldownStartedAt.IsSet()) {
+          UpdateTrailSound(
+            &weapon.nextUseTrailSoundVisualFrame, fb->use_trailsound_type()
+          );
+        }
 
         auto fb_emitter = fb->particle_emitter();
         if (!fb_emitter)
