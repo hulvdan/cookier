@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Iterator, Sequence, TypeVar
 
 import fnvhash
+import pyfiglet
 import yaml
 from bf_typer import log
 
@@ -90,8 +91,14 @@ REPLACING_SPACES_PATTERN = re.compile(r"\ +")
 REPLACING_NEWLINES_PATTERN = re.compile(r"\n+")
 
 
-# Constants.
-# ============================================================
+# !banner: constants
+#  ██████╗ ██████╗ ███╗   ██╗███████╗████████╗ █████╗ ███╗   ██╗████████╗███████╗
+# ██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝██╔══██╗████╗  ██║╚══██╔══╝██╔════╝
+# ██║     ██║   ██║██╔██╗ ██║███████╗   ██║   ███████║██╔██╗ ██║   ██║   ███████╗
+# ██║     ██║   ██║██║╚██╗██║╚════██║   ██║   ██╔══██║██║╚██╗██║   ██║   ╚════██║
+# ╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   ██║  ██║██║ ╚████║   ██║   ███████║
+#  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
+
 # {  ###
 PROJECT_DIR = Path(__file__).parent.parent
 TEMP_DIR = PROJECT_DIR / ".temp"
@@ -665,6 +672,126 @@ def hash32_file_utf8(filepath) -> int:
     return hash32_utf8(d)
 
 
+# Banners.
+# ==================================================
+# {  ###
+BANNERIFY_PATTERN = "!" + "banner: "
+
+
+def bannerify(lines: list[str]) -> str:
+    out = ""
+    bannering_prefix = ""
+    current_line_index = 0
+    off = 0
+    while current_line_index + off < len(lines):
+        line = lines[current_line_index + off]
+
+        if BANNERIFY_PATTERN in line:
+            if bannering_prefix:
+                print("Found line inside bannering")
+                exit(1)
+
+            if line.count(BANNERIFY_PATTERN) > 1:
+                print("Found line with more than 1 pattern inside")
+                exit(1)
+
+            bannering_prefix = line[: line.find(BANNERIFY_PATTERN)]
+            if not bannering_prefix:
+                print("Found line with no prefix")
+                exit(1)
+
+            if not line.removeprefix(bannering_prefix + BANNERIFY_PATTERN).strip():
+                print("Found line that has prefix but no content to bannerify")
+                exit(1)
+
+            for i in range(current_line_index + off + 1, len(lines)):
+                if lines[i].startswith(bannering_prefix):
+                    off += 1
+                else:
+                    out += lines[i]
+                    break
+
+            out += line
+            out += "\n"
+            out += "\n".join(
+                bannering_prefix + x.rstrip()
+                for x in pyfiglet.figlet_format(
+                    line.removeprefix(bannering_prefix + BANNERIFY_PATTERN),
+                    font="ansi_shadow",
+                    width=90,
+                ).splitlines()
+                if x.strip()
+            )
+            out += "\n"
+            bannering_prefix = ""
+
+        else:
+            out += line + "\n"
+
+        current_line_index += 1
+
+    return out
+
+
+def test_bannerify():
+    assert _bannerify([]) == ""
+    assert _bannerify(["a"]) == "a\n"
+    assert _bannerify(["a", " b"]) == "a\n b\n"
+
+    got = _bannerify(
+        [
+            f"// {BANNERIFY_PATTERN}a",
+            "// ASDASAD",
+            "",
+            f"// {BANNERIFY_PATTERN}b",
+            "",
+            "a",
+            "b",
+            "c",
+            "",
+            "",
+            "d",
+        ]
+    )
+    expected = "".join(
+        x.rstrip() + "\n"
+        for x in (
+            f"// {BANNERIFY_PATTERN}a",
+            "//  █████╗",
+            "// ██╔══██╗",
+            "// ███████║",
+            "// ██╔══██║",
+            "// ██║  ██║",
+            "// ╚═╝  ╚═╝",
+            "",
+            f"// {BANNERIFY_PATTERN}b",
+            "// ██████╗",
+            "// ██╔══██╗",
+            "// ██████╔╝",
+            "// ██╔══██╗",
+            "// ██████╔╝",
+            "// ╚═════╝",
+            "",
+            "a",
+            "b",
+            "c",
+            "",
+            "",
+            "d",
+        )
+    )
+    if got != expected:
+        print("EXPECTED:")
+        print(expected)
+        print("\nGOT:")
+        print(got)
+    assert got == expected
+
+
+# }
+
+
 from bf_game import *  # noqa
+
 
 ###
