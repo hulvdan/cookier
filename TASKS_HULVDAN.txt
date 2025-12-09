@@ -9,18 +9,6 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x sfx: missile
-x sfx: torch flame + fireball
-x sfx: grimoire of milk
-x sfx: laser shot
-x sfx: got achievement + item unlocked
-x sfx: sniper rifle other projectiles
-x sfx: sniper rifle big shot
-x fix время спавна пуль
-x disable sdl repeat
-x sfx: died
-x sfx: wave complete whoosh
-
 * sfx: lightning hit sfx
 * starts with different music (initialize random to different value)
 * sfx: flamethrower
@@ -35,8 +23,6 @@ x sfx: wave complete whoosh
 * sfx:
 *
 * cooravie shots cooldown + doesn't walk towards player when aggroed
-*
-* disable SDL repeat key
 *
 * сковородку поменьше нарисовать
 *
@@ -56,6 +42,8 @@ x sfx: wave complete whoosh
 * better sfx:
 * better sfx:
 * better sfx:
+*
+* Маслову билд
 *
 * цветовое кодирование кнопок зелёные - брать, красные - продавать, reroll - ???
 *
