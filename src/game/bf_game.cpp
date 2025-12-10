@@ -4196,28 +4196,26 @@ int ToRecyclePrice(f32 price) {  ///
 void AddItem(ItemType type) {  ///
   auto& items = g.run.state.items;
 
-  int increasedExistingItemCount = -1;
+  int increasedExistingItemIndex = -1;
 
   int itemIndex = -1;
   for (auto& item : items) {
     itemIndex++;
     if (item.type == type) {
       item.count++;
-      increasedExistingItemCount = itemIndex;
+      increasedExistingItemIndex = itemIndex;
       break;
     }
   }
 
-  if (increasedExistingItemCount >= 0) {
-    items[increasedExistingItemCount].uiBouncedAt = {};
-    items[increasedExistingItemCount].uiBouncedAt.SetNow();
+  if (increasedExistingItemIndex >= 0) {
+    items[increasedExistingItemIndex].uiBouncedAt = {};
+    items[increasedExistingItemIndex].uiBouncedAt.SetNow();
 
     // Moving increased-count-item to the end.
-    if (increasedExistingItemCount < items.count - 1) {
-      auto t = items[increasedExistingItemCount];
-      items.RemoveAt(increasedExistingItemCount);
-      *items.Add() = t;
-    }
+    auto t = items[increasedExistingItemIndex];
+    items.RemoveAt(increasedExistingItemIndex);
+    *items.Add() = t;
   }
   else {
     Item item{.type = type, .count = 1};
