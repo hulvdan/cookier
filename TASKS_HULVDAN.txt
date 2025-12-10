@@ -17,11 +17,11 @@ x draw frame with imgui
 x прикрутить imgui
 x cli команда для ребилда шейдеров
   NOTE: для релиза нужно билдить с O3
+x что такое IMGUI_CHECKVERSION
+x безье анимация wave completed
 
-* что такое IMGUI_CHECKVERSION
-*
-* безье анимация wave completed
 * fix: show weapon card burning damage
+* горение нормально смотрится на всех монстрах
 * fix: flamethrower не может слишком быстро бить врагов
 *
 * fix: почему burning spread 0 ?
@@ -182,6 +182,7 @@ x cli команда для ребилда шейдеров
 *
 * RELEASED!
 =======================
+* запрет ranged оружиям бить нескольких врагов за раз
 * iskeypressedrepeat
   iskeyreleasedrepeat
 * sfx: export all sounds as mono
