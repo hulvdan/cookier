@@ -3193,6 +3193,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 78
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 95
   - type: MELEE_0_QUATERSTAFF # ручка
     base_damage: 10 15 20 30

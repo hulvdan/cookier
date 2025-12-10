@@ -19,17 +19,18 @@ x cli команда для ребилда шейдеров
   NOTE: для релиза нужно билдить с O3
 x что такое IMGUI_CHECKVERSION
 x безье анимация wave completed
+x sfx: weapon sounds ok: MELEE_0_CACTI_CLUB
+x sfx: weapon sounds ok: MELEE_0_CHOPPER
+x sfx: weapon sounds ok: MELEE_0_CLAW
+x sfx: weapon sounds ok: MELEE_0_FIST
+x sfx: weapon sounds ok: MELEE_0_GHOST_AXE
+x sfx: weapon sounds ok: MELEE_0_GHOST_FLINT
+x sfx: weapon sounds ok: MELEE_0_LANCE
+x sfx: weapon sounds ok: MELEE_0_LIGHTNING_SHIV
+x sfx: weapon sounds ok: MELEE_0_PLANK
+x почему непраильно отображаются предметы
+x sfx: weapon sounds ok: MELEE_0_PRUNER
 
-* sfx: weapon sounds ok: MELEE_0_CACTI_CLUB
-* sfx: weapon sounds ok: MELEE_0_CHOPPER
-* sfx: weapon sounds ok: MELEE_0_CLAW
-* sfx: weapon sounds ok: MELEE_0_FIST
-* sfx: weapon sounds ok: MELEE_0_GHOST_AXE
-* sfx: weapon sounds ok: MELEE_0_GHOST_FLINT
-* sfx: weapon sounds ok: MELEE_0_LANCE
-* sfx: weapon sounds ok: MELEE_0_LIGHTNING_SHIV
-* sfx: weapon sounds ok: MELEE_0_PLANK
-* sfx: weapon sounds ok: MELEE_0_PRUNER
 * sfx: weapon sounds ok: MELEE_0_QUATERSTAFF
 * sfx: weapon sounds ok: MELEE_0_ROCK
 * sfx: weapon sounds ok: MELEE_0_SCREWDRIVER
