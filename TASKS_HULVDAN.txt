@@ -13,9 +13,10 @@ x removed `100_es` shitfixes
 x compiled imgui shaders
 x compiled binary_to_compressed_c
 x used binary_to_compressed_c to compress fonts
+x draw frame with imgui
+x прикрутить imgui
 
-* draw frame with imgui
-* прикрутить imgui
+* cli команда для ребилда шейдеров
 * что такое IMGUI_CHECKVERSION
 *
 * безье анимация wave completed
