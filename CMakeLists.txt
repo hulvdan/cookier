@@ -241,6 +241,7 @@ target_link_libraries(game
         SDL3-static
         basisu_transcoder
         bgfx
+        bx
         box2d
         imgui
         miniaudio
@@ -356,6 +357,7 @@ target_link_libraries(tests
         SDL3-static
         basisu_transcoder
         bgfx
+        bx
         box2d
         imgui
         miniaudio
