@@ -370,11 +370,11 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
     ImGui_ImplSDL3_NewFrame();
 
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();  // your drawing here
-    ImGui::Render();
-    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
     result = EngineUpdate();
+
+    ImGui::Render();
+    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
     if (result == SDL_APP_CONTINUE) {
       ZoneScopedN("bgfx. bgfx::frame()");
@@ -388,6 +388,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
 
 SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   ImGui_ImplSDL3_ProcessEvent(event);
+
+  auto& io = ImGui::GetIO();
 
   static i64     nextTouchNumber     = 1;
   static bool    emulatedTouchIsDown = false;
@@ -412,6 +414,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_DOWN: {  ///
+    if (io.WantCaptureKeyboard)
+      break;
+
     // if (event->key.repeat)
     //   break;
 
@@ -429,6 +434,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
+    if (io.WantCaptureKeyboard)
+      break;
+
     // if (event->key.repeat)
     //   break;
 
@@ -439,6 +447,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN: {  ///
+    if (io.WantCaptureMouse)
+      break;
+
     auto& e = event->button;
     auto  b = e.button;
     ASSERT(b > 0);
@@ -469,6 +480,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
+    if (io.WantCaptureMouse)
+      break;
+
     auto& e = event->button;
     auto  b = e.button;
     ASSERT(b > 0);
@@ -500,6 +514,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_WHEEL: {  ///
+    if (io.WantCaptureMouse)
+      break;
+
     const auto& e       = event->wheel;
     ge.meta._mouseWheel = MIN(1, MAX(-1, (e.direction ? -1 : 1) * e.integer_y));
 
@@ -508,6 +525,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_MOTION: {  ///
+    if (io.WantCaptureMouse)
+      break;
+
     const auto& e = event->motion;
 
     if (IsEmulatingMobile()) {
@@ -533,6 +553,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
+    if (io.WantCaptureMouse)
+      break;
+
     const auto& e = event->tfinger;
 
     _OnTouchDown({
@@ -546,6 +569,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
+    if (io.WantCaptureMouse)
+      break;
+
     const auto& e = event->tfinger;
     _OnTouchUp({
       ._id{._touchID = e.touchID, ._fingerID = e.fingerID},
@@ -557,6 +583,9 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_FINGER_MOTION: {  ///
+    if (io.WantCaptureMouse)
+      break;
+
     const auto& e = event->tfinger;
     _OnTouchMoved({
       ._id{._touchID = e.touchID, ._fingerID = e.fingerID},

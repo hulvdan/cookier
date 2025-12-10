@@ -14606,6 +14606,9 @@ void GameDraw() {
 #undef X
   }
 
+  if (ge.meta.debugEnabled)
+    ImGui::ShowDemoWindow();
+
   g.run.meleeWeaponColliderGizmos.Reset();
 }
 
