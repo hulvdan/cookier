@@ -1186,21 +1186,40 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
         found_shader_names = set()
         all_shaders_by_type = defaultdict(list)
+        shader_suffix_to_shader_type = {
+            "_fs.sc": "fragment",
+            "_vs.sc": "vertex",
+            ".gitkeep": "skip",
+            ".def.sc": "skip",
+            ".sh": "skip",
+        }
+        incorrect_shaders = []
 
         for base in (
             PROJECT_DIR / "src" / "engine" / "shaders",
             PROJECT_DIR / "src" / "game" / "shaders",
         ):
-            for shader_type, shaders in (
-                ("vertex", list(base.glob("*_vs.sc"))),
-                ("fragment", list(base.glob("*_fs.sc"))),
-            ):
-                for shader in shaders:
+            for shader in base.glob("*"):
+                shader_type = None
+                for suffix, shader_type_ in shader_suffix_to_shader_type.items():
+                    if shader.name.endswith(suffix):
+                        shader_type = shader_type_
+                        break
+
+                if shader_type is None:
+                    incorrect_shaders.append(str(shader))
+
+                elif shader_type != "skip":
                     assert shader.stem not in found_shader_names, (
                         f"Shader '{shader.stem}' is an engine's shader. Rename it!"
                     )
                     found_shader_names.add(shader.stem)
                     all_shaders_by_type[shader_type].append(shader)
+
+        assert not incorrect_shaders, (
+            "Found files in shaders directories with unknown type.\n"
+            "Their names should end with suffixes: {}.\n{}"
+        ).format(", ".join(shader_suffix_to_shader_type), "\n".join(incorrect_shaders))
 
         for shaderc_platform_name, profile in platform_mapping[platform]:
             for shader_type, shaders in all_shaders_by_type.items():

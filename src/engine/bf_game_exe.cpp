@@ -3,9 +3,10 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/bf_gamelib_generated.h"
 
-#include "imgui.h"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlgpu3.h"
+// #include "imgui.h"
+// #include "imgui_impl_sdl3.h"
+// #include "imgui_impl_sdlgpu3.h"
+#include "bf_bgfx_imgui.cpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include "bf_lib.cpp"
