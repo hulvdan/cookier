@@ -351,7 +351,7 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
     }
 
     ImGui_Implbgfx_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
 
     ImGui::NewFrame();
     ImGui::ShowDemoWindow();  // your drawing here
