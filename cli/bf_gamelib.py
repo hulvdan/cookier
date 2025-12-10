@@ -1125,6 +1125,10 @@ def cfy_fonts() -> None:
 def regenerate_shaders(building_for_release: bool) -> None:
     # {  ###
     output_directory = CODEGEN_DIR / "shaders"
+    if output_directory.exists():
+        run_command(["del", "/f/s/q", output_directory])
+        output_directory.mkdir(exist_ok=True)
+    recursive_mkdir(output_directory)
 
     with open(
         output_directory / "include_all.h", "w", encoding="utf-8"
@@ -1175,8 +1179,6 @@ def regenerate_shaders(building_for_release: bool) -> None:
             for shader in shaders:
                 varyingdef = str(shader).rsplit("_", 1)[0] + "_var.def.sc"
 
-                recursive_mkdir(output_directory)
-
                 for additional_args, name_suffix in (
                     ("--platform linux   -p 120", "glsl"),
                     ("--platform android -p 100_es", "essl"),
@@ -1223,12 +1225,11 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     remove_orphan_resources_files(platform, build_type)
 
     # Removing old codegen files.
-    if CODEGEN_DIR.exists():
-        run_command(["del", "/f/s/q", CODEGEN_DIR])
-    (CODEGEN_DIR / "flatbuffers").mkdir(exist_ok=True)
-    (CODEGEN_DIR / "fonts").mkdir(exist_ok=True)
-    (CODEGEN_DIR / "hands").mkdir(exist_ok=True)
-    (CODEGEN_DIR / "shaders").mkdir(exist_ok=True)
+    for folder in ("flatbuffers", "fonts", "hands"):
+        target_folder = CODEGEN_DIR / folder
+        if target_folder.exists():
+            run_command(["del", "/f/s/q", target_folder])
+            target_folder.mkdir(exist_ok=True)
 
     cfy_fonts()
 

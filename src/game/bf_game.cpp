@@ -14492,8 +14492,12 @@ void GameDraw() {
     int charsToShow
       = MIN(totalChars, Ceil((f32)totalChars * EaseOutQuad(MIN(1, p / (5 / 16.0f)))));
 
-    f32 scale = Lerp(1, 7, EaseInCubic(Clamp01(Unlerp(p, 0.7f, 0.9f))))
-                * EaseBounceSmall(Clamp01(Unlerp(p, 0, 0.3f)));
+    f32 scale = 1.2f + 0.1f * sinf(2 * PI32 * p);
+    if (p < 0.3f)
+      scale *= Lerp(0.15f, 1, EaseOutQuad(Remap(p, 0, 0.3f, 0, 1)));
+    if (p > 0.75f)
+      scale *= Lerp(1, 7, EaseInQuad(Remap(p, 0.75f, 1, 0, 1)));
+
     f32 fade = EaseOutQuad(Clamp01(Remap(p, 0.7f, 0.9f, 1, 0)));
 
     IterateOverCodepoints(
