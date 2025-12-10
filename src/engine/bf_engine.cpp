@@ -14,7 +14,7 @@ void                           GameLoad(const BFSave::Save* save);
 #  include "stb_image_write.h"
 #endif
 
-struct Rect {
+struct Rect {  ///
   Vector2 pos  = {};
   Vector2 size = {};
 
@@ -38,7 +38,7 @@ constexpr Vector2Int ASSETS_REFERENCE_RESOLUTION = {1920, 1080};
 constexpr Vector2Int LOGICAL_RESOLUTION          = {1280, 720};
 constexpr f32        ASSETS_TO_LOGICAL_RATIO     = 1280.0f / 3840.0f;
 
-struct Texture2D {
+struct Texture2D {  ///
   Vector2Int          size   = {};
   bgfx::TextureHandle handle = {};
 };
@@ -68,19 +68,19 @@ struct _PosColorVertex {  ///
 
 bgfx::VertexLayout _PosColorVertex::layout;
 
-struct Shader {
+struct Shader {  ///
   bgfx::ProgramHandle program              = {};
   bgfx::VertexLayout  vertexLayout         = {};
   u64                 additionalStateFlags = {};
 };
 
-enum DeviceType : int {
+enum DeviceType : int {  ///
   DeviceType_DESKTOP,
   DeviceType_MOBILE,
   DeviceType_COUNT,
 };
 
-struct TouchID {
+struct TouchID {  ///
   SDL_TouchID  _touchID  = {};
   SDL_FingerID _fingerID = {};
 
@@ -91,36 +91,36 @@ struct TouchID {
 
 constexpr TouchID InvalidTouchID = {};
 
-struct _TouchEvent {
+struct _TouchEvent {  ///
   TouchID _id          = {};
   i64     _number      = {};
   Vector2 _screenPos   = {};
   Vector2 _screenDelta = {};
 };
 
-struct TouchData {
+struct TouchData {  ///
   i64     number      = {};
   Vector2 screenPos   = {};
   Vector2 screenDelta = {};
   u64     userData    = {};
 };
 
-enum _TouchDataState : u32 {
+enum _TouchDataState : u32 {  ///
   _TouchDataState_DOWN     = 1 << 0,
   _TouchDataState_PRESSED  = 1 << 1,
   _TouchDataState_RELEASED = 1 << 2,
 };
 
-struct _TouchData {
+struct _TouchData {  ///
   TouchData data  = {};
   u32       state = {};
 };
 
-struct Margins {
+struct Margins {  ///
   f32 left, right, top, bottom = {};
 };
 
-struct DrawTextureData {
+struct DrawTextureData {  ///
   int     texID         = -1;
   f32     rotation      = {};
   Vector2 pos           = {};
@@ -133,7 +133,7 @@ struct DrawTextureData {
   // int materialsBufferStart = -1;
 };
 
-struct DrawTextureNineSliceData {
+struct DrawTextureNineSliceData {  ///
   int     texID            = -1;
   f32     rotation         = {};
   Vector2 pos              = {};
@@ -145,14 +145,14 @@ struct DrawTextureNineSliceData {
   Vector2 nineSliceSize    = {};
 };
 
-struct DrawCircleData {
+struct DrawCircleData {  ///
   // TODO: not only lines.
   Vector2 pos    = {};
   f32     radius = {};
   Color   color  = WHITE;
 };
 
-struct DrawRectData {
+struct DrawRectData {  ///
   Vector2 pos      = {};
   Vector2 size     = {};
   Vector2 anchor   = Vector2Half();
@@ -161,7 +161,7 @@ struct DrawRectData {
   Color   color    = WHITE;
 };
 
-struct Font {
+struct Font {  ///
   bool loaded = false;
 
   int size = {};
@@ -185,7 +185,7 @@ struct Font {
   f32 _scaleToFit = 1;
 };
 
-struct DrawTextData {
+struct DrawTextData {  ///
   Vector2     pos        = {};
   Vector2     scale      = {1, 1};
   Vector2     anchor     = Vector2Half();
@@ -197,7 +197,7 @@ struct DrawTextData {
   // TODO: Color outlineColor = BLACK + shader.
 };
 
-enum DrawCommandType {
+enum DrawCommandType {  ///
   DrawCommandType_INVALID,
   DrawCommandType_TEXTURE,
   DrawCommandType_TEXTURE_NINE_SLICE,
@@ -209,14 +209,14 @@ enum DrawCommandType {
   DrawCommandType_TEXT,
 };
 
-struct DrawGroup {
+struct DrawGroup {  ///
   DrawZ z                  = DrawZ_DEFAULT;
   f32   sortY              = f32_inf;
   int   commandsCount      = 0;
   int   commandsStartIndex = -1;
 };
 
-struct DrawCommand {
+struct DrawCommand {  ///
   DrawCommandType type = DrawCommandType_INVALID;
 
   union {
@@ -227,48 +227,48 @@ struct DrawCommand {
     DrawTextData             text;
   } _u;
 
-  auto& DataTexture() const {  ///
+  auto& DataTexture() const {
     ASSERT(type == DrawCommandType_TEXTURE);
     return _u.texture;
   }
 
-  auto& DataTextureNineSlice() const {  ///
+  auto& DataTextureNineSlice() const {
     ASSERT(type == DrawCommandType_TEXTURE_NINE_SLICE);
     return _u.textureNineSlice;
   }
 
-  auto& DataCircle() const {  ///
+  auto& DataCircle() const {
     auto allowed
       = (type == DrawCommandType_CIRCLE) || (type == DrawCommandType_CIRCLE_LINES);
     ASSERT(allowed);
     return _u.circle;
   }
 
-  auto& DataRect() const {  ///
+  auto& DataRect() const {
     auto allowed = (type == DrawCommandType_RECT) || (type == DrawCommandType_RECT_LINES);
     ASSERT(allowed);
     return _u.rect;
   }
 
-  auto& DataText() const {  ///
+  auto& DataText() const {
     ASSERT(type == DrawCommandType_TEXT);
     return _u.text;
   }
 };
 
-struct Camera {
+struct Camera {  ///
   Vector2 pos           = {};
   f32     zoom          = 1;
   f32     texturesScale = 1;
 };
 
-enum SavedataLoadingType {
+enum SavedataLoadingType {  ///
   SavedataLoadingType_NOT_LOADED,
   SavedataLoadingType_JUST_FISNIHED,
   SavedataLoadingType_FISNIHED,
 };
 
-enum LastEventType {
+enum LastEventType {  ///
   LastEventType_NOT_SET,
   LastEventType_TOUCH,
   LastEventType_MOUSE,
@@ -392,6 +392,7 @@ struct FrameVisual {  ///
 };
 
 struct _SoundVariation;
+
 int _CmpSoundVariation(  ///
   const _SoundVariation* v1,
   const _SoundVariation* v2
@@ -413,8 +414,7 @@ struct _SoundVariation {  ///
   }
 };
 
-int _CmpSoundVariation(const _SoundVariation* v1,
-                       const _SoundVariation* v2) {  ///
+int _CmpSoundVariation(const _SoundVariation* v1, const _SoundVariation* v2) {  ///
   if (v1->soundHashValue > v2->soundHashValue)
     return 1;
   if (v1->soundHashValue < v2->soundHashValue)
@@ -633,12 +633,12 @@ Vector2 Rect::GetRandomVisualPosInside() const {  ///
   return GetRandomPosInside(&VRAND, this);
 }
 
-void BeginMode2D(const Camera* camera) {
+void BeginMode2D(const Camera* camera) {  ///
   ASSERT(!ge.meta._currentCamera);
   ge.meta._currentCamera = camera;
 }
 
-void EndMode2D() {
+void EndMode2D() {  ///
   ASSERT(ge.meta._currentCamera);
   ge.meta._currentCamera = nullptr;
 }
@@ -671,7 +671,7 @@ void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
   });
 }
 
-struct PlaySoundData {
+struct PlaySoundData {  ///
   u64 delayMilliseconds = 0;
 };
 
@@ -2785,7 +2785,7 @@ void DeinitEngine() {  ///
   ma_engine_uninit(&ge.meta._soundManager.engine);
 }
 
-struct LoadFontData {
+struct LoadFontData {  ///
   const char* filepath = {};
 
   int size            = {};
@@ -2955,7 +2955,7 @@ void _OutlineFonts(
   BF_FREE(dist_);
 }
 
-struct LoadFontsResult {
+struct LoadFontsResult {  ///
   bool               loaded          = false;
   View<Font>         _fonts          = {};
   void*              _freeMeOnUnload = {};
@@ -3712,7 +3712,7 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
   return ge.meta.loading;
 }
 
-bool IsEmulatingMobile() {
+bool IsEmulatingMobile() {  ///
   return BF_DEBUG && (ge.meta.device == DeviceType_MOBILE);
 }
 
