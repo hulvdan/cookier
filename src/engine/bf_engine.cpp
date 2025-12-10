@@ -2751,17 +2751,10 @@ void InitEngine() {  ///
   ReloadSounds();
 
   ge.meta.programDefaultTexture = LoadProgram(
-    quad_tex_vs_100_es,
-    ARRAY_COUNT(quad_tex_vs_100_es),
-    quad_tex_fs_100_es,
-    ARRAY_COUNT(quad_tex_fs_100_es)
+    quad_tex_vs, ARRAY_COUNT(quad_tex_vs), quad_tex_fs, ARRAY_COUNT(quad_tex_fs)
   );
-  ge.meta.programDefaultQuad = LoadProgram(
-    quad_vs_100_es,
-    ARRAY_COUNT(quad_vs_100_es),
-    quad_fs_100_es,
-    ARRAY_COUNT(quad_fs_100_es)
-  );
+  ge.meta.programDefaultQuad
+    = LoadProgram(quad_vs, ARRAY_COUNT(quad_vs), quad_fs, ARRAY_COUNT(quad_fs));
 
   // Remove Z?
   _PosColorFlashTexVertex::layout.begin()
