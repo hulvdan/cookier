@@ -48,6 +48,8 @@ from PIL import Image
 
 # }
 
+CODEGEN_DIR = Path("codegen")
+
 
 def texture_ids_recursive_transform(
     gamelib_recursed, transform_texture_id, transform_texture_ids_list
@@ -1101,6 +1103,13 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     # {  ###
     remove_orphan_resources_files(platform, build_type)
 
+    # Removing old codegen files.
+    if CODEGEN_DIR.exists():
+        run_command(["del", "/f/s/q", CODEGEN_DIR])
+    (CODEGEN_DIR / "flatbuffers").mkdir(exist_ok=True)
+    (CODEGEN_DIR / "hands").mkdir(exist_ok=True)
+    (CODEGEN_DIR / "shaders").mkdir(exist_ok=True)
+
     if build_type == BuildType.Release and platform in (
         BuildPlatform.Web,
         BuildPlatform.WebYandex,
@@ -1226,7 +1235,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                 for shader in shaders:
                     varyingdef = str(shader).rsplit("_", 1)[0] + "_var.def.sc"
 
-                    out_file = output_directory / (shader.stem + f"_{profile}.bin")
+                    out_file = output_directory / (shader.stem + ".bin.h")
                     recursive_mkdir(output_directory)
 
                     run_command(

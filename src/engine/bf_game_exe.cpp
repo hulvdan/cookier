@@ -25,10 +25,14 @@
 
 #include "miniaudio.h"
 
-#include "shaders/quad_fs_100_es.bin"
-#include "shaders/quad_vs_100_es.bin"
-#include "shaders/quad_tex_fs_100_es.bin"
-#include "shaders/quad_tex_vs_100_es.bin"
+#include "shaders/imgui_image_fs.bin.h"
+#include "shaders/imgui_image_vs.bin.h"
+#include "shaders/ocornut_imgui_fs.bin.h"
+#include "shaders/ocornut_imgui_vs.bin.h"
+#include "shaders/quad_fs.bin.h"
+#include "shaders/quad_vs.bin.h"
+#include "shaders/quad_tex_fs.bin.h"
+#include "shaders/quad_tex_vs.bin.h"
 
 #include <bgfx/bgfx.h>
 
