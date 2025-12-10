@@ -3295,6 +3295,7 @@ weapons: # {  ###
     knockback_meters: 20 20 20 20
     melee_collider_height_px: 124
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK
     price: 122
   - type: MELEE_0_STICK # ложка
     base_damage: 8 9 10 12
@@ -3313,6 +3314,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 49
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 91
   - type: MELEE_0_TORCH
     base_damage: 1 1 1 1
@@ -3455,6 +3457,7 @@ weapons: # {  ###
         only_this_weapon: true
     melee_collider_height_px: 75
     use_sound_hash: GAME_SWING
+    damage_sound_hash: GAME_BONK_FIST
     price: 272
   - type: MELEE_2_POWER_FIST # перчатка подрывника
     base_damage: 40 60
@@ -3858,6 +3861,7 @@ weapons: # {  ###
     crit_chance: 3 3 3
     range_meters: 11.7 11.7 11.7
     knockback_meters: 20 25 30
+    use_sound_hash: GAME_FIRE_MISSILE
     price: 139
     projectile_type: EGG
   - type: RANGED_1_ROCKER_LAUNCHER
@@ -4121,6 +4125,7 @@ projectiles: # {  ###
     fades_in: true
     texture_ids:
       - game_projectile_egg
+    damage_sound_hash: GAME_BONK_FIST
   - type: ROCKET
     speed: 14
     scales_in: 2
@@ -4489,7 +4494,6 @@ stats: # {  ###
     is_secondary: true
   # Increases the amount of times Burn spreads.
   - type: BURNING_SPREAD
-    player_value: 5
     is_secondary: true
   - type: KNOCKBACK
     is_secondary: true
