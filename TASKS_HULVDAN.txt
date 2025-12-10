@@ -16,6 +16,9 @@ x sfx: flamethrower nextUseTrailSoundVisualFrame
 x impl weapon burning_damage, burning_times, burning_damage_scalings
 x FIRE WORKS :)
 
+* прикрутить imgui
+*
+* безье анимация wave completed
 * fix: show weapon card burning damage
 * fix: flamethrower не может слишком быстро бить врагов
 *

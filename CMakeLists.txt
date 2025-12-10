@@ -197,19 +197,55 @@ target_link_libraries(miniaudio
 #-----------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/readerwriterqueue")
 
+# freetype.
+#-----------------------------------------------------------------------------------
+add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/freetype")
+
+# imgui.
+#-----------------------------------------------------------------------------------
+add_library(imgui STATIC
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/imgui.h"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/imgui.cpp"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/imgui_draw.cpp"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/imgui_widgets.cpp"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/imgui_demo.cpp"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/imgui_tables.cpp"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/backends/imgui_impl_sdl3.cpp"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/backends/imgui_impl_sdlgpu3.cpp"
+    "${CMAKE_SOURCE_DIR}/vendor/imgui/misc/freetype/imgui_freetype.cpp"
+)
+target_include_directories(imgui
+    PUBLIC
+        "${CMAKE_SOURCE_DIR}/vendor/imgui"
+        "${CMAKE_SOURCE_DIR}/vendor/imgui/backends"
+        "${CMAKE_SOURCE_DIR}/vendor/imgui/misc/freetype"
+)
+target_link_libraries(imgui
+    PUBLIC
+        SDL3-static
+    PRIVATE
+        freetype
+)
+target_compile_definitions(imgui
+    PUBLIC
+        IMGUI_USE_WCHAR32
+        IMGUI_ENABLE_FREETYPE
+)
+
 # game.
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
 target_link_libraries(game
     PRIVATE
+        GameAnalytics
         SDL3-static
+        basisu_transcoder
         bgfx
         box2d
-        vendor_and_codegen
-        basisu_transcoder
-        GameAnalytics
+        imgui
         miniaudio
         readerwriterqueue
+        vendor_and_codegen
 )
 if ("${PLATFORM}" STREQUAL "Win")
     target_link_libraries(game
@@ -316,14 +352,15 @@ endif()
 add_executable(tests "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
 target_link_libraries(tests
     PRIVATE
+        GameAnalytics
         SDL3-static
+        basisu_transcoder
         bgfx
         box2d
-        vendor_and_codegen
-        basisu_transcoder
-        GameAnalytics
+        imgui
         miniaudio
         readerwriterqueue
+        vendor_and_codegen
 )
 target_link_libraries(tests
     PRIVATE
