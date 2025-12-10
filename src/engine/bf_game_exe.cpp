@@ -3,6 +3,10 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/bf_gamelib_generated.h"
 
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlgpu3.h"
+
 #define SDL_MAIN_USE_CALLBACKS
 #include "bf_lib.cpp"
 
@@ -38,7 +42,8 @@
 #include "game/bf_game.cpp"
 
 struct EngineAppState {
-  SDL_Window* window = {};
+  SDL_Window*    window     = {};
+  SDL_GPUDevice* gpu_device = nullptr;
 } g_appstate;
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -260,6 +265,30 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x000000ff, 1.0f, 0);
   }
 
+  // ImGui.
+  {
+    ImGui::CreateContext();
+    auto& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
+
+    ImGui_ImplSDL3_InitForSDLGPU(window);
+    ImGui_ImplSDLGPU3_InitInfo initInfo{};
+    initInfo.Device = g_appstate.gpu_device;
+    initInfo.ColorTargetFormat
+      = SDL_GetGPUSwapchainTextureFormat(g_appstate.gpu_device, window);
+    initInfo.MSAASamples = SDL_GPU_SAMPLECOUNT_1;  // Only used in multi-viewports mode.
+    initInfo.SwapchainComposition
+      = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;  // Only used in multi-viewports mode.
+    initInfo.PresentMode = SDL_GPU_PRESENTMODE_VSYNC;
+    ImGui_ImplSDLGPU3_Init(&initInfo);
+  }
+
+  // Setup scaling
+  ImGuiStyle& style = ImGui::GetStyle();
+  style.ScaleAllSizes(ge.meta.imguiScale);
+  style.FontScaleDpi = ge.meta.imguiScale;
+
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   js_TriggerOnResize();
 #endif
@@ -344,10 +373,58 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
       ge.meta._drawing = false;
     }
 
+    ImGui_ImplSDLGPU3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
     result = EngineUpdate();
     if (result == SDL_APP_CONTINUE) {
       ZoneScopedN("bgfx. bgfx::frame()");
       bgfx::frame(false);
+
+      {
+        auto& io = ImGui::GetIO();
+
+        ImGui::Render();
+        ImDrawData* draw_data = ImGui::GetDrawData();
+        const bool  is_minimized
+          = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
+
+        SDL_GPUCommandBuffer* command_buffer
+          = SDL_AcquireGPUCommandBuffer(g_appstate.gpu_device
+          );  // Acquire a GPU command buffer
+
+        SDL_GPUTexture* swapchain_texture;
+        SDL_WaitAndAcquireGPUSwapchainTexture(
+          command_buffer, g_appstate.window, &swapchain_texture, nullptr, nullptr
+        );  // Acquire a swapchain texture
+
+        if (swapchain_texture != nullptr && !is_minimized) {
+          // This is mandatory: call ImGui_ImplSDLGPU3_PrepareDrawData() to upload the
+          // vertex/index buffer!
+          ImGui_ImplSDLGPU3_PrepareDrawData(draw_data, command_buffer);
+
+          // Setup and start a render pass
+          SDL_GPUColorTargetInfo target_info = {};
+          target_info.texture                = swapchain_texture;
+          target_info.clear_color            = SDL_FColor{0, 0, 0, 1};
+          target_info.load_op                = SDL_GPU_LOADOP_CLEAR;
+          target_info.store_op               = SDL_GPU_STOREOP_STORE;
+          target_info.mip_level              = 0;
+          target_info.layer_or_depth_plane   = 0;
+          target_info.cycle                  = false;
+          SDL_GPURenderPass* render_pass
+            = SDL_BeginGPURenderPass(command_buffer, &target_info, 1, nullptr);
+
+          // Render ImGui
+          ImGui_ImplSDLGPU3_RenderDrawData(draw_data, command_buffer, render_pass);
+
+          SDL_EndGPURenderPass(render_pass);
+        }
+
+        // Submit the command buffer
+        SDL_SubmitGPUCommandBuffer(command_buffer);
+      }
     }
   }
 
@@ -356,6 +433,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
 }
 
 SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
+  ImGui_ImplSDL3_ProcessEvent(event);
+
   static i64     nextTouchNumber     = 1;
   static bool    emulatedTouchIsDown = false;
   static TouchID emulatedTouchID{._touchID = 1, ._fingerID = 1};
@@ -554,6 +633,11 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
 
 void SDL_AppQuit(void* /* appstate */, SDL_AppResult /* result */) {  ///
   DeinitEngine();
+
+  SDL_WaitForGPUIdle(g_appstate.gpu_device);
+  ImGui_ImplSDL3_Shutdown();
+  ImGui_ImplSDLGPU3_Shutdown();
+  ImGui::DestroyContext();
 
   bgfx::shutdown();
 

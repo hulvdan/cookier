@@ -453,6 +453,8 @@ struct EngineData {
     i64 frameGame   = 0;
     i64 frameVisual = 0;
 
+    f32 imguiScale = 1.5f;
+
     Texture2D           atlas                 = {};
     Vector2Int          atlasSize             = {};
     bgfx::ProgramHandle programDefaultTexture = {};
