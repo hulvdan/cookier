@@ -3,7 +3,16 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/bf_gamelib_generated.h"
 
-#include "bf_bgfx_imgui.cpp"
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+
+#define BX_CONFIG_DEBUG (BF_DEBUG)
+
+#include "shaders/include_all.h"
+
+// #include "bf_bgfx_imgui.cpp"
+#include "imgui/imgui_impl_bgfx.h"
+#include "imgui/imgui_impl_bgfx.cpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include "bf_lib.cpp"
@@ -21,15 +30,6 @@
 #include "stb_truetype.h"
 
 #include "miniaudio.h"
-
-#include "shaders/imgui_image_fs.bin.h"
-#include "shaders/imgui_image_vs.bin.h"
-#include "shaders/ocornut_imgui_fs.bin.h"
-#include "shaders/ocornut_imgui_vs.bin.h"
-#include "shaders/quad_fs.bin.h"
-#include "shaders/quad_vs.bin.h"
-#include "shaders/quad_tex_fs.bin.h"
-#include "shaders/quad_tex_vs.bin.h"
 
 #include <bgfx/bgfx.h>
 
@@ -350,7 +350,16 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
       ge.meta._drawing = false;
     }
 
+    ImGui_Implbgfx_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow();  // your drawing here
+    ImGui::Render();
+    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+
     result = EngineUpdate();
+
     if (result == SDL_APP_CONTINUE) {
       ZoneScopedN("bgfx. bgfx::frame()");
       bgfx::frame(false);
@@ -563,11 +572,10 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
 void SDL_AppQuit(void* /* appstate */, SDL_AppResult /* result */) {  ///
   DeinitEngine();
 
-  SDL_WaitForGPUIdle(g_appstate.gpu_device);
   ImGui_ImplSDL3_Shutdown();
-  ImGui_ImplSDLGPU3_Shutdown();
-  ImGui::DestroyContext();
+  ImGui_Implbgfx_Shutdown();
 
+  ImGui::DestroyContext();
   bgfx::shutdown();
 
   SDL_DestroyWindow(g_appstate.window);

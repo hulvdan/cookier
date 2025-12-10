@@ -9,13 +9,12 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x sfx: lightning hit sfx
-x sfx: blow (blowgun (slingshot))
-x sfx: crossbow
-x sfx: flamethrower nextUseTrailSoundVisualFrame
-x impl weapon burning_damage, burning_times, burning_damage_scalings
-x FIRE WORKS :)
+x removed `100_es` shitfixes
+x compiled imgui shaders
+x compiled binary_to_compressed_c
+x used binary_to_compressed_c to compress fonts
 
+* draw frame with imgui
 * прикрутить imgui
 * что такое IMGUI_CHECKVERSION
 *
@@ -442,7 +441,7 @@ TECH DEBT
 
 LATER:
 ================================================================================
-* draw melee weapon attack colliders
+* engine: realtime shader compilation: https://github.com/fredakilla/brtshaderc
 * when player can be burnt:
   make sure that burn ticks don't set player to be invincible
 * save: starting wave completed animation saves the game

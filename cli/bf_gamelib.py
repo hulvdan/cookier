@@ -1122,6 +1122,92 @@ def cfy_fonts() -> None:
 
 
 @timing
+def regenerate_shaders():
+    # {  ###
+    output_directory = CODEGEN_DIR / "shaders"
+
+    with open(
+        output_directory / "include_all.h", "w", encoding="utf-8"
+    ) as include_all_file:
+        include_all_file.write("#pragma once\n\n")
+
+        found_shader_names = set()
+        all_shaders_by_type = {  # type: ignore[var-annotated]
+            "fragment": [],
+            "vertex": [],
+        }
+        shader_suffix_to_shader_type = {
+            "_fs.sc": "fragment",
+            "_vs.sc": "vertex",
+            ".gitkeep": "skip",
+            ".def.sc": "skip",
+            ".sh": "skip",
+        }
+        incorrect_shaders = []
+
+        for base in (
+            SRC_DIR / "engine" / "shaders",
+            SRC_DIR / "game" / "shaders",
+        ):
+            for shader in base.glob("*"):
+                shader_type = None
+                for suffix, shader_type_ in shader_suffix_to_shader_type.items():
+                    if shader.name.endswith(suffix):
+                        shader_type = shader_type_
+                        break
+
+                if shader_type is None:
+                    incorrect_shaders.append(str(shader))
+
+                elif shader_type != "skip":
+                    assert shader.stem not in found_shader_names, (
+                        f"Shader '{shader.stem}' is an engine's shader. Rename it!"
+                    )
+                    found_shader_names.add(shader.stem)
+                    all_shaders_by_type[shader_type].append(shader)
+
+        assert not incorrect_shaders, (
+            "Found files in shaders directories with unknown type.\n"
+            "Their names should end with suffixes: {}.\n{}"
+        ).format(", ".join(shader_suffix_to_shader_type), "\n".join(incorrect_shaders))
+
+        for shader_type, shaders in all_shaders_by_type.items():
+            for shader in shaders:
+                varyingdef = str(shader).rsplit("_", 1)[0] + "_var.def.sc"
+
+                recursive_mkdir(output_directory)
+
+                for additional_args, name_suffix in (
+                    ("--platform linux   -p 120", "glsl"),
+                    ("--platform android -p 100_es", "essl"),
+                    ("--platform linux   -p spirv", "spv"),
+                    ("--platform windows -p s_4_0 -O 3", "dx11"),
+                    ("--platform ios     -p metal -O 3", "mtl"),
+                ):
+                    out_file = Path(
+                        f"{output_directory / shader.stem}_{name_suffix}.bin.h"
+                    )
+                    include_all_file.write(f'#include "shaders/{out_file.name}"\n')
+
+                    run_command(
+                        replace_double_spaces(
+                            f"""
+                            {SHADERC_PATH}
+                            --type {shader_type}
+                            -f {shader}
+                            -o {out_file}
+                            {additional_args}
+                            -i {PROJECT_DIR / "vendor" / "bgfx" / "src"}
+                            --varyingdef {varyingdef}
+                            --Werror
+                            --bin2c
+                            """.replace("\n", " ")
+                        )
+                    )
+    # }
+
+
+@timing
 def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     # {  ###
     remove_orphan_resources_files(platform, build_type)
@@ -1205,88 +1291,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         out_file.write_text(shell_contents, encoding="utf-8")
 
     # Shaders.
-    if 1:
-        platform_mapping = {
-            # BuildPlatform.Win: [("windows", "s_5_0")],
-            # BuildPlatform.Win: [("windows", "s_4_0")],
-            BuildPlatform.Win: [("windows", "100_es")],
-            # BuildPlatform.Win: [("windows", "300_es")],
-            # BuildPlatform.Win: [("windows", "330")],
-            BuildPlatform.Web: [("asm.js", "100_es")],
-            BuildPlatform.WebYandex: [("asm.js", "100_es")],
-        }
-
-        assert platform in platform_mapping, f"Not supported platform: {platform}"
-
-        output_directory = PROJECT_DIR / "codegen" / "shaders"
-
-        found_shader_names = set()
-        all_shaders_by_type = defaultdict(list)
-        shader_suffix_to_shader_type = {
-            "_fs.sc": "fragment",
-            "_vs.sc": "vertex",
-            ".gitkeep": "skip",
-            ".def.sc": "skip",
-            ".sh": "skip",
-        }
-        incorrect_shaders = []
-
-        for base in (
-            PROJECT_DIR / "src" / "engine" / "shaders",
-            PROJECT_DIR / "src" / "game" / "shaders",
-        ):
-            for shader in base.glob("*"):
-                shader_type = None
-                for suffix, shader_type_ in shader_suffix_to_shader_type.items():
-                    if shader.name.endswith(suffix):
-                        shader_type = shader_type_
-                        break
-
-                if shader_type is None:
-                    incorrect_shaders.append(str(shader))
-
-                elif shader_type != "skip":
-                    assert shader.stem not in found_shader_names, (
-                        f"Shader '{shader.stem}' is an engine's shader. Rename it!"
-                    )
-                    found_shader_names.add(shader.stem)
-                    all_shaders_by_type[shader_type].append(shader)
-
-        assert not incorrect_shaders, (
-            "Found files in shaders directories with unknown type.\n"
-            "Their names should end with suffixes: {}.\n{}"
-        ).format(", ".join(shader_suffix_to_shader_type), "\n".join(incorrect_shaders))
-
-        for shaderc_platform_name, profile in platform_mapping[platform]:
-            for shader_type, shaders in all_shaders_by_type.items():
-                for shader in shaders:
-                    varyingdef = str(shader).rsplit("_", 1)[0] + "_var.def.sc"
-
-                    out_file = output_directory / (shader.stem + ".bin.h")
-                    recursive_mkdir(output_directory)
-
-                    run_command(
-                        [
-                            SHADERC_PATH,
-                            "-f",
-                            shader,
-                            "-o",
-                            out_file,
-                            "--type",
-                            shader_type,
-                            "--platform",
-                            shaderc_platform_name,
-                            "--profile",
-                            profile,
-                            "-i",
-                            PROJECT_DIR / "vendor" / "bgfx" / "src",
-                            "--varyingdef",
-                            varyingdef,
-                            "--bin2c",
-                            "-O3",
-                            "--Werror",
-                        ]
-                    )
+    regenerate_shaders()
 
     recursive_mkdir(HANDS_GENERATED_DIR)
 
