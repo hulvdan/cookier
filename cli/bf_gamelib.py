@@ -3,6 +3,7 @@ import csv
 import json
 import os
 import shutil
+import string
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
@@ -472,8 +473,8 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
     codepoints: set[int] = set()
 
     for strings in loc_by_languages.values():
-        for string in strings:
-            codepoints.update(ord(c) for c in string if c not in SKIP_CHARACTERS)
+        for string_ in strings:
+            codepoints.update(ord(c) for c in string_ if c not in SKIP_CHARACTERS)
 
     gamelib["localizations"] = [{"strings": x} for x in loc_by_languages.values()]
 
@@ -487,12 +488,12 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
             broken_lines: list = []
             loc["broken_lines"] = broken_lines
 
-            for string_index, string in enumerate(loc["strings"]):
+            for string_index, string_ in enumerate(loc["strings"]):
                 string_lines: list = []
                 broken_lines.append({"lines": string_lines})
                 string_placeholders_to_verify = set()
 
-                for line in process_string(string):
+                for line in process_string(string_):
                     grs: list = []
                     string_lines.append({"groups": grs})
 
@@ -1099,6 +1100,28 @@ def get_sounds_that_reaper_would_export() -> set[str]:
 
 
 @timing
+def cfy_fonts() -> None:
+    allowed_chars = string.ascii_lowercase + string.digits + "_"
+    for filepath in (SRC_DIR / "engine" / "fonts").glob("*"):
+        out_name = (
+            replace_double_spaces(
+                "".join(c if c in allowed_chars else " " for c in filepath.name.lower())
+            )
+            .replace(" ", "_")
+            .strip("_")
+        )
+        run_command(
+            [
+                r".\cli\binary_to_compressed_c.exe",
+                filepath,
+                "codegen_" + out_name,
+                ">",
+                CODEGEN_DIR / "fonts" / (out_name + ".c"),
+            ]
+        )
+
+
+@timing
 def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     # {  ###
     remove_orphan_resources_files(platform, build_type)
@@ -1107,9 +1130,13 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     if CODEGEN_DIR.exists():
         run_command(["del", "/f/s/q", CODEGEN_DIR])
     (CODEGEN_DIR / "flatbuffers").mkdir(exist_ok=True)
+    (CODEGEN_DIR / "fonts").mkdir(exist_ok=True)
     (CODEGEN_DIR / "hands").mkdir(exist_ok=True)
     (CODEGEN_DIR / "shaders").mkdir(exist_ok=True)
 
+    cfy_fonts()
+
+    # Generating shaders.
     if build_type == BuildType.Release and platform in (
         BuildPlatform.Web,
         BuildPlatform.WebYandex,
