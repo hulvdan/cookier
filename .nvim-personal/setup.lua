@@ -3,6 +3,9 @@ local opts = { remap = false, silent = true }
 vim.keymap.set("n", "gD", "<C-w>o:vs<CR>gd", opts)
 vim.keymap.set("n", "<leader>fc", ":e codegen/hands/bf_codegen.cpp<CR>", opts)
 vim.keymap.set("n", "<leader>fl", ":e src/bf_lib.cpp<CR>", opts)
+vim.keymap.set("n", "<C-S-g>v", function()
+    vim.fn.system([[start .cmake/vs17/game.sln]])
+end, opts)
 
 vim.keymap.set("n", "<leader>C", "o  continue;<ESC>", opts)
 vim.keymap.set("n", "<leader>B", "o  break;<ESC>", opts)
