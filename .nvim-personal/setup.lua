@@ -100,7 +100,8 @@ function rebuild_tasks()
                 vim.fn.execute([[term uv run python cli\bf_cli.py banner ]] .. vim.fn.expand("%"))
             end,
         },
-        { "h_temp", cli_command("temp") },
+        { "h_shaders", cli_command("shaders") },
+        { "w_temp", cli_command("temp") },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },
         -- ----------

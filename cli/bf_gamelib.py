@@ -1183,13 +1183,13 @@ def regenerate_shaders(building_for_release: bool) -> None:
                     ("--platform linux   -p spirv", "spv"),
                     (
                         "--platform windows -p s_4_0"
-                        + ("-O 3" if building_for_release else ""),
+                        + (" -O 3 " if building_for_release else ""),
                         "dx11",
                     ),
                     (
                         (
                             "--platform ios -p metal"
-                            + ("-O 3" if building_for_release else "")
+                            + (" -O 3 " if building_for_release else "")
                         ),
                         "mtl",
                     ),
@@ -1301,7 +1301,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         out_file.write_text(shell_contents, encoding="utf-8")
 
     # Shaders.
-    regenerate_shaders(build_type != BuildType.Debug)
+    # regenerate_shaders(build_type != BuildType.Debug)
 
     recursive_mkdir(HANDS_GENERATED_DIR)
 

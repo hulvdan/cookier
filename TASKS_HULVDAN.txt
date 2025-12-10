@@ -15,8 +15,9 @@ x compiled binary_to_compressed_c
 x used binary_to_compressed_c to compress fonts
 x draw frame with imgui
 x прикрутить imgui
+x cli команда для ребилда шейдеров
+  NOTE: для релиза нужно билдить с O3
 
-* cli команда для ребилда шейдеров
 * что такое IMGUI_CHECKVERSION
 *
 * безье анимация wave completed

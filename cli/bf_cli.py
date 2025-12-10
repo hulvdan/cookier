@@ -5,7 +5,7 @@ from pathlib import Path
 
 import bf_lib
 from bf_game import *  # noqa
-from bf_gamelib import do_generate
+from bf_gamelib import do_generate, regenerate_shaders
 from bf_lib import (
     ALLOWED_BUILDS,
     BUTLER_PATH,
@@ -422,6 +422,11 @@ def _credit_sfx(_folder: Path, _credit: str = "") -> None:
 #         p = stack.pop(0)
 #         stack = stack[1:]
 # }
+
+
+@command
+def shaders() -> None:
+    regenerate_shaders(True)
 
 
 @command
