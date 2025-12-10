@@ -266,6 +266,22 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR, 0x000000ff, 1.0f, 0);
   }
 
+  // Initializing imgui.
+  {
+    ZoneScopedN("Initializing imgui.");
+
+    ImGui::CreateContext();
+
+    ImGui_Implbgfx_Init(255);
+#if BX_PLATFORM_WINDOWS
+    ImGui_ImplSDL3_InitForD3D(g_appstate.window);
+#elif BX_PLATFORM_OSX
+    ImGui_ImplSDL3_InitForMetal(g_appstate.window);
+#elif BX_PLATFORM_LINUX || BX_PLATFORM_EMSCRIPTEN
+    ImGui_ImplSDL3_InitForOpenGL(g_appstate.window, nullptr);
+#endif
+  }
+
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   js_TriggerOnResize();
 #endif
