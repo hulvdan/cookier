@@ -17,6 +17,7 @@ x impl weapon burning_damage, burning_times, burning_damage_scalings
 x FIRE WORKS :)
 
 * прикрутить imgui
+* что такое IMGUI_CHECKVERSION
 *
 * безье анимация wave completed
 * fix: show weapon card burning damage
