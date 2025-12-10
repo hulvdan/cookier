@@ -19,58 +19,9 @@ x cli команда для ребилда шейдеров
   NOTE: для релиза нужно билдить с O3
 x что такое IMGUI_CHECKVERSION
 x безье анимация wave completed
-x sfx: weapon sounds ok: MELEE_0_CACTI_CLUB
-x sfx: weapon sounds ok: MELEE_0_CHOPPER
-x sfx: weapon sounds ok: MELEE_0_CLAW
-x sfx: weapon sounds ok: MELEE_0_FIST
-x sfx: weapon sounds ok: MELEE_0_GHOST_AXE
-x sfx: weapon sounds ok: MELEE_0_GHOST_FLINT
-x sfx: weapon sounds ok: MELEE_0_LANCE
-x sfx: weapon sounds ok: MELEE_0_LIGHTNING_SHIV
-x sfx: weapon sounds ok: MELEE_0_PLANK
 x почему непраильно отображаются предметы
-x sfx: weapon sounds ok: MELEE_0_PRUNER
+x sfx: все оружия звучат ~ок
 
-* sfx: weapon sounds ok: MELEE_0_QUATERSTAFF
-* sfx: weapon sounds ok: MELEE_0_ROCK
-* sfx: weapon sounds ok: MELEE_0_SCREWDRIVER
-* sfx: weapon sounds ok: MELEE_0_SHARP_TOOTH
-* sfx: weapon sounds ok: MELEE_0_SPIKY_SHIELD
-* sfx: weapon sounds ok: MELEE_0_STICK
-* sfx: weapon sounds ok: MELEE_0_TORCH
-* sfx: weapon sounds ok: MELEE_0_WRENCH
-* sfx: weapon sounds ok: MELEE_1_CIRCULAR_SAW
-* sfx: weapon sounds ok: MELEE_1_FLAMING_BRASS_KNUCKLES
-* sfx: weapon sounds ok: MELEE_1_HAMMER
-* sfx: weapon sounds ok: MELEE_1_SWORD
-* sfx: weapon sounds ok: MELEE_2_PLASMA_SLEDGE
-* sfx: weapon sounds ok: MELEE_2_POWER_FIST
-* sfx: weapon sounds ok: MELEE_2_THUNDER_SWORD
-* sfx: weapon sounds ok: MELEE_3_DEX_TROYER
-* sfx: weapon sounds ok: MELEE_3_EXCALIBUR
-* sfx: weapon sounds ok: MELEE_3_SCYTHE
-* sfx: weapon sounds ok: RANGED_0_CROSSBOW
-* sfx: weapon sounds ok: RANGED_0_SHOTGUN
-* sfx: weapon sounds ok: RANGED_0_GHOST_SCEPTER
-* sfx: weapon sounds ok: RANGED_0_ICICLE
-* sfx: weapon sounds ok: RANGED_0_JAVELIN
-* sfx: weapon sounds ok: RANGED_0_LASER_GUN
-* sfx: weapon sounds ok: RANGED_0_PISTOL
-* sfx: weapon sounds ok: RANGED_0_SHREDDER
-* sfx: weapon sounds ok: RANGED_0_SHURIKEN
-* sfx: weapon sounds ok: RANGED_0_SLINGSHOT
-* sfx: weapon sounds ok: RANGED_0_SMG
-* sfx: weapon sounds ok: RANGED_0_WAND
-* sfx: weapon sounds ok: RANGED_1_FIREBALL
-* sfx: weapon sounds ok: RANGED_1_FLAMETHROWER
-* sfx: weapon sounds ok: RANGED_1_POTATO_THROWER
-* sfx: weapon sounds ok: RANGED_1_ROCKER_LAUNCHER
-* sfx: weapon sounds ok: RANGED_2_MINIGUN
-* sfx: weapon sounds ok: RANGED_2_NUCLEAR_LAUNCHER
-* sfx: weapon sounds ok: RANGED_2_SNIPER_GUN
-* sfx: weapon sounds ok: RANGED_3_CHAIN_GUN
-* sfx: weapon sounds ok: RANGED_3_GATLING_LASER
-*
 * sfx: turret spatial shot sound
 *
 * fix: show weapon card burning damage
