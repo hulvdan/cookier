@@ -1122,7 +1122,7 @@ def cfy_fonts() -> None:
 
 
 @timing
-def regenerate_shaders():
+def regenerate_shaders(building_for_release: bool) -> None:
     # {  ###
     output_directory = CODEGEN_DIR / "shaders"
 
@@ -1181,8 +1181,18 @@ def regenerate_shaders():
                     ("--platform linux   -p 120", "glsl"),
                     ("--platform android -p 100_es", "essl"),
                     ("--platform linux   -p spirv", "spv"),
-                    ("--platform windows -p s_4_0 -O 3", "dx11"),
-                    ("--platform ios     -p metal -O 3", "mtl"),
+                    (
+                        "--platform windows -p s_4_0"
+                        + ("-O 3" if building_for_release else ""),
+                        "dx11",
+                    ),
+                    (
+                        (
+                            "--platform ios -p metal"
+                            + ("-O 3" if building_for_release else "")
+                        ),
+                        "mtl",
+                    ),
                 ):
                     out_file = Path(
                         f"{output_directory / shader.stem}_{name_suffix}.bin.h"
@@ -1291,7 +1301,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         out_file.write_text(shell_contents, encoding="utf-8")
 
     # Shaders.
-    regenerate_shaders()
+    regenerate_shaders(build_type != BuildType.Debug)
 
     recursive_mkdir(HANDS_GENERATED_DIR)
 

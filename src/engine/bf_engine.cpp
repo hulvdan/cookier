@@ -2365,15 +2365,6 @@ View<TouchID> GetTouchIDs() {  ///
   return {.count = ge.meta._touchIDs.count, .base = ge.meta._touchIDs.base};
 }
 
-bgfx::ProgramHandle
-LoadProgram(const u8* vsh, u32 sizeVsh, const u8* fsh, u32 sizeFsh) {  ///
-  return bgfx::createProgram(
-    _LoadShader(vsh, sizeVsh),
-    _LoadShader(fsh, sizeFsh),
-    /* destroyShaders */ true
-  );
-}
-
 Texture2D _LoadTexture(const char* filepath, Vector2Int size) {  ///
   ZoneScopedN("_LoadTexture()");
   LOGI("Loading texture '%s'...", filepath);
@@ -2750,11 +2741,25 @@ void InitEngine() {  ///
   );
   ReloadSounds();
 
-  ge.meta.programDefaultTexture = LoadProgram(
-    quad_tex_vs, ARRAY_COUNT(quad_tex_vs), quad_tex_fs, ARRAY_COUNT(quad_tex_fs)
+  static const bgfx::EmbeddedShader s_embeddedShaders[] = {
+    BGFX_EMBEDDED_SHADER(quad_tex_vs),
+    BGFX_EMBEDDED_SHADER(quad_tex_fs),
+    BGFX_EMBEDDED_SHADER(quad_vs),
+    BGFX_EMBEDDED_SHADER(quad_fs),
+    BGFX_EMBEDDED_SHADER_END()
+  };
+
+  bgfx::RendererType::Enum type = bgfx::getRendererType();
+  ge.meta.programDefaultTexture = bgfx::createProgram(
+    bgfx::createEmbeddedShader(s_embeddedShaders, type, "quad_tex_vs"),
+    bgfx::createEmbeddedShader(s_embeddedShaders, type, "quad_tex_fs"),
+    true
   );
-  ge.meta.programDefaultQuad
-    = LoadProgram(quad_vs, ARRAY_COUNT(quad_vs), quad_fs, ARRAY_COUNT(quad_fs));
+  ge.meta.programDefaultQuad = bgfx::createProgram(
+    bgfx::createEmbeddedShader(s_embeddedShaders, type, "quad_vs"),
+    bgfx::createEmbeddedShader(s_embeddedShaders, type, "quad_fs"),
+    true
+  );
 
   // Remove Z?
   _PosColorFlashTexVertex::layout.begin()
