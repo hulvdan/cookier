@@ -20,6 +20,58 @@ x cli команда для ребилда шейдеров
 x что такое IMGUI_CHECKVERSION
 x безье анимация wave completed
 
+* sfx: weapon sounds ok: MELEE_0_CACTI_CLUB
+* sfx: weapon sounds ok: MELEE_0_CHOPPER
+* sfx: weapon sounds ok: MELEE_0_CLAW
+* sfx: weapon sounds ok: MELEE_0_FIST
+* sfx: weapon sounds ok: MELEE_0_GHOST_AXE
+* sfx: weapon sounds ok: MELEE_0_GHOST_FLINT
+* sfx: weapon sounds ok: MELEE_0_LANCE
+* sfx: weapon sounds ok: MELEE_0_LIGHTNING_SHIV
+* sfx: weapon sounds ok: MELEE_0_PLANK
+* sfx: weapon sounds ok: MELEE_0_PRUNER
+* sfx: weapon sounds ok: MELEE_0_QUATERSTAFF
+* sfx: weapon sounds ok: MELEE_0_ROCK
+* sfx: weapon sounds ok: MELEE_0_SCREWDRIVER
+* sfx: weapon sounds ok: MELEE_0_SHARP_TOOTH
+* sfx: weapon sounds ok: MELEE_0_SPIKY_SHIELD
+* sfx: weapon sounds ok: MELEE_0_STICK
+* sfx: weapon sounds ok: MELEE_0_TORCH
+* sfx: weapon sounds ok: MELEE_0_WRENCH
+* sfx: weapon sounds ok: MELEE_1_CIRCULAR_SAW
+* sfx: weapon sounds ok: MELEE_1_FLAMING_BRASS_KNUCKLES
+* sfx: weapon sounds ok: MELEE_1_HAMMER
+* sfx: weapon sounds ok: MELEE_1_SWORD
+* sfx: weapon sounds ok: MELEE_2_PLASMA_SLEDGE
+* sfx: weapon sounds ok: MELEE_2_POWER_FIST
+* sfx: weapon sounds ok: MELEE_2_THUNDER_SWORD
+* sfx: weapon sounds ok: MELEE_3_DEX_TROYER
+* sfx: weapon sounds ok: MELEE_3_EXCALIBUR
+* sfx: weapon sounds ok: MELEE_3_SCYTHE
+* sfx: weapon sounds ok: RANGED_0_CROSSBOW
+* sfx: weapon sounds ok: RANGED_0_SHOTGUN
+* sfx: weapon sounds ok: RANGED_0_GHOST_SCEPTER
+* sfx: weapon sounds ok: RANGED_0_ICICLE
+* sfx: weapon sounds ok: RANGED_0_JAVELIN
+* sfx: weapon sounds ok: RANGED_0_LASER_GUN
+* sfx: weapon sounds ok: RANGED_0_PISTOL
+* sfx: weapon sounds ok: RANGED_0_SHREDDER
+* sfx: weapon sounds ok: RANGED_0_SHURIKEN
+* sfx: weapon sounds ok: RANGED_0_SLINGSHOT
+* sfx: weapon sounds ok: RANGED_0_SMG
+* sfx: weapon sounds ok: RANGED_0_WAND
+* sfx: weapon sounds ok: RANGED_1_FIREBALL
+* sfx: weapon sounds ok: RANGED_1_FLAMETHROWER
+* sfx: weapon sounds ok: RANGED_1_POTATO_THROWER
+* sfx: weapon sounds ok: RANGED_1_ROCKER_LAUNCHER
+* sfx: weapon sounds ok: RANGED_2_MINIGUN
+* sfx: weapon sounds ok: RANGED_2_NUCLEAR_LAUNCHER
+* sfx: weapon sounds ok: RANGED_2_SNIPER_GUN
+* sfx: weapon sounds ok: RANGED_3_CHAIN_GUN
+* sfx: weapon sounds ok: RANGED_3_GATLING_LASER
+*
+* sfx: turret spatial shot sound
+*
 * fix: show weapon card burning damage
 * горение нормально смотрится на всех монстрах
 * fix: flamethrower не может слишком быстро бить врагов
@@ -31,14 +83,11 @@ x безье анимация wave completed
   died enemies don't drop coins (apply int_max damage)
 *
 * sfx: burn tick
-* sfx: turret spatial shot sound
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 *
 * sfx: загуглить, как не перегрузить master?
 * sfx: debug отображение master пика
 *
-* sfx: bonk for metallic punch (wrench / hammer / spoon / hexdriver) weapons
-* sfx: просмотреть все оружия ВЫПИШИ ВСЕ ОРУЖИЯ
 * sfx:
 * sfx:
 * sfx:
