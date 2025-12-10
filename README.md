@@ -33,6 +33,7 @@
   ./emsdk install latest
   ```
 - `npm install -g free-tex-packer-cli`:
+- `g++ cli\binary_to_compressed_c.cpp -o cli\binary_to_compressed_c.exe`
 - SFX
   - Reaper. https://www.reaper.fm/download.php
   - Reaper SWS Extensions. https://www.sws-extension.org/

@@ -8,26 +8,25 @@
 #include <bx/allocator.h>
 #include <bx/math.h>
 #include <bx/timer.h>
-#include <dear-imgui/imgui.h>
-#include <dear-imgui/imgui_internal.h>
+#include <imgui.h>
+#include <imgui_internal.h>
 
-#include "imgui.h"
-#include "../bgfx_utils.h"
+// #include "../bgfx_utils.h"
 
 #ifndef USE_LOCAL_STB
 #  define USE_LOCAL_STB 1
 #endif  // USE_LOCAL_STB
 
-#include "vs_ocornut_imgui.bin.h"
-#include "fs_ocornut_imgui.bin.h"
-#include "vs_imgui_image.bin.h"
-#include "fs_imgui_image.bin.h"
+#include "shaders/ocornut_imgui_vs.bin.h"
+#include "shaders/ocornut_imgui_fs.bin.h"
+#include "shaders/imgui_image_vs.bin.h"
+#include "shaders/imgui_image_fs.bin.h"
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] = {
-  BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
-  BGFX_EMBEDDED_SHADER(fs_ocornut_imgui),
-  BGFX_EMBEDDED_SHADER(vs_imgui_image),
-  BGFX_EMBEDDED_SHADER(fs_imgui_image),
+  BGFX_EMBEDDED_SHADER(ocornut_imgui_vs),
+  BGFX_EMBEDDED_SHADER(ocornut_imgui_fs),
+  BGFX_EMBEDDED_SHADER(imgui_image_vs),
+  BGFX_EMBEDDED_SHADER(imgui_image_fs),
 
   BGFX_EMBEDDED_SHADER_END()
 };
