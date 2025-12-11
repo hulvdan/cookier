@@ -10,9 +10,9 @@ WORKING SINCE 2025-09-07
 - ЧИНИМ
 
 x sfx: turret spatial shot sound
+x fix: show weapon card burning damage
+x ref weapon damage + burning use the same lambda
 
-* fix: show weapon card burning damage
-*
 * burn ticks: apprentice wand
 * burn ticks: fireball
 * burn ticks: torch

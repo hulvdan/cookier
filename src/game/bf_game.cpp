@@ -7339,7 +7339,16 @@ void DoUI() {
             }
           };
 
-          // Damage.
+          LAMBDA (
+            void,
+            componentWeaponDamageWithScalings,
+            (int         locale,
+             int         baseDamage,
+             int         actualDamage,
+             int         times,
+             FBFlattened damageScalings,
+             int         tierOffset)
+          )
           {
             CLAY({.layout{
               .childGap = GAP_FLEX,
@@ -7351,21 +7360,11 @@ void DoUI() {
               PlaceholdGroupBegin("VALUE");
 
               LAMBDA (void, showPelletsCount, (Color color)) {
-                int projectileCount = 1;
-                if (fb->projectile_spawn_frame_factors())
-                  projectileCount *= fb->projectile_spawn_frame_factors()->size();
-                if (fb->projectile_count())
-                  projectileCount *= fb->projectile_count()->Get(tierOffset);
-                if (projectileCount > 1)
-                  PlaceholdFormattedString(TextFormat("x%d", projectileCount), color);
+                if (times > 1)
+                  PlaceholdFormattedString(TextFormat("x%d", times), color);
               };
 
-              // Scalings.
-              const FBFlattened flattened{fb->damage_scalings()};
-
               if (data.affectedByGame) {
-                const int actualDamage
-                  = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
                 PlaceholdFormattedString(TextFormat("%d", actualDamage));
                 showPelletsCount(palTextGreen);
 
@@ -7373,12 +7372,10 @@ void DoUI() {
                 PlaceholdString("| ", palTextWhite);
               }
 
-              PlaceholdFormattedString(
-                TextFormat("%d", fb->base_damage()->Get(tierOffset)), palTextWhite
-              );
+              PlaceholdFormattedString(TextFormat("%d", baseDamage), palTextWhite);
               showPelletsCount(palTextWhite);
 
-              for (const int scalingIndex : flattened.Iter()) {
+              for (const int scalingIndex : FBFlattened{damageScalings}.Iter()) {
                 PlaceholdString(" ");
                 PlaceholdString("+ ", palTextWhite);
 
@@ -7393,80 +7390,44 @@ void DoUI() {
 
               PlaceholdGroupEnd();
 
-              BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                Loc_UI_WEAPON_DAMAGE, {.color = palTextBezhevy}
-              );
+              BF_CLAY_TEXT_BROKEN_LOCALIZED(locale, {.color = palTextBezhevy});
 
               FlexEnd();
             }
+          };
+
+          // Damage.
+          {
+            int projectileCount = 1;
+            if (fb->projectile_spawn_frame_factors())
+              projectileCount *= fb->projectile_spawn_frame_factors()->size();
+            if (fb->projectile_count())
+              projectileCount *= fb->projectile_count()->Get(tierOffset);
+            componentWeaponDamageWithScalings(
+              Loc_UI_WEAPON_DAMAGE,
+              fb->base_damage()->Get(tierOffset),
+              CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier),
+              projectileCount,
+              fb->damage_scalings(),
+              tierOffset
+            );
           }
 
           // Burning damage.
           if (fb->burning_damage()) {
-            CLAY({.layout{
-              .childGap = GAP_FLEX,
-              BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            }}) {
-              FlexBegin(CARD_WIDTH, 0);
-
-              PlaceholdGroupBegin("VALUE");
-
-              if (data.affectedByGame) {
-                PlaceholdFormattedString(TextFormat(
-                  "%dx%d",
-                  ApplyDamageScalings(
-                    fb->burning_damage()->Get(tierOffset),
-                    tierOffset,
-                    fb->burning_damage_scalings(),
-                    1
-                  ),
-                  fb->burning_times()->Get(tierOffset)
-                ));
-
-                PlaceholdString(" ");
-                PlaceholdString("| ", palTextWhite);
-              }
-
-              PlaceholdFormattedString(
-                TextFormat(
-                  "%dx%d",
-                  fb->burning_damage()->Get(tierOffset),
-                  fb->burning_times()->Get(tierOffset)
-                ),
-                palTextWhite
-              );
-
-              const FBFlattened scales{fb->burning_damage_scalings()};
-              if (!scales.IsEmpty()) {
-                PlaceholdString(" ");
-                PlaceholdString("+ ", palTextWhite);
-
-                for (auto scalingIndex : scales.Iter()) {
-                  auto fb_scaling = glib->damage_scalings()->Get(scalingIndex);
-
-                  auto percent = fb_scaling->percents_per_tier()->Get(tierOffset);
-                  PlaceholdFormattedString(TextFormat("%d%%", percent), palTextWhite);
-                  PlaceholdImage(
-                    fb_stats->Get(fb_scaling->stat_type())->small_icon_texture_id()
-                  );
-
-                  if (scalingIndex < scales.end - 1)
-                    PlaceholdString("+ ", palTextWhite);
-                }
-              }
-
-              // if (data.affectedByGame)
-              //   PlaceholdString(")", palTextWhite);
-
-              PlaceholdGroupEnd();
-
-              BF_CLAY_TEXT_BROKEN_LOCALIZED(
-                Loc_UI_BURNING_DAMAGE, {.color = palTextBezhevy}
-              );
-
-              FlexEnd();
-            }
+            componentWeaponDamageWithScalings(
+              Loc_UI_BURNING_DAMAGE,
+              fb->burning_damage()->Get(tierOffset),
+              ApplyDamageScalings(
+                fb->burning_damage()->Get(tierOffset),
+                tierOffset,
+                fb->burning_damage_scalings(),
+                1
+              ),
+              fb->burning_times()->Get(tierOffset),
+              fb->burning_damage_scalings(),
+              tierOffset
+            );
           }
 
           // Critical.
