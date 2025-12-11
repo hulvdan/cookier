@@ -3768,15 +3768,10 @@ struct FBFlattened {  ///
   RangeIterator Iter() const {
     return {start, end};
   }
-};
 
-FBFlattened ToFBFlattened(const BFGame::Flattened* fb) {  ///
-  FBFlattened result{};
-  if (fb) {
-    result.start = fb->start();
-    result.end   = fb->end();
+  bool IsEmpty() const {
+    return start >= end;
   }
-  return result;
-}
+};
 
 ///

@@ -25,6 +25,8 @@ from bf_lib import (
     ART_DIR,
     ART_TEXTURES_DIR,
     SRC_DIR,
+    all_are_none,
+    all_are_not_none,
     check_duplicates,
     game_settings,
     gamelib_processor,
@@ -322,6 +324,14 @@ def _process_gamelib(
 
         if not i:
             continue
+
+        # All burning fields must be specified at the same time. Or none at all.
+        burning_fields = [
+            x.get("burning_damage"),
+            x.get("burning_times"),
+            x.get("burning_damage_scalings"),
+        ]
+        assert all_are_not_none(burning_fields) or all_are_none(burning_fields)
 
         weapon_type, min_tier_index, name = x["type"].split("_", 2)
         min_tier_index = int(min_tier_index)

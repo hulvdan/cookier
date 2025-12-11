@@ -11,6 +11,8 @@ WORKING SINCE 2025-09-07
 
 x sfx: turret spatial shot sound
 
+* fix: show weapon card burning damage
+*
 * burn ticks: apprentice wand
 * burn ticks: fireball
 * burn ticks: torch
@@ -19,7 +21,6 @@ x sfx: turret spatial shot sound
 *
 * приоритезировать, что делать дальше
 *
-* fix: show weapon card burning damage
 * горение нормально смотрится на всех монстрах
 * fix: flamethrower не может слишком быстро бить врагов
 *

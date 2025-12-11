@@ -14,6 +14,8 @@ UI_COOLDOWN;Задержка;Cooldown;"TODO: Может, не ""задержка
 UI_RANGE;Дальность;Range;
 UI_KNOCKBACK;Отбрасывание;Knockback;
 UI_CRIT;Крит;Critical;
+UI_WEAPON_DAMAGE;Урон: {VALUE};Damage: {VALUE};
+UI_BURNING_DAMAGE;Горение: {VALUE};Burning: {VALUE};
 UI_THIS_WAVE_DAMAGE;Нанесено урона;This wave damage;
 UI_LIMITED;Ограничено;Limited;
 UI_UNIQUE;Уникалка;Unique;
@@ -449,7 +451,7 @@ ACHIEVEMENT_DESCRIPTION_DIE_FOR_THE_FIRST_TIME;Первое поражение;T
 ACHIEVEMENT_DESCRIPTION_REROLL_N_TIMES_IN_A_ROW_IN_SHOP;Переброшено {VALUE} раз подряд в магазине;Rerolled {VALUE} times in a row in the shop;
 ACHIEVEMENT_DESCRIPTION_KILL_TREES;Среблено {VALUE} деревьев;Cut {VALUE} trees;
 ACHIEVEMENT_DESCRIPTION_HEAL_X_DURING_A_RUN;Вылечено {VALUE} здоровья за забег;Healed {VALUE} HP during a run;
-ACHIEVEMENT_DESCRIPTION_MAX_COUNT_OF_PROJECTILE_ON_SCREEN_LIGHTNING;В мире одновременно находились {VALUE} шт. молний;Had {VALUE} lightning projectiles in the world simultaneosly;
+ACHIEVEMENT_DESCRIPTION_MAX_COUNT_OF_PROJECTILE_ON_SCREEN_LIGHTNING;В мире одновременно находились {VALUE} шт. молний;Had {VALUE} lightning projectiles in the world simultaneously;
 PICKUPABLE_COIN;Печеньга;Cookien;
 PICKUPABLE_CONSUMABLE;Яблоко;Apple;
 PICKUPABLE_CRATE;Сундук;Chest;
@@ -478,7 +480,7 @@ WEAPON_MELEE_1_SWORD;Старый Меч;Old Sword;
 WEAPON_MELEE_2_PLASMA_SLEDGE;Граната Света На Палочке;Grenade Of Light On A Stick;
 WEAPON_MELEE_2_POWER_FIST;Перчатка Подрывника;Demolitionist's Glove;
 WEAPON_MELEE_2_THUNDER_SWORD;Скрученный Кинжал;Twisted Dagger;
-WEAPON_MELEE_3_DEX_TROYER;Нож Грома;Knife Of Thunder;
+WEAPON_MELEE_3_DEX_TROYER;Кинжал Грома;Knife Of Thunder;
 WEAPON_MELEE_3_EXCALIBUR;Терра Меч;Terra Sword;
 WEAPON_MELEE_3_SCYTHE;Трилезвийная Коса;Triple-bladed Scythe;
 WEAPON_RANGED_0_CROSSBOW;Арбалет;Crossbow;

@@ -2450,6 +2450,10 @@ void PlaceholdString(const char* value, Color color = palTextGreen) {  ///
   });
 }
 
+void PlaceholdFormattedString(const char* value, Color color = palTextGreen) {  ///
+  PlaceholdString(PushTextToArena(&g.meta.trashArena, value), color);
+}
+
 // `placeholder` and `value` must be statically allocated or live in trashArena.
 void PlaceholdString(
   const char* placeholder,
@@ -6713,7 +6717,7 @@ void DoUI() {
 
           PlaceholdGroupBegin("MODIFIER");
 
-          PlaceholdString(
+          PlaceholdFormattedString(
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
             (isPositive == fb_stat->negative_is_good() ? palTextRed : palTextGreen)
           );
@@ -6760,7 +6764,10 @@ void DoUI() {
 
           PlaceholdString(
             "MODIFIER",
-            TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
+            PushTextToArena(
+              &g.meta.trashArena,
+              TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v)))
+            ),
             palTextGreen
           );
         }
@@ -6821,7 +6828,7 @@ void DoUI() {
                   color = palTextRed;
               }
 
-              PlaceholdString(PushTextToArena(&g.meta.trashArena, formatted), color);
+              PlaceholdFormattedString(formatted, color);
             } break;
 
             case CondVarType_FLOAT: {
@@ -6840,7 +6847,7 @@ void DoUI() {
               if (fb_placeholder->is_percent())
                 formatted = TextFormat("%s%%", formatted);
 
-              PlaceholdString(PushTextToArena(&g.meta.trashArena, formatted));
+              PlaceholdFormattedString(formatted);
             } break;
 
             case CondVarType_DAMAGE: {
@@ -6856,7 +6863,7 @@ void DoUI() {
 
               int totalScalings = 0;
               if (scalings) {
-                for (const int s : ToFBFlattened(scalings).Iter()) {
+                for (const int s : FBFlattened{scalings}.Iter()) {
                   const int v
                     = fb_damageScalings->Get(s)->percents_per_tier()->Get(tierOffset);
                   if (v)
@@ -6865,18 +6872,16 @@ void DoUI() {
               }
 
               if (baseDamage) {
-                PlaceholdString(PushTextToArena(&g.meta.trashArena, FormatInt(baseDamage))
-                );
+                PlaceholdFormattedString(FormatInt(baseDamage));
 
                 if (totalScalings) {
                   PlaceholdString(" ");
-                  PlaceholdString("+");
-                  PlaceholdString(" ");
+                  PlaceholdString("+ ");
                 }
               }
 
               if (scalings) {
-                for (auto s : ToFBFlattened(scalings).Iter()) {
+                for (auto s : FBFlattened{scalings}.Iter()) {
                   auto fb_scaling = fb_damageScalings->Get(s);
 
                   int v = fb_scaling->percents_per_tier()->Get(tierOffset);
@@ -6888,7 +6893,7 @@ void DoUI() {
                   if (!v)
                     continue;
 
-                  PlaceholdString(TextFormat("%d%%", v));
+                  PlaceholdFormattedString(TextFormat("%d%%", v));
                   PlaceholdImage(
                     fb_stats->Get(fb_scaling->stat_type())->small_icon_texture_id()
                   );
@@ -6896,8 +6901,7 @@ void DoUI() {
 
                   if (totalScalings > 0) {
                     PlaceholdString(" ");
-                    PlaceholdString("+");
-                    PlaceholdString(" ");
+                    PlaceholdString("+ ");
                   }
                 }
               }
@@ -6980,8 +6984,11 @@ void DoUI() {
             ->c_str()
         );
       }
-      else
-        PlaceholdString("VALUE", TextFormat("%d", fb_step->value()));
+      else {
+        PlaceholdString(
+          "VALUE", PushTextToArena(&g.meta.trashArena, TextFormat("%d", fb_step->value()))
+        );
+      }
 
       if (fb->stat_type()) {
         PlaceholdGroupBegin("STAT");
@@ -7333,9 +7340,16 @@ void DoUI() {
           };
 
           // Damage.
-          componentWeaponStatEntry(
-            fb_stats->Get(StatType_DAMAGE)->name_locale(),
-            [&]() BF_FORCE_INLINE_LAMBDA {
+          {
+            CLAY({.layout{
+              .childGap = GAP_FLEX,
+              BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              FlexBegin(CARD_WIDTH, 0);
+
+              PlaceholdGroupBegin("VALUE");
+
               LAMBDA (void, showPelletsCount, (Color color)) {
                 int projectileCount = 1;
                 if (fb->projectile_spawn_frame_factors())
@@ -7343,49 +7357,119 @@ void DoUI() {
                 if (fb->projectile_count())
                   projectileCount *= fb->projectile_count()->Get(tierOffset);
                 if (projectileCount > 1)
-                  BF_CLAY_TEXT(TextFormat("x%d", projectileCount), {.color = color});
+                  PlaceholdFormattedString(TextFormat("x%d", projectileCount), color);
               };
 
-              const int baseDamage = fb->base_damage()->Get(tierOffset);
+              // Scalings.
+              const FBFlattened flattened{fb->damage_scalings()};
+
               if (data.affectedByGame) {
                 const int actualDamage
                   = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
-                BF_CLAY_TEXT(TextFormat("%d", actualDamage), {.color = palTextGreen});
+                PlaceholdFormattedString(TextFormat("%d", actualDamage));
                 showPelletsCount(palTextGreen);
-                BF_CLAY_TEXT(
-                  TextFormat(" (%d", baseDamage), {.color = secondaryTextColor}
+                PlaceholdString(" (", palTextWhite);
+              }
+
+              PlaceholdFormattedString(
+                TextFormat("%d", fb->base_damage()->Get(tierOffset)), palTextWhite
+              );
+              showPelletsCount(palTextWhite);
+
+              for (const int scalingIndex : flattened.Iter()) {
+                PlaceholdString(" ");
+                PlaceholdString("+ ", palTextWhite);
+
+                const auto fb_scaling = fb_damageScalings->Get(scalingIndex);
+                const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
+                PlaceholdFormattedString(
+                  TextFormat("%d%%", fb_scaling->percents_per_tier()->Get(tierOffset)),
+                  palTextWhite
                 );
-                showPelletsCount(secondaryTextColor);
-                BF_CLAY_TEXT(")", {.color = secondaryTextColor});
-              }
-              else {
-                BF_CLAY_TEXT(TextFormat("%d", baseDamage), {.color = palTextGreen});
-                showPelletsCount(palTextGreen);
+                PlaceholdImage(fb_stat->small_icon_texture_id());
               }
 
-              // Scalings.
-              const auto fb_scalingIndices = fb->damage_scalings();
-              if (fb_scalingIndices
-                  && (fb_scalingIndices->start() < fb_scalingIndices->end()))
-              {
-                BF_CLAY_TEXT(" (");
+              if (data.affectedByGame)
+                PlaceholdString(")", palTextWhite);
 
-                const auto flattened = ToFBFlattened(fb_scalingIndices);
+              PlaceholdGroupEnd();
 
-                for (const int scalingIndex : flattened.Iter()) {
-                  const auto fb_scaling = fb_damageScalings->Get(scalingIndex);
-                  const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
-                  BF_CLAY_TEXT(
-                    TextFormat("%d%%", fb_scaling->percents_per_tier()->Get(tierOffset))
-                  );
-                  BF_CLAY_IMAGE({.texID = fb_stat->small_icon_texture_id()});
-                  if (scalingIndex < flattened.end - 1)
-                    BF_CLAY_TEXT(" + ");
-                }
-                BF_CLAY_TEXT(")");
-              }
+              BF_CLAY_TEXT_BROKEN_LOCALIZED(
+                Loc_UI_WEAPON_DAMAGE, {.color = palTextBezhevy}
+              );
+
+              FlexEnd();
             }
-          );
+          }
+
+          // Burning damage.
+          if (fb->burning_damage()) {
+            CLAY({.layout{
+              .childGap = GAP_FLEX,
+              BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+              .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            }}) {
+              FlexBegin(CARD_WIDTH, 0);
+
+              PlaceholdGroupBegin("VALUE");
+
+              if (data.affectedByGame) {
+                PlaceholdFormattedString(TextFormat(
+                  "%dx%d",
+                  ApplyDamageScalings(
+                    fb->burning_damage()->Get(tierOffset),
+                    tierOffset,
+                    fb->burning_damage_scalings(),
+                    1
+                  ),
+                  fb->burning_times()->Get(tierOffset)
+                ));
+
+                PlaceholdString(" ");
+                PlaceholdString("(", palTextWhite);
+              }
+
+              PlaceholdFormattedString(
+                TextFormat(
+                  "%dx%d",
+                  fb->burning_damage()->Get(tierOffset),
+                  fb->burning_times()->Get(tierOffset)
+                ),
+                palTextWhite
+              );
+
+              const FBFlattened scales{fb->burning_damage_scalings()};
+              if (!scales.IsEmpty()) {
+                PlaceholdString(" ");
+                PlaceholdString("+ ", palTextWhite);
+
+                for (auto scalingIndex : scales.Iter()) {
+                  auto fb_scaling = glib->damage_scalings()->Get(scalingIndex);
+
+                  auto percent = fb_scaling->percents_per_tier()->Get(tierOffset);
+                  PlaceholdFormattedString(TextFormat("%d%%", percent), palTextWhite);
+                  PlaceholdString(" ");
+                  PlaceholdImage(
+                    fb_stats->Get(fb_scaling->stat_type())->small_icon_texture_id()
+                  );
+
+                  if (scalingIndex < scales.end - 1)
+                    PlaceholdString("+ ", palTextWhite);
+                }
+              }
+
+              if (data.affectedByGame)
+                PlaceholdString(")", palTextWhite);
+
+              PlaceholdGroupEnd();
+
+              BF_CLAY_TEXT_BROKEN_LOCALIZED(
+                Loc_UI_BURNING_DAMAGE, {.color = palTextBezhevy}
+              );
+
+              FlexEnd();
+            }
+          }
 
           // Critical.
           {
