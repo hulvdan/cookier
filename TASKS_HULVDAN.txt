@@ -23,8 +23,10 @@ x better sfx: darker cunai
 x starts with different music (initialize random to different value)
 x go through localization TODOs
 x TASKS_INTERNET.txt
+x nothing changes knockback stat
+x fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
+x сковородку поменьше нарисовать
 
-* fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
 * fix: web билд почему-то прогресс неправильно отображается
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
@@ -118,7 +120,6 @@ x TASKS_INTERNET.txt
 * better sfx: add higher layer to barrel
 * sfx: ease engine volume change on focus / defocus
 * cli команда для сравнения пиков звуков
-* сковородку поменьше нарисовать
 * cooravie shots cooldown + doesn't walk towards player when aggroed
 * sfx: загуглить, как не перегрузить master?
 * sfx: debug отображение master пика
