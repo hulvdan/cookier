@@ -21,8 +21,15 @@ x что такое IMGUI_CHECKVERSION
 x безье анимация wave completed
 x почему непраильно отображаются предметы
 x sfx: все оружия звучат ~ок
+x sfx: turret spatial shot sound
 
-* sfx: turret spatial shot sound
+* burn ticks: apprentice wand
+* burn ticks: fireball
+* burn ticks: torch
+*
+* sfx: burn tick
+*
+* приоритезировать, что делать дальше
 *
 * fix: show weapon card burning damage
 * горение нормально смотрится на всех монстрах
@@ -34,7 +41,6 @@ x sfx: все оружия звучат ~ок
 * restrict max enemies to 100
   died enemies don't drop coins (apply int_max damage)
 *
-* sfx: burn tick
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 *
 * sfx: загуглить, как не перегрузить master?

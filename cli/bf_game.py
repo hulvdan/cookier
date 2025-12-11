@@ -811,9 +811,6 @@ def _process_gamelib(
     # {  ###
     for v in transforms:
         recursive_replace_transform(gamelib, *(v[1:]))
-    for v in transforms:
-        for x in gamelib[v[0]]:
-            x.pop("type", None)
 
     recursive_flattenizer(gamelib, "damage_scaling", "damage_scalings", "damage_scalings")
     # }

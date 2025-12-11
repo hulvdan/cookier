@@ -12138,7 +12138,10 @@ void GameFixedUpdate() {
                     .bounce               = fb->turret_bounce(),
                   },
                 });
-                PlaySound(fb->action_sound_hash());
+
+                PlaySound(
+                  fb->action_sound_hash(), {.pos{creature.pos.x, creature.pos.y, 2, 16}}
+                );
               }
 
               const auto dur
@@ -13612,6 +13615,14 @@ void GameFixedUpdate() {
   );
   SetMusicLowpassFactor(g.meta.musicLowpassFactor);
 
+  {
+    auto engine = &ge.meta._soundManager.engine;
+    ma_engine_listener_set_position(
+      engine, 0, PLAYER_CREATURE.pos.x, PLAYER_CREATURE.pos.y, 0
+    );
+    ma_engine_listener_set_world_up(engine, 0, 0, 0, 1);
+  }
+
   ge.meta.frameVisual++;
 }
 
@@ -14608,8 +14619,25 @@ void GameDraw() {
 #undef X
   }
 
-  if (ge.meta.debugEnabled)
-    ImGui::ShowDemoWindow();
+#define IM ImGui
+
+  // Cheats. Giving items.
+  if (ge.meta.debugEnabled) {  ///
+    IM::Begin("Cheats");
+
+    FOR_RANGE (int, i, ItemType_COUNT) {
+      if (!i)
+        continue;
+
+      const auto type = (ItemType)i;
+      if (IM::Button(
+            TextFormat("Give item: %s", glib->items()->Get(type)->type()->c_str())
+          ))
+        AddItem(type);
+    }
+
+    IM::End();
+  }
 
   g.run.meleeWeaponColliderGizmos.Reset();
 }

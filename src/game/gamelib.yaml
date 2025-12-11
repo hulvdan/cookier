@@ -152,6 +152,7 @@ creatures: # {  ###
     texture_ids:
       - ui_item_turret
     shadow_offset_y: -0.43
+    action_sound_hash: GAME_GUN_SHOT
   - type: MOB_SMALL
     appearing_wave_number: 1
     spawn_factor: 100
