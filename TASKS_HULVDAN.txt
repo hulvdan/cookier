@@ -17,55 +17,21 @@ x Маслову билд
 x fix: почему факел не даёт burning spread ?
   вывести все статы в imgui
 
-* sfx: burn tick
-*
 * приоритезировать, что делать дальше
 *
-* горение нормально смотрится на всех монстрах
-* fix: flamethrower не может слишком быстро бить врагов
+* better sfx: shotgun darker?
+* better sfx: darker cunai
 *
-* restrict max enemies to 100
-  died enemies don't drop coins (apply int_max damage)
+* starts with different music (initialize random to different value)
+* горение нормально смотрится на всех монстрах
+*
+* fix: flamethrower не может слишком быстро бить врагов
 *
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 *
-* sfx: загуглить, как не перегрузить master?
-* sfx: debug отображение master пика
-*
-* sfx:
-* sfx:
-* sfx:
-*
-* starts with different music (initialize random to different value)
-*
-* cooravie shots cooldown + doesn't walk towards player when aggroed
-*
-* сковородку поменьше нарисовать
-*
-* cli команда для сравнения пиков звуков
-*
 * sfx: emscripten старт звука после key / mouse / touch press
-* sfx: ease engine volume change on focus / defocus
 *
-* better sfx: ui hover
-* better sfx: shotgun less reverb?
-* better sfx: mob hit sound
-* better sfx: add higher layer to barrel
-* better sfx:
-* better sfx:
-* better sfx:
-* better sfx:
-* better sfx:
-* better sfx:
-* better sfx:
-*
-*
-* bf_image: возможность rectangle не скруглять какие-либо углы
-* ОБУЧЕНИЕ: золотые окантовки вокруг кнопок, на которые игрок не кликал раньше
-* sfx: miniaudio playsound volume easing
-* sfx: навести порядок у reaper в скриптах (убрать абсолютные пути)
-*
-* itch билд почему-то прогресс неправильно отображается
+* fix: itch билд почему-то прогресс неправильно отображается
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
 * firefox itch билд почему-то не запускается, а хром работает
@@ -172,6 +138,22 @@ x fix: почему факел не даёт burning spread ?
 *
 * RELEASED!
 =======================
+* sfx: навести порядок у reaper в скриптах (убрать абсолютные пути)
+* sfx: miniaudio playsound volume easing
+* ОБУЧЕНИЕ: золотые окантовки вокруг кнопок, на которые игрок не кликал раньше
+* bf_image: возможность rectangle не скруглять какие-либо углы
+* better sfx: ui hover
+* better sfx: add higher layer to barrel
+* sfx: ease engine volume change on focus / defocus
+* cli команда для сравнения пиков звуков
+* сковородку поменьше нарисовать
+* cooravie shots cooldown + doesn't walk towards player when aggroed
+* sfx: загуглить, как не перегрузить master?
+* sfx: debug отображение master пика
+*
+* restrict max enemies to 100
+  died enemies don't drop coins (apply int_max damage)
+* sfx: burn tick
 * запрет ranged оружиям бить нескольких врагов за раз
 * iskeypressedrepeat
   iskeyreleasedrepeat
