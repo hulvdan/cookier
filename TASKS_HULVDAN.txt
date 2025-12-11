@@ -18,15 +18,14 @@ x fix: почему факел не даёт burning spread ?
   вывести все статы в imgui
 - fix выдача всех ачивок
 x билды цвета
+x better sfx: shotgun darker?
+x better sfx: darker cunai
 
 * приоритезировать, что делать дальше
 *
-* better sfx: shotgun darker?
 * fix: web билд почему-то прогресс неправильно отображается
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
-*
-* better sfx: darker cunai
 *
 * starts with different music (initialize random to different value)
 * горение нормально смотрится на всех монстрах
