@@ -127,10 +127,10 @@ x TASKS_INTERNET.txt
 * prod: аналитика
 *
 * fix расположение ховер карточек
-* find suitable music
 *
 * RELEASED!
 =======================
+* find suitable music
 * engine: show transient buffer arena
 * баланс количество chester-ов
 * ограничить количество живых chester-ов
