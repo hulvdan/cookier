@@ -14675,20 +14675,46 @@ void GameDraw() {
 
   // Cheats. Giving items.
   if (ge.meta.debugEnabled) {  ///
-    IM::Begin("Cheats");
+    if (0)
+      IM::ShowDemoWindow();
 
-    FOR_RANGE (int, i, ItemType_COUNT) {
-      if (!i)
-        continue;
+    if (IM::Begin("Cheats")) {
+      if (IM::BeginTabBar("tabs")) {
+        if (IM::BeginTabItem("Items")) {
+          FOR_RANGE (int, i, ItemType_COUNT) {
+            if (!i)
+              continue;
 
-      const auto type = (ItemType)i;
-      if (IM::Button(
-            TextFormat("Give item: %s", glib->items()->Get(type)->type()->c_str())
-          ))
-        AddItem(type);
+            const auto type = (ItemType)i;
+            if (IM::Button(
+                  TextFormat("Give item: %s", glib->items()->Get(type)->type()->c_str())
+                ))
+              AddItem(type);
+          }
+          IM::EndTabItem();
+        }
+
+        if (IM::BeginTabItem("Stats")) {
+          FOR_RANGE (int, i, StatType_COUNT) {
+            if (!i)
+              continue;
+            const auto stat = (StatType)i;
+            IM::LabelText(
+              TextFormat("stat%d", i),
+              TextFormat(
+                "%s %d",
+                glib->stats()->Get(stat)->type()->c_str(),
+                g.run.state.stats[stat]
+              )
+            );
+          }
+          IM::EndTabItem();
+        }
+
+        IM::EndTabBar();
+      }
+      IM::End();
     }
-
-    IM::End();
   }
 
   g.run.meleeWeaponColliderGizmos.Reset();
