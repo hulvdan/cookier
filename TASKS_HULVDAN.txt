@@ -24,6 +24,9 @@ x starts with different music (initialize random to different value)
 x go through localization TODOs
 x TASKS_INTERNET.txt
 
+* show controls before starting the first wave
+  (show circle around center of the map -> player has to go away from it)
+*
 * приоритезировать, что делать дальше
 *
 * fix: web билд почему-то прогресс неправильно отображается
@@ -118,18 +121,14 @@ x TASKS_INTERNET.txt
 *
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
 *
-* show controls before starting the first wave
-  (show circle around center of the map -> player has to go away from it)
-*
-* prod: MUSIC
-* prod: SFX
-* prod: сакутиновая отправка event-ов аналитики
 * prod: аналитика
+* prod: сакутиновая отправка event-ов аналитики
 *
 * fix расположение ховер карточек
 *
 * RELEASED!
 =======================
+* prod: MUSIC
 * find suitable music
 * engine: show transient buffer arena
 * баланс количество chester-ов
