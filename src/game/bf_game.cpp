@@ -6180,7 +6180,7 @@ void DoUI() {
       keys.count = 0;
 
     return componentButton(
-      {.id = rerollID, .group = group, .keys = keys},
+      {.id = rerollID, .group = group, .keys = keys, .tier = 7},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
           const bool canReroll = (price <= PLAYER_COINS);
@@ -7727,7 +7727,7 @@ void DoUI() {
                 {
                   .id    = combineID,
                   .group = groupDetails,
-                  .tier  = tier,
+                  .tier  = 7,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
@@ -7741,7 +7741,7 @@ void DoUI() {
                      .id    = weaponRecycleID,
                      .group = groupDetails,
                      .price = recyclePrice,
-                     .tier  = tier,
+                     .tier  = 4,
             });
 
             // Cancel button.
@@ -9251,7 +9251,7 @@ void DoUI() {
         }}) {
           auto       tookID = CLAY_ID("button_picked_up_item_take");
           const bool took   = componentButton(
-            {.id = tookID, .group = group, .tier = fb->tier()},
+            {.id = tookID, .group = group, .tier = 7},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
             }
@@ -9266,7 +9266,7 @@ void DoUI() {
             .id    = CLAY_ID("button_picked_up_item_recycle"),
             .group = group,
             .price = recyclePrice,
-            .tier  = fb->tier(),
+            .tier  = 4,
           });
 
           if (took)
@@ -9439,6 +9439,7 @@ void DoUI() {
                           .group = groupUpgrades,
                           .keys  = keys,
                           .tier  = upgrade.tier,
+                  // .tier  = 7,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});

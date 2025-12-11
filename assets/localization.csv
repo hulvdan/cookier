@@ -9,7 +9,7 @@ UI_ITEM;Предмет;Item;
 UI_ITEMS;Предметы;Items;
 UI_WEAPON;Оружие;Weapon;
 UI_WEAPONS;Оружие;Weapons;
-UI_ITEM_FOUND;Найден Предмет!;Item Found!;
+UI_ITEM_FOUND;Предмет Из Сундука;Chest Item;
 UI_COOLDOWN;Задержка;Cooldown;"TODO: Может, не ""задержка"", а что-то другое?"
 UI_RANGE;Дальность;Range;
 UI_KNOCKBACK;Отбрасывание;Knockback;
