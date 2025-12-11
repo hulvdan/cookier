@@ -12,10 +12,9 @@ WORKING SINCE 2025-09-07
 x sfx: turret spatial shot sound
 x fix: show weapon card burning damage
 x ref weapon damage + burning use the same lambda
+x цветовое кодирование кнопок взятия / recycle / reroll
 
-* burn ticks: apprentice wand
-* burn ticks: fireball
-* burn ticks: torch
+* Маслову билд
 *
 * sfx: burn tick
 *
@@ -62,9 +61,6 @@ x ref weapon damage + burning use the same lambda
 * better sfx:
 * better sfx:
 *
-* Маслову билд
-*
-* цветовое кодирование кнопок зелёные - брать, красные - продавать, reroll - ???
 *
 * bf_image: возможность rectangle не скруглять какие-либо углы
 * ОБУЧЕНИЕ: золотые окантовки вокруг кнопок, на которые игрок не кликал раньше
