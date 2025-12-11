@@ -21,6 +21,7 @@ x билды цвета
 x better sfx: shotgun darker?
 x better sfx: darker cunai
 x starts with different music (initialize random to different value)
+x go through localization TODOs
 
 * приоритезировать, что делать дальше
 *
@@ -45,7 +46,6 @@ x starts with different music (initialize random to different value)
   мб даже проставить это в gamelib.fbs, а не хардкодить
   + требование указания в gamelib.yaml как обязательное поле
 *
-* go through localization TODOs
 * прогнать localization.txt через chatgpt, чтобы он нашёл грамматические ошибки и излишества
 * починить вёрстку web для ipad
 *
