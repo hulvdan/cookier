@@ -20,6 +20,7 @@ x fix: почему факел не даёт burning spread ?
 x билды цвета
 x better sfx: shotgun darker?
 x better sfx: darker cunai
+x starts with different music (initialize random to different value)
 
 * приоритезировать, что делать дальше
 *
@@ -27,7 +28,6 @@ x better sfx: darker cunai
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
 *
-* starts with different music (initialize random to different value)
 * горение нормально смотрится на всех монстрах
 *
 * fix: flamethrower не может слишком быстро бить врагов

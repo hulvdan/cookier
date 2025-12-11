@@ -2722,6 +2722,13 @@ void ReloadSounds() {  ///
 void InitEngine() {  ///
   ZoneScopedN("InitEngine");
 
+  // Initializing visual random.
+  {
+    SDL_Time t{};
+    SDL_GetCurrentTime(&t);
+    ge.meta.visualRand._state = (u32)t;
+  }
+
   ge.meta._keyboardState.base = SDL_GetKeyboardState(&ge.meta._keyboardState.count);
 
   size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardState.count;
