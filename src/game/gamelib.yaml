@@ -469,6 +469,7 @@ effect_conditions: # {  ###
     x_multiplied_by_times: true
     y_condvar_type: DAMAGE
   - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
+    x_is_percent: true
     x_multiplied_by_times: true
     y_condvar_type: DAMAGE
   - type: STAT__UPON__PICKUPABLE__AT_MAX_HP
@@ -4630,94 +4631,15 @@ builds: # {  ###
       - stat_type: LUCK
         value: 8
     unlocks_item_type: POTATO
-  - type: NINJA
-    hat_type: BEANIE
-    hat_color: 0x208cb2ff
-    layer_colors:
-      - 0xefcb84ff # head
-      - 0x885A44ff # feet
-      - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
-      - 0x885A44ff # beard
-      - 0xefcb84ff # arms
-    starting_weapon_types:
-      - RANGED_0_SHURIKEN
-      - RANGED_0_SHREDDER
-      - RANGED_0_SLINGSHOT
-    effects:
-      - stat_type: RANGE
-        value: 30
-      - stat_type: DODGE
-        value: 3
-      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
-        weapon_type: RANGED_0_SHURIKEN
-        placeholders:
-          - ints: 1
-      - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
-    unlocks_item_type: STATUE
-  - type: VICTIM
-    hat_type: TOP
-    hat_color: 0xc02931ff
-    layer_colors:
-      - 0xefcb84ff # head
-      - 0xc02931ff # feet
-      - 0xc02931ff # shirt
-      - 0xc02931ff # phartuk
-      - 0xc02931ff # beard
-      - 0xefcb84ff # arms
-    starting_weapon_types:
-      - MELEE_0_CACTI_CLUB
-      - MELEE_0_TORCH
-      - RANGED_0_SHOTGUN
-    effects:
-      - stat_type: ENEMIES
-        value: 50
-      - stat_type: DAMAGE
-        value: 25
-      - effectcondition_type: END_OF_THE_WAVE_GET__STAT
-        stat_type: HARVESTING
-        value: -3
-    unlocks_weapon_type: RANGED_1_FIREBALL
-  - type: FAST
-    hat_type: TOP
-    hat_color: 0x7b7c74ff
-    layer_colors:
-      - 0xefcb84ff # head
-      - 0x885A44ff # feet
-      - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
-      - 0x885A44ff # beard
-      - 0xefcb84ff # arms
-    starting_weapon_types:
-      - MELEE_0_LIGHTNING_SHIV
-      - MELEE_0_GHOST_FLINT
-      - MELEE_0_LANCE
-      - RANGED_0_SMG
-      - RANGED_0_SHURIKEN
-    effects:
-      - stat_type: SPEED
-        value: 30
-      # - effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
-      #   stat_type: DAMAGE_MELEE
-      #   stat_type_2: SPEED
-      #   value: 1
-      #   placeholders:
-      #     - ints: 2
-      - stat_type: ARMOR
-        value: -3
-      - effectcondition_type: STAT__WHEN_IDLE
-        stat_type: ARMOR
-        value: -100
-    unlocks_weapon_type: MELEE_0_CLAW
   - type: ENGINEER
-    hat_type: TOP
-    hat_color: 0x7b7c74ff
+    hat_type: BEANIE
+    hat_color: 0xdc9824ff
     layer_colors:
       - 0xefcb84ff # head
-      - 0x885A44ff # feet
-      - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
-      - 0x885A44ff # beard
+      - 0xb8560fff # feet
+      - 0xdc9824ff # shirt
+      - 0x208cb2ff # phartuk
+      - 0xb8560fff # beard
       - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_WRENCH
@@ -4741,16 +4663,128 @@ builds: # {  ###
           - ints: -50
       - effectcondition_type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
     unlocks_weapon_type: RANGED_1_ROCKER_LAUNCHER
-  - type: ARMS_DEALER
+  - type: VICTIM
     hat_type: TOP
-    hat_color: 0x7b7c74ff
+    hat_color: 0xc02931ff
+    layer_colors:
+      - 0xefcb84ff # head
+      - 0xb8560fff # feet
+      - 0xc02931ff # shirt
+      - 0xc02931ff # phartuk
+      - 0xb8560fff # beard
+      - 0xefcb84ff # arms
+    starting_weapon_types:
+      - MELEE_0_CACTI_CLUB
+      - MELEE_0_TORCH
+      - RANGED_0_SHOTGUN
+    effects:
+      - stat_type: ENEMIES
+        value: 50
+      - stat_type: DAMAGE
+        value: 25
+      - effectcondition_type: END_OF_THE_WAVE_GET__STAT
+        stat_type: HARVESTING
+        value: -3
+    unlocks_weapon_type: RANGED_1_FIREBALL
+  - type: FAST
+    hat_type: KEPKA
+    hat_color: 0x208cb2ff
     layer_colors:
       - 0xefcb84ff # head
       - 0x885A44ff # feet
-      - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
+      - 0x82dcd7ff # shirt
+      - 0x208cb2ff # phartuk
       - 0x885A44ff # beard
       - 0xefcb84ff # arms
+    starting_weapon_types:
+      - MELEE_0_LIGHTNING_SHIV
+      - MELEE_0_GHOST_FLINT
+      - MELEE_0_LANCE
+      - RANGED_0_SMG
+      - RANGED_0_SHURIKEN
+    effects:
+      - stat_type: SPEED
+        value: 30
+      # - effectcondition_type: STAT__EVERY_OTHER__X__STAT_2
+      #   stat_type: DAMAGE_MELEE
+      #   stat_type_2: SPEED
+      #   value: 1
+      #   placeholders:
+      #     - ints: 2
+      - stat_type: ARMOR
+        value: -3
+      - effectcondition_type: STAT__WHEN_IDLE
+        stat_type: ARMOR
+        value: -100
+    unlocks_weapon_type: MELEE_0_CLAW
+  - type: NINJA
+    hat_type: BEANIE
+    hat_color: 0x3a3a41ff
+    layer_colors:
+      - 0xefcb84ff # head
+      - 0x7a7576ff # feet
+      - 0x7a7576ff # shirt
+      - 0x3a3a41ff # phartuk
+      - 0x7a7576ff # beard
+      - 0xefcb84ff # arms
+    starting_weapon_types:
+      - RANGED_0_SHURIKEN
+      - RANGED_0_SHREDDER
+      - RANGED_0_SLINGSHOT
+    effects:
+      - stat_type: RANGE
+        value: 30
+      - stat_type: DODGE
+        value: 3
+      - effectcondition_type: START_WITH__X__ITEM_OR_WEAPON
+        weapon_type: RANGED_0_SHURIKEN
+        placeholders:
+          - ints: 1
+      - effectcondition_type: CANT_EQUIP_MELEE_WEAPONS
+    unlocks_item_type: STATUE
+  - type: LICH
+    hat_type: BEANIE
+    hat_color: 0xa13d77ff
+    layer_colors:
+      - 0xcec7b1ff # head
+      - 0xa13d77ff # feet
+      - 0x7a7576ff # shirt
+      - 0xCEC7B1ff # phartuk
+      - 0xa13d77ff # beard
+      - 0xa13d77ff # arms
+    starting_weapon_types:
+      - MELEE_0_LIGHTNING_SHIV
+      - MELEE_0_STICK
+      - MELEE_0_SHARP_TOOTH
+      - RANGED_0_ICICLE
+      - RANGED_0_SHURIKEN
+    effects:
+      - stat_type: REGEN
+        value: 10
+      - stat_type: LIFE_STEAL
+        value: 10
+      - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
+        placeholders:
+          - ints: 100
+          - ints: 10
+        damage_scalings:
+          - stat_type: HP
+            percents_per_tier: 100
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: DAMAGE
+        placeholders:
+          - ints: -50
+    unlocks_item_type: DECOMPOSING_FLESH
+  - type: ARMS_DEALER
+    hat_type: KEPKA
+    hat_color: 0xdc9824ff
+    layer_colors:
+      - 0x885a44ff # head
+      - 0xdc9824ff # feet
+      - 0xdc9824ff # shirt
+      - 0x7a7576ff # phartuk
+      - 0x7b7c74ff # beard
+      - 0x885a44ff # arms
     starting_weapon_types:
       - MELEE_0_FIST
       - MELEE_0_GHOST_FLINT
@@ -4777,48 +4811,15 @@ builds: # {  ###
           - ints: 1
       - effectcondition_type: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
     unlocks_item_type: RICOCHET
-  - type: LICH
-    hat_type: TOP
-    hat_color: 0x7b7c74ff
-    layer_colors:
-      - 0xefcb84ff # head
-      - 0x885A44ff # feet
-      - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
-      - 0x885A44ff # beard
-      - 0xefcb84ff # arms
-    starting_weapon_types:
-      - MELEE_0_LIGHTNING_SHIV
-      - MELEE_0_STICK
-      - MELEE_0_SHARP_TOOTH
-      - RANGED_0_ICICLE
-      - RANGED_0_SHURIKEN
-    effects:
-      - stat_type: REGEN
-        value: 10
-      - stat_type: LIFE_STEAL
-        value: 10
-      - effectcondition_type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_HEALING
-        placeholders:
-          - ints: 100
-          - ints: 10
-        damage_scalings:
-          - stat_type: HP
-            percents_per_tier: 100
-      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
-        stat_type_2: DAMAGE
-        placeholders:
-          - ints: -50
-    unlocks_item_type: DECOMPOSING_FLESH
   - type: GOLEM
-    hat_type: TOP
-    hat_color: 0x7b7c74ff
+    hat_type: GOPNIK
+    hat_color: 0xb8560fff
     layer_colors:
       - 0xefcb84ff # head
-      - 0x885A44ff # feet
-      - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
-      - 0x885A44ff # beard
+      - 0xc02931ff # feet
+      - 0xe68556ff # shirt
+      - 0xb8560fff # phartuk
+      - 0xc02931ff # beard
       - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_FIST
@@ -4850,13 +4851,13 @@ builds: # {  ###
     unlocks_item_type: ALIEN_BABY
   - type: LUCKY
     hat_type: TOP
-    hat_color: 0x7b7c74ff
+    hat_color: 0x66a650ff
     layer_colors:
       - 0xefcb84ff # head
-      - 0x885A44ff # feet
-      - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
-      - 0x885A44ff # beard
+      - 0xdc9824ff # feet
+      - 0xb9d850ff # shirt
+      - 0x66a650ff # phartuk
+      - 0xdc9824ff # beard
       - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_FIST
@@ -4880,15 +4881,15 @@ builds: # {  ###
         value: -50
     unlocks_item_type: WOLF_HELMET
   - type: LEARNER
-    hat_type: TOP
-    hat_color: 0x7b7c74ff
+    hat_type: GOPNIK
+    hat_color: 0xa13d77ff
     layer_colors:
-      - 0xefcb84ff
-      - 0x885A44ff
-      - 0x208CB2ff
-      - 0xCEC7B1ff
-      - 0x885A44ff
-      - 0xefcb84ff
+      - 0xefcb84ff # head
+      - 0xa13d77ff # feet
+      - 0xa13d77ff # shirt
+      - 0x6d2047ff # phartuk
+      - 0x885A44ff # beard
+      - 0xefcb84ff # arms
     starting_weapon_types:
       - MELEE_0_STICK
       - MELEE_0_GHOST_AXE
