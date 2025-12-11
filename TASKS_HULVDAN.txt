@@ -19,7 +19,14 @@ x fix: почему факел не даёт burning spread ?
 
 * приоритезировать, что делать дальше
 *
+* fix выдача всех ачивок
+* билды цвета
+*
 * better sfx: shotgun darker?
+* fix: web билд почему-то прогресс неправильно отображается
+  Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
+  (есть скрин в screenshots)
+*
 * better sfx: darker cunai
 *
 * starts with different music (initialize random to different value)
@@ -31,14 +38,8 @@ x fix: почему факел не даёт burning spread ?
 *
 * sfx: emscripten старт звука после key / mouse / touch press
 *
-* fix: itch билд почему-то прогресс неправильно отображается
-  Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
-  (есть скрин в screenshots)
-* firefox itch билд почему-то не запускается, а хром работает
-*
 * sfx: настройки для игрока: можно сменить громкость звука / музыки
-* sfx: какая-либо проверка на peak REAPER / PYTHON
-* sfx:
+*
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
 * impl: STAT__WHEN_BELOW__X__PERCENT_HP
 *
@@ -50,18 +51,11 @@ x fix: почему факел не даёт burning spread ?
 * прогнать localization.txt через chatgpt, чтобы он нашёл грамматические ошибки и излишества
 * починить вёрстку web для ipad
 *
-* проставить у всех оружий корректную точку спавна projectile
-  ВЫПИСАТЬ ВСЕ ОРУЖИЯ
-*
 * баланс количество сундуков
-* баланс количество chester-ов
 * баланс прирост здоровья врагов
   + какие-то мобы должны прожить
     2 секунд в начале, 3 в конце
     5 секунд в начале, 7 в конце
-* ограничить количество живых chester-ов
-*
-* engine: show transient buffer arena
 *
 * lance -% damage PROPERTY (NOT STAT)
 *
@@ -138,6 +132,12 @@ x fix: почему факел не даёт burning spread ?
 *
 * RELEASED!
 =======================
+* engine: show transient buffer arena
+* баланс количество chester-ов
+* ограничить количество живых chester-ов
+* проставить у всех оружий корректную точку спавна projectile
+  ВЫПИСАТЬ ВСЕ ОРУЖИЯ
+* sfx: какая-либо проверка на peak REAPER / PYTHON
 * sfx: навести порядок у reaper в скриптах (убрать абсолютные пути)
 * sfx: miniaudio playsound volume easing
 * ОБУЧЕНИЕ: золотые окантовки вокруг кнопок, на которые игрок не кликал раньше
