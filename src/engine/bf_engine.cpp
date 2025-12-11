@@ -673,6 +673,9 @@ void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
 
 struct PlaySoundData {  ///
   u64 delayMilliseconds = 0;
+
+  // posx, posy, distmin, distmax.
+  Vector4 pos = {f32_inf, f32_inf, f32_inf, f32_inf};
 };
 
 void SetVolumeMaster(f32 v) {  ///
@@ -727,11 +730,17 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   ASSERT(soundIndex >= 0);
   ASSERT(soundIndex < fb_sounds->size());
 
+  const bool hasPos = (data.pos.x != f32_inf)     //
+                      && (data.pos.y != f32_inf)  //
+                      && (data.pos.z != f32_inf)  //
+                      && (data.pos.w != f32_inf);
+
   // Playing the same sound during the next short time doesn't spawn a new sound.
   // We're boosting previously launched one.
   auto& launchedSound = m.launchedSounds[soundIndex];
 
-  if (launchedSound.frame.IsSet()
+  if (!hasPos                         //
+      && launchedSound.frame.IsSet()  //
       && (launchedSound.frame.Elapsed().value < BF_SOUND_VOLUME_BOOST_MAX_LATENCY_FRAMES))
   {
     launchedSound.frame = {};
@@ -787,11 +796,22 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
         continue;
       s = m.playingSounds.base + i;
 
-      launchedSound = {
-        .index           = i,
-        .loadedFileIndex = loadedFileIndex,
-      };
-      launchedSound.frame.SetNow();
+      if (hasPos) {
+        // ma_sound_set_position(s, data.pos.x, data.pos.y, 0);
+        // ma_sound_set_min_distance(s, data.pos.z);
+        // ma_sound_set_max_distance(s, data.pos.w);
+      }
+      else {
+        // ma_sound_set_attenuation_model(s, ma_attenuation_model_none);
+        // ma_sound_set_pinned_listener_index(s, 0);
+        // ma_sound_set_positioning(s, ma_positioning_relative);
+        // ma_sound_set_position(s, 0, 0, 0);
+        launchedSound = {
+          .index           = i,
+          .loadedFileIndex = loadedFileIndex,
+        };
+        launchedSound.frame.SetNow();
+      }
 
       v      = nextSoundGeneration++;
       result = {
@@ -820,6 +840,19 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   }
 
   ASSERT_FALSE(ma_sound_is_playing(s));
+
+  if (!fb_sound->is_music()) {
+    if (hasPos) {
+      ma_sound_set_attenuation_model(s, ma_attenuation_model_linear);
+      ma_sound_set_position(s, data.pos.x, data.pos.y, 0);
+
+      ASSERT(data.pos.z <= data.pos.w);
+      ma_sound_set_min_distance(s, data.pos.z);
+      ma_sound_set_max_distance(s, data.pos.w);
+    }
+    else
+      ma_sound_set_attenuation_model(s, ma_attenuation_model_none);
+  }
 
   static_assert(sizeof(void*) == sizeof(size_t));
   const auto soundEndUserData = (size_t)loadedFileIndex;
@@ -2635,8 +2668,7 @@ void ReloadSounds() {  ///
   }
 
   for (auto fb : *fb_sounds) {
-    u32 customFlags
-      = MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
+    u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
     if (fb->pitch_min() == fb->pitch_max())
       customFlags |= MA_SOUND_FLAG_NO_PITCH;
 
@@ -2645,7 +2677,7 @@ void ReloadSounds() {  ///
     ma_sound_group* group = nullptr;
 
     if (fb->is_music()) {
-      flags |= MA_SOUND_FLAG_STREAM;
+      flags |= MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM;
       group = &m.groupMusic;
     }
     else {

@@ -53,6 +53,7 @@ table Localization {
 }
 
 table Placeholder {
+    type: string (required);
 }
 
 struct Posf {
@@ -86,6 +87,7 @@ table Flattened {
 
 // GAME STUFF
 table Stat {
+    type: string (required);
     big_icon_texture_id: int;
     small_icon_texture_id: int;
     name_locale: int;
@@ -106,10 +108,12 @@ table DamageScaling {
 }
 
 table Hostility {
+    type: string (required);
     color: uint = 0xffffffff;
 }
 
 table Creature {
+    type: string (required);
     appearing_wave_number: int;
 
     spawn_factor: float;
@@ -174,6 +178,7 @@ table Creature {
 }
 
 table CondVar {
+    type: string (required);
 }
 
 table EffectConditionPlaceholder {
@@ -193,6 +198,7 @@ table EffectConditionPlaceholder {
 }
 
 table EffectCondition {
+    type: string (required);
     restrict: int; // 0 general, 1 weapon only, 2 build only.
     rectrict_only_melee_weapons: bool;
     rectrict_only_ranged_weapons: bool;
@@ -211,6 +217,7 @@ table EffectCondition {
 }
 
 table WeaponProperty {
+    type: string (required);
     name_locale: int;
 }
 
@@ -250,6 +257,7 @@ table Effect {
 }
 
 table Item {
+    type: string (required);
     name_locale: int;
     texture_id: int;
     tier: int;
@@ -260,6 +268,7 @@ table Item {
 }
 
 table Ailment {
+    type: string (required);
     // duration_seconds: float;
 }
 
@@ -272,6 +281,7 @@ table ParticleEmitter {
 }
 
 table Weapon {
+    type: string (required);
     name_locale: int;
     min_tier_index: int;
     base_damage: [int];
@@ -317,6 +327,7 @@ table Weapon {
 }
 
 table Projectile {
+    type: string (required);
     color: uint = 0xffffffff;
     speed: float;
     rotation_speed: float;
@@ -347,6 +358,7 @@ table ParticleVariation {
 }
 
 table Particle {
+    type: string (required);
     duration_seconds: float;
     duration_plus_minus: float;
     disable_rotation: bool;
@@ -358,20 +370,24 @@ table Particle {
 }
 
 table Pickupable {
+    type: string (required);
     name_locale: int;
     variation_texture_ids: [int];
     pickup_sound_hash: uint;
 }
 
 table Number {
+    type: string (required);
     color: uint = 0xffffffff;
 }
 
 table PreSpawn {
+    type: string (required);
     hostility_type: int;
 }
 
 table Difficulty {
+    type: string (required);
     name_locale: int;
     texture_id: int;
     mob_hp_scale: float;
@@ -379,6 +395,7 @@ table Difficulty {
 }
 
 table Build {
+    type: string (required);
     name_locale: int;
     hat_type: int;
     hat_color: uint = 0xffffffff;
@@ -396,6 +413,7 @@ table AchievementStep {
 }
 
 table Achievement {
+    type: string (required);
     name_locale: int;
     description_locale: int;
     hide_progress: bool;
@@ -412,6 +430,7 @@ table FloorSegment {
 }
 
 table Biome {
+    type: string (required);
     floor_color: uint;
     outline_color: uint;
     fill_color: uint;
@@ -426,6 +445,7 @@ table ShootingPattern {
 }
 
 table Hat {
+    type: string (required);
     texture_id: int;
     anchor: Posf;
 }
@@ -436,6 +456,7 @@ table AchievementOrder {
 }
 
 table TrailSound {
+    type: string (required);
     sound_hash: uint;
     repeat_seconds: float;
 }
