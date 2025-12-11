@@ -9,18 +9,6 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x removed `100_es` shitfixes
-x compiled imgui shaders
-x compiled binary_to_compressed_c
-x used binary_to_compressed_c to compress fonts
-x draw frame with imgui
-x прикрутить imgui
-x cli команда для ребилда шейдеров
-  NOTE: для релиза нужно билдить с O3
-x что такое IMGUI_CHECKVERSION
-x безье анимация wave completed
-x почему непраильно отображаются предметы
-x sfx: все оружия звучат ~ок
 x sfx: turret spatial shot sound
 
 * burn ticks: apprentice wand
