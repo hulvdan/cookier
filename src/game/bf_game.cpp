@@ -1550,9 +1550,7 @@ void AchievementStepSetLock(
   if (fb_step->unlocks_weapon_type())
     g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = lock;
 
-  if (locked)
-    g.player.achievementStepsCompleted--;
-  else
+  if (!locked)
     g.player.achievementStepsCompleted++;
 
   ASSERT(g.player.achievementStepsCompleted >= 0);
@@ -4907,20 +4905,18 @@ void GameInitAfterLoadingSavedata() {
         continue;
 
       g.player.achievementStepsTotal += fb_steps->size();
-      g.player.achievementStepsCompleted += fb_steps->size();
 
-      int  stepIndex = -1;
-      bool locked    = false;
+      int stepIndex = -1;
       for (auto fb_step : *fb_steps) {
+        bool locked = false;
+
         stepIndex++;
-        if (!fb->negative_is_good() && (fb_step->value() > x.value)) {
-          AchievementStepSetLock(achievementType, stepIndex, fb_step, true);
+        if (!fb->negative_is_good() && (fb_step->value() > x.value))
           locked = true;
-        }
-        if (fb->negative_is_good() && (fb_step->value() < x.value)) {
-          AchievementStepSetLock(achievementType, stepIndex, fb_step, true);
+        if (fb->negative_is_good() && (fb_step->value() < x.value))
           locked = true;
-        }
+
+        AchievementStepSetLock(achievementType, stepIndex, fb_step, locked);
       }
     }
 
@@ -11467,15 +11463,10 @@ void GameFixedUpdate() {
         for (const auto fb_step : *fb_steps) {
           stepIndex++;
 
-          auto& v = g.player.achievements[achievementIndex].value;
           if (fb->negative_is_good())
-            v = MIN(v, fb_step->value());
+            AchievementMin((AchievementType)achievementIndex, fb_step->value());
           else
-            v = MAX(v, fb_step->value());
-
-          AchievementStepSetLock(
-            (AchievementType)achievementIndex, stepIndex, fb_step, false
-          );
+            AchievementMax((AchievementType)achievementIndex, fb_step->value());
         }
       }
 

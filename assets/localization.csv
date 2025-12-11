@@ -392,7 +392,7 @@ BUILD_FAST;Беглец;TODO Faster;
 BUILD_ENGINEER;Ремесленник;TODO Remeslennik;
 BUILD_ARMS_DEALER;Оружейник;TODO Oruzheynik;
 BUILD_LICH;Паразит;TODO Parazite;
-BUILD_GOLEM;Шкаф;TODO Shkaf;
+BUILD_GOLEM;Здоровяк;TODO Zhdorovyak;
 BUILD_LUCKY;Удачник;Lucker;
 BUILD_LEARNER;Учёный;Researcher;
 ACHIEVEMENT_NAME_DIFFICULTY;Сложность;Difficulty;
