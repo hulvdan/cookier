@@ -793,6 +793,7 @@ def _process_gamelib(
     if 1:  # {  ###
         ranges = [
             (ord(" "), ord(" ") + 1),  # Space character
+            # (ord("−"), ord("−") + 1),  # Long minus character
             (33, 127),  # ASCII
             (1040, 1104),  # Cyrillic
         ]
