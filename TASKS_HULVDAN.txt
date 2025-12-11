@@ -22,6 +22,7 @@ x better sfx: shotgun darker?
 x better sfx: darker cunai
 x starts with different music (initialize random to different value)
 x go through localization TODOs
+x TASKS_INTERNET.txt
 
 * приоритезировать, что делать дальше
 *
