@@ -7368,7 +7368,9 @@ void DoUI() {
                   = CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier);
                 PlaceholdFormattedString(TextFormat("%d", actualDamage));
                 showPelletsCount(palTextGreen);
-                PlaceholdString(" (", palTextWhite);
+
+                PlaceholdString(" ");
+                PlaceholdString("| ", palTextWhite);
               }
 
               PlaceholdFormattedString(
@@ -7388,9 +7390,6 @@ void DoUI() {
                 );
                 PlaceholdImage(fb_stat->small_icon_texture_id());
               }
-
-              if (data.affectedByGame)
-                PlaceholdString(")", palTextWhite);
 
               PlaceholdGroupEnd();
 
@@ -7426,7 +7425,7 @@ void DoUI() {
                 ));
 
                 PlaceholdString(" ");
-                PlaceholdString("(", palTextWhite);
+                PlaceholdString("| ", palTextWhite);
               }
 
               PlaceholdFormattedString(
@@ -7448,7 +7447,6 @@ void DoUI() {
 
                   auto percent = fb_scaling->percents_per_tier()->Get(tierOffset);
                   PlaceholdFormattedString(TextFormat("%d%%", percent), palTextWhite);
-                  PlaceholdString(" ");
                   PlaceholdImage(
                     fb_stats->Get(fb_scaling->stat_type())->small_icon_texture_id()
                   );
@@ -7458,8 +7456,8 @@ void DoUI() {
                 }
               }
 
-              if (data.affectedByGame)
-                PlaceholdString(")", palTextWhite);
+              // if (data.affectedByGame)
+              //   PlaceholdString(")", palTextWhite);
 
               PlaceholdGroupEnd();
 
