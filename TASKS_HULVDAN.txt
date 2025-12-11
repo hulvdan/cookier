@@ -14,6 +14,8 @@ x fix: show weapon card burning damage
 x ref weapon damage + burning use the same lambda
 x цветовое кодирование кнопок взятия / recycle / reroll
 x Маслову билд
+x fix: почему факел не даёт burning spread ?
+  вывести все статы в imgui
 
 * sfx: burn tick
 *
@@ -21,9 +23,6 @@ x Маслову билд
 *
 * горение нормально смотрится на всех монстрах
 * fix: flamethrower не может слишком быстро бить врагов
-*
-* fix: почему burning spread 0 ?
-  Его же факел даёт
 *
 * restrict max enemies to 100
   died enemies don't drop coins (apply int_max damage)
