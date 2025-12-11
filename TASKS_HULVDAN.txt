@@ -24,45 +24,15 @@ x starts with different music (initialize random to different value)
 x go through localization TODOs
 x TASKS_INTERNET.txt
 
-* show controls before starting the first wave
-  (show circle around center of the map -> player has to go away from it)
-*
-* приоритезировать, что делать дальше
-*
+* fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
 * fix: web билд почему-то прогресс неправильно отображается
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
 *
-* горение нормально смотрится на всех монстрах
-*
-* fix: flamethrower не может слишком быстро бить врагов
-*
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
-*
-* sfx: emscripten старт звука после key / mouse / touch press
-*
-* sfx: настройки для игрока: можно сменить громкость звука / музыки
-*
-* impl: STAT__MODS_CHANGED_BY__X__PERCENT
-* impl: STAT__WHEN_BELOW__X__PERCENT_HP
-*
-* проверить все effect conditions на immediate
-  мб даже проставить это в gamelib.fbs, а не хардкодить
-  + требование указания в gamelib.yaml как обязательное поле
-*
-* прогнать localization.txt через chatgpt, чтобы он нашёл грамматические ошибки и излишества
-* починить вёрстку web для ipad
-*
-* баланс количество сундуков
-* баланс прирост здоровья врагов
-  + какие-то мобы должны прожить
-    2 секунд в начале, 3 в конце
-    5 секунд в начале, 7 в конце
-*
-* lance -% damage PROPERTY (NOT STAT)
+* fix: lance -% damage PROPERTY (NOT STAT)
 *
 * impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
-* impl stat KNOCKBACK
 * impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
 * impl effectcondition_type YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
 * impl weapon projectile_piercing_damage_bonus_percent
@@ -70,35 +40,10 @@ x TASKS_INTERNET.txt
 * stats: LOOT_ALIENS_CHANCE
 * stats: LOOT_ALIENS_SPEED
 * stats: ENEMY_DAMAGE
-*
-* fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
-*
-* fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
-*
-* prod: билды
-*
-* на старте рана не стартовать волну, пока не выйдешь за пределы области
-  * скрыть hud
-  * спрайты для разных стилей управления (* клава, * мышь, * пальцы)
-*
+* impl: STAT__MODS_CHANGED_BY__X__PERCENT
+* impl: STAT__WHEN_BELOW__X__PERCENT_HP
 * effect works: xp gain DURING THE NEXT WAVE
-*
-* garden spawn easing
-* landmine spawn easing
-* landmine death easing
-* polish: turret easing
-* polish: garden easing
-* polish: mob cooravie shooting easing
-* polish: boss scale easing upon shot pre/post frames
-* polish: mob rusher rotation pre/post easing
-* polish:
-* polish:
-* polish:
-* polish:
-* polish:
-*
-* can open achievements on picked up item / upgrades / shop / end screens
-*
+* fix: flamethrower не может слишком быстро бить врагов
 * impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_ENEMY_DEATH
 * impl: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_ON_GETTING_HURT
 * impl: CAP__STAT
@@ -118,8 +63,25 @@ x TASKS_INTERNET.txt
 * impl: X__PERCENT_DAMAGE_FOR__Y__SECONDS_AFTER_PICKING_UP__PICKUPABLE
 * impl: X__DAMAGE_EVERY__Y__SECONDS
 * impl: STAT__WHEN_IDLE
-*
 * X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE min 1 damage
+*
+* sfx: emscripten старт звука после key / mouse / touch press
+* sfx: настройки для игрока: можно сменить громкость звука / музыки
+* горение нормально смотрится на всех монстрах
+*
+* проверить все effect conditions на immediate
+  мб даже проставить это в gamelib.fbs, а не хардкодить
+  + требование указания в gamelib.yaml как обязательное поле
+*
+*
+* на старте рана не стартовать волну, пока не выйдешь за пределы области
+  * скрыть hud
+  * спрайты для разных стилей управления (* клава, * мышь, * пальцы)
+*
+* polish: turret easing
+* garden apple spawn easing
+* polish: mob cooravie shooting easing
+* polish: boss scale easing upon shot pre/post frames
 *
 * prod: аналитика
 * prod: сакутиновая отправка event-ов аналитики
@@ -128,6 +90,18 @@ x TASKS_INTERNET.txt
 *
 * RELEASED!
 =======================
+* fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
+* can open achievements on picked up item / upgrades / shop / end screens
+* polish: mob rusher rotation pre/post easing
+* landmine spawn easing
+* landmine death easing
+* impl stat KNOCKBACK
+* баланс количество сундуков
+* баланс прирост здоровья врагов
+  + какие-то мобы должны прожить
+    2 секунд в начале, 3 в конце
+    5 секунд в начале, 7 в конце
+* починить вёрстку web для ipad
 * prod: MUSIC
 * find suitable music
 * engine: show transient buffer arena
