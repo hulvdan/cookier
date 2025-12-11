@@ -3418,9 +3418,9 @@ weapons: # {  ###
     crit_chance: 3 3 3
     range_meters: 4.08 4.08 4.08
     knockback_meters: 30 40 50
-    effects:
-      - stat_type: KNOCKBACK
-        value: 2 4 6
+    # effects:
+    #   - stat_type: KNOCKBACK
+    #     value: 2 4 6
     melee_collider_height_px: 99
     use_sound_hash: GAME_SWING
     damage_sound_hash: GAME_BONK_FIST
