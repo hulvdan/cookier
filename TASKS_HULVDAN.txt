@@ -13,9 +13,8 @@ x sfx: turret spatial shot sound
 x fix: show weapon card burning damage
 x ref weapon damage + burning use the same lambda
 x цветовое кодирование кнопок взятия / recycle / reroll
+x Маслову билд
 
-* Маслову билд
-*
 * sfx: burn tick
 *
 * приоритезировать, что делать дальше
