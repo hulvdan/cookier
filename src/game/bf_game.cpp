@@ -3310,7 +3310,7 @@ void OnPickedUp(int pickupableIndex) {  ///
 
           TryApplyDamage({
             .creatureIndex                      = (int)creatureIndex,
-            .damage                             = damage,
+            .damage                             = MAX(1, damage),
             .damagerCreatureType                = CreatureType_PLAYER,
             .critDamageMultiplier               = critDamageMultiplier,
             .weaponCritChance                   = weaponCritChance,
