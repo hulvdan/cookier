@@ -361,7 +361,7 @@ STAT_FREE_REROLLS;Бесплатные Перебрасывания;Free Rerolls
 STAT_TREES;Количество Деревьев;Trees;
 STAT_ENEMIES;Количество Врагов;Enemies;
 STAT_ENEMY_SPEED;Скорость Врагов;Enemy Speed;
-STAT_ENEMY_DAMAGE;Урон Врагов;Enemy Damage;
+STAT_ENEMY_ADDITIONAL_DAMAGE_PERCENT;Урон Врагов;Enemy Damage;
 STAT_LOOT_ALIENS_CHANCE;Шанс спавна врагов с сундуком;Chance of spawning enemies with chest;
 STAT_LOOT_ALIENS_SPEED;Скорость врагов с сундуком;Speed of enemies with chest;
 STAT_REROLL_PRICE;Цена Перебрасывания;Reroll Price;
