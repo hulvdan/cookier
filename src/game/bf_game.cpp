@@ -2643,18 +2643,19 @@ void MakeNumber(MakeNumberData data) {  ///
   *g.run.numbers.Add() = number;
 }
 
-f32 GetStatModificationScale() {  ///
-  f32 scaleStats = 1;
+f32 GetStatModificationScale(StatType stat) {  ///
+  f32 scaleStat = 1;
   IterateOverEffects(
     EffectConditionType_STAT_2__MODS_CHANGED_BY__X__PERCENT,
     -1,
     [&](
       Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
     ) BF_FORCE_INLINE_LAMBDA {
-      scaleStats += (1 + (f32)EFFECT_X_INT / 100.0f) * (f32)times;
+      if (fb_effect->stat_type_2() == stat)
+        scaleStat += (f32)EFFECT_X_INT * (f32)times / 100.0f;
     }
   );
-  return scaleStats;
+  return scaleStat;
 }
 
 int GetNextLevelXp(int currentLevel) {  ///
@@ -6957,7 +6958,7 @@ void DoUI() {
             v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
-          v = Round((f32)v * GetStatModificationScale());
+          v = Round((f32)v * GetStatModificationScale((StatType)fb_effect->stat_type()));
           v *= count;
 
           const bool  isPositive = v >= 0;
