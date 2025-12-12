@@ -12,6 +12,7 @@ WORKING SINCE 2025-09-07
 x fix: web билд почему-то прогресс неправильно отображается
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
+x stats: ENEMY_ADDITIONAL_DAMAGE_PERCENT
 
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * fix: lance -% damage PROPERTY (NOT STAT)
@@ -21,9 +22,6 @@ x fix: web билд почему-то прогресс неправильно о
 * impl effectcondition_type YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
 * impl weapon projectile_piercing_damage_bonus_percent
 * impl STAT__DURING_NEXT_WAVE
-* stats: LOOT_ALIENS_CHANCE
-* stats: LOOT_ALIENS_SPEED
-* stats: ENEMY_DAMAGE
 * impl: STAT__MODS_CHANGED_BY__X__PERCENT
 * impl: STAT__WHEN_BELOW__X__PERCENT_HP
 * effect works: xp gain DURING THE NEXT WAVE
@@ -36,7 +34,6 @@ x fix: web билд почему-то прогресс неправильно о
 * impl: CRITS_DEAL__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
 * impl: BURNING_DEALS__X__PERCENT_OF_ENEMY_CURRENT_HP_BONUS_DAMAGE__Y__FOR_BOSSES
 * impl: X__STAT__FOR_EVERY_DIFFERENT__TIER__ITEM
-* stats: ACCURACY
 * impl: X__PIERCE_ON_CRIT
 * impl: X__STAT__UPON__PICKUPABLE__AT_MAX_HP
 * impl: X__STAT__UPON__PICKUPABLE__AT_MAX_HP_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
@@ -74,6 +71,9 @@ x fix: web билд почему-то прогресс неправильно о
 *
 * RELEASED!
 =======================
+* stats: LOOT_ALIENS_CHANCE
+* stats: LOOT_ALIENS_SPEED
+* stats: ACCURACY
 * fix молочник: "Имеет Молочный Пистолет на старте" перенос на новую строку
 * can open achievements on picked up item / upgrades / shop / end screens
 * polish: mob rusher rotation pre/post easing

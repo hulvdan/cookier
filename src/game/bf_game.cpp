@@ -2804,7 +2804,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
   if (creature.health <= 0)
     return false;
 
-  const auto fb = glib->creatures()->Get(creature.type);
+  const auto fb         = glib->creatures()->Get(creature.type);
+  const auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
 
   creature.aggroed = fb->can_aggro();
 
@@ -2905,7 +2906,6 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
 
       data.damage = MAX(1, data.damage);
 
-      auto fb_damager = glib->creatures()->Get(data.damagerCreatureType);
       if (fb_damager->hostility_type() == HostilityType_FRIENDLY) {
         MakeNumber({
           .type  = (isCrit ? NumberType_DAMAGE_CRIT : NumberType_DAMAGE),
@@ -2956,6 +2956,13 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         data.damage = Round((f32)data.damage * 1.0f / (1.0f + armor / 15.0f));
       else if (armor < 0)
         data.damage = Round((f32)data.damage * (15.0f - 2 * armor) / (15 - armor));
+
+      // If damager is enemy -> applying StatType_ENEMY_ADDITIONAL_DAMAGE_PERCENT stat.
+      if (fb_damager->hostility_type() == HostilityType_MOB) {
+        auto percent = g.run.state.stats[StatType_ENEMY_ADDITIONAL_DAMAGE_PERCENT];
+        data.damage  = Round((f32)data.damage * (1 + (f32)percent / 100.0f));
+      }
+
       data.damage = MAX(1, data.damage);
 
       MakeNumber({

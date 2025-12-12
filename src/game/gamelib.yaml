@@ -1503,7 +1503,7 @@ items: # {  ###
         value: 20
       - stat_type: HARVESTING
         value: 10
-      - stat_type: ENEMY_DAMAGE
+      - stat_type: ENEMY_ADDITIONAL_DAMAGE_PERCENT
         value: 15
   - type: STATUE
     texture_id: ui_item_concentrating_donut
@@ -2709,7 +2709,7 @@ items: # {  ###
 #     - stat_type: XP_GAIN
 #       effectcondition_type: STAT__DURING_NEXT_WAVE
 #       value: 100
-#     - stat_type: ENEMY_DAMAGE
+#     - stat_type: ENEMY_ADDITIONAL_DAMAGE_PERCENT
 #       effectcondition_type: STAT__DURING_NEXT_WAVE
 #       value: 50
 # - type: PENCIL
@@ -4516,7 +4516,7 @@ stats: # {  ###
   - type: ENEMY_SPEED
     is_percent: true
     is_secondary: true
-  - type: ENEMY_DAMAGE
+  - type: ENEMY_ADDITIONAL_DAMAGE_PERCENT
     is_percent: true
     is_secondary: true
   - type: ENEMY_HP_SCALE
@@ -4572,13 +4572,13 @@ difficulties: # {  ###
     effects:
       - stat_type: ENEMY_HP_SCALE
         value: 20
-      - stat_type: ENEMY_DAMAGE
+      - stat_type: ENEMY_ADDITIONAL_DAMAGE_PERCENT
         value: 10
   - type: D2
     effects:
       - stat_type: ENEMY_HP_SCALE
         value: 50
-      - stat_type: ENEMY_DAMAGE
+      - stat_type: ENEMY_ADDITIONAL_DAMAGE_PERCENT
         value: 35
       - stat_type: ENEMY_SPEED
         value: 12
