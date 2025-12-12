@@ -3,6 +3,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/bf_gamelib_generated.h"
 
+#define IM ImGui
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 
