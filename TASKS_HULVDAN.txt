@@ -42,7 +42,7 @@ x fix: lance -% damage PROPERTY (NOT STAT)
   * когда загрузился, не ставить паузу, а отображать геймплей и область
 *
 * polish: turret easing
-* garden apple spawn easing
+* garden: apple spawn easing
 * polish: mob cooravie shooting easing
 * polish: boss scale easing upon shot pre/post frames
 *
@@ -132,7 +132,6 @@ x fix: lance -% damage PROPERTY (NOT STAT)
 * подумать о том, как нормально сделать сохранение в вебе
 * найти алгос для кодирования байтов в скомпрессированную строку + декодирования
 * sfx: deesser на музыку по частотам звуков
-* imgui прикрутить
 * sfx: обработка звуков: trim left -> прописать это в gamelib -> PlaySound будет докидывать задержку
 * sfx: использовать девайс от SDL?
   https://miniaud.io/docs/examples/engine_sdl.html
