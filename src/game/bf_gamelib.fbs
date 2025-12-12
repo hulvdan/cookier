@@ -211,6 +211,10 @@ table EffectCondition {
     // requires_tier: bool;
     // requires_item: bool;
     // requires_weapon: bool;
+
+    stat_multiplied_by_times: bool = true;
+    stat_multiplied_by_this_wave_added_count: bool;
+
     requires_item_or_weapon: bool;  // Either item or weapon.
     // required_weapongroup: bool;
     placeholders: [EffectConditionPlaceholder];
