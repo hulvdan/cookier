@@ -1764,7 +1764,6 @@ items: # {  ###
 #     - effectcondition_type: STAT__UPON__PICKUPABLE__AT_MAX_HP
 #       stat_type: HP
 #       value: 1
-# TODO: X__PIERCE_ON_CRIT
 # TODO: CHANGE_BURNING_ACTIVATION_SPEED_BY__X__PERCENT
 # - type: EYES_SURGERY
 #   texture_id: ui_item_todo
