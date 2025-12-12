@@ -1382,6 +1382,11 @@ struct GameData {
   } debug;
 } g = {};
 
+void ResetDynamicStats() {  ///
+  FOR_RANGE (int, i, StatType_COUNT)
+    g.run.dynamicStats[i] = g.run.state.staticStats[i];
+}
+
 struct MakePreSpawnData {  ///
   PreSpawnType type                    = {};
   CreatureType typeCreature            = {};
@@ -1630,10 +1635,12 @@ void TriggerWaveCompleted(bool instant) {  ///
     g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
   else
     PlaySound(Sound_GAME_BIG_TEXT_WHOOSH);
+  ResetDynamicStats();
 }
 
 void ChangeDynamicStat(StatType stat, int value) {  ///
-  g.run.dynamicStats[stat] += value;
+  if (g.run.state.screen == ScreenType_GAMEPLAY)
+    g.run.dynamicStats[stat] += value;
 }
 
 void ChangeStaticAndDynamicStat(StatType stat, int value) {  ///
@@ -1994,8 +2001,7 @@ void RecalculateThisWaveMobs() {  ///
 }
 
 void OnWaveStarted() {  ///
-  FOR_RANGE (int, i, g.run.state.staticStats.count)
-    g.run.dynamicStats[i] = g.run.state.staticStats[i];
+  ResetDynamicStats();
 
   g.meta.stickControl = {};
 
@@ -2152,23 +2158,19 @@ void GameLoad(const BFSave::Save* save) {  ///
   {
     auto fb_stats = glib->stats();
     int  i        = 0;
-    for (auto& x : s.staticStats) {
-      x                     = fb_stats->Get(i)->player_value();
-      g.run.dynamicStats[i] = x;
-      i++;
-    }
+    for (auto& x : s.staticStats)
+      x = fb_stats->Get(i++)->player_value();
   }
 
   // Loading values of previosly saved stats.
   int  statIndex = 0;
   auto fb_stats  = save->stats();
   if (fb_stats) {
-    for (auto x : *fb_stats) {
-      s.staticStats[statIndex]      = x;
-      g.run.dynamicStats[statIndex] = x;
-      statIndex++;
-    }
+    for (auto x : *fb_stats)
+      s.staticStats[statIndex++] = x;
   }
+
+  ResetDynamicStats();
 
   s.pickedUpItem.toPick = (ItemType)save->screen_picked_up_item__to_pick();
 
@@ -8457,12 +8459,18 @@ void DoUI() {
             || !fb_stat->small_icon_texture_id())
           continue;
 
+        int v{};
+        if (g.run.state.screen == ScreenType_GAMEPLAY)
+          v = g.run.dynamicStats[statIndex];
+        else
+          v = g.run.state.staticStats[statIndex];
+
         auto color = palTextWhite;
-        auto v     = ((g.run.state.screen == ScreenType_GAMEPLAY) ? g.run.dynamicStats[statIndex] : g.run.state.staticStats[statIndex] );
         if (v > 0)
           color = (fb_stat->negative_is_good() ? palTextRed : palTextGreen);
         else if (v < 0)
           color = (fb_stat->negative_is_good() ? palTextGreen : palTextRed);
+
         entry((StatType)statIndex, fb_stat->small_icon_texture_id(), v, color);
       }
 
