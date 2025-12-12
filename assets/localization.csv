@@ -16,7 +16,7 @@ UI_KNOCKBACK;Отбрасывание;Knockback;
 UI_CRIT;Крит;Critical;
 UI_WEAPON_DAMAGE;Урон: {VALUE};Damage: {VALUE};
 UI_BURNING_DAMAGE;Горение: {VALUE};Burning: {VALUE};
-UI_THIS_WAVE_DAMAGE;Нанесено урона;This wave damage;
+UI_THIS_WAVE_DAMAGE;Урон за волну;This wave damage;
 UI_LIMITED;Ограничено;Limited;
 UI_UNIQUE;Уникалка;Unique;
 UI_COMBINE;Скомбинировать;Combine;
