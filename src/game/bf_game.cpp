@@ -1119,6 +1119,10 @@ struct TurretToSpawn {  ///
   FBFlattened damageScalings = {};
 };
 
+struct GardenToSpawn {  ///
+  lframe spawnsAppleEvery = {};
+};
+
 struct RotatedRect {  ///
   Vector2 pos      = {};
   Vector2 size     = {};
@@ -1320,6 +1324,7 @@ struct GameData {
   X(Pickupable, pickupables)               \
   X(Particle, particles)                   \
   X(TurretToSpawn, turretsToSpawn)         \
+  X(GardenToSpawn, gardensToSpawn)         \
   X(RotatedRect, meleeWeaponColliderGizmos)
 
 #define X(type_, name_) Vector<type_> name_ = {};
@@ -2005,6 +2010,21 @@ void OnWaveStarted() {  ///
       }
   );
   GRAND.Shuffle(g.run.turretsToSpawn.base, g.run.turretsToSpawn.count);
+
+  g.run.gardensToSpawn.Reset();
+  IterateOverEffects(
+    EffectConditionType_SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS,
+    -1,
+    [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+      BF_FORCE_INLINE_LAMBDA {
+        FOR_RANGE (int, i, times) {
+          *g.run.gardensToSpawn.Add() = {
+            .spawnsAppleEvery = lframe::FromSeconds(EFFECT_X_FLOAT),
+          };
+        }
+      }
+  );
+  GRAND.Shuffle(g.run.gardensToSpawn.base, g.run.gardensToSpawn.count);
 
   g.run.waveStartedAt = {};
   g.run.waveStartedAt.SetNow();
@@ -12205,7 +12225,12 @@ void GameFixedUpdate() {
 
       // Making pre spawn decals.
       {  ///
-        LAMBDA (void, makePreSpawns, (CreatureType type, TurretToSpawn turret = {})) {
+        LAMBDA (
+          void,
+          makePreSpawns,
+          (CreatureType type, TurretToSpawn turret = {}, GardenToSpawn garden = {})
+        )
+        {
           ASSERT(type);
 
           Vector2 posToSpawn{};
@@ -12241,11 +12266,12 @@ void GameFixedUpdate() {
             } while (!CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(p));
 
             MakePreSpawn({
-              .type           = PreSpawnType_CREATURE,
-              .typeCreature   = type,
-              .pos            = p,
-              .damage         = turret.baseDamage,
-              .damageScalings = turret.damageScalings,
+              .type                    = PreSpawnType_CREATURE,
+              .typeCreature            = type,
+              .pos                     = p,
+              .damage                  = turret.baseDamage,
+              .damageScalings          = turret.damageScalings,
+              .garden_spawnsAppleEvery = garden.spawnsAppleEvery,
             });
           }
         };
@@ -12281,15 +12307,21 @@ void GameFixedUpdate() {
               g.run.state.toSpawn++;
           }
 
-          // Spawning turrets.
+          // Spawning turrets and gardens.
           if ((g.run.waveStartedAt.Elapsed().value + 1)
-                % (FIXED_FPS * SPAWNING_TURRETS_EVERY_N_SECONDS)
+                % (FIXED_FPS * SPAWNING_TURRETS_OR_GARDENS_EVERY_N_SECONDS)
               == 0)
           {
-            if (g.run.turretsToSpawn.count > 0) {
-              auto t = g.run.turretsToSpawn[g.run.turretsToSpawn.count - 1];
-              g.run.turretsToSpawn.count--;
-              makePreSpawns(CreatureType_TURRET, t);
+            if (g.run.turretsToSpawn.count > 0)
+              makePreSpawns(CreatureType_TURRET, g.run.turretsToSpawn.Pop());
+
+            if (g.run.gardensToSpawn.count > 0) {
+              auto t = g.run.gardensToSpawn.Pop();
+              MakePreSpawn({
+                .type = PreSpawnType_GARDEN,
+                .pos  = CREATURES_WORLD_SPAWN_BOUNDS.GetRandomGamePosInside(),
+                .garden_spawnsAppleEvery = t.spawnsAppleEvery,
+              });
             }
           }
 
@@ -14624,61 +14656,57 @@ void GameDraw() {
   EngineApplyVignette();
   FlushDrawCommands();
 
-  // Drawing debug text.
-  if (ge.meta.debugEnabled) {  ///
-    int y = 1;
-    LAMBDA (void, DebugText, (const char* pattern, auto&&... args)) {
-      bgfx::dbgTextPrintf(1, y++, 0x4f, pattern, args...);
-    };
-
-    DebugText("Close debug menu: hold F1 -> press F2");
-    DebugText("F3 change localization");
-    DebugText("F4 change device");
-    DebugText("F5 +10 coins");
-    if (g.run.state.screen == ScreenType_GAMEPLAY) {
-      DebugText("0 die");
-      DebugText("F6 complete wave");
-      DebugText("F7 show end screen");
-      DebugText("F8 add level");
-      DebugText("F9 add crate");
-    }
-    DebugText("F10 unlock all achievements");
-    DebugText("N - increase wave. Shift N - decrease wave");
-
-    DebugText(TextFormat("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x));
-
-    LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
-      DebugText(
-        "%s: %d %d (%.1f%%) (max: %d, %.1f%%)",
-        name,
-        arena.used,
-        arena.size,
-        100.0f * (f32)arena.used / (f32)arena.size,
-        arena.maxUsed,
-        100.0f * (f32)arena.maxUsed / (f32)arena.size
-      );
-    };
-
-    debugTextArena("ge.meta._arena", ge.meta._arena);
-    debugTextArena("g.run.arena", g.run.arena);
-    debugTextArena("g.meta.trashArena", g.meta.trashArena);
-    debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
-
-#define X(type_, name_) DebugText("g.run." #name_ ".count: %d", g.run.name_.count);
-    VECTORS_TABLE;
-#undef X
-  }
-
 #define IM ImGui
 
-  // Cheats. Giving items.
+  // Debug info.
   if (ge.meta.debugEnabled) {  ///
     if (0)
       IM::ShowDemoWindow();
 
-    if (IM::Begin("Cheats")) {
+    if (IM::Begin("Debug")) {
       if (IM::BeginTabBar("tabs")) {
-        if (IM::BeginTabItem("Items")) {
+        if (IM::BeginTabItem("info")) {
+          IM::Text("Close debug menu: hold F1 -> press F2");
+          IM::Text("F3 change localization");
+          IM::Text("F4 change device");
+          IM::Text("F5 +10 coins");
+          if (g.run.state.screen == ScreenType_GAMEPLAY) {
+            IM::Text("0 die");
+            IM::Text("F6 complete wave");
+            IM::Text("F7 show end screen");
+            IM::Text("F8 add level");
+            IM::Text("F9 add crate");
+          }
+          IM::Text("F10 unlock all achievements");
+          IM::Text("N - increase wave. Shift N - decrease wave");
+
+          IM::Text("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x
+          );
+
+          LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
+            IM::Text(
+              "%s: %d %d (%.1f%%) (max: %d, %.1f%%)",
+              name,
+              arena.used,
+              arena.size,
+              100.0f * (f32)arena.used / (f32)arena.size,
+              arena.maxUsed,
+              100.0f * (f32)arena.maxUsed / (f32)arena.size
+            );
+          };
+
+          debugTextArena("ge.meta._arena", ge.meta._arena);
+          debugTextArena("g.run.arena", g.run.arena);
+          debugTextArena("g.meta.trashArena", g.meta.trashArena);
+          debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
+
+#define X(type_, name_) IM::Text("g.run." #name_ ".count: %d", g.run.name_.count);
+          VECTORS_TABLE;
+#undef X
+          IM::EndTabItem();
+        }
+
+        if (IM::BeginTabItem("items")) {
           FOR_RANGE (int, i, ItemType_COUNT) {
             if (!i)
               continue;
@@ -14692,18 +14720,13 @@ void GameDraw() {
           IM::EndTabItem();
         }
 
-        if (IM::BeginTabItem("Stats")) {
+        if (IM::BeginTabItem("stats")) {
           FOR_RANGE (int, i, StatType_COUNT) {
             if (!i)
               continue;
             const auto stat = (StatType)i;
-            IM::LabelText(
-              TextFormat("stat%d", i),
-              TextFormat(
-                "%s %d",
-                glib->stats()->Get(stat)->type()->c_str(),
-                g.run.state.stats[stat]
-              )
+            IM::Text(
+              "%s %d", glib->stats()->Get(stat)->type()->c_str(), g.run.state.stats[stat]
             );
           }
           IM::EndTabItem();
@@ -14711,8 +14734,8 @@ void GameDraw() {
 
         IM::EndTabBar();
       }
-      IM::End();
     }
+    IM::End();
   }
 
   g.run.meleeWeaponColliderGizmos.Reset();
