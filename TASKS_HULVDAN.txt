@@ -18,8 +18,8 @@ x fix wrench / hex driver
 x ref: consumable -> apple
 x ref: chest -> chest
 
-* fix: lance -% damage PROPERTY (NOT STAT)
 * impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+* fix: lance -% damage PROPERTY (NOT STAT)
 * impl YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
 * impl STAT__DURING_NEXT_WAVE
 * impl: STAT_2__MODS_CHANGED_BY__X__PERCENT
@@ -197,17 +197,6 @@ x ref: chest -> chest
 * mouse: disable hover sound for stats cancel button?
 * beautify error wiggling flash red?
 *
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
 * sparkles that highlight the weapons can be combined
 * outline with offset down
 *
@@ -218,7 +207,6 @@ x ref: chest -> chest
   мб "рукопашная"?
 *
 * стереть недопонимание PROPERY / Стат. "Именно ЭТО оружие получает урон +4"
-*
 *
 * implement all weapon/item/build/difficulty effects
 * weapon groups (primitive, medical, etc.) + set bonuses
@@ -239,7 +227,6 @@ x ref: chest -> chest
 * stats coloring
 * on-player-equipped item layers (hats, decals, etc.) (isaac-like)
 *
-*
 * slashing melee attacks
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
 * pause: unpause on touch
@@ -259,27 +246,7 @@ x ref: chest -> chest
 * weapon tag: explosive: 5 10 15 20 25 explosion size
 * weapon tag: elemental: 1 2 3 4 5 elemental damage
 * weapons categorization. жидкое / твёрдое?
-
-TECH DEBT
-============================================================
-* broken_strings: proper lines support
-* engine: different atlases for different resolutions
-* engine: handle the case when there's too much textures to pack into 1 atlas
-* engine: nine slice should work even if width/height of image is very small
-* HTML game loading screen?
-* record+replay system
-* trim pngs of transparent pixels
-* internet shouldn't be required for building:
-  check web debug yandex build with mocked ysdk
-* font shader that remaps fillColor and outlineColor
-* enable linting: clang-tidy to show f32 int / int f32 conversions
-* engine fonts: fix scaling of not yet reloaded fonts (y position)
-* fix sometimes sdl thinks window is out of focus -> sounds mutes
-* engine: LoadFonts per localization
-
-LATER:
-================================================================================
-* engine: realtime shader compilation: https://github.com/fredakilla/brtshaderc
+*
 * when player can be burnt:
   make sure that burn ticks don't set player to be invincible
 * save: starting wave completed animation saves the game
@@ -309,3 +276,22 @@ LATER:
 * моргание таймера красным в последние 3 секунды
 * scroll: keyboard: up / down buttons can consume `uiElementSwitchDirection`
 * wave complete animation: try making text bigger
+
+TECH DEBT
+============================================================
+* engine: realtime shader compilation: https://github.com/fredakilla/brtshaderc
+* broken_strings: proper lines support
+* engine: different atlases for different resolutions
+* engine: handle the case when there's too much textures to pack into 1 atlas
+* engine: nine slice should work even if width/height of image is very small
+* HTML game loading screen?
+* record+replay system
+* trim pngs of transparent pixels
+* internet shouldn't be required for building:
+  check web debug yandex build with mocked ysdk
+* font shader that remaps fillColor and outlineColor
+* enable linting: clang-tidy to show f32 int / int f32 conversions
+* engine fonts: fix scaling of not yet reloaded fonts (y position)
+* fix sometimes sdl thinks window is out of focus -> sounds mutes
+* engine: LoadFonts per localization
+

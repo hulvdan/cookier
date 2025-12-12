@@ -1555,13 +1555,12 @@ items: # {  ###
     price: 65
     effects:
       - stat_type: DAMAGE
-        value: 13 # Then 20
+        value: 20 # Then 20
       - stat_type: ARMOR
         value: 1
-        # TODO: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
-        # - stat_type: DAMAGE
-        #   effectcondition_type: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
-        #   value: -2
+      - stat_type: DAMAGE
+        effectcondition_type: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
+        value: -2
   - type: TURRET
     texture_id: ui_item_turret
     price: 15
@@ -3575,11 +3574,9 @@ weapons: # {  ###
       - effectcondition_type: STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
         stat_type: DAMAGE
         value: 3
-        only_this_weapon: true
       - effectcondition_type: YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
         placeholders:
           - ints: 3
-        only_this_weapon: true
     melee_collider_height_px: 104
     use_sound_hash: GAME_SWING
     damage_sound_hash: GAME_HIT_BLADE
