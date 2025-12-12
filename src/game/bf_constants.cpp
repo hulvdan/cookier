@@ -201,10 +201,10 @@ constexpr f32 BODY_LINEAR_DAMPING_SPEED_SCALE = 7.0f / 3.29f * 10.0f;
 
 constexpr f32 STRUCTURE_MIN_RANGE_METERS = 2;
 
-constexpr int  SPAWNING_TURRETS_EVERY_N_SECONDS   = 2;
-constexpr int  SPAWNING_GARDENS_EVERY_N_SECONDS   = 5;
-constexpr auto SPAWNING_LANDMINES_INTERVAL_FRAMES = lframe::FromSeconds(8);
-constexpr auto LANDMINE_DETONATION_FRAMES         = lframe::FromSeconds(0.5);
+constexpr int  SPAWNING_TURRETS_OR_GARDENS_EVERY_N_SECONDS = 2;
+constexpr int  SPAWNING_GARDENS_EVERY_N_SECONDS            = 5;
+constexpr auto SPAWNING_LANDMINES_INTERVAL_FRAMES          = lframe::FromSeconds(8);
+constexpr auto LANDMINE_DETONATION_FRAMES                  = lframe::FromSeconds(0.5);
 
 // Colors.
 // ============================================================
