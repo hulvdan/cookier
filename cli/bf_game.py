@@ -1162,7 +1162,7 @@ def process_images():
         "game_landmine",
         "ui_coin_x2",
         "game_projectile_mob",
-        "game_pickupable_crate",
+        "game_pickupable_chest",
         "game_creature_tree",
         "game_pickupable_apple",
         "game_creature_ranger",

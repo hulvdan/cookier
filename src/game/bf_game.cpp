@@ -1208,7 +1208,7 @@ struct GameData {
       int playerKilledEnemies    = 0;
       int notPickedUpCoins       = 0;
       int notPickedUpCoinsVisual = 0;
-      int crates                 = 0;
+      int chests                 = 0;
       int toSpawn                = 3;
 
       Array<int, StatType_COUNT>          stats   = {};
@@ -1276,7 +1276,7 @@ struct GameData {
     int       playerContinuousIdleFrames        = 0;
     int       playerContinuousWalkingFrames     = 0;
 
-    int  cratesDroppedThisWave = 0;
+    int  chestsDroppedThisWave = 0;
     bool cantHeal              = false;
 
     FrameGame waveStartedAt = {};
@@ -1997,7 +1997,7 @@ void OnWaveStarted() {  ///
   g.run.playerContinuousIdleFrames        = 0;
   g.run.playerContinuousWalkingFrames     = 0;
 
-  g.run.cratesDroppedThisWave = 0;
+  g.run.chestsDroppedThisWave = 0;
 
   g.run.turretsToSpawn.Reset();
   IterateOverEffects(
@@ -2093,7 +2093,7 @@ void GameLoad(const BFSave::Save* save) {  ///
   s.playerKilledEnemies    = save->player_killed_enemies();
   s.notPickedUpCoins       = save->not_picked_up_coins();
   s.notPickedUpCoinsVisual = s.notPickedUpCoins;
-  s.crates                 = save->crates();
+  s.chests                 = save->chests();
   s.toSpawn                = save->to_spawn();
 
   // Loading saved weapons.
@@ -2238,7 +2238,7 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
     fb_save.xp                         = s.xp;
     fb_save.player_killed_enemies      = s.playerKilledEnemies;
     fb_save.not_picked_up_coins        = s.notPickedUpCoins;
-    fb_save.crates                     = s.crates;
+    fb_save.chests                     = s.chests;
     fb_save.to_spawn                   = s.toSpawn;
 
     for (const auto& weapon : g.run.state.weapons) {
@@ -2294,7 +2294,7 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
 
       fb_save.level  = fb_save.level_on_start_of_the_wave;
       fb_save.xp     = s.xpOnStartOfTheWave;
-      fb_save.crates = 0;
+      fb_save.chests = 0;
     }
   }
 
@@ -3200,7 +3200,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       }
     }
 
-    // Mob drops coin / apple / crate.
+    // Mob drops coin / apple / chest.
     {
       MakePickupableData data{
         .type        = PickupableType_COIN,
@@ -3213,11 +3213,11 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       if (GRAND.FRand() <= fb->apple_drop_chance() * luckFactor) {
         data.type = PickupableType_APPLE;
 
-        const auto crateChance = fb->crate_instead_of_apple_factor() * luckFactor
-                                 / (f32)(1 + g.run.cratesDroppedThisWave);
-        if (GRAND.FRand() <= crateChance) {
-          data.type = PickupableType_CRATE;
-          g.run.cratesDroppedThisWave++;
+        const auto chestChance = fb->chest_instead_of_apple_factor() * luckFactor
+                                 / (f32)(1 + g.run.chestsDroppedThisWave);
+        if (GRAND.FRand() <= chestChance) {
+          data.type = PickupableType_CHEST;
+          g.run.chestsDroppedThisWave++;
         }
 
         MakePickupable(data);
@@ -3270,7 +3270,7 @@ void OnPickedUp(int pickupableIndex) {  ///
 
   auto fb_creatures = glib->creatures();
 
-  const int appleOrCrateHeal = MIN(1, g.run.state.stats[StatType_APPLE_HEAL]);
+  const int appleOrChestHeal = MIN(1, g.run.state.stats[StatType_APPLE_HEAL]);
   IterateOverEffects(
     EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
     -1,
@@ -3385,14 +3385,14 @@ void OnPickedUp(int pickupableIndex) {  ///
   } break;
 
   case PickupableType_APPLE: {
-    if (appleOrCrateHeal > 0)
-      HealPlayer(appleOrCrateHeal);
+    if (appleOrChestHeal > 0)
+      HealPlayer(appleOrChestHeal);
   } break;
 
-  case PickupableType_CRATE: {
-    if (appleOrCrateHeal > 0)
-      HealPlayer(appleOrCrateHeal);
-    g.run.state.crates++;
+  case PickupableType_CHEST: {
+    if (appleOrChestHeal > 0)
+      HealPlayer(appleOrChestHeal);
+    g.run.state.chests++;
   } break;
 
   default:
@@ -3425,7 +3425,7 @@ void MakePickupable(MakePickupableData data) {  ///
   } break;
 
   case PickupableType_APPLE:
-  case PickupableType_CRATE: {
+  case PickupableType_CHEST: {
     // Intentionally left blank.
   } break;
 
@@ -8826,7 +8826,7 @@ void DoUI() {
       }
       // }
 
-      // Picked up crates.
+      // Picked up chests.
       // { ///
       CLAY({
         .layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM},
@@ -8841,8 +8841,8 @@ void DoUI() {
       }) {
         FLOATING_BEAUTIFY;
 
-        FOR_RANGE (int, i, g.run.state.crates) {
-          const auto fb = fb_pickupables->Get(PickupableType_CRATE);
+        FOR_RANGE (int, i, g.run.state.chests) {
+          const auto fb = fb_pickupables->Get(PickupableType_CHEST);
           BF_CLAY_IMAGE({
             .texID
             = fb->variation_texture_ids()->Get(i % fb->variation_texture_ids()->size()),
@@ -9306,8 +9306,8 @@ void DoUI() {
 
             g.run.state.pickedUpItem = {};
 
-            g.run.state.crates--;
-            if (g.run.state.crates) {
+            g.run.state.chests--;
+            if (g.run.state.chests) {
               g.run.scheduledPickedUpItems      = true;
               g.run.scheduledPickedUpItemsReset = true;
             }
@@ -11474,9 +11474,9 @@ void GameFixedUpdate() {
         AddXP(GetNextLevelXp(g.run.state.stats[StatType_LEVEL]));
       }
 
-      // F9 - add crate.
+      // F9 - add chest.
       if (IsKeyPressed(SDL_SCANCODE_F9)) {  ///
-        g.run.state.crates++;
+        g.run.state.chests++;
       }
     }
 
@@ -11526,14 +11526,14 @@ void GameFixedUpdate() {
     PLAYER_CREATURE.health    = MIN(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth);
   }
 
-  // Picking up remaining crates at the end of the wave.
+  // Picking up remaining chests at the end of the wave.
   if (g.run.scheduledWaveCompleted.IsSet()) {  ///
     int pickupableIndex = -1;
 
     for (auto& pickupable : g.run.pickupables) {
       pickupableIndex++;
 
-      if (pickupable.type != PickupableType_CRATE)
+      if (pickupable.type != PickupableType_CHEST)
         continue;
 
       if (!pickupable.pickedUpAt.IsSet())
@@ -11630,7 +11630,7 @@ void GameFixedUpdate() {
   if (g.run.scheduledUI) {  ///
     g.run.scheduledUI = false;
 
-    if (g.run.state.crates) {
+    if (g.run.state.chests) {
       g.run.scheduledPickedUpItems      = true;
       g.run.scheduledPickedUpItemsReset = true;
     }
@@ -11695,13 +11695,13 @@ void GameFixedUpdate() {
     // Resetting all pickupables.
     g.run.pickupables.Reset();
 #else
-    // Resetting all pickupables except crates.
+    // Resetting all pickupables except chests.
     {
       const int total = g.run.pickupables.count;
       int       off   = 0;
       FOR_RANGE (int, i, total) {
         const auto& pickupable = g.run.pickupables[i - off];
-        if (pickupable.type != PickupableType_CRATE) {
+        if (pickupable.type != PickupableType_CHEST) {
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
         }
@@ -14684,7 +14684,7 @@ void GameDraw() {
           IM::Text("F6 complete wave");
           IM::Text("F7 show end screen");
           IM::Text("F8 add level");
-          IM::Text("F9 add crate");
+          IM::Text("F9 add chest");
         }
 
         IM::Text("F10 unlock all achievements");

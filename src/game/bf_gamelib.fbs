@@ -136,7 +136,7 @@ table Creature {
     hostility_type: int = 1;
     knockback_resistance: float;
     apple_drop_chance: float = 0.007;
-    crate_instead_of_apple_factor: float = 0.25;
+    chest_instead_of_apple_factor: float = 0.25;
     is_boss: bool = false;
     collider_scale: float = 1;
     hurtbox_scale: float = 1;

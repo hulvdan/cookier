@@ -15,9 +15,9 @@ x fix: web билд почему-то прогресс неправильно о
 x stats: ENEMY_ADDITIONAL_DAMAGE_PERCENT
 x impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS
 x fix wrench / hex driver
+x ref: consumable -> apple
 
-* ref: consumable -> apple
-* ref: crate -> chest
+* ref: chest -> chest
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * fix: lance -% damage PROPERTY (NOT STAT)
 *
@@ -231,10 +231,10 @@ x fix wrench / hex driver
 * fix multiple one-by-one sliding achievements translation
 * save load: more tests!
 * new run: build icons
-* mob with crate: guaranteed cooldown?
+* mob with chest: guaranteed cooldown?
 * hp bar black outline
 * luck = подкова
-* multiple level ups icons in the top right corner (like picked up crates)
+* multiple level ups icons in the top right corner (like picked up chests)
 * turret: show damage in item
 * landmine: show damage in item
 * landmine: show spawn rate "Gets spawned every %.1f seconds"
@@ -264,96 +264,6 @@ x fix wrench / hex driver
 * weapon tag: explosive: 5 10 15 20 25 explosion size
 * weapon tag: elemental: 1 2 3 4 5 elemental damage
 * weapons categorization. жидкое / твёрдое?
-
-ART:
-================================================================================
-* art: crate (as chest)
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-* art:
-
-SFX:
-============================================================
-* sfx: ui: button click
-* sfx: ui: button hover big
-* sfx: ui: buy
-* sfx: ui: sell
-* sfx: ui: weapon combine
-* sfx: ui: reroll
-* sfx: ui: go next wave
-* sfx: ui: mob hurt
-* sfx: ui: player hurt
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx: ui:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-* sfx:
-
-QA:
-================================================================================
-* StatType_ARMOR
-* StatType_COINS_HEAL
-*
-*
-
-NOTES:
-================================================================================
-MOBS:
-- default mob - стандартная с шоколадными крошками
-- ranged mob стреляет шоколадными крошками
-- heavy rusher mob
-- heavy spawner mob - толстая шрек печенька
-- tiny mob
-- моб с сундуком
-- mob boss - галет (он сухой)
-- tree - cow / apple tree
-* mob that rotates when moving?
 
 TECH DEBT
 ============================================================
