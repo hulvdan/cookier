@@ -1374,6 +1374,10 @@ struct GameData {
     FrameVisual changedCoinsAt            = {};
     FrameVisual changedNotPickedUpCoinsAt = {};
   } ui;
+
+  struct Debug {
+    bool showGizmos = false;
+  } debug;
 } g = {};
 
 struct MakePreSpawnData {  ///
@@ -11273,7 +11277,7 @@ void DoUI() {
         }
         else {
           // UI elements' gizmos.
-          if (ge.meta.debugEnabled && bb.width && bb.height) {
+          if (g.debug.showGizmos && bb.width && bb.height) {
             DrawGroup_CommandRectLines({
               .pos{bb.x, bb.y},
               .size{bb.width, bb.height},
@@ -13063,7 +13067,7 @@ void GameFixedUpdate() {
 
               auto pos = PLAYER_CREATURE.pos + weapon.targetDir * colliderSize.x / 2.0f;
 
-              if (ge.meta.debugEnabled) {
+              if (g.debug.showGizmos) {
                 *g.run.meleeWeaponColliderGizmos.Add() = {
                   .pos      = pos,
                   .size     = colliderSize,
@@ -14327,7 +14331,7 @@ void GameDraw() {
   }
 
   // Drawing projectiles gizmos.
-  if (ge.meta.debugEnabled) {  ///
+  if (g.debug.showGizmos) {  ///
     for (const auto& projectile : g.run.projectiles) {
       auto fb = fb_projectiles->Get(projectile.c.type);
 
@@ -14425,7 +14429,7 @@ void GameDraw() {
   }
 
   // Gizmos. Colliders.
-  if (ge.meta.debugEnabled) {  ///
+  if (g.debug.showGizmos) {  ///
     DrawGroup_Begin(DrawZ_GIZMOS);
     DrawGroup_SetSortY(0);
 
@@ -14663,77 +14667,99 @@ void GameDraw() {
     if (0)
       IM::ShowDemoWindow();
 
-    if (IM::Begin("Debug")) {
-      if (IM::BeginTabBar("tabs")) {
-        if (IM::BeginTabItem("info")) {
-          IM::Text("Close debug menu: hold F1 -> press F2");
-          IM::Text("F3 change localization");
-          IM::Text("F4 change device");
-          IM::Text("F5 +10 coins");
-          if (g.run.state.screen == ScreenType_GAMEPLAY) {
-            IM::Text("0 die");
-            IM::Text("F6 complete wave");
-            IM::Text("F7 show end screen");
-            IM::Text("F8 add level");
-            IM::Text("F9 add crate");
-          }
-          IM::Text("F10 unlock all achievements");
-          IM::Text("N - increase wave. Shift N - decrease wave");
+    auto localizationEn = glib->localizations()->Get(1)->strings();
 
-          IM::Text("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x
+    if (IM::Begin("Debug") && IM::BeginTabBar("tabs")) {
+      if (IM::BeginTabItem("info")) {
+        IM::Text("Close debug menu: hold F1 -> press F2");
+
+        IM::Checkbox("Gizmos", &g.debug.showGizmos);
+
+        IM::Text("F3 change localization");
+        IM::Text("F4 change device");
+        IM::Text("F5 +10 coins");
+
+        if (g.run.state.screen == ScreenType_GAMEPLAY) {
+          IM::Text("0 die");
+          IM::Text("F6 complete wave");
+          IM::Text("F7 show end screen");
+          IM::Text("F8 add level");
+          IM::Text("F9 add crate");
+        }
+
+        IM::Text("F10 unlock all achievements");
+        IM::Text("N - increase wave. Shift N - decrease wave");
+
+        IM::Text("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x);
+
+        LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
+          IM::Text(
+            "%s: %d %d (%.1f%%) (max: %d, %.1f%%)",
+            name,
+            arena.used,
+            arena.size,
+            100.0f * (f32)arena.used / (f32)arena.size,
+            arena.maxUsed,
+            100.0f * (f32)arena.maxUsed / (f32)arena.size
           );
+        };
 
-          LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
-            IM::Text(
-              "%s: %d %d (%.1f%%) (max: %d, %.1f%%)",
-              name,
-              arena.used,
-              arena.size,
-              100.0f * (f32)arena.used / (f32)arena.size,
-              arena.maxUsed,
-              100.0f * (f32)arena.maxUsed / (f32)arena.size
-            );
-          };
-
-          debugTextArena("ge.meta._arena", ge.meta._arena);
-          debugTextArena("g.run.arena", g.run.arena);
-          debugTextArena("g.meta.trashArena", g.meta.trashArena);
-          debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
+        debugTextArena("ge.meta._arena", ge.meta._arena);
+        debugTextArena("g.run.arena", g.run.arena);
+        debugTextArena("g.meta.trashArena", g.meta.trashArena);
+        debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
 
 #define X(type_, name_) IM::Text("g.run." #name_ ".count: %d", g.run.name_.count);
-          VECTORS_TABLE;
+        VECTORS_TABLE;
 #undef X
-          IM::EndTabItem();
-        }
-
-        if (IM::BeginTabItem("items")) {
-          FOR_RANGE (int, i, ItemType_COUNT) {
-            if (!i)
-              continue;
-
-            const auto type = (ItemType)i;
-            if (IM::Button(
-                  TextFormat("Give item: %s", glib->items()->Get(type)->type()->c_str())
-                ))
-              AddItem(type);
-          }
-          IM::EndTabItem();
-        }
-
-        if (IM::BeginTabItem("stats")) {
-          FOR_RANGE (int, i, StatType_COUNT) {
-            if (!i)
-              continue;
-            const auto stat = (StatType)i;
-            IM::Text(
-              "%s %d", glib->stats()->Get(stat)->type()->c_str(), g.run.state.stats[stat]
-            );
-          }
-          IM::EndTabItem();
-        }
-
-        IM::EndTabBar();
+        IM::EndTabItem();
       }
+
+      if (IM::BeginTabItem("items")) {
+        FOR_RANGE (int, i, ItemType_COUNT) {
+          if (!i)
+            continue;
+
+          auto fb   = glib->items()->Get(i);
+          auto name = localizationEn->Get(fb->name_locale())->c_str();
+          if (IM::Button(TextFormat("Give item: %s - %s", fb->type()->c_str(), name)))
+            AddItem((ItemType)i);
+        }
+        IM::EndTabItem();
+      }
+
+      if ((g.run.state.screen == ScreenType_SHOP) && IM::BeginTabItem("weapons")) {
+        IM::Text("These buttons set shop's 2nd weapon");
+
+        FOR_RANGE (int, i, WeaponType_COUNT) {
+          if (!i)
+            continue;
+
+          auto fb   = fb_weapons->Get(i);
+          auto name = localizationEn->Get(fb->name_locale())->c_str();
+          if (IM::Button(TextFormat("%s - %s", fb->type()->c_str(), name))) {
+            g.run.state.shop.toPick[1] = {
+              .weapon = (WeaponType)i,
+              .tier   = fb->min_tier_index(),
+            };
+          }
+        }
+        IM::EndTabItem();
+      }
+
+      if (IM::BeginTabItem("stats")) {
+        FOR_RANGE (int, i, StatType_COUNT) {
+          if (!i)
+            continue;
+          const auto stat = (StatType)i;
+          IM::Text(
+            "%s %d", glib->stats()->Get(stat)->type()->c_str(), g.run.state.stats[stat]
+          );
+        }
+        IM::EndTabItem();
+      }
+
+      IM::EndTabBar();
     }
     IM::End();
   }

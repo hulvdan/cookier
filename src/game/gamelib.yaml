@@ -3192,7 +3192,6 @@ weapons: # {  ###
       - effectcondition_type: SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
         placeholders:
           - floats: 15 14 12 10
-        only_this_weapon: true
     melee_collider_height_px: 78
     use_sound_hash: GAME_SWING
     damage_sound_hash: GAME_BONK_FIST
@@ -3255,7 +3254,6 @@ weapons: # {  ###
         damage_scalings:
           - stat_type: ENGINEERING
             percents_per_tier: 100 100 100 100
-        only_this_weapon: true
     melee_collider_height_px: 64
     use_sound_hash: GAME_SWING
     damage_sound_hash: GAME_BONK_FIST
