@@ -9,28 +9,10 @@ WORKING SINCE 2025-09-07
 - РЕЛИЗ
 - ЧИНИМ
 
-x sfx: turret spatial shot sound
-x fix: show weapon card burning damage
-x ref weapon damage + burning use the same lambda
-x цветовое кодирование кнопок взятия / recycle / reroll
-x Маслову билд
-x fix: почему факел не даёт burning spread ?
-  вывести все статы в imgui
-- fix выдача всех ачивок
-x билды цвета
-x better sfx: shotgun darker?
-x better sfx: darker cunai
-x starts with different music (initialize random to different value)
-x go through localization TODOs
-x TASKS_INTERNET.txt
-x nothing changes knockback stat
-x fix: sprite of chocolate cookien is offsetted. It shouldn't be!!!
-x сковородку поменьше нарисовать
-
-* fix: web билд почему-то прогресс неправильно отображается
+x fix: web билд почему-то прогресс неправильно отображается
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
-*
+
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * fix: lance -% damage PROPERTY (NOT STAT)
 *
