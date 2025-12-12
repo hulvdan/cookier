@@ -1,12 +1,12 @@
 WORKING SINCE 2025-09-07
 
 ПЛАН
-- ЗВУКИ
-- ПРИКРУТ АНАЛИТИКИ (+ САКУТИНОВСКАЯ ШТУКА)
 - ДОПИЛКА ЭФФЕКТОВ
-- БАЛАНС
+- ПРИКРУТ АНАЛИТИКИ (+ САКУТИНОВСКАЯ ШТУКА)
 - ФИКСЫ ТОЛЬКО НУЖНОГО ДЛЯ РЕЛИЗА
+- МИНИМАЛЬНЫЙ БАЛАНС
 - РЕЛИЗ
+- БАЛАНС
 - ЧИНИМ
 
 x fix: web билд почему-то прогресс неправильно отображается
@@ -14,10 +14,11 @@ x fix: web билд почему-то прогресс неправильно о
   (есть скрин в screenshots)
 x stats: ENEMY_ADDITIONAL_DAMAGE_PERCENT
 
+* impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
+* ref: consumable -> apple
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * fix: lance -% damage PROPERTY (NOT STAT)
 *
-* impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
 * impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
 * impl effectcondition_type YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
 * impl weapon projectile_piercing_damage_bonus_percent
@@ -54,10 +55,10 @@ x stats: ENEMY_ADDITIONAL_DAMAGE_PERCENT
   мб даже проставить это в gamelib.fbs, а не хардкодить
   + требование указания в gamelib.yaml как обязательное поле
 *
-*
-* на старте рана не стартовать волну, пока не выйдешь за пределы области
+* на старте рана / игры не стартовать волну, пока не выйдешь за пределы области
   * скрыть hud
   * спрайты для разных стилей управления (* клава, * мышь, * пальцы)
+  * когда загрузился, не ставить паузу, а отображать геймплей и область
 *
 * polish: turret easing
 * garden apple spawn easing
