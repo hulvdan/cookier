@@ -24,6 +24,8 @@ x impl STAT__DURING_NEXT_WAVE
 x impl: STAT__WHEN_BELOW__X__PERCENT_HP
 x fix: lance -% damage PROPERTY (NOT STAT)
 
+* fix: у strange mushroom (CELERY_TEA)
+  неверно отображаются данные по тому, что будет в след волну
 * impl: STAT_2__MODS_CHANGED_BY__X__PERCENT
   почему у инженера +28 инженерки ??? Должно отображаться +10
   * в билдах и сложностях не должны скалироваться STAT_2__MODS_CHANGED_BY__X__PERCENT
@@ -53,8 +55,14 @@ x fix: lance -% damage PROPERTY (NOT STAT)
 *
 * fix расположение ховер карточек
 *
+* добавить MAGIC у сохранения!!!!
+  продумать слегка версионирование сохранений
+  (magic)HVSV|(save version)1|(game version)1.31|(data)XXX
+*
 * RELEASED!
 =======================
+* art: missile более толстый контур
+* мины спавнятся ближе к центру по окружности
 * impl: X__DAMAGE_EVERY__Y__SECONDS
 * impl: X__PERCENT_DAMAGE_FOR__Y__SECONDS_AFTER_PICKING_UP__PICKUPABLE
 * impl: X__STAT__EVERY_OTHER__Y__STAT2

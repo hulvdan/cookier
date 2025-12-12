@@ -1148,8 +1148,6 @@ struct GameData {
 
     LoadFontsResult loadedFonts = {};
 
-    bool godMode = false;
-
     struct {
       bool    controlling   = false;
       Vector2 startPos      = {};
@@ -2151,7 +2149,7 @@ void OnWaveStarted() {  ///
       ) BF_FORCE_INLINE_LAMBDA {
         ChangeDynamicStat(
           (StatType)fb_effect->stat_type(),
-          fb_effect->value()->Get(tierOffset) * times * thisWaveAddedCount
+          fb_effect->value()->Get(tierOffset) * thisWaveAddedCount
         );
       }
     );
@@ -4144,9 +4142,8 @@ int MakeCreature(MakeCreatureData data) {  ///
                );
 
   if (fb->hostility_type() != HostilityType_FRIENDLY) {
-    const f32 mobHpScale
-      = (f32)(100 + g.run.dynamicStats[StatType_ENEMY_HP_SCALE]) / 100.0f;
-    health = Round((f32)health * mobHpScale);
+    const f32 mobHpScale = 1 + (f32)g.run.dynamicStats[StatType_ENEMY_HP_SCALE] / 100.0f;
+    health               = Round((f32)health * mobHpScale);
   }
 
   const auto creatureID = g.run.nextCreatureID++;
@@ -5487,7 +5484,7 @@ int GetCreatureIndexByID(int id) {  ///
 f32 GetCreatureSpeed(const Creature& creature) {  ///
   f32 speed = creature.speed * creature.speedModifier;
   if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
-    speed *= (f32)(g.run.dynamicStats[StatType_ENEMY_SPEED] + 100) / 100.0f;
+    speed *= 1 + (f32)g.run.dynamicStats[StatType_ENEMY_SPEED] / 100.0f;
     speed = MAX(0, speed);
   }
   return speed;
@@ -5669,7 +5666,7 @@ void MakeAOE(
       // Player damages mob.
       damage = ApplyPlayerStatDamageMultiplier(damage);
       damage = Round(
-        damage * ((f32)g.run.dynamicStats[StatType_EXPLOSION_DAMAGE] / 100.0f + 1)
+        damage * (1 + (f32)g.run.dynamicStats[StatType_EXPLOSION_DAMAGE] / 100.0f)
       );
     }
 
@@ -6908,10 +6905,10 @@ void DoUI() {
   LAMBDA (
     void,
     componentEffectsExploded,
-    (auto fb_effects, int tierOffset, int count, int maxWidth)
+    (auto fb_effects, int tierOffset, int times, int thisWaveAddedCount, int maxWidth)
   )
   {  ///
-    ASSERT(count > 0);
+    ASSERT(times > 0);
     ASSERT(tierOffset >= 0);
     if (!fb_effects)
       return;
@@ -6959,7 +6956,7 @@ void DoUI() {
             isPercent = true;
           }
           v = Round((f32)v * GetStatModificationScale((StatType)fb_effect->stat_type()));
-          v *= count;
+          v *= times;
 
           const bool  isPositive = v >= 0;
           const char* format     = nullptr;
@@ -6972,7 +6969,7 @@ void DoUI() {
 
           PlaceholdFormattedString(
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
-            (isPositive == fb_stat->negative_is_good() ? palTextRed : palTextGreen)
+            ((isPositive == fb_stat->negative_is_good()) ? palTextRed : palTextGreen)
           );
 
           if (fb_stat->small_icon_texture_id()) {
@@ -7005,7 +7002,7 @@ void DoUI() {
             v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
-          v *= count;
+          v *= times;
 
           // TODO: correct colors.
           const char* format     = nullptr;
@@ -7054,9 +7051,9 @@ void DoUI() {
               auto cv = fb_vals->ints()->Get(tierOffset);
 
               if (fb_placeholder->multiplied_by_times())
-                cv *= count;
+                cv *= times;
               if (fb_placeholder->divided_by_times())
-                cv /= count;
+                cv /= times;
 
               auto formatFunc = FormatInt;
               if (fb_placeholder->signed_())
@@ -7088,9 +7085,9 @@ void DoUI() {
               auto cv = fb_vals->floats()->Get(tierOffset);
 
               if (fb_placeholder->multiplied_by_times())
-                cv *= count;
+                cv *= times;
               if (fb_placeholder->divided_by_times())
-                cv /= count;
+                cv /= times;
 
               auto formatFunc = FormatFloatDot1WithoutLeadingZeros;
               if (fb_placeholder->signed_())
@@ -7108,9 +7105,9 @@ void DoUI() {
               ASSERT(baseDamage >= 0);
 
               if (fb_placeholder->multiplied_by_times())
-                baseDamage *= count;
+                baseDamage *= times;
               if (fb_placeholder->divided_by_times())
-                baseDamage /= count;
+                baseDamage /= times;
 
               auto scalings = fb_effect->damage_scalings();
 
@@ -7139,9 +7136,9 @@ void DoUI() {
 
                   int v = fb_scaling->percents_per_tier()->Get(tierOffset);
                   if (fb_placeholder->multiplied_by_times())
-                    v *= count;
+                    v *= times;
                   if (fb_placeholder->divided_by_times())
-                    v /= count;
+                    v /= times;
 
                   if (!v)
                     continue;
@@ -7298,6 +7295,7 @@ void DoUI() {
     WeaponType     weapon     = {};
 
     int count               = 1;
+    int thisWaveAddedCount  = 0;
     int weaponIndexOrMinus1 = -1;
 
     HiddenType hidden         = HiddenType_SHOW_EMPTY_SLOT;
@@ -7561,16 +7559,22 @@ void DoUI() {
 
         // Difficulty stats.
         if (data.difficulty) {  ///
-          componentEffectsExploded(fb_difficulty->effects(), 0, data.count, CARD_WIDTH);
+          componentEffectsExploded(
+            fb_difficulty->effects(), 0, data.count, 0, CARD_WIDTH
+          );
         }
         // Build stats.
         else if (data.build) {  ///
-          componentEffectsExploded(fb_build->effects(), 0, data.count, CARD_WIDTH);
+          componentEffectsExploded(fb_build->effects(), 0, data.count, 0, CARD_WIDTH);
         }
         // Item stats.
         else if (data.item) {  ///
           componentEffectsExploded(
-            fb_items->Get(data.item)->effects(), 0, data.count, CARD_WIDTH
+            fb_items->Get(data.item)->effects(),
+            0,
+            data.count,
+            data.thisWaveAddedCount,
+            CARD_WIDTH
           );
         }
         // Weapon stats.
@@ -7722,7 +7726,7 @@ void DoUI() {
           {
             f32 value = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE;
             if (data.affectedByGame)
-              value *= (f32)(100 + g.run.dynamicStats[StatType_KNOCKBACK]) / 100.0f;
+              value *= 1 + (f32)g.run.dynamicStats[StatType_KNOCKBACK] / 100.0f;
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat("%.1f", value)));
@@ -7811,7 +7815,7 @@ void DoUI() {
             }
           }
 
-          componentEffectsExploded(fb->effects(), tierOffset, 1, CARD_WIDTH);
+          componentEffectsExploded(fb->effects(), tierOffset, 1, 0, CARD_WIDTH);
 
           // This wave damage.
           ASSERT(thisWaveDamage >= 0);
@@ -8163,6 +8167,7 @@ void DoUI() {
     WeaponType     weapon     = {};
 
     int count               = 1;
+    int thisWaveAddedCount  = 1;
     int weaponIndexOrMinus1 = -1;
 
     bool affectedByGame = false;
@@ -8275,6 +8280,7 @@ void DoUI() {
           .item                       = data.item,
           .weapon                     = data.weapon,
           .count                      = data.count,
+          .thisWaveAddedCount         = data.thisWaveAddedCount,
           .weaponIndexOrMinus1        = data.weaponIndexOrMinus1,
           .affectedByGame             = data.affectedByGame,
           .overrideTier               = data.overrideTier,
@@ -8346,10 +8352,11 @@ void DoUI() {
               .height = CLAY_SIZING_FIXED(slotSize.y),
             }}})
             if (t < g.run.state.items.count + 2) {
-              int            itemCount      = 1;
-              DifficultyType difficultyType = {};
-              BuildType      buildType      = {};
-              ItemType       itemType       = {};
+              DifficultyType difficultyType     = {};
+              BuildType      buildType          = {};
+              ItemType       itemType           = {};
+              int            count              = 1;
+              int            thisWaveAddedCount = 1;
 
               Clay_ElementId slotID{};
 
@@ -8391,8 +8398,9 @@ void DoUI() {
                   .showsDetails = true,
                   .uiBouncedAt  = item.uiBouncedAt,
                 });
-                itemType  = item.type;
-                itemCount = item.count;
+                itemType           = item.type;
+                count              = item.count;
+                thisWaveAddedCount = item.thisWaveAddedCount;
               }
 
               if (data.markFirstAsDefault && (t == 0))
@@ -8401,14 +8409,15 @@ void DoUI() {
               processShowingOrNotShowingSlotDetails(slotID);
 
               gridEntryDetails(GridEntryDetailsData{
-                .id             = slotID,
-                .difficulty     = difficultyType,
-                .build          = buildType,
-                .item           = itemType,
-                .count          = itemCount,
-                .affectedByGame = data.affectedByGame,
-                .detailsRight   = data.detailsRight,
-                .detailsBelow   = data.detailsBelow,
+                .id                 = slotID,
+                .difficulty         = difficultyType,
+                .build              = buildType,
+                .item               = itemType,
+                .count              = count,
+                .thisWaveAddedCount = thisWaveAddedCount,
+                .affectedByGame     = data.affectedByGame,
+                .detailsRight       = data.detailsRight,
+                .detailsBelow       = data.detailsBelow,
               });
             }
           }
@@ -12415,7 +12424,7 @@ void GameFixedUpdate() {
             auto& data = creature.DataTurret();
 
             f32 rangeMeters = fb->turret_range_meters();
-            rangeMeters *= (f32)g.run.dynamicStats[StatType_STRUCTURE_RANGE] / 100.0f + 1;
+            rangeMeters *= 1 + (f32)g.run.dynamicStats[StatType_STRUCTURE_RANGE] / 100.0f;
             rangeMeters = MAX(STRUCTURE_MIN_RANGE_METERS, rangeMeters);
 
             auto originalSize
@@ -12778,7 +12787,7 @@ void GameFixedUpdate() {
           if (pickupable.pickedUpAt.IsSet())
             continue;
 
-          auto pickupRangeScale = (f32)(100 + g.run.dynamicStats[StatType_PICKUP_RANGE]);
+          auto pickupRangeScale = 1 + (f32)g.run.dynamicStats[StatType_PICKUP_RANGE];
           pickupRangeScale      = MAX(30, pickupRangeScale);
           pickupRangeScale /= 100.0f;
 
@@ -13142,11 +13151,8 @@ void GameFixedUpdate() {
         const auto fb = fb_creatures->Get(creature.type);
 
         f32 speed = GetCreatureSpeed(creature);
-        if (creature.type == CreatureType_PLAYER) {
-          speed *= MAX(0, (f32)(100 + g.run.dynamicStats[StatType_SPEED]) / 100.0f);
-          if (g.meta.godMode)
-            speed *= 1.5f;
-        }
+        if (creature.type == CreatureType_PLAYER)
+          speed *= MAX(0, 1 + (f32)g.run.dynamicStats[StatType_SPEED] / 100.0f);
 
         speed *= b2Body_GetMass(creature.body.id) * BODY_LINEAR_DAMPING_SPEED_SCALE;
 
@@ -15183,6 +15189,7 @@ void GameDraw() {
 
       IM::EndTabBar();
     }
+
     IM::End();
   }
 

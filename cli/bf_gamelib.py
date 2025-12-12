@@ -1368,8 +1368,9 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         (BuildPlatform.WebYandex, BuildType.Release): ".cmake/WebYandex_Release/",
     }[(platform, build_type)]
 
+    recursive_mkdir(dist_dir)
+
     if (platform, build_type) in symlink_resources_for:
-        recursive_mkdir(dist_dir)
         p = Path(dist_dir + "resources")
         if not p.exists():
             p.symlink_to(RESOURCES_DIR, target_is_directory=True)

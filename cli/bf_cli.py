@@ -51,6 +51,7 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
     command = [
         "cmake",
         "-DBUILD_SHARED_LIBS=OFF",
+        # "-T ClangCL",
         f"-DPLATFORM={platform}",
         f"-DCMAKE_CONFIGURATION_TYPES={build_type}",
     ]

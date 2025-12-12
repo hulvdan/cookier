@@ -465,6 +465,8 @@ effect_conditions: # {  ###
     y_condvar_type: FLOAT
     y_divided_by_times: true
   - type: STAT__DURING_NEXT_WAVE
+    stat_multiplied_by_times: false
+    stat_multiplied_by_this_wave_added_count: true
   - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON_KILLING
     x_multiplied_by_times: true
     y_condvar_type: DAMAGE
