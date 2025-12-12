@@ -61,6 +61,8 @@ constexpr f32 MELEE_WEAPON_COLLIDER_PHANTOM_RANGE_METERS = 0.12f;
 
 // Other.
 // ============================================================
+constexpr auto IDLE_OR_WALKING_BONUS_FRAMES = FIXED_FPS / 8;
+
 constexpr auto ANIMATION_0_FRAMES = lframe::FromSeconds(0.2f);
 constexpr auto ANIMATION_1_FRAMES = lframe::FromSeconds(0.5f);
 constexpr auto ANIMATION_2_FRAMES = lframe::FromSeconds(1.2f);

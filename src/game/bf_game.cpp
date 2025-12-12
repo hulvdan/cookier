@@ -1882,7 +1882,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
         BF_FORCE_INLINE_LAMBDA {
           if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
             return;
-          if (g.run.playerContinuousIdleFrames > FIXED_FPS / 8)
+          if (g.run.playerContinuousIdleFrames >= IDLE_OR_WALKING_BONUS_FRAMES)
             applyEffectToDamage(fb_effect, tierOffset, times);
         }
     );
@@ -1894,7 +1894,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
         BF_FORCE_INLINE_LAMBDA {
           if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
             return;
-          if (g.run.playerContinuousWalkingFrames > FIXED_FPS / 8)
+          if (g.run.playerContinuousWalkingFrames > IDLE_OR_WALKING_BONUS_FRAMES)
             applyEffectToDamage(fb_effect, tierOffset, times);
         }
     );
@@ -12549,13 +12549,46 @@ void GameFixedUpdate() {
 
         g.run.previousPlayerPos = PLAYER_CREATURE.pos;
 
+        LAMBDA (void, giveIdleBonus, (int sign)) {
+          IterateOverEffects(
+            EffectConditionType_STAT__WHEN_IDLE,
+            -1,
+            [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times) {
+              g.run.dynamicStats[fb_effect->stat_type()]
+                += fb_effect->value()->Get(tierOffset) * times * sign;
+            }
+          );
+        };
+
+        LAMBDA (void, giveWalkingBonus, (int sign)) {
+          IterateOverEffects(
+            EffectConditionType_STAT__WHEN_WALKING,
+            -1,
+            [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times) {
+              g.run.dynamicStats[fb_effect->stat_type()]
+                += fb_effect->value()->Get(tierOffset) * times * sign;
+            }
+          );
+        };
+
         if ((deltaMeters > 0) && !FloatEquals(deltaMeters, 0)) {
           g.run.playerWalkedMetersCumulativeDelta += deltaMeters;
+
+          if (g.run.playerContinuousIdleFrames >= IDLE_OR_WALKING_BONUS_FRAMES)
+            giveIdleBonus(-1);
           g.run.playerContinuousIdleFrames = 0;
+
           g.run.playerContinuousWalkingFrames++;
+          if (g.run.playerContinuousWalkingFrames == IDLE_OR_WALKING_BONUS_FRAMES)
+            giveWalkingBonus(1);
         }
         else {
           g.run.playerContinuousIdleFrames++;
+          if (g.run.playerContinuousIdleFrames == IDLE_OR_WALKING_BONUS_FRAMES)
+            giveIdleBonus(1);
+
+          if (g.run.playerContinuousWalkingFrames >= IDLE_OR_WALKING_BONUS_FRAMES)
+            giveWalkingBonus(-1);
           g.run.playerContinuousWalkingFrames = 0;
 
           IterateOverEffects(
@@ -14704,8 +14737,6 @@ void GameDraw() {
   EngineApplyVignette();
   FlushDrawCommands();
 
-#define IM ImGui
-
   // Debug info.
   if (ge.meta.debugEnabled) {  ///
     if (0)
@@ -14760,12 +14791,24 @@ void GameDraw() {
       }
 
       if (IM::BeginTabItem("items")) {
+        static char searchBuf[512]{};
+        IM::InputTextWithHint(
+          "##items-search", "Search by name or code", searchBuf, ARRAY_COUNT(searchBuf)
+        );
+
         FOR_RANGE (int, i, ItemType_COUNT) {
           if (!i)
             continue;
 
           auto fb   = glib->items()->Get(i);
           auto name = localizationEn->Get(fb->name_locale())->c_str();
+
+          // Search filtering.
+          if (searchBuf[0]) {
+            if (!(strstr(name, searchBuf) || strstr(fb->type()->c_str(), searchBuf)))
+              continue;
+          }
+
           if (IM::Button(TextFormat("%d: %s - %s", i, fb->type()->c_str(), name)))
             AddItem((ItemType)i);
         }
@@ -14775,12 +14818,24 @@ void GameDraw() {
       if ((g.run.state.screen == ScreenType_SHOP) && IM::BeginTabItem("weapons")) {
         IM::Text("These buttons set shop's 2nd weapon");
 
+        static char searchBuf[512]{};
+        IM::InputTextWithHint(
+          "##weapons-search", "Search by name or code", searchBuf, ARRAY_COUNT(searchBuf)
+        );
+
         FOR_RANGE (int, i, WeaponType_COUNT) {
           if (!i)
             continue;
 
           auto fb   = fb_weapons->Get(i);
           auto name = localizationEn->Get(fb->name_locale())->c_str();
+
+          // Search filtering.
+          if (searchBuf[0]) {
+            if (!(strstr(name, searchBuf) || strstr(fb->type()->c_str(), searchBuf)))
+              continue;
+          }
+
           if (IM::Button(TextFormat("%d: %s - %s", i, fb->type()->c_str(), name))) {
             g.run.state.shop.toPick[1] = {
               .weapon = (WeaponType)i,
