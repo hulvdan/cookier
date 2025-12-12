@@ -1310,6 +1310,8 @@ struct GameData {
 
     Array<int, ProjectileType_COUNT> projectileCounts = {};
 
+    bool schedulePlayerHurtSound = false;
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -1377,7 +1379,7 @@ struct GameData {
     FrameVisual changedNotPickedUpCoinsAt = {};
   } ui;
 
-  struct Debug {
+  struct Debug {  ///
     bool showGizmos = false;
   } debug;
 } g = {};
@@ -2670,6 +2672,7 @@ struct TryApplyDamageData {  ///
   int          indexOfWeaponThatDidDamageOrMinus1 = -1;
   bool         weaponCanApplyAilment              = true;
   bool         weaponSound                        = false;
+  bool         playerSound                        = true;
   bool*        outWasCrit                         = nullptr;
   bool*        outJustKilled                      = nullptr;
 };
@@ -3028,6 +3031,8 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
             );
           }
       );
+
+      g.run.schedulePlayerHurtSound |= data.playerSound;
     }
 
     if (data.outWasCrit)
@@ -13537,6 +13542,25 @@ void GameFixedUpdate() {
       }
     }
 
+    // Processing EffectConditionType_YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
+    IterateOverEffects(  ///
+      EffectConditionType_YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND,
+      -1,
+      [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
+        BF_FORCE_INLINE_LAMBDA {
+          auto v = EFFECT_X_INT * times;
+          if (v <= 0)
+            return;
+          if (((g.run.waveStartedAt.Elapsed().value + 1) % FIXED_FPS) == 0) {
+            TryApplyDamage({
+              .creatureIndex = 0,
+              .damage        = v,
+              .playerSound   = false,
+            });
+          }
+        }
+    );
+
     // Processing `projectilesToRemove`.
     if (g.run.projectilesToRemove.count > 0) {  ///
       ZoneScopedN("Processing `projectilesToRemove`.");
@@ -13578,17 +13602,14 @@ void GameFixedUpdate() {
     {  ///
       ZoneScopedN("Processing `justDamagedCreatures`.");
 
-      bool playerHurt = false;
-      bool mobHurt    = false;
+      bool mobHurt = false;
 
       for (const auto index : g.run.justDamagedCreatures) {
         auto& creature = g.run.creatures[index];
 
         const auto fb = fb_creatures->Get(creature.type);
 
-        if (creature.type == CreatureType_PLAYER)
-          playerHurt = true;
-        else if (creature.health <= 0)
+        if (creature.type != CreatureType_PLAYER && (creature.health <= 0))
           mobHurt = true;
 
         if (creature.health <= 0) {
@@ -13612,9 +13633,10 @@ void GameFixedUpdate() {
         }
       }
 
-      if (playerHurt) {
+      if (g.run.schedulePlayerHurtSound) {
         PlaySound(Sound_GAME_PLAYER_HURT);
         PlaySound(Sound_GAME_PLAYER_HURT_KICK);
+        g.run.schedulePlayerHurtSound = false;
       }
       if (mobHurt)
         PlaySound(Sound_GAME_MOB_HURT);
