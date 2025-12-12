@@ -1644,14 +1644,14 @@ void ChangeStaticAndDynamicStat(StatType stat, int value) {  ///
   if (fb_stat->reach_this_or_more_stat_achievement_type()) {
     AchievementMax(
       (AchievementType)fb_stat->reach_this_or_more_stat_achievement_type(),
-      g.run.state.stats[stat]
+      g.run.state.staticStats[stat]
     );
   }
 
   if (fb_stat->reach_this_or_less_stat_achievement_type()) {
     AchievementMin(
       (AchievementType)fb_stat->reach_this_or_less_stat_achievement_type(),
-      g.run.state.stats[stat]
+      g.run.state.staticStats[stat]
     );
   }
 }
@@ -8458,7 +8458,7 @@ void DoUI() {
           continue;
 
         auto color = palTextWhite;
-        auto v     = g.run.dynamicStats[statIndex];
+        auto v     = ((g.run.state.screen == ScreenType_GAMEPLAY) ? g.run.dynamicStats[statIndex] : g.run.state.staticStats[statIndex] );
         if (v > 0)
           color = (fb_stat->negative_is_good() ? palTextRed : palTextGreen);
         else if (v < 0)
