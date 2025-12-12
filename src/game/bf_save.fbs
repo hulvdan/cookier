@@ -63,7 +63,7 @@ table Save {
 
     player_killed_enemies: int;
     not_picked_up_coins: int;
-    crates: int;
+    chests: int;
     to_spawn: int;
 
     weapons: [Weapon];

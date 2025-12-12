@@ -265,7 +265,7 @@ creatures: # {  ###
     not_aggroed_speed: 4
     speed_plus_minus: 0.8
     apple_drop_chance: inf
-    crate_instead_of_apple_factor: inf
+    chest_instead_of_apple_factor: inf
     texture_ids:
       - game_creature_chester
     shadow_offset_y: -0.57
@@ -648,7 +648,7 @@ items: # {  ###
     limit: 3
     effects:
       - effectcondition_type: X__COINS_UPON__PICKUPABLE
-        pickupable_type: CRATE
+        pickupable_type: CHEST
         placeholders:
           - ints: 15
       - stat_type: SPEED
@@ -2070,7 +2070,7 @@ items: # {  ###
 #     - stat_type: HP
 #       value: 3
 #     - effectcondition_type: X__CHANCE_TO_EXPLODE_DEALING__Y__DAMAGE_UPON__PICKUPABLE
-#       pickupable_type: CRATE
+#       pickupable_type: CHEST
 #       placeholders:
 #         - ints: 50
 #         - ints: 10
@@ -2177,14 +2177,14 @@ items: # {  ###
 #       placeholders:
 #         - ints: 5
 #         - floats: 1
-# TODO: EXTRA_ITEM_IN_A_CRATE_CHANCE
+# TODO: EXTRA_ITEM_IN_A_CHEST_CHANCE
 # - type: TREASURE_MAP
 #   texture_id: ui_item_todo
 #   tier: 1
 #   price: 35
 #   limit: 5
 #   effects:
-#     - stat_type: EXTRA_ITEM_IN_A_CRATE_CHANCE
+#     - stat_type: EXTRA_ITEM_IN_A_CHEST_CHANCE
 #       value: 20
 # TODO: TYLER_DEALING__X__DAMAGE_AND_SHOOTING__Y__PROJECTILES
 # + TYLER projectile (it's lightning)
@@ -4295,10 +4295,10 @@ pickupables: # {  ###
     pickup_sound_hash: GAME_PICKUP_APPLE
     variation_texture_ids:
       - game_pickupable_apple
-  - type: CRATE
+  - type: CHEST
     pickup_sound_hash: GAME_PICKUP_CHEST
     variation_texture_ids:
-      - game_pickupable_crate
+      - game_pickupable_chest
 # }
 
 numbers: # {  ###
@@ -4525,7 +4525,7 @@ stats: # {  ###
   - type: REROLL_PRICE
     is_percent: true
     is_secondary: true
-  - type: EXTRA_ITEM_IN_A_CRATE_CHANCE
+  - type: EXTRA_ITEM_IN_A_CHEST_CHANCE
     is_percent: true
     is_secondary: true
     is_hidden: true
