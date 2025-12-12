@@ -25,8 +25,8 @@
 * GET_STAT_DURING_THE_NEXT_WAVE
 * GET_STAT_FOR_EVERY_LIVING_ENEMY
 * STAT__EVERY__X__SECONDS_BONUS_IS_LOST_UPON_TAKING_DAMAGE
-* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP (1 max hp, consumable)
-* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP_UNTIL_THE_END_OF_THE_WAVE (1 hp regen, consumable)
+* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP (1 max hp, apple)
+* STAT__UPON_PICKUPABLE_WHILE_AT_MAX_HP_UNTIL_THE_END_OF_THE_WAVE (1 hp regen, apple)
 * stat: accuracy [-PI32 / 4, PI32 / 4]
 * STAT_FOR_EVERY_DIFFERENT_TIER_ITEM
 * STAT_FOR_EVERY_BURNING_ENEMY
@@ -40,7 +40,7 @@
 * CAP_STAT
 * ENEMIES_TAKE__X__PERCENT_MORE_DAMAGE_DURING__Y__SECONDS_AFTER_ELEMENTAL_DAMAGE
   ("Elemental Damage" string is GREEN)
-* CONSUMABLES_HEAL_OVER__X__SECONDS
+* APPLES_HEAL_OVER__X__SECONDS
 * STRUCTURES_CAN_CRIT
 * TURRET_FROM_DEAD_TREE
 * STAT_WHILE_LOWER_THAN_X_PERCENT_HP (hp regen x2, <=50% hp)
@@ -100,7 +100,7 @@ melee weapon effects:
 - drop coins chance on hit (brick breaks) (10/30/60/120 coins per tier)
 - cooldown is 1.83s/1.52s every 30/40 shots
 - deal 10%/20% of enemy current health as bonus damage (1%/2% bosses + elites)
-- +1/+1/+1/+2 healing from consumables
+- +1/+1/+1/+2 healing from apples
 - melee weapon also can explode with some chance
 - X chance to gain 1 coin upon killing an enemy with a crit
 - +X stat every Y seconds until the end of the wave (+10% attack speed, every 5 seconds)

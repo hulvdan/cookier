@@ -1164,7 +1164,7 @@ def process_images():
         "game_projectile_mob",
         "game_pickupable_crate",
         "game_creature_tree",
-        "game_pickupable_consumable",
+        "game_pickupable_apple",
         "game_creature_ranger",
         "game_creature_spawner",
         "game_creature_chester",
