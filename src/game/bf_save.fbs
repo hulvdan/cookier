@@ -6,6 +6,7 @@ namespace BFSave;
 table Item {
     type: int;
     count: int;
+    this_wave_added_count: int;
 }
 
 table Weapon {
