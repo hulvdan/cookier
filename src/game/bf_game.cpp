@@ -14722,7 +14722,7 @@ void GameDraw() {
 
           auto fb   = glib->items()->Get(i);
           auto name = localizationEn->Get(fb->name_locale())->c_str();
-          if (IM::Button(TextFormat("Give item: %s - %s", fb->type()->c_str(), name)))
+          if (IM::Button(TextFormat("%d: %s - %s", i, fb->type()->c_str(), name)))
             AddItem((ItemType)i);
         }
         IM::EndTabItem();
@@ -14737,7 +14737,7 @@ void GameDraw() {
 
           auto fb   = fb_weapons->Get(i);
           auto name = localizationEn->Get(fb->name_locale())->c_str();
-          if (IM::Button(TextFormat("%s - %s", fb->type()->c_str(), name))) {
+          if (IM::Button(TextFormat("%d: %s - %s", i, fb->type()->c_str(), name))) {
             g.run.state.shop.toPick[1] = {
               .weapon = (WeaponType)i,
               .tier   = fb->min_tier_index(),
@@ -14753,7 +14753,10 @@ void GameDraw() {
             continue;
           const auto stat = (StatType)i;
           IM::Text(
-            "%s %d", glib->stats()->Get(stat)->type()->c_str(), g.run.state.stats[stat]
+            "%d: %s %d",
+            i,
+            glib->stats()->Get(stat)->type()->c_str(),
+            g.run.state.stats[stat]
           );
         }
         IM::EndTabItem();
