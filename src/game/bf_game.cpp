@@ -2017,7 +2017,7 @@ void OnWaveStarted() {  ///
 
   g.run.gardensToSpawn.Reset();
   IterateOverEffects(
-    EffectConditionType_SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS,
+    EffectConditionType_SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS,
     -1,
     [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
       BF_FORCE_INLINE_LAMBDA {
@@ -3200,7 +3200,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       }
     }
 
-    // Mob drops coin / consumable / crate.
+    // Mob drops coin / apple / crate.
     {
       MakePickupableData data{
         .type        = PickupableType_COIN,
@@ -3210,10 +3210,10 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       MakePickupable(data);
 
       const auto luckFactor = GetLuckFactor();
-      if (GRAND.FRand() <= fb->consumable_drop_chance() * luckFactor) {
-        data.type = PickupableType_CONSUMABLE;
+      if (GRAND.FRand() <= fb->apple_drop_chance() * luckFactor) {
+        data.type = PickupableType_APPLE;
 
-        const auto crateChance = fb->crate_instead_of_consumable_factor() * luckFactor
+        const auto crateChance = fb->crate_instead_of_apple_factor() * luckFactor
                                  / (f32)(1 + g.run.cratesDroppedThisWave);
         if (GRAND.FRand() <= crateChance) {
           data.type = PickupableType_CRATE;
@@ -3270,7 +3270,7 @@ void OnPickedUp(int pickupableIndex) {  ///
 
   auto fb_creatures = glib->creatures();
 
-  const int consumableOrCrateHeal = MIN(1, g.run.state.stats[StatType_CONSUMABLE_HEAL]);
+  const int appleOrCrateHeal = MIN(1, g.run.state.stats[StatType_APPLE_HEAL]);
   IterateOverEffects(
     EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
     -1,
@@ -3384,14 +3384,14 @@ void OnPickedUp(int pickupableIndex) {  ///
       HealPlayer();
   } break;
 
-  case PickupableType_CONSUMABLE: {
-    if (consumableOrCrateHeal > 0)
-      HealPlayer(consumableOrCrateHeal);
+  case PickupableType_APPLE: {
+    if (appleOrCrateHeal > 0)
+      HealPlayer(appleOrCrateHeal);
   } break;
 
   case PickupableType_CRATE: {
-    if (consumableOrCrateHeal > 0)
-      HealPlayer(consumableOrCrateHeal);
+    if (appleOrCrateHeal > 0)
+      HealPlayer(appleOrCrateHeal);
     g.run.state.crates++;
   } break;
 
@@ -3424,7 +3424,7 @@ void MakePickupable(MakePickupableData data) {  ///
     ASSERT(d.amount > 0);
   } break;
 
-  case PickupableType_CONSUMABLE:
+  case PickupableType_APPLE:
   case PickupableType_CRATE: {
     // Intentionally left blank.
   } break;
@@ -12351,7 +12351,7 @@ void GameFixedUpdate() {
 
           // Spawning gardens.
           IterateOverEffects(
-            EffectConditionType_SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_CONSUMABLE_EVERY__Y__SECONDS,
+            EffectConditionType_SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_APPLE_EVERY__Y__SECONDS,
             -1,
             [&](Weapon* w, int wi, auto fb_effect, int tierOffset, int times)
               BF_FORCE_INLINE_LAMBDA {
@@ -13454,7 +13454,7 @@ void GameFixedUpdate() {
         } while (!CREATURES_WORLD_SPAWN_BOUNDS.ContainsInside(pos));
 
         MakePickupable({
-          .type = PickupableType_CONSUMABLE,
+          .type = PickupableType_APPLE,
           .pos  = pos,
         });
       }

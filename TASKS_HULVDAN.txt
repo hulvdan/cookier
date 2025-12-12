@@ -13,10 +13,11 @@ x fix: web билд почему-то прогресс неправильно о
   Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
   (есть скрин в screenshots)
 x stats: ENEMY_ADDITIONAL_DAMAGE_PERCENT
-x impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_CONSUMABLE_EVERY__X__SECONDS
+x impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS
 x fix wrench / hex driver
 
 * ref: consumable -> apple
+* ref: crate -> chest
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * fix: lance -% damage PROPERTY (NOT STAT)
 *
