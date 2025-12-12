@@ -22,8 +22,8 @@ x impl: STAT__WHEN_IDLE STAT__WHEN_WALKING
 x impl YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
 x impl STAT__DURING_NEXT_WAVE
 x impl: STAT__WHEN_BELOW__X__PERCENT_HP
+x fix: lance -% damage PROPERTY (NOT STAT)
 
-* fix: lance -% damage PROPERTY (NOT STAT)
 * impl: STAT_2__MODS_CHANGED_BY__X__PERCENT
   почему у инженера +28 инженерки ??? Должно отображаться +10
 * fix: flamethrower не может слишком быстро бить врагов
