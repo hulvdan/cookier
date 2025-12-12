@@ -7019,7 +7019,7 @@ void DoUI() {
         if ((percent < 100) && (fb_step->value() != 1)) {
           BF_CLAY_TEXT(" ");
           BF_CLAY_TEXT(
-            TextFormat("(%d / %d)", v, fb_step->value()),
+            TextFormat("(%d / %d)", (int)v, (int)fb_step->value()),
             {
               .color    = palTextBezhevy,
               .wrapMode = CLAY_TEXT_WRAP_NONE,
