@@ -1829,7 +1829,12 @@ void IterateOverEffects(
   }
 }
 
-int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) {  ///
+int CalculateWeaponDamage(
+  int        weaponIndexOrMinus1,
+  WeaponType type,
+  int        tier,
+  bool       affectedByGame
+) {  ///
   ASSERT(tier < 4);
   const auto fb = glib->weapons()->Get(type);
   ASSERT(tier >= fb->min_tier_index());
@@ -1893,7 +1898,7 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
     }
   );
 
-  if ((g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused) {
+  if ((g.run.state.screen == ScreenType_GAMEPLAY) && affectedByGame) {
     IterateOverEffects(
       EffectConditionType_PROPERTY__WHEN_IDLE,
       weaponIndexOrMinus1,
@@ -1925,14 +1930,13 @@ int CalculateWeaponDamage(int weaponIndexOrMinus1, WeaponType type, int tier) { 
       ) BF_FORCE_INLINE_LAMBDA {
         if (fb_effect->weaponproperty_type() != WeaponPropertyType_DAMAGE)
           return;
-        if (g.run.playerContinuousWalkingFrames > IDLE_OR_WALKING_BONUS_FRAMES)
+        if (g.run.playerContinuousWalkingFrames >= IDLE_OR_WALKING_BONUS_FRAMES)
           applyEffectToDamage(fb_effect, tierOffset, times);
       }
     );
   }
 
-  damage = MAX(1, damage);
-  return damage;
+  return MAX(1, damage);
 }
 
 Vector2 GetPlayerWeaponOffset(int weaponIndex) {  ///
@@ -5723,7 +5727,7 @@ bool OnWeaponCollided(b2ShapeId shapeID, int* const weaponIndex) {  ///
     return continueCollisions;
 
   const int  tierOffset = weapon.tier - fb->min_tier_index();
-  const auto damage     = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier);
+  const auto damage = CalculateWeaponDamage(*weaponIndex, weapon.type, weapon.tier, true);
   const auto knockbackMeters = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE;
   const auto critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset);
   const auto weaponCritChance     = fb->crit_chance()->Get(tierOffset);
@@ -7666,7 +7670,9 @@ void DoUI() {
             componentWeaponDamageWithScalings(
               Loc_UI_WEAPON_DAMAGE,
               fb->base_damage()->Get(tierOffset),
-              CalculateWeaponDamage(data.weaponIndexOrMinus1, data.weapon, tier),
+              CalculateWeaponDamage(
+                data.weaponIndexOrMinus1, data.weapon, tier, data.affectedByGame
+              ),
               projectileCount,
               fb->damage_scalings(),
               tierOffset
@@ -13371,7 +13377,7 @@ void GameFixedUpdate() {
                     .dir                 = dir,
                     .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
                     .damage
-                    = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier),
+                    = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier, true),
                     .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
                     .weaponCritChance     = fb->crit_chance()->Get(tierOffset),
                     .knockbackMeters

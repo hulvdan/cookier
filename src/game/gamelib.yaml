@@ -3119,8 +3119,8 @@ weapons: # {  ###
     effects:
       - stat_type: SPEED
         value: 2 3 4 5
-      - effectcondition_type: STAT__WHEN_IDLE
-        stat_type: DAMAGE
+      - effectcondition_type: PROPERTY__WHEN_IDLE
+        weaponproperty_type: DAMAGE
         value: -8 -12 -16 -20
         only_this_weapon: true
     melee_collider_height_px: 40
