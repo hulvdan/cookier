@@ -2031,6 +2031,29 @@ void RecalculateThisWaveMobs() {  ///
     g.run.thisWaveMobs[i].accumulatedFactor /= accumulatedFactor;
 }
 
+void UpdateHPPercentThresholdEffects(int prevHealth) {  ///
+  IterateOverEffects(
+    EffectConditionType_STAT__WHEN_BELOW__X__PERCENT_HP,
+    -1,
+    [&](
+      Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
+    ) BF_FORCE_INLINE_LAMBDA {
+      const auto threshold
+        = Round((f32)(PLAYER_CREATURE.maxHealth * EFFECT_X_INT) / 100.0f);
+
+      int scale = 0;
+      if ((prevHealth >= threshold) && (PLAYER_CREATURE.health < threshold))
+        scale = 1;
+      else if ((prevHealth < threshold) && (PLAYER_CREATURE.health >= threshold))
+        scale = -1;
+      ChangeDynamicStat(
+        (StatType)fb_effect->stat_type(),
+        scale * times * fb_effect->value()->Get(tierOffset)
+      );
+    }
+  );
+}
+
 void OnWaveStarted() {  ///
   ResetDynamicStats();
 
@@ -2129,6 +2152,9 @@ void OnWaveStarted() {  ///
       }
     );
   }
+
+  if (PLAYER_CREATURE.health != PLAYER_CREATURE.maxHealth)
+    UpdateHPPercentThresholdEffects(PLAYER_CREATURE.maxHealth);
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -2742,14 +2768,24 @@ struct TryApplyDamageData {  ///
 bool TryApplyDamage(TryApplyDamageData data);
 
 void HealPlayer(int amount = 1) {  ///
+  ASSERT(amount >= 0);
+  if (amount <= 0)
+    return;
   if (g.run.state.screen != ScreenType_GAMEPLAY)
     return;
   if (g.run.cantHeal)
     return;
 
   if (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth) {
+    auto prevHealth = PLAYER_CREATURE.health;
+
     PLAYER_CREATURE.health
-      = MoveTowardsF(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+      = MoveTowardsI(PLAYER_CREATURE.health, PLAYER_CREATURE.maxHealth, amount);
+
+    g.run.runHealed += PLAYER_CREATURE.health - prevHealth;
+    AchievementMax(AchievementType_HEAL_X_DURING_A_RUN, g.run.runHealed);
+
+    UpdateHPPercentThresholdEffects(prevHealth);
   }
 
   IterateOverEffects(
@@ -3173,9 +3209,14 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
         += (f32)MIN(data.damage, creature.health) / (f32)creature.health;
     }
 
+    auto prevHealth = creature.health;
+
     int damaged = MAX(0, MIN(creature.health, data.damage));
 
     creature.health -= data.damage;
+
+    if (creature.type == CreatureType_PLAYER)
+      UpdateHPPercentThresholdEffects(prevHealth);
 
     int effectDroppedCoins = 0;
 
@@ -11706,6 +11747,7 @@ void GameFixedUpdate() {
             AchievementMax((AchievementType)achievementIndex, fb_step->value());
         }
       }
+      g.ui.justUnlockedAchievements.Reset();
 
       Save();
     }
@@ -12126,9 +12168,7 @@ void GameFixedUpdate() {
           const bool canRegen = (g.run.playerLastRegenAt.Elapsed() >= interval);
 
           if (canRegen) {
-            PLAYER_CREATURE.health++;
-            g.run.runHealed++;
-            AchievementMax(AchievementType_HEAL_X_DURING_A_RUN, g.run.runHealed);
+            HealPlayer(1);
             g.run.playerLastRegenAt = {};
             g.run.playerLastRegenAt.SetNow();
           }
