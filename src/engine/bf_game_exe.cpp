@@ -37,6 +37,10 @@
 #  include "GameAnalytics/GameAnalytics.h"
 #endif
 
+#define ZPL_IMPLEMENTATION
+#define ZPL_PICO
+#include "zpl.h"
+
 #include "bf_version.cpp"
 #include "hands/bf_codegen.cpp"
 #include "engine/bf_engine_config.cpp"
