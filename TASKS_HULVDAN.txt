@@ -16,8 +16,8 @@ x stats: ENEMY_ADDITIONAL_DAMAGE_PERCENT
 x impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS
 x fix wrench / hex driver
 x ref: consumable -> apple
+x ref: chest -> chest
 
-* ref: chest -> chest
 * fix: почему у инженера +28 инженерки ??? Должно отображаться +10
 * fix: lance -% damage PROPERTY (NOT STAT)
 *
