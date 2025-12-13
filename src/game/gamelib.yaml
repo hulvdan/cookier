@@ -391,7 +391,6 @@ effect_conditions: # {  ###
     y_multiplied_by_times: true
   - type: X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE
     x_is_percent: true
-    x_signed: true
     y_condvar_type: DAMAGE
     y_multiplied_by_times: true
   - type: X__PERCENT_MORE_COINS_FROM_RECYCLING
@@ -507,6 +506,7 @@ effect_conditions: # {  ###
     x_multiplied_by_times: true
   - type: STAT_2__MODS_CHANGED_BY__X__PERCENT
     x_is_percent: true
+    x_signed: true
     x_color_by_stat_2: true
     x_multiplied_by_times: true
   - type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
