@@ -4907,7 +4907,6 @@ void GameInit() {
   ZoneScoped;
 
   SetVolumeMusic(0.5f);
-  PlaySound(Sound_MUSIC_BATTLE);
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
@@ -11674,6 +11673,12 @@ void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
+  static bool launchedMusic = false;
+  if (ge.meta._soundManager.works && !launchedMusic) {
+    launchedMusic = true;
+    PlaySound(Sound_MUSIC_BATTLE);
+  }
+
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
@@ -14142,7 +14147,9 @@ void GameFixedUpdate() {
        : 0.6f),
     FIXED_DT
   );
-  SetMusicLowpassFactor(g.meta.musicLowpassFactor);
+
+  if (ge.meta._soundManager.works)
+    SetMusicLowpassFactor(g.meta.musicLowpassFactor);
 
   {
     auto engine = &ge.meta._soundManager.engine;
