@@ -17,9 +17,9 @@ x fix some stat show x as signed
 x fix на билды и сложности не влияет STAT_2__MODS_CHANGED_BY__X__PERCENT
 x fix выдачи ачивок
 x fix thisWaveAddedCount in achievements
+x починить хрюшку
 
 * impl: применяется STAT_2__MODS_CHANGED_BY__X__PERCENT
-* проверить, не сломалась ли хрюшка?
 * sfx: взрыв
 * fix: flamethrower не может слишком быстро бить врагов
 *
