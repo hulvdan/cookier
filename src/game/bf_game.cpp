@@ -7214,7 +7214,7 @@ void DoUI() {
               else
                 INVALID_PATH;
 
-              PlaceholdString(localization_strings->Get(locale)->c_str());
+              PlaceholdBrokenLocale(locale, palTextGreen);
             } break;
 
             default:

@@ -48,7 +48,9 @@
 #include "game/bf_game.cpp"
 
 struct EngineAppState {
-  SDL_Window* window = {};
+  SDL_Window* window               = {};
+  bool        resizedWindow        = false;
+  Vector2     sizeToPixelSizeRatio = {};
 } g_appstate;
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -159,9 +161,16 @@ class BGFXCallbackHandler : public bgfx::CallbackI {  ///
   void captureFrame(const void* data, uint32_t size) override {}
 };
 
-void OnWindowResized(int w, int h) {  ///
-  bgfx::reset(w, h, BGFX_RESET_VSYNC);
-  ge.meta.screenSize = {w, h};
+void UpdateWindowSizeData(SDL_Window* window) {  ///
+  int pw = 0;
+  int ph = 0;
+  int w  = 0;
+  int h  = 0;
+  SDL_GetWindowSizeInPixels(window, &pw, &ph);
+  SDL_GetWindowSize(window, &w, &h);
+
+  g_appstate.sizeToPixelSizeRatio = {(f32)pw / (f32)w, (f32)ph / (f32)h};
+  ge.meta.screenSize              = {pw, ph};
 }
 
 SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv */) {  ///
@@ -184,19 +193,18 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
   SDL_WindowFlags flags
     = SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
 
-  ge.meta.screenSize = LOGICAL_RESOLUTION;
-
   SDL_Window* window = nullptr;
   {
     ZoneScopedN("SDL. SDL_CreateWindow()");
     window = SDL_CreateWindow(
-      GetWindowTitle(), ge.meta.screenSize.x, ge.meta.screenSize.y, flags
+      GetWindowTitle(), LOGICAL_RESOLUTION.x, LOGICAL_RESOLUTION.y, flags
     );
     if (!window) {
       LOGE("SDL_CreateWindow failed!");
       return SDL_APP_FAILURE;
     }
     g_appstate.window = window;
+    UpdateWindowSizeData(window);
   }
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
@@ -293,6 +301,11 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
 SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
   SDL_AppResult result{};
 
+  if (g_appstate.resizedWindow) {
+    g_appstate.resizedWindow = false;
+    bgfx::reset(ge.meta.screenSize.x, ge.meta.screenSize.y, BGFX_RESET_VSYNC);
+  }
+
 #ifdef BF_PLATFORM_WebYandex
   static bool pr1 = false;
   static bool pr2 = false;
@@ -366,19 +379,29 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
       ge.meta._drawing = false;
     }
 
-    ImGui_Implbgfx_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
+    static bool canStartImGuiFrame = true;
+    bool        startedImGuiFrame  = false;
 
-    ImGui::NewFrame();
+    if (canStartImGuiFrame) {
+      ImGui_Implbgfx_NewFrame();
+      ImGui_ImplSDL3_NewFrame();
+      ImGui::NewFrame();
+      canStartImGuiFrame = false;
+      startedImGuiFrame  = true;
+    }
 
     result = EngineUpdate();
 
-    ImGui::Render();
-    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+    if (startedImGuiFrame) {
+      ImGui::EndFrame();
+      ImGui::Render();
+      ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+    }
 
     if (result == SDL_APP_CONTINUE) {
       ZoneScopedN("bgfx. bgfx::frame()");
       bgfx::frame(false);
+      canStartImGuiFrame = true;
     }
   }
 
@@ -389,7 +412,7 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
 SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   ImGui_ImplSDL3_ProcessEvent(event);
 
-  static Vector2 sizeToPixelSizeRatio = {};
+  const auto& sizeToPixelSizeRatio = g_appstate.sizeToPixelSizeRatio;
 
   auto& io = ImGui::GetIO();
 
@@ -406,19 +429,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_WINDOW_RESIZED: {  ///
-    int pw = 0;
-    int ph = 0;
-    int w  = 0;
-    int h  = 0;
-
-    const auto window = SDL_GetWindowFromID(event->window.windowID);
-    SDL_GetWindowSizeInPixels(window, &pw, &ph);
-    SDL_GetWindowSize(window, &w, &h);
-
-    sizeToPixelSizeRatio.x = (f32)pw / (f32)w;
-    sizeToPixelSizeRatio.y = (f32)ph / (f32)h;
-
-    OnWindowResized(pw, ph);
+    UpdateWindowSizeData(SDL_GetWindowFromID(event->window.windowID));
+    g_appstate.resizedWindow = true;
   } break;
 
   case SDL_EVENT_KEY_DOWN: {  ///
