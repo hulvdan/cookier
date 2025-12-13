@@ -2687,17 +2687,6 @@ void AddXP(f32 xp) {  ///
     nextLevelXp = GetNextLevelXp(g.run.state.staticStats[StatType_LEVEL]);
 
     MakeNumber({.type = NumberType_LEVEL_UP, .pos = PLAYER_CREATURE.pos});
-
-    // Increasing random stat that has `upgrade_values`.
-    while (1) {
-      const auto stat = (StatType)(GRAND.Rand() % StatType_COUNT);
-      const auto fb   = glib->stats()->Get(stat);
-      const auto vals = fb->upgrade_values();
-      if (!vals)
-        continue;
-      ChangeStaticAndDynamicStat(stat, vals->Get(0));
-      break;
-    }
   }
 
   if (addedLevels > 0) {
