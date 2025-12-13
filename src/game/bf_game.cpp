@@ -1960,6 +1960,21 @@ void SanitizeCoins() {  ///
     PLAYER_COINS = int_max;
 }
 
+f32 GetStatModificationScale(StatType stat) {  ///
+  f32 scaleStat = 1;
+  IterateOverEffects(
+    EffectConditionType_STAT_2__MODS_CHANGED_BY__X__PERCENT,
+    -1,
+    [&](
+      Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
+    ) BF_FORCE_INLINE_LAMBDA {
+      if (fb_effect->stat_type_2() == stat)
+        scaleStat += (f32)EFFECT_X_INT * (f32)times / 100.0f;
+    }
+  );
+  return scaleStat;
+}
+
 void ApplyStatEffect(const BFGame::Effect* fb_effect, int tierOffset, int times) {  ///
   ASSERT(times != 0);
 
@@ -1996,6 +2011,12 @@ void ApplyStatEffect(const BFGame::Effect* fb_effect, int tierOffset, int times)
 
       changeBy += newStatValue - statValue;
     }
+  }
+
+  if (fb_effect->modification_scaleable()) {
+    const auto scale = GetStatModificationScale((StatType)fb_effect->stat_type());
+    if (scale != 1)
+      changeBy = Round((f32)changeBy * scale);
   }
 
   if (changeBy)
@@ -2654,21 +2675,6 @@ void MakeNumber(MakeNumberData data) {  ///
   };
   number.createdAt.SetNow();
   *g.run.numbers.Add() = number;
-}
-
-f32 GetStatModificationScale(StatType stat) {  ///
-  f32 scaleStat = 1;
-  IterateOverEffects(
-    EffectConditionType_STAT_2__MODS_CHANGED_BY__X__PERCENT,
-    -1,
-    [&](
-      Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
-    ) BF_FORCE_INLINE_LAMBDA {
-      if (fb_effect->stat_type_2() == stat)
-        scaleStat += (f32)EFFECT_X_INT * (f32)times / 100.0f;
-    }
-  );
-  return scaleStat;
 }
 
 int GetNextLevelXp(int currentLevel) {  ///
@@ -4507,6 +4513,41 @@ void AddItem(ItemType type) {  ///
   }
 }
 
+void _UpdateImmediateWeaponEffects(int weaponIndex, int scale) {  ///
+  int occupiedSlots = 0;
+  int emptySlots    = 0;
+  for (auto& w : g.run.state.weapons) {
+    if (w.type)
+      occupiedSlots++;
+    else
+      emptySlots++;
+  }
+
+  struct {
+    EffectConditionType c;
+    int                 times;
+  } toUpdate_[]{
+    {EffectConditionType_DEFAULT_GET__STAT, 1},
+    {EffectConditionType_STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
+    {EffectConditionType_STAT__FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
+  };
+  VIEW_FROM_ARRAY_DANGER(toUpdate);
+
+  const auto& weapon = g.run.state.weapons[weaponIndex];
+  const int   tierOffset
+    = weapon.tier - glib->weapons()->Get(weapon.type)->min_tier_index();
+
+  for (auto c : toUpdate) {
+    IterateOverWeaponEffects(
+      c.c,
+      weapon.type,
+      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
+        ApplyStatEffect(fb_effect, tierOffset, c.times * scale);
+      }
+    );
+  }
+}
+
 void RunInit() {
   ZoneScoped;
 
@@ -4594,6 +4635,7 @@ void RunInit() {
       if (weapon) {
         int  weaponIndex = -1;
         bool added       = false;
+
         for (auto& w : g.run.state.weapons) {
           ASSERT(times > 0);
           weaponIndex++;
@@ -4608,6 +4650,9 @@ void RunInit() {
             break;
         }
         ASSERT(added);
+
+        if (added)
+          _UpdateImmediateWeaponEffects(weaponIndex, 1);
       }
     }
   );
@@ -5908,41 +5953,6 @@ void ButtonSFX(bool draw, Clay_ElementId id, bool hovered) {  ///
 
 int GetBuildTier(BuildType build) {  ///
   return MAX(0, (int)g.player.builds[build].maxDifficultyBeaten - 1);
-}
-
-void _UpdateImmediateWeaponEffects(int weaponIndex, int scale) {  ///
-  int occupiedSlots = 0;
-  int emptySlots    = 0;
-  for (auto& w : g.run.state.weapons) {
-    if (w.type)
-      occupiedSlots++;
-    else
-      emptySlots++;
-  }
-
-  struct {
-    EffectConditionType c;
-    int                 times;
-  } toUpdate_[]{
-    {EffectConditionType_DEFAULT_GET__STAT, 1},
-    {EffectConditionType_STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT, occupiedSlots},
-    {EffectConditionType_STAT__FOR_EVERY_EMPTY_WEAPON_SLOT, emptySlots},
-  };
-  VIEW_FROM_ARRAY_DANGER(toUpdate);
-
-  const auto& weapon = g.run.state.weapons[weaponIndex];
-  const int   tierOffset
-    = weapon.tier - glib->weapons()->Get(weapon.type)->min_tier_index();
-
-  for (auto c : toUpdate) {
-    IterateOverWeaponEffects(
-      c.c,
-      weapon.type,
-      [&](auto fb_effect) BF_FORCE_INLINE_LAMBDA {
-        ApplyStatEffect(fb_effect, tierOffset, c.times * scale);
-      }
-    );
-  }
 }
 
 void ApplyImmediateWeaponEffects() {  ///
