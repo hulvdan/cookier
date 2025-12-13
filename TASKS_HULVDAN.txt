@@ -9,20 +9,6 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-x fix: web билд почему-то прогресс неправильно отображается
-  Пишет прогресс "3 / 0", для ачивки "подорвать врагов разом">
-  (есть скрин в screenshots)
-x stats: ENEMY_ADDITIONAL_DAMAGE_PERCENT
-x impl effectcondition_type SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS
-x fix wrench / hex driver
-x ref: consumable -> apple
-x ref: chest -> chest
-x impl stat STAT__UPON_TAKING_DAMAGE_BONUS_GETS_LOST_AT_THE_END_OF_THE_WAVE
-x impl: STAT__WHEN_IDLE STAT__WHEN_WALKING
-x impl YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
-x impl STAT__DURING_NEXT_WAVE
-x impl: STAT__WHEN_BELOW__X__PERCENT_HP
-x fix: lance -% damage PROPERTY (NOT STAT)
 
 * fix: у strange mushroom (CELERY_TEA)
   неверно отображаются данные по тому, что будет в след волну

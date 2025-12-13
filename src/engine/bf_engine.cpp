@@ -825,13 +825,11 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
       return {};
     }
 
-    if (ma_sound_init_copy(
-          &m.engine,
-          &original.ma_sound,
-          original.flags | MA_SOUND_FLAG_WAIT_INIT,
-          &m.groupSFX,
-          s
-        )
+    auto flags = original.flags | MA_SOUND_FLAG_WAIT_INIT;
+    if (!hasPos)
+      flags |= MA_SOUND_FLAG_NO_SPATIALIZATION;
+
+    if (ma_sound_init_copy(&m.engine, &original.ma_sound, flags, &m.groupSFX, s)
         != MA_SUCCESS)
     {
       INVALID_PATH;
