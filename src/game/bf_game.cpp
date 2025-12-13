@@ -11690,12 +11690,6 @@ void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
-  static bool launchedMusic = false;
-  if (ge.meta._soundManager.works && !launchedMusic) {
-    launchedMusic = true;
-    PlaySound(Sound_MUSIC_BATTLE);
-  }
-
   TEMP_USAGE(&g.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
@@ -13010,6 +13004,8 @@ void GameFixedUpdate() {
           g.run.walkingTutorialCompletedAt.SetNow();
           ASSERT_FALSE(g.run.waveStartedAt.IsSet());
           g.run.waveStartedAt.SetNow();
+
+          PlaySound(Sound_MUSIC_BATTLE);
         }
       }
     }
