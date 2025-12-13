@@ -21,6 +21,8 @@ x починить хрюшку
 x impl: применяется STAT_2__MODS_CHANGED_BY__X__PERCENT
 x fix: при старте чувачком, что стартует с оружием,
   применяются immediate эффекты этого оружия
+x ahk: зажатый CAPS + scroll = беск скролл
+  scroll / caps останавливает
 
 * sfx: взрыв
 * fix: flamethrower не может слишком быстро бить врагов
