@@ -39,19 +39,19 @@
           overflow: hidden;
           background-color: black;
         }
-        canvas.emscripten { border: 0px none; background-color: black;}
+        canvas.emscripten {
+            border: 0px none;
+            background-color: black;
+            width: 100vw;
+            height: 100vh;
+        }
     </style>
+
     </head>
     <body>
         <canvas class=emscripten id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
         <p id="output" />
         <script>
-            function onResize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                Module.ccall('resize_from_js', null, ['number', 'number'], [window.innerWidth, window.innerHeight]);
-            }
-
             var Module = {
                 preRun: [],
                 postRun: [
@@ -61,10 +61,6 @@
                         if (isMobile)
                             device = 1;
                         Module.ccall('set_device_type_from_js', null, ['number'], [ device ]);
-                    },
-                    () => {
-                        window.addEventListener('resize', onResize);
-                        onResize();
                     },
                 ],
 

@@ -15144,10 +15144,10 @@ void GameDraw() {
           IM::Text(
             "%s: %d %d (%.1f%%) (max: %d, %.1f%%)",
             name,
-            arena.used,
-            arena.size,
+            (int)arena.used,
+            (int)arena.size,
             100.0f * (f32)arena.used / (f32)arena.size,
-            arena.maxUsed,
+            (int)arena.maxUsed,
             100.0f * (f32)arena.maxUsed / (f32)arena.size
           );
         };
