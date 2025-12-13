@@ -6147,24 +6147,20 @@ void DoUI() {
   };
 
   if (!draw) {
-    if (g.meta.playerUsesKeyboardOrController)
-      Clay_SetPointerState({f32_inf, f32_inf}, false);
-    else {
-      auto pos = ScreenPosToLogical(GetMouseScreenPos());
+    auto pos = ScreenPosToLogical(GetMouseScreenPos());
 
-      if (ge.events.last == LastEventType_TOUCH) {
-        pos = Vector2Inf();
+    if (ge.events.last == LastEventType_TOUCH) {
+      pos = Vector2Inf();
 
-        if (ge.meta._latestActiveTouchID != InvalidTouchID) {
-          const auto td = GetTouchData(ge.meta._latestActiveTouchID);
-          if (_disallowTouchNumber != td.number)
-            pos = ScreenPosToLogical(td.screenPos);
-        }
+      if (ge.meta._latestActiveTouchID != InvalidTouchID) {
+        const auto td = GetTouchData(ge.meta._latestActiveTouchID);
+        if (_disallowTouchNumber != td.number)
+          pos = ScreenPosToLogical(td.screenPos);
       }
-
-      pos = {pos.x, LOGICAL_RESOLUTION.y - pos.y};
-      Clay_SetPointerState({pos.x, pos.y}, false);
     }
+
+    pos = {pos.x, LOGICAL_RESOLUTION.y - pos.y};
+    Clay_SetPointerState({pos.x, pos.y}, false);
   }
 
   const auto localization              = glib->localizations()->Get(ge.meta.localization);
@@ -6189,8 +6185,6 @@ void DoUI() {
     _wheel = GetMouseWheel();
     if (IsKeyDown(SDL_SCANCODE_LSHIFT) || IsKeyDown(SDL_SCANCODE_RSHIFT))
       _wheel *= 10;
-    if (draw)
-      _wheel = 0;
   }
   const int wheel = _wheel;
 
@@ -6266,7 +6260,8 @@ void DoUI() {
       return false;
     if (_alreadyHandledClickOrTouch)
       return false;
-    const bool result = Clay_Hovered()  //
+    const bool result = !g.meta.playerUsesKeyboardOrController  //
+                        && Clay_Hovered()                       //
                         && IsTouchPressed(ge.meta._latestActiveTouchID);
     if (result && preventFutureDispatch)
       _alreadyHandledClickOrTouch = true;
@@ -6279,7 +6274,8 @@ void DoUI() {
     if (_alreadyHandledClickOrTouch)
       return false;
     const bool result
-      = Clay_Hovered()  //
+      = !g.meta.playerUsesKeyboardOrController  //
+        && Clay_Hovered()                       //
         && (IsMousePressed(L) || IsTouchPressed(ge.meta._latestActiveTouchID));
     if (result && preventFutureDispatch)
       _alreadyHandledClickOrTouch = true;
@@ -6393,14 +6389,17 @@ void DoUI() {
         BF_CLAY_CUSTOM_BEGIN{
           BF_CLAY_CUSTOM_NINE_SLICE(
             glib->ui_button_nine_slice(),
-            (((Clay_Hovered() || isSelected) && canShowAsSelected) ? 6 : data.tier)
+            (((!g.meta.playerUsesKeyboardOrController && Clay_Hovered() || isSelected)
+              && canShowAsSelected)
+               ? 6
+               : data.tier)
           ),
         } BF_CLAY_CUSTOM_END,
       }) {
-        bool hovered = Clay_Hovered();
+        bool hovered = !g.meta.playerUsesKeyboardOrController && Clay_Hovered();
 
         // MOUSE can focus buttons.
-        if (hovered && (ge.events.last != LastEventType_TOUCH)) {
+        if (hovered && (ge.events.last == LastEventType_MOUSE)) {
           if (!draw && (focused.id != data.id.id)) {
             focused      = data.id;
             justSelected = true;
@@ -6594,7 +6593,8 @@ void DoUI() {
         flash = ColorLerp(palWhite, flash, p);
       }
 
-      const bool hovered = data.canHover && Clay_Hovered();
+      const bool hovered
+        = data.canHover && Clay_Hovered() && !g.meta.playerUsesKeyboardOrController;
 
       auto& focused = controlsContexts[currentContext].focused;
 
@@ -6805,7 +6805,9 @@ void DoUI() {
         }
 
         if (data.canHover) {
-          ButtonSFX(draw, data.id, Clay_Hovered());
+          ButtonSFX(
+            draw, data.id, !g.meta.playerUsesKeyboardOrController && Clay_Hovered()
+          );
 
           if (isCurrentContextActive()) {
             result |= clickOrTouchPressed();
@@ -8242,7 +8244,7 @@ void DoUI() {
     if (_shownDetailsThisFrame)
       return;
 
-    const bool hovered = Clay_Hovered();
+    const bool hovered = !g.meta.playerUsesKeyboardOrController && Clay_Hovered();
 
     const bool isSelected
       = (data.weaponIndexOrMinus1 >= 0)
@@ -8472,8 +8474,10 @@ void DoUI() {
         }
       }
 
-      bool movedUp   = (Clay_Hovered() && (wheel > 0));
-      bool movedDown = (Clay_Hovered() && (wheel < 0));
+      bool movedUp
+        = (!g.meta.playerUsesKeyboardOrController && Clay_Hovered() && (wheel > 0));
+      bool movedDown
+        = (!g.meta.playerUsesKeyboardOrController && Clay_Hovered() && (wheel < 0));
 
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_Y,
@@ -10470,7 +10474,9 @@ void DoUI() {
                         .canHover = canHover,
                       });
 
-                      if ((canHover && Clay_Hovered())
+                      if ((canHover                                   //
+                           && !g.meta.playerUsesKeyboardOrController  //
+                           && Clay_Hovered())
                           || (id.id == controlsContexts[currentContext].focused.id))
                       {
                         g.meta.pausedAchievementsHoveredAchievement = currentAchievement;
