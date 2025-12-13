@@ -411,6 +411,7 @@ table Build {
 }
 
 table AchievementStep {
+    global_index: int;
     value: int;
     unlocks_build_type: int;
     unlocks_weapon_type: int;

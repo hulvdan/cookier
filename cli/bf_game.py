@@ -577,6 +577,8 @@ def _process_gamelib(
             ACHIEVEMENTS_ORDER_FILEPATH.read_text()
         )
 
+        step_global_index = -1
+
         for i, x in enumerate_table("achievements"):
             if not i:
                 continue
@@ -639,6 +641,9 @@ def _process_gamelib(
                     x["type"], field
                 )
             for stepIndex, step in enumerate(x["steps"]):
+                step_global_index += 1
+                step["global_index"] = step_global_index
+
                 assert step["value"] != 0
                 # step["order"] = achievements_order[x["type"]][stepIndex]
 
@@ -672,6 +677,7 @@ def _process_gamelib(
                             "unlocks_weapon_type": non_lockable_weapons,
                         }.get(field, [])
 
+        genline(f"constexpr int TOTAL_ACHIEVEMENT_STEPS = {step_global_index + 1};\n")
     # }
 
     # Props.
