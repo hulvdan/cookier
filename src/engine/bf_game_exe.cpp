@@ -179,7 +179,7 @@ void EmscriptenLog(
   int             category,
   SDL_LogPriority priority,
   const char*     message
-) {
+) {  ///
   switch (priority) {
   case SDL_LOG_PRIORITY_VERBOSE:
   case SDL_LOG_PRIORITY_INFO:
@@ -435,7 +435,7 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
   return result;
 }
 
-SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
+SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   ImGui_ImplSDL3_ProcessEvent(event);
 
   const auto& sizeToPixelSizeRatio = g_appstate.sizeToPixelSizeRatio;
