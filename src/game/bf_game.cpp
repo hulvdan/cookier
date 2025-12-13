@@ -4778,6 +4778,9 @@ void ReloadFontsIfNeeded() {  ///
   static bool       loaded             = false;
   static Vector2Int previousScreenSize = {};
 
+  if ((ge.meta.screenSize.x <= 0) || (ge.meta.screenSize.y <= 0))
+    return;
+
   // Debounce.
   {
     static int debounce = 0;
@@ -6052,6 +6055,9 @@ bool IsAchievementStepLocked(AchievementType type, int stepIndex) {  ///
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 void DoUI() {
+  if ((ge.meta.screenSize.x <= 0) || (ge.meta.screenSize.y <= 0))
+    return;
+
   ZoneScoped;
 
   enum UIZIndexOffset {  ///
