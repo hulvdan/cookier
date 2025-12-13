@@ -2550,7 +2550,9 @@ void SetMusicLowpassFactor(f32 factor) {  ///
   ASSERT(factor >= 0);
   ASSERT(factor <= 1);
 
-  auto&      m          = ge.meta._soundManager;
+  auto& m = ge.meta._soundManager;
+  ASSERT(m.works);
+
   const auto sampleRate = ma_engine_get_sample_rate(&m.engine);
 
   const auto minFreq    = 40.0f;
@@ -2776,7 +2778,6 @@ void InitEngine() {  ///
   ge.meta.atlas = _LoadTexture(
     "resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
   );
-  ReloadSounds();
 
   static const bgfx::EmbeddedShader s_embeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(quad_tex_vs),
@@ -3453,6 +3454,8 @@ SDL_AppResult EngineUpdate() {  ///
       }
     }
 
+    static bool reloadSounds = true;
+
 #ifdef SDL_PLATFORM_WINDOWS
 #  if BF_DEBUG
     auto glibPeekResult = PeekFiletime(GAMELIB_PATH);
@@ -3470,12 +3473,17 @@ SDL_AppResult EngineUpdate() {  ///
           "../../../resources/atlas_d2.basis",
           {glib->atlas_size_x(), glib->atlas_size_y()}
         );
-        ReloadSounds();
+        reloadSounds = true;
         LOGI("Gamelib reloaded!");
       }
     }
 #  endif
 #endif
+
+    if (ge.events.last && reloadSounds) {
+      reloadSounds = false;
+      ReloadSounds();
+    }
 
     GameFixedUpdate();
 
