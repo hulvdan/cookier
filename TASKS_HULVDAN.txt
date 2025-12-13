@@ -27,8 +27,8 @@ x читерское изменение статов работает через
 x sfx: взрыв
 x sfx: emscripten старт звука после key / mouse / touch press
 x sdl correct web screen size
+x sdl log emscripten not error
 
-* sdl log emscripten not error
 * fix imgui crash when changing window sizek
 * sfx: настройки для игрока: можно сменить громкость звука / музыки
 * горение нормально смотрится на всех монстрах
