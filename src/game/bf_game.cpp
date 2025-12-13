@@ -1673,7 +1673,7 @@ int GetAchievementsCompletedPercent() {  ///
   if (g.player.achievementStepsCompleted > 0)
     percent = MAX(1, percent);
 
-  return percent;
+  return MAX(0, MIN(100, percent));
 }
 
 // NOTE: Doesn't apply `StatType_DAMAGE`.
@@ -7590,7 +7590,7 @@ void DoUI() {
             fb_items->Get(data.item)->effects(),
             0,
             data.count,
-            data.thisWaveAddedCount,
+            (data.affectedByGame ? data.thisWaveAddedCount : 1),
             CARD_WIDTH
           );
         }
