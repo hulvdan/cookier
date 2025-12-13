@@ -181,7 +181,11 @@ void EmscriptenLog(
   const char*     message
 ) {  ///
   switch (priority) {
+  case SDL_LOG_PRIORITY_TRACE:
   case SDL_LOG_PRIORITY_VERBOSE:
+  case SDL_LOG_PRIORITY_DEBUG:
+    break;
+
   case SDL_LOG_PRIORITY_INFO:
     emscripten_log(EM_LOG_CONSOLE, "%s", message);
     break;
