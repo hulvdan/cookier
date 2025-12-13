@@ -258,6 +258,7 @@ table Effect {
     only_other_weapons: bool;
 
     sound_hash: uint;
+    modification_scaleable: bool = true;
 }
 
 table Item {
