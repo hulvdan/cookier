@@ -1311,6 +1311,8 @@ struct GameData {
 
     bool schedulePlayerHurtSound = false;
 
+    FrameVisual walkingTutorialCompletedAt = {};
+
     // Using "X-macros". ref: https://www.geeksforgeeks.org/c/x-macros-in-c/
     // These containers preserve allocated memory upon resetting state of the run.
 #define VECTORS_TABLE                      \
@@ -2130,7 +2132,8 @@ void OnWaveStarted() {  ///
   GRAND.Shuffle(g.run.gardensToSpawn.base, g.run.gardensToSpawn.count);
 
   g.run.waveStartedAt = {};
-  g.run.waveStartedAt.SetNow();
+  if (g.run.walkingTutorialCompletedAt.IsSet())
+    g.run.waveStartedAt.SetNow();
 
   g.run.bossCreatureID = 0;
 
@@ -2326,10 +2329,8 @@ void GameLoad(const BFSave::Save* save) {  ///
   if (save->health() <= 0)
     g.run.scheduledEnd = true;
 
-  if (s.screen == ScreenType_GAMEPLAY) {
-    g.meta.paused = true;
+  if (s.screen == ScreenType_GAMEPLAY)
     OnWaveStarted();
-  }
   else if (s.screen == ScreenType_WAVE_END_ANIMATION)
     TriggerWaveCompleted(true);
   else if (s.screen == ScreenType_PICKED_UP_ITEM)
@@ -2931,6 +2932,9 @@ void MakeParticles(MakeParticlesData data) {  ///
 void MakePickupable(MakePickupableData data);
 
 bool CanSpawnMoreCreatures() {  ///
+  if (!g.run.waveStartedAt.IsSet())
+    return false;
+
   const auto framesUntilTheEndOfTheWave
     = GetWaveDuration(g.run.state.waveIndex) - g.run.waveStartedAt.Elapsed();
   return (framesUntilTheEndOfTheWave > DONT_SPAWN_RIGHT_BEFORE_WAVE_ENDS + SPAWN_FRAMES);
@@ -8861,9 +8865,16 @@ void DoUI() {
   // ╚══════╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝
 
   // Gameplay.
-  if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
+  if (g.run.waveStartedAt.IsSet()  //
+        && (g.run.state.screen == ScreenType_GAMEPLAY)
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
   {
+    Beautify b{
+      .alpha
+      = MIN(1, g.run.walkingTutorialCompletedAt.Elapsed().Progress(ANIMATION_1_FRAMES))
+    };
+    BEAUTIFY(b);
+
     CLAY(  ///
       {
         .layout{
@@ -12195,7 +12206,9 @@ void GameFixedUpdate() {
 #endif
 
       // Finishing wave opens upgrades screen.
-      if (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.state.waveIndex)) {  ///
+      if (g.run.waveStartedAt.IsSet()
+          && (g.run.waveStartedAt.Elapsed() >= GetWaveDuration(g.run.state.waveIndex)))
+      {  ///
         if (!g.run.scheduledWaveCompleted.IsSet()) {
           TriggerWaveCompleted(false);
           SetWaveWonTrue();
@@ -12965,27 +12978,40 @@ void GameFixedUpdate() {
       }
 
       // Processing EffectConditionType_STAT__EVERY__X__SECONDS.
-      IterateOverEffects(  ///
-        EffectConditionType_STAT__EVERY__X__SECONDS,
-        -1,
-        [&](
-          Weapon* w,
-          int     wi,
-          auto    fb_effect,
-          int     tierOffset,
-          int     times,
-          int     thisWaveAddedCount
-        ) BF_FORCE_INLINE_LAMBDA {
-          const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
-          const auto e  = g.run.waveStartedAt.Elapsed();
-          if (((e.value + 1) % lf.value) == 0) {
-            ChangeStaticAndDynamicStatBy(
-              (StatType)fb_effect->stat_type(),
-              fb_effect->value()->Get(tierOffset) * times
-            );
+      if (g.run.waveStartedAt.IsSet()) {  ///
+        IterateOverEffects(
+          EffectConditionType_STAT__EVERY__X__SECONDS,
+          -1,
+          [&](
+            Weapon* w,
+            int     wi,
+            auto    fb_effect,
+            int     tierOffset,
+            int     times,
+            int     thisWaveAddedCount
+          ) BF_FORCE_INLINE_LAMBDA {
+            const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
+            const auto e  = g.run.waveStartedAt.Elapsed();
+            if (((e.value + 1) % lf.value) == 0) {
+              ChangeStaticAndDynamicStatBy(
+                (StatType)fb_effect->stat_type(),
+                fb_effect->value()->Get(tierOffset) * times
+              );
+            }
           }
+        );
+      }
+
+      // Finishing walking tutorial.
+      if (!g.run.walkingTutorialCompletedAt.IsSet()) {
+        if (Vector2DistanceSqr(PLAYER_CREATURE.pos, (Vector2)WORLD_SIZE / 2.0f)
+            >= SQR(WALKING_TUTORIAL_RADIUS_METERS))
+        {
+          g.run.walkingTutorialCompletedAt.SetNow();
+          ASSERT_FALSE(g.run.waveStartedAt.IsSet());
+          g.run.waveStartedAt.SetNow();
         }
-      );
+      }
     }
 
     // Removing old picked up pickupables.
@@ -13892,29 +13918,31 @@ void GameFixedUpdate() {
     }
 
     // Processing EffectConditionType_YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND
-    IterateOverEffects(  ///
-      EffectConditionType_YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND,
-      -1,
-      [&](
-        Weapon* w,
-        int     wi,
-        auto    fb_effect,
-        int     tierOffset,
-        int     times,
-        int     thisWaveAddedCount
-      ) BF_FORCE_INLINE_LAMBDA {
-        auto v = EFFECT_X_INT * times;
-        if (v <= 0)
-          return;
-        if (((g.run.waveStartedAt.Elapsed().value + 1) % FIXED_FPS) == 0) {
-          TryApplyDamage({
-            .creatureIndex = 0,
-            .damage        = v,
-            .playerSound   = false,
-          });
+    if (g.run.waveStartedAt.IsSet()) {  ///
+      IterateOverEffects(
+        EffectConditionType_YOU_GET_HURT_BY__X__DAMAGE_PER_SECOND,
+        -1,
+        [&](
+          Weapon* w,
+          int     wi,
+          auto    fb_effect,
+          int     tierOffset,
+          int     times,
+          int     thisWaveAddedCount
+        ) BF_FORCE_INLINE_LAMBDA {
+          auto v = EFFECT_X_INT * times;
+          if (v <= 0)
+            return;
+          if (((g.run.waveStartedAt.Elapsed().value + 1) % FIXED_FPS) == 0) {
+            TryApplyDamage({
+              .creatureIndex = 0,
+              .damage        = v,
+              .playerSound   = false,
+            });
+          }
         }
-      }
-    );
+      );
+    }
 
     // Processing `projectilesToRemove`.
     if (g.run.projectilesToRemove.count > 0) {  ///
