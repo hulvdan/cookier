@@ -11,7 +11,6 @@
 
 #include "shaders/include_all.h"
 
-// #include "bf_bgfx_imgui.cpp"
 #include "imgui/imgui_impl_bgfx.h"
 #include "imgui/imgui_impl_bgfx.cpp"
 
@@ -406,8 +405,6 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     ge.meta.quitRequested = true;
   } break;
 
-    // #ifndef SDL_PLATFORM_EMSCRIPTEN
-
   case SDL_EVENT_WINDOW_RESIZED: {  ///
     int pw = 0;
     int ph = 0;
@@ -423,8 +420,6 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
 
     OnWindowResized(pw, ph);
   } break;
-
-    // #endif
 
   case SDL_EVENT_KEY_DOWN: {  ///
     ge.events.canStartSound = true;
