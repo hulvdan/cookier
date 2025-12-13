@@ -547,6 +547,14 @@ struct EngineData {
     _ReceivedEvents prevFrame = {};
     _ReceivedEvents thisFrame = {};
     LastEventType   last      = {};
+
+    bool canStartSound =
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+      false
+#else
+      true
+#endif
+      ;
   } events;
 
   struct Settings {
@@ -3480,7 +3488,7 @@ SDL_AppResult EngineUpdate() {  ///
 #  endif
 #endif
 
-    if (ge.events.last && reloadSounds) {
+    if (ge.events.canStartSound && reloadSounds) {
       reloadSounds = false;
       ReloadSounds();
     }
