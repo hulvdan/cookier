@@ -6950,7 +6950,12 @@ void DoUI() {
             v         = (fb_effect->value_multiplier()->Get(tierOffset) - 1.0f) * 100.0f;
             isPercent = true;
           }
-          v = Round((f32)v * GetStatModificationScale((StatType)fb_effect->stat_type()));
+
+          if (fb_effect->modification_scaleable()) {
+            v = Round(
+              (f32)v * GetStatModificationScale((StatType)fb_effect->stat_type())
+            );
+          }
 
           if (fb_cond->stat_multiplied_by_times())
             v *= times;

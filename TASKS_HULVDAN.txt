@@ -14,6 +14,7 @@ x fix: у strange mushroom (CELERY_TEA)
 x fix: оружейник - ломание оружия должно снимать immediate эффекты
 x level up doesn't upgrade stats randomly
 x fix some stat show x as signed
+x fix на билды и сложности не влияет STAT_2__MODS_CHANGED_BY__X__PERCENT
 
 * impl: STAT_2__MODS_CHANGED_BY__X__PERCENT
   почему у инженера +28 инженерки ??? Должно отображаться +10

@@ -314,6 +314,9 @@ def _process_gamelib(
         process_effects_of(x, 1)
         x["name_locale"] = f"DIFFICULTY_{i}"
         x["texture_id"] = "ui_item_difficulty_{}".format(i)
+
+        for effect in x.get("effects", []):
+            effect["modification_scaleable"] = False
     # }
 
     # Weapons.
@@ -510,6 +513,8 @@ def _process_gamelib(
                 continue
 
             x["finish_run_achievement_type"] = f"FINISH_RUN_WITH_BUILD_{x['type']}"
+            for effect in x.get("effects", []):
+                effect["modification_scaleable"] = False
 
             process_effects_of(x, 1)
             x["name_locale"] = "BUILD_{}".format(x["type"])
