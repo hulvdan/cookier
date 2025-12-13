@@ -173,8 +173,34 @@ void UpdateWindowSizeData(SDL_Window* window) {  ///
   ge.meta.screenSize              = {pw, ph};
 }
 
-SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv */) {  ///
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+void EmscriptenLog(
+  void*           userdata,
+  int             category,
+  SDL_LogPriority priority,
+  const char*     message
+) {
+  switch (priority) {
+  case SDL_LOG_PRIORITY_VERBOSE:
+  case SDL_LOG_PRIORITY_INFO:
+    emscripten_log(EM_LOG_CONSOLE, "%s", message);
+    break;
+  case SDL_LOG_PRIORITY_WARN:
+    emscripten_log(EM_LOG_WARN, "%s", message);
+    break;
+  case SDL_LOG_PRIORITY_ERROR:
+    emscripten_log(EM_LOG_ERROR, "%s", message);
+    break;
+  }
+}
+#endif
+
+SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
   ZoneScopedN("SDL_AppInit");
+
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+  SDL_SetLogOutputFunction(EmscriptenLog, nullptr);
+#endif
 
   GamePreInit();
 
