@@ -59,6 +59,8 @@ constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX = 2;
 
 constexpr f32 MELEE_WEAPON_COLLIDER_PHANTOM_RANGE_METERS = 0.12f;
 
+constexpr f32 WALKING_TUTORIAL_RADIUS_METERS = 6;
+
 // Other.
 // ============================================================
 constexpr auto IDLE_OR_WALKING_BONUS_FRAMES = FIXED_FPS / 8;
