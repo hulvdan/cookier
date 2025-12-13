@@ -2214,8 +2214,9 @@ void GameLoad(const BFSave::Save* save) {  ///
   if (fb_items) {
     for (auto x : *fb_items) {
       *s.items.Add() = {
-        .type  = (ItemType)x->type(),
-        .count = x->count(),
+        .type               = (ItemType)x->type(),
+        .count              = x->count(),
+        .thisWaveAddedCount = x->this_wave_added_count(),
       };
     }
 
@@ -2356,8 +2357,9 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
 
     for (const auto& item : g.run.state.items) {
       fb_save.items.push_back(std::make_unique<BFSave::ItemT>(BFSave::ItemT{
-        .type  = item.type,
-        .count = item.count,
+        .type                  = item.type,
+        .count                 = item.count,
+        .this_wave_added_count = item.thisWaveAddedCount,
       }));
     }
 
@@ -6938,6 +6940,10 @@ void DoUI() {
           BF_CLAY_TEXT(": ", {.color = color});
         }
 
+        const auto cond                = fb_effect->effectcondition_type();
+        auto       fb_cond             = fb_effectConditions->Get(cond);
+        auto       fb_condPlaceholders = fb_cond->placeholders();
+
         if (fb_effect->stat_type()) {
           const auto fb_stat = fb_stats->Get(fb_effect->stat_type());
 
@@ -6956,7 +6962,11 @@ void DoUI() {
             isPercent = true;
           }
           v = Round((f32)v * GetStatModificationScale((StatType)fb_effect->stat_type()));
-          v *= times;
+
+          if (fb_cond->stat_multiplied_by_times())
+            v *= times;
+          if (fb_cond->stat_multiplied_by_this_wave_added_count())
+            v *= thisWaveAddedCount;
 
           const bool  isPositive = v >= 0;
           const char* format     = nullptr;
@@ -7026,10 +7036,6 @@ void DoUI() {
           auto fb_pickupable = fb_pickupables->Get(fb_effect->pickupable_type());
           PlaceholdBrokenLocale("PICKUPABLE", fb_pickupable->name_locale(), palTextGreen);
         }
-
-        const auto cond                = fb_effect->effectcondition_type();
-        auto       fb_cond             = fb_effectConditions->Get(cond);
-        auto       fb_condPlaceholders = fb_cond->placeholders();
 
         if (fb_condPlaceholders) {
           char index = -1;
@@ -12787,7 +12793,7 @@ void GameFixedUpdate() {
           if (pickupable.pickedUpAt.IsSet())
             continue;
 
-          auto pickupRangeScale = 1 + (f32)g.run.dynamicStats[StatType_PICKUP_RANGE];
+          auto pickupRangeScale = 100.0f + (f32)g.run.dynamicStats[StatType_PICKUP_RANGE];
           pickupRangeScale      = MAX(30, pickupRangeScale);
           pickupRangeScale /= 100.0f;
 
