@@ -28,8 +28,9 @@ x sfx: взрыв
 x sfx: emscripten старт звука после key / mouse / touch press
 x sdl correct web screen size
 x sdl log emscripten not error
+x fix imgui crash when changing window size
+x fix screen size issues
 
-* fix imgui crash when changing window size
 * sfx: настройки для игрока: можно сменить громкость звука / музыки
 * горение нормально смотрится на всех монстрах
 *
