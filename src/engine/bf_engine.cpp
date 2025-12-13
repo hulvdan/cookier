@@ -3092,7 +3092,7 @@ std::tuple<bool, LoadFontsResult> _ProcessFonts(
       ZoneScopedN("stbtt_PackFontRanges()");
 
       if (!stbtt_PackFontRanges(&context, font.fileData, 0, &range, 1)) {
-        LOGE("stbtt_PackFontRanges failed");
+        LOG("stbtt_PackFontRanges failed");
         tryEnlargingAtlas = true;
         break;
       }
