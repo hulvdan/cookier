@@ -391,7 +391,7 @@ BUILD_VICTIM;Жертва;Victim;
 BUILD_FAST;Беглец;Fugitive;
 BUILD_ENGINEER;Ремесленник;Artisan;
 BUILD_ARMS_DEALER;Оружейник;Arms Dealer;
-BUILD_LICH;Паразит;Parasite;
+BUILD_LICH;Бледный;Pale;
 BUILD_GOLEM;Здоровяк;Strongman;
 BUILD_LUCKY;Удачник;Lucker;
 BUILD_LEARNER;Учёный;Researcher;
