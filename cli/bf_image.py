@@ -61,7 +61,10 @@ def outline(
         color = (*color, 255)
 
     img = np.asarray(image)
-    h, w, _ = img.shape
+
+    h = img.shape[0]
+    w = img.shape[1]
+
     padding = radius
     alpha = img[:, :, 3]
     rgb_img = img[:, :, 0:3]
