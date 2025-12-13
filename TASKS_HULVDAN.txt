@@ -12,6 +12,7 @@ WORKING SINCE 2025-09-07
 x fix: у strange mushroom (CELERY_TEA)
   неверно отображаются данные по тому, что будет в след волну
 x fix: оружейник - ломание оружия должно снимать immediate эффекты
+x level up doesn't upgrade stats randomly
 
 * impl: STAT_2__MODS_CHANGED_BY__X__PERCENT
   почему у инженера +28 инженерки ??? Должно отображаться +10
