@@ -940,6 +940,15 @@ def process_images():
         bf_image.conveyor_suffix("back"),
     )
 
+    # Outlining input icons.
+    for f in ART_TEXTURES_DIR.glob("ui_input_*.png"):
+        f.unlink()
+    bf_image.conveyor(
+        "to_inputify",
+        "Outlining",
+        bf_image.conveyor_outline(radius=6, color=(0, 0, 0, 255)),
+    )
+
     # Spritesheetifying props.
     for f in (ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):
         f.unlink()
