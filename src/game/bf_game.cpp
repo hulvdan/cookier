@@ -1183,9 +1183,10 @@ struct GameData {
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
 
-    Array<LockInfo, BuildType_COUNT>  lockedBuilds  = {};
-    Array<LockInfo, ItemType_COUNT>   lockedItems   = {};
-    Array<LockInfo, WeaponType_COUNT> lockedWeapons = {};
+    Array<bool, TOTAL_ACHIEVEMENT_STEPS> lockedSteps   = {};
+    Array<LockInfo, BuildType_COUNT>     lockedBuilds  = {};
+    Array<LockInfo, ItemType_COUNT>      lockedItems   = {};
+    Array<LockInfo, WeaponType_COUNT>    lockedWeapons = {};
 
     int achievementStepsTotal     = 0;
     int achievementStepsCompleted = 0;
@@ -1548,27 +1549,22 @@ void Save() {  ///
   g.meta.scheduledSave = true;
 }
 
-void AchievementStepSetLock(
+void AchievementStepUnlock(
   AchievementType                achievement,
   int                            stepIndex,
-  const BFGame::AchievementStep* fb_step,
-  bool                           locked
+  const BFGame::AchievementStep* fb_step
 ) {  ///
   ASSERT(glib->achievements()->Get(achievement)->steps()->Get(stepIndex) == fb_step);
 
-  LockInfo lock{};
-  if (locked)
-    lock = {.achievement = achievement, .stepIndex = stepIndex};
+  if (g.player.lockedSteps[fb_step->global_index()])
+    return;
 
-  if (fb_step->unlocks_build_type())
-    g.player.lockedBuilds[fb_step->unlocks_build_type()] = lock;
-  if (fb_step->unlocks_item_type())
-    g.player.lockedItems[fb_step->unlocks_item_type()] = lock;
-  if (fb_step->unlocks_weapon_type())
-    g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = lock;
+  g.player.lockedSteps[fb_step->global_index()]          = false;
+  g.player.lockedBuilds[fb_step->unlocks_build_type()]   = {};
+  g.player.lockedItems[fb_step->unlocks_item_type()]     = {};
+  g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = {};
 
-  if (!locked)
-    g.player.achievementStepsCompleted++;
+  g.player.achievementStepsCompleted++;
 
   ASSERT(g.player.achievementStepsCompleted >= 0);
   ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
@@ -1588,7 +1584,7 @@ void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue)
          && (fb_step->value() <= newValue))
         || (fb->negative_is_good() && (oldValue > fb_step->value()) && (fb_step->value() >= newValue)))
     {
-      AchievementStepSetLock(type, stepIndex, fb_step, false);
+      AchievementStepUnlock(type, stepIndex, fb_step);
       *g.ui.justUnlockedAchievements.Add() = {.type = type, .stepIndex = stepIndex};
     }
   }
@@ -5135,6 +5131,30 @@ void GameInitAfterLoadingSavedata() {
     g.player.achievementStepsTotal     = 0;
     g.player.achievementStepsCompleted = 0;
 
+    // Locking all achievements.
+    {
+      int index = -1;
+      for (auto fb : *glib->achievements()) {
+        index++;
+
+        auto fb_steps = fb->steps();
+        if (!fb_steps)
+          continue;
+
+        int stepIndex = -1;
+        for (auto fb_step : *fb_steps) {
+          stepIndex++;
+          LockInfo lock{
+            .achievement = (AchievementType)index,
+            .stepIndex   = stepIndex,
+          };
+          g.player.lockedBuilds[fb_step->unlocks_build_type()]   = lock;
+          g.player.lockedItems[fb_step->unlocks_item_type()]     = lock;
+          g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = lock;
+        }
+      }
+    }
+
     int i = -1;
     for (const auto& x : g.player.achievements) {  ///
       i++;
@@ -5157,7 +5177,8 @@ void GameInitAfterLoadingSavedata() {
         if (fb->negative_is_good() && (fb_step->value() < x.value))
           locked = true;
 
-        AchievementStepSetLock(achievementType, stepIndex, fb_step, locked);
+        if (!locked)
+          AchievementStepUnlock(achievementType, stepIndex, fb_step);
       }
     }
 
