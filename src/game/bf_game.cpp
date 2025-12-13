@@ -12014,8 +12014,12 @@ void GameFixedUpdate() {
       );
 
       if (destroyWeapons) {
+        RemoveImmediateWeaponEffects();
+
         for (auto& w : g.run.state.weapons)
           w.type = {};
+
+        ApplyImmediateWeaponEffects();
       }
     }
 
