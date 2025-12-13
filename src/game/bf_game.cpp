@@ -1637,14 +1637,14 @@ void TriggerWaveCompleted(bool instant) {  ///
     item.thisWaveAddedCount = 0;
 }
 
-void ChangeDynamicStat(StatType stat, int value) {  ///
+void ChangeDynamicStatBy(StatType stat, int value) {  ///
   if (g.run.state.screen == ScreenType_GAMEPLAY)
     g.run.dynamicStats[stat] += value;
 }
 
-void ChangeStaticAndDynamicStat(StatType stat, int value) {  ///
+void ChangeStaticAndDynamicStatBy(StatType stat, int value) {  ///
   g.run.state.staticStats[stat] += value;
-  ChangeDynamicStat(stat, value);
+  ChangeDynamicStatBy(stat, value);
 
   const auto fb_stat = glib->stats()->Get(stat);
   if (fb_stat->reach_this_or_more_stat_achievement_type()) {
@@ -1660,6 +1660,8 @@ void ChangeStaticAndDynamicStat(StatType stat, int value) {  ///
       g.run.state.staticStats[stat]
     );
   }
+
+  Save();
 }
 
 int GetAchievementsCompletedPercent() {  ///
@@ -1966,12 +1968,13 @@ void ApplyStatEffect(const BFGame::Effect* fb_effect, int tierOffset, int times)
   if (!statType)
     return;
 
+  int changeBy = 0;
+
   auto value = fb_effect->value();
   if (value)
-    ChangeStaticAndDynamicStat(statType, value->Get(tierOffset) * times);
+    changeBy = value->Get(tierOffset) * times;
 
-  if (statType == StatType_COINS)
-    SanitizeCoins();
+  int statValue = g.run.state.staticStats[statType];
 
   auto value_multiplier = fb_effect->value_multiplier();
   if (value_multiplier) {
@@ -1981,16 +1984,22 @@ void ApplyStatEffect(const BFGame::Effect* fb_effect, int tierOffset, int times)
       if (times < 0)
         multiplier = 1 / multiplier;
 
-      int&      statValue = g.run.dynamicStats[statType];
-      const f32 newVal    = (f32)statValue * multiplier;
+      int newStatValue{};
+
+      const f32 newVal = (f32)statValue * multiplier;
       if (newVal > (f32)int_max)
-        statValue = int_max;
+        newStatValue = int_max;
       else if (newVal < (f32)int_min)
-        statValue = int_min;
+        newStatValue = int_min;
       else
-        statValue = Round(newVal);
+        newStatValue = Round(newVal);
+
+      changeBy += newStatValue - statValue;
     }
   }
+
+  if (changeBy)
+    ChangeStaticAndDynamicStatBy(statType, changeBy);
 
   if (statType == StatType_COINS)
     SanitizeCoins();
@@ -2043,7 +2052,7 @@ void UpdateHPPercentThresholdEffects(int prevHealth) {  ///
         scale = 1;
       else if ((prevHealth < threshold) && (PLAYER_CREATURE.health >= threshold))
         scale = -1;
-      ChangeDynamicStat(
+      ChangeDynamicStatBy(
         (StatType)fb_effect->stat_type(),
         scale * times * fb_effect->value()->Get(tierOffset)
       );
@@ -2142,7 +2151,7 @@ void OnWaveStarted() {  ///
         int     times,
         int     thisWaveAddedCount
       ) BF_FORCE_INLINE_LAMBDA {
-        ChangeDynamicStat(
+        ChangeDynamicStatBy(
           (StatType)fb_effect->stat_type(),
           fb_effect->value()->Get(tierOffset) * thisWaveAddedCount
         );
@@ -2152,6 +2161,15 @@ void OnWaveStarted() {  ///
 
   if (PLAYER_CREATURE.health != PLAYER_CREATURE.maxHealth)
     UpdateHPPercentThresholdEffects(PLAYER_CREATURE.maxHealth);
+
+  // Applying effects: START_OF_THE_WAVE_GET__STAT.
+  IterateOverEffects(
+    EffectConditionType_START_OF_THE_WAVE_GET__STAT,
+    -1,
+    [&](
+      Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
+    ) BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
+  );
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -3156,7 +3174,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           int     times,
           int     thisWaveAddedCount
         ) BF_FORCE_INLINE_LAMBDA {
-          ChangeDynamicStat(
+          ChangeDynamicStatBy(
             (StatType)fb_effect->stat_type(), fb_effect->value()->Get(tierOffset) * times
           );
         }
@@ -8657,9 +8675,9 @@ void DoUI() {
           // Increasing stat by clicking on it in debug mode.
           if (stat && (ge.meta.debugEnabled || BF_DEBUG)) {
             if (clickOrTouchPressed())
-              ChangeStaticAndDynamicStat(stat, 1);
+              ChangeStaticAndDynamicStatBy(stat, 1);
             if (wheel && Clay_Hovered())
-              ChangeStaticAndDynamicStat(stat, wheel);
+              ChangeStaticAndDynamicStatBy(stat, wheel);
           }
 
           if (value)
@@ -9770,7 +9788,7 @@ void DoUI() {
                   g.run.scheduledShopReset = true;
                 }
 
-                ChangeStaticAndDynamicStat(upgrade.stat, amount);
+                ChangeStaticAndDynamicStatBy(upgrade.stat, amount);
 
                 if (upgrade.stat == StatType_HP)
                   PLAYER_CREATURE.health += amount;
@@ -10831,9 +10849,9 @@ void DoUI() {
               // Increasing stat by clicking on it in debug mode.
               if (stat && ge.meta.debugEnabled) {
                 if (clickOrTouchPressed())
-                  ChangeStaticAndDynamicStat(stat, 1);
+                  ChangeStaticAndDynamicStatBy(stat, 1);
                 if (wheel && Clay_Hovered())
-                  ChangeStaticAndDynamicStat(stat, wheel);
+                  ChangeStaticAndDynamicStatBy(stat, wheel);
               }
 
               const auto fb = fb_stats->Get(stat);
@@ -11890,7 +11908,7 @@ void GameFixedUpdate() {
           );
 
           if (percent > 0)
-            ChangeStaticAndDynamicStat(
+            ChangeStaticAndDynamicStatBy(
               StatType_HARVESTING, Ceil((f32)(harvesting * percent) / 100.0f)
             );
         }
@@ -12063,20 +12081,6 @@ void GameFixedUpdate() {
     const int health          = g.run.state.staticStats[StatType_HP];
     PLAYER_CREATURE.health    = MAX(1, health);
     PLAYER_CREATURE.maxHealth = MAX(1, health);
-
-    // Applying effects: START_OF_THE_WAVE_GET__STAT.
-    IterateOverEffects(
-      EffectConditionType_START_OF_THE_WAVE_GET__STAT,
-      -1,
-      [&](
-        Weapon* w,
-        int     wi,
-        auto    fb_effect,
-        int     tierOffset,
-        int     times,
-        int     thisWaveAddedCount
-      ) BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
-    );
 
     Save();
   }
@@ -12894,7 +12898,7 @@ void GameFixedUpdate() {
             ) BF_FORCE_INLINE_LAMBDA {
               const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
               if ((g.run.playerContinuousIdleFrames % lf.value) == 0) {
-                ChangeStaticAndDynamicStat(
+                ChangeStaticAndDynamicStatBy(
                   (StatType)fb_effect->stat_type(),
                   fb_effect->value()->Get(tierOffset) * times
                 );
@@ -12923,7 +12927,7 @@ void GameFixedUpdate() {
               int     thisWaveAddedCount
             ) BF_FORCE_INLINE_LAMBDA {
               if ((g.run.playerWalkedMeters % EFFECT_X_INT) == 0) {
-                ChangeStaticAndDynamicStat(
+                ChangeStaticAndDynamicStatBy(
                   (StatType)fb_effect->stat_type(),
                   fb_effect->value()->Get(tierOffset) * times
                 );
@@ -12948,7 +12952,7 @@ void GameFixedUpdate() {
           const auto lf = lframe::FromSeconds(EFFECT_X_FLOAT);
           const auto e  = g.run.waveStartedAt.Elapsed();
           if (((e.value + 1) % lf.value) == 0) {
-            ChangeStaticAndDynamicStat(
+            ChangeStaticAndDynamicStatBy(
               (StatType)fb_effect->stat_type(),
               fb_effect->value()->Get(tierOffset) * times
             );
