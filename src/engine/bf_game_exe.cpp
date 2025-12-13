@@ -76,18 +76,11 @@ EMSCRIPTEN_KEEPALIVE void set_localization_from_js(int localization) {  ///
   ge.meta.localization = localization;
 }
 
-EMSCRIPTEN_KEEPALIVE void resize_from_js(int w, int h) {  ///
-  if (g_appstate.window)
-    SDL_SetWindowSize(g_appstate.window, w, h);
-}
-
 EMSCRIPTEN_KEEPALIVE void set_device_type_from_js(int type) {  ///
   ge.meta.device = (DeviceType)type;
   LOGI("Set device %d", type);
 }
 }
-
-EM_JS(void, js_TriggerOnResize, (), { onResize(); });
 
 EM_JS(void, js_LogWebGLVersion, (), {  ///
   let canvas = document.createElement('canvas');
@@ -167,6 +160,11 @@ class BGFXCallbackHandler : public bgfx::CallbackI {  ///
   void captureFrame(const void* data, uint32_t size) override {}
 };
 
+void OnWindowResized(int w, int h) {  ///
+  bgfx::reset(w, h, BGFX_RESET_VSYNC);
+  ge.meta.screenSize = {w, h};
+}
+
 SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv */) {  ///
   ZoneScopedN("SDL_AppInit");
 
@@ -184,7 +182,8 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
     }
   }
 
-  SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
+  SDL_WindowFlags flags
+    = SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
 
   ge.meta.screenSize = LOGICAL_RESOLUTION;
 
@@ -287,9 +286,6 @@ SDL_AppResult SDL_AppInit(void** /* appstate */, int /* argc */, char** /* argv 
 #endif
   }
 
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-  js_TriggerOnResize();
-#endif
   InitEngine();
 
   return SDL_APP_CONTINUE;
@@ -394,6 +390,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
 SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
   ImGui_ImplSDL3_ProcessEvent(event);
 
+  static Vector2 sizeToPixelSizeRatio = {};
+
   auto& io = ImGui::GetIO();
 
   static i64     nextTouchNumber     = 1;
@@ -408,15 +406,25 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     ge.meta.quitRequested = true;
   } break;
 
+    // #ifndef SDL_PLATFORM_EMSCRIPTEN
+
   case SDL_EVENT_WINDOW_RESIZED: {  ///
-    auto window = SDL_GetWindowFromID(event->window.windowID);
+    int pw = 0;
+    int ph = 0;
+    int w  = 0;
+    int h  = 0;
 
-    auto width  = event->window.data1;
-    auto height = event->window.data2;
+    const auto window = SDL_GetWindowFromID(event->window.windowID);
+    SDL_GetWindowSizeInPixels(window, &pw, &ph);
+    SDL_GetWindowSize(window, &w, &h);
 
-    bgfx::reset(width, height, BGFX_RESET_VSYNC);
-    ge.meta.screenSize = {width, height};
+    sizeToPixelSizeRatio.x = (f32)pw / (f32)w;
+    sizeToPixelSizeRatio.y = (f32)ph / (f32)h;
+
+    OnWindowResized(pw, ph);
   } break;
+
+    // #endif
 
   case SDL_EVENT_KEY_DOWN: {  ///
     ge.events.canStartSound = true;
@@ -483,8 +491,14 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ge.events.thisFrame.mousePressed = true;
       ge.events.last                   = LastEventType_MOUSE;
 
-      ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
-      ge.meta._mousePos              = {e.x, ge.meta.screenSize.y - e.y};
+      ge.meta._mouseOrLatestTouchPos = {
+        e.x * sizeToPixelSizeRatio.x,
+        ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+      };
+      ge.meta._mousePos = {
+        e.x * sizeToPixelSizeRatio.x,
+        ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+      };
     }
   } break;
 
@@ -502,7 +516,10 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       emulatedTouchIsDown = false;
       _OnTouchUp({
         ._id = emulatedTouchID,
-        ._screenPos{e.x, ge.meta.screenSize.y - e.y},
+        ._screenPos{
+          e.x * sizeToPixelSizeRatio.x,
+          ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+        },
       });
 
       ge.events.thisFrame.touchReleased = true;
@@ -517,8 +534,14 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ge.events.thisFrame.mouseReleased = true;
       ge.events.last                    = LastEventType_MOUSE;
 
-      ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
-      ge.meta._mousePos              = {e.x, ge.meta.screenSize.y - e.y};
+      ge.meta._mouseOrLatestTouchPos = {
+        e.x * sizeToPixelSizeRatio.x,
+        ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+      };
+      ge.meta._mousePos = {
+        e.x * sizeToPixelSizeRatio.x,
+        ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+      };
     }
   } break;
 
@@ -526,7 +549,8 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
     if (io.WantCaptureMouse)
       break;
 
-    const auto& e       = event->wheel;
+    const auto& e = event->wheel;
+
     ge.meta._mouseWheel = MIN(1, MAX(-1, (e.direction ? -1 : 1) * e.integer_y));
 
     ge.events.thisFrame.mouseWheeled = true;
@@ -544,8 +568,14 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       if (emulatedTouchIsDown) {
         _OnTouchMoved({
           ._id = emulatedTouchID,
-          ._screenPos{e.x, ge.meta.screenSize.y - e.y},
-          ._screenDelta{e.xrel, -e.yrel},
+          ._screenPos{
+            e.x * sizeToPixelSizeRatio.x,
+            ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+          },
+          ._screenDelta{
+            e.xrel * sizeToPixelSizeRatio.x,
+            -e.yrel * sizeToPixelSizeRatio.y,
+          },
         });
 
         ge.events.thisFrame.touchMoved = true;
@@ -556,8 +586,14 @@ SDL_AppResult SDL_AppEvent(void* /* appstate */, SDL_Event* event) {
       ge.events.thisFrame.mouseMoved = true;
       ge.events.last                 = LastEventType_MOUSE;
 
-      ge.meta._mouseOrLatestTouchPos = {e.x, ge.meta.screenSize.y - e.y};
-      ge.meta._mousePos              = {e.x, ge.meta.screenSize.y - e.y};
+      ge.meta._mouseOrLatestTouchPos = {
+        e.x * sizeToPixelSizeRatio.x,
+        ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+      };
+      ge.meta._mousePos = {
+        e.x * sizeToPixelSizeRatio.x,
+        ge.meta.screenSize.y - e.y * sizeToPixelSizeRatio.y,
+      };
     }
   } break;
 
