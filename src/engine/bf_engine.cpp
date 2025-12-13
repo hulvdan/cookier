@@ -3540,18 +3540,28 @@ SDL_AppResult EngineUpdate() {  ///
     }
   }
 
-  // Forbidding use of `logicRand` during drawing.
-  // This way game's logic remains deterministic.
-  // It allows re-simulation of game using prerecorded inputs
-  // such that game's state is always the same during and after the simulation.
-  // TODO: record / replay inputs.
-  // TODO: mb IsKeyPressed and other functions should also raise.
-  ge.meta.logicRand._raise = true;
-  ge.meta._drawing         = true;
-  ge.draw.flushedThisFrame = false;
-  GameDraw();
-  ge.meta._drawing         = false;
-  ge.meta.logicRand._raise = false;
+  if ((ge.meta.screenSize.x > 0) && (ge.meta.screenSize.y > 0)) {
+    ImGui_Implbgfx_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
+    // Forbidding use of `logicRand` during drawing.
+    // This way game's logic remains deterministic.
+    // It allows re-simulation of game using prerecorded inputs
+    // such that game's state is always the same during and after the simulation.
+    // TODO: record / replay inputs.
+    // TODO: mb IsKeyPressed and other functions should also raise.
+    ge.meta.logicRand._raise = true;
+    ge.meta._drawing         = true;
+    ge.draw.flushedThisFrame = false;
+    GameDraw();
+    ge.meta._drawing         = false;
+    ge.meta.logicRand._raise = false;
+
+    ImGui::EndFrame();
+    ImGui::Render();
+    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+  }
 
   return SDL_APP_CONTINUE;
 }

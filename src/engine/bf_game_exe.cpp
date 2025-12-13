@@ -409,29 +409,11 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
       ge.meta._drawing = false;
     }
 
-    static bool canStartImGuiFrame = true;
-    bool        startedImGuiFrame  = false;
-
-    if (canStartImGuiFrame) {
-      ImGui_Implbgfx_NewFrame();
-      ImGui_ImplSDL3_NewFrame();
-      ImGui::NewFrame();
-      canStartImGuiFrame = false;
-      startedImGuiFrame  = true;
-    }
-
     result = EngineUpdate();
-
-    if (startedImGuiFrame) {
-      ImGui::EndFrame();
-      ImGui::Render();
-      ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-    }
 
     if (result == SDL_APP_CONTINUE) {
       ZoneScopedN("bgfx. bgfx::frame()");
       bgfx::frame(false);
-      canStartImGuiFrame = true;
     }
   }
 
