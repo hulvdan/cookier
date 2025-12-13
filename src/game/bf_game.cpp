@@ -1188,7 +1188,6 @@ struct GameData {
     Array<LockInfo, ItemType_COUNT>      lockedItems   = {};
     Array<LockInfo, WeaponType_COUNT>    lockedWeapons = {};
 
-    int achievementStepsTotal     = 0;
     int achievementStepsCompleted = 0;
   } player;
 
@@ -1567,7 +1566,7 @@ void AchievementStepUnlock(
   g.player.achievementStepsCompleted++;
 
   ASSERT(g.player.achievementStepsCompleted >= 0);
-  ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
+  ASSERT(g.player.achievementStepsCompleted <= TOTAL_ACHIEVEMENT_STEPS);
 }
 
 void OnAchievementValueChanged(AchievementType type, int oldValue, int newValue) {  ///
@@ -1664,12 +1663,12 @@ void ChangeStaticAndDynamicStat(StatType stat, int value) {  ///
 }
 
 int GetAchievementsCompletedPercent() {  ///
-  ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
+  ASSERT(g.player.achievementStepsCompleted <= TOTAL_ACHIEVEMENT_STEPS);
   ASSERT(g.player.achievementStepsCompleted >= 0);
-  ASSERT(g.player.achievementStepsTotal > 0);
+  ASSERT(TOTAL_ACHIEVEMENT_STEPS > 0);
 
-  int percent = g.player.achievementStepsCompleted * 100 / g.player.achievementStepsTotal;
-  if (g.player.achievementStepsCompleted < g.player.achievementStepsTotal)
+  int percent = g.player.achievementStepsCompleted * 100 / TOTAL_ACHIEVEMENT_STEPS;
+  if (g.player.achievementStepsCompleted < TOTAL_ACHIEVEMENT_STEPS)
     percent = MIN(99, percent);
   if (g.player.achievementStepsCompleted > 0)
     percent = MAX(1, percent);
@@ -5128,7 +5127,6 @@ void GameInit() {
 void GameInitAfterLoadingSavedata() {
   // Recalculating unlocked builds, items and weapons based off achievements.
   {  ///
-    g.player.achievementStepsTotal     = 0;
     g.player.achievementStepsCompleted = 0;
 
     // Locking all achievements.
@@ -5165,8 +5163,6 @@ void GameInitAfterLoadingSavedata() {
       if (!fb_steps)
         continue;
 
-      g.player.achievementStepsTotal += fb_steps->size();
-
       int stepIndex = -1;
       for (auto fb_step : *fb_steps) {
         bool locked = false;
@@ -5183,7 +5179,7 @@ void GameInitAfterLoadingSavedata() {
     }
 
     ASSERT(g.player.achievementStepsCompleted >= 0);
-    ASSERT(g.player.achievementStepsCompleted <= g.player.achievementStepsTotal);
+    ASSERT(g.player.achievementStepsCompleted <= TOTAL_ACHIEVEMENT_STEPS);
   }
 
   g.run.randomTiers = GetRandomCumulativeChances(
