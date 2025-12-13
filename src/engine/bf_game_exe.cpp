@@ -188,7 +188,7 @@ void EmscriptenLog(
   case SDL_LOG_PRIORITY_WARN:
     emscripten_log(EM_LOG_WARN, "%s", message);
     break;
-  case SDL_LOG_PRIORITY_ERROR:
+  default:
     emscripten_log(EM_LOG_ERROR, "%s", message);
     break;
   }
