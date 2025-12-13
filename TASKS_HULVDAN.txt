@@ -16,9 +16,8 @@ x level up doesn't upgrade stats randomly
 x fix some stat show x as signed
 x fix на билды и сложности не влияет STAT_2__MODS_CHANGED_BY__X__PERCENT
 
-* impl: STAT_2__MODS_CHANGED_BY__X__PERCENT
-  почему у инженера +28 инженерки ??? Должно отображаться +10
-  * в билдах и сложностях не должны скалироваться STAT_2__MODS_CHANGED_BY__X__PERCENT
+* fix выдачи ачивок
+* impl: применяется STAT_2__MODS_CHANGED_BY__X__PERCENT
 * проверить, не сломалась ли хрюшка?
 * sfx: взрыв
 * fix: flamethrower не может слишком быстро бить врагов
