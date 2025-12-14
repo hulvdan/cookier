@@ -14497,8 +14497,11 @@ void GameDraw() {
     auto color = ColorFromRGBA(fb->color());
     if (creature.type == CreatureType_RANGER) {
       const auto& data = creature.DataRanger();
-      f32         t    = 0;
+
       if (data.startedShootingAt.IsSet()) {
+        f32  t         = 0;
+        auto scaleEase = EaseInQuad;
+
         auto e = data.startedShootingAt.Elapsed();
         if (e < MOB_RANGER_SHOOTING_FRAME)
           t = e.Progress(MOB_RANGER_SHOOTING_FRAME);
@@ -14506,10 +14509,13 @@ void GameDraw() {
           t = 1
               - (e - MOB_RANGER_SHOOTING_FRAME)
                   .Progress(MOB_RANGER_SHOOTING_FRAMES - MOB_RANGER_SHOOTING_FRAME);
+          scaleEase = EaseOutQuad;
         }
+
+        t = Clamp01(t);
+        scale *= Lerp(1, 1.2f, scaleEase(t));
+        color = ColorLerp(color, palRed, t);
       }
-      t     = Clamp01(t);
-      color = ColorLerp(color, palRed, t);
     }
     else if (creature.type == CreatureType_RUSHER) {
       const auto& data = creature.DataRusher();
