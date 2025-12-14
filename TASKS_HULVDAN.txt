@@ -17,14 +17,17 @@ x walking tutor: better touch textures
 x fix cheat f6
 x sdl log debug
 x cap max particles + numbers
+x garden landmine fade in/out
+x landmine bounce
 
-* fix обсидиановая подкова почему-то даёт слишком много скорости врагам
-*
-* polish: turret easing
+* polish: garden: breathing
 * polish: garden: apple spawn easing
+* polish: turret easing
 * polish: mob cooravie shooting easing
 * polish: boss scale easing upon shot pre/post frames
 * polish: горение нормально смотрится на всех монстрах
+*
+* fix обсидиановая подкова почему-то даёт слишком много скорости врагам
 *
 * sfx: настройки для игрока: можно сменить громкость звука / музыки
   пауза из любого места
@@ -33,7 +36,6 @@ x cap max particles + numbers
 * prod: сакутиновая отправка event-ов аналитики
 *
 * fix расположение ховер карточек
-* restrict max enemies to 100 (or particles) (bgfx can fail)
 *
 * добавить MAGIC у сохранения!!!!
   продумать слегка версионирование сохранений
@@ -41,6 +43,7 @@ x cap max particles + numbers
 *
 * RELEASED!
 =======================
+* restrict max enemies to 100 (or particles) (bgfx can fail)
 * sfx: crossbow shot sounds like electricity
 * walking tutor: crisp mouse tex
 * проверить все effect conditions на immediate

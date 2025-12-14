@@ -964,6 +964,7 @@ int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
 struct Landmine {  ///
   Vector2     pos                 = {};
   FrameGame   startedDetonationAt = {};
+  FrameGame   spawnedAt           = {};
   int         damage              = {};
   FBFlattened damageScalings      = {};
 };
@@ -971,7 +972,7 @@ struct Landmine {  ///
 struct Garden {  ///
   Vector2   pos              = {};
   lframe    spawnsAppleEvery = {};
-  FrameGame createdAt        = {};
+  FrameGame spawnedAt        = {};
 };
 
 struct UIButtonState {  ///
@@ -2473,6 +2474,7 @@ void MakeLandmine(MakeLandmineData data) {  ///
     .damage         = data.damage,
     .damageScalings = data.damageScalings,
   };
+  v.spawnedAt.SetNow();
   *g.run.landmines.Add() = v;
 }
 
@@ -2487,7 +2489,7 @@ void MakeGarden(MakeGardenData data) {  ///
     .pos              = data.pos,
     .spawnsAppleEvery = data.spawnsAppleEvery,
   };
-  v.createdAt.SetNow();
+  v.spawnedAt.SetNow();
   *g.run.gardens.Add() = v;
 }
 
@@ -13914,7 +13916,7 @@ void GameFixedUpdate() {
         interval /= GetPlayerStatStructureAttackSpeedMultiplier();
         interval = MAX(2, interval);
 
-        if ((garden.createdAt.Elapsed().value + 1) % interval != 0)
+        if ((garden.spawnedAt.Elapsed().value + 1) % interval != 0)
           continue;
 
         Vector2 pos{};
@@ -14707,25 +14709,60 @@ void GameDraw() {
     }
   }
 
-  // Drawing landmines.
-  {  ///
-    const auto texID = glib->game_landmine_texture_id();
-    for (const auto& x : g.run.landmines)
-      DrawGroup_OneShotTexture({.texID = texID, .pos = x.pos}, DrawZ_LANDMINES);
-  }
+  {
+    f32 baseFade = 1;
+    if (g.run.scheduledWaveCompleted.IsSet())
+      baseFade *= MAX(0, 1 - g.run.scheduledWaveCompleted.Elapsed().Progress(DIE_FRAMES));
 
-  // Drawing gardens.
-  {  ///
-    const auto texID = glib->game_garden_texture_id();
-    for (const auto& x : g.run.gardens) {
-      DrawGroup_OneShotTexture(
-        {
-          .texID = texID,
-          .pos   = x.pos,
-          .scale = Vector2One() * 1.2f,
-        },
-        DrawZ_DEFAULT
-      );
+    // Drawing landmines.
+    {  ///
+      const auto texID = glib->game_landmine_texture_id();
+      for (const auto& x : g.run.landmines) {
+        f32 fade = baseFade;
+        fade *= MIN(
+          1, x.spawnedAt.Elapsed().Progress(lframe::FromSeconds(0.33f * 3.0f / 8.0f))
+        );
+
+        Vector2 scale{1, 1};
+        if (x.startedDetonationAt.IsSet()) {
+          f32 p = x.startedDetonationAt.Elapsed().Progress(LANDMINE_DETONATION_FRAMES);
+          scale.x += 0.2f * sinf(2 * PI32 * p);
+          scale.y -= 0.2f * sinf(2 * PI32 * p);
+
+          fade *= 1 - EaseInQuad(p);
+        }
+
+        DrawGroup_OneShotTexture(
+          {
+            .texID = texID,
+            .pos   = x.pos,
+            .scale = scale,
+            .color = Fade(WHITE, fade),
+          },
+          DrawZ_LANDMINES
+        );
+      }
+    }
+
+    // Drawing gardens.
+    {  ///
+      const auto texID = glib->game_garden_texture_id();
+      for (const auto& x : g.run.gardens) {
+        f32 fade = baseFade;
+        fade *= MIN(
+          1, x.spawnedAt.Elapsed().Progress(lframe::FromSeconds(0.33f * 3.0f / 8.0f))
+        );
+
+        DrawGroup_OneShotTexture(
+          {
+            .texID = texID,
+            .pos   = x.pos,
+            .scale = Vector2One() * 1.2f,
+            .color = Fade(WHITE, fade),
+          },
+          DrawZ_DEFAULT
+        );
+      }
     }
   }
 
