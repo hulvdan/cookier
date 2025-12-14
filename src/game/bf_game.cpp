@@ -14931,15 +14931,6 @@ void GameDraw() {
     DrawGroup_Begin(DrawZ_TUTORIAL_AREA);
     DrawGroup_SetSortY(0);
 
-    const int  SEGMENTS           = 12;
-    const auto revolutionDur      = 3 * FIXED_FPS;
-    const f32  revolutionRotation = -2 * PI32 / (f32)SEGMENTS
-                                   * (f32)(ge.meta.frameGame % revolutionDur)
-                                   / (f32)revolutionDur;
-
-    f32 offAmplitude = Lerp(640, 680, breathingP);
-    offAmplitude *= Lerp(3 / 4.0f, 1, EaseOutQuad(walkingTutorialFade));
-
     const auto c = WORLD_SIZEf / 2.0f;
 
     // "Walk out of the area" text prompt.
