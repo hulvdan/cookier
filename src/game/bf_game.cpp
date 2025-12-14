@@ -3490,7 +3490,7 @@ void OnPickedUp(int pickupableIndex) {  ///
 
   auto fb_creatures = glib->creatures();
 
-  const int appleOrChestHeal = MIN(1, g.run.dynamicStats[StatType_APPLE_HEAL]);
+  const int appleOrChestHeal = g.run.dynamicStats[StatType_APPLE_HEAL];
   IterateOverEffects(
     EffectConditionType_X__CHANCE_TO_DEAL__Y__DAMAGE_UPON__PICKUPABLE,
     -1,
@@ -14921,7 +14921,7 @@ void GameDraw() {
 
   // Drawing walking tutorial area.
   if (walkingTutorialFade > 0) {  ///
-    const Color color = Fade(WHITE, EaseOutQuad(walkingTutorialFade));
+    const Color color = Fade({239, 203, 132, 255}, EaseOutQuad(walkingTutorialFade));
 
     const f32 breathingP
       = (sinf(2 * PI32 * (f32)(ge.meta.frameGame % (2 * FIXED_FPS)) / 2 / (f32)FIXED_FPS)
@@ -14932,18 +14932,6 @@ void GameDraw() {
     DrawGroup_SetSortY(0);
 
     const auto c = WORLD_SIZEf / 2.0f;
-
-    // "Walk out of the area" text prompt.
-    if (0) {
-      const auto string = localization_strings->Get(Loc_UI_MOVEMENT__CAPS);
-      DrawGroup_CommandText({
-        .pos        = c + Vector2(0, 4),
-        .font       = &g.meta.fontUIBig,
-        .text       = string->c_str(),
-        .bytesCount = (int)string->size(),
-        .color      = color,
-      });
-    }
 
     const f32 rotation = PI32 / 40;
     const f32 marginX  = (f32)WORLD_SIZE.x * 1.0f / 4.0f;
@@ -15021,8 +15009,8 @@ void GameDraw() {
       .texID    = tex,
       .rotation = -rotation,
       .pos      = Vector2(WORLD_SIZE.x - marginX, c.y) + off,
-      .scale    = Vector2One() * 2.0f,
-      .color    = Fade({220, 152, 26, 255}, fade),
+      .scale    = Vector2One(),
+      .color    = Fade(color, fade),
     });
 
     DrawGroup_End();
@@ -15287,8 +15275,6 @@ void GameDraw() {
 
         IM::Text("F10 unlock all achievements");
         IM::Text("N - increase wave. Shift N - decrease wave");
-
-        IM::Text("%.2f", b2Body_GetLinearVelocity(PLAYER_CREATURE.body.id).x);
 
         LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
           IM::Text(
