@@ -519,6 +519,11 @@ table GameLibrary {
     ui_icon_up_texture_id: int;
     ui_icon_down_texture_id: int;
     ui_vignette_danger_hp_level_texture_id: int;
+    ui_input_key_texture_id: int;
+    ui_input_mouse_texture_id: int;
+    ui_input_mouse_left_down_texture_id: int;
+    ui_input_touch_texture_id: int;
+    ui_input_touch_down_texture_id: int;
     game_decal_pre_spawn_texture_id: int;
     game_landmine_texture_id: int;
     game_coin_glow_texture_id: int;
