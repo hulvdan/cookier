@@ -26,8 +26,10 @@ x fix correct gardens spawn as in item's card
 x polish: turret easing
 x polish: mob cooravie shooting easing
 x imgui doesn't use ini in web
+x cheat кнопка навешивания огня на мобов
+x cheat кнопка замедления мобов
 
-* cheat кнопка навешивания огня на мобов
+* добавить амплитуду разброса огня по существам по их collider/hurtbox-ам
 * polish: горение нормально смотрится на всех монстрах
 * fix почему иногда монетки летят в stash, но не увеличивают его?
   ASSERT всегда в stash-е >= 0 монет
