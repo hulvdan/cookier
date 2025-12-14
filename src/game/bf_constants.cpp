@@ -5,6 +5,7 @@
 constexpr int        WORLD_X                                  = 32;
 constexpr int        WORLD_Y                                  = 32;
 constexpr Vector2Int WORLD_SIZE                               = {WORLD_X, WORLD_Y};
+constexpr Vector2    WORLD_SIZEf                              = (Vector2)WORLD_SIZE;
 constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MAX = 12;
 constexpr f32        ENEMIES_DECAY_SPAWNING_AROUND_PLAYER_MIN = 4;
 constexpr f32        WORLD_CORNER_MARGIN_X                    = 3.0f;
@@ -59,7 +60,7 @@ constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MAX = 2;
 
 constexpr f32 MELEE_WEAPON_COLLIDER_PHANTOM_RANGE_METERS = 0.12f;
 
-constexpr f32 WALKING_TUTORIAL_RADIUS_METERS = 6;
+constexpr f32 WALKING_TUTORIAL_RADIUS_METERS = 4;
 
 // Other.
 // ============================================================

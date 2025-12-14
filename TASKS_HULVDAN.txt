@@ -12,6 +12,7 @@ WORKING SINCE 2025-09-07
 * walking tutor: спрайты для разных стилей управления (* клава, * мышь, * пальцы)
 * walking tutor: отобразить управление и текст
 * walking tutor: отобразить область
+* walking tutor: check localization: TODO walk out of the area
 *
 * fix обсидиановая подкова почему-то даёт слишком много скорости врагам
 *
