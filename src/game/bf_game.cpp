@@ -1628,6 +1628,12 @@ void SetWaveWonTrue() {  ///
 
 void TriggerWaveCompleted(bool instant) {  ///
   ASSERT_FALSE(g.run.scheduledWaveCompleted.IsSet());
+
+  if (!g.run.walkingTutorialCompletedAt.IsSet())
+    g.run.walkingTutorialCompletedAt.SetNow();
+  if (!g.run.waveStartedAt.IsSet())
+    g.run.waveStartedAt.SetNow();
+
   g.run.scheduledWaveCompleted.SetNow();
   if (instant)
     g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
