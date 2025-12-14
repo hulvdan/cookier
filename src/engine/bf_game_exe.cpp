@@ -324,6 +324,11 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
 
     ImGui::CreateContext();
 
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+    auto& io       = ImGui::GetIO();
+    io.IniFilename = nullptr;
+#endif
+
     ImGui_Implbgfx_Init(255);
 #if BX_PLATFORM_WINDOWS
     ImGui_ImplSDL3_InitForD3D(g_appstate.window);
