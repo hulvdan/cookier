@@ -13,9 +13,9 @@ x walking tutor: отобразить управление и текст
 x walking tutor: отобразить область
 x walking tutor: check localization: TODO walk out of the area
 x walking tutor: спрайты для разных стилей управления (* клава, * мышь, * пальцы)
+x walking tutor: better touch textures
+x fix cheat f6
 
-* walking tutor: better touch textures
-*
 * fix обсидиановая подкова почему-то даёт слишком много скорости врагам
 *
 * sfx: настройки для игрока: можно сменить громкость звука / музыки
