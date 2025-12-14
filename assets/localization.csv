@@ -50,7 +50,6 @@ UI_ARE_YOU_SURE;Вы уверены?;Are you sure?;
 UI_SURE_RESTART;Вы уверены, что хотите Начать Заново?;Are you sure you want to Restart?;
 UI_SURE_NEW_RUN;Вы уверены, что хотите Начать Новый Забег?;Are you sure you want to Start A New Run?;
 UI_SURE_QUIT;Вы уверены, что хотите Выйти?;Are you sure you want to Quit?;
-UI_MOVEMENT;Выйдите за пределы области;TODO Walk out of the area;
 EFFECT_DEFAULT_GET__STAT;{MODIFIER} {STAT};{MODIFIER} {STAT};
 EFFECT_SMALLEST_DIFFICULTY_DESCRIPTION;Лучшая сложность для обучения игре;The best difficulty for getting the hang of the game;
 EFFECT_STAT__EVERY__X__KILLED_ENEMIES;{MODIFIER} {STAT} каждые {X} убийств;{MODIFIER} {STAT} every {X} kills;
