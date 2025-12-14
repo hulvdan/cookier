@@ -14747,18 +14747,60 @@ void GameDraw() {
     // Drawing gardens.
     {  ///
       const auto texID = glib->game_garden_texture_id();
+
+      constexpr int GARDEN_REVOLUTIONS = 8;
+
+      Vector2 anchor{0.5f, 0.2f};
+      Vector2 posOffset{
+        0,
+        -(f32)glib->original_texture_sizes()->Get(texID)->y() * ASSETS_TO_LOGICAL_RATIO
+          / METER_LOGICAL_SIZE
+      };
+      posOffset *= anchor;
+
       for (const auto& x : g.run.gardens) {
+        if (g.debug.showGizmos) {
+          DrawGroup_OneShotCircleLines({
+            .pos    = x.pos,
+            .radius = 0.4f,
+            .color  = YELLOW,
+          });
+        }
+
+        const auto e = x.spawnedAt.Elapsed();
+
         f32 fade = baseFade;
-        fade *= MIN(
-          1, x.spawnedAt.Elapsed().Progress(lframe::FromSeconds(0.33f * 3.0f / 8.0f))
-        );
+        fade *= MIN(1, e.Progress(lframe::FromSeconds(0.33f * 3.0f / 8.0f)));
+
+        f32 p = (f32)(e.value % x.spawnsAppleEvery.value) / (f32)x.spawnsAppleEvery.value;
+        p *= GARDEN_REVOLUTIONS;
+
+        auto scale = Vector2(1, 1) * 1.2f;
+
+        f32       ampl                 = 0.08f;
+        const f32 spawnAppleAmplScale  = 5;
+        const f32 spawnAppleScaleScale = 1;
+        if (p < 1) {
+          ampl *= Lerp(spawnAppleAmplScale, 1, p);
+          scale *= Lerp(spawnAppleScaleScale, 1, p);
+        }
+        else if (p > GARDEN_REVOLUTIONS - 1) {
+          ampl *= Lerp(1, spawnAppleAmplScale, p - (GARDEN_REVOLUTIONS - 1));
+          scale *= Lerp(1, spawnAppleScaleScale, p - (GARDEN_REVOLUTIONS - 1));
+        }
+
+        p = fmodf(p, 1);
+
+        auto breathing = sinf(2 * PI32 * (p + 0.55f));
+        scale += Vector2(-breathing, breathing) * ampl;
 
         DrawGroup_OneShotTexture(
           {
-            .texID = texID,
-            .pos   = x.pos,
-            .scale = Vector2One() * 1.2f,
-            .color = Fade(WHITE, fade),
+            .texID  = texID,
+            .pos    = x.pos + posOffset,
+            .anchor = anchor,
+            .scale  = scale,
+            .color  = Fade(WHITE, fade),
           },
           DrawZ_DEFAULT
         );

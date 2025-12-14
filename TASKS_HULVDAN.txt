@@ -19,9 +19,10 @@ x sdl log debug
 x cap max particles + numbers
 x garden landmine fade in/out
 x landmine bounce
+x polish: garden: breathing
+x polish: garden: apple spawn easing
 
-* polish: garden: breathing
-* polish: garden: apple spawn easing
+* fix correct gardens spawn as in item's card
 * polish: turret easing
 * polish: mob cooravie shooting easing
 * polish: boss scale easing upon shot pre/post frames
