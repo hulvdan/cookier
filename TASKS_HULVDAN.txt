@@ -22,8 +22,8 @@ x landmine bounce
 x polish: garden: breathing
 x polish: garden: apple spawn easing
 x fix correct gardens spawn as in item's card
+x polish: turret easing
 
-* polish: turret easing
 * polish: mob cooravie shooting easing
 * polish: boss scale easing upon shot pre/post frames
 * polish: горение нормально смотрится на всех монстрах

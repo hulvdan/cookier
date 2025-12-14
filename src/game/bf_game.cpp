@@ -14527,6 +14527,18 @@ void GameDraw() {
       t     = Clamp01(t);
       color = ColorLerp(color, palRed, t);
     }
+    else if (creature.type == CreatureType_TURRET) {
+      const auto& data = creature.DataTurret();
+      if (data.startedShootingAt.IsSet()) {
+        scale *= Lerp(
+          1.22f,
+          1,
+          EaseOutCubic(
+            MIN(1, data.startedShootingAt.Elapsed().Progress(ANIMATION_1_FRAMES))
+          )
+        );
+      }
+    }
 
     auto flash = TRANSPARENT_WHITE;
     if (creature.lastDamagedFlashAt.IsSet()) {
