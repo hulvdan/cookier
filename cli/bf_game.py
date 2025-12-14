@@ -24,6 +24,7 @@ import bf_swatch
 from bf_lib import (
     ART_DIR,
     ART_TEXTURES_DIR,
+    ASSETS_DIR,
     SRC_DIR,
     all_are_none,
     all_are_not_none,
@@ -940,14 +941,27 @@ def process_images():
         bf_image.conveyor_suffix("back"),
     )
 
-    # Outlining input icons.
+    # Making input images.
     for f in ART_TEXTURES_DIR.glob("ui_input_*.png"):
         f.unlink()
     bf_image.conveyor(
         "to_inputify",
         "Outlining",
-        bf_image.conveyor_outline(radius=6, color=(0, 0, 0, 255)),
+        bf_image.conveyor_outline(radius=5, color=(0, 0, 0, 255)),
     )
+
+    c1 = (220, 152, 36, 255)
+    c2 = (0, 0, 0, 255)
+    bf_image.outline(
+        bf_image.rectangle(160, radius=20, width=10, fill=c1, outline=c2),
+        radius=1,
+        color=(0, 0, 0, 0),
+    ).save(ART_TEXTURES_DIR / "ui_input_key.png")
+    bf_image.outline(
+        bf_image.ellipse(1300, width=20, fill=(0, 0, 0, 0), outline=c1),
+        radius=10,
+        color=c2,
+    ).save(ASSETS_DIR / "art" / "src" / "game_walking_tutorial_area.png")
 
     # Spritesheetifying props.
     for f in (ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):

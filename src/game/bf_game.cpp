@@ -4572,7 +4572,7 @@ void RunInit() {
   }
 
   // Making player. {  ///
-  auto playerPos = (Vector2)WORLD_SIZE / 2.0f;
+  auto playerPos = WORLD_SIZEf / 2.0f;
   MakeCreature({
     .type = CreatureType_PLAYER,
     .pos  = playerPos,
@@ -12637,7 +12637,7 @@ void GameFixedUpdate() {
         spawnEnemiesEvery = MAX(1, spawnEnemiesEvery);
 
         if (CanSpawnMoreCreatures()) {
-          if (g.run.waveStartedAt.Elapsed().value % spawnEnemiesEvery == 0) {
+          if (((g.run.waveStartedAt.Elapsed().value - 1) % spawnEnemiesEvery) == 0) {
             FOR_RANGE (int, toSpawnIndex, g.run.state.toSpawn) {
               const auto   factor = GRAND.FRand();
               CreatureType spawnType{};
@@ -12803,7 +12803,7 @@ void GameFixedUpdate() {
 
       // Spawning boss during the last wave.
       if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossCreatureID) {  ///
-        const auto worldCenter = (Vector2)WORLD_SIZE / 2.0f;
+        const auto worldCenter = WORLD_SIZEf / 2.0f;
         const auto dir       = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, worldCenter);
         const auto bossPos   = worldCenter + dir * BOSS_SPAWN_OFFSET_METERS;
         g.run.bossCreatureID = MakeCreature({.type = CreatureType_BOSS, .pos = bossPos});
@@ -12998,14 +12998,18 @@ void GameFixedUpdate() {
 
       // Finishing walking tutorial.
       if (!g.run.walkingTutorialCompletedAt.IsSet()) {
-        if (Vector2DistanceSqr(PLAYER_CREATURE.pos, (Vector2)WORLD_SIZE / 2.0f)
+        if (Vector2DistanceSqr(PLAYER_CREATURE.pos, WORLD_SIZEf / 2.0f)
             >= SQR(WALKING_TUTORIAL_RADIUS_METERS))
         {
           g.run.walkingTutorialCompletedAt.SetNow();
           ASSERT_FALSE(g.run.waveStartedAt.IsSet());
           g.run.waveStartedAt.SetNow();
 
-          PlaySound(Sound_MUSIC_BATTLE);
+          static bool launchedMusic = false;
+          if (!launchedMusic) {
+            launchedMusic = true;
+            PlaySound(Sound_MUSIC_BATTLE);
+          }
         }
       }
     }
@@ -14917,11 +14921,137 @@ void GameDraw() {
 
   // Drawing walking tutorial area.
   if (walkingTutorialFade > 0) {  ///
-    DrawGroup_OneShotCircleLines({
-      .pos    = (Vector2)WORLD_SIZE / 2.0f,
-      .radius = WALKING_TUTORIAL_RADIUS_METERS,
-      .color  = Fade(BLUE, walkingTutorialFade),
+    const Color color = Fade(WHITE, EaseOutQuad(walkingTutorialFade));
+
+    const f32 breathingP
+      = (sinf(2 * PI32 * (f32)(ge.meta.frameGame % (2 * FIXED_FPS)) / 2 / (f32)FIXED_FPS)
+         + 1)
+        / 2.0f;
+
+    DrawGroup_Begin(DrawZ_TUTORIAL_AREA);
+    DrawGroup_SetSortY(0);
+
+    const int  SEGMENTS           = 12;
+    const auto revolutionDur      = 3 * FIXED_FPS;
+    const f32  revolutionRotation = -2 * PI32 / (f32)SEGMENTS
+                                   * (f32)(ge.meta.frameGame % revolutionDur)
+                                   / (f32)revolutionDur;
+
+    f32 offAmplitude = Lerp(640, 680, breathingP);
+    offAmplitude *= Lerp(3 / 4.0f, 1, EaseOutQuad(walkingTutorialFade));
+
+    if (0) {
+      FOR_RANGE (int, i, SEGMENTS) {
+        const f32 rotation = 2 * PI32 * i / SEGMENTS + revolutionRotation;
+
+        const auto off = Vector2Rotate(
+          {0, offAmplitude * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE}, rotation
+        );
+
+        DrawGroup_CommandTexture({
+          .texID    = glib->game_walking_tutorial_area_segment_texture_id(),
+          .rotation = rotation,
+          .pos      = WORLD_SIZEf / 2.0f + off,
+          .color    = color,
+        });
+      }
+    }
+
+    const auto c = WORLD_SIZEf / 2.0f;
+
+    // "Walk out of the area" text prompt.
+    if (0) {
+      const auto string = localization_strings->Get(Loc_UI_MOVEMENT__CAPS);
+      DrawGroup_CommandText({
+        .pos        = c + Vector2(0, 4),
+        .font       = &g.meta.fontUIBig,
+        .text       = string->c_str(),
+        .bytesCount = (int)string->size(),
+        .color      = color,
+      });
+    }
+
+    const f32 rotation = PI32 / 40;
+    const f32 marginX  = (f32)WORLD_SIZE.x * 1.0f / 4.0f;
+
+    if (ge.meta.device != DeviceType_MOBILE) {
+      const int  keyTex     = glib->ui_input_key_texture_id();
+      const auto keyTexSize = ToVector2(glib->original_texture_sizes()->Get(keyTex))
+                              * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
+
+      Vector2 keyboardKeyOffsets[]{{-1, -0.5f}, {0, -0.5f}, {1, -0.5f}, {0, 0.5f}};
+
+      for (auto o : keyboardKeyOffsets) {
+        o *= Lerp(1.05f, 1.15f, breathingP);
+        auto off = Vector2Rotate(keyTexSize * o, rotation);
+
+        DrawGroup_CommandTexture({
+          .texID    = keyTex,
+          .rotation = rotation,
+          .pos{
+            marginX + off.x,
+            c.y + off.y,
+          },
+          .color = color,
+        });
+      }
+    }
+
+    const auto mouseDurPerStep = FIXED_FPS;
+
+    // Steps:
+    // 0. Mouse fast unfade
+    // 1. Mouse hold
+    // 2. Mouse move
+    // 3. Mouse fade
+    const int mouseSteps = 4;
+
+    const auto fr = ge.meta.frameGame % (mouseSteps * mouseDurPerStep);
+
+    const int step = fr / mouseDurPerStep;
+    ASSERT(step >= 0);
+    ASSERT(step < mouseSteps);
+
+    const f32 stepP = (f32)(fr % mouseDurPerStep) / (f32)mouseDurPerStep;
+    ASSERT(stepP >= 0);
+    ASSERT(stepP <= 1);
+
+    f32 fade = walkingTutorialFade;
+    if (step == 0)
+      fade *= EaseOutQuad(stepP);
+    else if (step == 3)
+      fade *= 1 - EaseInQuad(stepP);
+
+    int mouseTexs[]{
+      glib->ui_input_mouse_texture_id(),
+      glib->ui_input_mouse_left_down_texture_id(),
+    };
+
+    if (ge.meta.device == DeviceType_MOBILE) {
+      mouseTexs[0] = glib->ui_input_touch_texture_id();
+      mouseTexs[1] = glib->ui_input_touch_down_texture_id();
+    }
+
+    int tex = mouseTexs[1];
+    if (step == 0)
+      tex = mouseTexs[0];
+
+    Vector2       off{-1, 0.1f};
+    const Vector2 offTarget{1, -0.1f};
+    if (step == 2)
+      off = Vector2Lerp(off, offTarget, EaseInOutQuad(stepP));
+    else if (step == 3)
+      off = offTarget;
+
+    DrawGroup_CommandTexture({
+      .texID    = tex,
+      .rotation = -rotation,
+      .pos      = Vector2(WORLD_SIZE.x - marginX, c.y) + off,
+      .scale    = Vector2One() * 2.0f,
+      .color    = Fade({220, 152, 26, 255}, fade),
     });
+
+    DrawGroup_End();
   }
 
   // Gizmos. Colliders.
@@ -14974,54 +15104,6 @@ void GameDraw() {
   }
 
   EndMode2D();
-
-  // Drawing walking tutorial controls.
-  if (walkingTutorialFade > 0) {  ///
-    DrawGroup_Begin(DrawZ_TUTORIAL_CONTROLS);
-    DrawGroup_SetSortY(0);
-
-    auto cy = (f32)LOGICAL_RESOLUTION.y * 3 / 16.0f;
-
-    DrawGroup_CommandRect({
-      .pos{LOGICAL_RESOLUTION.x / 2.0f, cy},
-      .size{LOGICAL_RESOLUTION.x * 2, 200 * 3 / 4.0f},
-      .color = Fade(BLACK, walkingTutorialFade * 0.5f),
-    });
-
-    // Keyboard controls.
-    {
-      const int  tex        = glib->ui_input_key_texture_id();
-      const auto keyTexSize = ToVector2(glib->original_texture_sizes()->Get(tex));
-
-      Vector2 keyboardKeyOffsets[]{{-1, -0.5f}, {0, -0.5f}, {1, -0.5f}, {0, 0.5f}};
-      for (auto o : keyboardKeyOffsets) {
-        o *= 0.6f;
-        DrawGroup_CommandTexture({
-          .texID = tex,
-          .pos{
-            (f32)LOGICAL_RESOLUTION.x * 1 / 4.0f + keyTexSize.x * o.x,
-            cy + keyTexSize.y * o.y,
-          },
-          .scale = Vector2One() * 1.8f,
-          .color = Fade(WHITE, walkingTutorialFade),
-        });
-      }
-    }
-
-    // "Go out of the area" text prompt.
-    {
-      const auto string = localization_strings->Get(Loc_UI_MOVEMENT__CAPS);
-      DrawGroup_CommandText({
-        .pos{LOGICAL_RESOLUTION.x / 2.0f, cy},
-        .font       = &g.meta.fontUIBigOutlined,
-        .text       = string->c_str(),
-        .bytesCount = (int)string->size(),
-        .color      = Fade(WHITE, walkingTutorialFade),
-      });
-    }
-
-    DrawGroup_End();
-  }
 
   // Drawing pickupables.
   for (const auto& pickupable : g.run.pickupables) {  ///
