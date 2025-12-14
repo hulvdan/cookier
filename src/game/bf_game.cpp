@@ -14908,6 +14908,22 @@ void GameDraw() {
     DrawGroup_End();
   }
 
+  f32 walkingTutorialFade = 1;
+  if (g.run.walkingTutorialCompletedAt.IsSet()) {
+    walkingTutorialFade = MAX(
+      0, 1 - g.run.walkingTutorialCompletedAt.Elapsed().Progress(ANIMATION_1_FRAMES)
+    );
+  }
+
+  // Drawing walking tutorial area.
+  if (walkingTutorialFade > 0) {  ///
+    DrawGroup_OneShotCircleLines({
+      .pos    = (Vector2)WORLD_SIZE / 2.0f,
+      .radius = WALKING_TUTORIAL_RADIUS_METERS,
+      .color  = Fade(BLUE, walkingTutorialFade),
+    });
+  }
+
   // Gizmos. Colliders.
   if (g.debug.showGizmos) {  ///
     DrawGroup_Begin(DrawZ_GIZMOS);
@@ -14958,6 +14974,54 @@ void GameDraw() {
   }
 
   EndMode2D();
+
+  // Drawing walking tutorial controls.
+  if (walkingTutorialFade > 0) {  ///
+    DrawGroup_Begin(DrawZ_TUTORIAL_CONTROLS);
+    DrawGroup_SetSortY(0);
+
+    auto cy = (f32)LOGICAL_RESOLUTION.y * 3 / 16.0f;
+
+    DrawGroup_CommandRect({
+      .pos{LOGICAL_RESOLUTION.x / 2.0f, cy},
+      .size{LOGICAL_RESOLUTION.x * 2, 200 * 3 / 4.0f},
+      .color = Fade(BLACK, walkingTutorialFade * 0.5f),
+    });
+
+    // Keyboard controls.
+    {
+      const int  tex        = glib->ui_input_key_texture_id();
+      const auto keyTexSize = ToVector2(glib->original_texture_sizes()->Get(tex));
+
+      Vector2 keyboardKeyOffsets[]{{-1, -0.5f}, {0, -0.5f}, {1, -0.5f}, {0, 0.5f}};
+      for (auto o : keyboardKeyOffsets) {
+        o *= 0.6f;
+        DrawGroup_CommandTexture({
+          .texID = tex,
+          .pos{
+            (f32)LOGICAL_RESOLUTION.x * 1 / 4.0f + keyTexSize.x * o.x,
+            cy + keyTexSize.y * o.y,
+          },
+          .scale = Vector2One() * 1.8f,
+          .color = Fade(WHITE, walkingTutorialFade),
+        });
+      }
+    }
+
+    // "Go out of the area" text prompt.
+    {
+      const auto string = localization_strings->Get(Loc_UI_MOVEMENT__CAPS);
+      DrawGroup_CommandText({
+        .pos{LOGICAL_RESOLUTION.x / 2.0f, cy},
+        .font       = &g.meta.fontUIBigOutlined,
+        .text       = string->c_str(),
+        .bytesCount = (int)string->size(),
+        .color      = Fade(WHITE, walkingTutorialFade),
+      });
+    }
+
+    DrawGroup_End();
+  }
 
   // Drawing pickupables.
   for (const auto& pickupable : g.run.pickupables) {  ///

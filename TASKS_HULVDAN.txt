@@ -9,30 +9,6 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-x fix: у strange mushroom (CELERY_TEA)
-  неверно отображаются данные по тому, что будет в след волну
-x fix: оружейник - ломание оружия должно снимать immediate эффекты
-x level up doesn't upgrade stats randomly
-x fix some stat show x as signed
-x fix на билды и сложности не влияет STAT_2__MODS_CHANGED_BY__X__PERCENT
-x fix выдачи ачивок
-x fix thisWaveAddedCount in achievements
-x починить хрюшку
-x impl: применяется STAT_2__MODS_CHANGED_BY__X__PERCENT
-x fix: при старте чувачком, что стартует с оружием,
-  применяются immediate эффекты этого оружия
-x ahk: зажатый CAPS + scroll = беск скролл
-  scroll / caps останавливает
-x читерское изменение статов работает через магнитное колесо + SHIFT
-x sfx: взрыв
-x sfx: emscripten старт звука после key / mouse / touch press
-x sdl correct web screen size
-x sdl log emscripten not error
-x fix imgui crash when changing window size
-x fix screen size issues
-x walking tutor: hide hud
-x walking tutor: game doesn't start immediately + pause doesn't get set on save load
-
 * walking tutor: спрайты для разных стилей управления (* клава, * мышь, * пальцы)
 * walking tutor: отобразить управление и текст
 * walking tutor: отобразить область
@@ -40,12 +16,13 @@ x walking tutor: game doesn't start immediately + pause doesn't get set on save 
 * fix обсидиановая подкова почему-то даёт слишком много скорости врагам
 *
 * sfx: настройки для игрока: можно сменить громкость звука / музыки
-* горение нормально смотрится на всех монстрах
+  пауза из любого места
 *
 * polish: turret easing
-* garden: apple spawn easing
+* polish: garden: apple spawn easing
 * polish: mob cooravie shooting easing
 * polish: boss scale easing upon shot pre/post frames
+* polish: горение нормально смотрится на всех монстрах
 *
 * prod: аналитика
 * prod: сакутиновая отправка event-ов аналитики

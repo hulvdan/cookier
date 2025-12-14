@@ -6,6 +6,7 @@ draw_z: # {  ###
   - FLOOR_DECALS
   - LANDMINES
   - PICKUPABLES
+  - TUTORIAL_AREA
   - DEFAULT
   - WEAPONS_1
   - WEAPONS_2
@@ -18,6 +19,7 @@ draw_z: # {  ###
   - BOSS_HP
   - DAMAGE_NUMBERS
   - DANGER_HP_LEVEL_VIGNETTE
+  - TUTORIAL_CONTROLS
   - VIGNETTE
   - SCREEN_FADE
   - UI
