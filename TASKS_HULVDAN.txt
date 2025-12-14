@@ -25,7 +25,6 @@ x fix correct gardens spawn as in item's card
 x polish: turret easing
 x polish: mob cooravie shooting easing
 
-* polish: boss scale easing upon shot pre/post frames
 * polish: горение нормально смотрится на всех монстрах
 *
 * fix обсидиановая подкова почему-то даёт слишком много скорости врагам
@@ -44,6 +43,7 @@ x polish: mob cooravie shooting easing
 *
 * RELEASED!
 =======================
+* polish: boss scale easing upon shot pre/post frames
 * sfx: landmine activation
 * restrict max enemies to 100 (or particles) (bgfx can fail)
 * sfx: crossbow shot sounds like electricity

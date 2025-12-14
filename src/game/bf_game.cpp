@@ -14533,9 +14533,6 @@ void GameDraw() {
         color = ColorLerp(color, palRed, t);
       }
     }
-    else if (creature.type == CreatureType_BOSS) {
-      const auto& data = creature.DataBoss();
-    }
     else if (creature.type == CreatureType_TURRET) {
       const auto& data = creature.DataTurret();
       if (data.startedShootingAt.IsSet()) {
