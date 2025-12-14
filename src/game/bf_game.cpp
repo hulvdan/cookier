@@ -14519,8 +14519,8 @@ void GameDraw() {
     }
     else if (creature.type == CreatureType_RUSHER) {
       const auto& data = creature.DataRusher();
-      f32         t    = 0;
       if (data.startedRushingAt.IsSet()) {
+        f32  t = 0;
         auto e = data.startedRushingAt.Elapsed();
         if (e < MOB_RUSHER_RUSH_PRE_FRAMES)
           t = e.Progress(MOB_RUSHER_RUSH_PRE_FRAMES);
@@ -14529,9 +14529,12 @@ void GameDraw() {
               - (e - MOB_RUSHER_RUSH_TOTAL_FRAMES + MOB_RUSHER_RUSH_PRE_FRAMES)
                   .Progress(MOB_RUSHER_RUSH_POST_FRAMES);
         }
+        t     = Clamp01(t);
+        color = ColorLerp(color, palRed, t);
       }
-      t     = Clamp01(t);
-      color = ColorLerp(color, palRed, t);
+    }
+    else if (creature.type == CreatureType_BOSS) {
+      const auto& data = creature.DataBoss();
     }
     else if (creature.type == CreatureType_TURRET) {
       const auto& data = creature.DataTurret();
