@@ -1557,7 +1557,7 @@ void AchievementStepUnlock(
 ) {  ///
   ASSERT(glib->achievements()->Get(achievement)->steps()->Get(stepIndex) == fb_step);
 
-  if (g.player.lockedSteps[fb_step->global_index()])
+  if (!g.player.lockedSteps[fb_step->global_index()])
     return;
 
   g.player.lockedSteps[fb_step->global_index()]          = false;
@@ -1648,7 +1648,7 @@ void TriggerWaveCompleted(bool instant) {  ///
 void ChangeDynamicStatBy(StatType stat, int value) {  ///
   if (g.run.state.screen == ScreenType_GAMEPLAY) {
     LOGD(
-      "Changing %s by %d (from %d to %d)",
+      "ChangeDynamicStatBy %s by %d (from %d to %d)",
       glib->stats()->Get(stat)->type()->c_str(),
       value,
       g.run.dynamicStats[stat],
@@ -1709,11 +1709,11 @@ int ApplyDamageScalings(
     auto percent   = fb_scaling->percents_per_tier()->Get(tierOffset) * times;
     baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
   }
-  return baseDamage;
+  return MAX(1, baseDamage);
 }
 
 int ApplyPlayerStatDamageMultiplier(int damage) {  ///
-  auto v = (f32)(100 + g.run.dynamicStats[StatType_DAMAGE]) / 100.0f;
+  auto v = 1 + (f32)g.run.dynamicStats[StatType_DAMAGE] / 100.0f;
   return MAX(1, Round((f32)damage * v));
 }
 
@@ -1855,7 +1855,6 @@ int CalculateWeaponDamage(
   int damage = fb->base_damage()->Get(tierOffset);
   damage     = ApplyDamageScalings(damage, tierOffset, fb->damage_scalings(), 1);
   damage     = ApplyPlayerStatDamageMultiplier(damage);
-
   LAMBDA (void, applyEffectToDamage, (auto fb_effect, int tierOffset2, int times)) {
     if (times < 0)
       return;
@@ -2682,6 +2681,8 @@ void PlaceholdImage(const char* placeholder, int texID) {  ///
 }
 
 void MakeNumber(MakeNumberData data) {  ///
+  if (g.run.numbers.count >= MAX_NUMBERS_COUNT)
+    return;
   ASSERT(data.type);
   Number number{
     .type  = data.type,
@@ -2897,6 +2898,9 @@ void MakeParticles(MakeParticlesData data) {  ///
   auto color = ColorFromRGBA(fb->color());
   if (data.color != WHITE)
     color = ColorTint(color, data.color);
+
+  const int maxCount = MAX(0, MAX_PARTICLES_COUNT - g.run.particles.count);
+  data.count         = MIN(data.count, maxCount);
 
   if (data.count > 0)
     g.run.particles.Reserve(g.run.particles.count + data.count);
@@ -5229,6 +5233,7 @@ void GameInitAfterLoadingSavedata() {
             .achievement = (AchievementType)index,
             .stepIndex   = stepIndex,
           };
+          g.player.lockedSteps[fb_step->global_index()]          = true;
           g.player.lockedBuilds[fb_step->unlocks_build_type()]   = lock;
           g.player.lockedItems[fb_step->unlocks_item_type()]     = lock;
           g.player.lockedWeapons[fb_step->unlocks_weapon_type()] = lock;
@@ -15305,7 +15310,8 @@ void GameDraw() {
         debugTextArena("g.meta.trashArena", g.meta.trashArena);
         debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
 
-#define X(type_, name_) IM::Text("g.run." #name_ ".count: %d", g.run.name_.count);
+#define X(type_, name_) \
+  IM::Text("g.run." #name_ ": %d/%d", g.run.name_.count, g.run.name_.maxCount);
         VECTORS_TABLE;
 #undef X
         IM::EndTabItem();
