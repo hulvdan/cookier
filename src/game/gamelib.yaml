@@ -361,11 +361,9 @@ effect_conditions: # {  ###
     x_is_percent: true
   - type: SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_APPLE_EVERY__Y__SECONDS
     x_condvar_type: FLOAT
-    x_divided_by_times: true
     y_condvar_type: FLOAT
   - type: SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS
     x_condvar_type: FLOAT
-    x_divided_by_times: true
   - type: SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE
     x_condvar_type: FLOAT
     x_divided_by_times: true
@@ -1128,10 +1126,13 @@ items: # {  ###
     tier: 1
     limit: 3
     effects:
-      - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_APPLE_EVERY__Y__SECONDS
+      - effectcondition_type: SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS
         placeholders:
           - floats: 15
-          - floats: 15
+            # - effectcondition_type: SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_APPLE_EVERY__Y__SECONDS
+            #   placeholders:
+            #     - floats: 15
+            #     - floats: 15
   - type: GENTLE_ALIEN
     texture_id: ui_item_healthy_cracker
     tier: 0

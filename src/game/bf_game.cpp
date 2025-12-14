@@ -14726,8 +14726,8 @@ void GameDraw() {
         Vector2 scale{1, 1};
         if (x.startedDetonationAt.IsSet()) {
           f32 p = x.startedDetonationAt.Elapsed().Progress(LANDMINE_DETONATION_FRAMES);
-          scale.x += 0.2f * sinf(2 * PI32 * p);
-          scale.y -= 0.2f * sinf(2 * PI32 * p);
+          scale.x += 0.2f * sinf(2 * PI32 * p * 0.66f);
+          scale.y -= 0.2f * sinf(2 * PI32 * p * 0.66f);
 
           fade *= 1 - EaseInQuad(p);
         }
