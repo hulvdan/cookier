@@ -941,18 +941,8 @@ def process_images():
     )
 
     # Making input images.
-    for f in ART_TEXTURES_DIR.glob("ui_input_*.png"):
-        f.unlink()
-    bf_image.conveyor(
-        "to_inputify",
-        "Outlining",
-        bf_image.conveyor_outline(radius=5, color=(0, 0, 0, 255)),
-    )
-
-    c1 = (220, 152, 36, 255)
-    c2 = (0, 0, 0, 255)
     bf_image.outline(
-        bf_image.rectangle(160, radius=20, width=10, fill=c1, outline=c2),
+        bf_image.rectangle(160, radius=20, width=10),
         radius=1,
         color=(0, 0, 0, 0),
     ).save(ART_TEXTURES_DIR / "ui_input_key.png")
