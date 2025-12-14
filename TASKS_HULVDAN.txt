@@ -9,10 +9,12 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-* walking tutor: спрайты для разных стилей управления (* клава, * мышь, * пальцы)
-* walking tutor: отобразить управление и текст
-* walking tutor: отобразить область
-* walking tutor: check localization: TODO walk out of the area
+x walking tutor: отобразить управление и текст
+x walking tutor: отобразить область
+x walking tutor: check localization: TODO walk out of the area
+x walking tutor: спрайты для разных стилей управления (* клава, * мышь, * пальцы)
+
+* walking tutor: better touch textures
 *
 * fix обсидиановая подкова почему-то даёт слишком много скорости врагам
 *
@@ -36,6 +38,7 @@ WORKING SINCE 2025-09-07
 *
 * RELEASED!
 =======================
+* walking tutor: crisp mouse tex
 * проверить все effect conditions на immediate
 * fix: flamethrower не может слишком быстро бить врагов
 * art: missile более толстый контур
