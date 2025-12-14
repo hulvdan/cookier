@@ -15,17 +15,18 @@ x walking tutor: check localization: TODO walk out of the area
 x walking tutor: спрайты для разных стилей управления (* клава, * мышь, * пальцы)
 x walking tutor: better touch textures
 x fix cheat f6
+x sdl log debug
 
 * fix обсидиановая подкова почему-то даёт слишком много скорости врагам
-*
-* sfx: настройки для игрока: можно сменить громкость звука / музыки
-  пауза из любого места
 *
 * polish: turret easing
 * polish: garden: apple spawn easing
 * polish: mob cooravie shooting easing
 * polish: boss scale easing upon shot pre/post frames
 * polish: горение нормально смотрится на всех монстрах
+*
+* sfx: настройки для игрока: можно сменить громкость звука / музыки
+  пауза из любого места
 *
 * prod: аналитика
 * prod: сакутиновая отправка event-ов аналитики

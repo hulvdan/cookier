@@ -1646,8 +1646,16 @@ void TriggerWaveCompleted(bool instant) {  ///
 }
 
 void ChangeDynamicStatBy(StatType stat, int value) {  ///
-  if (g.run.state.screen == ScreenType_GAMEPLAY)
+  if (g.run.state.screen == ScreenType_GAMEPLAY) {
+    LOGD(
+      "Changing %s by %d (from %d to %d)",
+      glib->stats()->Get(stat)->type()->c_str(),
+      value,
+      g.run.dynamicStats[stat],
+      g.run.dynamicStats[stat] + value
+    );
     g.run.dynamicStats[stat] += value;
+  }
 }
 
 void ChangeStaticAndDynamicStatBy(StatType stat, int value) {  ///
@@ -5566,11 +5574,9 @@ int GetCreatureIndexByID(int id) {  ///
 
 f32 GetCreatureSpeed(const Creature& creature) {  ///
   f32 speed = creature.speed * creature.speedModifier;
-  if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
+  if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB)
     speed *= 1 + (f32)g.run.dynamicStats[StatType_ENEMY_SPEED] / 100.0f;
-    speed = MAX(0, speed);
-  }
-  return speed;
+  return MAX(0, speed);
 }
 
 // NOTE: Current implementation assumes that `creatureSpeed` << `projectileSpeed`.

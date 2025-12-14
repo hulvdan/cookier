@@ -202,8 +202,19 @@ void EmscriptenLog(
 SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
   ZoneScopedN("SDL_AppInit");
 
+  if (BF_DEBUG)
+    SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_DEBUG);
+
 #ifdef SDL_PLATFORM_EMSCRIPTEN
   SDL_SetLogOutputFunction(EmscriptenLog, nullptr);
+#else
+  SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_TRACE, "T: ");
+  SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_VERBOSE, "V: ");
+  SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_DEBUG, "D: ");
+  SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_INFO, "I: ");
+  SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_WARN, "W: ");
+  SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_ERROR, "E: ");
+  SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_CRITICAL, "C: ");
 #endif
 
   GamePreInit();
