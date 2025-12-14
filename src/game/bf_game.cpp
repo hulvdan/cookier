@@ -1382,7 +1382,9 @@ struct GameData {
   } ui;
 
   struct Debug {  ///
-    bool showGizmos = false;
+    bool gizmos   = false;
+    bool mobsBurn = false;
+    bool mobsSlow = false;
   } debug;
 } g = {};
 
@@ -2495,7 +2497,6 @@ void MakeGarden(MakeGardenData data) {  ///
 
 void ApplyAilment(ApplyAilmentData data) {  ///
   ASSERT(data.creature);
-  ASSERT(data.c.weaponIndex >= 0);
 
   if (data.creature->ailments.count >= data.creature->ailments.maxCount)
     return;
@@ -5581,8 +5582,11 @@ int GetCreatureIndexByID(int id) {  ///
 
 f32 GetCreatureSpeed(const Creature& creature) {  ///
   f32 speed = creature.speed * creature.speedModifier;
-  if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB)
+  if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
     speed *= 1 + (f32)g.run.dynamicStats[StatType_ENEMY_SPEED] / 100.0f;
+    if (g.debug.mobsSlow)
+      speed *= 0.2f;
+  }
   return MAX(0, speed);
 }
 
@@ -11626,7 +11630,7 @@ void DoUI() {
         }
         else {
           // UI elements' gizmos.
-          if (g.debug.showGizmos && bb.width && bb.height) {
+          if (g.debug.gizmos && bb.width && bb.height) {
             DrawGroup_CommandRectLines({
               .pos{bb.x, bb.y},
               .size{bb.width, bb.height},
@@ -13089,6 +13093,36 @@ void GameFixedUpdate() {
       }
     }
 
+    // Cheat. Mobs burn.
+    if (g.debug.mobsBurn) {  ///
+      for (auto& c : g.run.creatures) {
+        bool hasFire = false;
+
+        if (fb_creatures->Get(c.type)->hostility_type() == HostilityType_FRIENDLY)
+          continue;
+
+        for (auto& ailment : c.ailments) {
+          if (ailment.c.type == AilmentType_BURN) {
+            hasFire = true;
+            break;
+          }
+        }
+
+        if (!hasFire) {
+          ApplyAilment({
+            .c{
+              .type            = AilmentType_BURN,
+              .initialTimes    = 1,
+              .remainingTimes  = 1,
+              .remainingSpread = 0,
+              .damage          = 1,
+            },
+            .creature = &c,
+          });
+        }
+      }
+    }
+
     // Burning spread.
     {  ///
       ZoneScopedN("Burning spread.");
@@ -13196,8 +13230,11 @@ void GameFixedUpdate() {
                 && (fb->hostility_type() != HostilityType_FRIENDLY))
               burningEnemies++;
 
-            const auto& w          = g.run.state.weapons[a.c.weaponIndex];
-            const int   tierOffset = w.tier - fb_weapons->Get(w.type)->min_tier_index();
+            int tierOffset = 0;
+            if (a.c.weaponIndex >= 0) {
+              const auto& w = g.run.state.weapons[a.c.weaponIndex];
+              tierOffset    = w.tier - fb_weapons->Get(w.type)->min_tier_index();
+            }
 
             TryApplyDamage({
               .creatureIndex = creatureIndex,
@@ -13525,7 +13562,7 @@ void GameFixedUpdate() {
 
               auto pos = PLAYER_CREATURE.pos + weapon.targetDir * colliderSize.x / 2.0f;
 
-              if (g.debug.showGizmos) {
+              if (g.debug.gizmos) {
                 *g.run.meleeWeaponColliderGizmos.Add() = {
                   .pos      = pos,
                   .size     = colliderSize,
@@ -14777,7 +14814,7 @@ void GameDraw() {
       posOffset *= anchor;
 
       for (const auto& x : g.run.gardens) {
-        if (g.debug.showGizmos) {
+        if (g.debug.gizmos) {
           DrawGroup_OneShotCircleLines({
             .pos    = x.pos,
             .radius = 0.4f,
@@ -14929,7 +14966,7 @@ void GameDraw() {
   }
 
   // Drawing projectiles gizmos.
-  if (g.debug.showGizmos) {  ///
+  if (g.debug.gizmos) {  ///
     for (const auto& projectile : g.run.projectiles) {
       auto fb = fb_projectiles->Get(projectile.c.type);
 
@@ -15131,7 +15168,7 @@ void GameDraw() {
   }
 
   // Gizmos. Colliders.
-  if (g.debug.showGizmos) {  ///
+  if (g.debug.gizmos) {  ///
     DrawGroup_Begin(DrawZ_GIZMOS);
     DrawGroup_SetSortY(0);
 
@@ -15373,7 +15410,9 @@ void GameDraw() {
       if (IM::BeginTabItem("info")) {
         IM::Text("Close debug menu: hold F1 -> press F2");
 
-        IM::Checkbox("Gizmos", &g.debug.showGizmos);
+        IM::Checkbox("Gizmos", &g.debug.gizmos);
+        IM::Checkbox("Mobs Burn", &g.debug.mobsBurn);
+        IM::Checkbox("Mobs Slow", &g.debug.mobsSlow);
 
         IM::Text("F3 change localization");
         IM::Text("F4 change device");
