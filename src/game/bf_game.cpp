@@ -14940,23 +14940,6 @@ void GameDraw() {
     f32 offAmplitude = Lerp(640, 680, breathingP);
     offAmplitude *= Lerp(3 / 4.0f, 1, EaseOutQuad(walkingTutorialFade));
 
-    if (0) {
-      FOR_RANGE (int, i, SEGMENTS) {
-        const f32 rotation = 2 * PI32 * i / SEGMENTS + revolutionRotation;
-
-        const auto off = Vector2Rotate(
-          {0, offAmplitude * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE}, rotation
-        );
-
-        DrawGroup_CommandTexture({
-          .texID    = glib->game_walking_tutorial_area_segment_texture_id(),
-          .rotation = rotation,
-          .pos      = WORLD_SIZEf / 2.0f + off,
-          .color    = color,
-        });
-      }
-    }
-
     const auto c = WORLD_SIZEf / 2.0f;
 
     // "Walk out of the area" text prompt.
