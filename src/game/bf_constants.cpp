@@ -1,5 +1,8 @@
 #pragma once
 
+constexpr int MAX_PARTICLES_COUNT = 2048;
+constexpr int MAX_NUMBERS_COUNT   = 1024;
+
 // Sizings + colliders.
 // ============================================================
 constexpr int        WORLD_X                                  = 32;
