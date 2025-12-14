@@ -24,7 +24,6 @@ import bf_swatch
 from bf_lib import (
     ART_DIR,
     ART_TEXTURES_DIR,
-    ASSETS_DIR,
     SRC_DIR,
     all_are_none,
     all_are_not_none,
@@ -957,11 +956,6 @@ def process_images():
         radius=1,
         color=(0, 0, 0, 0),
     ).save(ART_TEXTURES_DIR / "ui_input_key.png")
-    bf_image.outline(
-        bf_image.ellipse(1300, width=20, fill=(0, 0, 0, 0), outline=c1),
-        radius=10,
-        color=c2,
-    ).save(ASSETS_DIR / "art" / "src" / "game_walking_tutorial_area.png")
 
     # Spritesheetifying props.
     for f in (ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):
