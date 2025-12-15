@@ -9,25 +9,8 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-x walking tutor: отобразить управление и текст
-x walking tutor: отобразить область
-x walking tutor: check localization: TODO walk out of the area
-x walking tutor: спрайты для разных стилей управления (* клава, * мышь, * пальцы)
-x walking tutor: better touch textures
-x fix cheat f6
-x sdl log debug
-x fix f10 get all achievements
-x cap max particles + numbers
-x garden landmine fade in/out
-x landmine bounce
-x polish: garden: breathing
-x polish: garden: apple spawn easing
-x fix correct gardens spawn as in item's card
-x polish: turret easing
-x polish: mob cooravie shooting easing
-x imgui doesn't use ini in web
-x cheat кнопка навешивания огня на мобов
-x cheat кнопка замедления мобов
+x ref hurtbox radius
+x fix boss doesn't spawn upon game restart and not yet completing walking tutorial
 
 * добавить амплитуду разброса огня по существам по их collider/hurtbox-ам
 * polish: горение нормально смотрится на всех монстрах
