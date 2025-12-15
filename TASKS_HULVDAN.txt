@@ -37,6 +37,7 @@ x imgui state persists
 *
 * RELEASED!
 =======================
+* windows release imgui doesn't load debug stuff by default
 * sfx: звук продажи
 * sfx: звук улучшения оружия
 * sfx: музыку загружать после тутора (увеличит скорость запуска)
