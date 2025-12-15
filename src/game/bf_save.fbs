@@ -76,6 +76,9 @@ table Save {
     screen_upgrades__rerolls: Rerolls;
     screen_shop__to_pick: [ShopItem];
     screen_shop__rerolls: Rerolls;
+
+    volume_sfx: int;
+    volume_music: int;
 }
 
 file_identifier "SAVE";

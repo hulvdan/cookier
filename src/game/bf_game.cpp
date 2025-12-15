@@ -1167,6 +1167,9 @@ struct GameData {
     WeaponType     weapon     = {};
     BiomeType      biome      = BiomeType_INVALID;
 
+    int volumeSFX   = 3;
+    int volumeMusic = 1;
+
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
 
@@ -2363,6 +2366,9 @@ void GameLoad(const BFSave::Save* save) {  ///
   g.player.lockedBuilds  = {};
   g.player.lockedWeapons = {};
   g.player.lockedItems   = {};
+
+  g.player.volumeMusic = MAX(0, MIN(3, save->volume_music()));
+  g.player.volumeSFX   = MAX(0, MIN(3, save->volume_sfx()));
 }
 
 flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
@@ -2456,6 +2462,9 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
       fb_save.xp     = s.xpOnStartOfTheWave;
       fb_save.chests = 0;
     }
+
+    fb_save.volume_music = g.player.volumeMusic;
+    fb_save.volume_sfx   = g.player.volumeSFX;
   }
 
   flatbuffers::FlatBufferBuilder fbb{};
@@ -4928,8 +4937,6 @@ void ReloadFontsIfNeeded() {  ///
 
 void GameInit() {
   ZoneScoped;
-
-  SetVolume(0.5f, VolumeType_MUSIC);
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
@@ -10598,10 +10605,43 @@ void DoUI() {
           BF_CLAY_SIZING_GROW_XY,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
-          // componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-          //   BF_CLAY_SPACER_HORIZONTAL;
-          //   componentButtonStats(groupTop);
-          // });
+          componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+            BF_CLAY_SPACER_HORIZONTAL;
+
+            int nextVolumeButtonNumber = 1;
+            LAMBDA (void, componentButtonVolume, (int iconTexID, int* var)) {
+              const bool clicked = componentButton(
+                {
+                  .id    = CLAY_IDI("volume_sfx", nextVolumeButtonNumber++),
+                  .group = groupTop,
+                },
+                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+                  BF_CLAY_IMAGE({.texID = iconTexID});
+                  BF_CLAY_IMAGE({
+                    .texID
+                    = glib->ui_icon_volume_bands_texture_ids()->Get(MAX(0, *var - 1)),
+                    .color = Fade(WHITE, (*var ? 1 : 0)),
+                  });
+                }
+              );
+              if (clicked) {
+                *var = *var - 1;
+                if (*var < 0)
+                  *var = 3;
+                PlaySound(Sound_UI_CLICK);
+                Save();
+              }
+            };
+
+            componentButtonVolume(glib->ui_icon_sfx_texture_id(), &g.player.volumeSFX);
+
+            CLAY({.layout{.sizing{.width = GAP_SMALL}}}) {}
+
+            componentButtonVolume(
+              glib->ui_icon_music_texture_id(), &g.player.volumeMusic
+            );
+            // componentButtonStats(groupTop);
+          });
 
           BF_CLAY_SPACER_VERTICAL;
 
@@ -11717,6 +11757,10 @@ void GameFixedUpdate() {
     else if (loaded != SavedataLoadingType_FISNIHED)
       return;
   }
+
+  SetVolume(VolumeType_MASTER, 0.85f);
+  SetVolume(VolumeType_SFX, (f32)g.player.volumeSFX / 3.0f);
+  SetVolume(VolumeType_MUSIC, (f32)g.player.volumeMusic / 3.0f);
 
   // Setup. {  ///
   ReloadFontsIfNeeded();
