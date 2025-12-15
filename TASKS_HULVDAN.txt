@@ -11,6 +11,7 @@ WORKING SINCE 2025-09-07
 
 x ref hurtbox radius
 x fix boss doesn't spawn upon game restart and not yet completing walking tutorial
+x ref lib instrument -> imgui debug
 
 * добавить амплитуду разброса огня по существам по их collider/hurtbox-ам
 * polish: горение нормально смотрится на всех монстрах
