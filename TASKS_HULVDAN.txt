@@ -16,9 +16,6 @@ x амплитуда разброса огня по существам по их
 x polish: горение нормально смотрится на всех монстрах
 x imgui state persists
 
-* fix почему иногда монетки летят в stash, но не увеличивают его?
-  ASSERT всегда в stash-е >= 0 монет
-*
 * игрок может изменить громкость звуки и музыки.
   пауза из любого места (иконка gear)
 *
@@ -37,6 +34,16 @@ x imgui state persists
 *
 * RELEASED!
 =======================
+* fix почему иногда монетки летят в stash, но не увеличивают его?
+  ASSERT всегда в stash-е >= 0 монет
+  - хорошо тестится с пончиками, что притягивают монетки
+  - прям до wave completed игрок поднял монетку
+    -> она ещё летит, проставился wave completed
+    -> notPickedUpCoins = колву монеток, что будут подняты к концу волны
+       notPickedUpCoinsVisual = 0
+    -> монетка прилетает, снижает notPickedUpCoins, а также notPickedUpCoinsVisual
+    -> notPickedUpCoinsVisual < 0
+  - также notPickedUpCoins теряются при перезаходе
 * windows release imgui doesn't load debug stuff by default
 * sfx: звук продажи
 * sfx: звук улучшения оружия
