@@ -518,8 +518,8 @@ struct EngineData {
       ma_sound_group groupMusic = {};
 
       struct {
-        f32 immediate = 1;
-        f32 eased     = 1;
+        f32 immediate = 0;
+        f32 eased     = 0;
       } volumes_[VolumeType_COUNT];
       VIEW_FROM_ARRAY_DANGER(volumes);
 
@@ -709,11 +709,10 @@ struct PlaySoundData {  ///
   Vector4 pos = {f32_inf, f32_inf, f32_inf, f32_inf};
 };
 
-void SetVolume(f32 v, VolumeType type) {  ///
+void SetVolume(VolumeType type, f32 v) {  ///
+  ASSERT(type < VolumeType_COUNT);
   ASSERT(v >= 0);
   ASSERT(v <= 1);
-  ASSERT(type);
-  ASSERT(type < VolumeType_COUNT);
 
   auto& m = ge.meta._soundManager;
 

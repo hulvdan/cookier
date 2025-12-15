@@ -531,7 +531,7 @@ table GameLibrary {
     game_coin_glow_texture_id: int;
     // AUTOMATIC_TEXTURE_BIND_END
 
-    ui_icon_bands_texture_ids: [int] (required);
+    ui_icon_volume_bands_texture_ids: [int] (required);
 
     game_garden_texture_id: int;
     ui_controls_touch_handle_margin: int;
