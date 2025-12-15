@@ -5,6 +5,7 @@
 
 #define IM ImGui
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_impl_sdl3.h"
 
 #define BX_CONFIG_DEBUG (BF_DEBUG)
@@ -322,11 +323,20 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
   {
     ZoneScopedN("Initializing imgui.");
 
+    IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
     auto& io       = ImGui::GetIO();
     io.IniFilename = nullptr;
+#else
+    ImGuiSettingsHandler iniHandler;
+    iniHandler.TypeName   = "UserData";
+    iniHandler.TypeHash   = ImHashStr("UserData");
+    iniHandler.ReadOpenFn = BF_IM_ReadOpen;
+    iniHandler.ReadLineFn = BF_IM_ReadLine;
+    iniHandler.WriteAllFn = BF_IM_WriteAll;
+    IM::AddSettingsHandler(&iniHandler);
 #endif
 
     ImGui_Implbgfx_Init(255);

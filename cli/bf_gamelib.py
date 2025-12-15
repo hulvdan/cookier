@@ -619,6 +619,62 @@ def convert_gamelib_json_to_binary(
 
     gamelib["original_texture_sizes"] = original_texture_sizes
 
+    # Imgui debug variables.
+    if 1:
+        debug_variables = gamelib.pop("debug_variables", [])
+        genline("struct BFDebug {")
+        for var in debug_variables:
+            t, n = var["type"], var["name"]
+            genline(f"  {t} {n} = {{}};")
+        genline("} gdebug = {};\n")
+
+        genline(
+            "void BF_IM_ReadLine(ImGuiContext*, ImGuiSettingsHandler*, void*, const char* line) {"
+        )
+        for var in debug_variables:
+            t, n = var["type"], var["name"]
+            matched_type = {"int": "int", "bool": "int", "f32": "f32"}[t]
+            genline(f"  {matched_type} toRead_{n} = {{}};")
+
+        addedVar = False
+        for var in debug_variables:
+            t, n = var["type"], var["name"]
+            prefix = "else " if addedVar else ""
+            match t:
+                case "bool":
+                    genline(
+                        f'  {prefix}if (sscanf(line, "{n}=%d", &toRead_{n}) == 1) {{ gdebug.{n} = (bool)toRead_{n}; }}'
+                    )
+                case "int":
+                    genline(
+                        f'  {prefix}if (sscanf(line, "{n}=%d", &toRead_{n}) == 1) {{ gdebug.{n} = toRead_{n}; }}'
+                    )
+                case "f32":
+                    genline(
+                        f'  {prefix}if (sscanf(line, "{n}=%f", &toRead_{n}) == 1) {{ gdebug.{n} = toRead_{n}; }}'
+                    )
+                case _:
+                    raise NotImplementedError
+            addedVar = True
+        genline("}\n")
+
+        genline(
+            "void BF_IM_WriteAll(ImGuiContext*, ImGuiSettingsHandler*, ImGuiTextBuffer* buf) {"
+        )
+        genline('  buf->appendf("[UserData][Main]\\n");')
+        for var in debug_variables:
+            t, n = var["type"], var["name"]
+            match t:
+                case "bool":
+                    genline(f'  buf->appendf("{n}=%d\\n", (int)gdebug.{n});')
+                case "int":
+                    genline(f'  buf->appendf("{n}=%d\\n", gdebug.{n});')
+                case "f32":
+                    genline(f'  buf->appendf("{n}=%f\\n", gdebug.{n});')
+                case _:
+                    raise NotImplementedError
+        genline("}\n")
+
     # Enriching gamelib with sounds.
     if 1:
         do_audio()
