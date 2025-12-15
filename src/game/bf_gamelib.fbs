@@ -503,6 +503,8 @@ table GameLibrary {
     ui_item_locked_texture_id: int;
     ui_controls_touch_base_texture_id: int;
     ui_controls_touch_handle_texture_id: int;
+    ui_icon_sfx_texture_id: int;
+    ui_icon_music_texture_id: int;
     ui_icon_back_big_texture_id: int;
     ui_icon_combine_texture_id: int;
     ui_icon_go_next_wave2_texture_id: int;
@@ -528,6 +530,8 @@ table GameLibrary {
     game_landmine_texture_id: int;
     game_coin_glow_texture_id: int;
     // AUTOMATIC_TEXTURE_BIND_END
+
+    ui_icon_bands_texture_ids: [int] (required);
 
     game_garden_texture_id: int;
     ui_controls_touch_handle_margin: int;

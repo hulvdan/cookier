@@ -5161,6 +5161,10 @@ player_layer_texture_anchors:
     y: -0.75
 # }
 
+ui_icon_volume_bands_texture_ids:
+  - ui_icon_volume_bands_1
+  - ui_icon_volume_bands_2
+  - ui_icon_volume_bands_3
 burning_creature_particle_emitter:
   particle_type: FIRE
   offset_plus_minus:

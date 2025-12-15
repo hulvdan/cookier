@@ -923,6 +923,17 @@ def process_images():
         radius=TOUCH_OUTLINE,
     ).save(ART_TEXTURES_DIR / "ui_controls_touch_handle.png")
 
+    # Making volume band icons.
+    for f in (ART_TEXTURES_DIR / "to_outline").glob("ui_icon_volume_band_*.png"):
+        f.unlink()
+    bf_image.conveyor(
+        "to_volume_band",
+        "Outlining",
+        bf_image.conveyor_outline(radius=10, color=(255, 255, 255, 255)),
+        bf_image.conveyor_scale(0.2127),
+        out_dir=ART_TEXTURES_DIR / "to_outline",
+    )
+
     # Outlining ui icons.
     bf_image.conveyor(
         "to_outline",
