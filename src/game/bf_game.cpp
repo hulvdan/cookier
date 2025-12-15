@@ -4929,7 +4929,7 @@ void ReloadFontsIfNeeded() {  ///
 void GameInit() {
   ZoneScoped;
 
-  SetVolumeMusic(0.5f);
+  SetVolume(0.5f, VolumeType_MUSIC);
 
   SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
   SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");

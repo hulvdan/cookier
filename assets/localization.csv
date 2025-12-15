@@ -64,8 +64,8 @@ EFFECT_X__PERCENT_MORE_STATS_GAINED_FROM_UPGRADES;{X} статов при под
 EFFECT_STAT__WHEN_WALKING;{MODIFIER} {STAT} при ходьбе;{MODIFIER} {STAT} when walking;
 EFFECT_STAT__WHEN_IDLE;{MODIFIER} {STAT} при отсутствии движения;{MODIFIER} {STAT} when idle;
 EFFECT_HARVESTING_INCREASES_BY_ADDITIONAL__X__PERCENT_AT_THE_END_OF_THE_WAVE;Инвестиции дополнительно увеличиваются на {X} в конце волны;Investments additionally increase by {X} at the end of the wave;
-EFFECT_SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_APPLE_EVERY__Y__SECONDS;Создаёт огород каждые {X}с, что выращивает яблоко раз в {Y}с;Spawns a garden every {X}s that grows an apple every {Y}s;
-EFFECT_SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS;Создаёт огород, что выращивает яблоко раз в {X}с;Spawns a garden that grows an apple every {X}s;
+EFFECT_SPAWNS_GARDEN_EVERY__X__SECONDS_THAT_SPAWNS_APPLE_EVERY__Y__SECONDS;Создаёт сад каждые {X}с, что выращивает яблоко раз в {Y}с;Spawns a garden every {X}s that grows an apple every {Y}s;
+EFFECT_SPAWNS_GARDEN_THAT_SPAWNS_APPLE_EVERY__X__SECONDS;Создаёт сад, что выращивает яблоко раз в {X}с;Spawns a garden that grows an apple every {X}s;
 EFFECT_SPAWNS_LANDMINE_EVERY__X__SECONDS_DEALING__Y__DAMAGE;Новая мина каждые {X}с, наносящая {Y} урона;Spawns a landmine every {X}s dealing {Y} damage;
 EFFECT_STAT__FOR_EVERY_OCCUPIED_WEAPON_SLOT;{MODIFIER} {STAT} за каждый занятый слот оружия;{MODIFIER} {STAT} for every occupied weapon slot;
 EFFECT_STAT__FOR_EVERY_EMPTY_WEAPON_SLOT;{MODIFIER} {STAT} за каждый свободный слот оружия;{MODIFIER} {STAT} for every empty weapon slot;
