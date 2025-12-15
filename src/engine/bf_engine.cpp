@@ -457,6 +457,13 @@ struct PlayingSound {  ///
   int generation = {};
 };
 
+enum VolumeType {  ///
+  VolumeType_MASTER,
+  VolumeType_SFX,
+  VolumeType_MUSIC,
+  VolumeType_COUNT,
+};
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -495,6 +502,8 @@ struct EngineData {
     f64 prevFrameTime = {};
     f64 frameTime     = {};
 
+    bool isFocused = true;
+
     Arena _arena = {};
 
     DeviceType device = DeviceType_DESKTOP;
@@ -508,6 +517,12 @@ struct EngineData {
       ma_sound_group groupSFX   = {};
       ma_sound_group groupMusic = {};
 
+      struct {
+        f32 immediate = 1;
+        f32 eased     = 1;
+      } volumes_[VolumeType_COUNT];
+      VIEW_FROM_ARRAY_DANGER(volumes);
+
       ReaderWriterQueue<_EndedSound> soundsToUninitialize{};
       Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
       Vector<_SoundVariationRange>   soundVariationRanges           = {};
@@ -518,7 +533,6 @@ struct EngineData {
         ma_node_graph engineg;
       };
 
-      f32                            volume                        = 0.75f;
       Array<ma_sound, BF_MAX_SOUNDS> playingSounds                 = {};
       ma_sound*                      playingMusic                  = nullptr;
       Array<int, BF_MAX_SOUNDS>      playingSoundsBoolsGenerations = {};
@@ -695,24 +709,17 @@ struct PlaySoundData {  ///
   Vector4 pos = {f32_inf, f32_inf, f32_inf, f32_inf};
 };
 
-void SetVolumeMaster(f32 v) {  ///
+void SetVolume(f32 v, VolumeType type) {  ///
   ASSERT(v >= 0);
   ASSERT(v <= 1);
-  auto& m  = ge.meta._soundManager;
-  m.volume = Clamp01(v);
-  ma_engine_set_volume(&m.engine, m.volume);
-}
+  ASSERT(type);
+  ASSERT(type < VolumeType_COUNT);
 
-void SetVolumeSFX(f32 v) {  ///
-  ASSERT(v >= 0);
-  ASSERT(v <= 1);
-  ma_sound_set_volume(&ge.meta._soundManager.groupSFX, Clamp01(v));
-}
+  auto& m = ge.meta._soundManager;
 
-void SetVolumeMusic(f32 v) {  ///
-  ASSERT(v >= 0);
-  ASSERT(v <= 1);
-  ma_sound_set_volume(&ge.meta._soundManager.groupMusic, Clamp01(v));
+  m.volumes[type].immediate = v;
+  if (!m.works)
+    m.volumes[type].eased = v;
 }
 
 // TODO: Options struct to support
@@ -2563,6 +2570,10 @@ void _UnloadTexture(Texture2D* texture) {  ///
   *texture = {};
 }
 
+void SetSFXVolume(f32 volume) {}
+
+void SetMusicVolume(f32 volume) {}
+
 void SetMusicLowpassFactor(f32 factor) {  ///
   ASSERT(factor >= 0);
   ASSERT(factor <= 1);
@@ -2615,9 +2626,6 @@ void ReloadSounds() {  ///
     INVALID_PATH;
     return;
   }
-
-  if (ma_engine_set_volume(&m.engine, m.volume) != MA_SUCCESS)
-    INVALID_PATH;
 
   LOGI("miniaudio engine initialized");
 
@@ -3434,6 +3442,39 @@ SDL_AppResult EngineUpdate() {  ///
 
   static f32 frameTime = 0.0f;
   frameTime += FrameTime();
+
+  // Updating master, sfx, music volumes.
+  auto& m = ge.meta._soundManager;
+  if (m.works) {
+    int volumeTypeIndex = -1;
+    for (auto& v : m.volumes) {
+      volumeTypeIndex++;
+
+      f32 target = v.immediate;
+      if ((volumeTypeIndex == VolumeType_MASTER) && !ge.meta.isFocused)
+        target = 0;
+
+      v.eased = Clamp01(MoveTowardsF(v.eased, target, FrameTime() * 6.0f));
+
+      switch ((VolumeType)volumeTypeIndex) {
+      case VolumeType_MASTER: {
+        ma_engine_set_volume(&ge.meta._soundManager.engine, v.eased);
+      } break;
+
+      case VolumeType_SFX: {
+        ma_sound_set_volume(&ge.meta._soundManager.groupSFX, v.eased);
+      } break;
+
+      case VolumeType_MUSIC: {
+        ma_sound_set_volume(&ge.meta._soundManager.groupMusic, v.eased);
+      } break;
+
+      default:
+        INVALID_PATH;
+        break;
+      }
+    }
+  }
 
   if (IsKeyDown(SDL_SCANCODE_F1) && IsKeyPressed(SDL_SCANCODE_F2))
     ge.meta.debugEnabled = !ge.meta.debugEnabled;

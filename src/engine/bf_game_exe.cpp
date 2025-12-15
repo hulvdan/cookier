@@ -690,13 +690,11 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///
-    // Required by yandex.
-    ma_engine_set_volume(&ge.meta._soundManager.engine, 0);
+    ge.meta.isFocused = false;
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
-    // Required by yandex.
-    ma_engine_set_volume(&ge.meta._soundManager.engine, ge.meta._soundManager.volume);
+    ge.meta.isFocused = true;
   } break;
 
   default:
