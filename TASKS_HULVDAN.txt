@@ -13,12 +13,12 @@ x ref hurtbox radius
 x fix boss doesn't spawn upon game restart and not yet completing walking tutorial
 x ref lib instrument -> imgui debug
 x амплитуда разброса огня по существам по их collider/hurtbox-ам
+x polish: горение нормально смотрится на всех монстрах
 
 * imgui codegen ini
   * прописать debug переменные (названия + типы) в gamelib
   * генерим scanf / load функции
   * автозагрузка
-* polish: горение нормально смотрится на всех монстрах
 * fix почему иногда монетки летят в stash, но не увеличивают его?
   ASSERT всегда в stash-е >= 0 монет
 *
