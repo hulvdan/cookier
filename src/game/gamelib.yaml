@@ -5181,5 +5181,23 @@ sounds:
   - type: GAME_RUN_WON
     pitch_min: 1
     pitch_max: 1
+debug_variables: # {  ###
+  - name: gizmos
+    type: bool
+  - name: mobsBurn
+    type: bool
+  - name: mobsSlow
+    type: bool
+  - name: waveDurationMode # 0 - default, 1 - short, 2 - very short, 3 - long.
+    type: int
+  - name: overriddenTreeSpawnIntervalSeconds
+    type: int
+  - name: disableMobSpawns
+    type: bool
+  - name: disableBossSpawn
+    type: bool
+  - name: mobSpawnRate
+    type: f32
+# }
 
 ###

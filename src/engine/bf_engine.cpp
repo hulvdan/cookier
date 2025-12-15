@@ -9,6 +9,15 @@ void                           GameDraw();
 flatbuffers::FlatBufferBuilder GameDumpStateForSaving();
 void                           GameLoad(const BFSave::Save* save);
 
+void BF_IM_ReadLine(ImGuiContext*, ImGuiSettingsHandler*, void* entry, const char* line);
+void BF_IM_WriteAll(ImGuiContext*, ImGuiSettingsHandler*, ImGuiTextBuffer* buf);
+
+void* BF_IM_ReadOpen(ImGuiContext*, ImGuiSettingsHandler*, const char* name) {
+  if (strcmp(name, "Main") == 0)
+    return (void*)1;
+  return nullptr;
+}
+
 #if BF_DEBUG
 #  define STB_IMAGE_WRITE_IMPLEMENTATION
 #  include "stb_image_write.h"

@@ -1366,17 +1366,6 @@ struct GameData {
     FrameVisual changedCoinsAt            = {};
     FrameVisual changedNotPickedUpCoinsAt = {};
   } ui;
-
-  struct Debug {  ///
-    bool gizmos           = false;
-    bool mobsBurn         = false;
-    bool mobsSlow         = false;
-    int  waveDurationMode = 0;  // 0 - default, 1 - short, 2 - very short, 3 - long.
-    int  overriddenTreeSpawnIntervalSeconds = 0;
-    bool disableMobSpawns                   = false;
-    bool disableBossSpawn                   = false;
-    f32  mobSpawnRate                       = 0;
-  } debug;
 } g = {};
 
 lframe GetWaveDuration(int waveIndex) {  ///
@@ -1389,13 +1378,13 @@ lframe GetWaveDuration(int waveIndex) {  ///
 
   int seconds = durations[MAX(0, MIN(durations.count - 1, waveIndex))];
 
-  ASSERT(g.debug.waveDurationMode >= 0);
-  ASSERT(g.debug.waveDurationMode <= 3);
-  if (g.debug.waveDurationMode == 1)
+  ASSERT(gdebug.waveDurationMode >= 0);
+  ASSERT(gdebug.waveDurationMode <= 3);
+  if (gdebug.waveDurationMode == 1)
     seconds /= 3;
-  else if (g.debug.waveDurationMode == 2)
+  else if (gdebug.waveDurationMode == 2)
     seconds = 2;
-  if (g.debug.waveDurationMode == 3)
+  if (gdebug.waveDurationMode == 3)
     seconds = 9999;
 
   return lframe::Unscaled(seconds * FIXED_FPS);
@@ -4173,9 +4162,9 @@ int MakeCreature(MakeCreatureData data) {  ///
   auto slot  = g.run.creatures.Add();
 
   const auto fb = glib->creatures()->Get(data.type);
-  if (index && g.debug.disableMobSpawns && !fb->is_boss())
+  if (index && gdebug.disableMobSpawns && !fb->is_boss())
     return -1;
-  if (g.debug.disableBossSpawn && fb->is_boss())
+  if (gdebug.disableBossSpawn && fb->is_boss())
     return -1;
 
   int health = fb->health()
@@ -5592,7 +5581,7 @@ f32 GetCreatureSpeed(const Creature& creature) {  ///
   f32 speed = creature.speed * creature.speedModifier;
   if (glib->creatures()->Get(creature.type)->hostility_type() == HostilityType_MOB) {
     speed *= 1 + (f32)g.run.dynamicStats[StatType_ENEMY_SPEED] / 100.0f;
-    if (g.debug.mobsSlow)
+    if (gdebug.mobsSlow)
       speed *= 0.2f;
   }
   return MAX(0, speed);
@@ -11633,7 +11622,7 @@ void DoUI() {
         }
         else {
           // UI elements' gizmos.
-          if (g.debug.gizmos && bb.width && bb.height) {
+          if (gdebug.gizmos && bb.width && bb.height) {
             DrawGroup_CommandRectLines({
               .pos{bb.x, bb.y},
               .size{bb.width, bb.height},
@@ -12661,7 +12650,7 @@ void GameFixedUpdate() {
         multiplier
           *= Lerp(0.4f, 1, MIN(1, (f32)g.run.state.waveIndex / (f32)WAVE_MAX_ENEMIES));
         spawnEnemiesEvery
-          = Round((f32)spawnEnemiesEvery * powf(2, -g.debug.mobSpawnRate) / multiplier);
+          = Round((f32)spawnEnemiesEvery * powf(2, -gdebug.mobSpawnRate) / multiplier);
         spawnEnemiesEvery = MAX(1, spawnEnemiesEvery);
 
         if (CanSpawnMoreCreatures()) {
@@ -12758,8 +12747,8 @@ void GameFixedUpdate() {
 
           // Spawning trees every 10 seconds.
           int seconds = 10;
-          if (g.debug.overriddenTreeSpawnIntervalSeconds)
-            seconds = g.debug.overriddenTreeSpawnIntervalSeconds;
+          if (gdebug.overriddenTreeSpawnIntervalSeconds)
+            seconds = gdebug.overriddenTreeSpawnIntervalSeconds;
           if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * seconds) == 0) {
             const int toSpawn = GetNumberOfTreesToSpawn();
             FOR_RANGE (int, i, toSpawn)
@@ -13103,7 +13092,7 @@ void GameFixedUpdate() {
     }
 
     // Cheat. Mobs burn.
-    if (g.debug.mobsBurn) {  ///
+    if (gdebug.mobsBurn) {  ///
       for (auto& c : g.run.creatures) {
         bool hasFire = false;
 
@@ -13572,7 +13561,7 @@ void GameFixedUpdate() {
 
               auto pos = PLAYER_CREATURE.pos + weapon.targetDir * colliderSize.x / 2.0f;
 
-              if (g.debug.gizmos) {
+              if (gdebug.gizmos) {
                 *g.run.meleeWeaponColliderGizmos.Add() = {
                   .pos      = pos,
                   .size     = colliderSize,
@@ -14823,7 +14812,7 @@ void GameDraw() {
       posOffset *= anchor;
 
       for (const auto& x : g.run.gardens) {
-        if (g.debug.gizmos) {
+        if (gdebug.gizmos) {
           DrawGroup_OneShotCircleLines({
             .pos    = x.pos,
             .radius = 0.4f,
@@ -14975,7 +14964,7 @@ void GameDraw() {
   }
 
   // Drawing projectiles gizmos.
-  if (g.debug.gizmos) {  ///
+  if (gdebug.gizmos) {  ///
     for (const auto& projectile : g.run.projectiles) {
       auto fb = fb_projectiles->Get(projectile.c.type);
 
@@ -15177,7 +15166,7 @@ void GameDraw() {
   }
 
   // Gizmos. Colliders.
-  if (g.debug.gizmos) {  ///
+  if (gdebug.gizmos) {  ///
     DrawGroup_Begin(DrawZ_GIZMOS);
     DrawGroup_SetSortY(0);
 
@@ -15422,14 +15411,14 @@ void GameDraw() {
         IM::Text("");
 
         if (IM::Button("Reset Debug"))
-          g.debug = {};
+          gdebug = {};
 
-        IM::Checkbox("Gizmos", &g.debug.gizmos);
-        IM::Checkbox("Mobs Burn", &g.debug.mobsBurn);
-        IM::Checkbox("Mobs Slow", &g.debug.mobsSlow);
+        IM::Checkbox("Gizmos", &gdebug.gizmos);
+        IM::Checkbox("Mobs Burn", &gdebug.mobsBurn);
+        IM::Checkbox("Mobs Slow", &gdebug.mobsSlow);
 
-        IM::Checkbox("Disable Mob Spawns", &g.debug.disableMobSpawns);
-        IM::Checkbox("Disable Boss Spawn", &g.debug.disableBossSpawn);
+        IM::Checkbox("Disable Mob Spawns", &gdebug.disableMobSpawns);
+        IM::Checkbox("Disable Boss Spawn", &gdebug.disableBossSpawn);
 
         {
           IM::Text("Wave Duration: ");
@@ -15438,18 +15427,18 @@ void GameDraw() {
           for (const auto mode : waveDurationModes) {
             modeIndex++;
             IM::SameLine();
-            if (IM::RadioButton(mode, g.debug.waveDurationMode == modeIndex))
-              g.debug.waveDurationMode = modeIndex;
+            if (IM::RadioButton(mode, gdebug.waveDurationMode == modeIndex))
+              gdebug.waveDurationMode = modeIndex;
           }
         }
 
         IM::InputInt(
-          "Tree Spawn Interval", &g.debug.overriddenTreeSpawnIntervalSeconds, 1, 5
+          "Tree Spawn Interval", &gdebug.overriddenTreeSpawnIntervalSeconds, 1, 5
         );
-        g.debug.overriddenTreeSpawnIntervalSeconds
-          = MIN(60, MAX(0, g.debug.overriddenTreeSpawnIntervalSeconds));
+        gdebug.overriddenTreeSpawnIntervalSeconds
+          = MIN(60, MAX(0, gdebug.overriddenTreeSpawnIntervalSeconds));
 
-        ImGui::SliderFloat("Mob Spawn Rate", &g.debug.mobSpawnRate, -2, 2, "%.1f", 0);
+        ImGui::SliderFloat("Mob Spawn Rate", &gdebug.mobSpawnRate, -2, 2, "%.1f", 0);
 
         IM::Text("");
 
