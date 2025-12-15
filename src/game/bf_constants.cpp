@@ -50,12 +50,10 @@ constexpr f32 RANGE_TO_METER_SCALE = 0.02f;
 
 #define SQR(v) ((v) * (v))
 
-constexpr f32 PLAYER_HURTBOX_RADIUS     = 0.6f;
-constexpr f32 MOB_HURTBOX_RADIUS        = 0.7f;
 constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 LANDMINE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
-constexpr f32 BURNING_SPREAD_DISTANCE   = MOB_HURTBOX_RADIUS * 3.5f;
+constexpr f32 BURNING_SPREAD_DISTANCE   = 2.5f;
 
 constexpr auto GARDEN_FRUIT_SPAWNING_INTERVAL     = lframe::FromSeconds(10);
 constexpr f32  GARDEN_PICKUPABLE_SPAWN_RADIUS_MIN = 1;

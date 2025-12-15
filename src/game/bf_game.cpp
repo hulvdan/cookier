@@ -4165,11 +4165,6 @@ int MakeCreature(MakeCreatureData data) {  ///
   if (BF_DISABLE_BOSS_SPAWN && fb->is_boss())
     return -1;
 
-  f32 hurtboxRadius = PLAYER_HURTBOX_RADIUS;
-  if (data.type != CreatureType_PLAYER)
-    hurtboxRadius = MOB_HURTBOX_RADIUS;
-  hurtboxRadius *= fb->hurtbox_scale();
-
   int health = fb->health()
                + Round(
                  ((g.run.state.waveIndex - fb->appearing_wave_number() + 1))
@@ -4192,7 +4187,7 @@ int MakeCreature(MakeCreatureData data) {  ///
     .body      = MakeCircleBody({
            .pos           = data.pos,
            .radius        = CREATURE_COLLIDER_RADIUS * fb->collider_scale(),
-           .hurtboxRadius = hurtboxRadius,
+           .hurtboxRadius = fb->hurtbox_radius(),
            .bodyData{
              .type     = BodyType_CREATURE,
              .userData = ShapeUserData::Creature(creatureID),
@@ -5631,11 +5626,7 @@ Vector2 CalculatePlayerProjectileBounceDirection(
     );
     const auto d = Vector2DistanceSqr(forecastedCreaturePos, pos);
 
-    if (d <= SQR(
-          range + projectileColliderRadius
-          + MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
-        ))
-    {
+    if (d <= SQR(range + projectileColliderRadius + fb_creature->hurtbox_radius())) {
       return Vector2DirectionOrRandom(pos, forecastedCreaturePos);
     }
   }
@@ -5756,9 +5747,8 @@ void MakeAOE(
     if (fb_damager->hostility_type() == fb_creature->hostility_type())
       continue;
 
-    if (Vector2DistanceSqr(creature.pos, pos) > SQR(
-          baseRadius * sizeMultiplier + MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
-        ))
+    if (Vector2DistanceSqr(creature.pos, pos)
+        > SQR(baseRadius * sizeMultiplier + fb_creature->hurtbox_radius()))
       continue;
 
     int damage = Round((f32)baseDamage * GetExplosionDamageMultiplier());
@@ -12825,7 +12815,10 @@ void GameFixedUpdate() {
       }
 
       // Spawning boss during the last wave.
-      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1) && !g.run.bossCreatureID) {  ///
+      if ((g.run.state.waveIndex >= TOTAL_WAVES - 1)  //
+          && !g.run.bossCreatureID                    //
+          && g.run.walkingTutorialCompletedAt.IsSet())
+      {  ///
         const auto worldCenter = WORLD_SIZEf / 2.0f;
         const auto dir       = Vector2DirectionOrRandom(PLAYER_CREATURE.pos, worldCenter);
         const auto bossPos   = worldCenter + dir * BOSS_SPAWN_OFFSET_METERS;
@@ -12847,7 +12840,8 @@ void GameFixedUpdate() {
             continue;
 
           if (Vector2DistanceSqr(playerPos, creature.pos) <= SQR(
-                PLAYER_HURTBOX_RADIUS + CREATURE_COLLIDER_RADIUS * fb->collider_scale()
+                fb_creatures->Get(CreatureType_PLAYER)->hurtbox_radius()
+                + CREATURE_COLLIDER_RADIUS * fb->collider_scale()
               ))
           {
             TryApplyDamage({
@@ -13202,6 +13196,8 @@ void GameFixedUpdate() {
       for (auto& creature : g.run.creatures) {
         creatureIndex++;
 
+        const auto fb = fb_creatures->Get(creature.type);
+
         int ailmentsTotal = creature.ailments.count;
         int off           = 0;
 
@@ -13265,6 +13261,7 @@ void GameFixedUpdate() {
           EmitParticles({
             .fb_emitter    = glib->burning_creature_particle_emitter(),
             .pos           = creature.pos,
+            .offsetScale   = Vector2One() * fb->hurtbox_radius(),
             .velocity      = GetCreatureSpeed(creature),
             .velocityAngle = Vector2AngleOrRandom(creature.controller.move),
           });
@@ -13388,9 +13385,7 @@ void GameFixedUpdate() {
               continue;
 
             const auto dist = MAX(
-              0,
-              Vector2Distance(pos, creature.pos)
-                - MOB_HURTBOX_RADIUS * fb_creature->hurtbox_scale()
+              0, Vector2Distance(pos, creature.pos) - fb_creature->hurtbox_radius()
             );
 
             if (dist < minDist) {
@@ -13726,8 +13721,7 @@ void GameFixedUpdate() {
 
           const auto distSqr = Vector2DistanceSqr(creature.pos, projectile.c.pos);
 
-          const auto radius
-            = fb->collider_radius() + fb_creature->hurtbox_scale() * MOB_HURTBOX_RADIUS;
+          const auto radius = fb->collider_radius() + fb_creature->hurtbox_radius();
 
           if (distSqr < SQR(radius)) {
             Vector2 knockbackDirection{};

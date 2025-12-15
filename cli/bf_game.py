@@ -448,6 +448,12 @@ def _process_gamelib(
     # ============================================================
     # {  ###
     for i, x in enumerate_table("creatures"):
+        if i >= 1:
+            mandatory_fields = ["hurtbox_radius"]
+            for field in mandatory_fields:
+                assert field in x, "Creature {} needs `{}` specified".format(
+                    x["type"], field
+                )
         if i >= 2:
             mob_mandatory_fields = [
                 "spawn_factor",

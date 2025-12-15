@@ -139,7 +139,7 @@ table Creature {
     chest_instead_of_apple_factor: float = 0.25;
     is_boss: bool = false;
     collider_scale: float = 1;
-    hurtbox_scale: float = 1;
+    hurtbox_radius: float;
     coins_dropped: int = 1;
     can_move: bool = true;
     aggroed_by_default: bool = true;
