@@ -761,20 +761,6 @@ struct MakeNumberData {  ///
   Vector2    pos   = {};
 };
 
-lframe GetWaveDuration(int waveIndex) {  ///
-  constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
-                             60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
-  VIEW_FROM_ARRAY_DANGER(durations);
-  int seconds = durations[MIN(durations.count - 1, waveIndex)];
-  if (BF_SHORT_WAVE_DURATION)
-    seconds /= 3;
-  if (BF_VERY_SHORT_WAVE_DURATION)
-    seconds = 2;
-  if (BF_VERY_LONG_WAVE_DURATION)
-    seconds = 9999;
-  return lframe::Unscaled(seconds * FIXED_FPS);
-}
-
 struct RandomCumulativeChances {  ///
   f32 cumulativeChances[4] = {};
 };
@@ -1382,11 +1368,38 @@ struct GameData {
   } ui;
 
   struct Debug {  ///
-    bool gizmos   = false;
-    bool mobsBurn = false;
-    bool mobsSlow = false;
+    bool gizmos           = false;
+    bool mobsBurn         = false;
+    bool mobsSlow         = false;
+    int  waveDurationMode = 0;  // 0 - default, 1 - short, 2 - very short, 3 - long.
+    int  overriddenTreeSpawnIntervalSeconds = 0;
+    bool disableMobSpawns                   = false;
+    bool disableBossSpawn                   = false;
+    f32  mobSpawnRate                       = 0;
   } debug;
 } g = {};
+
+lframe GetWaveDuration(int waveIndex) {  ///
+  constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
+                             60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
+  VIEW_FROM_ARRAY_DANGER(durations);
+
+  ASSERT(waveIndex >= 0);
+  ASSERT(waveIndex < durations.count);
+
+  int seconds = durations[MAX(0, MIN(durations.count - 1, waveIndex))];
+
+  ASSERT(g.debug.waveDurationMode >= 0);
+  ASSERT(g.debug.waveDurationMode <= 3);
+  if (g.debug.waveDurationMode == 1)
+    seconds /= 3;
+  else if (g.debug.waveDurationMode == 2)
+    seconds = 2;
+  if (g.debug.waveDurationMode == 3)
+    seconds = 9999;
+
+  return lframe::Unscaled(seconds * FIXED_FPS);
+}
 
 void ResetDynamicStats() {  ///
   FOR_RANGE (int, i, StatType_COUNT)
@@ -4160,9 +4173,9 @@ int MakeCreature(MakeCreatureData data) {  ///
   auto slot  = g.run.creatures.Add();
 
   const auto fb = glib->creatures()->Get(data.type);
-  if (index && BF_DISABLE_MOB_SPAWNS && !fb->is_boss())
+  if (index && g.debug.disableMobSpawns && !fb->is_boss())
     return -1;
-  if (BF_DISABLE_BOSS_SPAWN && fb->is_boss())
+  if (g.debug.disableBossSpawn && fb->is_boss())
     return -1;
 
   int health = fb->health()
@@ -12646,7 +12659,8 @@ void GameFixedUpdate() {
         constexpr int WAVE_MAX_ENEMIES = 8;
         multiplier
           *= Lerp(0.4f, 1, MIN(1, (f32)g.run.state.waveIndex / (f32)WAVE_MAX_ENEMIES));
-        spawnEnemiesEvery = Round((f32)spawnEnemiesEvery / multiplier);
+        spawnEnemiesEvery
+          = Round((f32)spawnEnemiesEvery * powf(2, -g.debug.mobSpawnRate) / multiplier);
         spawnEnemiesEvery = MAX(1, spawnEnemiesEvery);
 
         if (CanSpawnMoreCreatures()) {
@@ -12743,8 +12757,8 @@ void GameFixedUpdate() {
 
           // Spawning trees every 10 seconds.
           int seconds = 10;
-          if (BF_OVERRIDE_TREE_SPAWN_INTERVAL)
-            seconds = BF_OVERRIDE_TREE_SPAWN_INTERVAL;
+          if (g.debug.overriddenTreeSpawnIntervalSeconds)
+            seconds = g.debug.overriddenTreeSpawnIntervalSeconds;
           if ((g.run.waveStartedAt.Elapsed().value + 1) % (FIXED_FPS * seconds) == 0) {
             const int toSpawn = GetNumberOfTreesToSpawn();
             FOR_RANGE (int, i, toSpawn)
@@ -15404,9 +15418,39 @@ void GameDraw() {
       if (IM::BeginTabItem("info")) {
         IM::Text("Close debug menu: hold F1 -> press F2");
 
+        IM::Text("");
+
+        if (IM::Button("Reset Debug"))
+          g.debug = {};
+
         IM::Checkbox("Gizmos", &g.debug.gizmos);
         IM::Checkbox("Mobs Burn", &g.debug.mobsBurn);
         IM::Checkbox("Mobs Slow", &g.debug.mobsSlow);
+
+        IM::Checkbox("Disable Mob Spawns", &g.debug.disableMobSpawns);
+        IM::Checkbox("Disable Boss Spawn", &g.debug.disableBossSpawn);
+
+        {
+          IM::Text("Wave Duration: ");
+          const char* waveDurationModes[]{"Default", "Short", "Very Short", "Long"};
+          int         modeIndex = -1;
+          for (const auto mode : waveDurationModes) {
+            modeIndex++;
+            IM::SameLine();
+            if (IM::RadioButton(mode, g.debug.waveDurationMode == modeIndex))
+              g.debug.waveDurationMode = modeIndex;
+          }
+        }
+
+        IM::InputInt(
+          "Tree Spawn Interval", &g.debug.overriddenTreeSpawnIntervalSeconds, 1, 5
+        );
+        g.debug.overriddenTreeSpawnIntervalSeconds
+          = MIN(60, MAX(0, g.debug.overriddenTreeSpawnIntervalSeconds));
+
+        ImGui::SliderFloat("Mob Spawn Rate", &g.debug.mobSpawnRate, -2, 2, "%.1f", 0);
+
+        IM::Text("");
 
         IM::Text("F3 change localization");
         IM::Text("F4 change device");
