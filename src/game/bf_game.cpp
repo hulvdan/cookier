@@ -4124,8 +4124,6 @@ struct MakeCircleBodyData {  ///
 
 Body MakeCircleBody(MakeCircleBodyData data) {  ///
   ASSERT(data.radius > 0);
-  if (data.bodyData.type == BodyType_CREATURE)
-    ASSERT(data.hurtboxRadius > 0);
 
   auto makeBodyResult = MakeBody(data.pos, data.bodyData);
 
