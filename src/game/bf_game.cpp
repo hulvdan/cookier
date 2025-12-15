@@ -11668,12 +11668,13 @@ int GetMobDamage(CreatureType type) {  ///
 }
 
 struct EmitParticlesData {  ///
-  const BFGame::ParticleEmitter* fb_emitter     = {};
-  Vector2                        pos            = {};
-  Vector2                        offsetScale    = {1, 1};
-  f32                            offsetRotation = 0;
-  f32                            velocity       = 0;
-  f32                            velocityAngle  = 0;
+  const BFGame::ParticleEmitter* fb_emitter           = {};
+  Vector2                        pos                  = {};
+  Vector2                        offsetScale          = {1, 1};
+  Vector2                        offsetPlusMinusScale = {1, 1};
+  f32                            offsetRotation       = 0;
+  f32                            velocity             = 0;
+  f32                            velocityAngle        = 0;
 };
 
 void EmitParticles(EmitParticlesData data) {  ///
@@ -11689,7 +11690,7 @@ void EmitParticles(EmitParticlesData data) {  ///
     off = ToVector2(data.fb_emitter->offset()) * data.offsetScale;
   data.pos += Vector2Rotate(off, data.offsetRotation);
   data.pos += ToVector2(data.fb_emitter->offset_plus_minus())
-              * Vector2(GRAND.FRand11(), GRAND.FRand11());
+              * Vector2(GRAND.FRand11(), GRAND.FRand11()) * data.offsetPlusMinusScale;
 
   MakeParticles({
     .type           = (ParticleType)data.fb_emitter->particle_type(),
@@ -13273,11 +13274,11 @@ void GameFixedUpdate() {
 
         if (emitFire) {
           EmitParticles({
-            .fb_emitter    = glib->burning_creature_particle_emitter(),
-            .pos           = creature.pos,
-            .offsetScale   = Vector2One() * fb->hurtbox_radius(),
-            .velocity      = GetCreatureSpeed(creature),
-            .velocityAngle = Vector2AngleOrRandom(creature.controller.move),
+            .fb_emitter           = glib->burning_creature_particle_emitter(),
+            .pos                  = creature.pos,
+            .offsetPlusMinusScale = Vector2One() * MAX(0, fb->hurtbox_radius() - 0.4f),
+            .velocity             = GetCreatureSpeed(creature),
+            .velocityAngle        = Vector2AngleOrRandom(creature.controller.move),
           });
         }
       }
