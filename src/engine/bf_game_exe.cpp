@@ -57,43 +57,33 @@ struct EngineAppState {
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
 extern "C" {
 #  ifdef BF_PLATFORM_WebYandex
-EMSCRIPTEN_KEEPALIVE void mark_ysdk_loaded_from_js() {  ///
+EMSCRIPTEN_KEEPALIVE void fromJS_markYsdkLoaded() {  ///
   ge.meta.ysdkLoaded = true;
 }
 
-EMSCRIPTEN_KEEPALIVE void pause_from_js() {  ///
+EMSCRIPTEN_KEEPALIVE void fromJS_pause() {  ///
   ge.meta.windowIsInactive = true;
 }
 
-EMSCRIPTEN_KEEPALIVE void resume_from_js() {  ///
+EMSCRIPTEN_KEEPALIVE void fromJS_resume() {  ///
   ge.meta.windowIsInactive = false;
 }
 #  endif
 
-EMSCRIPTEN_KEEPALIVE void saved_from_js() {  ///
+EMSCRIPTEN_KEEPALIVE void fromJS_saved() {  ///
   ge.meta.previousSaveIsNotCompletedYet = false;
 }
 
-EMSCRIPTEN_KEEPALIVE void set_localization_from_js(int localization) {  ///
+EMSCRIPTEN_KEEPALIVE void fromJS_setLocalization(int localization) {  ///
   ge.meta.localization = localization;
 }
 
-EMSCRIPTEN_KEEPALIVE void set_device_type_from_js(int type) {  ///
+EMSCRIPTEN_KEEPALIVE void fromJS_setDeviceType(int type) {  ///
   ge.meta.device = (DeviceType)type;
   LOGI("Set device %d", type);
 }
 }
 
-EM_JS(void, js_LogWebGLVersion, (), {  ///
-  let canvas = document.createElement('canvas');
-  let gl     = canvas.getContext('webgl2') || canvas.getContext('webgl');
-  if (gl) {
-    console.log("GL_VERSION: " + gl.getParameter(gl.VERSION));
-  }
-  else {
-    console.log("No WebGL context available.");
-  }
-});
 #endif
 
 class BGFXCallbackHandler : public bgfx::CallbackI {  ///
@@ -384,7 +374,7 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
     bgfx::touch(0);
     bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
-    ge.meta.isFocused
+    ge.meta.windowIsFocused
       = (SDL_GetWindowFlags(g_appstate.window) & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS));
     EngineOnFrameStart();
 
@@ -692,11 +682,11 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///
-    ge.meta.isFocused = false;
+    ge.meta.windowIsFocused = false;
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
-    ge.meta.isFocused = true;
+    ge.meta.windowIsFocused = true;
   } break;
 
   default:

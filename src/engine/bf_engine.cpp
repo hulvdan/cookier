@@ -502,8 +502,6 @@ struct EngineData {
     f64 prevFrameTime = {};
     f64 frameTime     = {};
 
-    bool isFocused = true;
-
     Arena _arena = {};
 
     DeviceType device = DeviceType_DESKTOP;
@@ -542,6 +540,7 @@ struct EngineData {
 
     bool ysdkLoaded       = false;
     bool windowIsInactive = false;
+    bool windowIsFocused  = true;
     bool quitRequested    = false;
     bool quitScheduled    = false;
 
@@ -602,6 +601,27 @@ struct EngineData {
     bool                flushedThisFrame  = false;
   } draw;
 } ge = {};
+
+#ifdef BF_PLATFORM_WebYandex
+
+// clang-format off
+EM_JS(void, Metric, (const char* eventName), {  ///
+  try {
+    if (typeof ym === "function")
+      ym(window.yandexMetricaCounterId, 'reachGoal', UTF8ToString(eventName));
+    else
+      console.warn("Yandex Metrica is not ready yet.");
+  } catch (e) {
+    console.error("Error sending data to Yandex Metrica:", e);
+  }
+});
+// clang-format on
+
+#else
+
+void Metric(const char* _string) {}
+
+#endif
 
 #define GRAND (ge.meta.logicRand)
 #define VRAND (ge.meta.visualRand)
@@ -3446,7 +3466,8 @@ SDL_AppResult EngineUpdate() {  ///
       volumeTypeIndex++;
 
       f32 target = v;
-      if ((volumeTypeIndex == VolumeType_MASTER) && !ge.meta.isFocused)
+      if ((volumeTypeIndex == VolumeType_MASTER)
+          && (!ge.meta.windowIsFocused || ge.meta.windowIsInactive))
         target = 0;
 
       switch ((VolumeType)volumeTypeIndex) {
@@ -3682,6 +3703,19 @@ EMSCRIPTEN_KEEPALIVE void mark_js_returned_savedata(int value) {  ///
 }
 }
 
+// clang-format off
+EM_JS(void, js_LogWebGLVersion, (), {  ///
+  let canvas = document.createElement('canvas');
+  let gl     = canvas.getContext('webgl2') || canvas.getContext('webgl');
+  if (gl) {
+    console.log("GL_VERSION: " + gl.getParameter(gl.VERSION));
+  }
+  else {
+    console.log("No WebGL context available.");
+  }
+});
+// clang-format on
+
 #  if defined(BF_PLATFORM_WebYandex)
 
 // clang-format off
@@ -3689,10 +3723,10 @@ EM_JS(void, js_Save, (const char* data), {
   window.player
     .setData({save: UTF8ToString(data)}, /* flush */ true)
     .then(() => {
-      Module.ccall('saved_from_js', null, [], []);
+      Module.ccall('fromJS_saved', null, [], []);
     })
     .catch(() => {
-      Module.ccall('saved_from_js', null, [], []);
+      Module.ccall('fromJS_saved', null, [], []);
     });
 });
 // clang-format on
@@ -3702,7 +3736,7 @@ EM_JS(void, js_Save, (const char* data), {
 // clang-format off
 EM_JS(void, js_Save, (const char* data), {
   localStorage.setItem('save', UTF8ToString(data));
-  Module.ccall('saved_from_js', null, [], []);
+  Module.ccall('fromJS_saved', null, [], []);
 });
 // clang-format on
 

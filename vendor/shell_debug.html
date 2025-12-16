@@ -60,7 +60,7 @@
                         var device = 0;
                         if (isMobile)
                             device = 1;
-                        Module.ccall('set_device_type_from_js', null, ['number'], [ device ]);
+                        Module.ccall('fromJS_setDeviceType', null, ['number'], [ device ]);
                     },
                 ],
 

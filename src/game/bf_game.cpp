@@ -1162,6 +1162,9 @@ struct GameData {
   } meta;
 
   struct Player {  ///
+    int runsWon  = 0;
+    int runsLost = 0;
+
     DifficultyType difficulty = DifficultyType_D0;
     BuildType      build      = BuildType_DEFAULT;
     WeaponType     weapon     = {};
@@ -2239,6 +2242,8 @@ void GameLoad(const BFSave::Save* save) {  ///
     }
   }
 
+  g.player.runsWon         = save->runs_won();
+  g.player.runsLost        = save->runs_lost();
   g.player.difficulty      = (DifficultyType)save->difficulty();
   g.player.build           = (BuildType)save->build();
   g.player.weapon          = (WeaponType)save->weapon();
@@ -2387,6 +2392,9 @@ flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
         BFSave::BuildT{.max_difficulty_beaten = x.maxDifficultyBeaten}
       ));
     }
+
+    fb_save.runs_won  = g.player.runsWon;
+    fb_save.runs_lost = g.player.runsLost;
 
     fb_save.difficulty = (int)g.player.difficulty;
     fb_save.build      = (int)g.player.build;
@@ -11405,7 +11413,7 @@ void DoUI() {
   }
 
   // Window is inactive.
-  if (ge.meta.windowIsInactive) {  ///
+  if (ge.meta.windowIsInactive || !ge.meta.windowIsFocused) {  ///
     CLAY({
       .floating{
         .zIndex   = zIndex,
@@ -12008,6 +12016,14 @@ void GameFixedUpdate() {
         g.run.scheduledEnd = true;
         g.run.state.won    = g.run.state.waveWon;
 
+        if (!g.player.runsWon)
+          Metric(g.run.state.won ? "g_Run0_Won" : "g_Run0_Lost");
+
+        if (g.run.state.won)
+          g.player.runsWon++;
+        else
+          g.player.runsLost++;
+
         // Updating `Build.maxDifficultyBeaten` + achievement.
         if (g.run.state.won) {
           auto d = g.player.difficulty;
@@ -12207,7 +12223,11 @@ void GameFixedUpdate() {
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION);
 
   // Updating gameplay.
-  if (!ge.meta.windowIsInactive && !g.meta.paused && gameplayOrWaveEndScreen) {
+  if (!ge.meta.windowIsInactive   //
+      && ge.meta.windowIsFocused  //
+      && !g.meta.paused           //
+      && gameplayOrWaveEndScreen)
+  {
     ZoneScopedN("Updating gameplay.");
 
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
@@ -13064,6 +13084,9 @@ void GameFixedUpdate() {
         if (Vector2DistanceSqr(PLAYER_CREATURE.pos, WORLD_SIZEf / 2.0f)
             >= SQR(WALKING_TUTORIAL_RADIUS_METERS))
         {
+          if (!g.player.runsWon)
+            Metric("g_Run0_TutorialCompleted");
+
           g.run.walkingTutorialCompletedAt.SetNow();
           ASSERT_FALSE(g.run.waveStartedAt.IsSet());
           g.run.waveStartedAt.SetNow();
@@ -14099,6 +14122,8 @@ void GameFixedUpdate() {
             AchievementAdd(AchievementType_KILL_TREES, 1);
 
           if (!index) {
+            SendMetric("");
+
             // Player died.
             PlaySound(Sound_GAME_PLAYER_DIED);
 
