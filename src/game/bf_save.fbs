@@ -41,6 +41,8 @@ table Build {
 
 table Save {
     random_state: uint;
+    runs_won: int;
+    runs_lost: int;
 
     achievements: [Achievement];
     builds: [Build];

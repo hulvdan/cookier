@@ -12,6 +12,27 @@ WORKING SINCE 2025-09-07
 x volume change eased on miniaudio
 x sdl is window focused, а не полагаться на event-ы
 
+g_Run0_Wave1_Won
+g_Run0_Shop_ToWave2
+g_Run0_Shop_ToWave3
+g_Run0_Shop_ToWave4
+g_Run0_Shop_ToWave5
+g_Run0_Shop_ToWave6
+g_Run0_Shop_ToWave7
+g_Run0_Shop_ToWave8
+g_Run0_Shop_ToWave9
+g_Run0_Shop_ToWave10
+g_Run0_Shop_ToWave11
+g_Run0_Shop_ToWave12
+g_Run0_Shop_ToWave13
+g_Run0_Shop_ToWave14
+g_Run0_Shop_ToWave15
+g_Run0_Shop_ToWave16
+g_Run0_Shop_ToWave17
+g_Run0_Shop_ToWave18
+g_Run0_Shop_ToWave19
+g_Run0_Shop_ToWave20
+
 * max-games.ru/plugin-yg/ завести яндекс метрику
 * яндекс аналитика
   - max-games.ru/plugin-yg/ реф хорошего дизайна функционала яндекс sdk
@@ -21,7 +42,7 @@ x sdl is window focused, а не полагаться на event-ы
 * метрики: смерть?
 * метрики: завершение рана
 *
-* не обновлять игру, если !isFocused
+* не обновлять игру, если !windowIsFocused
 * реклама при нажатии на след волну (кажд 3 - 5 волн + обязательно, если игрок долго не продолжал игру)
 * tutor: кнопки передвижения с стрелочками + понятной рамкой, что это КНОПКА
   СМ СКРИНШОТ, ЧТОБЫ В CLIP STUDIO ПЕРЕРИСОВАТЬ
@@ -44,6 +65,7 @@ x sdl is window focused, а не полагаться на event-ы
   продумать слегка версионирование сохранений
   (magic)HVSV|(save version)1|(game version)1.31|(data)XXX
 *
+* название ЗАМОЛОЧЬ ПЕЧЕНЬКИ
 * пробежаться по чеклисту от сакутина
 *
 * профильнуть низкую скорость запуска
@@ -54,6 +76,10 @@ x sdl is window focused, а не полагаться на event-ы
 *
 * RELEASED!
 =======================
+* красиво намутить beautify translation / flash магаза/levelup/pickupitem
+* РЕКЛАМНОЕ ВИДЕО ОБЯЗАТЕЛЬНО
+* сильнее сжать аудио
+* автоперевод по кнопке? (возможность указать термины «печеньги»)
 * музыка ставится на паузу, если master 0
 * сохранять громкость звука и музыки в local storage
 * клёвые иконки языков (+ см скрин)
