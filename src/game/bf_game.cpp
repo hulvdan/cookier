@@ -13084,10 +13084,11 @@ void GameFixedUpdate() {
         if (Vector2DistanceSqr(PLAYER_CREATURE.pos, WORLD_SIZEf / 2.0f)
             >= SQR(WALKING_TUTORIAL_RADIUS_METERS))
         {
+          g.run.walkingTutorialCompletedAt.SetNow();
+
           if (!g.player.runsWon)
             Metric("g_Run0_TutorialCompleted");
 
-          g.run.walkingTutorialCompletedAt.SetNow();
           ASSERT_FALSE(g.run.waveStartedAt.IsSet());
           g.run.waveStartedAt.SetNow();
 
