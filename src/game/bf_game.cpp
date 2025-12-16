@@ -14122,8 +14122,6 @@ void GameFixedUpdate() {
             AchievementAdd(AchievementType_KILL_TREES, 1);
 
           if (!index) {
-            SendMetric("");
-
             // Player died.
             PlaySound(Sound_GAME_PLAYER_DIED);
 
