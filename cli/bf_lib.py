@@ -27,6 +27,7 @@ class _GameSettings:
     itch_target: str = "hulvdan/game-template"
     languages: list[str] = field(default_factory=lambda: ["russian", "english"])
     generate_flatbuffers_api_for: list[str] = field(default_factory=list)
+    yandex_metrica_counter_id: int | None = None
     # }
 
 
