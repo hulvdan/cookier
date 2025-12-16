@@ -609,7 +609,7 @@ EM_JS(void, Metric, (const char* eventName), {  ///
   try {
     if (typeof ym === "function") {
       ym(window.yandexMetricaCounterId, 'reachGoal', UTF8ToString(eventName));
-      console.log("Yandex Metrica Log", eventName);
+      console.log("Yandex Metrica Log", UTF8ToString(eventName));
     } else
       console.warn("Yandex Metrica is not ready yet.");
   } catch (e) {
