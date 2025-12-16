@@ -1320,7 +1320,8 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                     <noscript><div><img src="https://mc.yandex.ru/watch/YANDEX_METRIC_COUNTER_ID" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
                     <!-- /Yandex.Metrika counter -->
                 """.replace(
-                    "YANDEX_METRIC_COUNTER_ID", game_settings.yandex_metrica_counter_id
+                    "YANDEX_METRIC_COUNTER_ID",
+                    str(game_settings.yandex_metrica_counter_id),
                 ),
                 "EXTEND_MAIN_SCRIPT": """
                     const moduleReady = new Promise(resolve => {
