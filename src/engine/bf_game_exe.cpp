@@ -384,6 +384,8 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
     bgfx::touch(0);
     bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
+    ge.meta.isFocused
+      = (SDL_GetWindowFlags(g_appstate.window) & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS));
     EngineOnFrameStart();
 
     bgfx::dbgTextClear(0, false);

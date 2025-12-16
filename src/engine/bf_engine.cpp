@@ -517,10 +517,7 @@ struct EngineData {
       ma_sound_group groupSFX   = {};
       ma_sound_group groupMusic = {};
 
-      struct {
-        f32 immediate = 0;
-        f32 eased     = 0;
-      } volumes_[VolumeType_COUNT];
+      f32 volumes_[VolumeType_COUNT];
       VIEW_FROM_ARRAY_DANGER(volumes);
 
       ReaderWriterQueue<_EndedSound> soundsToUninitialize{};
@@ -716,9 +713,7 @@ void SetVolume(VolumeType type, f32 v) {  ///
 
   auto& m = ge.meta._soundManager;
 
-  m.volumes[type].immediate = v;
-  if (!m.works)
-    m.volumes[type].eased = v;
+  m.volumes[type] = v;
 }
 
 // TODO: Options struct to support
@@ -2618,8 +2613,9 @@ void ReloadSounds() {  ///
   if (!fb_sounds->size())
     return;
 
-  m.engine    = {};
-  auto config = ma_engine_config_init();
+  m.engine                                  = {};
+  auto config                               = ma_engine_config_init();
+  config.defaultVolumeSmoothTimeInPCMFrames = 120;
   if (ma_engine_init(&config, &m.engine) != MA_SUCCESS) {
     LOGW("Failed to init miniaudio engine");
     INVALID_PATH;
@@ -3449,23 +3445,21 @@ SDL_AppResult EngineUpdate() {  ///
     for (auto& v : m.volumes) {
       volumeTypeIndex++;
 
-      f32 target = v.immediate;
+      f32 target = v;
       if ((volumeTypeIndex == VolumeType_MASTER) && !ge.meta.isFocused)
         target = 0;
 
-      v.eased = Clamp01(MoveTowardsF(v.eased, target, FrameTime() * 6.0f));
-
       switch ((VolumeType)volumeTypeIndex) {
       case VolumeType_MASTER: {
-        ma_engine_set_volume(&ge.meta._soundManager.engine, v.eased);
+        ma_engine_set_volume(&ge.meta._soundManager.engine, v);
       } break;
 
       case VolumeType_SFX: {
-        ma_sound_set_volume(&ge.meta._soundManager.groupSFX, v.eased);
+        ma_sound_set_volume(&ge.meta._soundManager.groupSFX, v);
       } break;
 
       case VolumeType_MUSIC: {
-        ma_sound_set_volume(&ge.meta._soundManager.groupMusic, v.eased);
+        ma_sound_set_volume(&ge.meta._soundManager.groupMusic, v);
       } break;
 
       default:
