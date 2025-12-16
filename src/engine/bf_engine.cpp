@@ -3467,7 +3467,7 @@ SDL_AppResult EngineUpdate() {  ///
 
       f32 target = v;
       if ((volumeTypeIndex == VolumeType_MASTER)
-          && (!ge.meta.windowIsFocused || ge.meta.windowIsInactive))
+          && (ge.meta.windowIsInactive || !ge.meta.windowIsFocused))
         target = 0;
 
       switch ((VolumeType)volumeTypeIndex) {
