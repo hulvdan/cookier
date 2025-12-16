@@ -76,8 +76,9 @@ function rebuild_tasks()
         {
             "c_serve_webyandex_release",
             function()
-                vim.fn.execute([[term npx @yandex-games/sdk-dev-proxy -h localhost --dev-mode=true]])
-                vim.fn.execute([[term python -m http.server -d .cmake\WebYandex_Release 80]])
+                vim.fn.execute(
+                    [[term npx @yandex-games/sdk-dev-proxy --dev-mode=true -c -p .cmake\WebYandex_Release --port 8082]]
+                )
             end,
         },
         { "o_deploy_itch", cli_command("deploy_itch") },
