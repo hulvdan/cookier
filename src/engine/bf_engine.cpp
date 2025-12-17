@@ -539,10 +539,12 @@ struct EngineData {
     } _soundManager = {};
 
     bool ysdkLoaded       = false;
+    bool markGameplay     = false;
     bool windowIsInactive = false;
-    bool windowIsFocused  = true;
     bool quitRequested    = false;
     bool quitScheduled    = false;
+
+    bool windowIsFocused = true;
 
     bool debugEnabled = false;
 
@@ -560,6 +562,7 @@ struct EngineData {
     int jsLoadedSavedata = 0;
 
     bool _drawing = false;
+
   } meta;
 
   struct {
@@ -615,11 +618,27 @@ EM_JS(void, Metric, (const char* eventName), {  ///
     console.error("Error sending data to Yandex Metrica:", e);
   }
 });
+
+EM_JS(void, MarkGameplayStop, (), {  ///
+  window.ysdk.features.GameplayAPI?.stop();
+});
+
+EM_JS(void, MarkGameplayStart, (), {  ///
+  window.ysdk.features.GameplayAPI?.start();
+});
 // clang-format on
 
 #else
 
 void Metric(const char* _string) {}
+
+void MarkGameplayStop() {  ///
+  ge.meta.markGameplay = false;
+}
+
+void MarkGameplayStart() {  ///
+  ge.meta.markGameplay = true;
+}
 
 #endif
 

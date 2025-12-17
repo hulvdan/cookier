@@ -1646,6 +1646,8 @@ void TriggerWaveCompleted(bool instant) {  ///
     g.run.waveStartedAt.SetNow();
 
   g.run.scheduledWaveCompleted.SetNow();
+  MarkGameplayStop();
+
   if (instant)
     g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
   else
@@ -2218,6 +2220,8 @@ void OnWaveStarted() {  ///
       Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
     ) BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
   );
+
+  MarkGameplayStart();
 }
 
 void GameLoad(const BFSave::Save* save) {  ///
@@ -2367,6 +2371,9 @@ void GameLoad(const BFSave::Save* save) {  ///
     g.run.scheduledShop = true;
   else if (s.screen == ScreenType_END)
     g.run.scheduledEnd = true;
+
+  if (s.screen != ScreenType_GAMEPLAY)
+    MarkGameplayStop();
 
   g.player.lockedBuilds  = {};
   g.player.lockedWeapons = {};
@@ -9552,6 +9559,9 @@ void DoUI() {
                 PlaySound(Sound_UI_CLICK);
                 p.weapon = weapon;
 
+                if (ge.meta.runs_won == 1)
+                  Metric("g_Run1_Started");
+
                 Save();
 
                 ResetFocus(currentContext);
@@ -10142,6 +10152,9 @@ void DoUI() {
               g.run.scheduledNextWave = true;
               PlaySound(Sound_UI_CLICK);
               PlaySound(Sound_GAME_WAVE_START);
+
+              if (!g.player.runs_won)
+                Metric(TextFormat("g_Run0_Shop_ToWave%d", g.run.waveIndex + 1));
 
               for (auto& x : g.run.state.shop.toPick)
                 x = {};
@@ -12198,6 +12211,11 @@ void GameFixedUpdate() {
     g.meta.scheduledTogglePause = false;
 
     g.meta.paused = !g.meta.paused;
+    if (g.meta.paused)
+      MarkGameplayStop();
+    else
+      MarkGameplayStart();
+
     Save();
   }
 
@@ -15507,6 +15525,8 @@ void GameDraw() {
         ImGui::SliderFloat("Mob Spawn Rate", &gdebug.mobSpawnRate, -2, 2, "%.1f", 0);
 
         IM::Text("");
+
+        IM::Text(ge.meta.markGameplay ? "MarkGameplay: 1" : "MarkGameplay: 0");
 
         IM::Text("F3 change localization");
         IM::Text("F4 change device");
