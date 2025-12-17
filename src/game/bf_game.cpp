@@ -11434,7 +11434,7 @@ void DoUI() {
   }
 
   // Window is inactive.
-  if (ge.meta.shouldGameplayStop.Value()) {  ///
+  if (ge.meta.shouldGameplayStop.ShouldStop()) {  ///
     CLAY({
       .floating{
         .zIndex   = zIndex,
@@ -12249,8 +12249,8 @@ void GameFixedUpdate() {
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION);
 
   // Updating gameplay.
-  if (!ge.meta.shouldGameplayStop.Value()  //
-      && !g.meta.paused                    //
+  if (!ge.meta.shouldGameplayStop.ShouldStop()  //
+      && !g.meta.paused                         //
       && gameplayOrWaveEndScreen)
   {
     ZoneScopedN("Updating gameplay.");
