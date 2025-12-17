@@ -9559,8 +9559,14 @@ void DoUI() {
                 PlaySound(Sound_UI_CLICK);
                 p.weapon = weapon;
 
-                if (g.player.runsWon == 1)
-                  Metric("g_Run1_Started");
+                if (g.player.runsWon)
+                  Metric(TextFormat("g_Run%d_Started", g.player.runsWon));
+
+                if (p.difficulty > DifficultyType_D0) {
+                  Metric(TextFormat(
+                    "g_Difficulty%d_Started", (int)p.difficulty - (int)DifficultyType_D0
+                  ));
+                }
 
                 Save();
 
