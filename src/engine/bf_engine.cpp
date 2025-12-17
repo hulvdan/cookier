@@ -621,27 +621,35 @@ EM_JS(void, Metric, (const char* eventName), {  ///
   }
 });
 
-EM_JS(void, MarkGameplayStop, (), {  ///
+EM_JS(void, jsYandexMarkGameplayStop, (), {  ///
   window.ysdk.features.GameplayAPI?.stop();
 });
 
-EM_JS(void, MarkGameplayStart, (), {  ///
+EM_JS(void, jsYandexMarkGameplayStart, (), {  ///
   window.ysdk.features.GameplayAPI?.start();
 });
 // clang-format on
 
 #else
 
-void Metric(const char* _string) {
+void Metric(const char* _string) {  ///
   LOGI("Metric: %s", _string);
 }
 
 void MarkGameplayStop() {  ///
   ge.meta.markGameplay = false;
+
+#  ifdef BF_PLATFORM_WebYandex
+  jsYandexMarkGameplayStop();
+#  endif
 }
 
 void MarkGameplayStart() {  ///
   ge.meta.markGameplay = true;
+
+#  ifdef BF_PLATFORM_WebYandex
+  jsYandexMarkGameplayStart();
+#  endif
 }
 
 #endif
