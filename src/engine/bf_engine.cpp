@@ -636,23 +636,23 @@ void Metric(const char* _string) {  ///
   LOGI("Metric: %s", _string);
 }
 
+#endif
+
 void MarkGameplayStop() {  ///
   ge.meta.markGameplay = false;
 
-#  ifdef BF_PLATFORM_WebYandex
+#ifdef BF_PLATFORM_WebYandex
   jsYandexMarkGameplayStop();
-#  endif
+#endif
 }
 
 void MarkGameplayStart() {  ///
   ge.meta.markGameplay = true;
 
-#  ifdef BF_PLATFORM_WebYandex
+#ifdef BF_PLATFORM_WebYandex
   jsYandexMarkGameplayStart();
-#  endif
-}
-
 #endif
+}
 
 #define GRAND (ge.meta.logicRand)
 #define VRAND (ge.meta.visualRand)
