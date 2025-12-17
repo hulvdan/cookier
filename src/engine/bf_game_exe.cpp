@@ -62,11 +62,11 @@ EMSCRIPTEN_KEEPALIVE void fromJS_markYsdkLoaded() {  ///
 }
 
 EMSCRIPTEN_KEEPALIVE void fromJS_pause() {  ///
-  ge.meta.windowIsInactive = true;
+  ge.meta.shouldGameplayStop.windowIsInactive = true;
 }
 
 EMSCRIPTEN_KEEPALIVE void fromJS_resume() {  ///
-  ge.meta.windowIsInactive = false;
+  ge.meta.shouldGameplayStop.windowIsInactive = false;
 }
 #  endif
 
@@ -385,8 +385,17 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
     bgfx::touch(0);
     bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
-    ge.meta.windowIsFocused
-      = (SDL_GetWindowFlags(g_appstate.window) & (SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS));
+    {
+      auto hasFocus = false;
+
+      auto f = SDL_GetWindowFlags(g_appstate.window);
+      if (f & SDL_WINDOW_INPUT_FOCUS)
+        hasFocus = true;
+      else if (f & SDL_WINDOW_MOUSE_FOCUS)
+        hasFocus = true;
+
+      ge.meta.shouldGameplayStop.windowIsNotFocused = !hasFocus;
+    }
     EngineOnFrameStart();
 
     bgfx::dbgTextClear(0, false);
@@ -693,11 +702,11 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///
-    ge.meta.windowIsFocused = false;
+    ge.meta.shouldGameplayStop.windowIsNotFocused = true;
   } break;
 
   case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
-    ge.meta.windowIsFocused = true;
+    ge.meta.shouldGameplayStop.windowIsNotFocused = false;
   } break;
 
   default:

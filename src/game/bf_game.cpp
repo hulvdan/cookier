@@ -10155,6 +10155,8 @@ void DoUI() {
             );
 
             if (nextWavePressed) {
+              ShowInterAd();
+
               g.run.scheduledNextWave = true;
               PlaySound(Sound_UI_CLICK);
               PlaySound(Sound_GAME_WAVE_START);
@@ -11432,7 +11434,7 @@ void DoUI() {
   }
 
   // Window is inactive.
-  if (ge.meta.windowIsInactive || !ge.meta.windowIsFocused) {  ///
+  if (ge.meta.shouldGameplayStop.Value()) {  ///
     CLAY({
       .floating{
         .zIndex   = zIndex,
@@ -12247,9 +12249,8 @@ void GameFixedUpdate() {
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION);
 
   // Updating gameplay.
-  if (!ge.meta.windowIsInactive   //
-      && ge.meta.windowIsFocused  //
-      && !g.meta.paused           //
+  if (!ge.meta.shouldGameplayStop.Value()  //
+      && !g.meta.paused                    //
       && gameplayOrWaveEndScreen)
   {
     ZoneScopedN("Updating gameplay.");

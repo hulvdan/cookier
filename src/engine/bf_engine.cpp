@@ -538,13 +538,20 @@ struct EngineData {
       Vector<_LaunchedSound> launchedSounds = {};
     } _soundManager = {};
 
-    bool ysdkLoaded       = false;
-    bool markGameplay     = false;
-    bool windowIsInactive = false;
-    bool quitRequested    = false;
-    bool quitScheduled    = false;
+    struct ShouldGameplayStop {
+      bool windowIsInactive   = false;
+      bool windowIsNotFocused = false;
+      bool adIsPlaying        = false;
 
-    bool windowIsFocused = true;
+      bool Value() const {
+        return windowIsNotFocused || windowIsInactive || adIsPlaying;
+      }
+    } shouldGameplayStop;
+
+    bool ysdkLoaded    = false;
+    bool markGameplay  = false;
+    bool quitRequested = false;
+    bool quitScheduled = false;
 
     bool debugEnabled = false;
 
@@ -604,6 +611,39 @@ struct EngineData {
     bool                flushedThisFrame  = false;
   } draw;
 } ge = {};
+
+#if defined(SDL_PLATFORM_EMSCRIPTEN)
+extern "C" {
+#  ifdef BF_PLATFORM_WebYandex
+EMSCRIPTEN_KEEPALIVE void fromJS_adOpened() {  ///
+  ge.meta.shouldGameplayStop.adIsPlaying = true;
+}
+
+EMSCRIPTEN_KEEPALIVE void fromJS_continueBecauseAdClosedOrErrored() {  ///
+  ge.meta.shouldGameplayStop.adIsPlaying = false;
+}
+}
+#  endif
+#endif
+
+void ShowInterAd() {  ///
+#ifdef BF_PLATFORM_WebYandex
+  // TODO: Мб тут заранее (до вызова ysdk-ем callback-а onOpen)
+  // проставить `adIsPlaying = true`?
+
+  // clang-format off
+  EM_ASM({
+    ysdk.adv.showFullscreenAdv({
+      callbacks: {
+        onOpen: () => { fromJS_adOpened(); },
+        onClose: () => { fromJS_continueBecauseAdClosedOrErrored(); },
+        onError: (e) => { fromJS_continueBecauseAdClosedOrErrored(); },
+      },
+    });
+  });
+// clang-format on
+#endif
+}
 
 void Metric(const char* goalId) {  ///
   LOGI("Metric: %s", goalId);
@@ -3482,8 +3522,7 @@ SDL_AppResult EngineUpdate() {  ///
       volumeTypeIndex++;
 
       f32 target = v;
-      if ((volumeTypeIndex == VolumeType_MASTER)
-          && (ge.meta.windowIsInactive || !ge.meta.windowIsFocused))
+      if ((volumeTypeIndex == VolumeType_MASTER) && ge.meta.shouldGameplayStop.Value())
         target = 0;
 
       switch ((VolumeType)volumeTypeIndex) {
