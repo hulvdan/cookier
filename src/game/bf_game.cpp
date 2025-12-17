@@ -9559,7 +9559,7 @@ void DoUI() {
                 PlaySound(Sound_UI_CLICK);
                 p.weapon = weapon;
 
-                if (ge.meta.runs_won == 1)
+                if (g.player.runs_won == 1)
                   Metric("g_Run1_Started");
 
                 Save();
