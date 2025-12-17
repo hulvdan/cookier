@@ -786,7 +786,7 @@ void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
   ASSERT(sound);
 
   auto& m = ge.meta._soundManager;
-  ASSERT(m.works);
+  ASSERT(m.Works());
 
   const auto loadedFileIndex = *(size_t*)&userData;
 
