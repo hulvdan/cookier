@@ -611,7 +611,9 @@ struct EngineData {
 EM_JS(void, Metric, (const char* eventName), {  ///
   try {
     if (typeof ym === "function")
-      ym(window.yandexMetricaCounterId, 'reachGoal', UTF8ToString(eventName));
+      const value = UTF8ToString(eventName);
+      ym(window.yandexMetricaCounterId, 'reachGoal', value);
+      console.log(value);
     else
       console.warn("Yandex Metrica is not ready yet.");
   } catch (e) {
