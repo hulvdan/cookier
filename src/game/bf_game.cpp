@@ -9559,7 +9559,7 @@ void DoUI() {
                 PlaySound(Sound_UI_CLICK);
                 p.weapon = weapon;
 
-                if (g.player.runs_won == 1)
+                if (g.player.runsWon == 1)
                   Metric("g_Run1_Started");
 
                 Save();
@@ -10153,7 +10153,7 @@ void DoUI() {
               PlaySound(Sound_UI_CLICK);
               PlaySound(Sound_GAME_WAVE_START);
 
-              if (!g.player.runs_won)
+              if (!g.player.runsWon)
                 Metric(TextFormat("g_Run0_Shop_ToWave%d", g.run.waveIndex + 1));
 
               for (auto& x : g.run.state.shop.toPick)
