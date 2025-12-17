@@ -33,17 +33,17 @@ target_include_directories(vendor_and_codegen
         "${CMAKE_SOURCE_DIR}/vendor"
 )
 
-# GameAnalytics.
-#-----------------------------------------------------------------------------------
-if (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
-    add_library(GameAnalytics INTERFACE)
-else()
-    add_subdirectory(vendor/gameanalytics-sdk-cpp)
-endif()
-target_include_directories(GameAnalytics
-    INTERFACE
-        "${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/include"
-)
+# # GameAnalytics.
+# #-----------------------------------------------------------------------------------
+# if (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
+#     add_library(GameAnalytics INTERFACE)
+# else()
+#     add_subdirectory(vendor/gameanalytics-sdk-cpp)
+# endif()
+# target_include_directories(GameAnalytics
+#     INTERFACE
+#         "${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/include"
+# )
 
 # bgfx.
 #-----------------------------------------------------------------------------------
@@ -237,7 +237,7 @@ target_compile_definitions(imgui
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
 target_link_libraries(game
     PRIVATE
-        GameAnalytics
+        # GameAnalytics
         SDL3-static
         basisu_transcoder
         bgfx
@@ -278,8 +278,8 @@ elseif (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
             "-sALLOW_MEMORY_GROWTH=1"
             "-sINITIAL_MEMORY=56426496" # 63MB heap.
             "-sSTACK_SIZE=1048576" # 1MB stack.
-            "-sEXPORTED_RUNTIME_METHODS=['ccall']"
             --preload-file resources
+            --bind
     )
     set_target_properties(game
         PROPERTIES
@@ -353,7 +353,7 @@ endif()
 add_executable(tests "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
 target_link_libraries(tests
     PRIVATE
-        GameAnalytics
+        # GameAnalytics
         SDL3-static
         basisu_transcoder
         bgfx
@@ -363,10 +363,6 @@ target_link_libraries(tests
         miniaudio
         readerwriterqueue
         vendor_and_codegen
-)
-target_link_libraries(tests
-    PRIVATE
-        GameAnalytics
 )
 target_include_directories(tests
     PRIVATE
@@ -379,30 +375,30 @@ target_compile_definitions(tests
         DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 )
 
-# GameAnalytics post setup.
-#-----------------------------------------------------------------------------------
-if ("${PLATFORM}" STREQUAL "Win")
-    add_custom_command(
-        TARGET game PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/curl/lib/win64
-            ${CMAKE_BINARY_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/openssl/1.1.1d/libs/win64
-            ${CMAKE_BINARY_DIR}
-        DEPENDS GameAnalytics
-    )
-    add_custom_command(
-        TARGET tests PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/curl/lib/win64
-            ${CMAKE_BINARY_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/openssl/1.1.1d/libs/win64
-            ${CMAKE_BINARY_DIR}
-        DEPENDS GameAnalytics
-    )
-endif()
+# # GameAnalytics post setup.
+# #-----------------------------------------------------------------------------------
+# if ("${PLATFORM}" STREQUAL "Win")
+#     add_custom_command(
+#         TARGET game PRE_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+#             ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/curl/lib/win64
+#             ${CMAKE_BINARY_DIR}
+#         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+#             ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/openssl/1.1.1d/libs/win64
+#             ${CMAKE_BINARY_DIR}
+#         DEPENDS GameAnalytics
+#     )
+#     add_custom_command(
+#         TARGET tests PRE_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+#             ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/curl/lib/win64
+#             ${CMAKE_BINARY_DIR}
+#         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+#             ${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/externals/openssl/1.1.1d/libs/win64
+#             ${CMAKE_BINARY_DIR}
+#         DEPENDS GameAnalytics
+#     )
+# endif()
 
 # Enabling Linting On Windows.
 #-----------------------------------------------------------------------------------
@@ -435,7 +431,7 @@ if(WIN32 AND CMAKE_GENERATOR STREQUAL Ninja)
         "${CMAKE_SOURCE_DIR}/vendor/box2d/include"
         "${CMAKE_SOURCE_DIR}/vendor/bx/include"
         "${CMAKE_SOURCE_DIR}/vendor/flatbuffers"
-        "${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/include"
+        # "${CMAKE_SOURCE_DIR}/vendor/gameanalytics-sdk-cpp/include"
         "${CMAKE_SOURCE_DIR}/vendor/glm"
         "${CMAKE_SOURCE_DIR}/vendor/miniaudio/include"
         "${CMAKE_SOURCE_DIR}/vendor/SDL3/include"

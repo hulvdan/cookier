@@ -592,14 +592,14 @@ struct EngineData {
     f32       screenFade      = 0;
     View<u64> bgfxDisabledCapabilities{};
 
-    struct {
-      bool                     setup      = {};
-      const char*              build      = {};
-      const char*              gameKey    = {};
-      const char*              gameSecret = {};
-      std::vector<std::string> currencies = {};
-      std::vector<std::string> resources  = {};
-    } gameanalytics;
+    // struct {
+    //   bool                     setup      = {};
+    //   const char*              build      = {};
+    //   const char*              gameKey    = {};
+    //   const char*              gameSecret = {};
+    //   std::vector<std::string> currencies = {};
+    //   std::vector<std::string> resources  = {};
+    // } gameanalytics;
 
     size_t additionalArenaSize = 0;
   } settings;
@@ -612,18 +612,41 @@ struct EngineData {
   } draw;
 } ge = {};
 
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-extern "C" {
-#  ifdef BF_PLATFORM_WebYandex
-EMSCRIPTEN_KEEPALIVE void fromJS_adOpened() {  ///
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+
+void fromJS_markYsdkLoaded() {  ///
+  ge.meta.ysdkLoaded = true;
+}
+
+void fromJS_pause() {  ///
+  ge.meta.shouldGameplayStop.windowIsInactive = true;
+}
+
+void fromJS_resume() {  ///
+  ge.meta.shouldGameplayStop.windowIsInactive = false;
+}
+
+void fromJS_saved() {  ///
+  ge.meta.previousSaveIsNotCompletedYet = false;
+}
+
+void fromJS_setLocalization(int localization) {  ///
+  ge.meta.localization = localization;
+}
+
+void fromJS_setDeviceType(int type) {  ///
+  ge.meta.device = (DeviceType)type;
+  LOGI("Set device %d", type);
+}
+
+void fromJS_adOpened() {  ///
   ge.meta.shouldGameplayStop.adIsPlaying = true;
 }
 
-EMSCRIPTEN_KEEPALIVE void fromJS_continueBecauseAdClosedOrErrored() {  ///
+void fromJS_continueBecauseAdClosedOrErrored() {  ///
   ge.meta.shouldGameplayStop.adIsPlaying = false;
 }
-}
-#  endif
+
 #endif
 
 void ShowInterAd() {  ///
@@ -635,9 +658,9 @@ void ShowInterAd() {  ///
   EM_ASM({
     ysdk.adv.showFullscreenAdv({
       callbacks: {
-        onOpen: () => { fromJS_adOpened(); },
-        onClose: () => { fromJS_continueBecauseAdClosedOrErrored(); },
-        onError: (e) => { fromJS_continueBecauseAdClosedOrErrored(); },
+        onOpen: () => { Module.fromJS_adOpened(); },
+        onClose: () => { Module.fromJS_continueBecauseAdClosedOrErrored(); },
+        onError: (e) => { Module.fromJS_continueBecauseAdClosedOrErrored(); },
       },
     });
   });
@@ -2830,17 +2853,17 @@ void InitEngine() {  ///
   size_t arenaSize = 3 * sizeof(bool) * ge.meta._keyboardState.count;
   ge.meta._arena   = MakeArena(arenaSize + ge.settings.additionalArenaSize);
 
-#if !defined(SDL_PLATFORM_EMSCRIPTEN)
-  if (ge.settings.gameanalytics.setup) {
-    const auto& a = ge.settings.gameanalytics;
-    gameanalytics::GameAnalytics::setEnabledInfoLog(true);
-    gameanalytics::GameAnalytics::setEnabledVerboseLog(BF_DEBUG);
-    gameanalytics::GameAnalytics::configureBuild(a.build);
-    gameanalytics::GameAnalytics::configureAvailableResourceCurrencies(a.currencies);
-    gameanalytics::GameAnalytics::configureAvailableResourceItemTypes(a.resources);
-    gameanalytics::GameAnalytics::initialize(a.gameKey, a.gameSecret);
-  }
-#endif
+  // #if !defined(SDL_PLATFORM_EMSCRIPTEN)
+  //   if (ge.settings.gameanalytics.setup) {
+  //     const auto& a = ge.settings.gameanalytics;
+  //     gameanalytics::GameAnalytics::setEnabledInfoLog(true);
+  //     gameanalytics::GameAnalytics::setEnabledVerboseLog(BF_DEBUG);
+  //     gameanalytics::GameAnalytics::configureBuild(a.build);
+  //     gameanalytics::GameAnalytics::configureAvailableResourceCurrencies(a.currencies);
+  //     gameanalytics::GameAnalytics::configureAvailableResourceItemTypes(a.resources);
+  //     gameanalytics::GameAnalytics::initialize(a.gameKey, a.gameSecret);
+  //   }
+  // #endif
 
   {
     ZoneScopedN("basist. basist::basisu_transcoder_init()");
@@ -3752,10 +3775,8 @@ void _Save(Arena* _) {
 
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
 
-extern "C" {
-EMSCRIPTEN_KEEPALIVE void fromJS_markReturnedSavedata(int value) {  ///
+void fromJS_markReturnedSavedata(int value) {  ///
   ge.meta.jsLoadedSavedata = value;
-}
 }
 
 // clang-format off
@@ -3791,11 +3812,11 @@ EM_JS(const char*, jsLoad, (), {
 #  endif
 
   if (!window.jsLoad_savedata) {
-    Module.ccall('fromJS_markReturnedSavedata', null, ['number'], [1]);
+    Module.fromJS_markReturnedSavedata(1);
     return null;
   }
 
-  Module.ccall('fromJS_markReturnedSavedata', null, ['number'], [2]);
+  Module.fromJS_markReturnedSavedata(2);
 
   var len            = lengthBytesUTF8(window.jsLoad_savedata) + 1;
   var string_on_heap = _malloc(len);
@@ -3817,10 +3838,10 @@ void _Save(Arena* arena) {
     window.player
       .setData({save: UTF8ToString($0)}, /* flush */ true)
       .then(() => {
-        Module.ccall('fromJS_saved', null, [], []);
+        Module.fromJS_saved();
       })
       .catch(() => {
-        Module.ccall('fromJS_saved', null, [], []);
+        Module.fromJS_saved();
       });
   }, encoded);
   // clang-format on
@@ -3830,7 +3851,7 @@ void _Save(Arena* arena) {
   // clang-format off
   EM_ASM({
     localStorage.setItem('save', UTF8ToString($0));
-    Module.ccall('fromJS_saved', null, [], []);
+    Module.fromJS_saved();
   }, encoded);
   // clang-format on
 
