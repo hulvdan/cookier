@@ -914,9 +914,8 @@ def process_images():
     TOUCH_COLOR = (255, 255, 255, 255)
 
     # `ui_controls_touch_base`.
-    bf_image.outline(
-        bf_image.ellipse(480, width=24, outline=TOUCH_COLOR, fill=(0, 0, 0, 0)),
-        radius=TOUCH_OUTLINE,
+    bf_image.ellipse(
+        460, width=TOUCH_OUTLINE, outline=(0, 0, 0, 255), fill=(0, 0, 0, 0)
     ).save(ART_TEXTURES_DIR / "ui_controls_touch_base.png")
 
     # `ui_controls_touch_handle`.
