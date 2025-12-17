@@ -34,9 +34,9 @@
 
 #include <bgfx/bgfx.h>
 
-#if !defined(SDL_PLATFORM_EMSCRIPTEN)
-#  include "GameAnalytics/GameAnalytics.h"
-#endif
+// #if !defined(SDL_PLATFORM_EMSCRIPTEN)
+// #  include "GameAnalytics/GameAnalytics.h"
+// #endif
 
 #define ZPL_IMPLEMENTATION
 #define ZPL_PICO
@@ -48,43 +48,15 @@
 #include "engine/bf_engine.cpp"
 #include "game/bf_game.cpp"
 
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+#  include "hands/bf_emscripten_binds.cpp"
+#endif
+
 struct EngineAppState {
   SDL_Window* window               = {};
   bool        resizedWindow        = false;
   Vector2     sizeToPixelSizeRatio = {};
 } g_appstate;
-
-#if defined(SDL_PLATFORM_EMSCRIPTEN)
-extern "C" {
-#  ifdef BF_PLATFORM_WebYandex
-EMSCRIPTEN_KEEPALIVE void fromJS_markYsdkLoaded() {  ///
-  ge.meta.ysdkLoaded = true;
-}
-
-EMSCRIPTEN_KEEPALIVE void fromJS_pause() {  ///
-  ge.meta.shouldGameplayStop.windowIsInactive = true;
-}
-
-EMSCRIPTEN_KEEPALIVE void fromJS_resume() {  ///
-  ge.meta.shouldGameplayStop.windowIsInactive = false;
-}
-#  endif
-
-EMSCRIPTEN_KEEPALIVE void fromJS_saved() {  ///
-  ge.meta.previousSaveIsNotCompletedYet = false;
-}
-
-EMSCRIPTEN_KEEPALIVE void fromJS_setLocalization(int localization) {  ///
-  ge.meta.localization = localization;
-}
-
-EMSCRIPTEN_KEEPALIVE void fromJS_setDeviceType(int type) {  ///
-  ge.meta.device = (DeviceType)type;
-  LOGI("Set device %d", type);
-}
-}
-
-#endif
 
 class BGFXCallbackHandler : public bgfx::CallbackI {  ///
   public:

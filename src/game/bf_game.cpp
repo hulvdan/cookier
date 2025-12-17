@@ -13048,14 +13048,17 @@ void GameFixedUpdate() {
             }
           );
 
-          if ((g.run.playerContinuousIdleFrames % FIXED_FPS) == 0)
+          if (g.run.walkingTutorialCompletedAt.IsSet()
+              && ((g.run.playerContinuousIdleFrames % FIXED_FPS) == 0))
             AchievementAdd(AchievementType_IDLER, 1);
         }
 
         while (g.run.playerWalkedMetersCumulativeDelta >= 1) {
           g.run.playerWalkedMetersCumulativeDelta -= 1;
           g.run.playerWalkedMeters++;
-          AchievementAdd(AchievementType_WALKER, 1);
+
+          if (g.run.walkingTutorialCompletedAt.IsSet())
+            AchievementAdd(AchievementType_WALKER, 1);
 
           IterateOverEffects(
             EffectConditionType_STAT__EVERY__X__WALKED_METERS,
