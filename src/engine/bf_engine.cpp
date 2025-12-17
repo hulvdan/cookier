@@ -613,9 +613,7 @@ void Metric(const char* goalId) {  ///
   EM_ASM({
     try {
       if (typeof ym === "function") {
-        const value = UTF8ToString($0);
-        ym(window.yandexMetricaCounterId, 'reachGoal', value);
-        console.log(value);
+        ym(window.yandexMetricaCounterId, 'reachGoal', UTF8ToString($0));
       } else {
         console.warn("Yandex Metrica is not ready yet.");
       }
