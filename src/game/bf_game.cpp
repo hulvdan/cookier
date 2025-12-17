@@ -11837,7 +11837,10 @@ void GameFixedUpdate() {
       g.meta.scheduledSave = false;
       g.meta.lastSaveAt    = {};
       g.meta.lastSaveAt.SetNow();
+
+#ifndef BF_PLATFORM_WebYandex
       LOGI("Saving...");
+#endif
 
       ge.meta.previousSaveIsNotCompletedYet = true;
       _Save(&g.meta.trashArena);
@@ -13119,14 +13122,17 @@ void GameFixedUpdate() {
 
           ASSERT_FALSE(g.run.waveStartedAt.IsSet());
           g.run.waveStartedAt.SetNow();
-
-          static bool launchedMusic = false;
-          if (!launchedMusic) {
-            launchedMusic = true;
-            PlaySound(Sound_MUSIC_BATTLE);
-          }
         }
       }
+    }
+
+    static bool launchedMusic = false;
+    if (g.run.walkingTutorialCompletedAt.IsSet()  //
+        && !launchedMusic                         //
+        && ge.meta._soundManager.Works())
+    {
+      launchedMusic = true;
+      PlaySound(Sound_MUSIC_BATTLE);
     }
 
     // Removing old picked up pickupables.
@@ -14330,7 +14336,7 @@ void GameFixedUpdate() {
     FIXED_DT
   );
 
-  if (ge.meta._soundManager.works)
+  if (ge.meta._soundManager.Works())
     SetMusicLowpassFactor(g.meta.musicLowpassFactor);
 
   {

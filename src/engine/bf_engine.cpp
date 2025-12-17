@@ -522,7 +522,13 @@ struct EngineData {
       Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
       Vector<_SoundVariationRange>   soundVariationRanges           = {};
 
-      bool works = false;
+      bool _works   = false;
+      bool _started = false;
+
+      bool Works() const {
+        return _works && _started;
+      }
+
       union {
         ma_engine     engine;
         ma_node_graph engineg;
@@ -825,7 +831,7 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   ASSERT_FALSE(ge.meta._drawing);
   auto& m = ge.meta._soundManager;
 
-  if (!m.works)
+  if (!m.Works())
     return {};
 
   const auto fb_sounds = glib->sounds();
@@ -2664,7 +2670,7 @@ void SetMusicLowpassFactor(f32 factor) {  ///
   ASSERT(factor <= 1);
 
   auto& m = ge.meta._soundManager;
-  ASSERT(m.works);
+  ASSERT(m.Works());
 
   const auto sampleRate = ma_engine_get_sample_rate(&m.engine);
 
@@ -2695,7 +2701,8 @@ void ReloadSounds() {  ///
   while (m.soundsToUninitialize.try_dequeue(sound_))
     continue;
 
-  m.works = false;
+  m._works   = false;
+  m._started = false;
 
   // Initializing audio only if there are sounds in project.
   const auto fb_sounds = glib->sounds();
@@ -2707,11 +2714,14 @@ void ReloadSounds() {  ///
   m.engine                                  = {};
   auto config                               = ma_engine_config_init();
   config.defaultVolumeSmoothTimeInPCMFrames = 120;
+  config.noAutoStart                        = true;
   if (ma_engine_init(&config, &m.engine) != MA_SUCCESS) {
     LOGW("Failed to init miniaudio engine");
     INVALID_PATH;
     return;
   }
+
+  ma_engine_set_volume(&ge.meta._soundManager.engine, 0);
 
   LOGI("miniaudio engine initialized");
 
@@ -2827,7 +2837,7 @@ void ReloadSounds() {  ///
 
   checkErr(ma_fence_wait(&fence));
 
-  m.works = !_errored;
+  m._works = !_errored;
 }
 
 void InitEngine() {  ///
@@ -3531,14 +3541,14 @@ SDL_AppResult EngineUpdate() {  ///
 
   // Updating master, sfx, music volumes.
   auto& m = ge.meta._soundManager;
-  if (m.works) {
+  if (m.Works()) {
     int volumeTypeIndex = -1;
     for (auto& v : m.volumes) {
       volumeTypeIndex++;
 
       f32 target = v;
       if ((volumeTypeIndex == VolumeType_MASTER)
-          && ge.meta.shouldGameplayStop.ShouldStop())
+          && (ge.meta.shouldGameplayStop.ShouldStop() || !ge.events.canStartSound))
         target = 0;
 
       switch ((VolumeType)volumeTypeIndex) {
@@ -3624,9 +3634,23 @@ SDL_AppResult EngineUpdate() {  ///
 #  endif
 #endif
 
-    if (ge.events.canStartSound && reloadSounds) {
+    if (reloadSounds) {
       reloadSounds = false;
       ReloadSounds();
+    }
+
+    if (ge.meta._soundManager._works  //
+        && ge.events.canStartSound    //
+        && !ge.meta._soundManager._started)
+    {
+      if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS) {
+        ge.meta._soundManager._started = true;
+        LOGI("Started miniaudio engine");
+      }
+      else {
+        ge.meta._soundManager._works = false;
+        LOGE("Failed to start miniaudio engine");
+      }
     }
 
     GameFixedUpdate();
