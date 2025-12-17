@@ -211,7 +211,18 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
   GamePreInit();
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
-  js_LogWebGLVersion();
+  // clang-format off
+  EM_ASM({
+    let canvas = document.createElement('canvas');
+    let gl     = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    if (gl) {
+      console.log("GL_VERSION: " + gl.getParameter(gl.VERSION));
+    }
+    else {
+      console.log("No WebGL context available.");
+    }
+  });
+  // clang-format on
 #endif
 
   {
