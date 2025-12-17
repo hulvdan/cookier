@@ -605,44 +605,35 @@ struct EngineData {
   } draw;
 } ge = {};
 
+void Metric(const char* goalId) {  ///
+  LOGI("Metric: %s", goalId);
+
 #ifdef BF_PLATFORM_WebYandex
-
-// clang-format off
-EM_JS(void, Metric, (const char* eventName), {  ///
-  try {
-    if (typeof ym === "function")
-      const value = UTF8ToString(eventName);
-      ym(window.yandexMetricaCounterId, 'reachGoal', value);
-      console.log("Metric", value);
-    else
-      console.warn("Yandex Metrica is not ready yet.");
-  } catch (e) {
-    console.error("Error sending data to Yandex Metrica:", e);
-  }
-});
-
-EM_JS(void, jsYandexMarkGameplayStop, (), {  ///
-  window.ysdk.features.GameplayAPI?.stop();
-});
-
-EM_JS(void, jsYandexMarkGameplayStart, (), {  ///
-  window.ysdk.features.GameplayAPI?.start();
-});
-// clang-format on
-
-#else
-
-void Metric(const char* _string) {  ///
-  LOGI("Metric: %s", _string);
-}
-
+  // clang-format off
+  EM_ASM({
+    try {
+      if (typeof ym === "function") {
+        const value = UTF8ToString($0);
+        ym(window.yandexMetricaCounterId, 'reachGoal', value);
+        console.log(value);
+      } else {
+        console.warn("Yandex Metrica is not ready yet.");
+      }
+    } catch (e) {
+      console.error("Error sending data to Yandex Metrica:", e);
+    }
+  }, goalId);
+  // clang-format on
 #endif
+}
 
 void MarkGameplayStop() {  ///
   ge.meta.markGameplay = false;
 
 #ifdef BF_PLATFORM_WebYandex
-  jsYandexMarkGameplayStop();
+  // clang-format off
+  EM_ASM({ window.ysdk.features.GameplayAPI?.stop(); });
+  // clang-format on
 #endif
 }
 
@@ -650,7 +641,9 @@ void MarkGameplayStart() {  ///
   ge.meta.markGameplay = true;
 
 #ifdef BF_PLATFORM_WebYandex
-  jsYandexMarkGameplayStart();
+  // clang-format off
+  EM_ASM({ window.ysdk.features.GameplayAPI?.start(); });
+  // clang-format on
 #endif
 }
 
@@ -722,17 +715,11 @@ void EndMode2D() {  ///
   ge.meta._currentCamera = nullptr;
 }
 
-// clang-format off
-#ifdef BF_PLATFORM_WebYandex
-EM_JS(void, js_YandexReady, (), {
-  window.ysdk.features.LoadingAPI.ready();
-});
-#endif
-// clang-format on
-
 void GameReady() {  ///
 #ifdef BF_PLATFORM_WebYandex
-  js_YandexReady();
+  // clang-format off
+  EM_ASM({ window.ysdk.features.LoadingAPI.ready(); });
+  // clang-format on
 #endif
 }
 
@@ -3729,51 +3716,10 @@ void _Save(Arena* _) {
 #elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
 
 extern "C" {
-EMSCRIPTEN_KEEPALIVE void mark_js_returned_savedata(int value) {  ///
+EMSCRIPTEN_KEEPALIVE void fromJS_markReturnedSavedata(int value) {  ///
   ge.meta.jsLoadedSavedata = value;
 }
 }
-
-// clang-format off
-EM_JS(void, js_LogWebGLVersion, (), {  ///
-  let canvas = document.createElement('canvas');
-  let gl     = canvas.getContext('webgl2') || canvas.getContext('webgl');
-  if (gl) {
-    console.log("GL_VERSION: " + gl.getParameter(gl.VERSION));
-  }
-  else {
-    console.log("No WebGL context available.");
-  }
-});
-// clang-format on
-
-#  if defined(BF_PLATFORM_WebYandex)
-
-// clang-format off
-EM_JS(void, js_Save, (const char* data), {
-  window.player
-    .setData({save: UTF8ToString(data)}, /* flush */ true)
-    .then(() => {
-      Module.ccall('fromJS_saved', null, [], []);
-    })
-    .catch(() => {
-      Module.ccall('fromJS_saved', null, [], []);
-    });
-});
-// clang-format on
-
-#  elif defined(BF_PLATFORM_Web)
-
-// clang-format off
-EM_JS(void, js_Save, (const char* data), {
-  localStorage.setItem('save', UTF8ToString(data));
-  Module.ccall('fromJS_saved', null, [], []);
-});
-// clang-format on
-
-#  else
-#    error "Not implemented"
-#  endif
 
 // clang-format off
 
@@ -3808,11 +3754,11 @@ EM_JS(const char*, jsLoad, (), {
 #  endif
 
   if (!window.jsLoad_savedata) {
-    Module.ccall('mark_js_returned_savedata', null, ['number'], [1]);
+    Module.ccall('fromJS_markReturnedSavedata', null, ['number'], [1]);
     return null;
   }
 
-  Module.ccall('mark_js_returned_savedata', null, ['number'], [2]);
+  Module.ccall('fromJS_markReturnedSavedata', null, ['number'], [2]);
 
   var len            = lengthBytesUTF8(window.jsLoad_savedata) + 1;
   var string_on_heap = _malloc(len);
@@ -3826,7 +3772,34 @@ void _Save(Arena* arena) {
   TEMP_USAGE(arena);
   auto fbb     = GameDumpStateForSaving();
   auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), arena);
-  js_Save(encoded);
+
+#  if defined(BF_PLATFORM_WebYandex)
+
+  // clang-format off
+  EM_ASM({
+    window.player
+      .setData({save: UTF8ToString($0)}, /* flush */ true)
+      .then(() => {
+        Module.ccall('fromJS_saved', null, [], []);
+      })
+      .catch(() => {
+        Module.ccall('fromJS_saved', null, [], []);
+      });
+  }, encoded);
+  // clang-format on
+
+#  elif defined(BF_PLATFORM_Web)
+
+  // clang-format off
+  EM_ASM({
+    localStorage.setItem('save', UTF8ToString($0));
+    Module.ccall('fromJS_saved', null, [], []);
+  }, encoded);
+  // clang-format on
+
+#  else
+#    error "Not implemented"
+#  endif
 }
 
 #else
