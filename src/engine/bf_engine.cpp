@@ -543,7 +543,7 @@ struct EngineData {
       bool windowIsNotFocused = false;
       bool adIsPlaying        = false;
 
-      bool Value() const {
+      bool ShouldStop() const {
         return windowIsNotFocused || windowIsInactive || adIsPlaying;
       }
     } shouldGameplayStop;
@@ -618,12 +618,8 @@ void fromJS_markYsdkLoaded() {  ///
   ge.meta.ysdkLoaded = true;
 }
 
-void fromJS_pause() {  ///
-  ge.meta.shouldGameplayStop.windowIsInactive = true;
-}
-
-void fromJS_resume() {  ///
-  ge.meta.shouldGameplayStop.windowIsInactive = false;
+void fromJS_setWindowIsInactive(int value) {  ///
+  ge.meta.shouldGameplayStop.windowIsInactive = (bool)value;
 }
 
 void fromJS_saved() {  ///
@@ -639,12 +635,8 @@ void fromJS_setDeviceType(int type) {  ///
   LOGI("Set device %d", type);
 }
 
-void fromJS_adOpened() {  ///
-  ge.meta.shouldGameplayStop.adIsPlaying = true;
-}
-
-void fromJS_continueBecauseAdClosedOrErrored() {  ///
-  ge.meta.shouldGameplayStop.adIsPlaying = false;
+void fromJS_setAdIsPlaying(int value) {  ///
+  ge.meta.shouldGameplayStop.adIsPlaying = (bool)value;
 }
 
 #endif
@@ -658,9 +650,9 @@ void ShowInterAd() {  ///
   EM_ASM({
     ysdk.adv.showFullscreenAdv({
       callbacks: {
-        onOpen: () => { Module.fromJS_adOpened(); },
-        onClose: () => { Module.fromJS_continueBecauseAdClosedOrErrored(); },
-        onError: (e) => { Module.fromJS_continueBecauseAdClosedOrErrored(); },
+        onOpen: () => { Module.fromJS_setAdIsPlaying(1); },
+        onClose: () => { Module.fromJS_setAdIsPlaying(0); },
+        onError: (e) => { Module.fromJS_setAdIsPlaying(0); },
       },
     });
   });
@@ -3545,20 +3537,21 @@ SDL_AppResult EngineUpdate() {  ///
       volumeTypeIndex++;
 
       f32 target = v;
-      if ((volumeTypeIndex == VolumeType_MASTER) && ge.meta.shouldGameplayStop.Value())
+      if ((volumeTypeIndex == VolumeType_MASTER)
+          && ge.meta.shouldGameplayStop.ShouldStop())
         target = 0;
 
       switch ((VolumeType)volumeTypeIndex) {
       case VolumeType_MASTER: {
-        ma_engine_set_volume(&ge.meta._soundManager.engine, v);
+        ma_engine_set_volume(&ge.meta._soundManager.engine, target);
       } break;
 
       case VolumeType_SFX: {
-        ma_sound_set_volume(&ge.meta._soundManager.groupSFX, v);
+        ma_sound_set_volume(&ge.meta._soundManager.groupSFX, target);
       } break;
 
       case VolumeType_MUSIC: {
-        ma_sound_set_volume(&ge.meta._soundManager.groupMusic, v);
+        ma_sound_set_volume(&ge.meta._soundManager.groupMusic, target);
       } break;
 
       default:
