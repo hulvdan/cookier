@@ -10154,7 +10154,7 @@ void DoUI() {
               PlaySound(Sound_GAME_WAVE_START);
 
               if (!g.player.runsWon)
-                Metric(TextFormat("g_Run0_Shop_ToWave%d", g.run.waveIndex + 1));
+                Metric(TextFormat("g_Run0_Shop_ToWave%d", g.run.state.waveIndex + 1));
 
               for (auto& x : g.run.state.shop.toPick)
                 x = {};

@@ -632,7 +632,9 @@ EM_JS(void, MarkGameplayStart, (), {  ///
 
 #else
 
-void Metric(const char* _string) {}
+void Metric(const char* _string) {
+  LOGI("Metric: %s", _string);
+}
 
 void MarkGameplayStop() {  ///
   ge.meta.markGameplay = false;
