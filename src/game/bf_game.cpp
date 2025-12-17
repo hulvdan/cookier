@@ -15187,23 +15187,38 @@ void GameDraw() {
 
     if (ge.meta.device != DeviceType_MOBILE) {
       const int  keyTex     = glib->ui_input_key_texture_id();
+      const int  arrowTex   = glib->ui_input_key_arrow_texture_id();
       const auto keyTexSize = ToVector2(glib->original_texture_sizes()->Get(keyTex))
                               * (ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE);
 
-      Vector2 keyboardKeyOffsets[]{{-1, -0.5f}, {0, -0.5f}, {1, -0.5f}, {0, 0.5f}};
+      struct {
+        Vector2 offset        = {};
+        f32     arrowRotation = 0;
+      } keyboardKeyOffsets[]{
+        {.offset{-1, -0.5f}, .arrowRotation = PI32},
+        {.offset{0, -0.5f}, .arrowRotation = -PI32 / 2},
+        {.offset{1, -0.5f}, .arrowRotation = 0},
+        {.offset{0, 0.5f}, .arrowRotation = PI32 / 2},
+      };
 
       for (auto o : keyboardKeyOffsets) {
-        o *= Lerp(1.05f, 1.15f, breathingP);
-        auto off = Vector2Rotate(keyTexSize * o, rotation);
+        o.offset *= Lerp(1.05f, 1.15f, breathingP);
+        auto off = Vector2Rotate(keyTexSize * o.offset, rotation);
+
+        const Vector2 posKey{marginX + off.x, c.y + off.y};
 
         DrawGroup_CommandTexture({
           .texID    = keyTex,
           .rotation = rotation,
-          .pos{
-            marginX + off.x,
-            c.y + off.y,
-          },
-          .color = color,
+          .pos      = posKey,
+          .color    = color,
+        });
+
+        DrawGroup_CommandTexture({
+          .texID    = arrowTex,
+          .rotation = rotation + o.arrowRotation,
+          .pos      = posKey + Vector2Rotate({0, 0.09f}, rotation),
+          .color    = BLACK,
         });
       }
     }
