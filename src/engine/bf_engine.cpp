@@ -613,7 +613,7 @@ EM_JS(void, Metric, (const char* eventName), {  ///
     if (typeof ym === "function")
       const value = UTF8ToString(eventName);
       ym(window.yandexMetricaCounterId, 'reachGoal', value);
-      console.log(value);
+      console.log("Metric", value);
     else
       console.warn("Yandex Metrica is not ready yet.");
   } catch (e) {
