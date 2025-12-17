@@ -9,31 +9,13 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-x volume change eased on miniaudio
-x sdl is window focused, а не полагаться на event-ы
-
-g_Run0_Wave1_Won
-g_Run0_Shop_ToWave2
-g_Run0_Shop_ToWave3
-g_Run0_Shop_ToWave4
-g_Run0_Shop_ToWave5
-g_Run0_Shop_ToWave6
-g_Run0_Shop_ToWave7
-g_Run0_Shop_ToWave8
-g_Run0_Shop_ToWave9
-g_Run0_Shop_ToWave10
-g_Run0_Shop_ToWave11
-g_Run0_Shop_ToWave12
-g_Run0_Shop_ToWave13
-g_Run0_Shop_ToWave14
-g_Run0_Shop_ToWave15
-g_Run0_Shop_ToWave16
-g_Run0_Shop_ToWave17
-g_Run0_Shop_ToWave18
-g_Run0_Shop_ToWave19
-g_Run0_Shop_ToWave20
-
+* почему в метрике не отображаются мои заходы в игру?
 * max-games.ru/plugin-yg/ завести яндекс метрику
+* реклама при нажатии на след волну (кажд 3 - 5 волн + обязательно, если игрок долго не продолжал игру)
+* tutor: кнопки передвижения с стрелочками + понятной рамкой, а не полагаться на event-ы
+* проверить работу ysdk gameplay start / stop
+* дозабить остальные event-ы
+
 * яндекс аналитика
   - max-games.ru/plugin-yg/ реф хорошего дизайна функционала яндекс sdk
 * сакутиновая отправка event-ов яндекс аналитики
@@ -42,9 +24,7 @@ g_Run0_Shop_ToWave20
 * метрики: смерть?
 * метрики: завершение рана
 *
-* не обновлять игру, если !windowIsFocused
-* реклама при нажатии на след волну (кажд 3 - 5 волн + обязательно, если игрок долго не продолжал игру)
-* tutor: кнопки передвижения с стрелочками + понятной рамкой, что это КНОПКА
+* не обновлять игру, что это КНОПКА
   СМ СКРИНШОТ, ЧТОБЫ В CLIP STUDIO ПЕРЕРИСОВАТЬ
 * tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 * джойстик просто чёрное кольцо (большое)
@@ -76,6 +56,7 @@ g_Run0_Shop_ToWave20
 *
 * RELEASED!
 =======================
+* порт на ВК
 * красиво намутить beautify translation / flash магаза/levelup/pickupitem
 * РЕКЛАМНОЕ ВИДЕО ОБЯЗАТЕЛЬНО
 * сильнее сжать аудио
