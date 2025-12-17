@@ -52,6 +52,7 @@ x реклама при нажатии на след волну (кажд 3 - 5 
 *
 * RELEASED!
 =======================
+* sfx: stop music & resume after pause (it's harder than it seems)
 * сакутиновая отправка event-ов яндекс аналитики
 * порт на ВК
 * красиво намутить beautify translation / flash магаза/levelup/pickupitem
