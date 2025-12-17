@@ -963,7 +963,7 @@ def process_images():
         bf_image.rectangle(160, radius=20, width=10),
         radius=1,
         color=(0, 0, 0, 0),
-    ).save(ART_TEXTURES_DIR / "ui_input_key.png")
+    ).save(ART_DIR / "src" / "ui_input_key.png")
 
     # Spritesheetifying props.
     for f in (ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):
