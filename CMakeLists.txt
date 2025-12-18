@@ -232,6 +232,16 @@ target_compile_definitions(imgui
         # IMGUI_ENABLE_FREETYPE
 )
 
+# base85.
+#-----------------------------------------------------------------------------------
+add_library(base85 STATIC "${CMAKE_SOURCE_DIR}/vendor/base85/base85.c")
+target_include_directories(base85 PUBLIC "${CMAKE_SOURCE_DIR}/vendor/base85")
+
+# base91.
+#-----------------------------------------------------------------------------------
+add_library(base91 STATIC "${CMAKE_SOURCE_DIR}/vendor/base91/base91.c")
+target_include_directories(base85 PUBLIC "${CMAKE_SOURCE_DIR}/vendor/base91")
+
 # game.
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
@@ -239,10 +249,11 @@ target_link_libraries(game
     PRIVATE
         # GameAnalytics
         SDL3-static
+        base85
         basisu_transcoder
         bgfx
-        bx
         box2d
+        bx
         imgui
         miniaudio
         readerwriterqueue
@@ -355,10 +366,11 @@ target_link_libraries(tests
     PRIVATE
         # GameAnalytics
         SDL3-static
+        base85
         basisu_transcoder
         bgfx
-        bx
         box2d
+        bx
         imgui
         miniaudio
         readerwriterqueue
