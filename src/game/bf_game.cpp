@@ -9341,8 +9341,8 @@ void DoUI() {
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
     SCOPED_CONTEXT(ControlsContext_NEW_RUN);
 
-    auto groupTop = MakeControlsGroup();
-    auto group    = MakeControlsGroup();
+    const auto groupTop = MakeControlsGroup();
+    const auto group    = MakeControlsGroup();
 
     LAMBDA (void, componentNewRunSelections, (auto innerLambda)) {
       CLAY({.layout{
@@ -9390,7 +9390,7 @@ void DoUI() {
           SDL_Scancode keys_[]{SDL_SCANCODE_ESCAPE, SDL_SCANCODE_BACKSPACE};
           VIEW_FROM_ARRAY_DANGER(keys);
 
-          const bool backed = componentButtonBack(groupTop);
+          const bool backed = componentButtonBack({.group = groupTop});
 
           if (backed) {
             PlaySound(Sound_UI_CLICK);
@@ -9407,7 +9407,7 @@ void DoUI() {
 
         BF_CLAY_SPACER_HORIZONTAL;
 
-        componentVolumeButtons();
+        componentVolumeButtons(groupTop);
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -9720,8 +9720,8 @@ void DoUI() {
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
     SCOPED_CONTEXT(ControlsContext_PICKED_UP_ITEM);
 
-    auto groupTop = MakeControlsGroup();
-    auto group    = MakeControlsGroup();
+    const auto groupTop = MakeControlsGroup();
+    const auto group    = MakeControlsGroup();
 
     CLAY({
       .layout{
@@ -9744,7 +9744,7 @@ void DoUI() {
         BF_CLAY_SPACER_HORIZONTAL;
         // componentButtonStats(groupTop);
         // componentButtonPause();
-        componentVolumeButtons();
+        componentVolumeButtons(groupTop);
 
         componentScreenName_floatingInTheCenter(Loc_UI_ITEM_FOUND, []() {});
       });
@@ -9827,9 +9827,9 @@ void DoUI() {
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
     SCOPED_CONTEXT(ControlsContext_UPGRADES);
 
-    auto groupTop      = MakeControlsGroup();
-    auto groupUpgrades = MakeControlsGroup();
-    auto groupReroll   = MakeControlsGroup();
+    const auto groupTop      = MakeControlsGroup();
+    const auto groupUpgrades = MakeControlsGroup();
+    const auto groupReroll   = MakeControlsGroup();
 
     CLAY({
       .layout{
@@ -9854,7 +9854,7 @@ void DoUI() {
         BF_CLAY_SPACER_HORIZONTAL;
         // componentButtonStats(groupTop);
         // componentButtonPause();
-        componentVolumeButtons();
+        componentVolumeButtons(groupTop);
 
         componentScreenName_floatingInTheCenter(Loc_UI_LEVEL_UP, []() {});
       });
@@ -10048,11 +10048,11 @@ void DoUI() {
     for (auto& x : groupsToBuy_)
       x = MakeControlsGroup();
     VIEW_FROM_ARRAY_DANGER(groupsToBuy);
-    auto groupGoNextWave = MakeControlsGroup();
-    auto groupWeapons    = MakeControlsGroup();
-    auto groupItems      = MakeControlsGroup();
-    auto groupItemArrows = MakeControlsGroup();
-    auto groupTop        = MakeControlsGroup();
+    const auto groupGoNextWave = MakeControlsGroup();
+    const auto groupWeapons    = MakeControlsGroup();
+    const auto groupItems      = MakeControlsGroup();
+    const auto groupItemArrows = MakeControlsGroup();
+    const auto groupTop        = MakeControlsGroup();
 
     // Columns.
     CLAY({
@@ -10114,7 +10114,7 @@ void DoUI() {
 
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             // componentButtonPause();
-            componentVolumeButtons();
+            componentVolumeButtons(groupTop);
 
             // Stats.
             // componentButtonStats(groupTop);
@@ -10364,10 +10364,10 @@ void DoUI() {
 
 #define BF_SCREEN_END_STATS_COLUMN_STICK_TO_RIGHT 1
 
-    auto groupTop             = MakeControlsGroup();
-    auto groupWeaponsAndItems = MakeControlsGroup();
-    auto groupItemArrows      = MakeControlsGroup();
-    auto groupButtons         = MakeControlsGroup();
+    const auto groupTop             = MakeControlsGroup();
+    const auto groupWeaponsAndItems = MakeControlsGroup();
+    const auto groupItemArrows      = MakeControlsGroup();
+    const auto groupButtons         = MakeControlsGroup();
 
     CLAY({
       .layout{
@@ -10405,7 +10405,7 @@ void DoUI() {
 
         componentButtonAchievements(groupTop);
         BF_CLAY_SPACER_HORIZONTAL;
-        componentVolumeButtons();
+        componentVolumeButtons(groupTop);
         // componentButtonPause();
         // componentButtonStats(groupTop);
       });
@@ -10571,10 +10571,10 @@ void DoUI() {
 
         componentStats2Wrapped();
 
-        auto groupTop             = MakeControlsGroup();
-        auto groupButtons         = MakeControlsGroup();
-        auto groupWeaponsAndItems = MakeControlsGroup();
-        auto groupItemArrows      = MakeControlsGroup();
+        const auto groupTop             = MakeControlsGroup();
+        const auto groupButtons         = MakeControlsGroup();
+        const auto groupWeaponsAndItems = MakeControlsGroup();
+        const auto groupItemArrows      = MakeControlsGroup();
 
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
@@ -10583,7 +10583,7 @@ void DoUI() {
           componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
             componentButtonAchievements(groupTop);
             BF_CLAY_SPACER_HORIZONTAL;
-            componentVolumeButtons();
+            componentVolumeButtons(groupTop);
             // componentButtonStats(groupTop);
           });
 
@@ -10793,6 +10793,7 @@ void DoUI() {
       FLOATING_BEAUTIFY;
       SCOPED_CONTEXT(ControlsContext_ACHIEVEMENTS);
 
+      const auto groupTop  = MakeControlsGroup();
       const auto groupGrid = MakeControlsGroup();
 
       CLAY({.layout{
@@ -10808,7 +10809,7 @@ void DoUI() {
 
         // "Achievements" label.
         componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-          if (componentButtonBack({.markControlAsDefault = true})) {
+          if (componentButtonBack({.markControlAsDefault = true, .group = groupTop})) {
             g.meta.showingAchievements                = false;
             g.meta.achievementsHoveredAchievement     = 0;
             g.meta.achievementsHoveredAchievementStep = 0;
@@ -11757,7 +11758,7 @@ void DoUI() {
               // const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) /
               // (f32)cycleDur;
 
-              const auto rectColor = Darken({49, 25, 23, 255}, 0.6f);
+              const Color rectColor{16, 12, 9, 255};
 
               FOR_RANGE (int, y, rectsYToSide) {
                 FOR_RANGE (int, n, 2) {
