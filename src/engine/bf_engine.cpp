@@ -3846,7 +3846,7 @@ void _Save(Arena* arena) {
   ZoneScoped;
   TEMP_USAGE(arena);
   auto fbb     = GameDumpStateForSaving();
-  auto encoded = EncodeToHex(fbb.GetBufferPointer(), fbb.GetSize(), arena);
+  auto encoded = EncodeToAscii(fbb.GetBufferPointer(), fbb.GetSize(), arena);
 
 #  if defined(BF_PLATFORM_WebYandex)
 
@@ -3907,7 +3907,7 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
       return SavedataLoadingType_NOT_LOADED;
 
     if (ge.meta.jsLoadedSavedata == 2) {
-      ge.meta.savedata = DecodeFromHex(savedata, arena);
+      ge.meta.savedata = DecodeFromAscii(savedata, arena);
       free((void*)savedata);
     }
 
