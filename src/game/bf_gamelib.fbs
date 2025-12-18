@@ -493,6 +493,7 @@ table GameLibrary {
 
     // AUTOMATIC_TEXTURE_BIND_START
     vignette_texture_id: int;
+    ui_background_rect_texture_id: int;
     ui_player_bar_top_texture_id: int;
     ui_player_bar_back_texture_id: int;
     ui_boss_bar_top_texture_id: int;
