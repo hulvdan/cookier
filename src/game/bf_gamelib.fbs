@@ -510,6 +510,8 @@ table GameLibrary {
     ui_icon_combine_texture_id: int;
     ui_icon_go_next_wave2_texture_id: int;
     ui_icon_pause_texture_id: int;
+    ui_icon_pause_small_texture_id: int;
+    ui_icon_achievements_texture_id: int;
     ui_icon_cancel_big_texture_id: int;
     ui_icon_cancel_texture_id: int;
     ui_icon_sell_texture_id: int;
