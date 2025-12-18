@@ -9152,9 +9152,19 @@ void DoUI() {
 
         FontBegin(&g.meta.fontUIBigOutlined);
 
-        CLAY({}) {
-          BF_CLAY_TEXT_LOCALIZED(Loc_UI_WAVE__CAPS);
-          BF_CLAY_TEXT(TextFormat(" %d", g.run.state.waveIndex + 1));
+        if (g.run.state.waveIndex > 0) {
+          BF_CLAY_IMAGE(
+            {.texID = glib->ui_icon_current_wave_texture_id()},
+            [&]() BF_FORCE_INLINE_LAMBDA {
+              CLAY({.layout{
+                BF_CLAY_SIZING_GROW_XY,
+                .padding{.top = GAP_SMALL / 2},
+                BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+              }}) {
+                BF_CLAY_TEXT(TextFormat("%d", g.run.state.waveIndex + 1));
+              }
+            }
+          );
         }
 
         BF_CLAY_IMAGE(
