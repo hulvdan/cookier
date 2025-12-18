@@ -18,8 +18,11 @@ x gear icon
 x переработать паузу
 x ui: задник должен быть opacity 100 (кроме деталки оружия)
 x ui: клёвые rect-ы мозайка
+x achievments can move using arrows to top
 
-* achievments can move using arrows to top
+* fix: нельзя пробелом нажать на confirm new run в модалке
+* fix: когда геймплей, открыл паузу, открыл модалку new run
+  -> escape заклывает паузу, а должен - модалку
 * ui: убрать backgorund-ы у кнопок верхних
 *
 * tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
