@@ -161,6 +161,7 @@ VIEW_FROM_ARRAY_DANGER(PLAYER_WEAPONS_DRAW_Z);
 
 constexpr int TOTAL_TIERS = 4;
 
+constexpr Color SCREEN_OVERLAY_COLOR     = BLACK;
 constexpr Color MODAL_OVERLAY_COLOR      = BLACK;
 constexpr f32   MODAL_OVERLAY_COLOR_FADE = 0.75f;
 
