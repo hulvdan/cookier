@@ -135,13 +135,16 @@ set_target_properties(box2d
         COMPILE_WARNING_AS_ERROR OFF
 )
 
-# basisu_transcoder.
+# zstd.
 #-----------------------------------------------------------------------------------
 add_library(zstd STATIC
-    "${CMAKE_SOURCE_DIR}/vendor/basis_universal/zstd/zstd.h"
-    "${CMAKE_SOURCE_DIR}/vendor/basis_universal/zstd/zstd.c"
+    "${CMAKE_SOURCE_DIR}/vendor/zstd/zstd.h"
+    "${CMAKE_SOURCE_DIR}/vendor/zstd/zstd.c"
 )
-target_include_directories(zstd PUBLIC "${CMAKE_SOURCE_DIR}/vendor/basis_universal/zstd")
+target_include_directories(zstd PUBLIC "${CMAKE_SOURCE_DIR}/vendor/zstd")
+
+# basisu_transcoder.
+#-----------------------------------------------------------------------------------
 add_library(basisu_transcoder STATIC
     "${CMAKE_SOURCE_DIR}/vendor/basis_universal/transcoder/basisu_transcoder.h"
     "${CMAKE_SOURCE_DIR}/vendor/basis_universal/transcoder/basisu_transcoder.cpp"
@@ -232,16 +235,6 @@ target_compile_definitions(imgui
         # IMGUI_ENABLE_FREETYPE
 )
 
-# base85.
-#-----------------------------------------------------------------------------------
-add_library(base85 STATIC "${CMAKE_SOURCE_DIR}/vendor/base85/base85.c")
-target_include_directories(base85 PUBLIC "${CMAKE_SOURCE_DIR}/vendor/base85")
-
-# base91.
-#-----------------------------------------------------------------------------------
-add_library(base91 STATIC "${CMAKE_SOURCE_DIR}/vendor/base91/base91.c")
-target_include_directories(base85 PUBLIC "${CMAKE_SOURCE_DIR}/vendor/base91")
-
 # game.
 #-----------------------------------------------------------------------------------
 add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
@@ -249,7 +242,6 @@ target_link_libraries(game
     PRIVATE
         # GameAnalytics
         SDL3-static
-        base85
         basisu_transcoder
         bgfx
         box2d
@@ -258,6 +250,7 @@ target_link_libraries(game
         miniaudio
         readerwriterqueue
         vendor_and_codegen
+        zstd
 )
 if ("${PLATFORM}" STREQUAL "Win")
     target_link_libraries(game
@@ -366,7 +359,6 @@ target_link_libraries(tests
     PRIVATE
         # GameAnalytics
         SDL3-static
-        base85
         basisu_transcoder
         bgfx
         box2d
@@ -375,6 +367,7 @@ target_link_libraries(tests
         miniaudio
         readerwriterqueue
         vendor_and_codegen
+        zstd
 )
 target_include_directories(tests
     PRIVATE
