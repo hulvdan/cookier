@@ -11,6 +11,7 @@ WORKING SINCE 2025-09-07
 
 x заменить WAVE сверху на иконку меча
 
+* web better encoding
 * пауза из любого места (иконка gear)
 * tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 *
@@ -26,7 +27,6 @@ x заменить WAVE сверху на иконку меча
   (magic)HVSV|(save version)1|(game version)1.31|(data)XXX
 *
 * пробежаться по чеклисту от сакутина
-*
 *
 * sfx: проверить chrome ios
 *

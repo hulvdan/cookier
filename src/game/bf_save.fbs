@@ -40,6 +40,8 @@ table Build {
 }
 
 table Save {
+    version: int = 1;
+
     random_state: uint;
     runs_won: int;
     runs_lost: int;
