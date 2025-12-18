@@ -854,6 +854,9 @@ enum ScreenType {  ///
   ScreenType_END,
 };
 
+const ScreenType PAUSABLE_SCREENS_[]{ScreenType_GAMEPLAY};
+VIEW_FROM_ARRAY_DANGER(PAUSABLE_SCREENS);
+
 struct ShopItem {  ///
   WeaponType weapon = {};
   ItemType   item   = {};
@@ -1034,13 +1037,13 @@ struct ControlsGroup {  ///
 
 enum ControlsContext {  ///
   ControlsContext_INVALID,
-  ControlsContext_PAUSE,
   ControlsContext_ACHIEVEMENTS,
   ControlsContext_NEW_RUN,
   ControlsContext_PICKED_UP_ITEM,
   ControlsContext_UPGRADES,
   ControlsContext_SHOP,
   ControlsContext_END,
+  ControlsContext_MODAL_PAUSE,
   ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
   ControlsContext_MODAL_STATS,
   ControlsContext_MODAL_CONFIRM_RESTART,
@@ -1051,8 +1054,11 @@ enum ControlsContext {  ///
 };
 
 const ControlsContext CONTROLS_CONTEXT_MODALS_[]{
+  // Lower = more priority.
   ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
   ControlsContext_MODAL_STATS,
+  ControlsContext_MODAL_PAUSE,
+  ControlsContext_ACHIEVEMENTS,
   ControlsContext_MODAL_CONFIRM_RESTART,
   ControlsContext_MODAL_CONFIRM_NEW_RUN,
   ControlsContext_MODAL_CONFIRM_QUIT,
@@ -1142,12 +1148,12 @@ struct GameData {
       Vector2 calculatedDir = {};
     } stickControl;
 
-    bool        paused                                   = false;
-    bool        scheduledTogglePause                     = false;
-    bool        pausedShowingAchievements                = false;
-    int         pausedAchievementsHoveredAchievement     = 0;
-    int         pausedAchievementsHoveredAchievementStep = 0;
-    FrameVisual showingStats                             = {};
+    bool        paused                             = false;
+    bool        scheduledTogglePause               = false;
+    bool        showingAchievements                = false;
+    int         achievementsHoveredAchievement     = 0;
+    int         achievementsHoveredAchievementStep = 0;
+    FrameVisual showingStats                       = {};
 
     bool        scheduledSave = false;
     FrameVisual lastSaveAt    = {};
@@ -8809,12 +8815,111 @@ void DoUI() {
         * ASSETS_TO_LOGICAL_RATIO
       + 2 * GAP_SMALL;
 
+  const auto groupTop = MakeControlsGroup();
+
+  LAMBDA (void, componentButtonAchievements, ()) {  ///
+    const bool clicked = componentButton(
+      {.id = CLAY_ID("button_achievements"), .group = groupTop},
+      [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_IMAGE(
+          {.texID = glib->ui_icon_achievements_texture_id()},
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            auto percent = GetAchievementsCompletedPercent();
+            auto color   = palTextBezhevy;
+            if (percent >= 100)
+              color = palTextGreen;
+
+            CLAY({.layout{
+              BF_CLAY_SIZING_GROW_XY,
+              BF_CLAY_CHILD_ALIGNMENT_CENTER_BOTTOM,
+            }}) {
+              FontBegin(&g.meta.fontUIBigOutlined);
+              BF_CLAY_TEXT(TextFormat("%d%%", percent), {.color = color});
+              FontEnd();
+            }
+          }
+        );
+      }
+    );
+
+    if (clicked) {
+      PlaySound(Sound_UI_CLICK);
+      g.meta.showingAchievements = true;
+    }
+  };
+
+  LAMBDA (void, componentButtonPause, ()) {  ///
+    const bool clicked = componentButton(
+      {.id = CLAY_ID("button_pause"), .group = groupTop},
+      [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_IMAGE({.texID = glib->ui_icon_pause_small_texture_id()});
+      }
+    );
+
+    if (clicked) {
+      PlaySound(Sound_UI_CLICK);
+      g.meta.scheduledTogglePause = true;
+    }
+  };
+
+  struct ComponentButtonBackData {  ///
+    bool markControlAsDefault = {};
+  };
+
+  LAMBDA (bool, componentButtonBack, (ComponentButtonBackData data = {})) {  ///
+    const auto id      = CLAY_ID("button_back");
+    const bool clicked = componentButton(
+      {.id = id, .group = groupTop, .keys = KEYS_CANCEL},
+      [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+        BF_CLAY_IMAGE({.texID = glib->ui_icon_back_big_texture_id()});
+      }
+    );
+    if (data.markControlAsDefault)
+      markControlAsDefault(id);
+    if (clicked)
+      PlaySound(Sound_UI_CLICK);
+    return clicked;
+  };
+
+  LAMBDA (void, componentVolumeButtons, ()) {  ///
+    int nextVolumeButtonNumber = 1;
+    LAMBDA (void, componentButtonVolume, (int iconTexID, int* var)) {
+      const bool clicked = componentButton(
+        {
+          .id                = CLAY_IDI("volume_sfx", nextVolumeButtonNumber),
+          .group             = groupTop,
+          .paddingHorizontal = (u16)((nextVolumeButtonNumber == 1) ? GAP_BIG : GAP_SMALL),
+        },
+        [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
+          BF_CLAY_IMAGE({.texID = iconTexID});
+          BF_CLAY_IMAGE({
+            .texID = glib->ui_icon_volume_bands_texture_ids()->Get(MAX(0, *var - 1)),
+            .color = Fade(WHITE, (*var ? 1 : 0)),
+          });
+        }
+      );
+      if (clicked) {
+        *var = *var - 1;
+        if (*var < 0)
+          *var = 3;
+        PlaySound(Sound_UI_CLICK);
+        Save();
+      }
+      nextVolumeButtonNumber++;
+    };
+
+    componentButtonVolume(glib->ui_icon_sfx_texture_id(), &g.player.volumeSFX);
+
+    componentButtonVolume(glib->ui_icon_music_texture_id(), &g.player.volumeMusic);
+  };
+
   LAMBDA (void, componentTopRow, (auto innerLambda)) {  ///
     CLAY({.layout{
       .sizing{
         .width  = CLAY_SIZING_GROW(0),
         .height = CLAY_SIZING_FIXED(topRowHeight),
       },
+      .childGap = GAP_SMALL,
       BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
     }}) {
       innerLambda();
@@ -9040,42 +9145,6 @@ void DoUI() {
               }
             }
           });
-
-          // Pause button.
-          CLAY({
-            .floating{
-              .offset{GAP_BIG, 0},
-              .zIndex = zIndex,
-              .attachPoints{
-                .element = CLAY_ATTACH_POINT_LEFT_CENTER,
-                .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
-              },
-              .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-              .attachTo           = CLAY_ATTACH_TO_PARENT,
-            },
-          }) {
-            FLOATING_BEAUTIFY;
-
-            const bool canPause
-              = (g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused;
-
-            auto color = WHITE;
-            if (canPause && Clay_Hovered())
-              color = palGreen;
-
-            BF_CLAY_IMAGE(
-              {
-                .texID = glib->ui_icon_pause_texture_id(),
-                .color = Fade(color, EaseOutQuad(g.meta.pauseButtonFadeProgress)),
-              },
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                if (clickOrTouchPressed() && canPause) {
-                  g.meta.scheduledTogglePause = true;
-                  PlaySound(Sound_UI_CLICK);
-                }
-              }
-            );
-          }
         }
 
         // Coins.
@@ -9127,6 +9196,41 @@ void DoUI() {
             {.color = Fade(palTextWhite, fade)}
           );
         }
+      }
+
+      // Pause button and picked up chests.
+      CLAY({
+        .floating{
+          .zIndex = zIndex,
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_RIGHT_TOP,
+            .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
+          },
+          .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+          .attachTo           = CLAY_ATTACH_TO_PARENT,
+        },
+      }) {
+        FLOATING_BEAUTIFY;
+
+        const bool canPause
+          = (g.run.state.screen == ScreenType_GAMEPLAY) && !g.meta.paused;
+
+        auto color = WHITE;
+        if (canPause && Clay_Hovered())
+          color = palGreen;
+
+        BF_CLAY_IMAGE(
+          {
+            .texID = glib->ui_icon_pause_texture_id(),
+            .color = Fade(color, EaseOutQuad(g.meta.pauseButtonFadeProgress)),
+          },
+          [&]() BF_FORCE_INLINE_LAMBDA {
+            if (clickOrTouchPressed() && canPause) {
+              g.meta.scheduledTogglePause = true;
+              PlaySound(Sound_UI_CLICK);
+            }
+          }
+        );
       }
 
       FontEnd();
@@ -9197,17 +9301,18 @@ void DoUI() {
       CLAY({
         .layout{.childGap = GAP_SMALL, .layoutDirection = CLAY_TOP_TO_BOTTOM},
         .floating{
+          .offset{0, GAP_SMALL},
           .zIndex = zIndex,
           .attachPoints{
-            .element = CLAY_ATTACH_POINT_RIGHT_TOP,
-            .parent  = CLAY_ATTACH_POINT_RIGHT_TOP,
+            .element = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+            .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
           },
           .attachTo = CLAY_ATTACH_TO_PARENT,
         },
       }) {
         FLOATING_BEAUTIFY;
 
-        FOR_RANGE (int, i, g.run.state.chests) {
+        FOR_RANGE (int, i, MIN(11, g.run.state.chests)) {
           const auto fb = fb_pickupables->Get(PickupableType_CHEST);
           BF_CLAY_IMAGE({
             .texID
@@ -9224,8 +9329,7 @@ void DoUI() {
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
     SCOPED_CONTEXT(ControlsContext_NEW_RUN);
 
-    auto groupTop = MakeControlsGroup();
-    auto group    = MakeControlsGroup();
+    auto group = MakeControlsGroup();
 
     LAMBDA (void, componentNewRunSelections, (auto innerLambda)) {
       CLAY({.layout{
@@ -9265,18 +9369,15 @@ void DoUI() {
       auto& p = g.player;
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+        componentButtonAchievements();
+
         componentScreenName_floatingInTheCenter(Loc_UI_NEW_RUN, []() {});
 
         if (g.ui.newRunStep > 0) {
           SDL_Scancode keys_[]{SDL_SCANCODE_ESCAPE, SDL_SCANCODE_BACKSPACE};
           VIEW_FROM_ARRAY_DANGER(keys);
 
-          const bool backed = componentButton(
-            {.id = CLAY_ID("button_back"), .group = groupTop, .keys = keys},
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_IMAGE({.texID = glib->ui_icon_back_big_texture_id()});
-            }
-          );
+          const bool backed = componentButtonBack();
 
           if (backed) {
             PlaySound(Sound_UI_CLICK);
@@ -9290,6 +9391,10 @@ void DoUI() {
               g.ui.newRunSelectedBuildAt = {};
           }
         }
+
+        BF_CLAY_SPACER_HORIZONTAL;
+
+        componentVolumeButtons();
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -9602,8 +9707,7 @@ void DoUI() {
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
     SCOPED_CONTEXT(ControlsContext_PICKED_UP_ITEM);
 
-    auto group    = MakeControlsGroup();
-    auto groupTop = MakeControlsGroup();
+    auto group = MakeControlsGroup();
 
     CLAY({
       .layout{
@@ -9621,9 +9725,12 @@ void DoUI() {
       componentStats2Wrapped();
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+        componentButtonAchievements();
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
         // componentButtonStats(groupTop);
+        // componentButtonPause();
+        componentVolumeButtons();
 
         componentScreenName_floatingInTheCenter(Loc_UI_ITEM_FOUND, []() {});
       });
@@ -9706,7 +9813,6 @@ void DoUI() {
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
     SCOPED_CONTEXT(ControlsContext_UPGRADES);
 
-    auto groupStats    = MakeControlsGroup();
     auto groupUpgrades = MakeControlsGroup();
     auto groupReroll   = MakeControlsGroup();
 
@@ -9727,9 +9833,13 @@ void DoUI() {
       componentStats2Wrapped();
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+        componentButtonAchievements();
+
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
-        // componentButtonStats(groupStats);
+        // componentButtonStats(groupTop);
+        // componentButtonPause();
+        componentVolumeButtons();
 
         componentScreenName_floatingInTheCenter(Loc_UI_LEVEL_UP, []() {});
       });
@@ -9910,10 +10020,10 @@ void DoUI() {
       BF_CLAY_SPACER_VERTICAL;
     }
 
-    ControlsGroupConnect(groupStats, Direction_DOWN, groupUpgrades);
+    ControlsGroupConnect(groupTop, Direction_DOWN, groupUpgrades);
     ControlsGroupConnect(groupUpgrades, Direction_RIGHT, groupUpgrades);
     ControlsGroupConnect(groupUpgrades, Direction_DOWN, groupReroll);
-    ControlsGroupConnect(groupReroll, Direction_DOWN, groupStats);
+    ControlsGroupConnect(groupReroll, Direction_DOWN, groupTop);
   }
   // Shop.
   else if (g.run.state.screen == ScreenType_SHOP) {  ///
@@ -9923,7 +10033,6 @@ void DoUI() {
     for (auto& x : groupsToBuy_)
       x = MakeControlsGroup();
     VIEW_FROM_ARRAY_DANGER(groupsToBuy);
-    auto groupTop        = MakeControlsGroup();
     auto groupGoNextWave = MakeControlsGroup();
     auto groupWeapons    = MakeControlsGroup();
     auto groupItems      = MakeControlsGroup();
@@ -9952,6 +10061,8 @@ void DoUI() {
       }}) {
         // 1. Wave, coins, reroll.
         componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+          componentButtonAchievements();
+
           // Coins.
           componentPlayerCoins();
 
@@ -9983,6 +10094,11 @@ void DoUI() {
                 PlaySound(Sound_UI_ERROR);
               }
             }
+          }
+
+          CLAY({.layout{.childGap = GAP_SMALL}}) {
+            // componentButtonPause();
+            componentVolumeButtons();
 
             // Stats.
             // componentButtonStats(groupTop);
@@ -10230,7 +10346,8 @@ void DoUI() {
   else if (g.run.state.screen == ScreenType_END) {  ///
     SCOPED_CONTEXT(ControlsContext_END);
 
-    auto groupTop             = MakeControlsGroup();
+#define BF_SCREEN_END_STATS_COLUMN_STICK_TO_RIGHT 1
+
     auto groupWeaponsAndItems = MakeControlsGroup();
     auto groupItemArrows      = MakeControlsGroup();
     auto groupButtons         = MakeControlsGroup();
@@ -10249,6 +10366,10 @@ void DoUI() {
         BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
       } BF_CLAY_CUSTOM_END,
     }) {
+#if BF_SCREEN_END_STATS_COLUMN_STICK_TO_RIGHT
+      componentStats2Wrapped();
+#endif
+
       // Header. Run Won / Lost, Wave.
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
         const int locale = (g.run.state.won ? Loc_UI_WON : Loc_UI_LOST);
@@ -10265,7 +10386,10 @@ void DoUI() {
           }
         );
 
-        // BF_CLAY_SPACER_HORIZONTAL;
+        componentButtonAchievements();
+        BF_CLAY_SPACER_HORIZONTAL;
+        componentVolumeButtons();
+        // componentButtonPause();
         // componentButtonStats(groupTop);
       });
 
@@ -10323,16 +10447,18 @@ void DoUI() {
               .detailsBelow = 0,
             });
           }
-
-          componentStats2Wrapped(
-            {
-              .element = CLAY_ATTACH_POINT_LEFT_CENTER,
-              .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
-            },
-            {GAP_BIG * 3, 0}
-          );
         }
       }
+
+#if !BF_SCREEN_END_STATS_COLUMN_STICK_TO_RIGHT
+      componentStats2Wrapped(
+        {
+          .element = CLAY_ATTACH_POINT_LEFT_CENTER,
+          .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
+        },
+        {GAP_BIG * 3, 0}
+      );
+#endif
 
       BF_CLAY_SPACER_VERTICAL;
 
@@ -10343,7 +10469,7 @@ void DoUI() {
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
       }}) {
         bool restarted = false;
-        if (!g.run.state.won) {
+        if (0 && !g.run.state.won) {
           restarted = componentTextButton(
             {
               .id    = CLAY_ID("button_end_restart"),
@@ -10398,7 +10524,7 @@ void DoUI() {
   else
     INVALID_PATH;
 
-  // Pause / Achievements.
+  // Pause.
   if (g.meta.paused) {
     CLAY(  ///
       {
@@ -10423,262 +10549,23 @@ void DoUI() {
     ) {
       FLOATING_BEAUTIFY;
 
-      // Achievements.
-      if (g.meta.pausedShowingAchievements) {  ///
-        SCOPED_CONTEXT(ControlsContext_ACHIEVEMENTS);
-
-        const auto groupBackButton = MakeControlsGroup();
-        const auto groupGrid       = MakeControlsGroup();
-
-        CLAY({.layout{
-          BF_CLAY_SIZING_GROW_XY,
-          .childGap = GAP_BIG,
-          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }}) {
-          const auto fb_order   = glib->achievements_order();
-          int        totalSlots = fb_order->size();
-
-          // int currentAchievement = 1;
-          // int currentStep        = 0;
-          int shownSlots = 0;
-
-          // {
-          //   int achievementIndex = -1;
-          //   for (auto fb : *fb_achievements) {
-          //     achievementIndex++;
-          //
-          //     auto fb_steps = fb->steps();
-          //     if (fb_steps) {
-          //       auto stepsCount = (int)fb_steps->size();
-          //       totalSlots += stepsCount;
-          //     }
-          //   }
-          // }
-
-          // "Achievements" label.
-          componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-            componentScreenName_floatingInTheCenter(
-              Loc_UI_ACHIEVEMENTS,
-              [&]() BF_FORCE_INLINE_LAMBDA {
-                int percent = GetAchievementsCompletedPercent();
-
-                if (percent > 0) {
-                  auto color = palTextBezhevy;
-                  if (percent >= 100)
-                    color = palTextGreen;
-                  BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = color});
-                }
-              }
-            );
-          });
-
-          BF_CLAY_SPACER_VERTICAL;
-
-          const int achievementsY = CeilDivision((int)totalSlots, ACHIEVEMENTS_X);
-
-          // Columns.
-          CLAY({.layout{
-            .childGap = GAP_BIG,
-            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-          }}) {
-            // Left column. Grid of achievements.
-            CLAY({.layout{
-              .childGap = GAP_BIG,
-              BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            }}) {
-              CLAY({
-                .layout{
-                  BF_CLAY_PADDING_ALL(PADDING_FRAME),
-                  .childGap        = GAP_SMALL,
-                  .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                },
-                BF_CLAY_CUSTOM_BEGIN{
-                  BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
-                } BF_CLAY_CUSTOM_END,
-              }) {
-                g.meta.pausedAchievementsHoveredAchievement     = 0;
-                g.meta.pausedAchievementsHoveredAchievementStep = 0;
-
-                FOR_RANGE (int, y, achievementsY) {
-                  ControlsGroupNewRow(groupGrid);
-
-                  CLAY({.layout{.childGap = GAP_SMALL}})
-                  FOR_RANGE (int, x, ACHIEVEMENTS_X) {
-                    if (shownSlots >= totalSlots)
-                      break;
-
-                    const auto t   = y * ACHIEVEMENTS_X + x;
-                    const auto fb_ = fb_order->Get(t);
-                    const auto currentAchievement
-                      = (AchievementType)fb_->achievement_type();
-                    const int currentStep = fb_->step_index();
-
-                    const bool isLocked
-                      = IsAchievementStepLocked(currentAchievement, currentStep);
-
-                    const auto fb      = fb_achievements->Get(currentAchievement);
-                    const auto fb_step = fb->steps()->Get(currentStep);
-
-                    bool canHover = true;
-
-                    CLAY({}) {
-                      int texID = 0;
-                      int tier  = 0;
-
-                      if (isLocked)
-                        texID = glib->ui_item_locked_texture_id();
-                      else
-                        tier = 3;
-
-                      auto id = CLAY_IDI(
-                        "paused_achievement", 100 * (int)currentAchievement + currentStep
-                      );
-
-                      componentUniversalSlot({
-                        .id    = id,
-                        .group = groupGrid,
-                        .build
-                        = (BuildType)(isLocked ? 0 : fb_step->unlocks_build_type()),
-                        .item = (ItemType)(isLocked ? 0 : fb_step->unlocks_item_type()),
-                        .weapon
-                        = (WeaponType)(isLocked ? 0 : fb_step->unlocks_weapon_type()),
-                        .hidden   = HiddenType_SHOW_LOCK,
-                        .tier     = tier,
-                        .canHover = canHover,
-                      });
-
-                      if ((canHover                                   //
-                           && !g.meta.playerUsesKeyboardOrController  //
-                           && Clay_Hovered())
-                          || (id.id == controlsContexts[currentContext].focused.id))
-                      {
-                        g.meta.pausedAchievementsHoveredAchievement = currentAchievement;
-                        g.meta.pausedAchievementsHoveredAchievementStep = currentStep;
-                      }
-                    }
-
-                    shownSlots++;
-                  }
-                }
-              }
-            }
-
-            // Right column. Hover data.
-            CLAY({.layout{
-              .childGap        = GAP_BIG,
-              .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            }}) {
-              const BFGame::Achievement*     fb       = nullptr;
-              const BFGame::AchievementStep* fb_step  = nullptr;
-              bool                           isLocked = false;
-
-              if (g.meta.pausedAchievementsHoveredAchievement) {
-                fb = fb_achievements->Get(g.meta.pausedAchievementsHoveredAchievement);
-                fb_step
-                  = fb->steps()->Get(g.meta.pausedAchievementsHoveredAchievementStep);
-                isLocked = IsAchievementStepLocked(
-                  (AchievementType)g.meta.pausedAchievementsHoveredAchievement,
-                  g.meta.pausedAchievementsHoveredAchievementStep
-                );
-              }
-
-              // Achievement's name and description.
-              componentAchievement(
-                (AchievementType)g.meta.pausedAchievementsHoveredAchievement,
-                g.meta.pausedAchievementsHoveredAchievementStep,
-                false
-              );
-
-              // Achievement's reward.
-              componentUniversalCard(ComponentUniversalCardData{
-                .build
-                = (BuildType)((fb_step && !isLocked) ? fb_step->unlocks_build_type() : 0),
-                .item
-                = (ItemType)((fb_step && !isLocked) ? fb_step->unlocks_item_type() : 0),
-                .weapon
-                = (WeaponType)((fb_step && !isLocked) ? fb_step->unlocks_weapon_type() : 0
-                ),
-                .hidden         = HiddenType_SHOW_LOCK,
-                .setFixedHeight = true,
-              });
-            }
-          }
-
-          // Back button.
-          const auto backButtonID = CLAY_ID("button_pause_achievements_back");
-          const bool back         = componentTextButton(
-            {.id = backButtonID, .group = groupBackButton, .keys = KEYS_CANCEL},
-            [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-              BF_CLAY_TEXT_LOCALIZED(Loc_UI_BACK__CAPS, {.color = textColor});
-            }
-          );
-          markControlAsDefault(backButtonID);
-
-          if (back) {
-            PlaySound(Sound_UI_CLICK);
-            g.meta.pausedShowingAchievements                = false;
-            g.meta.pausedAchievementsHoveredAchievement     = 0;
-            g.meta.pausedAchievementsHoveredAchievementStep = 0;
-          }
-
-          BF_CLAY_SPACER_VERTICAL;
-        }
-
-        ControlsGroupConnect(groupBackButton, Direction_UP, groupGrid);
-        ControlsGroupConnect(groupGrid, Direction_UP, groupBackButton);
-      }
-      // Pause.
-      else {  ///
-        SCOPED_CONTEXT(ControlsContext_PAUSE);
+      if (!g.meta.showingAchievements) {  ///
+        SCOPED_CONTEXT(ControlsContext_MODAL_PAUSE);
 
         componentStats2Wrapped();
 
         auto groupButtons         = MakeControlsGroup();
         auto groupWeaponsAndItems = MakeControlsGroup();
         auto groupItemArrows      = MakeControlsGroup();
-        auto groupTop             = MakeControlsGroup();
 
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+            componentButtonAchievements();
             BF_CLAY_SPACER_HORIZONTAL;
-
-            int nextVolumeButtonNumber = 1;
-            LAMBDA (void, componentButtonVolume, (int iconTexID, int* var)) {
-              const bool clicked = componentButton(
-                {
-                  .id    = CLAY_IDI("volume_sfx", nextVolumeButtonNumber++),
-                  .group = groupTop,
-                },
-                [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-                  BF_CLAY_IMAGE({.texID = iconTexID});
-                  BF_CLAY_IMAGE({
-                    .texID
-                    = glib->ui_icon_volume_bands_texture_ids()->Get(MAX(0, *var - 1)),
-                    .color = Fade(WHITE, (*var ? 1 : 0)),
-                  });
-                }
-              );
-              if (clicked) {
-                *var = *var - 1;
-                if (*var < 0)
-                  *var = 3;
-                PlaySound(Sound_UI_CLICK);
-                Save();
-              }
-            };
-
-            componentButtonVolume(glib->ui_icon_sfx_texture_id(), &g.player.volumeSFX);
-
-            CLAY({.layout{.sizing{.width = GAP_SMALL}}}) {}
-
-            componentButtonVolume(
-              glib->ui_icon_music_texture_id(), &g.player.volumeMusic
-            );
+            componentVolumeButtons();
             // componentButtonStats(groupTop);
           });
 
@@ -10730,7 +10617,9 @@ void DoUI() {
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool restarted = componentTextButton(
+                bool restarted = false;
+#if 0
+                restarted = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_restart"),
                     .group = groupButtons,
@@ -10740,6 +10629,7 @@ void DoUI() {
                     BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, {.color = textColor});
                   }
                 );
+#endif
 
                 ControlsGroupNewRow(groupButtons);
 
@@ -10756,7 +10646,9 @@ void DoUI() {
 
                 ControlsGroupNewRow(groupButtons);
 
-                const bool achievements = componentTextButton(
+                bool achievements = false;
+#if 0
+                achievements = componentTextButton(
                   {
                     .id    = CLAY_ID("button_pause_achievements"),
                     .group = groupButtons,
@@ -10771,6 +10663,7 @@ void DoUI() {
                       BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = textColor});
                   }
                 );
+#endif
 
                 bool quit = false;
 #if defined(SDL_PLATFORM_DESKTOP)
@@ -10795,7 +10688,7 @@ void DoUI() {
                 if (newRun)
                   g.meta.confirmingNewRun = true;
                 if (achievements)
-                  g.meta.pausedShowingAchievements = true;
+                  g.meta.showingAchievements = true;
                 if (quit)
                   ge.meta.quitRequested = true;
 
@@ -10855,6 +10748,207 @@ void DoUI() {
         ControlsGroupConnect(groupWeaponsAndItems, Direction_RIGHT, groupItemArrows);
         ControlsGroupConnect(groupItemArrows, Direction_RIGHT, groupWeaponsAndItems);
       }
+    }
+  }
+
+  // Achievements.
+  if (g.meta.showingAchievements) {
+    CLAY(  ///
+      {
+        .layout{
+          BF_CLAY_SIZING_GROW_XY,
+          BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+            PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          ),
+        },
+        .floating{
+          .zIndex = zIndex,
+          .attachPoints{
+            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+          },
+          .attachTo = CLAY_ATTACH_TO_PARENT,
+        },
+        BF_CLAY_CUSTOM_BEGIN{
+          BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        } BF_CLAY_CUSTOM_END,
+      }
+    ) {
+      FLOATING_BEAUTIFY;
+      SCOPED_CONTEXT(ControlsContext_ACHIEVEMENTS);
+
+      const auto groupBackButton = MakeControlsGroup();
+      const auto groupGrid       = MakeControlsGroup();
+
+      CLAY({.layout{
+        BF_CLAY_SIZING_GROW_XY,
+        .childGap = GAP_BIG,
+        BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+      }}) {
+        const auto fb_order   = glib->achievements_order();
+        int        totalSlots = fb_order->size();
+
+        int shownSlots = 0;
+
+        // "Achievements" label.
+        componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
+          if (componentButtonBack({.markControlAsDefault = true})) {
+            g.meta.showingAchievements                = false;
+            g.meta.achievementsHoveredAchievement     = 0;
+            g.meta.achievementsHoveredAchievementStep = 0;
+          }
+
+          componentScreenName_floatingInTheCenter(
+            Loc_UI_ACHIEVEMENTS,
+            [&]() BF_FORCE_INLINE_LAMBDA {
+              int percent = GetAchievementsCompletedPercent();
+
+              if (percent > 0) {
+                auto color = palTextBezhevy;
+                if (percent >= 100)
+                  color = palTextGreen;
+                BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = color});
+              }
+            }
+          );
+        });
+
+        BF_CLAY_SPACER_VERTICAL;
+
+        const int achievementsY = CeilDivision((int)totalSlots, ACHIEVEMENTS_X);
+
+        // Columns.
+        CLAY({.layout{
+          .childGap = GAP_BIG,
+          BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+        }}) {
+          // Left column. Grid of achievements.
+          CLAY({.layout{
+            .childGap = GAP_BIG,
+            BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
+            CLAY({
+              .layout{
+                BF_CLAY_PADDING_ALL(PADDING_FRAME),
+                .childGap        = GAP_SMALL,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+              },
+              BF_CLAY_CUSTOM_BEGIN{
+                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+              } BF_CLAY_CUSTOM_END,
+            }) {
+              g.meta.achievementsHoveredAchievement     = 0;
+              g.meta.achievementsHoveredAchievementStep = 0;
+
+              FOR_RANGE (int, y, achievementsY) {
+                ControlsGroupNewRow(groupGrid);
+
+                CLAY({.layout{.childGap = GAP_SMALL}})
+                FOR_RANGE (int, x, ACHIEVEMENTS_X) {
+                  if (shownSlots >= totalSlots)
+                    break;
+
+                  const auto t   = y * ACHIEVEMENTS_X + x;
+                  const auto fb_ = fb_order->Get(t);
+                  const auto currentAchievement
+                    = (AchievementType)fb_->achievement_type();
+                  const int currentStep = fb_->step_index();
+
+                  const bool isLocked
+                    = IsAchievementStepLocked(currentAchievement, currentStep);
+
+                  const auto fb      = fb_achievements->Get(currentAchievement);
+                  const auto fb_step = fb->steps()->Get(currentStep);
+
+                  bool canHover = true;
+
+                  CLAY({}) {
+                    int texID = 0;
+                    int tier  = 0;
+
+                    if (isLocked)
+                      texID = glib->ui_item_locked_texture_id();
+                    else
+                      tier = 3;
+
+                    auto id = CLAY_IDI(
+                      "paused_achievement", 100 * (int)currentAchievement + currentStep
+                    );
+
+                    componentUniversalSlot({
+                      .id    = id,
+                      .group = groupGrid,
+                      .build = (BuildType)(isLocked ? 0 : fb_step->unlocks_build_type()),
+                      .item  = (ItemType)(isLocked ? 0 : fb_step->unlocks_item_type()),
+                      .weapon
+                      = (WeaponType)(isLocked ? 0 : fb_step->unlocks_weapon_type()),
+                      .hidden   = HiddenType_SHOW_LOCK,
+                      .tier     = tier,
+                      .canHover = canHover,
+                    });
+
+                    if ((canHover                                   //
+                         && !g.meta.playerUsesKeyboardOrController  //
+                         && Clay_Hovered())
+                        || (id.id == controlsContexts[currentContext].focused.id))
+                    {
+                      g.meta.achievementsHoveredAchievement     = currentAchievement;
+                      g.meta.achievementsHoveredAchievementStep = currentStep;
+                    }
+                  }
+
+                  shownSlots++;
+                }
+              }
+            }
+          }
+
+          // Right column. Hover data.
+          CLAY({.layout{
+            .childGap        = GAP_BIG,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
+            const BFGame::Achievement*     fb       = nullptr;
+            const BFGame::AchievementStep* fb_step  = nullptr;
+            bool                           isLocked = false;
+
+            if (g.meta.achievementsHoveredAchievement) {
+              fb       = fb_achievements->Get(g.meta.achievementsHoveredAchievement);
+              fb_step  = fb->steps()->Get(g.meta.achievementsHoveredAchievementStep);
+              isLocked = IsAchievementStepLocked(
+                (AchievementType)g.meta.achievementsHoveredAchievement,
+                g.meta.achievementsHoveredAchievementStep
+              );
+            }
+
+            // Achievement's name and description.
+            componentAchievement(
+              (AchievementType)g.meta.achievementsHoveredAchievement,
+              g.meta.achievementsHoveredAchievementStep,
+              false
+            );
+
+            // Achievement's reward.
+            componentUniversalCard(ComponentUniversalCardData{
+              .build
+              = (BuildType)((fb_step && !isLocked) ? fb_step->unlocks_build_type() : 0),
+              .item
+              = (ItemType)((fb_step && !isLocked) ? fb_step->unlocks_item_type() : 0),
+              .weapon
+              = (WeaponType)((fb_step && !isLocked) ? fb_step->unlocks_weapon_type() : 0),
+              .hidden         = HiddenType_SHOW_LOCK,
+              .setFixedHeight = true,
+            });
+          }
+        }
+
+        BF_CLAY_SPACER_VERTICAL;
+      }
+
+      ControlsGroupConnect(groupBackButton, Direction_UP, groupGrid);
+      ControlsGroupConnect(groupGrid, Direction_UP, groupBackButton);
     }
   }
 
@@ -11143,8 +11237,12 @@ void DoUI() {
 
       ControlsGroupConnect(group, Direction_RIGHT, group);
 
-      if ((result == ConfirmModalResultType_CONFIRMED) && setToTrueOnConfirm)
-        *setToTrueOnConfirm = true;
+      if ((result == ConfirmModalResultType_CONFIRMED)) {
+        if (setToTrueOnConfirm)
+          *setToTrueOnConfirm = true;
+        g.meta.scheduledTogglePause = true;
+      }
+
       if (result)
         *requested = false;
 
@@ -11338,8 +11436,8 @@ void DoUI() {
       context.thisFrame = false;
     }
 
-    if (shownModal)
-      ASSERT(shownScreen);
+    // if (shownModal)
+    //   ASSERT(shownScreen);
 
     ControlsContext currentContext = shownModal;
     if (!currentContext)
@@ -12242,19 +12340,19 @@ void GameFixedUpdate() {
 
   // Handling ESC or P to toggle pause.
   {  ///
-    if (g.run.state.screen == ScreenType_GAMEPLAY) {
-      if (!g.meta.paused) {
-        for (auto c : KEYS_PAUSE) {
-          if (IsKeyPressed(c)) {
-            g.meta.scheduledTogglePause = true;
-            PlaySound(Sound_UI_CLICK);
-            break;
-          }
+    if (!PAUSABLE_SCREENS.Contains(g.run.state.screen)) {
+      g.meta.paused               = false;
+      g.meta.scheduledTogglePause = false;
+    }
+    else if (!g.meta.paused) {
+      for (auto c : KEYS_PAUSE) {
+        if (IsKeyPressed(c)) {
+          g.meta.scheduledTogglePause = true;
+          PlaySound(Sound_UI_CLICK);
+          break;
         }
       }
     }
-    else
-      g.meta.paused = false;
   }
 
   const auto gameplayOrWaveEndScreen
