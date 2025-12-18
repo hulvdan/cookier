@@ -8824,17 +8824,18 @@ void DoUI() {
         * ASSETS_TO_LOGICAL_RATIO
       + 2 * GAP_SMALL;
 
-  const auto groupTop = MakeControlsGroup();
-
-  LAMBDA (void, componentButtonAchievements, ()) {  ///
+  LAMBDA (void, componentButtonAchievements, (ControlsGroupID group)) {  ///
     const bool clicked = componentButton(
-      {.id = CLAY_ID("button_achievements"), .group = groupTop},
+      {.id = CLAY_ID("button_achievements"), .group = group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
           {.texID = glib->ui_icon_achievements_texture_id()},
           [&]() BF_FORCE_INLINE_LAMBDA {
             auto percent = GetAchievementsCompletedPercent();
-            auto color   = palTextBezhevy;
+            if (percent <= 0)
+              return;
+
+            auto color = palTextBezhevy;
             if (percent >= 100)
               color = palTextGreen;
 
@@ -8857,9 +8858,9 @@ void DoUI() {
     }
   };
 
-  LAMBDA (void, componentButtonPause, ()) {  ///
+  LAMBDA (void, componentButtonPause, (ControlsGroupID group)) {  ///
     const bool clicked = componentButton(
-      {.id = CLAY_ID("button_pause"), .group = groupTop},
+      {.id = CLAY_ID("button_pause"), .group = group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE({.texID = glib->ui_icon_pause_small_texture_id()});
       }
@@ -8872,13 +8873,15 @@ void DoUI() {
   };
 
   struct ComponentButtonBackData {  ///
-    bool markControlAsDefault = {};
+    bool            markControlAsDefault = {};
+    ControlsGroupID group                = {};
   };
 
   LAMBDA (bool, componentButtonBack, (ComponentButtonBackData data = {})) {  ///
+    ASSERT(data.group);
     const auto id      = CLAY_ID("button_back");
     const bool clicked = componentButton(
-      {.id = id, .group = groupTop, .keys = KEYS_CANCEL},
+      {.id = id, .group = data.group, .keys = KEYS_CANCEL},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE({.texID = glib->ui_icon_back_big_texture_id()});
       }
@@ -8890,13 +8893,13 @@ void DoUI() {
     return clicked;
   };
 
-  LAMBDA (void, componentVolumeButtons, ()) {  ///
+  LAMBDA (void, componentVolumeButtons, (ControlsGroupID group)) {  ///
     int nextVolumeButtonNumber = 1;
     LAMBDA (void, componentButtonVolume, (int iconTexID, int* var)) {
       const bool clicked = componentButton(
         {
           .id                = CLAY_IDI("volume_sfx", nextVolumeButtonNumber),
-          .group             = groupTop,
+          .group             = group,
           .paddingHorizontal = (u16)((nextVolumeButtonNumber == 1) ? GAP_BIG : GAP_SMALL),
         },
         [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
@@ -9338,7 +9341,8 @@ void DoUI() {
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
     SCOPED_CONTEXT(ControlsContext_NEW_RUN);
 
-    auto group = MakeControlsGroup();
+    auto groupTop = MakeControlsGroup();
+    auto group    = MakeControlsGroup();
 
     LAMBDA (void, componentNewRunSelections, (auto innerLambda)) {
       CLAY({.layout{
@@ -9378,7 +9382,7 @@ void DoUI() {
       auto& p = g.player;
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-        componentButtonAchievements();
+        componentButtonAchievements(groupTop);
 
         componentScreenName_floatingInTheCenter(Loc_UI_NEW_RUN, []() {});
 
@@ -9386,7 +9390,7 @@ void DoUI() {
           SDL_Scancode keys_[]{SDL_SCANCODE_ESCAPE, SDL_SCANCODE_BACKSPACE};
           VIEW_FROM_ARRAY_DANGER(keys);
 
-          const bool backed = componentButtonBack();
+          const bool backed = componentButtonBack(groupTop);
 
           if (backed) {
             PlaySound(Sound_UI_CLICK);
@@ -9716,7 +9720,8 @@ void DoUI() {
   else if (g.run.state.screen == ScreenType_PICKED_UP_ITEM) {  ///
     SCOPED_CONTEXT(ControlsContext_PICKED_UP_ITEM);
 
-    auto group = MakeControlsGroup();
+    auto groupTop = MakeControlsGroup();
+    auto group    = MakeControlsGroup();
 
     CLAY({
       .layout{
@@ -9734,7 +9739,7 @@ void DoUI() {
       componentStats2Wrapped();
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-        componentButtonAchievements();
+        componentButtonAchievements(groupTop);
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
         // componentButtonStats(groupTop);
@@ -9822,6 +9827,7 @@ void DoUI() {
   else if (g.run.state.screen == ScreenType_UPGRADES) {  ///
     SCOPED_CONTEXT(ControlsContext_UPGRADES);
 
+    auto groupTop      = MakeControlsGroup();
     auto groupUpgrades = MakeControlsGroup();
     auto groupReroll   = MakeControlsGroup();
 
@@ -9842,7 +9848,7 @@ void DoUI() {
       componentStats2Wrapped();
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-        componentButtonAchievements();
+        componentButtonAchievements(groupTop);
 
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
@@ -10046,6 +10052,7 @@ void DoUI() {
     auto groupWeapons    = MakeControlsGroup();
     auto groupItems      = MakeControlsGroup();
     auto groupItemArrows = MakeControlsGroup();
+    auto groupTop        = MakeControlsGroup();
 
     // Columns.
     CLAY({
@@ -10070,7 +10077,7 @@ void DoUI() {
       }}) {
         // 1. Wave, coins, reroll.
         componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-          componentButtonAchievements();
+          componentButtonAchievements(groupTop);
 
           // Coins.
           componentPlayerCoins();
@@ -10357,6 +10364,7 @@ void DoUI() {
 
 #define BF_SCREEN_END_STATS_COLUMN_STICK_TO_RIGHT 1
 
+    auto groupTop             = MakeControlsGroup();
     auto groupWeaponsAndItems = MakeControlsGroup();
     auto groupItemArrows      = MakeControlsGroup();
     auto groupButtons         = MakeControlsGroup();
@@ -10395,7 +10403,7 @@ void DoUI() {
           }
         );
 
-        componentButtonAchievements();
+        componentButtonAchievements(groupTop);
         BF_CLAY_SPACER_HORIZONTAL;
         componentVolumeButtons();
         // componentButtonPause();
@@ -10563,6 +10571,7 @@ void DoUI() {
 
         componentStats2Wrapped();
 
+        auto groupTop             = MakeControlsGroup();
         auto groupButtons         = MakeControlsGroup();
         auto groupWeaponsAndItems = MakeControlsGroup();
         auto groupItemArrows      = MakeControlsGroup();
@@ -10572,7 +10581,7 @@ void DoUI() {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }}) {
           componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-            componentButtonAchievements();
+            componentButtonAchievements(groupTop);
             BF_CLAY_SPACER_HORIZONTAL;
             componentVolumeButtons();
             // componentButtonStats(groupTop);
@@ -10784,8 +10793,7 @@ void DoUI() {
       FLOATING_BEAUTIFY;
       SCOPED_CONTEXT(ControlsContext_ACHIEVEMENTS);
 
-      const auto groupBackButton = MakeControlsGroup();
-      const auto groupGrid       = MakeControlsGroup();
+      const auto groupGrid = MakeControlsGroup();
 
       CLAY({.layout{
         BF_CLAY_SIZING_GROW_XY,
@@ -10954,8 +10962,8 @@ void DoUI() {
         BF_CLAY_SPACER_VERTICAL;
       }
 
-      ControlsGroupConnect(groupBackButton, Direction_UP, groupGrid);
-      ControlsGroupConnect(groupGrid, Direction_UP, groupBackButton);
+      ControlsGroupConnect(groupTop, Direction_UP, groupGrid);
+      ControlsGroupConnect(groupGrid, Direction_UP, groupTop);
     }
   }
 
@@ -11723,29 +11731,71 @@ void DoUI() {
             if (data.overlay.set) {
               const auto& d = data.overlay;
 
-              Vector2 size = (Vector2)LOGICAL_RESOLUTION;
-              Vector2 pos{};
-              if (ge.meta.screenToLogicalRatio > 1) {
-                auto d = size.x * (ge.meta.screenToLogicalRatio - 1);
-                size.x += d;
-                pos.x -= d / 2;
-              }
-              else if (ge.meta.screenToLogicalRatio < 1) {
-                auto d = size.y * (1.0f / ge.meta.screenToLogicalRatio - 1);
-                size.y += d;
-                pos.y -= d / 2;
-              }
-
               DrawGroup_CommandRect({
-                .pos  = pos,
-                .size = size,
-                .anchor{},
+                .pos   = LOGICAL_RESOLUTIONf / 2.0f,
+                .size  = ge.meta.scaledLogicalResolution,
                 .color = d.color,
               });
             }
 
             if (data.screenBackground.set) {
-              // USE ui_background_rect_texture_id bricks moving
+              DrawGroup_CommandRect({
+                .pos   = LOGICAL_RESOLUTIONf / 2.0f,
+                .size  = ge.meta.scaledLogicalResolution,
+                .color = Darken({49, 25, 23, 255}, 0.3f),
+              });
+
+              const int  texID = glib->ui_background_rect_texture_id();
+              const auto gap   = GAP_SMALL;
+              const auto size  = ToVector2(glib->original_texture_sizes()->Get(texID))
+                                * ASSETS_TO_LOGICAL_RATIO;
+
+              const int rectsXToSide = 10;
+              const int rectsYToSide = 5;
+
+              // const int cycleDur = 24 * FIXED_FPS;
+              // const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) /
+              // (f32)cycleDur;
+
+              const auto rectColor = Darken({49, 25, 23, 255}, 0.6f);
+
+              FOR_RANGE (int, y, rectsYToSide) {
+                FOR_RANGE (int, n, 2) {
+                  FOR_RANGE (int, x, rectsXToSide) {
+                    FOR_RANGE (int, m, 2) {
+                      if (!x && m)
+                        continue;
+
+                      f32 offY = (size.y + gap) / 2.0f;
+                      if (x % 2)
+                        offY = 0;
+
+                      auto center = LOGICAL_RESOLUTIONf / 2.0f;
+                      auto off = Vector2(x * (size.x + gap), offY + y * (size.y + gap));
+                      if (n)
+                        off.y *= -1;
+
+                      f32 angle = -PI32 / 6;
+
+                      // off.y += (((x + m) % 2) ? 1 : -1) * (size.y + gap) * cycleP;
+                      //
+                      f32 fade = 1;
+                      // if ((y == rectsYToSide - 1) && ((x + m + n) % 2)) {
+                      //   const f32 p = 10 * cycleP - 9;
+                      //   if (p > 0)
+                      //     fade = 1 - p;
+                      // }
+
+                      DrawGroup_CommandTexture({
+                        .texID    = texID,
+                        .rotation = angle,
+                        .pos      = center + Vector2Rotate(off, angle + (m ? PI32 : 0)),
+                        .color    = Fade(rectColor, fade),
+                      });
+                    }
+                  }
+                }
+              }
             }
 
             if (data.shadow.set) {
@@ -15520,7 +15570,7 @@ void GameDraw() {
     DrawGroup_OneShotTexture(
       {
         .texID = glib->ui_vignette_danger_hp_level_texture_id(),
-        .pos   = (Vector2)LOGICAL_RESOLUTION / 2.0f,
+        .pos   = LOGICAL_RESOLUTIONf / 2.0f,
         .scale = Vector2One() * 4.2f,
         .color = Fade(palRed, MIN(1, g.run.dangerHPLevelOverlayValue)),
       },

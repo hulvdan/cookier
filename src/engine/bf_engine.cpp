@@ -45,6 +45,7 @@ struct Rect {  ///
 
 constexpr Vector2Int ASSETS_REFERENCE_RESOLUTION = {1920, 1080};
 constexpr Vector2Int LOGICAL_RESOLUTION          = {1280, 720};
+constexpr Vector2    LOGICAL_RESOLUTIONf         = (Vector2)LOGICAL_RESOLUTION;
 constexpr f32        ASSETS_TO_LOGICAL_RATIO     = 1280.0f / 3840.0f;
 
 struct Texture2D {  ///
@@ -479,8 +480,10 @@ struct EngineData {
 
     Vector2Int screenSize = {};
 
-    f32 screenToLogicalRatio = {};
-    f32 screenScale          = {};
+    f32     screenToLogicalRatio    = {};
+    Vector2 scaledLogicalResolution = {};
+    // Vector2 logicalToScaledLogicalVector = {};
+    f32 screenScale = {};
 
     View<const bool> _keyboardState         = {};
     bool*            _keyboardStatePressed  = {};
@@ -1052,7 +1055,7 @@ Vector2 WorldPosToLogical(Vector2 pos, Camera* camera) {  ///
   ASSERT(camera->zoom > 0);
   pos -= camera->pos;
   pos *= camera->zoom;
-  pos += (Vector2)LOGICAL_RESOLUTION / 2.0f;
+  pos += LOGICAL_RESOLUTIONf / 2.0f;
   return pos;
 }
 
@@ -1063,7 +1066,7 @@ void _ApplyCurrentCamera(Vector2* point, Vector2* size, bool isTexture = false) 
 
     *point -= ge.meta._currentCamera->pos;
     *point *= ge.meta._currentCamera->zoom;
-    *point += (Vector2)LOGICAL_RESOLUTION / 2.0f;
+    *point += LOGICAL_RESOLUTIONf / 2.0f;
     if (size) {
       *size *= ge.meta._currentCamera->zoom;
       if (isTexture)
@@ -1079,7 +1082,7 @@ void _ApplyCurrentCamera(Vector2* point, f32* size, bool isTexture = false) {  /
 
     *point -= ge.meta._currentCamera->pos;
     *point *= ge.meta._currentCamera->zoom;
-    *point += (Vector2)LOGICAL_RESOLUTION / 2.0f;
+    *point += LOGICAL_RESOLUTIONf / 2.0f;
     if (size) {
       *size *= ge.meta._currentCamera->zoom;
       if (isTexture)
@@ -2165,7 +2168,7 @@ void FlushDrawCommands() {
                 Vector2 bottomLeft{};
                 Vector2 bottomRight{};
 
-                auto lrh    = (Vector2)LOGICAL_RESOLUTION / 2.0f;
+                auto lrh    = LOGICAL_RESOLUTIONf / 2.0f;
                 topLeft     = Vector2{q.x0, q.y1} / lrh - Vector2One();
                 topRight    = Vector2{q.x1, q.y1} / lrh - Vector2One();
                 bottomLeft  = Vector2{q.x0, q.y0} / lrh - Vector2One();
@@ -3143,8 +3146,7 @@ std::tuple<bool, LoadFontsResult> _ProcessFonts(
   ASSERT(outFonts.count > 0);
   ASSERT(outFonts.count == data_.count);
 
-  const f32 scaleToFit
-    = ScaleToFit((Vector2)LOGICAL_RESOLUTION, (Vector2)ge.meta.screenSize);
+  const f32 scaleToFit = ScaleToFit(LOGICAL_RESOLUTIONf, (Vector2)ge.meta.screenSize);
 
   int maxExtraPadding = 0;
   for (const auto& data : data_) {
@@ -3398,6 +3400,14 @@ void EngineOnFrameStart() {
   constexpr auto ratioLogical  = (f32)LOGICAL_RESOLUTION.x / (f32)LOGICAL_RESOLUTION.y;
   auto           ratioActual   = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y;
   ge.meta.screenToLogicalRatio = ratioActual / ratioLogical;
+
+  Vector2 screenToLogicalRatioVector{1, 1};
+  if (ge.meta.screenToLogicalRatio > 1)
+    screenToLogicalRatioVector.x *= ge.meta.screenToLogicalRatio;
+  else
+    screenToLogicalRatioVector.y /= ge.meta.screenToLogicalRatio;
+
+  ge.meta.scaledLogicalResolution = LOGICAL_RESOLUTIONf * screenToLogicalRatioVector;
 
   // Caching ScreenToLogical data.
   {  ///

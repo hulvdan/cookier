@@ -16,8 +16,12 @@ x добавить MAGIC у сохранения!!!!
   (magic)HVSV|(save version)1|(game version)1.31|(data)XXX
 x gear icon
 x переработать паузу
+x ui: задник должен быть opacity 100 (кроме деталки оружия)
+x ui: клёвые rect-ы мозайка
 
-* ui: задник должен быть opacity 100 (кроме деталки оружия)
+* achievments can move using arrows to top
+* ui: убрать backgorund-ы у кнопок верхних
+*
 * tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 *
 * yandex: баннер
