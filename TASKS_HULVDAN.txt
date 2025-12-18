@@ -10,8 +10,8 @@ WORKING SINCE 2025-09-07
 - ЧИНИМ
 
 x заменить WAVE сверху на иконку меча
+x web better encoding
 
-* web better encoding
 * пауза из любого места (иконка gear)
 * tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 *
