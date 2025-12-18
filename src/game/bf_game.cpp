@@ -166,6 +166,11 @@ Clay_Color ToClayColor(Color color) {
     .set = true, .color = (color_)     \
   }
 
+#define BF_CLAY_CUSTOM_SCREEN_BACKGROUND \
+  .screenBackground {                    \
+    .set = true                          \
+  }
+
 struct Beautify {
   f32     alpha     = 1;
   Vector2 translate = {0, 0};
@@ -264,6 +269,10 @@ struct ClayCustomData {
     bool  set   = false;
     Color color = MAGENTA;
   } overlay = {};
+
+  struct {
+    bool set = false;
+  } screenBackground;
 
   struct {
     bool                     set       = false;
@@ -9363,7 +9372,7 @@ void DoUI() {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_BEGIN{
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
       } BF_CLAY_CUSTOM_END,
     }) {
       auto& p = g.player;
@@ -9719,7 +9728,7 @@ void DoUI() {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_BEGIN{
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
       } BF_CLAY_CUSTOM_END,
     }) {
       componentStats2Wrapped();
@@ -9827,7 +9836,7 @@ void DoUI() {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_BEGIN{
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
       } BF_CLAY_CUSTOM_END,
     }) {
       componentStats2Wrapped();
@@ -10048,7 +10057,7 @@ void DoUI() {
         .childGap = GAP_BIG,
       },
       BF_CLAY_CUSTOM_BEGIN{
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
       } BF_CLAY_CUSTOM_END,
     }) {
       // Left column that contains:
@@ -10363,7 +10372,7 @@ void DoUI() {
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
       },
       BF_CLAY_CUSTOM_BEGIN{
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+        BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
       } BF_CLAY_CUSTOM_END,
     }) {
 #if BF_SCREEN_END_STATS_COLUMN_STICK_TO_RIGHT
@@ -10543,7 +10552,7 @@ void DoUI() {
           .attachTo = CLAY_ATTACH_TO_PARENT,
         },
         BF_CLAY_CUSTOM_BEGIN{
-          BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
+          BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
         } BF_CLAY_CUSTOM_END,
       }
     ) {
@@ -10752,28 +10761,26 @@ void DoUI() {
   }
 
   // Achievements.
-  if (g.meta.showingAchievements) {
-    CLAY(  ///
-      {
-        .layout{
-          BF_CLAY_SIZING_GROW_XY,
-          BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-            PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
-          ),
+  if (g.meta.showingAchievements) {  ///
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
+      },
+      .floating{
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
         },
-        .floating{
-          .zIndex = zIndex,
-          .attachPoints{
-            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-          },
-          .attachTo = CLAY_ATTACH_TO_PARENT,
-        },
-        BF_CLAY_CUSTOM_BEGIN{
-          BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
-        } BF_CLAY_CUSTOM_END,
-      }
-    ) {
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
+      } BF_CLAY_CUSTOM_END,
+    }) {
       FLOATING_BEAUTIFY;
       SCOPED_CONTEXT(ControlsContext_ACHIEVEMENTS);
 
@@ -11735,6 +11742,10 @@ void DoUI() {
                 .anchor{},
                 .color = d.color,
               });
+            }
+
+            if (data.screenBackground.set) {
+              // USE ui_background_rect_texture_id bricks moving
             }
 
             if (data.shadow.set) {
