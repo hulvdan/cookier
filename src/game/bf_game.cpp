@@ -154,11 +154,11 @@ Clay_Color ToClayColor(Color color) {
     .set = (enabled_), .nineSlice = (gamelibNineSlicePtr_),   \
   }
 
-#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_, enabled_) \
-  .nineSlice {                                                           \
-    .set = enabled_, .nineSlice = (gamelibNineSlicePtr_),                \
-    .nineSliceColor = slotColors[(tier_) * 2],                           \
-    .nineSliceFlash = slotColors[(tier_) * 2 + 1],                       \
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_, enabled_, breathing_) \
+  .nineSlice {                                                                       \
+    .set = enabled_, .breathing = (breathing_), .nineSlice = (gamelibNineSlicePtr_), \
+    .nineSliceColor = slotColors[(tier_) * 2],                                       \
+    .nineSliceFlash = slotColors[(tier_) * 2 + 1],                                   \
   }
 
 #define BF_CLAY_CUSTOM_OVERLAY(color_) \
@@ -281,6 +281,7 @@ struct ClayCustomData {
 
   struct {
     bool                     set            = false;
+    bool                     breathing      = false;
     const BFGame::NineSlice* nineSlice      = nullptr;
     Color                    nineSliceColor = WHITE;
     Color                    nineSliceFlash = TRANSPARENT_BLACK;
@@ -6105,6 +6106,20 @@ bool IsAchievementStepLocked(AchievementType type, int stepIndex) {  ///
   return isLocked;
 }
 
+Color BreatheColor(Color color, int dur = 3 * FIXED_FPS) {  ///
+  f32 p = (f32)(ge.meta.frameVisual % dur) / (f32)dur;
+  p     = (sinf(2 * PI32 * p) + 1) / 2.0f;
+  p     = Lerp(p, EaseInQuad(p), 1);
+
+  const auto v      = ColorToHSV(color);
+  f32        factor = 0.5f;
+  return ColorLerp(
+    color, ColorFromHSV(v.x, Lerp(v.y, 0, factor / 2), Lerp(v.z, 1, factor)), p
+  );
+
+  // return ColorLerp(color, TextifyColor(color), p);
+}
+
 // NOTE: Logic must be executed only when `ge.meta._drawing` (`draw`) is false!
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
@@ -6394,6 +6409,7 @@ void DoUI() {
     u16                paddingVertical   = GAP_SMALL;
     View<SDL_Scancode> keys              = {};
     int                tier              = 0;
+    bool               breathing         = false;
     bool               hideBackground    = false;
   };
 
@@ -6446,7 +6462,8 @@ void DoUI() {
               && canShowAsSelected)
                ? 6
                : data.tier),
-            !data.hideBackground
+            !data.hideBackground,
+            data.breathing
           ),
         } BF_CLAY_CUSTOM_END,
       }) {
@@ -6519,7 +6536,13 @@ void DoUI() {
       keys.count = 0;
 
     return componentButton(
-      {.id = rerollID, .group = group, .keys = keys, .tier = 7},
+      {
+        .id        = rerollID,
+        .group     = group,
+        .keys      = keys,
+        .tier      = 7,
+        .breathing = (price <= PLAYER_COINS),
+      },
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
           const bool canReroll = (price <= PLAYER_COINS);
@@ -6614,6 +6637,7 @@ void DoUI() {
     bool            hidden                  = {};
     bool            canHover                = {};
     int             tier                    = {};
+    bool            breathing               = false;
     f32             flashWhite              = 0;
     bool            showsDetails            = false;
     bool            disallowsTouch          = false;
@@ -6638,6 +6662,9 @@ void DoUI() {
     }}})
     if (!data.hidden) {
       auto color = slotColors[2 * data.tier];
+      if (draw && data.breathing)
+        color = BreatheColor(color);
+
       auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
 
       if (data.uiBouncedAt.IsSet()) {
@@ -6734,9 +6761,10 @@ void DoUI() {
 
     HiddenType hidden = HiddenType_HIDE_IF_EMPTY;
 
-    int  count    = 1;
-    int  tier     = -1;
-    bool canHover = true;
+    int  count     = 1;
+    int  tier      = -1;
+    bool canHover  = true;
+    bool breathing = false;
 
     bool showsDetails            = false;
     bool disallowsTouch          = false;
@@ -6830,6 +6858,7 @@ void DoUI() {
         .hidden         = (!onlyOneOrNone && (data.hidden == HiddenType_HIDE_IF_EMPTY)),
         .canHover       = data.canHover,
         .tier           = tier,
+        .breathing      = data.breathing,
         .flashWhite     = MAX(unlockFlashWhiteLock, unlockFlashWhiteItem),
         .showsDetails   = data.showsDetails,
         .disallowsTouch = data.disallowsTouch,
@@ -7555,7 +7584,7 @@ void DoUI() {
           },
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_big_nine_slice(), data.shadow),
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true, false),
           } BF_CLAY_CUSTOM_END,
         }
       ) {
@@ -7973,10 +8002,11 @@ void DoUI() {
 
             const bool bought = componentButton(
               {
-                .id    = buyButtonID,
-                .group = data.shopGroup,
-                .keys  = keys,
-                .tier  = tier,
+                .id        = buyButtonID,
+                .group     = data.shopGroup,
+                .keys      = keys,
+                .tier      = tier,
+                .breathing = canBuy,
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
@@ -8098,9 +8128,10 @@ void DoUI() {
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
                 {
-                  .id    = combineID,
-                  .group = groupDetails,
-                  .tier  = 7,
+                  .id        = combineID,
+                  .group     = groupDetails,
+                  .tier      = 7,
+                  .breathing = true,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
@@ -8213,7 +8244,7 @@ void DoUI() {
       },
       BF_CLAY_CUSTOM_BEGIN{
         BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), shadow),
-        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true),
+        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true, false),
       } BF_CLAY_CUSTOM_END,
     }) {
       auto fb_previousStep
@@ -8685,6 +8716,7 @@ void DoUI() {
             .weapon       = weapon.type,
             .weaponIndex  = weaponIndex,
             .tier         = weapon.tier,
+            .breathing    = (wouldCombineWith >= 0),
             .showsDetails = true,
             .uiBouncedAt  = weapon.uiBouncedAt,
           });
@@ -9399,7 +9431,7 @@ void DoUI() {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         BF_CLAY_CUSTOM_BEGIN{
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
         } BF_CLAY_CUSTOM_END,
       }) {
         innerLambda();
@@ -9923,7 +9955,9 @@ void DoUI() {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
             BF_CLAY_CUSTOM_BEGIN{
-              BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), upgrade.tier, true),
+              BF_CLAY_CUSTOM_NINE_SLICE(
+                glib->ui_frame_nine_slice(), upgrade.tier, true, false
+              ),
             } BF_CLAY_CUSTOM_END,
           }) {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -10305,11 +10339,12 @@ void DoUI() {
 
             const bool nextWavePressed = componentButton(
               {
-                .id    = CLAY_ID("button_shop_next_wave"),
-                .group = groupGoNextWave,
-                .growX = true,
-                .keys  = keys,
-                .tier  = (nextIsBoss ? 4 : 7),
+                .id        = CLAY_ID("button_shop_next_wave"),
+                .group     = groupGoNextWave,
+                .growX     = true,
+                .keys      = keys,
+                .tier      = (nextIsBoss ? 4 : 7),
+                .breathing = true,
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_IMAGE(
@@ -10602,28 +10637,26 @@ void DoUI() {
     INVALID_PATH;
 
   // Pause.
-  if (g.meta.paused && !g.meta.showingAchievements) {
-    CLAY(  ///
-      {
-        .layout{
-          BF_CLAY_SIZING_GROW_XY,
-          BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-            PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
-          ),
+  if (g.meta.paused && !g.meta.showingAchievements) {  ///
+    CLAY({
+      .layout{
+        BF_CLAY_SIZING_GROW_XY,
+        BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
+          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+        ),
+      },
+      .floating{
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
         },
-        .floating{
-          .zIndex = zIndex,
-          .attachPoints{
-            .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-            .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-          },
-          .attachTo = CLAY_ATTACH_TO_PARENT,
-        },
-        BF_CLAY_CUSTOM_BEGIN{
-          BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
-        } BF_CLAY_CUSTOM_END,
-      }
-    ) {
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+      BF_CLAY_CUSTOM_BEGIN{
+        BF_CLAY_CUSTOM_SCREEN_BACKGROUND,
+      } BF_CLAY_CUSTOM_END,
+    }) {
       FLOATING_BEAUTIFY;
 
       SCOPED_CONTEXT(ControlsContext_MODAL_PAUSE);
@@ -10912,7 +10945,7 @@ void DoUI() {
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               },
               BF_CLAY_CUSTOM_BEGIN{
-                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
+                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
               } BF_CLAY_CUSTOM_END,
             }) {
               g.meta.achievementsHoveredAchievement     = 0;
@@ -11120,7 +11153,7 @@ void DoUI() {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_BEGIN{
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
           } BF_CLAY_CUSTOM_END,
         }) {
           // Stats label.
@@ -11265,7 +11298,7 @@ void DoUI() {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_BEGIN{
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
           } BF_CLAY_CUSTOM_END,
         }) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
@@ -11897,16 +11930,18 @@ void DoUI() {
               const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
               const auto fb              = d.nineSlice;
 
+              Color color{
+                d.nineSliceColor.r, d.nineSliceColor.g, d.nineSliceColor.b, 255
+              };
+              if (d.breathing)
+                color = BreatheColor(color);
+              color.a = (u8)((f32)d.nineSliceColor.a * beautifierAlpha);
+
               DrawGroup_CommandTextureNineSlice({
                 .texID = fb->texture_id(),
                 .pos{bb.x, bb.y},
                 .anchor{},
-                .color{
-                  d.nineSliceColor.r,
-                  d.nineSliceColor.g,
-                  d.nineSliceColor.b,
-                  (u8)((f32)d.nineSliceColor.a * beautifierAlpha)
-                },
+                .color = color,
                 .flash = d.nineSliceFlash,
                 .nineSliceMargins{
                   (f32)fb->left() / downscaleFactor,
