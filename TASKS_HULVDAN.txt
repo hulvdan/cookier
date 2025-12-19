@@ -9,17 +9,6 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-x заменить WAVE сверху на иконку меча
-x web better encoding
-x добавить MAGIC у сохранения!!!!
-  продумать слегка версионирование сохранений
-  (magic)HVSV|(save version)1|(game version)1.31|(data)XXX
-x gear icon
-x переработать паузу
-x ui: задник должен быть opacity 100 (кроме деталки оружия)
-x ui: клёвые rect-ы мозайка
-x achievments can move using arrows to top
-
 * fix: нельзя пробелом нажать на confirm new run в модалке
 * fix: когда геймплей, открыл паузу, открыл модалку new run
   -> escape заклывает паузу, а должен - модалку
