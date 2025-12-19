@@ -154,11 +154,11 @@ Clay_Color ToClayColor(Color color) {
     .set = (enabled_), .nineSlice = (gamelibNineSlicePtr_),   \
   }
 
-#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_) \
-  .nineSlice {                                                 \
-    .set = true, .nineSlice = (gamelibNineSlicePtr_),          \
-    .nineSliceColor = slotColors[(tier_) * 2],                 \
-    .nineSliceFlash = slotColors[(tier_) * 2 + 1],             \
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_, enabled_) \
+  .nineSlice {                                                           \
+    .set = enabled_, .nineSlice = (gamelibNineSlicePtr_),                \
+    .nineSliceColor = slotColors[(tier_) * 2],                           \
+    .nineSliceFlash = slotColors[(tier_) * 2 + 1],                       \
   }
 
 #define BF_CLAY_CUSTOM_OVERLAY(color_) \
@@ -6402,6 +6402,7 @@ void DoUI() {
     u16                paddingVertical   = GAP_SMALL;
     View<SDL_Scancode> keys              = {};
     int                tier              = 0;
+    bool               hideBackground    = false;
   };
 
   LAMBDA (
@@ -6451,7 +6452,8 @@ void DoUI() {
             (((!g.meta.playerUsesKeyboardOrController && Clay_Hovered() || isSelected)
               && canShowAsSelected)
                ? 6
-               : data.tier)
+               : data.tier),
+            !data.hideBackground
           ),
         } BF_CLAY_CUSTOM_END,
       }) {
@@ -7560,7 +7562,7 @@ void DoUI() {
           },
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_big_nine_slice(), data.shadow),
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true),
           } BF_CLAY_CUSTOM_END,
         }
       ) {
@@ -7825,7 +7827,8 @@ void DoUI() {
           // Cooldown.
           componentWeaponStatEntry(Loc_UI_COOLDOWN, [&]() BF_FORCE_INLINE_LAMBDA {
             const f32 cooldownSeconds = fb->cooldown()->Get(tierOffset);
-            BF_CLAY_TEXT(TextFormat("%.2fs", cooldownSeconds), {.color = palTextGreen});
+            BF_CLAY_TEXT(TextFormat("%.2f", cooldownSeconds), {.color = palTextGreen});
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_SECONDS_SUFFIX, {.color = palTextGreen});
           });
 
           // Knockback.
@@ -8217,7 +8220,7 @@ void DoUI() {
       },
       BF_CLAY_CUSTOM_BEGIN{
         BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), shadow),
-        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier),
+        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true),
       } BF_CLAY_CUSTOM_END,
     }) {
       auto fb_previousStep
@@ -8826,10 +8829,13 @@ void DoUI() {
 
   LAMBDA (void, componentButtonAchievements, (ControlsGroupID group)) {  ///
     const bool clicked = componentButton(
-      {.id = CLAY_ID("button_achievements"), .group = group},
+      {.id = CLAY_ID("button_achievements"), .group = group, .hideBackground = true},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
-          {.texID = glib->ui_icon_achievements_texture_id()},
+          {
+            .texID = glib->ui_icon_achievements_texture_id(),
+            .color = (hovered ? WHITE : TOP_BUTTON_NOT_HOVERED_COLOR),
+          },
           [&]() BF_FORCE_INLINE_LAMBDA {
             auto percent = GetAchievementsCompletedPercent();
             if (percent <= 0)
@@ -8844,7 +8850,9 @@ void DoUI() {
               BF_CLAY_CHILD_ALIGNMENT_CENTER_BOTTOM,
             }}) {
               FontBegin(&g.meta.fontUIBigOutlined);
-              BF_CLAY_TEXT(TextFormat("%d%%", percent), {.color = color});
+              BF_CLAY_TEXT(
+                TextFormat("%d%%", percent), {.color = (hovered ? WHITE : color)}
+              );
               FontEnd();
             }
           }
@@ -8878,12 +8886,16 @@ void DoUI() {
   };
 
   LAMBDA (bool, componentButtonBack, (ComponentButtonBackData data = {})) {  ///
+
     ASSERT(data.group);
     const auto id      = CLAY_ID("button_back");
     const bool clicked = componentButton(
-      {.id = id, .group = data.group, .keys = KEYS_CANCEL},
+      {.id = id, .group = data.group, .keys = KEYS_CANCEL, .hideBackground = true},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-        BF_CLAY_IMAGE({.texID = glib->ui_icon_back_big_texture_id()});
+        BF_CLAY_IMAGE({
+          .texID = glib->ui_icon_back_big_texture_id(),
+          .color = (hovered ? WHITE : TOP_BUTTON_NOT_HOVERED_COLOR),
+        });
       }
     );
     if (data.markControlAsDefault)
@@ -8901,12 +8913,14 @@ void DoUI() {
           .id                = CLAY_IDI("volume_sfx", nextVolumeButtonNumber),
           .group             = group,
           .paddingHorizontal = (u16)((nextVolumeButtonNumber == 1) ? GAP_BIG : GAP_SMALL),
+          .hideBackground    = true,
         },
         [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
-          BF_CLAY_IMAGE({.texID = iconTexID});
+          const auto color = (hovered ? WHITE : TOP_BUTTON_NOT_HOVERED_COLOR);
+          BF_CLAY_IMAGE({.texID = iconTexID, .color = color});
           BF_CLAY_IMAGE({
             .texID = glib->ui_icon_volume_bands_texture_ids()->Get(MAX(0, *var - 1)),
-            .color = Fade(WHITE, (*var ? 1 : 0)),
+            .color = Fade(color, (*var ? 1 : 0)),
           });
         }
       );
@@ -9359,7 +9373,7 @@ void DoUI() {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         BF_CLAY_CUSTOM_BEGIN{
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
         } BF_CLAY_CUSTOM_END,
       }) {
         innerLambda();
@@ -9881,7 +9895,7 @@ void DoUI() {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
             BF_CLAY_CUSTOM_BEGIN{
-              BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), upgrade.tier),
+              BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), upgrade.tier, true),
             } BF_CLAY_CUSTOM_END,
           }) {
             CLAY({.layout{.childGap = GAP_SMALL}}) {
@@ -10084,6 +10098,11 @@ void DoUI() {
 
           BF_CLAY_SPACER_HORIZONTAL;
 
+          CLAY({.layout{.childGap = GAP_SMALL}}) {
+            // componentButtonPause();
+            componentVolumeButtons(groupTop);
+          }
+
           // Reroll button.
           CLAY({.layout{.childGap = GAP_BIG}}) {
             const auto calculatedRerollPrice = g.run.state.shop.rerolls.GetPrice();
@@ -10110,11 +10129,6 @@ void DoUI() {
                 PlaySound(Sound_UI_ERROR);
               }
             }
-          }
-
-          CLAY({.layout{.childGap = GAP_SMALL}}) {
-            // componentButtonPause();
-            componentVolumeButtons(groupTop);
 
             // Stats.
             // componentButtonStats(groupTop);
@@ -10852,7 +10866,7 @@ void DoUI() {
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               },
               BF_CLAY_CUSTOM_BEGIN{
-                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
               } BF_CLAY_CUSTOM_END,
             }) {
               g.meta.achievementsHoveredAchievement     = 0;
@@ -11059,7 +11073,7 @@ void DoUI() {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_BEGIN{
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
           } BF_CLAY_CUSTOM_END,
         }) {
           // Stats label.
@@ -11204,7 +11218,7 @@ void DoUI() {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_BEGIN{
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0),
+            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true),
           } BF_CLAY_CUSTOM_END,
         }) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
@@ -13281,7 +13295,7 @@ void GameFixedUpdate() {
       }
 
       // Finishing walking tutorial.
-      if (!g.run.walkingTutorialCompletedAt.IsSet()) {
+      if (!g.run.walkingTutorialCompletedAt.IsSet()) {  ///
         if (Vector2DistanceSqr(PLAYER_CREATURE.pos, WORLD_SIZEf / 2.0f)
             >= SQR(WALKING_TUTORIAL_RADIUS_METERS))
         {
@@ -13296,13 +13310,16 @@ void GameFixedUpdate() {
       }
     }
 
-    static bool launchedMusic = false;
-    if (g.run.walkingTutorialCompletedAt.IsSet()  //
-        && !launchedMusic                         //
-        && ge.meta._soundManager.Works())
-    {
-      launchedMusic = true;
-      PlaySound(Sound_MUSIC_BATTLE);
+    // Launching music after completing walking tutorial.
+    {  ///
+      static bool launchedMusic = false;
+      if (g.run.walkingTutorialCompletedAt.IsSet()  //
+          && !launchedMusic                         //
+          && ge.meta._soundManager.Works())
+      {
+        launchedMusic = true;
+        PlaySound(Sound_MUSIC_BATTLE);
+      }
     }
 
     // Removing old picked up pickupables.
@@ -14393,8 +14410,8 @@ void GameFixedUpdate() {
       ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
 
     // Player's weapons create particles and play trail sounds.
-    if (!PLAYER_CREATURE.diedAt.IsSet()) {
-      FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {  ///
+    if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///
+      FOR_RANGE (int, weaponIndex, g.run.state.weapons.count) {
         auto& weapon = g.run.state.weapons[weaponIndex];
         if (!weapon.type)
           continue;
@@ -14509,7 +14526,8 @@ void GameFixedUpdate() {
   if (ge.meta._soundManager.Works())
     SetMusicLowpassFactor(g.meta.musicLowpassFactor);
 
-  {
+  // Setting audio listener position to player's world pos.
+  {  ///
     auto engine = &ge.meta._soundManager.engine;
     ma_engine_listener_set_position(
       engine, 0, PLAYER_CREATURE.pos.x, PLAYER_CREATURE.pos.y, 0
