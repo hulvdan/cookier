@@ -7106,13 +7106,18 @@ void DoUI() {
         {
           // auto color = secondaryTextColor;
           auto color = palTextWhite;
-          if (fb_effect->only_this_weapon())
-            BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, {.color = color});
-          if (fb_effect->only_other_weapons())
+          // if (fb_effect->only_this_weapon()) {
+          //   BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, {.color = color});
+          //   BF_CLAY_TEXT(": ", {.color = color});
+          // }
+          if (fb_effect->only_other_weapons()) {
             BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_OTHER_WEAPONS, {.color = color});
-          if (fb_effect->all_weapons())
+            BF_CLAY_TEXT(": ", {.color = color});
+          }
+          if (fb_effect->all_weapons()) {
             BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ALL_WEAPONS, {.color = color});
-          BF_CLAY_TEXT(": ", {.color = color});
+            BF_CLAY_TEXT(": ", {.color = color});
+          }
         }
 
         const auto cond                = fb_effect->effectcondition_type();
@@ -14686,6 +14691,36 @@ void GameFixedUpdate() {
     ma_engine_listener_set_world_up(engine, 0, 0, 0, 1);
   }
 
+  // Cheat. Cycling stuff in shop.
+  if ((g.run.state.screen == ScreenType_SHOP)  //
+      && gdebug.cyclingStuffInShop             //
+      && !(ge.meta.frameVisual % (FIXED_FPS / 6)))
+  {  ///
+    auto& v = g.run.state.shop.toPick[3];
+
+    if (v.weapon) {
+      v.weapon = (WeaponType)((int)v.weapon + 1);
+      if (v.weapon >= WeaponType_COUNT) {
+        v.weapon = {};
+        v.item   = (ItemType)1;
+      }
+    }
+    else if (v.item) {
+      v.item = (ItemType)((int)v.item + 1);
+      if (v.item >= ItemType_COUNT) {
+        v.item   = {};
+        v.weapon = (WeaponType)1;
+      }
+    }
+    else
+      v.weapon = (WeaponType)1;
+
+    if (v.item)
+      v.tier = fb_items->Get(v.item)->tier();
+    else if (v.weapon)
+      v.tier = fb_weapons->Get(v.weapon)->min_tier_index();
+  }
+
   ge.meta.frameVisual++;
 }
 
@@ -15892,7 +15927,9 @@ void GameDraw() {
         gdebug.overriddenTreeSpawnIntervalSeconds
           = MIN(60, MAX(0, gdebug.overriddenTreeSpawnIntervalSeconds));
 
-        ImGui::SliderFloat("Mob Spawn Rate", &gdebug.mobSpawnRate, -2, 2, "%.1f", 0);
+        IM::SliderFloat("Mob Spawn Rate", &gdebug.mobSpawnRate, -2, 2, "%.1f", 0);
+
+        IM::Checkbox("Cycling Stuff In Shop", &gdebug.cyclingStuffInShop);
 
         IM::Text("");
 
@@ -15938,6 +15975,16 @@ void GameDraw() {
       }
 
       if (IM::BeginTabItem("items")) {
+        if (IM::Button("Give all items")) {
+          FOR_RANGE (int, i, ItemType_COUNT) {
+            if (i)
+              AddItem((ItemType)i);
+          }
+          Save();
+        }
+
+        IM::Text("");
+
         static char searchBuf[512]{};
         IM::InputTextWithHint(
           "##items-search", "Search by name or code", searchBuf, ARRAY_COUNT(searchBuf)
@@ -15956,8 +16003,10 @@ void GameDraw() {
               continue;
           }
 
-          if (IM::Button(TextFormat("%d: %s - %s", i, fb->type()->c_str(), name)))
+          if (IM::Button(TextFormat("%d: %s - %s", i, fb->type()->c_str(), name))) {
             AddItem((ItemType)i);
+            Save();
+          }
         }
         IM::EndTabItem();
       }
@@ -15988,6 +16037,7 @@ void GameDraw() {
               .weapon = (WeaponType)i,
               .tier   = fb->min_tier_index(),
             };
+            Save();
           }
         }
         IM::EndTabItem();

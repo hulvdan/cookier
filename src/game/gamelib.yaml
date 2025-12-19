@@ -5202,6 +5202,8 @@ debug_variables: # {  ###
     type: bool
   - name: mobSpawnRate
     type: f32
+  - name: cyclingStuffInShop
+    type: bool
 # }
 
 ###
