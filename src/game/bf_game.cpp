@@ -10067,6 +10067,7 @@ void DoUI() {
     const auto groupItems      = MakeControlsGroup();
     const auto groupItemArrows = MakeControlsGroup();
     const auto groupTop        = MakeControlsGroup();
+    const auto groupTop2       = MakeControlsGroup();
 
     // Columns.
     CLAY({
@@ -10091,7 +10092,7 @@ void DoUI() {
       }}) {
         // 1. Wave, coins, reroll.
         componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-          componentButtonAchievements(groupTop);
+          componentButtonAchievements(groupTop2);
 
           // Coins.
           componentPlayerCoins();
@@ -10100,7 +10101,7 @@ void DoUI() {
 
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             // componentButtonPause();
-            componentVolumeButtons(groupTop);
+            componentVolumeButtons(groupTop2);
           }
 
           // Reroll button.
@@ -10335,10 +10336,17 @@ void DoUI() {
     ControlsGroupConnect(groupsToBuy[1], Direction_RIGHT, groupsToBuy[3]);
     ControlsGroupConnect(groupsToBuy[0], Direction_RIGHT, groupsToBuy[3]);
 
+    ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop2);
+    ControlsGroupConnect(groupTop, Direction_LEFT, groupTop2);
+
     ControlsGroupConnect(groupsToBuy[3], Direction_UP, groupTop);
     ControlsGroupConnect(groupsToBuy[2], Direction_UP, groupTop);
     ControlsGroupConnect(groupsToBuy[1], Direction_UP, groupTop);
     ControlsGroupConnect(groupsToBuy[0], Direction_UP, groupTop);
+    ControlsGroupConnect(groupsToBuy[3], Direction_UP, groupTop2);
+    ControlsGroupConnect(groupsToBuy[2], Direction_UP, groupTop2);
+    ControlsGroupConnect(groupsToBuy[1], Direction_UP, groupTop2);
+    ControlsGroupConnect(groupsToBuy[0], Direction_UP, groupTop2);
 
     ControlsGroupConnect(groupsToBuy[3], Direction_RIGHT, groupsToBuy[0]);
     ControlsGroupConnect(groupsToBuy[3], Direction_RIGHT, groupsToBuy[1]);
@@ -10353,8 +10361,11 @@ void DoUI() {
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[1]);
     ControlsGroupConnect(groupWeapons, Direction_UP, groupsToBuy[0]);
     ControlsGroupConnect(groupTop, Direction_DOWN, groupGoNextWave);
+    ControlsGroupConnect(groupTop2, Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupWeapons, Direction_UP, groupTop);
     ControlsGroupConnect(groupItems, Direction_UP, groupTop);
+    ControlsGroupConnect(groupWeapons, Direction_UP, groupTop2);
+    ControlsGroupConnect(groupItems, Direction_UP, groupTop2);
     ControlsGroupConnect(groupWeapons, Direction_RIGHT, groupGoNextWave);
     ControlsGroupConnect(groupItems, Direction_RIGHT, groupItemArrows);
     ControlsGroupConnect(groupItemArrows, Direction_RIGHT, groupWeapons);
@@ -10364,13 +10375,15 @@ void DoUI() {
     ControlsGroupConnect(groupsToBuy[2], Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupsToBuy[1], Direction_DOWN, groupGoNextWave);
     ControlsGroupConnect(groupsToBuy[0], Direction_DOWN, groupGoNextWave);
-    ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
 
     ControlsGroupConnect(groupItems, Direction_LEFT, groupGoNextWave);
 
     ControlsGroupConnect(groupTop, Direction_UP, groupGoNextWave);
+    ControlsGroupConnect(groupTop2, Direction_UP, groupGoNextWave);
     ControlsGroupConnect(groupItems, Direction_DOWN, groupTop);
+    ControlsGroupConnect(groupItems, Direction_DOWN, groupTop2);
     ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTop);
+    ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTop2);
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///

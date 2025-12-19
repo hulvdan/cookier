@@ -12,9 +12,9 @@ WORKING SINCE 2025-09-07
 x better back rect color
 x ui: убрать backgorund-ы у кнопок верхних
 x fix cooldown: на русском постфикс S заменить на С (секунды)
+x в магазе при нажатии ВВЕРХ (переходе на topRow) фокус берёт reroll button
 
 * fix shop weapon card range calculation
-* в магазе при нажатии ВВЕРХ (переходе на topRow) фокус берёт reroll button
 * fix: нельзя пробелом нажать на confirm new run в модалке
 * fix: когда геймплей, открыл паузу, открыл модалку new run
   -> escape заклывает паузу, а должен - модалку
