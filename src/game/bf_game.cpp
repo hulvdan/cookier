@@ -6501,7 +6501,7 @@ void DoUI() {
 
   LAMBDA (
     bool,
-    componentTextButton,
+    componentOutlinedTextButton,
     (ComponentButtonData                             data,
      auto /* void (bool hovered, Color textColor) */ innerLambda)
   )
@@ -10524,7 +10524,7 @@ void DoUI() {
       }}) {
         bool restarted = false;
         if (0 && !g.run.state.won) {
-          restarted = componentTextButton(
+          restarted = componentOutlinedTextButton(
             {
               .id    = CLAY_ID("button_end_restart"),
               .group = groupButtons,
@@ -10538,7 +10538,7 @@ void DoUI() {
 
         const auto newRunID = CLAY_ID("button_end_new_run");
 
-        const bool newRun = componentTextButton(
+        const bool newRun = componentOutlinedTextButton(
           {
             .id    = newRunID,
             .group = groupButtons,
@@ -10658,7 +10658,7 @@ void DoUI() {
               if (!controlsContexts[currentContext].focused.id)
                 controlsContexts[currentContext].focused = resumeButtonID;
 
-              const bool resumed = componentTextButton(
+              const bool resumed = componentOutlinedTextButton(
                 {
                   .id    = resumeButtonID,
                   .group = groupButtons,
@@ -10675,7 +10675,7 @@ void DoUI() {
 
               bool restarted = false;
 #if 0
-                restarted = componentTextButton(
+                restarted = componentOutlinedTextButton(
                   {
                     .id    = CLAY_ID("button_pause_restart"),
                     .group = groupButtons,
@@ -10689,7 +10689,7 @@ void DoUI() {
 
               ControlsGroupNewRow(groupButtons);
 
-              const bool newRun = componentTextButton(
+              const bool newRun = componentOutlinedTextButton(
                 {
                   .id    = CLAY_ID("button_pause_new_run"),
                   .group = groupButtons,
@@ -10704,7 +10704,7 @@ void DoUI() {
 
               bool achievements = false;
 #if 0
-                achievements = componentTextButton(
+                achievements = componentOutlinedTextButton(
                   {
                     .id    = CLAY_ID("button_pause_achievements"),
                     .group = groupButtons,
@@ -10725,7 +10725,7 @@ void DoUI() {
 #if defined(SDL_PLATFORM_DESKTOP)
               ControlsGroupNewRow(groupButtons);
 
-              quit = componentTextButton(
+              quit = componentOutlinedTextButton(
                 {
                   .id    = CLAY_ID("button_pause_quit"),
                   .group = groupButtons,
@@ -11260,7 +11260,7 @@ void DoUI() {
           BF_CLAY_SPACER_VERTICAL;
 
           CLAY({}) {
-            const bool confirmed = componentTextButton(
+            const bool confirmed = componentOutlinedTextButton(
               {.id = confirmID, .group = group, .keys = KEYS_ACCEPT},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
@@ -11269,7 +11269,7 @@ void DoUI() {
 
             CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
 
-            const bool cancelled = componentTextButton(
+            const bool cancelled = componentOutlinedTextButton(
               {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, {.color = textColor});
