@@ -20,6 +20,7 @@ x fix: когда геймплей, открыл паузу, открыл мод
 x fix: нельзя пробелом нажать на confirm new run в модалке
 x tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 x better breathing in shop (upgrades, rerolls, next wave, + bonus breathiing upon reroll)
+x more breathing
 
 * fix shop weapon card range calculation
 * ВЫ УВЕРЕНЫ? вертикально расположить кнопки
