@@ -1400,6 +1400,13 @@ struct GameData {
   } ui;
 } g = {};
 
+int GetStatValue(StatType stat) {  ///
+  if (g.run.state.screen == ScreenType_GAMEPLAY)
+    return g.run.dynamicStats[StatType_DAMAGE];
+  else
+    return g.run.state.staticStats[StatType_DAMAGE];
+}
+
 lframe GetWaveDuration(int waveIndex) {  ///
   constexpr int durations_[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 60,
                              60, 60, 60, 60, 60, 60, 60, 60, 60, 90};
@@ -1744,7 +1751,7 @@ int ApplyDamageScalings(
     auto       fb_scaling = glib->damage_scalings()->Get(scalingIndex);
     const auto stat       = (StatType)fb_scaling->stat_type();
     ASSERT(stat);
-    auto statValue = g.run.dynamicStats[stat];
+    auto statValue = GetStatValue(stat);
     auto percent   = fb_scaling->percents_per_tier()->Get(tierOffset) * times;
     baseDamage += Round((f32)statValue * (f32)percent / 100.0f);
   }
@@ -1752,7 +1759,7 @@ int ApplyDamageScalings(
 }
 
 int ApplyPlayerStatDamageMultiplier(int damage) {  ///
-  auto v = 1 + (f32)g.run.dynamicStats[StatType_DAMAGE] / 100.0f;
+  f32 v = 1 + (f32)GetStatValue(StatType_DAMAGE) / 100.0f;
   return MAX(1, Round((f32)damage * v));
 }
 
@@ -2081,7 +2088,7 @@ void ApplyStatEffect(const BFGame::Effect* fb_effect, int tierOffset, int times)
 }
 
 f32 GetLuckFactor() {  ///
-  return MAX(0, 1.0f + (f32)g.run.dynamicStats[StatType_LUCK] / 100.0f);
+  return MAX(0, 1.0f + (f32)GetStatValue(StatType_LUCK) / 100.0f);
 }
 
 void RecalculateThisWaveMobs() {  ///
@@ -2929,7 +2936,7 @@ f32 GetLifestealChance(
 
   f32 lifesteal = 0;
   if (affectedByGame)
-    lifesteal += (f32)g.run.dynamicStats[StatType_LIFE_STEAL] / 100.0f;
+    lifesteal += (f32)GetStatValue(StatType_LIFE_STEAL) / 100.0f;
 
   if (typeOrInvalid) {
     auto fb_percents = fb->life_steal_percents();
@@ -5552,11 +5559,11 @@ f32 _AttackSpeedMultiplier(int v) {  ///
 }
 
 f32 GetPlayerStatAttackSpeedMultiplier() {  ///
-  return _AttackSpeedMultiplier(g.run.dynamicStats[StatType_ATTACK_SPEED]);
+  return _AttackSpeedMultiplier(GetStatValue(StatType_ATTACK_SPEED));
 }
 
 f32 GetPlayerStatStructureAttackSpeedMultiplier() {  ///
-  return _AttackSpeedMultiplier(g.run.dynamicStats[StatType_STRUCTURE_ATTACK_SPEED]);
+  return _AttackSpeedMultiplier(GetStatValue(StatType_STRUCTURE_ATTACK_SPEED));
 }
 
 lframe ApplyAttackSpeedToDuration(lframe duration) {  ///
@@ -5572,12 +5579,12 @@ lframe ApplyStructureAttackSpeedToDuration(lframe duration) {  ///
 }
 
 f32 GetExplosionDamageMultiplier() {  ///
-  auto v = (f32)g.run.dynamicStats[StatType_EXPLOSION_DAMAGE];
+  auto v = (f32)GetStatValue(StatType_EXPLOSION_DAMAGE);
   return MAX(0, 1.0f + v / 100.0f);
 }
 
 f32 GetExplosionSizeMultiplier() {  ///
-  auto v = (f32)g.run.dynamicStats[StatType_EXPLOSION_SIZE];
+  auto v = (f32)GetStatValue(StatType_EXPLOSION_SIZE);
   if (v >= 0)
     return 1 + v / 100.0f;
   return powf(2, v / 50);
@@ -5593,7 +5600,7 @@ f32 CalculateWeaponRangeMeters(
 
   f32 rangeStat = 0;
   if (affectedByGame)
-    rangeStat = (f32)g.run.dynamicStats[StatType_RANGE];
+    rangeStat = (f32)GetStatValue(StatType_RANGE);
 
   f32 bonusRange = 0;
 
@@ -7876,7 +7883,7 @@ void DoUI() {
           {
             int chance = fb->crit_chance()->Get(tierOffset);
             if (data.affectedByGame)
-              chance += g.run.dynamicStats[StatType_CRIT_CHANCE];
+              chance += GetStatValue(StatType_CRIT_CHANCE);
 
             chance = MIN(100, MAX(0, chance));
 
@@ -7898,7 +7905,7 @@ void DoUI() {
           {
             f32 value = fb->knockback_meters()->Get(tierOffset) * KNOCKBACK_SCALE;
             if (data.affectedByGame)
-              value *= 1 + (f32)g.run.dynamicStats[StatType_KNOCKBACK] / 100.0f;
+              value *= 1 + (f32)GetStatValue(StatType_KNOCKBACK) / 100.0f;
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_KNOCKBACK, [&]() BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT(StripLeadingZerosInFloat(TextFormat("%.1f", value)));
@@ -7913,10 +7920,10 @@ void DoUI() {
             if (fb->projectile_type())
               BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
             else {
-              const f32 weaponRangeMeters
+              const f32 meleeRangeMeters
                 = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
                   * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-              BF_CLAY_TEXT(TextFormat("%.1f", weaponRangeMeters + rangeMeters));
+              BF_CLAY_TEXT(TextFormat("%.1f", meleeRangeMeters + rangeMeters));
             }
           });
 
@@ -7931,10 +7938,10 @@ void DoUI() {
               value += pierces->Get(tierOffset);
 
             if (data.affectedByGame)
-              value += g.run.dynamicStats[StatType_PIERCE];
+              value += GetStatValue(StatType_PIERCE);
 
             if (value > 0) {
-              int piercingDamageBonusPercent = g.run.dynamicStats[StatType_PIERCE_DAMAGE];
+              int piercingDamageBonusPercent = GetStatValue(StatType_PIERCE_DAMAGE);
               if (fb->projectile_piercing_damage_bonus_percent())
                 piercingDamageBonusPercent
                   += fb->projectile_piercing_damage_bonus_percent()->Get(tierOffset);
@@ -7958,7 +7965,7 @@ void DoUI() {
               value += bounces->Get(tierOffset);
 
             if (data.affectedByGame)
-              value += g.run.dynamicStats[StatType_BOUNCE];
+              value += GetStatValue(StatType_BOUNCE);
 
             if (value > 0) {
               componentWeaponStatEntry(Loc_UI_BOUNCE, [&]() BF_FORCE_INLINE_LAMBDA {
@@ -8853,11 +8860,7 @@ void DoUI() {
             || !fb_stat->small_icon_texture_id())
           continue;
 
-        int v{};
-        if (g.run.state.screen == ScreenType_GAMEPLAY)
-          v = g.run.dynamicStats[statIndex];
-        else
-          v = g.run.state.staticStats[statIndex];
+        int v = GetStatValue(statIndex);
 
         auto color = palTextWhite;
         if (v > 0)
@@ -11284,10 +11287,7 @@ void DoUI() {
               const auto fb   = glib->stats()->Get(type);
               if (!fb->is_hidden() && (fb->is_secondary() == (bool)columnIndex)) {
                 componentStatsEntry(
-                  fb->small_icon_texture_id(),
-                  fb->name_locale(),
-                  g.run.dynamicStats[type],
-                  type
+                  fb->small_icon_texture_id(), fb->name_locale(), GetStatValue(type), type
                 );
               }
             }
