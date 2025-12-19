@@ -18,6 +18,7 @@ x клавиша НАПРАВО в groupTop перемещает налево з
 x fix: когда геймплей, открыл паузу, открыл модалку new run
   -> escape заклывает паузу, а должен - модалку
 x fix: нельзя пробелом нажать на confirm new run в модалке
+x tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 
 * fix shop weapon card range calculation
 *
@@ -35,7 +36,6 @@ x fix: нельзя пробелом нажать на confirm new run в мод
 *
 * RELEASED!
 =======================
-* tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 * ref IsKeyPressed -> IsKeyPressedGlobal и т.п. (т.к. в UI IsKeyPressedInCurrentContext)
 * сделать кнопки в паузе большими + new run кнопка в END
 * red error flash (у класса ниндзя особенно)
