@@ -24,13 +24,26 @@ x more breathing
 x fix shop weapon card range calculation
 x ВЫ УВЕРЕНЫ? вертикально расположить кнопки
 x more shadows
+x cheat: cycling stuff in shop
+x cheat: give all items
 
+* ENGLISH
+  * fix dex troyer card size
+  * fix sniper gun card size
+* RISSIAN
+  * fix dex troyer card size
+  * fix scythe
+  * fix crossbow
+  * fix sniper gun card size
+  * fix chain gun
+*
+* fix проверить большие карточки - не должны ломать UI
+*
 * yandex: баннер
 * yandex: прописать ESC - меню
 *
 * увеличить расстояния между кнопками в карточке оружия
 * fix расположение ховер карточек
-* fix проверить большие карточки - не должны ломать UI
 * fix какой-то набор условий триггерит огромную скороть мобов
 *
 * пробежаться по чеклисту от сакутина
