@@ -6116,8 +6116,6 @@ Color BreatheColor(Color color, int dur = 3 * FIXED_FPS) {  ///
   return ColorLerp(
     color, ColorFromHSV(v.x, Lerp(v.y, 0, factor / 2), Lerp(v.z, 1, factor)), p
   );
-
-  // return ColorLerp(color, TextifyColor(color), p);
 }
 
 // NOTE: Logic must be executed only when `ge.meta._drawing` (`draw`) is false!
