@@ -10764,7 +10764,7 @@ void DoUI() {
         }}) {
           // 1. Buttons.
           CLAY({.layout{
-            .sizing{.width = CLAY_SIZING_FIXED(400)},
+            .sizing{.width = CLAY_SIZING_FIXED(320)},
             .childGap = GAP_BIG,
             BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
