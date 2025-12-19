@@ -9729,6 +9729,7 @@ void DoUI() {
       else
         INVALID_PATH;
 
+      ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
       ControlsGroupConnect(group, Direction_DOWN, groupTop);
       ControlsGroupConnect(groupTop, Direction_DOWN, group);
       ControlsGroupConnect(group, Direction_RIGHT, group);
@@ -9838,6 +9839,7 @@ void DoUI() {
       BF_CLAY_SPACER_VERTICAL;
     }
 
+    ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
     ControlsGroupConnect(groupTop, Direction_DOWN, group);
     ControlsGroupConnect(groupTop, Direction_UP, group);
   }
@@ -10053,6 +10055,7 @@ void DoUI() {
       BF_CLAY_SPACER_VERTICAL;
     }
 
+    ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
     ControlsGroupConnect(groupTop, Direction_DOWN, groupUpgrades);
     ControlsGroupConnect(groupUpgrades, Direction_RIGHT, groupUpgrades);
     ControlsGroupConnect(groupUpgrades, Direction_DOWN, groupReroll);
@@ -10388,6 +10391,9 @@ void DoUI() {
     ControlsGroupConnect(groupItems, Direction_DOWN, groupTop2);
     ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTop);
     ControlsGroupConnect(groupWeapons, Direction_DOWN, groupTop2);
+
+    ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
+    ControlsGroupConnect(groupTop2, Direction_RIGHT, groupTop2);
   }
   // End.
   else if (g.run.state.screen == ScreenType_END) {  ///
@@ -10557,6 +10563,7 @@ void DoUI() {
       BF_CLAY_SPACER_VERTICAL;
     }
 
+    ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
     ControlsGroupConnect(groupTop, Direction_DOWN, groupWeaponsAndItems);
     ControlsGroupConnect(groupWeaponsAndItems, Direction_DOWN, groupButtons);
     ControlsGroupConnect(groupWeaponsAndItems, Direction_RIGHT, groupItemArrows);
@@ -10788,6 +10795,7 @@ void DoUI() {
         BF_CLAY_SPACER_VERTICAL;
       }
 
+      ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
       ControlsGroupConnect(groupTop, Direction_DOWN, groupButtons);
       ControlsGroupConnect(groupButtons, Direction_UP, groupTop);
       ControlsGroupConnect(groupButtons, Direction_DOWN, groupTop);
@@ -10993,6 +11001,7 @@ void DoUI() {
         BF_CLAY_SPACER_VERTICAL;
       }
 
+      ControlsGroupConnect(groupTop, Direction_RIGHT, groupTop);
       ControlsGroupConnect(groupTop, Direction_UP, groupGrid);
       ControlsGroupConnect(groupGrid, Direction_UP, groupTop);
     }
