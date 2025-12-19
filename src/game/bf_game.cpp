@@ -1402,9 +1402,9 @@ struct GameData {
 
 int GetStatValue(StatType stat) {  ///
   if (g.run.state.screen == ScreenType_GAMEPLAY)
-    return g.run.dynamicStats[StatType_DAMAGE];
+    return g.run.dynamicStats[stat];
   else
-    return g.run.state.staticStats[StatType_DAMAGE];
+    return g.run.state.staticStats[stat];
 }
 
 lframe GetWaveDuration(int waveIndex) {  ///
@@ -8860,7 +8860,7 @@ void DoUI() {
             || !fb_stat->small_icon_texture_id())
           continue;
 
-        int v = GetStatValue(statIndex);
+        int v = GetStatValue((StatType)statIndex);
 
         auto color = palTextWhite;
         if (v > 0)
