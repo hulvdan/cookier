@@ -6128,7 +6128,8 @@ void DoUI() {
 
   const auto draw = ge.meta._drawing;
 
-  ControlsContext currentContext{};
+  static ControlsContext lastFrameActiveControlsContext{};
+  ControlsContext        currentContext{};
 
   static struct {
     bool           thisFrame = false;
@@ -6344,16 +6345,7 @@ void DoUI() {
   bool _alreadyHandledActivation = false;
 
   LAMBDA (bool, isCurrentContextActive, ()) {  ///
-    if (CONTROLS_CONTEXT_MODALS.Contains(currentContext))
-      return true;
-
-    for (auto c : CONTROLS_CONTEXT_MODALS) {
-      const auto& context = controlsContexts[c];
-      if (!context.disabled && (context.prevFrame || context.thisFrame))
-        return false;
-    }
-
-    return true;
+    return lastFrameActiveControlsContext == currentContext;
   };
 
   LAMBDA (bool, IsKeyPressedInCurrentContext, (SDL_Scancode key)) {  ///
@@ -6416,6 +6408,7 @@ void DoUI() {
       ASSERT(currentContext);
 
     ASSERT(data.id.id);
+    ASSERT(data.group);
     bool result = false;
 
     Clay_Sizing sizing{};
@@ -8827,9 +8820,26 @@ void DoUI() {
         * ASSETS_TO_LOGICAL_RATIO
       + 2 * GAP_SMALL;
 
-  LAMBDA (void, componentButtonAchievements, (ControlsGroupID group)) {  ///
+  struct ComponentButtonAchievementsData {  ///
+    const char*     id    = {};
+    ControlsGroupID group = {};
+  };
+
+  LAMBDA (Clay_ElementId, CurrentContextButtonId, (const char* id, int index = 0)) {  ///
+    const Clay_String str{.length = (i32)strlen(id), .chars = id};
+    const auto        value = CLAY_SIDI(str, index);
+    ASSERT(currentContext);
+    return {.id = value.id + Hash32((u8*)&currentContext, sizeof(currentContext))};
+  };
+
+  LAMBDA (void, componentButtonAchievements, (ComponentButtonAchievementsData data))
+  {  ///
     const bool clicked = componentButton(
-      {.id = CLAY_ID("button_achievements"), .group = group, .hideBackground = true},
+      {
+        .id             = CurrentContextButtonId("button_achievements"),
+        .group          = data.group,
+        .hideBackground = true,
+      },
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
           {
@@ -8866,9 +8876,13 @@ void DoUI() {
     }
   };
 
-  LAMBDA (void, componentButtonPause, (ControlsGroupID group)) {  ///
+  struct ComponentButtonPauseData {  ///
+    ControlsGroupID group = {};
+  };
+
+  LAMBDA (void, componentButtonPause, (ComponentButtonPauseData data)) {  ///
     const bool clicked = componentButton(
-      {.id = CLAY_ID("button_pause"), .group = group},
+      {.id = CurrentContextButtonId("button_pause"), .group = data.group},
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE({.texID = glib->ui_icon_pause_small_texture_id()});
       }
@@ -8881,16 +8895,19 @@ void DoUI() {
   };
 
   struct ComponentButtonBackData {  ///
-    bool            markControlAsDefault = {};
     ControlsGroupID group                = {};
+    bool            markControlAsDefault = false;
   };
 
   LAMBDA (bool, componentButtonBack, (ComponentButtonBackData data = {})) {  ///
-
-    ASSERT(data.group);
-    const auto id      = CLAY_ID("button_back");
+    auto       id      = CurrentContextButtonId("button_back");
     const bool clicked = componentButton(
-      {.id = id, .group = data.group, .keys = KEYS_CANCEL, .hideBackground = true},
+      {
+        .id             = id,
+        .group          = data.group,
+        .keys           = KEYS_CANCEL,
+        .hideBackground = true,
+      },
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE({
           .texID = glib->ui_icon_back_big_texture_id(),
@@ -8905,13 +8922,18 @@ void DoUI() {
     return clicked;
   };
 
-  LAMBDA (void, componentVolumeButtons, (ControlsGroupID group)) {  ///
+  struct ComponentVolumeButtonsData {  ///
+    ControlsGroupID group = {};
+  };
+
+  LAMBDA (void, componentVolumeButtons, (ComponentVolumeButtonsData data)) {  ///
     int nextVolumeButtonNumber = 1;
+
     LAMBDA (void, componentButtonVolume, (int iconTexID, int* var)) {
       const bool clicked = componentButton(
         {
-          .id                = CLAY_IDI("volume_sfx", nextVolumeButtonNumber),
-          .group             = group,
+          .id    = CurrentContextButtonId("button_volume", nextVolumeButtonNumber),
+          .group = data.group,
           .paddingHorizontal = (u16)((nextVolumeButtonNumber == 1) ? GAP_BIG : GAP_SMALL),
           .hideBackground    = true,
         },
@@ -9400,7 +9422,7 @@ void DoUI() {
       auto& p = g.player;
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-        componentButtonAchievements(groupTop);
+        componentButtonAchievements({.id = "new_run_achievements", .group = groupTop});
 
         componentScreenName_floatingInTheCenter(Loc_UI_NEW_RUN, []() {});
 
@@ -9425,7 +9447,7 @@ void DoUI() {
 
         BF_CLAY_SPACER_HORIZONTAL;
 
-        componentVolumeButtons(groupTop);
+        componentVolumeButtons({.group = groupTop});
       });
 
       BF_CLAY_SPACER_VERTICAL;
@@ -9758,12 +9780,12 @@ void DoUI() {
       componentStats2Wrapped();
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-        componentButtonAchievements(groupTop);
+        componentButtonAchievements({.group = groupTop});
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
         // componentButtonStats(groupTop);
         // componentButtonPause();
-        componentVolumeButtons(groupTop);
+        componentVolumeButtons({.group = groupTop});
 
         componentScreenName_floatingInTheCenter(Loc_UI_ITEM_FOUND, []() {});
       });
@@ -9868,13 +9890,13 @@ void DoUI() {
       componentStats2Wrapped();
 
       componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-        componentButtonAchievements(groupTop);
+        componentButtonAchievements({.group = groupTop});
 
         componentPlayerCoins();
         BF_CLAY_SPACER_HORIZONTAL;
         // componentButtonStats(groupTop);
         // componentButtonPause();
-        componentVolumeButtons(groupTop);
+        componentVolumeButtons({.group = groupTop});
 
         componentScreenName_floatingInTheCenter(Loc_UI_LEVEL_UP, []() {});
       });
@@ -10099,7 +10121,7 @@ void DoUI() {
       }}) {
         // 1. Wave, coins, reroll.
         componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-          componentButtonAchievements(groupTop2);
+          componentButtonAchievements({.group = groupTop2});
 
           // Coins.
           componentPlayerCoins();
@@ -10108,7 +10130,7 @@ void DoUI() {
 
           CLAY({.layout{.childGap = GAP_SMALL}}) {
             // componentButtonPause();
-            componentVolumeButtons(groupTop2);
+            componentVolumeButtons({.group = groupTop2});
           }
 
           // Reroll button.
@@ -10440,9 +10462,9 @@ void DoUI() {
           }
         );
 
-        componentButtonAchievements(groupTop);
+        componentButtonAchievements({.group = groupTop});
         BF_CLAY_SPACER_HORIZONTAL;
-        componentVolumeButtons(groupTop);
+        componentVolumeButtons({.group = groupTop});
         // componentButtonPause();
         // componentButtonStats(groupTop);
       });
@@ -10620,9 +10642,9 @@ void DoUI() {
         componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
           componentWaveAndTimerInCenterTopOfTheScreen();
 
-          componentButtonAchievements(groupTop);
+          componentButtonAchievements({.group = groupTop});
           BF_CLAY_SPACER_HORIZONTAL;
-          componentVolumeButtons(groupTop);
+          componentVolumeButtons({.group = groupTop});
           // componentButtonStats(groupTop);
         });
 
@@ -10847,7 +10869,7 @@ void DoUI() {
 
         // "Achievements" label.
         componentTopRow([&]() BF_FORCE_INLINE_LAMBDA {
-          if (componentButtonBack({.markControlAsDefault = true, .group = groupTop})) {
+          if (componentButtonBack({.group = groupTop, .markControlAsDefault = true})) {
             g.meta.showingAchievements                = false;
             g.meta.achievementsHoveredAchievement     = 0;
             g.meta.achievementsHoveredAchievementStep = 0;
@@ -11261,7 +11283,7 @@ void DoUI() {
 
           CLAY({}) {
             const bool confirmed = componentOutlinedTextButton(
-              {.id = confirmID, .group = group, .keys = KEYS_ACCEPT},
+              {.id = confirmID, .group = group},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
               }
@@ -11497,6 +11519,8 @@ void DoUI() {
     ControlsContext currentContext = shownModal;
     if (!currentContext)
       currentContext = shownScreen;
+
+    lastFrameActiveControlsContext = currentContext;
 
     if (uiElementSwitchDirection && currentContext && !justFocusedDefaultControl) {
       auto toSelect = controlsContexts[currentContext].focused;
