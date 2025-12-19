@@ -4666,7 +4666,7 @@ builds: # {  ###
         stat_type_2: DAMAGE
         placeholders:
           - ints: -50
-      - effectcondition_type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
+            # - effectcondition_type: STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
     unlocks_weapon_type: RANGED_1_ROCKER_LAUNCHER
   - type: VICTIM
     hat_type: TOP
