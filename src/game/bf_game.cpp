@@ -10574,6 +10574,7 @@ void DoUI() {
       });
 
       BF_CLAY_SPACER_VERTICAL;
+      BF_CLAY_SPACER_VERTICAL;
 
       // Main. Weapons, items.
       CLAY({.layout{
@@ -10603,7 +10604,7 @@ void DoUI() {
               // Weapons.
               componentWeaponsGrid({
                 .group        = groupWeaponsAndItems,
-                .weaponsX     = 8,
+                .weaponsX     = 10,
                 .detailsRight = 1,
                 .detailsBelow = 1,
               });
@@ -10620,8 +10621,8 @@ void DoUI() {
             componentItemsGrid({
               .group        = groupWeaponsAndItems,
               .groupArrows  = groupItemArrows,
-              .itemsX       = 8,
-              .itemsMaxY    = 4,
+              .itemsX       = 10,
+              .itemsMaxY    = 3,
               .scroll       = &g.run.itemsScrollEnd,
               .detailsRight = 1,
               .detailsBelow = 0,
@@ -10910,7 +10911,7 @@ void DoUI() {
               .group        = groupWeaponsAndItems,
               .groupArrows  = groupItemArrows,
               .itemsX       = 6,
-              .itemsMaxY    = 6,
+              .itemsMaxY    = 4,
               .scroll       = &g.run.itemsScrollPause,
               .detailsRight = 1,
               .detailsBelow = 0,
