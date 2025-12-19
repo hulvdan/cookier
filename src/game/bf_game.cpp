@@ -11222,7 +11222,7 @@ void DoUI() {
 
           CLAY({}) {
             const bool confirmed = componentTextButton(
-              {.id = confirmID, .group = group},
+              {.id = confirmID, .group = group, .keys = KEYS_ACCEPT},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
               }
@@ -11758,7 +11758,7 @@ void DoUI() {
               // const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) /
               // (f32)cycleDur;
 
-              const Color rectColor{16, 12, 9, 255};
+              const Color rectColor{22, 16, 13, 255};
 
               FOR_RANGE (int, y, rectsYToSide) {
                 FOR_RANGE (int, n, 2) {
