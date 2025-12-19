@@ -5236,8 +5236,8 @@ void GameInit() {
   }
 
   // Setup. {  ///
-  g.meta.trashArena         = MakeArena(64 * 1024);
-  g.meta.transientDataArena = MakeArena(64 * 1024);
+  g.meta.trashArena         = MakeArena(128 * 1024);
+  g.meta.transientDataArena = MakeArena(128 * 1024);
   g.run.arena               = MakeArena(4 * 1024);
   TEMP_USAGE(&g.meta.trashArena);
 
@@ -6325,7 +6325,7 @@ void DoUI() {
   const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
 
   constexpr int CARD_WIDTH          = 240;
-  constexpr int CARD_HEIGHT         = 390;
+  constexpr int CARD_HEIGHT         = 400;
   constexpr int UPGRADE_FRAME_WIDTH = 200;
   constexpr int ACHIEVEMENT_WIDTH   = CARD_WIDTH;
 
