@@ -10313,6 +10313,7 @@ void DoUI() {
               .shopGroup            = groupsToBuy[toPickIndex],
               .shopBuyingIndex      = toPickIndex,
               .shopFocusAfterBuying = changeToID,
+              .shadow               = true,
             });
             if (toPickIndex < g.run.state.shop.toPick.count - 1)
               CLAY({.layout{.sizing{.width = GAP_BIG}}}) {}
