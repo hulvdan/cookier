@@ -28,14 +28,21 @@ x cheat: cycling stuff in shop
 x cheat: give all items
 x fix карточки предметов и оружие не должны увеичивать размер карточки
 x fix расположение ховер карточек
+x cheat: hide hud
+x yandex черновик: прописать ESC - меню
 
-* проверить эффект «+% к изменениям»
 * yandex: баннер
-*
-* yandex: прописать ESC - меню
+* yandex: chatgpt описание
 * yandex: читерить могу только я
   КАК СДЕЛАТЬ ТАК, ЧТОБЫ ТОЛЬКО Я МОГ ЧИТЕРИТЬ
 *
+* проверить эффект «+% к изменениям»
+* fix что-то там реально не так с notPickedUpCoinsVisual - деньги реально теряются
+  - ASSERT отработал
+    ```
+    if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
+      ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
+    ```
 * fix какой-то набор условий триггерит огромную скороть мобов
 *
 * пробежаться по чеклисту от сакутина

@@ -11925,9 +11925,12 @@ void DoUI() {
               const int rectsXToSide = 10;
               const int rectsYToSide = 5;
 
-              // const int cycleDur = 24 * FIXED_FPS;
-              // const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) /
-              // (f32)cycleDur;
+#define BF_BACKGROUND_CYCLE_ENABLED 1
+
+#if BF_BACKGROUND_CYCLE_ENABLED
+              const int cycleDur = 20 * FIXED_FPS;
+              const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) / (f32)cycleDur;
+#endif
 
               const Color rectColor{22, 16, 13, 255};
 
@@ -11949,14 +11952,18 @@ void DoUI() {
 
                       f32 angle = -PI32 / 6;
 
-                      // off.y += (((x + m) % 2) ? 1 : -1) * (size.y + gap) * cycleP;
-                      //
                       f32 fade = 1;
+
+#if BF_BACKGROUND_CYCLE_ENABLED
+                      off.y += (((x + m) % 2) ? 1 : -1) * (size.y + gap) * 0.1f
+                               * cosf(2 * PI32 * cycleP);
+
                       // if ((y == rectsYToSide - 1) && ((x + m + n) % 2)) {
                       //   const f32 p = 10 * cycleP - 9;
                       //   if (p > 0)
                       //     fade = 1 - p;
                       // }
+#endif
 
                       DrawGroup_CommandTexture({
                         .texID    = texID,
@@ -15855,7 +15862,8 @@ void GameDraw() {
   // Drawing touch controls.
   if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
       && !g.meta.paused                            //
-      && g.meta.stickControl.controlling)
+      && g.meta.stickControl.controlling           //
+      && !gdebug.hideHUD)
   {  ///
     DrawGroup_Begin(DrawZ_TOUCH_CONTROLS);
     DrawGroup_SetSortY(0);
