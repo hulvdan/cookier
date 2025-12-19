@@ -19,6 +19,7 @@ x fix: когда геймплей, открыл паузу, открыл мод
   -> escape заклывает паузу, а должен - модалку
 x fix: нельзя пробелом нажать на confirm new run в модалке
 x tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
+x better breathing in shop (upgrades, rerolls, next wave, + bonus breathiing upon reroll)
 
 * fix shop weapon card range calculation
 *

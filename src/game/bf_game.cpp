@@ -154,6 +154,11 @@ Clay_Color ToClayColor(Color color) {
     .set = (enabled_), .nineSlice = (gamelibNineSlicePtr_),   \
   }
 
+struct Breathing {  ///
+  bool        set            = false;
+  FrameVisual bonusBreatheAt = {};
+};
+
 #define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_, enabled_, breathing_) \
   .nineSlice {                                                                       \
     .set = enabled_, .breathing = (breathing_), .nineSlice = (gamelibNineSlicePtr_), \
@@ -281,7 +286,7 @@ struct ClayCustomData {
 
   struct {
     bool                     set            = false;
-    bool                     breathing      = false;
+    Breathing                breathing      = {};
     const BFGame::NineSlice* nineSlice      = nullptr;
     Color                    nineSliceColor = WHITE;
     Color                    nineSliceFlash = TRANSPARENT_BLACK;
@@ -879,8 +884,9 @@ struct Upgrade {  ///
 };
 
 struct Rerolls {  ///
-  int rerolledFreeTimes = 0;
-  int rerolledTimes     = 0;
+  int         rerolledFreeTimes = 0;
+  int         rerolledTimes     = 0;
+  FrameVisual lastRerolledAt    = {};
 
   void Roll();
   int  GetPrice() const;
@@ -5374,6 +5380,9 @@ void Rerolls::Roll() {  ///
     rerolledFreeTimes++;
   else
     rerolledTimes++;
+
+  lastRerolledAt = {};
+  lastRerolledAt.SetNow();
 }
 
 int Rerolls::GetPrice() const {  ///
@@ -5574,16 +5583,16 @@ f32 GetExplosionSizeMultiplier() {  ///
 f32 GetWeaponRangeMeters(WeaponType type, int tier, bool affectedByGame = true) {  ///
   const auto fb = glib->weapons()->Get(type);
 
-  f32 range = 0;
+  f32 rangeStat = 0;
   if (affectedByGame)
-    range = (f32)g.run.dynamicStats[StatType_RANGE];
+    rangeStat = (f32)g.run.dynamicStats[StatType_RANGE];
 
   f32 bonusRange = 0;
 
-  if (range >= 0)
-    bonusRange = range * RANGE_TO_METER_SCALE;
+  if (rangeStat >= 0)
+    bonusRange = rangeStat * RANGE_TO_METER_SCALE;
   else {
-    bonusRange = (powf(2, range / -RANGE_GETS_HALVED_WHEN) - 1)
+    bonusRange = (powf(2, rangeStat / -RANGE_GETS_HALVED_WHEN) - 1)
                  * fb->range_meters()->Get(tier - fb->min_tier_index());
   }
 
@@ -6106,13 +6115,28 @@ bool IsAchievementStepLocked(AchievementType type, int stepIndex) {  ///
   return isLocked;
 }
 
-Color BreatheColor(Color color, int dur = 3 * FIXED_FPS) {  ///
-  f32 p = (f32)(ge.meta.frameVisual % dur) / (f32)dur;
+struct BreatheColorData {  ///
+  int       dur       = 3 * FIXED_FPS;
+  Breathing breathing = {};
+};
+
+Color BreatheColor(Color color, BreatheColorData data) {  ///
+  if (!data.breathing.set)
+    return color;
+
+  f32 p = (f32)(ge.meta.frameVisual % data.dur) / (f32)data.dur;
   p     = (sinf(2 * PI32 * p) + 1) / 2.0f;
   p     = Lerp(p, EaseInQuad(p), 1);
 
+  if (data.breathing.bonusBreatheAt.IsSet()) {
+    p = EaseOutQuad(MAX(
+      p,
+      1 - data.breathing.bonusBreatheAt.Elapsed().Progress(lframe::Unscaled(data.dur / 3))
+    ));
+  }
+
   const auto v      = ColorToHSV(color);
-  f32        factor = 0.5f;
+  f32        factor = 0.75f;
   return ColorLerp(
     color, ColorFromHSV(v.x, Lerp(v.y, 0, factor / 2), Lerp(v.z, 1, factor)), p
   );
@@ -6407,7 +6431,7 @@ void DoUI() {
     u16                paddingVertical   = GAP_SMALL;
     View<SDL_Scancode> keys              = {};
     int                tier              = 0;
-    bool               breathing         = false;
+    Breathing          breathing         = {};
     bool               hideBackground    = false;
   };
 
@@ -6535,11 +6559,11 @@ void DoUI() {
 
     return componentButton(
       {
-        .id        = rerollID,
-        .group     = group,
-        .keys      = keys,
-        .tier      = 7,
-        .breathing = (price <= PLAYER_COINS),
+        .id    = rerollID,
+        .group = group,
+        .keys  = keys,
+        .tier  = 7,
+        .breathing{.set = (price <= PLAYER_COINS)},
       },
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         CLAY({.layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER}}) {
@@ -6583,11 +6607,12 @@ void DoUI() {
   };
 
   struct ComponentButtonRecycleData {  ///
-    Clay_ElementId  id    = {};
-    ControlsGroupID group = {};
-    int             price = {};
-    Color           color = WHITE;
-    int             tier  = 0;
+    Clay_ElementId  id        = {};
+    ControlsGroupID group     = {};
+    int             price     = {};
+    Color           color     = WHITE;
+    int             tier      = 0;
+    Breathing       breathing = {};
   };
 
   LAMBDA (bool, componentButtonRecycle, (ComponentButtonRecycleData data)) {  ///
@@ -6596,7 +6621,12 @@ void DoUI() {
     ASSERT(data.id.id);
 
     return componentButton(
-      {.id = data.id, .group = data.group, .tier = data.tier},
+      {
+        .id        = data.id,
+        .group     = data.group,
+        .tier      = data.tier,
+        .breathing = data.breathing,
+      },
       [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
         BF_CLAY_IMAGE(
           {.texID = glib->ui_icon_sell_texture_id(), .color = data.color},
@@ -6635,7 +6665,7 @@ void DoUI() {
     bool            hidden                  = {};
     bool            canHover                = {};
     int             tier                    = {};
-    bool            breathing               = false;
+    Breathing       breathing               = {};
     f32             flashWhite              = 0;
     bool            showsDetails            = false;
     bool            disallowsTouch          = false;
@@ -6660,8 +6690,8 @@ void DoUI() {
     }}})
     if (!data.hidden) {
       auto color = slotColors[2 * data.tier];
-      if (draw && data.breathing)
-        color = BreatheColor(color);
+      if (draw && data.breathing.set)
+        color = BreatheColor(color, {.breathing = data.breathing});
 
       auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
 
@@ -6759,10 +6789,10 @@ void DoUI() {
 
     HiddenType hidden = HiddenType_HIDE_IF_EMPTY;
 
-    int  count     = 1;
-    int  tier      = -1;
-    bool canHover  = true;
-    bool breathing = false;
+    int       count     = 1;
+    int       tier      = -1;
+    bool      canHover  = true;
+    Breathing breathing = {};
 
     bool showsDetails            = false;
     bool disallowsTouch          = false;
@@ -7873,7 +7903,7 @@ void DoUI() {
               const f32 weaponRangeMeters
                 = (f32)glib->original_texture_sizes()->Get(fb->texture_ids()->Get(0))->x()
                   * ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
-              BF_CLAY_TEXT(TextFormat("%.1f + %.1f", weaponRangeMeters, rangeMeters));
+              BF_CLAY_TEXT(TextFormat("%.1f", weaponRangeMeters + rangeMeters));
             }
           });
 
@@ -8000,11 +8030,14 @@ void DoUI() {
 
             const bool bought = componentButton(
               {
-                .id        = buyButtonID,
-                .group     = data.shopGroup,
-                .keys      = keys,
-                .tier      = tier,
-                .breathing = canBuy,
+                .id    = buyButtonID,
+                .group = data.shopGroup,
+                .keys  = keys,
+                .tier  = tier,
+                .breathing{
+                  .set            = canBuy,
+                  .bonusBreatheAt = g.run.state.shop.rerolls.lastRerolledAt,
+                },
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 CLAY({.layout{
@@ -8126,10 +8159,10 @@ void DoUI() {
             if (canCombineWithIndex >= 0) {
               combined = componentButton(
                 {
-                  .id        = combineID,
-                  .group     = groupDetails,
-                  .tier      = 7,
-                  .breathing = true,
+                  .id    = combineID,
+                  .group = groupDetails,
+                  .tier  = 7,
+                  .breathing{.set = true},
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_combine_texture_id()});
@@ -9600,6 +9633,7 @@ void DoUI() {
               .difficulty              = (DifficultyType)(isLocked ? 0 : i),
               .hidden                  = HiddenType_SHOW_LOCK,
               .tier                    = (isLocked ? 0 : (int)i - 1),
+              .breathing               = !isLocked,
               .disallowsTouch          = true,
               .touchPreservesSelection = true,
             });
@@ -9663,6 +9697,7 @@ void DoUI() {
                 .build                   = (isLocked ? BuildType_INVALID : build),
                 .hidden                  = HiddenType_SHOW_LOCK,
                 .tier                    = (isLocked ? 0 : -1),
+                .breathing               = !isLocked,
                 .disallowsTouch          = true,
                 .touchPreservesSelection = true,
               });
@@ -9744,6 +9779,7 @@ void DoUI() {
                 .weapon         = (WeaponType)(isLocked ? 0 : fb_buildWeapons->Get(t)),
                 .hidden         = HiddenType_SHOW_LOCK,
                 .tier           = (isLocked ? 0 : -1),
+                .breathing      = !isLocked,
                 .disallowsTouch = true,
                 .touchPreservesSelection = true,
               });
@@ -9845,7 +9881,7 @@ void DoUI() {
         }}) {
           auto       tookID = CLAY_ID("button_picked_up_item_take");
           const bool took   = componentButton(
-            {.id = tookID, .group = group, .tier = 7},
+            {.id = tookID, .group = group, .tier = 7, .breathing{.set = true}},
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
             }
@@ -9861,6 +9897,7 @@ void DoUI() {
             .group = group,
             .price = recyclePrice,
             .tier  = 4,
+            .breathing{.set = true},
           });
 
           if (took)
@@ -10046,6 +10083,7 @@ void DoUI() {
                           .group = groupUpgrades,
                           .keys  = keys,
                           .tier  = upgrade.tier,
+                          .breathing{.set = true},
                   // .tier  = 7,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
@@ -10337,12 +10375,12 @@ void DoUI() {
 
             const bool nextWavePressed = componentButton(
               {
-                .id        = CLAY_ID("button_shop_next_wave"),
-                .group     = groupGoNextWave,
-                .growX     = true,
-                .keys      = keys,
-                .tier      = (nextIsBoss ? 4 : 7),
-                .breathing = true,
+                .id    = CLAY_ID("button_shop_next_wave"),
+                .group = groupGoNextWave,
+                .growX = true,
+                .keys  = keys,
+                .tier  = (nextIsBoss ? 4 : 7),
+                .breathing{.set = true},
               },
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_IMAGE(
@@ -10584,6 +10622,7 @@ void DoUI() {
               .id    = CLAY_ID("button_end_restart"),
               .group = groupButtons,
               .tier  = 7,
+              .breathing{.set = true},
             },
             [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
               BF_CLAY_TEXT_LOCALIZED(Loc_UI_RESTART__CAPS, {.color = textColor});
@@ -10598,6 +10637,7 @@ void DoUI() {
             .id    = newRunID,
             .group = groupButtons,
             .tier  = 7,
+            .breathing{.set = true},
           },
           [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
             BF_CLAY_TEXT_LOCALIZED(Loc_UI_NEW_RUN__CAPS, {.color = textColor});
@@ -11931,8 +11971,8 @@ void DoUI() {
               Color color{
                 d.nineSliceColor.r, d.nineSliceColor.g, d.nineSliceColor.b, 255
               };
-              if (d.breathing)
-                color = BreatheColor(color);
+              if (d.breathing.set)
+                color = BreatheColor(color, {.breathing = d.breathing});
               color.a = (u8)((f32)d.nineSliceColor.a * beautifierAlpha);
 
               DrawGroup_CommandTextureNineSlice({
