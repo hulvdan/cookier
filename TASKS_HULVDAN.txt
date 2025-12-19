@@ -21,10 +21,10 @@ x fix: нельзя пробелом нажать на confirm new run в мод
 x tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
 x better breathing in shop (upgrades, rerolls, next wave, + bonus breathiing upon reroll)
 x more breathing
+x fix shop weapon card range calculation
+x ВЫ УВЕРЕНЫ? вертикально расположить кнопки
+x more shadows
 
-* fix shop weapon card range calculation
-* ВЫ УВЕРЕНЫ? вертикально расположить кнопки
-*
 * yandex: баннер
 * yandex: прописать ESC - меню
 *
@@ -39,6 +39,7 @@ x more breathing
 *
 * RELEASED!
 =======================
+* impl STRUCTURES_SPAWN_CLOSE_TO_EACH_OTHER
 * ref IsKeyPressed -> IsKeyPressedGlobal и т.п. (т.к. в UI IsKeyPressedInCurrentContext)
 * сделать кнопки в паузе большими + new run кнопка в END
 * red error flash (у класса ниндзя особенно)

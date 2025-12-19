@@ -22,7 +22,7 @@ UI_THIS_WAVE_DAMAGE;Урон за волну;This wave damage;
 UI_LIMITED;Ограничено;Limited;
 UI_UNIQUE;Уникалка;Unique;
 UI_COMBINE;Скомбинировать;Combine;
-UI_CANCEL;Назад;Cancel;
+UI_CANCEL;Отмена;Cancel;
 UI_TAKE;Взять;Take;
 UI_RECYCLE;Продать;Recycle;
 UI_CHOOSE;Выбрать;Choose;

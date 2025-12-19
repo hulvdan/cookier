@@ -2257,6 +2257,12 @@ void OnWaveStarted() {  ///
   MarkGameplayStart();
 }
 
+void SwitchScreen(ScreenType screen) {  ///
+  g.run.state.screen          = screen;
+  g.run.shownScreenAt[screen] = {};
+  g.run.shownScreenAt[screen].SetNow();
+}
+
 void GameLoad(const BFSave::Save* save) {  ///
   auto& s         = g.run.state;
   auto  tempItems = s.items;
@@ -2414,6 +2420,8 @@ void GameLoad(const BFSave::Save* save) {  ///
 
   g.player.volumeMusic = MAX(0, MIN(3, save->volume_music()));
   g.player.volumeSFX   = MAX(0, MIN(3, save->volume_sfx()));
+
+  SwitchScreen(g.run.state.screen);
 }
 
 flatbuffers::FlatBufferBuilder GameDumpStateForSaving() {  ///
@@ -9478,6 +9486,7 @@ void DoUI() {
           .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         BF_CLAY_CUSTOM_BEGIN{
+          BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
           BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
         } BF_CLAY_CUSTOM_END,
       }) {
@@ -9567,6 +9576,7 @@ void DoUI() {
               .lockInfo       = lockInfo,
               .overrideTier   = overrideTier,
               .setFixedHeight = true,
+              .shadow         = true,
             });
           }
         };
@@ -9887,6 +9897,7 @@ void DoUI() {
           .item           = type,
           .affectedByGame = true,
           .setFixedHeight = true,
+          .shadow         = true,
         });
 
         // Take and Recycle buttons.
@@ -10006,6 +10017,7 @@ void DoUI() {
               .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
             BF_CLAY_CUSTOM_BEGIN{
+              BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
               BF_CLAY_CUSTOM_NINE_SLICE(
                 glib->ui_frame_nine_slice(), upgrade.tier, true, false
               ),
@@ -10999,6 +11011,7 @@ void DoUI() {
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
               },
               BF_CLAY_CUSTOM_BEGIN{
+                BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
                 BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
               } BF_CLAY_CUSTOM_END,
             }) {
@@ -11103,6 +11116,7 @@ void DoUI() {
               = (WeaponType)((fb_step && !isLocked) ? fb_step->unlocks_weapon_type() : 0),
               .hidden         = HiddenType_SHOW_LOCK,
               .setFixedHeight = true,
+              .shadow         = true,
             });
           }
         }
@@ -11342,13 +11356,14 @@ void DoUI() {
           .layout{
             .sizing{
               .width  = CLAY_SIZING_FIXED(450),
-              .height = CLAY_SIZING_FIXED(160),
+              .height = CLAY_SIZING_FIXED(200),
             },
             BF_CLAY_PADDING_ALL(PADDING_FRAME),
             BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_BEGIN{
+            BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
             BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
           } BF_CLAY_CUSTOM_END,
         }) {
@@ -11365,18 +11380,21 @@ void DoUI() {
 
           BF_CLAY_SPACER_VERTICAL;
 
-          CLAY({}) {
+          CLAY({.layout{
+            .childGap        = GAP_SMALL,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+          }}) {
             const bool confirmed = componentOutlinedTextButton(
-              {.id = confirmID, .group = group},
+              {.id = confirmID, .group = group, .growX = true},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(locale, {.color = textColor});
               }
             );
 
-            CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
+            ControlsGroupNewRow(group);
 
             const bool cancelled = componentOutlinedTextButton(
-              {.id = cancelID, .group = group, .keys = KEYS_CANCEL},
+              {.id = cancelID, .group = group, .growX = true, .keys = KEYS_CANCEL},
               [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                 BF_CLAY_TEXT_LOCALIZED(Loc_UI_CANCEL__CAPS, {.color = textColor});
               }
@@ -12087,12 +12105,6 @@ void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
       = ge.meta.frameVisual + lframe::FromSeconds(fb_sound->repeat_seconds()).value;
     PlaySound(fb_sound->sound_hash());
   }
-}
-
-void SwitchScreen(ScreenType screen) {  ///
-  g.run.state.screen          = screen;
-  g.run.shownScreenAt[screen] = {};
-  g.run.shownScreenAt[screen].SetNow();
 }
 
 void GameFixedUpdate() {
