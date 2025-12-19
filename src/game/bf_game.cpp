@@ -9206,9 +9206,9 @@ void DoUI() {
   // ╚══════╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝
 
   // Gameplay.
-  if (g.run.waveStartedAt.IsSet()  //
+  if (!gdebug.hideHUD && (g.run.waveStartedAt.IsSet()  //
         && (g.run.state.screen == ScreenType_GAMEPLAY)
-      || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION))
+      || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION)))
   {
     Beautify b{
       .alpha
@@ -11742,7 +11742,7 @@ void DoUI() {
   }
 
   // Game's version.
-  {  ///
+  if (!gdebug.hideHUD) {  ///
     bool showVersion = ge.meta.debugEnabled;
 #if BF_SHOW_VERSION
     showVersion = true;
@@ -15909,6 +15909,8 @@ void GameDraw() {
 
         IM::Checkbox("Disable Mob Spawns", &gdebug.disableMobSpawns);
         IM::Checkbox("Disable Boss Spawn", &gdebug.disableBossSpawn);
+
+        IM::Checkbox("Hide HUD", &gdebug.hideHUD);
 
         {
           IM::Text("Wave Duration: ");
