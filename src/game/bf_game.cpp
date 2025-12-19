@@ -867,6 +867,7 @@ enum ScreenType {  ///
   ScreenType_UPGRADES,
   ScreenType_SHOP,
   ScreenType_END,
+  ScreenType_COUNT,
 };
 
 const ScreenType PAUSABLE_SCREENS_[]{ScreenType_GAMEPLAY};
@@ -1271,6 +1272,9 @@ struct GameData {
     bool        scheduledNextWave           = false;
 
     bool showingSecondaryStats = false;
+
+    FrameVisual shownScreenAt_[ScreenType_COUNT]{};
+    VIEW_FROM_ARRAY_DANGER(shownScreenAt);
 
     Camera camera{
       .zoom          = METER_LOGICAL_SIZE,
@@ -5580,7 +5584,11 @@ f32 GetExplosionSizeMultiplier() {  ///
 }
 
 // NOTE: Doesn't include melee weapon's size.
-f32 GetWeaponRangeMeters(WeaponType type, int tier, bool affectedByGame = true) {  ///
+f32 CalculateWeaponRangeMeters(
+  WeaponType type,
+  int        tier,
+  bool       affectedByGame = true
+) {  ///
   const auto fb = glib->weapons()->Get(type);
 
   f32 rangeStat = 0;
@@ -5931,8 +5939,8 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   else
     p = EaseOutQuad(p * 2);
 
-  const f32  movingDistance = MAX(1, GetWeaponRangeMeters(weapon.type, weapon.tier));
-  const auto movedDistance  = p * movingDistance;
+  const f32 movingDistance = MAX(1, CalculateWeaponRangeMeters(weapon.type, weapon.tier));
+  const auto movedDistance = p * movingDistance;
 
   auto offset = weapon.targetDir * movedDistance;
 
@@ -6124,8 +6132,10 @@ Color BreatheColor(Color color, BreatheColorData data) {  ///
   if (!data.breathing.set)
     return color;
 
-  f32 p = (f32)(ge.meta.frameVisual % data.dur) / (f32)data.dur;
-  p     = (sinf(2 * PI32 * p) + 1) / 2.0f;
+  auto shownAt = g.run.shownScreenAt[g.run.state.screen];
+  ASSERT(shownAt.IsSet());
+  f32 p = (f32)(shownAt.Elapsed().value % data.dur) / (f32)data.dur;
+  p     = (cosf(2 * PI32 * p) + 1) / 2.0f;
   p     = Lerp(p, EaseInQuad(p), 1);
 
   if (data.breathing.bonusBreatheAt.IsSet()) {
@@ -6134,6 +6144,9 @@ Color BreatheColor(Color color, BreatheColorData data) {  ///
       1 - data.breathing.bonusBreatheAt.Elapsed().Progress(lframe::Unscaled(data.dur / 3))
     ));
   }
+
+  ASSERT(p >= 0);
+  ASSERT(p <= 1);
 
   const auto v      = ColorToHSV(color);
   f32        factor = 0.75f;
@@ -7896,7 +7909,7 @@ void DoUI() {
           // Range.
           componentWeaponStatEntry(Loc_UI_RANGE, [&]() BF_FORCE_INLINE_LAMBDA {
             const f32 rangeMeters
-              = GetWeaponRangeMeters(data.weapon, tier, data.affectedByGame);
+              = CalculateWeaponRangeMeters(data.weapon, tier, data.affectedByGame);
             if (fb->projectile_type())
               BF_CLAY_TEXT(TextFormat("%.1f", rangeMeters));
             else {
@@ -12076,6 +12089,12 @@ void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
   }
 }
 
+void SwitchScreen(ScreenType screen) {  ///
+  g.run.state.screen          = screen;
+  g.run.shownScreenAt[screen] = {};
+  g.run.shownScreenAt[screen].SetNow();
+}
+
 void GameFixedUpdate() {
   ZoneScoped;
 
@@ -12392,7 +12411,7 @@ void GameFixedUpdate() {
   // Advancing to new run.
   if (g.run.scheduledNewRun) {  ///
     g.run.scheduledNewRun = false;
-    g.run.state.screen    = ScreenType_NEW_RUN;
+    SwitchScreen(ScreenType_NEW_RUN);
     Save();
   }
 
@@ -12400,7 +12419,7 @@ void GameFixedUpdate() {
   if (g.run.scheduledPickedUpItems) {  ///
     g.run.scheduledPickedUpItems = false;
 
-    g.run.state.screen = ScreenType_PICKED_UP_ITEM;
+    SwitchScreen(ScreenType_PICKED_UP_ITEM);
 
     if (g.run.scheduledPickedUpItemsReset) {
       g.run.scheduledPickedUpItemsReset = false;
@@ -12413,8 +12432,7 @@ void GameFixedUpdate() {
   // Advancing to ScreenType_UPGRADES.
   if (g.run.scheduledUpgrades) {  ///
     g.run.scheduledUpgrades = false;
-
-    g.run.state.screen = ScreenType_UPGRADES;
+    SwitchScreen(ScreenType_UPGRADES);
 
     if (g.run.scheduledUpgradesReset) {
       g.run.scheduledUpgradesReset = false;
@@ -12432,7 +12450,7 @@ void GameFixedUpdate() {
   // Advancing to ScreenType_SHOP.
   if (g.run.scheduledShop) {  ///
     g.run.scheduledShop = false;
-    g.run.state.screen  = ScreenType_SHOP;
+    SwitchScreen(ScreenType_SHOP);
 
     g.run.projectiles.Reset();
     g.run.numbers.Reset();
@@ -12499,7 +12517,7 @@ void GameFixedUpdate() {
       PlaySound(Sound_GAME_RUN_LOST);
 
     g.run.scheduledEnd = false;
-    g.run.state.screen = ScreenType_END;
+    SwitchScreen(ScreenType_END);
 
     Save();
   }
@@ -12507,8 +12525,7 @@ void GameFixedUpdate() {
   // Advancing to the next wave (ScreenType_GAMEPLAY).
   if (g.run.scheduledNextWave) {  ///
     g.run.scheduledNextWave = false;
-
-    g.run.state.screen = ScreenType_GAMEPLAY;
+    SwitchScreen(ScreenType_GAMEPLAY);
 
     g.run.state.waveIndex++;
     g.run.state.xpOnStartOfTheWave = g.run.state.xp;
@@ -13811,7 +13828,7 @@ void GameFixedUpdate() {
 
           if (closestCreatureIndex >= 0) {
             const auto& closestCreature = g.run.creatures[closestCreatureIndex];
-            auto        range           = GetWeaponRangeMeters(weapon.type, weapon.tier);
+            auto        range = CalculateWeaponRangeMeters(weapon.type, weapon.tier);
 
             if (fb->projectile_type()) {
               const auto fb_projectile = glib->projectiles()->Get(fb->projectile_type());
@@ -13924,7 +13941,7 @@ void GameFixedUpdate() {
                     .weaponIndexOrMinus1 = weaponIndex,
                     .pos                 = spawnPos,
                     .dir                 = dir,
-                    .range               = GetWeaponRangeMeters(weapon.type, weapon.tier),
+                    .range = CalculateWeaponRangeMeters(weapon.type, weapon.tier),
                     .damage
                     = CalculateWeaponDamage(weaponIndex, weapon.type, weapon.tier, true),
                     .critDamageMultiplier = fb->crit_damage_multiplier()->Get(tierOffset),
@@ -13966,7 +13983,7 @@ void GameFixedUpdate() {
               };
               colliderSize *= ASSETS_TO_LOGICAL_RATIO / METER_LOGICAL_SIZE;
 
-              colliderSize.x += GetWeaponRangeMeters(weapon.type, weapon.tier);
+              colliderSize.x += CalculateWeaponRangeMeters(weapon.type, weapon.tier);
 
               auto pos = PLAYER_CREATURE.pos + weapon.targetDir * colliderSize.x / 2.0f;
 

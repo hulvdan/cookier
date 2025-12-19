@@ -22,6 +22,7 @@ x tutor: обязательно подсвечивать (breathe) кнопок,
 x better breathing in shop (upgrades, rerolls, next wave, + bonus breathiing upon reroll)
 
 * fix shop weapon card range calculation
+* ВЫ УВЕРЕНЫ? вертикально расположить кнопки
 *
 * yandex: баннер
 * yandex: прописать ESC - меню
