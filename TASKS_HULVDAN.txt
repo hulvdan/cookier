@@ -16,8 +16,8 @@ x gathered references for yandex banner
 x better icon splashes
 x more angry milker eyes
 x yandex: баннер
+x yandex: проверить, что ysdk проставляет язык
 
-* yandex: проверить, что ysdk проставляет язык
 * yandex: читерить могу только я
   КАК СДЕЛАТЬ ТАК, ЧТОБЫ ТОЛЬКО Я МОГ ЧИТЕРИТЬ
 *
