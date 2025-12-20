@@ -11421,8 +11421,6 @@ void DoUI() {
 
       zIndex -= UIZIndexOffset_CONFIRM_MODAL;
 
-      ControlsGroupConnect(group, Direction_RIGHT, group);
-
       if ((result == ConfirmModalResultType_CONFIRMED)) {
         if (setToTrueOnConfirm)
           *setToTrueOnConfirm = true;
