@@ -9,31 +9,11 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-x better back rect color
-x ui: убрать backgorund-ы у кнопок верхних
-x fix cooldown: на русском постфикс S заменить на С (секунды)
-x в магазе при нажатии ВВЕРХ (переходе на topRow) фокус берёт reroll button
-x пауза: отобразить текущую волну + таймер
-x клавиша НАПРАВО в groupTop перемещает налево зацикленно
-x fix: когда геймплей, открыл паузу, открыл модалку new run
-  -> escape заклывает паузу, а должен - модалку
-x fix: нельзя пробелом нажать на confirm new run в модалке
-x tutor: обязательно подсвечивать (breathe) кнопок, что могут быть нажаты
-x better breathing in shop (upgrades, rerolls, next wave, + bonus breathiing upon reroll)
-x more breathing
-x fix shop weapon card range calculation
-x ВЫ УВЕРЕНЫ? вертикально расположить кнопки
-x more shadows
-x cheat: cycling stuff in shop
-x cheat: give all items
-x fix карточки предметов и оружие не должны увеичивать размер карточки
-x fix расположение ховер карточек
-x cheat: hide hud
-x yandex черновик: прописать ESC - меню
+x english заменить engineering на перевод слова ремесло
+x yandex: chatgpt описание + SEO
 
-* english заменить engineering на перевод слова ремесло
+* yandex: проверить, что ysdk проставляет язык
 * yandex: баннер
-* yandex: chatgpt описание
 * yandex: читерить могу только я
   КАК СДЕЛАТЬ ТАК, ЧТОБЫ ТОЛЬКО Я МОГ ЧИТЕРИТЬ
 *
