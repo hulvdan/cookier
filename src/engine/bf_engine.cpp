@@ -3581,8 +3581,10 @@ SDL_AppResult EngineUpdate() {  ///
     }
   }
 
+#ifndef BF_PLATFORM_WebYandex
   if (IsKeyDown(SDL_SCANCODE_F1) && IsKeyPressed(SDL_SCANCODE_F2))
     ge.meta.debugEnabled = !ge.meta.debugEnabled;
+#endif
 
   if (ge.meta.debugEnabled || BF_DEBUG) {
     if (IsKeyPressed(SDL_SCANCODE_F3))
