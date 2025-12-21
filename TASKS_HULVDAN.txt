@@ -11,22 +11,7 @@ x прикрут аналитики
 x проверить, может ли игрок в яндексе клавой открыть меню (чтобы нажать NEW RUN)
 x +% к изменениям STAT__WHEN_IDLE STAT__WHEN_WALKING
 x проверить эффект «+% к изменениям»
-x fix что-то там реально не так с notPickedUpCoinsVisual - деньги реально теряются
-  - ASSERT отработал
-    ```
-    if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
-      ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
-    ```
-  fix почему иногда монетки летят в stash, но не увеличивают его?
-  ASSERT всегда в stash-е >= 0 монет
-  - хорошо тестится с пончиками, что притягивают монетки
-  - прям до wave completed игрок поднял монетку
-    -> она ещё летит, проставился wave completed
-    -> notPickedUpCoins = колву монеток, что будут подняты к концу волны
-       notPickedUpCoinsVisual = 0
-    -> монетка прилетает, снижает notPickedUpCoins, а также notPickedUpCoinsVisual
-    -> notPickedUpCoinsVisual < 0
-  - также notPickedUpCoins теряются при перезаходе
+x fix notPickedUpCoinsVisual - деньги реально теряются
 x fix какой-то набор условий триггерит огромную скороть мобов
   УСЛОВНЫЙ BREAKPOINT В ChangeDynamicStatBy ЕГО COUNT >= 1 НА ENEMY_SPEED
 
