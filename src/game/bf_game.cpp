@@ -161,7 +161,7 @@ struct Breathing {  ///
 
 #define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_, enabled_, breathing_) \
   .nineSlice {                                                                       \
-    .set = enabled_, .breathing = (breathing_), .nineSlice = (gamelibNineSlicePtr_), \
+    .set = enabled_, .breathing = breathing_, .nineSlice = (gamelibNineSlicePtr_),   \
     .nineSliceColor = slotColors[(tier_) * 2],                                       \
     .nineSliceFlash = slotColors[(tier_) * 2 + 1],                                   \
   }
@@ -7666,7 +7666,9 @@ void DoUI() {
           },
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_big_nine_slice(), data.shadow),
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true, false),
+            BF_CLAY_CUSTOM_NINE_SLICE(
+              glib->ui_frame_nine_slice(), tier, true, {.set = false}
+            ),
           } BF_CLAY_CUSTOM_END,
         }
       ) {
@@ -8329,7 +8331,9 @@ void DoUI() {
       },
       BF_CLAY_CUSTOM_BEGIN{
         BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), shadow),
-        BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), tier, true, false),
+        BF_CLAY_CUSTOM_NINE_SLICE(
+          glib->ui_frame_nine_slice(), tier, true, {.set = false}
+        ),
       } BF_CLAY_CUSTOM_END,
     }) {
       auto fb_previousStep
@@ -8798,12 +8802,12 @@ void DoUI() {
 
           // Weapon.
           const bool selectedWeapon = componentUniversalSlot({
-            .id           = slotID,
-            .group        = data.group,
-            .weapon       = weapon.type,
-            .weaponIndex  = weaponIndex,
-            .tier         = weapon.tier,
-            .breathing    = (wouldCombineWith >= 0),
+            .id          = slotID,
+            .group       = data.group,
+            .weapon      = weapon.type,
+            .weaponIndex = weaponIndex,
+            .tier        = weapon.tier,
+            .breathing{.set = (wouldCombineWith >= 0)},
             .showsDetails = true,
             .uiBouncedAt  = weapon.uiBouncedAt,
           });
@@ -9515,7 +9519,7 @@ void DoUI() {
         },
         BF_CLAY_CUSTOM_BEGIN{
           BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
+          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, {.set = false}),
         } BF_CLAY_CUSTOM_END,
       }) {
         innerLambda();
@@ -9682,12 +9686,12 @@ void DoUI() {
               p.difficulty = i;
 
             const bool chosen = componentUniversalSlot({
-              .id                      = slotID,
-              .group                   = group,
-              .difficulty              = (DifficultyType)(isLocked ? 0 : i),
-              .hidden                  = HiddenType_SHOW_LOCK,
-              .tier                    = (isLocked ? 0 : (int)i - 1),
-              .breathing               = !isLocked,
+              .id         = slotID,
+              .group      = group,
+              .difficulty = (DifficultyType)(isLocked ? 0 : i),
+              .hidden     = HiddenType_SHOW_LOCK,
+              .tier       = (isLocked ? 0 : (int)i - 1),
+              .breathing{.set = !isLocked},
               .disallowsTouch          = true,
               .touchPreservesSelection = true,
             });
@@ -9746,12 +9750,12 @@ void DoUI() {
                 p.build = build;
 
               const bool chosen = componentUniversalSlot({
-                .id                      = slotID,
-                .group                   = group,
-                .build                   = (isLocked ? BuildType_INVALID : build),
-                .hidden                  = HiddenType_SHOW_LOCK,
-                .tier                    = (isLocked ? 0 : -1),
-                .breathing               = !isLocked,
+                .id     = slotID,
+                .group  = group,
+                .build  = (isLocked ? BuildType_INVALID : build),
+                .hidden = HiddenType_SHOW_LOCK,
+                .tier   = (isLocked ? 0 : -1),
+                .breathing{.set = !isLocked},
                 .disallowsTouch          = true,
                 .touchPreservesSelection = true,
               });
@@ -9828,13 +9832,13 @@ void DoUI() {
                 p.weapon = weapon;
 
               const bool chosen = componentUniversalSlot({
-                .id             = slotID,
-                .group          = group,
-                .weapon         = (WeaponType)(isLocked ? 0 : fb_buildWeapons->Get(t)),
-                .hidden         = HiddenType_SHOW_LOCK,
-                .tier           = (isLocked ? 0 : -1),
-                .breathing      = !isLocked,
-                .disallowsTouch = true,
+                .id     = slotID,
+                .group  = group,
+                .weapon = (WeaponType)(isLocked ? 0 : fb_buildWeapons->Get(t)),
+                .hidden = HiddenType_SHOW_LOCK,
+                .tier   = (isLocked ? 0 : -1),
+                .breathing{.set = !isLocked},
+                .disallowsTouch          = true,
                 .touchPreservesSelection = true,
               });
 
@@ -10047,7 +10051,7 @@ void DoUI() {
             BF_CLAY_CUSTOM_BEGIN{
               BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
               BF_CLAY_CUSTOM_NINE_SLICE(
-                glib->ui_frame_nine_slice(), upgrade.tier, true, false
+                glib->ui_frame_nine_slice(), upgrade.tier, true, {.set = false}
               ),
             } BF_CLAY_CUSTOM_END,
           }) {
@@ -10140,7 +10144,6 @@ void DoUI() {
                           .keys  = keys,
                           .tier  = upgrade.tier,
                           .breathing{.set = true},
-                  // .tier  = 7,
                 },
                 [&](bool hovered, Color textColor) BF_FORCE_INLINE_LAMBDA {
                   BF_CLAY_IMAGE({.texID = glib->ui_icon_take_texture_id()});
@@ -10304,7 +10307,7 @@ void DoUI() {
 
         // 2. Items to buy.
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
-          CLAY({.layout{.sizing{.width = GAP_BIG * 1.75}}}) {}
+          CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG * 1.75f)}}}) {}
 
           int toPickIndex = -1;
 
@@ -10339,7 +10342,7 @@ void DoUI() {
               .shadow               = true,
             });
             if (toPickIndex < g.run.state.shop.toPick.count - 1)
-              CLAY({.layout{.sizing{.width = GAP_BIG}}}) {}
+              CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
           }
 
           for (auto i : DEFAULT_BUYING_INDICES) {
@@ -11042,7 +11045,9 @@ void DoUI() {
               },
               BF_CLAY_CUSTOM_BEGIN{
                 BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
-                BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
+                BF_CLAY_CUSTOM_NINE_SLICE(
+                  glib->ui_frame_nine_slice(), 0, true, {.set = false}
+                ),
               } BF_CLAY_CUSTOM_END,
             }) {
               g.meta.achievementsHoveredAchievement     = 0;
@@ -11251,7 +11256,9 @@ void DoUI() {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           },
           BF_CLAY_CUSTOM_BEGIN{
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
+            BF_CLAY_CUSTOM_NINE_SLICE(
+              glib->ui_frame_nine_slice(), 0, true, {.set = false}
+            ),
           } BF_CLAY_CUSTOM_END,
         }) {
           // Stats label.
@@ -11394,7 +11401,9 @@ void DoUI() {
           },
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
-            BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, false),
+            BF_CLAY_CUSTOM_NINE_SLICE(
+              glib->ui_frame_nine_slice(), 0, true, {.set = false}
+            ),
           } BF_CLAY_CUSTOM_END,
         }) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
@@ -11444,7 +11453,7 @@ void DoUI() {
 
       zIndex -= UIZIndexOffset_CONFIRM_MODAL;
 
-      if ((result == ConfirmModalResultType_CONFIRMED)) {
+      if (result == ConfirmModalResultType_CONFIRMED) {
         if (setToTrueOnConfirm)
           *setToTrueOnConfirm = true;
         g.meta.scheduledTogglePause = true;
