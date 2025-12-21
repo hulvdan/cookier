@@ -2220,23 +2220,15 @@ void OnWaveStarted() {  ///
     ) BF_FORCE_INLINE_LAMBDA { g.run.cantHeal = true; }
   );
 
-  for (auto& item : g.run.state.items) {
-    ASSERT(item.thisWaveAddedCount >= 0);
-    if (item.thisWaveAddedCount <= 0)
-      continue;
+  IterateOverEffects(
+    EffectConditionType_STAT__DURING_NEXT_WAVE,
+    -1,
+    [&](
+      Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
+    ) BF_FORCE_INLINE_LAMBDA {
+      const auto stat = (StatType)fb_effect->stat_type();
 
-    IterateOverEffects(
-      EffectConditionType_STAT__DURING_NEXT_WAVE,
-      -1,
-      [&](
-        Weapon* w,
-        int     wi,
-        auto    fb_effect,
-        int     tierOffset,
-        int     times,
-        int     thisWaveAddedCount
-      ) BF_FORCE_INLINE_LAMBDA {
-        const auto stat = (StatType)fb_effect->stat_type();
+      if (thisWaveAddedCount) {
         ChangeDynamicStatBy(
           stat,
           Round(
@@ -2245,8 +2237,8 @@ void OnWaveStarted() {  ///
           )
         );
       }
-    );
-  }
+    }
+  );
 
   if (PLAYER_CREATURE.health != PLAYER_CREATURE.maxHealth)
     UpdateHPPercentThresholdEffects(PLAYER_CREATURE.maxHealth);
