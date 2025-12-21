@@ -544,11 +544,13 @@ def git_stash():
     else:
         log.info("git_stash: no changes - not stashing")
 
-    yield
+    try:
+        yield
 
-    if should_stash:
-        log.info("git_stash: applying previously stashed changes...")
-        subprocess.run("git stash apply", check=True, shell=True)
+    finally:
+        if should_stash:
+            log.info("git_stash: applying previously stashed changes...")
+            subprocess.run("git stash apply", check=True, shell=True)
     # }
 
 
