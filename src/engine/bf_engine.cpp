@@ -621,11 +621,21 @@ struct EngineData {
   } draw;
 } ge = {};
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
+void StartAudio() {  ///
+  if (ge.meta._soundManager._started)
+    return;
 
-void fromJS_markCanStartSound() {  ///
-  ge.events.canStartSound = true;
+  if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
+    LOGI("Started miniaudio engine");
+  else {
+    ge.meta._soundManager._works = false;
+    LOGE("Failed to start miniaudio engine");
+  }
+
+  ge.meta._soundManager._started = true;
 }
+
+#ifdef SDL_PLATFORM_EMSCRIPTEN
 
 void fromJS_markYsdkLoaded() {  ///
   ge.meta.ysdkLoaded = true;
@@ -2724,6 +2734,14 @@ void ReloadSounds() {  ///
   auto config                               = ma_engine_config_init();
   config.defaultVolumeSmoothTimeInPCMFrames = 120;
   config.noAutoStart                        = true;
+
+  if (ge.meta.device == DeviceType_MOBILE) {
+    LOGI("Audio: mobile device -> high latency mode");
+    config.periodSizeInMilliseconds = 100;
+  }
+  else
+    LOGI("Audio: low latency mode");
+
   if (ma_engine_init(&config, &m.engine) != MA_SUCCESS) {
     LOGW("Failed to init miniaudio engine");
     INVALID_PATH;
@@ -2849,6 +2867,28 @@ void ReloadSounds() {  ///
   m._works = !_errored;
 }
 
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+bool OnEmscriptenMouseDown(
+  int                         eventType,
+  const EmscriptenMouseEvent* _event,
+  void*                       _userData
+) {
+  LOGI("event");
+  StartAudio();
+  return true;
+}
+
+bool OnEmscriptenTouchStart(
+  int                         eventType,
+  const EmscriptenTouchEvent* _event,
+  void*                       _userData
+) {
+  LOGI("event");
+  StartAudio();
+  return true;
+}
+#endif
+
 void InitEngine() {  ///
   ZoneScopedN("InitEngine");
 
@@ -2945,6 +2985,11 @@ void InitEngine() {  ///
   ge.meta.uniformTexture = bgfx::createUniform("u_texture", bgfx::UniformType::Sampler);
 
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
+
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+  emscripten_set_mousedown_callback("#canvas", 0, EM_TRUE, OnEmscriptenMouseDown);
+  emscripten_set_touchstart_callback("#canvas", 0, EM_TRUE, OnEmscriptenTouchStart);
+#endif
 
   LOGI("Initialized engine");
 }
@@ -3660,16 +3705,7 @@ SDL_AppResult EngineUpdate() {  ///
     if (ge.meta._soundManager._works  //
         && ge.events.canStartSound    //
         && !ge.meta._soundManager._started)
-    {
-      if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS) {
-        ge.meta._soundManager._started = true;
-        LOGI("Started miniaudio engine");
-      }
-      else {
-        ge.meta._soundManager._works = false;
-        LOGE("Failed to start miniaudio engine");
-      }
-    }
+      StartAudio();
 
     GameFixedUpdate();
 
