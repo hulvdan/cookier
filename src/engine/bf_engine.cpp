@@ -622,6 +622,8 @@ struct EngineData {
 } ge = {};
 
 void StartAudio() {  ///
+  if (!ge.meta._soundManager._works)
+    return;
   if (ge.meta._soundManager._started)
     return;
 
@@ -794,6 +796,14 @@ void EndMode2D() {  ///
 }
 
 void GameReady() {  ///
+  static bool once = false;
+  ASSERT_FALSE(once);
+  if (once)
+    return;
+  once = true;
+
+  ReloadSounds();
+
 #ifdef BF_PLATFORM_WebYandex
   // clang-format off
   EM_ASM({ window.ysdk.features.LoadingAPI.ready(); });
@@ -3671,8 +3681,6 @@ SDL_AppResult EngineUpdate() {  ///
       }
     }
 
-    static bool reloadSounds = true;
-
 #ifdef SDL_PLATFORM_WINDOWS
 #  if BF_DEBUG
     auto glibPeekResult = PeekFiletime(GAMELIB_PATH);
@@ -3690,17 +3698,12 @@ SDL_AppResult EngineUpdate() {  ///
           "../../../resources/atlas_d2.basis",
           {glib->atlas_size_x(), glib->atlas_size_y()}
         );
-        reloadSounds = true;
+        ReloadSounds();
         LOGI("Gamelib reloaded!");
       }
     }
 #  endif
 #endif
-
-    if (reloadSounds) {
-      reloadSounds = false;
-      ReloadSounds();
-    }
 
     if (ge.meta._soundManager._works  //
         && ge.events.canStartSound    //
