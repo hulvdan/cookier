@@ -340,13 +340,13 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
   static bool pr2 = false;
   if (!pr1) {
     pr1 = true;
-    LOGI("Waiting for yandex sdk to initialize...");
+    LOGI("Waiting for ysdk init...");
   }
   if (!ge.meta.ysdkLoaded)
     return SDL_APP_CONTINUE;
   if (!pr2) {
     pr2 = true;
-    LOGI("Waiting for yandex sdk to initialize... Done!");
+    LOGI("Waiting for ysdk init... Done!");
   }
 #endif
 
