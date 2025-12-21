@@ -280,8 +280,8 @@ elseif (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
             "-sMIN_WEBGL_VERSION=1"
             "-sMAX_WEBGL_VERSION=2"
             "-sALLOW_MEMORY_GROWTH=1"
-            "-sINITIAL_MEMORY=56426496" # 63MB heap.
-            "-sSTACK_SIZE=1048576" # 1MB stack.
+            "-sINITIAL_MEMORY=246022144" # X MB heap.
+            "-sSTACK_SIZE=2097152" # 2MB stack.
             --preload-file resources
             --bind
     )

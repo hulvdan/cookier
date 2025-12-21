@@ -623,6 +623,10 @@ struct EngineData {
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 
+void fromJS_markCanStartSound() {  ///
+  ge.events.canStartSound = true;
+}
+
 void fromJS_markYsdkLoaded() {  ///
   ge.meta.ysdkLoaded = true;
 }
@@ -640,8 +644,10 @@ void fromJS_setLocalization(int localization) {  ///
 }
 
 void fromJS_setDeviceType(int type) {  ///
+#  ifndef BF_PLATFORM_WebYandex
   ge.meta.device = (DeviceType)type;
   LOGI("Set device %d", type);
+#  endif
 }
 
 void fromJS_setAdIsPlaying(int value) {  ///

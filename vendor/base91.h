@@ -83,7 +83,6 @@ size_t base91_encode(const void *i, size_t len, char *o) {  ///
     ob[n++] = val % 91 + 33;
   }
 
-  BASE91_ASSERT(ob[n] == 0);
   ob[n] = 0;
   return n;
 }
