@@ -1220,11 +1220,10 @@ struct GameData {
       f32 xpOnStartOfTheWave    = 0;
       int previousCoins         = 0;
 
-      int playerKilledEnemies    = 0;
-      int notPickedUpCoins       = 0;
-      int notPickedUpCoinsVisual = 0;
-      int chests                 = 0;
-      int toSpawn                = 3;
+      int playerKilledEnemies = 0;
+      int notPickedUpCoins    = 0;
+      int chests              = 0;
+      int toSpawn             = 3;
 
       Array<int, StatType_COUNT>          staticStats = {};
       Array<Weapon, PLAYER_WEAPONS_COUNT> weapons     = {};
@@ -2292,25 +2291,24 @@ void GameLoad(const BFSave::Save* save) {  ///
     }
   }
 
-  g.player.runsWon         = save->runs_won();
-  g.player.runsLost        = save->runs_lost();
-  g.player.difficulty      = (DifficultyType)save->difficulty();
-  g.player.build           = (BuildType)save->build();
-  g.player.weapon          = (WeaponType)save->weapon();
-  g.player.biome           = (BiomeType)save->biome();
-  PLAYER_CREATURE.health   = save->health();
-  s.won                    = save->won();
-  s.screen                 = (ScreenType)save->screen();
-  s.waveIndex              = save->wave_index();
-  s.waveWon                = save->wave_won();
-  s.levelOnStartOfTheWave  = save->level_on_start_of_the_wave();
-  s.xp                     = save->xp();
-  s.xpOnStartOfTheWave     = s.xp;
-  s.playerKilledEnemies    = save->player_killed_enemies();
-  s.notPickedUpCoins       = save->not_picked_up_coins();
-  s.notPickedUpCoinsVisual = s.notPickedUpCoins;
-  s.chests                 = save->chests();
-  s.toSpawn                = save->to_spawn();
+  g.player.runsWon        = save->runs_won();
+  g.player.runsLost       = save->runs_lost();
+  g.player.difficulty     = (DifficultyType)save->difficulty();
+  g.player.build          = (BuildType)save->build();
+  g.player.weapon         = (WeaponType)save->weapon();
+  g.player.biome          = (BiomeType)save->biome();
+  PLAYER_CREATURE.health  = save->health();
+  s.won                   = save->won();
+  s.screen                = (ScreenType)save->screen();
+  s.waveIndex             = save->wave_index();
+  s.waveWon               = save->wave_won();
+  s.levelOnStartOfTheWave = save->level_on_start_of_the_wave();
+  s.xp                    = save->xp();
+  s.xpOnStartOfTheWave    = s.xp;
+  s.playerKilledEnemies   = save->player_killed_enemies();
+  s.notPickedUpCoins      = save->not_picked_up_coins();
+  s.chests                = save->chests();
+  s.toSpawn               = save->to_spawn();
 
   // Loading saved weapons.
   int weaponIndex = 0;
@@ -3585,6 +3583,12 @@ void Pickup(int pickupableIndex) {  ///
   g.run.pickupables[pickupableIndex].pickedUpAt.SetNow();
 }
 
+void OnCoinFlewToStash(int amount) {  ///
+  g.run.state.notPickedUpCoins += amount;
+  g.ui.changedNotPickedUpCoinsAt = {};
+  g.ui.changedNotPickedUpCoinsAt.SetNow();
+}
+
 void OnPickedUp(int pickupableIndex) {  ///
 #define PICKUPABLE (g.run.pickupables[pickupableIndex])
 
@@ -3675,36 +3679,42 @@ void OnPickedUp(int pickupableIndex) {  ///
     int         amount  = data.amount;
     int         xNumber = 1;
 
-    if (g.run.state.notPickedUpCoins > 0) {
-      int toAdd = amount;
-      if (toAdd > g.run.state.notPickedUpCoins)
-        toAdd = g.run.state.notPickedUpCoins;
+    ASSERT(amount > 0);
 
-      g.run.state.notPickedUpCoins -= toAdd;
-      g.run.state.notPickedUpCoinsVisual -= toAdd;
-      amount += toAdd;
-      xNumber *= 2;
+    if (g.run.scheduledWaveCompleted.IsSet())
+      OnCoinFlewToStash(amount);
+    else {
+      if (g.run.state.notPickedUpCoins > 0) {
+        int toAdd = amount;
+        if (toAdd > g.run.state.notPickedUpCoins)
+          toAdd = g.run.state.notPickedUpCoins;
+        ASSERT(toAdd > 0);
+
+        g.run.state.notPickedUpCoins -= toAdd;
+        amount += toAdd;
+        xNumber *= 2;
+      }
+
+      if (GRAND.FRand() < (f32)g.run.dynamicStats[StatType_DOUBLE_COIN_CHANCE] / 100.0f) {
+        amount *= 2;
+        xNumber *= 2;
+      }
+
+      if (xNumber > 1) {
+        MakeNumber({
+          .type  = NumberType_PICKUPABLE,
+          .value = xNumber,
+          .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
+        });
+      }
+
+      ChangeCoins(amount);
+      AddXP((f32)amount);
+
+      auto healChance = (f32)g.run.dynamicStats[StatType_COINS_HEAL] / 100.0f;
+      if (GRAND.FRand() < healChance)
+        HealPlayer();
     }
-
-    if (GRAND.FRand() < (f32)g.run.dynamicStats[StatType_DOUBLE_COIN_CHANCE] / 100.0f) {
-      amount *= 2;
-      xNumber *= 2;
-    }
-
-    if (xNumber > 1) {
-      MakeNumber({
-        .type  = NumberType_PICKUPABLE,
-        .value = xNumber,
-        .pos   = PLAYER_CREATURE.pos + Vector2(0, PLAYER_PICKUP_NUMBER_Y_OFFSET),
-      });
-    }
-
-    ChangeCoins(amount);
-    AddXP((f32)amount);
-
-    auto healChance = (f32)g.run.dynamicStats[StatType_COINS_HEAL] / 100.0f;
-    if (GRAND.FRand() < healChance)
-      HealPlayer();
   } break;
 
   case PickupableType_APPLE: {
@@ -9387,8 +9397,8 @@ void DoUI() {
           .childGap = GAP_SMALL,
           BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
         }}) {
-          f32        fade = (g.run.state.notPickedUpCoinsVisual > 0 ? 1 : 0);
-          const auto id   = CLAY_ID("notPickedUpCoinsVisual");
+          f32        fade = (g.run.state.notPickedUpCoins > 0 ? 1 : 0);
+          const auto id   = CLAY_ID("notPickedUpCoins");
           CLAY({.id = id}) {
             BF_CLAY_IMAGE({
               .texID = glib->ui_coin_x2_texture_id(),
@@ -9405,7 +9415,7 @@ void DoUI() {
           }
 
           BF_CLAY_TEXT(
-            TextFormat("%d", g.run.state.notPickedUpCoinsVisual),
+            TextFormat("%d", g.run.state.notPickedUpCoins),
             {.color = Fade(palTextWhite, fade)}
           );
         }
@@ -12348,7 +12358,6 @@ void GameFixedUpdate() {
           continue;
 
         const auto& data = pickupable.DataCoin();
-        g.run.state.notPickedUpCoins += data.amount;
 
         pickupable.startedFlyingAt.SetNow();
 
@@ -13521,19 +13530,13 @@ void GameFixedUpdate() {
                  && (pickupable.startedFlyingAt.Elapsed() >= WAVE_COMPLETED_COINS_FLYING_FRAMES))
         {
           const auto& d = pickupable.DataCoin();
-
-          g.run.state.notPickedUpCoinsVisual += d.amount;
-          g.ui.changedNotPickedUpCoinsAt = {};
-          g.ui.changedNotPickedUpCoinsAt.SetNow();
-
+          OnCoinFlewToStash(d.amount);
           needsRemoving = true;
         }
 
         if (needsRemoving) {
           PlaySound(fb->pickup_sound_hash());
-          if (pickupable.startedFlyingAt.IsSet()) {
-          }
-          else
+          if (!pickupable.startedFlyingAt.IsSet())
             OnPickedUp(i - off);
           g.run.pickupables.UnstableRemoveAt(i - off);
           off++;
@@ -14569,8 +14572,7 @@ void GameFixedUpdate() {
       g.run.numbers.count -= removed;
     }
 
-    if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
-      ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
+    ASSERT(g.run.state.notPickedUpCoins >= 0);
 
     // Player's weapons create particles and play trail sounds.
     if (!PLAYER_CREATURE.diedAt.IsSet()) {  ///

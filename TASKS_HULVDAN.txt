@@ -11,8 +11,7 @@ x прикрут аналитики
 x проверить, может ли игрок в яндексе клавой открыть меню (чтобы нажать NEW RUN)
 x +% к изменениям STAT__WHEN_IDLE STAT__WHEN_WALKING
 x проверить эффект «+% к изменениям»
-
-* fix что-то там реально не так с notPickedUpCoinsVisual - деньги реально теряются
+x fix что-то там реально не так с notPickedUpCoinsVisual - деньги реально теряются
   - ASSERT отработал
     ```
     if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
@@ -28,6 +27,7 @@ x проверить эффект «+% к изменениям»
     -> монетка прилетает, снижает notPickedUpCoins, а также notPickedUpCoinsVisual
     -> notPickedUpCoinsVisual < 0
   - также notPickedUpCoins теряются при перезаходе
+
 * fix какой-то набор условий триггерит огромную скороть мобов
   УСЛОВНЫЙ BREAKPOINT В ChangeDynamicStatBy ЕГО COUNT >= 1 НА ENEMY_SPEED
   * логирование scope-ов?
