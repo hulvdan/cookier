@@ -456,8 +456,6 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_DOWN: {  ///
-    ge.events.canStartSound = true;
-
     if (io.WantCaptureKeyboard)
       break;
 
@@ -478,6 +476,8 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
+    ge.events.canStartSound = true;
+
     if (io.WantCaptureKeyboard)
       break;
 
@@ -491,8 +491,6 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN: {  ///
-    ge.events.canStartSound = true;
-
     if (io.WantCaptureMouse)
       break;
 
@@ -532,6 +530,8 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
+    ge.events.canStartSound = true;
+
     if (io.WantCaptureMouse)
       break;
 
@@ -627,8 +627,6 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_FINGER_DOWN: {  ///
-    ge.events.canStartSound = true;
-
     if (io.WantCaptureMouse)
       break;
 
@@ -645,6 +643,8 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
+    ge.events.canStartSound = true;
+
     if (io.WantCaptureMouse)
       break;
 
