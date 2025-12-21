@@ -199,7 +199,7 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
 
   {
     ZoneScopedN("SDL. SDL_Init()");
-    if (!SDL_Init(0)) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
       LOGE("SDL_Init failed!");
       return SDL_APP_FAILURE;
     }
@@ -476,8 +476,6 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_KEY_UP: {  ///
-    ge.events.canStartSound = true;
-
     if (io.WantCaptureKeyboard)
       break;
 
@@ -530,8 +528,6 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_MOUSE_BUTTON_UP: {  ///
-    ge.events.canStartSound = true;
-
     if (io.WantCaptureMouse)
       break;
 
@@ -643,8 +639,6 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   } break;
 
   case SDL_EVENT_FINGER_UP: {  ///
-    ge.events.canStartSound = true;
-
     if (io.WantCaptureMouse)
       break;
 
