@@ -23,13 +23,22 @@ x протестить игру на айпаде chrome yandex
 - ipad safari 30fps -> нужно 60
 x протестить игру на айпаде safari yandex
 
+* ysdk set is mobile
 * ipad safari не работает звук
 * ipad chrome не работает звук
 * ipad safari не могу улучшить оружие - закрывается деталка
 * музыка клипает android chrome
   оптимизировать под android
 * android хер пойми, но не мог купить оружия / закрыть деталку оружия / перейти на след волну
+  INCREASE MINIAUDIO LATENCY
 * проверить остановку звука при смене вкладки
+* fix: ipad: in shop:
+  - press on class
+  - open achievements
+  - click on top left locked achievment
+  -> shows class details
+  expected:
+  -> class details don't show up
 *
 * увеличить кнопки в карточке оружия (чтобы исключить случайные нажатия)
 *
