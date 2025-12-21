@@ -9,15 +9,7 @@ WORKING SINCE 2025-09-07
 - БАЛАНС
 - ЧИНИМ
 
-x english заменить engineering на перевод слова ремесло
-x yandex: chatgpt описание + SEO
-x понял, почему aliasing у повёрнутых картинок пропадает
-x gathered references for yandex banner
-x better icon splashes
-x more angry milker eyes
-x yandex: баннер
-x yandex: проверить, что ysdk проставляет язык
-x yandex: убрал читы
+x проверить, может ли игрок в яндексе клавой открыть меню (чтобы нажать NEW RUN)
 
 * проверить эффект «+% к изменениям»
 * fix что-то там реально не так с notPickedUpCoinsVisual - деньги реально теряются
@@ -37,6 +29,10 @@ x yandex: убрал читы
 *
 * RELEASED!
 =======================
+* сделать что-то с открытием паузы во время игры.
+  Идеально, чтобы игрок мог рестартовать ран в любом месте (геймплей / магаз и т.п.)
+* в process_images те, что используют unlink должны иметь __ в названии
+  - чтобы лишные файлы не удалять
 * yandex: прикрутить читы (только для меня)
 * 30 минут гуглить и учиться тому, как в логи nvim - слишком часто крашится
 * 30 мин искать игру Лучник от Сакутина
@@ -326,4 +322,4 @@ TECH DEBT
 * engine fonts: fix scaling of not yet reloaded fonts (y position)
 * fix sometimes sdl thinks window is out of focus -> sounds mutes
 * engine: LoadFonts per localization
-
+* переставить SDL на DLL для стима
