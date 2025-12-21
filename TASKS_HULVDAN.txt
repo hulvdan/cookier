@@ -18,7 +18,19 @@ x проверить эффект «+% к изменениям»
     if (g.run.state.screen != ScreenType_WAVE_END_ANIMATION)
       ASSERT(g.run.state.notPickedUpCoins == g.run.state.notPickedUpCoinsVisual);
     ```
+  fix почему иногда монетки летят в stash, но не увеличивают его?
+  ASSERT всегда в stash-е >= 0 монет
+  - хорошо тестится с пончиками, что притягивают монетки
+  - прям до wave completed игрок поднял монетку
+    -> она ещё летит, проставился wave completed
+    -> notPickedUpCoins = колву монеток, что будут подняты к концу волны
+       notPickedUpCoinsVisual = 0
+    -> монетка прилетает, снижает notPickedUpCoins, а также notPickedUpCoinsVisual
+    -> notPickedUpCoinsVisual < 0
+  - также notPickedUpCoins теряются при перезаходе
 * fix какой-то набор условий триггерит огромную скороть мобов
+  УСЛОВНЫЙ BREAKPOINT В ChangeDynamicStatBy ЕГО COUNT >= 1 НА ENEMY_SPEED
+  * логирование scope-ов?
 *
 * пробежаться по чеклисту от сакутина
 *
@@ -60,16 +72,6 @@ x проверить эффект «+% к изменениям»
 * клёвые иконки языков (+ см скрин)
 * яндекс. ab test иконок https://yandex.ru/dev/games/doc/ru/concepts/ab-test
 * sfx: чекнуть MUSIC ASSETS мб там норм музыка ACTION - не loop
-* fix почему иногда монетки летят в stash, но не увеличивают его?
-  ASSERT всегда в stash-е >= 0 монет
-  - хорошо тестится с пончиками, что притягивают монетки
-  - прям до wave completed игрок поднял монетку
-    -> она ещё летит, проставился wave completed
-    -> notPickedUpCoins = колву монеток, что будут подняты к концу волны
-       notPickedUpCoinsVisual = 0
-    -> монетка прилетает, снижает notPickedUpCoins, а также notPickedUpCoinsVisual
-    -> notPickedUpCoinsVisual < 0
-  - также notPickedUpCoins теряются при перезаходе
 * windows release imgui doesn't load debug stuff by default
 * sfx: звук продажи
 * sfx: звук улучшения оружия
