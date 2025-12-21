@@ -4721,6 +4721,10 @@ builds: # {  ###
       - effectcondition_type: STAT__WHEN_IDLE
         stat_type: ARMOR
         value: -100
+      - effectcondition_type: STAT_2__MODS_CHANGED_BY__X__PERCENT
+        stat_type_2: ATTACK_SPEED
+        placeholders:
+          - ints: 25
     unlocks_weapon_type: MELEE_0_CLAW
   - type: NINJA
     hat_type: BEANIE

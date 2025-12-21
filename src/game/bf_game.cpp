@@ -13333,8 +13333,13 @@ void GameFixedUpdate() {
               int     times,
               int     thisWaveAddedCount
             ) {
-              g.run.dynamicStats[fb_effect->stat_type()]
-                += fb_effect->value()->Get(tierOffset) * times * sign;
+              ChangeDynamicStatBy(
+                fb_effect->stat_type(),
+                Round(
+                  GetStatModificationScale(fb_effect->stat_type())
+                  * fb_effect->value()->Get(tierOffset) * times * sign
+                )
+              );
             }
           );
         };
@@ -13351,8 +13356,13 @@ void GameFixedUpdate() {
               int     times,
               int     thisWaveAddedCount
             ) {
-              g.run.dynamicStats[fb_effect->stat_type()]
-                += fb_effect->value()->Get(tierOffset) * times * sign;
+              ChangeDynamicStatBy(
+                fb_effect->stat_type(),
+                Round(
+                  GetStatModificationScale(fb_effect->stat_type())
+                  * fb_effect->value()->Get(tierOffset) * times * sign
+                )
+              );
             }
           );
         };
