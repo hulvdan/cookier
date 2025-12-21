@@ -27,11 +27,9 @@ x fix что-то там реально не так с notPickedUpCoinsVisual - 
     -> монетка прилетает, снижает notPickedUpCoins, а также notPickedUpCoinsVisual
     -> notPickedUpCoinsVisual < 0
   - также notPickedUpCoins теряются при перезаходе
-
-* fix какой-то набор условий триггерит огромную скороть мобов
+x fix какой-то набор условий триггерит огромную скороть мобов
   УСЛОВНЫЙ BREAKPOINT В ChangeDynamicStatBy ЕГО COUNT >= 1 НА ENEMY_SPEED
-  * логирование scope-ов?
-*
+
 * пробежаться по чеклисту от сакутина
 *
 * sfx: проверить chrome ios
@@ -41,6 +39,7 @@ x fix что-то там реально не так с notPickedUpCoinsVisual - 
 *
 * RELEASED!
 =======================
+* логирование scope-ов?
 * сделать что-то с открытием паузы во время игры.
   Идеально, чтобы игрок мог рестартовать ран в любом месте (геймплей / магаз и т.п.)
 * в process_images те, что используют unlink должны иметь __ в названии

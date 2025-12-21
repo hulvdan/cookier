@@ -1440,7 +1440,7 @@ items: # {  ###
         value: 20
       - stat_type: RANGE
         value: -8
-  - type: SCARF
+  - type: OBSIDIAN_HORSESHOE # SCARF
     texture_id: ui_item_obsidian_horseshoe
     tier: 2
     price: 80
