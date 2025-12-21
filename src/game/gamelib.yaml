@@ -4618,6 +4618,7 @@ builds: # {  ###
     hat_type: GOPNIK
     hat_color: 0xcec7b1ff
     layer_colors:
+      # Upon changing - check MakeParticles! Player's particles have beard's color!
       - 0xefcb84ff # head
       - 0x885A44ff # feet
       - 0x208CB2ff # shirt

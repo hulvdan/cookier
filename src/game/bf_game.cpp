@@ -1194,7 +1194,7 @@ struct GameData {
     BiomeType      biome      = BiomeType_INVALID;
 
     int volumeSFX   = 3;
-    int volumeMusic = 1;
+    int volumeMusic = 2;
 
     Array<Achievement, AchievementType_COUNT> achievements = {};
     Array<Build, BuildType_COUNT>             builds       = {};
@@ -3448,6 +3448,13 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       velocityAnglePlusMinus = PI32 / 6;
     }
 
+    auto color = ColorFromRGBA(fb->hit_particles_color());
+    if (creature.type == CreatureType_PLAYER) {
+      color = ColorBrightness(
+        ColorFromRGBA(glib->builds()->Get(g.player.build)->layer_colors()->Get(4)), 0.25f
+      );
+    }
+
     MakeParticles({
       .type                   = ParticleType_HIT,
       .count                  = GRAND.RandInt(3, 6),
@@ -3458,7 +3465,7 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
       .velocityAnglePlusMinus = velocityAnglePlusMinus,
       .initialOffset          = 0.2f,
       .initialOffsetPlusMinus = 0.1f,
-      .color                  = ColorFromRGBA(fb->hit_particles_color()),
+      .color                  = color,
     });
   }
 
@@ -8753,15 +8760,17 @@ void DoUI() {
 
         int wouldCombineWith = -1;
 
-        FOR_RANGE (int, combineIndex, g.run.state.weapons.count) {
-          if (weaponIndex == combineIndex)
-            continue;
-          const auto& w = g.run.state.weapons[combineIndex];
-          if (!w.type)
-            break;
-          if ((w.type == weapon.type) && (w.tier == weapon.tier)) {
-            wouldCombineWith = combineIndex;
-            break;
+        if (weapon.tier < TOTAL_TIERS - 1) {
+          FOR_RANGE (int, combineIndex, g.run.state.weapons.count) {
+            if (weaponIndex == combineIndex)
+              continue;
+            const auto& w = g.run.state.weapons[combineIndex];
+            if (!w.type)
+              break;
+            if ((w.type == weapon.type) && (w.tier == weapon.tier)) {
+              wouldCombineWith = combineIndex;
+              break;
+            }
           }
         }
 
