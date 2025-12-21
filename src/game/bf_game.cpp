@@ -2134,9 +2134,12 @@ void UpdateHPPercentThresholdEffects(int prevHealth) {  ///
         scale = 1;
       else if ((prevHealth < threshold) && (PLAYER_CREATURE.health >= threshold))
         scale = -1;
+
+      const auto stat = (StatType)fb_effect->stat_type();
       ChangeDynamicStatBy(
-        (StatType)fb_effect->stat_type(),
-        scale * times * fb_effect->value()->Get(tierOffset)
+        stat,
+        GetStatModificationScale(stat) * scale * times
+          * fb_effect->value()->Get(tierOffset)
       );
     }
   );
@@ -2234,9 +2237,13 @@ void OnWaveStarted() {  ///
         int     times,
         int     thisWaveAddedCount
       ) BF_FORCE_INLINE_LAMBDA {
+        const auto stat = (StatType)fb_effect->stat_type();
         ChangeDynamicStatBy(
-          (StatType)fb_effect->stat_type(),
-          fb_effect->value()->Get(tierOffset) * thisWaveAddedCount
+          stat,
+          Round(
+            GetStatModificationScale(stat) * (f32)fb_effect->value()->Get(tierOffset)
+            * (f32)thisWaveAddedCount
+          )
         );
       }
     );
@@ -3272,8 +3279,13 @@ bool TryApplyDamage(TryApplyDamageData data) {  ///
           int     times,
           int     thisWaveAddedCount
         ) BF_FORCE_INLINE_LAMBDA {
+          const auto stat = (StatType)fb_effect->stat_type();
           ChangeDynamicStatBy(
-            (StatType)fb_effect->stat_type(), fb_effect->value()->Get(tierOffset) * times
+            stat,
+            Round(
+              GetStatModificationScale(stat) * (f32)fb_effect->value()->Get(tierOffset)
+              * (f32)times
+            )
           );
         }
       );
@@ -13321,9 +13333,9 @@ void GameFixedUpdate() {
 
         g.run.previousPlayerPos = PLAYER_CREATURE.pos;
 
-        LAMBDA (void, giveIdleBonus, (int sign)) {
+        LAMBDA (void, giveBonus, (EffectConditionType effectConditionType, int sign)) {
           IterateOverEffects(
-            EffectConditionType_STAT__WHEN_IDLE,
+            effectConditionType,
             -1,
             [&](
               Weapon* w,
@@ -13333,34 +13345,12 @@ void GameFixedUpdate() {
               int     times,
               int     thisWaveAddedCount
             ) {
+              const auto stat = (StatType)fb_effect->stat_type();
               ChangeDynamicStatBy(
-                fb_effect->stat_type(),
+                stat,
                 Round(
-                  GetStatModificationScale(fb_effect->stat_type())
-                  * fb_effect->value()->Get(tierOffset) * times * sign
-                )
-              );
-            }
-          );
-        };
-
-        LAMBDA (void, giveWalkingBonus, (int sign)) {
-          IterateOverEffects(
-            EffectConditionType_STAT__WHEN_WALKING,
-            -1,
-            [&](
-              Weapon* w,
-              int     wi,
-              auto    fb_effect,
-              int     tierOffset,
-              int     times,
-              int     thisWaveAddedCount
-            ) {
-              ChangeDynamicStatBy(
-                fb_effect->stat_type(),
-                Round(
-                  GetStatModificationScale(fb_effect->stat_type())
-                  * fb_effect->value()->Get(tierOffset) * times * sign
+                  GetStatModificationScale(stat) * fb_effect->value()->Get(tierOffset)
+                  * times * sign
                 )
               );
             }
@@ -13371,20 +13361,20 @@ void GameFixedUpdate() {
           g.run.playerWalkedMetersCumulativeDelta += deltaMeters;
 
           if (g.run.playerContinuousIdleFrames >= IDLE_OR_WALKING_BONUS_FRAMES)
-            giveIdleBonus(-1);
+            giveBonus(EffectConditionType_STAT__WHEN_IDLE, -1);
           g.run.playerContinuousIdleFrames = 0;
 
           g.run.playerContinuousWalkingFrames++;
           if (g.run.playerContinuousWalkingFrames == IDLE_OR_WALKING_BONUS_FRAMES)
-            giveWalkingBonus(1);
+            giveBonus(EffectConditionType_STAT__WHEN_WALKING, 1);
         }
         else {
           g.run.playerContinuousIdleFrames++;
           if (g.run.playerContinuousIdleFrames == IDLE_OR_WALKING_BONUS_FRAMES)
-            giveIdleBonus(1);
+            giveBonus(EffectConditionType_STAT__WHEN_IDLE, 1);
 
           if (g.run.playerContinuousWalkingFrames >= IDLE_OR_WALKING_BONUS_FRAMES)
-            giveWalkingBonus(-1);
+            giveBonus(EffectConditionType_STAT__WHEN_WALKING, -1);
           g.run.playerContinuousWalkingFrames = 0;
 
           IterateOverEffects(
