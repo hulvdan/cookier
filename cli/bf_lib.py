@@ -542,7 +542,7 @@ def git_check_no_unstashed() -> None:
         "git status --porcelain", check=True, shell=True, capture_output=True, text=True
     )
     git_status_text = process.stdout.strip()
-    assert not git_status_text, "You have unstashed changes! Can't proceed!"
+    assert not git_status_text, "You have unstashed changes! Won't proceed!"
 
 
 @contextmanager

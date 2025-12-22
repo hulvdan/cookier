@@ -314,6 +314,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
                 "-sASSERTIONS=0"
                 "-sEXIT_RUNTIME=0"
                 "--closure 1"
+                "-gsource-map"
         )
         if ("${PLATFORM}" STREQUAL "WebItch")
             target_link_options(game PRIVATE
