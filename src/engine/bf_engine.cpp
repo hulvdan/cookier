@@ -3676,10 +3676,7 @@ SDL_AppResult EngineUpdate() {  ///
       f32 target = v;
       if ((volumeTypeIndex == VolumeType_MASTER)
           && ge.meta.shouldGameplayStop.ShouldStop())
-      {
-        LOGI("Updating master volume. Setting target = 0");
         target = 0;
-      }
 
       switch ((VolumeType)volumeTypeIndex) {
       case VolumeType_MASTER: {
