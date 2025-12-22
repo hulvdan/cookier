@@ -30,10 +30,6 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
-#  define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
-#  define MA_ENABLE_WEBAUDIO
-#endif
 #include "miniaudio.h"
 
 #include <bgfx/bgfx.h>
