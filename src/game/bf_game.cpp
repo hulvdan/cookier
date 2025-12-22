@@ -13494,12 +13494,12 @@ void GameFixedUpdate() {
 
     // Launching music after completing walking tutorial.
     {  ///
-      static bool launchedMusic = false;
-      if (g.run.walkingTutorialCompletedAt.IsSet()  //
-          && !launchedMusic                         //
+      static bool once = false;
+      if (!once                                        //
+          && g.run.walkingTutorialCompletedAt.IsSet()  //
           && ge.meta._soundManager.Works())
       {
-        launchedMusic = true;
+        once = true;
         PlaySound(Sound_MUSIC_BATTLE);
       }
     }

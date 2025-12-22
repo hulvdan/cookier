@@ -2863,6 +2863,8 @@ void SetMusicLowpassFactor(f32 factor) {  ///
 
   auto& m = ge.meta._soundManager;
   ASSERT(m.Works());
+  if (!m.Works())
+    return;
 
   const auto sampleRate = ma_engine_get_sample_rate(&m.engine);
 
