@@ -22,6 +22,7 @@ from bf_lib import (
     bannerify,
     game_settings,
     git_bump_tag,
+    git_check_no_unstashed,
     git_stash,
     hash32,
     run_command,
@@ -360,6 +361,8 @@ def test():
 @command
 def deploy_itch():
     # {  ###
+    git_check_no_unstashed()
+
     git_bump_tag()
 
     with git_stash():
@@ -376,6 +379,8 @@ def deploy_itch():
 @command
 def deploy_yandex():
     # {  ###
+    git_check_no_unstashed()
+
     git_bump_tag()
 
     with git_stash():

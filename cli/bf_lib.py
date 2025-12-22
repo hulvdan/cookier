@@ -528,6 +528,14 @@ def recursive_flattenizer(
 #  ╚═════╝ ╚═╝   ╚═╝
 
 
+def git_check_no_unstashed() -> bool:
+    process = subprocess.run(
+        "git status --porcelain", check=True, shell=True, capture_output=True, text=True
+    )
+    git_status_text = process.stdout.strip()
+    assert not git_status_text, "You have unstashed changes! Can't proceed!"
+
+
 @contextmanager
 def git_stash():
     # {  ###
