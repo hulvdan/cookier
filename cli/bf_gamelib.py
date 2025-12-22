@@ -1307,6 +1307,15 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
             BuildPlatform.Web: {
                 "EXTEND_BODY_START": "",
                 "EXTEND_MAIN_SCRIPT": "",
+                "EXTEND_POST_RUN": """
+                    () => {
+                        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                        var device = 0;
+                        if (isMobile)
+                            device = 1;
+                        Module.fromJS_setDeviceType(device);
+                    },
+                """,
             },
             BuildPlatform.WebYandex: {
                 "EXTEND_BODY_START": """
@@ -1329,6 +1338,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                     "YANDEX_METRIC_COUNTER_ID",
                     str(game_settings.yandex_metrica_counter_id),
                 ),
+                "EXTEND_POST_RUN": "",
                 "EXTEND_MAIN_SCRIPT": """
                     const moduleReady = new Promise(resolve => {
                         Module.onRuntimeInitialized = resolve;
