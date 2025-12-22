@@ -1346,8 +1346,8 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
                     (async () => {
                         window.ysdk = await YaGames.init();
-                        if (window.ysdk.deviceInfo.IsMobile()
-                            || window.ysdk.deviceInfo.IsTablet())
+                        if (window.ysdk.deviceInfo.isMobile()
+                            || window.ysdk.deviceInfo.isTablet())
                             Module.fromJS_setDeviceType(1);
                         await moduleReady;
                         window.player = await window.ysdk.getPlayer();
