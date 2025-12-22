@@ -7,8 +7,10 @@ x прикрут аналитики
 - РЕЛИЗ
 - ФИКСЫ + БАЛАНС
 
-* CHECK ysdk set is mobile
+x CHECK ysdk set is mobile
   На айпаде должно проставиться touch управление
+x confirmation modal clicking outside should CANCEL it !!!
+x naysayer theme
 * ipad safari не работает звук
 * ipad chrome не работает звук
 * ipad safari не могу улучшить оружие - закрывается деталка

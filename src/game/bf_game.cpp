@@ -11408,7 +11408,7 @@ void DoUI() {
         }) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
             if (clickOrTouchPressed())
-              result = ConfirmModalResultType_CONFIRMED;
+              result = ConfirmModalResultType_CANCELLED;
           });
 
           BF_CLAY_SPACER_VERTICAL;
