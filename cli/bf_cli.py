@@ -232,8 +232,10 @@ def do_stop_debugger_ahk() -> None:
 
 @timing
 def do_run_in_debugger_ahk(target: BuildTarget, build_type: BuildType) -> None:
+    # {  ###
     exe_path = f".cmake/vs17/{build_type}/{target}.exe"
     run_command(rf"autohotkey .nvim-personal\cli.ahk run_in_debugger {exe_path}")
+    # }
 
 
 # @command
@@ -295,9 +297,11 @@ def do_activate_game_ahk() -> None:
 
 @command
 def codegen(platform: BuildPlatform, build_type: BuildType):
+    # {  ###
     do_cmake(platform, build_type)
     do_generate(platform, build_type)
     do_activate_game_ahk()
+    # }
 
 
 @command
