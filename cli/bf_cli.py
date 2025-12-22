@@ -396,9 +396,12 @@ def deploy_yandex():
 def receive_ws_logs(port: int):
     # {  ###
     async def handler(ws):
-        async for msg in ws:
-            ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-            print(f"[{ts}] {msg}")
+        get_time = lambda: datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        try:
+            async for msg in ws:
+                print(f"{get_time()} {msg}")
+        except websockets.exceptions.ConnectionClosedError:
+            print(f"{get_time()} I: DISCONNECTED")
 
     async def main():
         async with websockets.serve(handler, "0.0.0.0", port):

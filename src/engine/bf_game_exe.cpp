@@ -30,6 +30,10 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+#  define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
+#  define MA_ENABLE_WEBAUDIO
+#endif
 #include "miniaudio.h"
 
 #include <bgfx/bgfx.h>
@@ -150,13 +154,13 @@ void EmscriptenLog(
     break;
 
   case SDL_LOG_PRIORITY_INFO:
-    emscripten_log(EM_LOG_CONSOLE, "%s", message);
+    emscripten_log(EM_LOG_CONSOLE, "I: %s", message);
     break;
   case SDL_LOG_PRIORITY_WARN:
-    emscripten_log(EM_LOG_WARN, "%s", message);
+    emscripten_log(EM_LOG_WARN, "W: %s", message);
     break;
   default:
-    emscripten_log(EM_LOG_ERROR, "%s", message);
+    emscripten_log(EM_LOG_ERROR, "E: %s", message);
     break;
   }
 }

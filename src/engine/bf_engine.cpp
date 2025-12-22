@@ -620,6 +620,28 @@ struct EngineData {
   } draw;
 } ge = {};
 
+void LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
+  switch (level) {
+  case MA_LOG_LEVEL_DEBUG: {
+#if BF_DEBUG
+    LOGD("miniaudio: %s", message);
+#endif
+  } break;
+
+  case MA_LOG_LEVEL_INFO: {
+    LOGI("miniaudio: %s", message);
+  } break;
+
+  case MA_LOG_LEVEL_WARNING: {
+    LOGW("miniaudio: %s", message);
+  } break;
+
+  default: {
+    LOGE("miniaudio: %s", message);
+  } break;
+  }
+}
+
 void ReloadSounds() {  ///
   LOGI("ReloadSounds...");
   DEFER {
@@ -647,8 +669,16 @@ void ReloadSounds() {  ///
   if (!fb_sounds->size())
     return;
 
+  ma_log log{};
+  if (ma_log_init(nullptr, &log) != MA_SUCCESS)
+    INVALID_PATH;
+  if (ma_log_register_callback(&log, ma_log_callback_init(LogMiniaudio, nullptr))
+      != MA_SUCCESS)
+    INVALID_PATH;
+
   m.engine                                  = {};
   auto config                               = ma_engine_config_init();
+  config.pLog                               = &log;
   config.defaultVolumeSmoothTimeInPCMFrames = 120;
   config.noAutoStart                        = true;
 
@@ -2883,7 +2913,7 @@ void SetMusicLowpassFactor(f32 factor) {  ///
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
-bool OnEmscriptenMouseDown(
+bool OnEmscriptenClick(
   int                         eventType,
   const EmscriptenMouseEvent* _event,
   void*                       _userData
@@ -2892,7 +2922,7 @@ bool OnEmscriptenMouseDown(
   return true;
 }
 
-bool OnEmscriptenTouchStart(
+bool OnEmscriptenTouchEnd(
   int                         eventType,
   const EmscriptenTouchEvent* _event,
   void*                       _userData
@@ -3000,10 +3030,10 @@ void InitEngine() {  ///
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
-  if (emscripten_set_mousedown_callback("#canvas", 0, false, OnEmscriptenMouseDown)
+  if (emscripten_set_click_callback("#canvas", 0, false, OnEmscriptenClick)
       != EMSCRIPTEN_RESULT_SUCCESS)
     INVALID_PATH;
-  if (emscripten_set_touchstart_callback("#canvas", 0, false, OnEmscriptenTouchStart)
+  if (emscripten_set_touchend_callback("#canvas", 0, false, OnEmscriptenTouchEnd)
       != EMSCRIPTEN_RESULT_SUCCESS)
     INVALID_PATH;
 #endif

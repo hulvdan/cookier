@@ -187,10 +187,6 @@ target_include_directories(miniaudio
     PUBLIC
         "${CMAKE_SOURCE_DIR}/vendor/miniaudio/include"
 )
-target_compile_definitions(miniaudio
-    PRIVATE
-        MA_IMPLEMENTATION
-)
 target_link_libraries(miniaudio
     PRIVATE
         vendor_and_codegen
