@@ -3853,7 +3853,7 @@ void _Save(Arena* _) {
     LOGI("Save swap failed");
 }
 
-#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
 
 void fromJS_markReturnedSavedata(int value) {  ///
   ge.meta.jsLoadedSavedata = value;
@@ -3885,7 +3885,7 @@ EM_JS(const char*, jsLoad, (), {
   if (!window.jsLoad_savedataLoaded)
     return null;
 
-#  elif defined(BF_PLATFORM_Web)
+#  elif defined(BF_PLATFORM_Web) || defined(BF_PLATFORM_WebItch)
   window.jsLoad_savedata = localStorage.getItem('save');
 #  else
 #    error "Not implemented"
@@ -3926,7 +3926,7 @@ void _Save(Arena* arena) {
   }, encoded);
   // clang-format on
 
-#  elif defined(BF_PLATFORM_Web)
+#  elif defined(BF_PLATFORM_Web) || defined(BF_PLATFORM_WebItch)
 
   // clang-format off
   EM_ASM({
@@ -3960,7 +3960,7 @@ SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
     ge.meta.savedata = (const u8*)TryLoadFile("save.bin", nullptr);
     ge.meta.loading  = SavedataLoadingType_JUST_FISNIHED;
 
-#elif defined(BF_PLATFORM_WebYandex) || defined(BF_PLATFORM_Web)
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
 
     // JS loads asynchronously.
     const char* savedata = jsLoad();

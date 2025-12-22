@@ -51,10 +51,7 @@
                     };
                 })(),
 
-                canvas: (function() {
-                    var canvas = document.getElementById('canvas');
-                    return canvas;
-                })(),
+                canvas: (function() { return document.getElementById('canvas'); })(),
             };
         </script>
         {{{ SCRIPT }}}
