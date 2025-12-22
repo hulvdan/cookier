@@ -395,8 +395,10 @@ def deploy_yandex():
 @command
 def receive_ws_logs(port: int):
     # {  ###
+    get_time = lambda: datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+
     async def handler(ws):
-        get_time = lambda: datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        print(f"{get_time()} I: CONNECTED")
         try:
             async for msg in ws:
                 print(f"{get_time()} {msg}")
