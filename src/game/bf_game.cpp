@@ -8807,7 +8807,7 @@ void DoUI() {
             .weapon      = weapon.type,
             .weaponIndex = weaponIndex,
             .tier        = weapon.tier,
-            .breathing{.set = (wouldCombineWith >= 0)},
+            .breathing{.set = data.weAreInShop && (wouldCombineWith >= 0)},
             .showsDetails = true,
             .uiBouncedAt  = weapon.uiBouncedAt,
           });

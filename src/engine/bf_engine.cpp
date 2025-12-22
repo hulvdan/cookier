@@ -525,11 +525,10 @@ struct EngineData {
       Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
       Vector<_SoundVariationRange>   soundVariationRanges           = {};
 
-      bool _works   = false;
-      bool _started = false;
+      bool _works = false;
 
       bool Works() const {
-        return _works && _started;
+        return _works;
       }
 
       union {
@@ -639,8 +638,7 @@ void ReloadSounds() {  ///
   while (m.soundsToUninitialize.try_dequeue(sound_))
     continue;
 
-  m._works   = false;
-  m._started = false;
+  m._works = false;
 
   // Initializing audio only if there are sounds in project.
   const auto fb_sounds = glib->sounds();
@@ -788,11 +786,13 @@ void ReloadSounds() {  ///
   m._works = !_errored;
 }
 
-void StartAudio() {  ///
-  if (ge.meta._soundManager._started)
+void StartAudioOnce() {  ///
+  static bool once = false;
+  if (once)
     return;
+  once = true;
 
-  LOGI("StartAudio...");
+  LOGI("StartAudioOnce...");
 
   ReloadSounds();
 
@@ -803,9 +803,7 @@ void StartAudio() {  ///
     LOGE("Failed to start miniaudio engine");
   }
 
-  ge.meta._soundManager._started = true;
-
-  LOGI("StartAudio... Finished!");
+  LOGI("StartAudioOnce... Finished!");
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
@@ -2888,7 +2886,7 @@ bool OnEmscriptenMouseDown(
   const EmscriptenMouseEvent* _event,
   void*                       _userData
 ) {  ///
-  StartAudio();
+  StartAudioOnce();
   return true;
 }
 
@@ -2897,7 +2895,7 @@ bool OnEmscriptenTouchStart(
   const EmscriptenTouchEvent* _event,
   void*                       _userData
 ) {  ///
-  StartAudio();
+  StartAudioOnce();
   return true;
 }
 #endif
@@ -3713,8 +3711,7 @@ SDL_AppResult EngineUpdate() {  ///
 #endif
 
 #ifndef SDL_PLATFORM_EMSCRIPTEN
-    if (!ge.meta._soundManager._started)
-      StartAudio();
+    StartAudioOnce();
 #endif
 
     GameFixedUpdate();

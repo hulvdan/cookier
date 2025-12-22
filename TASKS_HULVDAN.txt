@@ -12,6 +12,7 @@ x CHECK ysdk set is mobile
 x confirmation modal clicking outside should CANCEL it !!!
 x naysayer theme
 x windows sounds don't get initialized
+x fix: weapon breathing must work ONLY IN SHOP
 
 * ipad safari не работает звук
 * ipad chrome не работает звук
