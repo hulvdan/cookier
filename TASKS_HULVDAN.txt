@@ -13,7 +13,11 @@ x confirmation modal clicking outside should CANCEL it !!!
 x naysayer theme
 x windows sounds don't get initialized
 x fix: weapon breathing must work ONLY IN SHOP
+x python ws server
 
+* separate itch shell
+* ipad sends logs to ws server
+* +дебаггинг айпад. streaming логов на пк
 * ipad safari не работает звук
 * ipad chrome не работает звук
 * ipad safari не могу улучшить оружие - закрывается деталка

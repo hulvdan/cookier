@@ -70,6 +70,7 @@ class BuildPlatform(StrEnum):
     Win = "Win"
     Web = "Web"
     WebYandex = "WebYandex"
+    WebItch = "WebItch"
 
 
 class BuildTarget(StrEnum):
@@ -83,6 +84,7 @@ ALLOWED_BUILDS = (  ###
     (BuildTarget.game, BuildPlatform.Win, BuildType.Release),
     (BuildTarget.game, BuildPlatform.Web, BuildType.Debug),
     (BuildTarget.game, BuildPlatform.Web, BuildType.Release),
+    (BuildTarget.game, BuildPlatform.WebItch, BuildType.Release),
     (BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release),
     (BuildTarget.tests, BuildPlatform.Win, BuildType.Debug),
 )

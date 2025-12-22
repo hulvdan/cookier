@@ -20,6 +20,7 @@ endif()
 
 # Adding:
 # BF_PLATFORM_Web
+# BF_PLATFORM_WebItch
 # BF_PLATFORM_WebYandex
 # BF_PLATFORM_Win
 add_compile_definitions("BF_PLATFORM_${PLATFORM}=1")
@@ -35,7 +36,7 @@ target_include_directories(vendor_and_codegen
 
 # # GameAnalytics.
 # #-----------------------------------------------------------------------------------
-# if (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
+# if ("${PLATFORM}" MATCHES "^Web")
 #     add_library(GameAnalytics INTERFACE)
 # else()
 #     add_subdirectory(vendor/gameanalytics-sdk-cpp)
@@ -91,7 +92,7 @@ if ("${PLATFORM}" STREQUAL "Win")
                 IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/vendor/bgfx/.build/win64_vs2022/bin/bimgRelease.lib"
         )
     endif()
-elseif (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
+elseif ("${PLATFORM}" MATCHES "^Web")
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
         set_target_properties(bgfx
             PROPERTIES
@@ -268,7 +269,7 @@ target_compile_definitions(game
 )
 
 if ("${PLATFORM}" STREQUAL "Win")
-elseif (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
+elseif ("${PLATFORM}" MATCHES "^Web")
     target_compile_options(game
         PRIVATE
             "-o MIN_WEBGL_VERSION=1"
@@ -318,7 +319,10 @@ elseif (("${PLATFORM}" STREQUAL "Web") OR ("${PLATFORM}" STREQUAL "WebYandex"))
                 "-sEXIT_RUNTIME=0"
                 "--closure 1"
         )
-        if ("${PLATFORM}" STREQUAL "WebYandex")
+        if ("${PLATFORM}" STREQUAL "WebItch")
+            target_link_options(game PRIVATE
+                "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release_itch.html")
+        elseif ("${PLATFORM}" STREQUAL "WebYandex")
             target_link_options(game PRIVATE
                 "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release_yandex.html")
         else()

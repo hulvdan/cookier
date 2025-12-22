@@ -22,7 +22,7 @@ build_type = "Debug"
 function select_target()
     targets = { "game" }
     build_types = { "Debug", "Release", "RelWithDebInfo" }
-    platforms = { "Win", "Web", "WebYandex" }
+    platforms = { "Win", "Web", "WebYandex", "WebItch" }
 
     function platform_build_type_choose()
         require("fastaction").select(platforms, {}, function(selected_platform)
@@ -102,6 +102,12 @@ function rebuild_tasks()
             end,
         },
         { "h_shaders", cli_command("shaders") },
+        {
+            "v_receive_ws_logs",
+            function()
+                vim.fn.execute([[term uv run python cli\bf_cli.py receive_ws_logs 8003]])
+            end,
+        },
         { "w_temp", cli_command("temp") },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },

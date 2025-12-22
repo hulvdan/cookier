@@ -1118,11 +1118,11 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
         case BuildPlatform.Win:
             target_dir_ = f".cmake/vs17/{build_type}/resources"
 
-        case BuildPlatform.Web | BuildPlatform.WebYandex:
-            target_dir_ = f".cmake/{platform}_{build_type}/resources"
-
         case _:
-            assert False, f"Not supported platform: {platform}"
+            if platform.lower().startswith("web"):
+                target_dir_ = f".cmake/{platform}_{build_type}/resources"
+            else:
+                assert False, f"Not supported platform: {platform}"
 
     src_files = {f.name for f in RESOURCES_DIR.iterdir() if f.is_file()}
 
@@ -1295,27 +1295,43 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
     cfy_fonts()
 
-    # Generating shaders.
-    if build_type == BuildType.Release and platform in (
-        BuildPlatform.Web,
-        BuildPlatform.WebYandex,
-    ):
+    # Generating shell.
+    if build_type == BuildType.Release and platform.lower().startswith("web"):
         shell_file = VENDOR_DIR / "shell_release.html"
         shell_contents = shell_file.read_text(encoding="utf-8")
+
+        NOT_YANDEX_WEB_POST_RUN = """
+            () => {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                var device = 0;
+                if (isMobile)
+                    device = 1;
+                Module.fromJS_setDeviceType(device);
+            },
+        """
 
         variables = {
             BuildPlatform.Web: {
                 "EXTEND_BODY_START": "",
-                "EXTEND_MAIN_SCRIPT": "",
-                "EXTEND_POST_RUN": """
-                    () => {
-                        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                        var device = 0;
-                        if (isMobile)
-                            device = 1;
-                        Module.fromJS_setDeviceType(device);
+                "EXTEND_PRE_RUN": """
+                    function() {
+                        const LOG_WS = new WebSocket("ws://192.168.1.146:8003");
+                        const oldLog = console.log;
+                        console.log = (...args) => {
+                          if (LOG_WS.readyState === WebSocket.OPEN)
+                            LOG_WS.send(args.join(" "));
+                          oldLog(...args);
+                        };
                     },
                 """,
+                "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
+                "EXTEND_MAIN_SCRIPT": "",
+            },
+            BuildPlatform.WebItch: {
+                "EXTEND_BODY_START": "",
+                "EXTEND_PRE_RUN": "",
+                "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
+                "EXTEND_MAIN_SCRIPT": "",
             },
             BuildPlatform.WebYandex: {
                 "EXTEND_BODY_START": """
@@ -1338,6 +1354,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                     "YANDEX_METRIC_COUNTER_ID",
                     str(game_settings.yandex_metrica_counter_id),
                 ),
+                "EXTEND_PRE_RUN": "",
                 "EXTEND_POST_RUN": "",
                 "EXTEND_MAIN_SCRIPT": """
                     const moduleReady = new Promise(resolve => {
@@ -1385,18 +1402,17 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
         assert "##" not in shell_contents
 
-        out_file = {
-            BuildPlatform.Web: TEMP_DIR / "shell_release.html",
-            BuildPlatform.WebYandex: TEMP_DIR / "shell_release_yandex.html",
-        }[platform]
-        out_file.write_text(shell_contents, encoding="utf-8")
+        name = "shell_release"
+        if suffix := str(platform).lower().removeprefix("web"):
+            name += "_" + suffix
+        (TEMP_DIR / f"{name}.html").write_text(shell_contents, encoding="utf-8")
 
     # Shaders.
     # regenerate_shaders(build_type != BuildType.Debug)
 
     recursive_mkdir(HANDS_GENERATED_DIR)
 
-    if platform in (BuildPlatform.Web, BuildPlatform.WebYandex):
+    if platform.lower().startswith("web"):
         bind_function_names: set[str] = set()
         for f in (
             SRC_DIR / "engine" / "bf_engine.cpp",
@@ -1458,12 +1474,11 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
     symlink_resources_for = (
         (BuildPlatform.Win, BuildType.Debug),
-        (BuildPlatform.Web, BuildType.Debug),
-        (BuildPlatform.Win, BuildType.Debug),
         (BuildPlatform.Win, BuildType.RelWithDebInfo),
         (BuildPlatform.Win, BuildType.Release),
         (BuildPlatform.Web, BuildType.Debug),
         (BuildPlatform.Web, BuildType.Release),
+        (BuildPlatform.WebItch, BuildType.Release),
         (BuildPlatform.WebYandex, BuildType.Release),
     )
     dist_dir = {
@@ -1472,6 +1487,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         (BuildPlatform.Win, BuildType.Release): ".cmake/vs17/Release/",
         (BuildPlatform.Web, BuildType.Debug): ".cmake/Web_Debug/",
         (BuildPlatform.Web, BuildType.Release): ".cmake/Web_Release/",
+        (BuildPlatform.WebItch, BuildType.Release): ".cmake/WebItch_Release/",
         (BuildPlatform.WebYandex, BuildType.Release): ".cmake/WebYandex_Release/",
     }[(platform, build_type)]
 

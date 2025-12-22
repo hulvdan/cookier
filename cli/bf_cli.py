@@ -1,9 +1,12 @@
 # Imports.  {  ###
+import asyncio
+import datetime
 import os
 import zipfile
 from pathlib import Path
 
 import bf_lib
+import websockets
 from bf_game import *  # noqa
 from bf_gamelib import do_generate, regenerate_shaders
 from bf_lib import (
@@ -67,12 +70,12 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
             command.append('-G "Visual Studio 17 2022"')
             command.append(r"-B .cmake/vs17")
 
-        case BuildPlatform.Web | BuildPlatform.WebYandex:
-            command.insert(0, "emcmake")
-            command.append(f"-B .cmake/{platform}_{build_type}")
-
         case _:
-            assert False, f"Not supported platform: {platform}"
+            if platform.lower().startswith("web"):
+                command.insert(0, "emcmake")
+                command.append(f"-B .cmake/{platform}_{build_type}")
+            else:
+                assert False, f"Not supported platform: {platform}"
 
     run_command(" ".join(command))
     # }
@@ -99,16 +102,17 @@ def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType
                 """
             )
 
-        case BuildPlatform.Web | BuildPlatform.WebYandex:
-            run_command(rf"cmake --build .cmake/{platform}_{build_type} -t {target}")
-
-            if platform == BuildPlatform.WebYandex:
-                make_web_build_archive(
-                    TEMP_DIR / "yandex.zip", Path(f".cmake/{platform}_{build_type}")
-                )
-
         case _:
-            assert False, f"Not supported platform: {platform}"
+            if platform.lower().startswith("web"):
+                run_command(rf"cmake --build .cmake/{platform}_{build_type} -t {target}")
+
+                if platform == BuildPlatform.WebYandex:
+                    make_web_build_archive(
+                        TEMP_DIR / "yandex.zip", Path(f".cmake/{platform}_{build_type}")
+                    )
+
+            else:
+                assert False, f"Not supported platform: {platform}"
     # }
 
 
@@ -366,10 +370,10 @@ def deploy_itch():
     git_bump_tag()
 
     with git_stash():
-        build(BuildTarget.game, BuildPlatform.Web, BuildType.Release)
+        build(BuildTarget.game, BuildPlatform.WebItch, BuildType.Release)
 
     zip_path = TEMP_DIR / "itch.zip"
-    make_web_build_archive(zip_path, Path(".cmake/Web_Release"))
+    make_web_build_archive(zip_path, Path(".cmake/WebItch_Release"))
 
     target = "{}:html".format(game_settings.itch_target)
     run_command([BUTLER_PATH, "push", zip_path, target])
@@ -385,6 +389,23 @@ def deploy_yandex():
 
     with git_stash():
         build(BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release)
+    # }
+
+
+@command
+def receive_ws_logs(port: int):
+    # {  ###
+    async def handler(ws):
+        async for msg in ws:
+            ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+            print(f"[{ts}] {msg}")
+
+    async def main():
+        async with websockets.serve(handler, "0.0.0.0", port):
+            print(f"Listening on ws://0.0.0.0:{port}")
+            await asyncio.Future()
+
+    asyncio.run(main())
     # }
 
 

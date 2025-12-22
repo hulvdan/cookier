@@ -28,6 +28,7 @@ dependencies = [
     "ruff>=0.14.6",
     "typer>=0.20.0",
     "types-pyyaml>=6.0.12.20250915",
+    "websockets>=15.0.1",
 ]
 packages = [
     { include = "cli" },
