@@ -1341,12 +1341,20 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                 """.replace("THIS_PC_LOCAL_IP", get_local_ip()),
                 "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
                 "EXTEND_MAIN_SCRIPT": "",
+                "EXTEND_HTML_END": """
+                    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+                    <script>
+                        eruda.init();
+                        eruda.position({x: 0, y: 0});
+                    </script>
+                """,
             },
             BuildPlatform.WebItch: {
                 "EXTEND_BODY_START": "",
                 "EXTEND_PRE_RUN": "",
                 "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
                 "EXTEND_MAIN_SCRIPT": "",
+                "EXTEND_HTML_END": "",
             },
             BuildPlatform.WebYandex: {
                 "EXTEND_BODY_START": """
@@ -1407,6 +1415,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                         Module.fromJS_setLocalization(lang);
                     })();
                 """,
+                "EXTEND_HTML_END": "",
             },
         }[platform]
 
