@@ -14,10 +14,9 @@ x naysayer theme
 x windows sounds don't get initialized
 x fix: weapon breathing must work ONLY IN SHOP
 x python ws server
+x separate itch shell
+x +дебаггинг айпад. streaming логов на пк
 
-* separate itch shell
-* ipad sends logs to ws server
-* +дебаггинг айпад. streaming логов на пк
 * ipad safari не работает звук
 * ipad chrome не работает звук
 * ipad safari не могу улучшить оружие - закрывается деталка
@@ -339,3 +338,4 @@ TECH DEBT
 * fix sometimes sdl thinks window is out of focus -> sounds mutes
 * engine: LoadFonts per localization
 * переставить SDL на DLL для стима
+* web build WS auto reconnect
