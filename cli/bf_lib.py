@@ -2,6 +2,7 @@
 import colorsys
 import hashlib
 import re
+import socket
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -253,6 +254,12 @@ def all_are_not_none(values: Iterator) -> bool:
 
 def all_are_none(values: Iterator) -> bool:
     return all(v is None for v in values)
+
+
+def get_local_ip() -> str:
+    ip_address = socket.gethostbyname(socket.gethostname())
+    assert ip_address != "127.0.0.1"
+    return ip_address
 
 
 # !banner: codegen

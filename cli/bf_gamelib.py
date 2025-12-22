@@ -37,6 +37,7 @@ from bf_lib import (
     game_settings,
     gamelib_processing_functions,
     genenum,
+    get_local_ip,
     load_gamelib_cached,
     log,
     recursive_mkdir,
@@ -1315,7 +1316,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                 "EXTEND_BODY_START": "",
                 "EXTEND_PRE_RUN": """
                     function() {
-                        const LOG_WS = new WebSocket("ws://192.168.1.146:8003");
+                        const LOG_WS = new WebSocket("ws://THIS_PC_LOCAL_IP:8003");
                         const oldLog = console.log;
                         console.log = (...args) => {
                           if (LOG_WS.readyState === WebSocket.OPEN)
@@ -1323,7 +1324,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                           oldLog(...args);
                         };
                     },
-                """,
+                """.replace("THIS_PC_LOCAL_IP", get_local_ip()),
                 "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
                 "EXTEND_MAIN_SCRIPT": "",
             },
