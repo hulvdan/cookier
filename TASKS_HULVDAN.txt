@@ -11,6 +11,8 @@ x CHECK ysdk set is mobile
   На айпаде должно проставиться touch управление
 x confirmation modal clicking outside should CANCEL it !!!
 x naysayer theme
+x windows sounds don't get initialized
+
 * ipad safari не работает звук
 * ipad chrome не работает звук
 * ipad safari не могу улучшить оружие - закрывается деталка

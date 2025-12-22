@@ -621,11 +621,180 @@ struct EngineData {
   } draw;
 } ge = {};
 
-void StartAudio() {  ///
-  if (!ge.meta._soundManager._works)
+void ReloadSounds() {  ///
+  LOGI("ReloadSounds...");
+  DEFER {
+    LOGI("ReloadSounds... Finished!");
+  };
+
+  auto& m = ge.meta._soundManager;
+
+  ma_engine_uninit(&m.engine);
+  m.engine                        = {};
+  m.playingSoundsBoolsGenerations = {};
+  m.playingSoundsCount            = 0;
+
+  // Resetting soundsToUninitialize.
+  _EndedSound sound_{};
+  while (m.soundsToUninitialize.try_dequeue(sound_))
+    continue;
+
+  m._works   = false;
+  m._started = false;
+
+  // Initializing audio only if there are sounds in project.
+  const auto fb_sounds = glib->sounds();
+  if (!fb_sounds)
     return;
+  if (!fb_sounds->size())
+    return;
+
+  m.engine                                  = {};
+  auto config                               = ma_engine_config_init();
+  config.defaultVolumeSmoothTimeInPCMFrames = 120;
+  config.noAutoStart                        = true;
+
+  if (ge.meta.device == DeviceType_MOBILE) {
+    LOGI("Audio. High latency mode (due to mobile device)");
+    config.periodSizeInMilliseconds = 100;
+  }
+  else
+    LOGI("Audio. Low latency mode");
+
+  LOGI("Audio. ma_engine_init...");
+
+  if (ma_engine_init(&config, &m.engine) != MA_SUCCESS) {
+    LOGW("Failed to init miniaudio engine");
+    INVALID_PATH;
+    return;
+  }
+
+  LOGI("Audio. ma_engine_init... Success!");
+
+  ma_engine_set_volume(&ge.meta._soundManager.engine, 0);
+
+  m.soundVariationRanges.Reset();
+  m.soundVariationRanges.Reserve(fb_sounds->size());
+
+  m.launchedSounds.Reset();
+  m.launchedSounds.Reserve(fb_sounds->size());
+  FOR_RANGE (int, i, fb_sounds->size()) {
+    *m.launchedSounds.Add() = {};
+  }
+
+  m.groupSFX   = {};
+  m.groupMusic = {};
+  ma_sound_group_init(
+    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupSFX
+  );
+  ma_sound_group_init(
+    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupMusic
+  );
+
+  ma_fence fence{};
+  if (ma_fence_init(&fence) != MA_SUCCESS) {
+    LOGW("Error during ma_fence_init");
+    INVALID_PATH;
+    return;
+  }
+  DEFER {
+    ma_fence_uninit(&fence);
+  };
+
+  int filesToLoad = 0;
+  for (auto fb : *fb_sounds)
+    filesToLoad += fb->variations()->size();
+
+  m.soundVariationsLoadedFromFiles.Reset();
+  m.soundVariationsLoadedFromFiles.Reserve(filesToLoad);
+  const auto oldBase = m.soundVariationsLoadedFromFiles.base;
+
+  bool _errored = false;
+  LAMBDA (bool, checkErr, (ma_result res)) {
+    if (res != MA_SUCCESS) {
+      _errored = true;
+      INVALID_PATH;
+      return true;
+    }
+    return false;
+  };
+
+  {
+    {
+      const auto cfg = ma_lpf_node_config_init(
+        ma_engine_get_channels(&m.engine), ma_engine_get_sample_rate(&m.engine), 2000, 8
+      );
+      checkErr(ma_lpf_node_init(&m.engineg, &cfg, nullptr, &m.musicLpf));
+    }
+
+    checkErr(ma_node_attach_output_bus(&m.groupMusic, 0, &m.musicLpf, 0));
+    checkErr(
+      ma_node_attach_output_bus(&m.musicLpf, 0, ma_node_graph_get_endpoint(&m.engineg), 0)
+    );
+    checkErr(
+      ma_node_attach_output_bus(&m.groupSFX, 0, ma_node_graph_get_endpoint(&m.engineg), 0)
+    );
+  }
+
+  for (auto fb : *fb_sounds) {
+    u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
+    if (fb->pitch_min() == fb->pitch_max())
+      customFlags |= MA_SOUND_FLAG_NO_PITCH;
+
+    static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
+    u32             flags = MA_SOUND_FLAG_ASYNC | customFlags;
+    ma_sound_group* group = nullptr;
+
+    if (fb->is_music()) {
+      flags |= MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM;
+      group = &m.groupMusic;
+    }
+    else {
+      flags |= MA_SOUND_FLAG_DECODE;
+      group = &m.groupSFX;
+    }
+
+    *m.soundVariationRanges.Add() = {
+      .start = m.soundVariationsLoadedFromFiles.count,
+      .end   = m.soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
+    };
+
+    int variationIndex = -1;
+    for (auto fb_variation : *fb->variations()) {
+      variationIndex++;
+
+      auto slot = m.soundVariationsLoadedFromFiles.Add();
+
+      *slot = {
+        .filepath       = fb_variation->filepath()->c_str(),
+        .soundHashValue = fb->enum_value_id(),
+        .variation      = variationIndex,
+        .flags          = customFlags,
+      };
+
+      auto fencePtr = &fence;
+      if (fb->is_music())
+        fencePtr = nullptr;
+      checkErr(ma_sound_init_from_file(
+        &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
+      ));
+    }
+  }
+
+  ASSERT(oldBase == m.soundVariationsLoadedFromFiles.base);
+
+  checkErr(ma_fence_wait(&fence));
+
+  m._works = !_errored;
+}
+
+void StartAudio() {  ///
   if (ge.meta._soundManager._started)
     return;
+
+  LOGI("StartAudio...");
+
+  ReloadSounds();
 
   if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
     LOGI("Started miniaudio engine");
@@ -635,6 +804,8 @@ void StartAudio() {  ///
   }
 
   ge.meta._soundManager._started = true;
+
+  LOGI("StartAudio... Finished!");
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
@@ -795,174 +966,12 @@ void EndMode2D() {  ///
   ge.meta._currentCamera = nullptr;
 }
 
-void ReloadSounds() {  ///
-  auto& m = ge.meta._soundManager;
-
-  ma_engine_uninit(&m.engine);
-  m.engine                        = {};
-  m.playingSoundsBoolsGenerations = {};
-  m.playingSoundsCount            = 0;
-
-  // Resetting soundsToUninitialize.
-  _EndedSound sound_{};
-  while (m.soundsToUninitialize.try_dequeue(sound_))
-    continue;
-
-  m._works   = false;
-  m._started = false;
-
-  // Initializing audio only if there are sounds in project.
-  const auto fb_sounds = glib->sounds();
-  if (!fb_sounds)
-    return;
-  if (!fb_sounds->size())
-    return;
-
-  m.engine                                  = {};
-  auto config                               = ma_engine_config_init();
-  config.defaultVolumeSmoothTimeInPCMFrames = 120;
-  config.noAutoStart                        = true;
-
-  if (ge.meta.device == DeviceType_MOBILE) {
-    LOGI("Audio: mobile device -> high latency mode");
-    config.periodSizeInMilliseconds = 100;
-  }
-  else
-    LOGI("Audio: low latency mode");
-
-  if (ma_engine_init(&config, &m.engine) != MA_SUCCESS) {
-    LOGW("Failed to init miniaudio engine");
-    INVALID_PATH;
-    return;
-  }
-
-  ma_engine_set_volume(&ge.meta._soundManager.engine, 0);
-
-  LOGI("miniaudio engine initialized");
-
-  m.soundVariationRanges.Reset();
-  m.soundVariationRanges.Reserve(fb_sounds->size());
-
-  m.launchedSounds.Reset();
-  m.launchedSounds.Reserve(fb_sounds->size());
-  FOR_RANGE (int, i, fb_sounds->size()) {
-    *m.launchedSounds.Add() = {};
-  }
-
-  m.groupSFX   = {};
-  m.groupMusic = {};
-  ma_sound_group_init(
-    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupSFX
-  );
-  ma_sound_group_init(
-    &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m.groupMusic
-  );
-
-  ma_fence fence{};
-  if (ma_fence_init(&fence) != MA_SUCCESS) {
-    LOGW("Error during ma_fence_init");
-    INVALID_PATH;
-    return;
-  }
-  DEFER {
-    ma_fence_uninit(&fence);
-  };
-
-  int filesToLoad = 0;
-  for (auto fb : *fb_sounds)
-    filesToLoad += fb->variations()->size();
-
-  m.soundVariationsLoadedFromFiles.Reset();
-  m.soundVariationsLoadedFromFiles.Reserve(filesToLoad);
-  const auto oldBase = m.soundVariationsLoadedFromFiles.base;
-
-  bool _errored = false;
-  LAMBDA (bool, checkErr, (ma_result res)) {
-    if (res != MA_SUCCESS) {
-      _errored = true;
-      INVALID_PATH;
-      return true;
-    }
-    return false;
-  };
-
-  {
-    {
-      const auto cfg = ma_lpf_node_config_init(
-        ma_engine_get_channels(&m.engine), ma_engine_get_sample_rate(&m.engine), 2000, 8
-      );
-      checkErr(ma_lpf_node_init(&m.engineg, &cfg, nullptr, &m.musicLpf));
-    }
-
-    checkErr(ma_node_attach_output_bus(&m.groupMusic, 0, &m.musicLpf, 0));
-    checkErr(
-      ma_node_attach_output_bus(&m.musicLpf, 0, ma_node_graph_get_endpoint(&m.engineg), 0)
-    );
-    checkErr(
-      ma_node_attach_output_bus(&m.groupSFX, 0, ma_node_graph_get_endpoint(&m.engineg), 0)
-    );
-  }
-
-  for (auto fb : *fb_sounds) {
-    u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
-    if (fb->pitch_min() == fb->pitch_max())
-      customFlags |= MA_SOUND_FLAG_NO_PITCH;
-
-    static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
-    u32             flags = MA_SOUND_FLAG_ASYNC | customFlags;
-    ma_sound_group* group = nullptr;
-
-    if (fb->is_music()) {
-      flags |= MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM;
-      group = &m.groupMusic;
-    }
-    else {
-      flags |= MA_SOUND_FLAG_DECODE;
-      group = &m.groupSFX;
-    }
-
-    *m.soundVariationRanges.Add() = {
-      .start = m.soundVariationsLoadedFromFiles.count,
-      .end   = m.soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
-    };
-
-    int variationIndex = -1;
-    for (auto fb_variation : *fb->variations()) {
-      variationIndex++;
-
-      auto slot = m.soundVariationsLoadedFromFiles.Add();
-
-      *slot = {
-        .filepath       = fb_variation->filepath()->c_str(),
-        .soundHashValue = fb->enum_value_id(),
-        .variation      = variationIndex,
-        .flags          = customFlags,
-      };
-
-      auto fencePtr = &fence;
-      if (fb->is_music())
-        fencePtr = nullptr;
-      checkErr(ma_sound_init_from_file(
-        &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
-      ));
-    }
-  }
-
-  ASSERT(oldBase == m.soundVariationsLoadedFromFiles.base);
-
-  checkErr(ma_fence_wait(&fence));
-
-  m._works = !_errored;
-}
-
 void GameReady() {  ///
   static bool once = false;
   ASSERT_FALSE(once);
   if (once)
     return;
   once = true;
-
-  ReloadSounds();
 
 #ifdef BF_PLATFORM_WebYandex
   // clang-format off
@@ -2850,10 +2859,6 @@ void _UnloadTexture(Texture2D* texture) {  ///
   *texture = {};
 }
 
-void SetSFXVolume(f32 volume) {}
-
-void SetMusicVolume(f32 volume) {}
-
 void SetMusicLowpassFactor(f32 factor) {  ///
   ASSERT(factor >= 0);
   ASSERT(factor <= 1);
@@ -2882,8 +2887,7 @@ bool OnEmscriptenMouseDown(
   int                         eventType,
   const EmscriptenMouseEvent* _event,
   void*                       _userData
-) {
-  LOGI("event");
+) {  ///
   StartAudio();
   return true;
 }
@@ -2892,8 +2896,7 @@ bool OnEmscriptenTouchStart(
   int                         eventType,
   const EmscriptenTouchEvent* _event,
   void*                       _userData
-) {
-  LOGI("event");
+) {  ///
   StartAudio();
   return true;
 }
@@ -2997,8 +3000,12 @@ void InitEngine() {  ///
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
-  emscripten_set_mousedown_callback("#canvas", 0, EM_TRUE, OnEmscriptenMouseDown);
-  emscripten_set_touchstart_callback("#canvas", 0, EM_TRUE, OnEmscriptenTouchStart);
+  if (emscripten_set_mousedown_callback("#canvas", 0, false, OnEmscriptenMouseDown)
+      != EMSCRIPTEN_RESULT_SUCCESS)
+    INVALID_PATH;
+  if (emscripten_set_touchstart_callback("#canvas", 0, false, OnEmscriptenTouchStart)
+      != EMSCRIPTEN_RESULT_SUCCESS)
+    INVALID_PATH;
 #endif
 
   LOGI("Initialized engine");
@@ -3705,10 +3712,10 @@ SDL_AppResult EngineUpdate() {  ///
 #  endif
 #endif
 
-    if (ge.meta._soundManager._works  //
-        && ge.events.canStartSound    //
-        && !ge.meta._soundManager._started)
+#ifndef SDL_PLATFORM_EMSCRIPTEN
+    if (!ge.meta._soundManager._started)
       StartAudio();
+#endif
 
     GameFixedUpdate();
 
