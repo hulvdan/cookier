@@ -680,7 +680,7 @@ void ReloadSounds() {  ///
   auto config                               = ma_engine_config_init();
   config.pLog                               = &log;
   config.defaultVolumeSmoothTimeInPCMFrames = 120;
-  // config.noAutoStart                        = true;
+  config.noAutoStart                        = true;
 
   if (ge.meta.device == DeviceType_MOBILE) {
     LOGI("Audio. High latency mode (due to mobile device)");
@@ -826,12 +826,12 @@ void StartAudioOnce() {  ///
 
   // ReloadSounds();
 
-  // if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
-  //   LOGI("Started miniaudio engine");
-  // else {
-  //   ge.meta._soundManager._works = false;
-  //   LOGE("Failed to start miniaudio engine");
-  // }
+  if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
+    LOGI("Started miniaudio engine");
+  else {
+    ge.meta._soundManager._works = false;
+    LOGE("Failed to start miniaudio engine");
+  }
 
   LOGI("StartAudioOnce... Finished!");
 }
