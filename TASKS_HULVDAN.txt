@@ -17,7 +17,9 @@ x python ws server
 x separate itch shell
 x +дебаггинг айпад. streaming логов на пк
 
+* fix win web не работает звук
 * ipad safari не работает звук
+* больше gap в паузе между кнопками и оружиями/предметами
 * ipad chrome не работает звук
 * ipad safari не могу улучшить оружие - закрывается деталка
 * музыка клипает android chrome
