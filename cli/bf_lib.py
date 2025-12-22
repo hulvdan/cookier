@@ -528,7 +528,7 @@ def recursive_flattenizer(
 #  ╚═════╝ ╚═╝   ╚═╝
 
 
-def git_check_no_unstashed() -> bool:
+def git_check_no_unstashed() -> None:
     process = subprocess.run(
         "git status --porcelain", check=True, shell=True, capture_output=True, text=True
     )
