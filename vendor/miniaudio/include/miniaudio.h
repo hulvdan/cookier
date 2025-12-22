@@ -42238,7 +42238,7 @@ static ma_result ma_context_uninit__webaudio(ma_context* pContext)
     EM_ASM({
         if (typeof(window.miniaudio) !== 'undefined') {
             miniaudio.unlock_event_types.map(function(event_type) {
-                document.removeEventListener(event_type, miniaudio.unlock, true);
+                document.getElementById('canvas').removeEventListener(event_type, miniaudio.unlock, true);
             });
 
             window.miniaudio.referenceCount -= 1;
@@ -42344,12 +42344,12 @@ static ma_result ma_context_init__webaudio(ma_context* pContext, const ma_contex
                     }
                 }
                 miniaudio.unlock_event_types.map(function(event_type) {
-                    document.removeEventListener(event_type, miniaudio.unlock, true);
+                    document.getElementById('canvas').removeEventListener(event_type, miniaudio.unlock, true);
                 });
             };
 
             miniaudio.unlock_event_types.map(function(event_type) {
-                document.addEventListener(event_type, miniaudio.unlock, true);
+                document.getElementById('canvas').addEventListener(event_type, miniaudio.unlock, true);
             });
         }
 

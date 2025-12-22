@@ -1323,6 +1323,12 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                             LOG_WS.send(args.join(" "));
                           oldLog(...args);
                         };
+                        const oldError = console.error;
+                        console.error = (...args) => {
+                          if (LOG_WS.readyState === WebSocket.OPEN)
+                            LOG_WS.send(args.join(" "));
+                          oldError(...args);
+                        };
                     },
                 """.replace("THIS_PC_LOCAL_IP", get_local_ip()),
                 "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,

@@ -623,7 +623,7 @@ struct EngineData {
 void LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
   switch (level) {
   case MA_LOG_LEVEL_DEBUG: {
-#if BF_DEBUG
+#if BF_DEBUG || defined(BF_PLATFORM_Web)
     LOGD("miniaudio: %s", message);
 #endif
   } break;
@@ -680,7 +680,7 @@ void ReloadSounds() {  ///
   auto config                               = ma_engine_config_init();
   config.pLog                               = &log;
   config.defaultVolumeSmoothTimeInPCMFrames = 120;
-  config.noAutoStart                        = true;
+  // config.noAutoStart                        = true;
 
   if (ge.meta.device == DeviceType_MOBILE) {
     LOGI("Audio. High latency mode (due to mobile device)");
@@ -824,14 +824,14 @@ void StartAudioOnce() {  ///
 
   LOGI("StartAudioOnce...");
 
-  ReloadSounds();
+  // ReloadSounds();
 
-  if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
-    LOGI("Started miniaudio engine");
-  else {
-    ge.meta._soundManager._works = false;
-    LOGE("Failed to start miniaudio engine");
-  }
+  // if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
+  //   LOGI("Started miniaudio engine");
+  // else {
+  //   ge.meta._soundManager._works = false;
+  //   LOGE("Failed to start miniaudio engine");
+  // }
 
   LOGI("StartAudioOnce... Finished!");
 }
@@ -855,10 +855,8 @@ void fromJS_setLocalization(int localization) {  ///
 }
 
 void fromJS_setDeviceType(int type) {  ///
-#  ifndef BF_PLATFORM_WebYandex
   ge.meta.device = (DeviceType)type;
-  LOGI("Set device %d", type);
-#  endif
+  LOGI("fromJS_setDeviceType: %d", type);
 }
 
 void fromJS_setAdIsPlaying(int value) {  ///
@@ -2919,7 +2917,7 @@ bool OnEmscriptenClick(
   void*                       _userData
 ) {  ///
   StartAudioOnce();
-  return true;
+  return false;
 }
 
 bool OnEmscriptenTouchEnd(
@@ -2928,7 +2926,7 @@ bool OnEmscriptenTouchEnd(
   void*                       _userData
 ) {  ///
   StartAudioOnce();
-  return true;
+  return false;
 }
 #endif
 
@@ -3638,6 +3636,38 @@ lframe FrameVisual::Elapsed() const {  ///
 SDL_AppResult EngineUpdate() {  ///
   ZoneScoped;
 
+  static bool reloadSounds = 1;
+
+#if BF_DEBUG && defined(SDL_PLATFORM_WINDOWS)
+  auto glibPeekResult = PeekFiletime(GAMELIB_PATH);
+  if (glibPeekResult.success && (glibPeekResult.filetime != glibTime)) {
+    auto newGlibFile = TryLoadFile(GAMELIB_PATH, nullptr);
+    if (newGlibFile) {
+      UnloadFile(glibFile);
+
+      glibFile = newGlibFile;
+      glibTime = glibPeekResult.filetime;
+
+      glib = BFGame::GetGameLibrary(glibFile);
+      _UnloadTexture(&ge.meta.atlas);
+      ge.meta.atlas = _LoadTexture(
+        "../../../resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
+      );
+      reloadSounds = 1;
+      LOGI("Gamelib reloaded!");
+    }
+  }
+#endif
+
+  if (reloadSounds) {
+    reloadSounds = 0;
+    ReloadSounds();
+  }
+
+#ifndef SDL_PLATFORM_EMSCRIPTEN
+  StartAudioOnce();
+#endif
+
   static bool initialized = false;
   if (!initialized) {
     initialized = true;
@@ -3717,34 +3747,6 @@ SDL_AppResult EngineUpdate() {  ///
         }
       }
     }
-
-#ifdef SDL_PLATFORM_WINDOWS
-#  if BF_DEBUG
-    auto glibPeekResult = PeekFiletime(GAMELIB_PATH);
-    if (glibPeekResult.success && (glibPeekResult.filetime != glibTime)) {
-      auto newGlibFile = TryLoadFile(GAMELIB_PATH, nullptr);
-      if (newGlibFile) {
-        UnloadFile(glibFile);
-
-        glibFile = newGlibFile;
-        glibTime = glibPeekResult.filetime;
-
-        glib = BFGame::GetGameLibrary(glibFile);
-        _UnloadTexture(&ge.meta.atlas);
-        ge.meta.atlas = _LoadTexture(
-          "../../../resources/atlas_d2.basis",
-          {glib->atlas_size_x(), glib->atlas_size_y()}
-        );
-        ReloadSounds();
-        LOGI("Gamelib reloaded!");
-      }
-    }
-#  endif
-#endif
-
-#ifndef SDL_PLATFORM_EMSCRIPTEN
-    StartAudioOnce();
-#endif
 
     GameFixedUpdate();
 
