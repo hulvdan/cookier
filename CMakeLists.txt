@@ -321,9 +321,11 @@ elseif ("${PLATFORM}" MATCHES "^Web")
         elseif ("${PLATFORM}" STREQUAL "WebYandex")
             target_link_options(game PRIVATE
                 "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release_yandex.html")
-        else()
+        elseif ("${PLATFORM}" STREQUAL "Web")
             target_link_options(game PRIVATE
                 "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release.html")
+        else()
+            message(FATAL_ERROR "Not supported platform: ${PLATFORM}")
         endif()
     endif()
 else()
