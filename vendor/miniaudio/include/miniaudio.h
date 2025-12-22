@@ -42326,8 +42326,7 @@ static ma_result ma_context_init__webaudio(ma_context* pContext, const ma_contex
             };
 
             miniaudio.unlock_event_types = (function(){
-                // return ['touchend', 'click'];
-                return ['touchstart', 'pointerdown'];
+                return ['touchend', 'click'];
             })();
 
             miniaudio.unlock = function() {
