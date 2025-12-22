@@ -1316,18 +1316,26 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                 "EXTEND_BODY_START": "",
                 "EXTEND_PRE_RUN": """
                     function() {
-                        const LOG_WS = new WebSocket("ws://THIS_PC_LOCAL_IP:8003");
+                        const dep = "websocket";
+                        Module.addRunDependency(dep);
+
+                        const wsUrl = "ws://THIS_PC_LOCAL_IP:8003";
+                        const LOG_WS = new WebSocket(wsUrl);
+                        LOG_WS.onopen = () => { Module.removeRunDependency(dep); };
+                        LOG_WS.onerror = (err) => { Module.removeRunDependency(dep); };
+                        LOG_WS.onclose = (err) => { Module.removeRunDependency(dep); };
+
                         const oldLog = console.log;
                         console.log = (...args) => {
-                          if (LOG_WS.readyState === WebSocket.OPEN)
-                            LOG_WS.send(args.join(" "));
-                          oldLog(...args);
+                            if (LOG_WS.readyState === WebSocket.OPEN)
+                                LOG_WS.send(args.join(" "));
+                            oldLog(...args);
                         };
                         const oldError = console.error;
                         console.error = (...args) => {
-                          if (LOG_WS.readyState === WebSocket.OPEN)
-                            LOG_WS.send(args.join(" "));
-                          oldError(...args);
+                            if (LOG_WS.readyState === WebSocket.OPEN)
+                                LOG_WS.send(args.join(" "));
+                            oldError(...args);
                         };
                     },
                 """.replace("THIS_PC_LOCAL_IP", get_local_ip()),

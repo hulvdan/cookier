@@ -16,6 +16,7 @@ x fix: weapon breathing must work ONLY IN SHOP
 x python ws server
 x separate itch shell
 x +дебаггинг айпад. streaming логов на пк
+x гарантированно получаю логи со старта приложения в вебе (жду подключения ws)
 
 * fix win web не работает звук
 * ipad safari не работает звук

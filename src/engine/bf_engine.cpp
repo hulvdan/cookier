@@ -552,7 +552,7 @@ struct EngineData {
       bool adIsPlaying        = false;
 
       bool ShouldStop() const {
-        return windowIsNotFocused || windowIsInactive || adIsPlaying;
+        return windowIsInactive || windowIsNotFocused || adIsPlaying;
       }
     } shouldGameplayStop;
 
@@ -577,21 +577,12 @@ struct EngineData {
     int jsLoadedSavedata = 0;
 
     bool _drawing = false;
-
   } meta;
 
   struct {
     _ReceivedEvents prevFrame = {};
     _ReceivedEvents thisFrame = {};
     LastEventType   last      = {};
-
-    bool canStartSound =
-#ifdef SDL_PLATFORM_EMSCRIPTEN
-      false
-#else
-      true
-#endif
-      ;
   } events;
 
   struct Settings {
@@ -699,16 +690,13 @@ void ReloadSounds() {  ///
 
   LOGI("Audio. ma_engine_init... Success!");
 
-  ma_engine_set_volume(&ge.meta._soundManager.engine, 0);
-
   m.soundVariationRanges.Reset();
   m.soundVariationRanges.Reserve(fb_sounds->size());
 
   m.launchedSounds.Reset();
   m.launchedSounds.Reserve(fb_sounds->size());
-  FOR_RANGE (int, i, fb_sounds->size()) {
+  FOR_RANGE (int, i, fb_sounds->size())
     *m.launchedSounds.Add() = {};
-  }
 
   m.groupSFX   = {};
   m.groupMusic = {};
@@ -748,13 +736,10 @@ void ReloadSounds() {  ///
   };
 
   {
-    {
-      const auto cfg = ma_lpf_node_config_init(
-        ma_engine_get_channels(&m.engine), ma_engine_get_sample_rate(&m.engine), 2000, 8
-      );
-      checkErr(ma_lpf_node_init(&m.engineg, &cfg, nullptr, &m.musicLpf));
-    }
-
+    const auto cfg = ma_lpf_node_config_init(
+      ma_engine_get_channels(&m.engine), ma_engine_get_sample_rate(&m.engine), 2000, 8
+    );
+    checkErr(ma_lpf_node_init(&m.engineg, &cfg, nullptr, &m.musicLpf));
     checkErr(ma_node_attach_output_bus(&m.groupMusic, 0, &m.musicLpf, 0));
     checkErr(
       ma_node_attach_output_bus(&m.musicLpf, 0, ma_node_graph_get_endpoint(&m.engineg), 0)
@@ -814,9 +799,13 @@ void ReloadSounds() {  ///
   checkErr(ma_fence_wait(&fence));
 
   m._works = !_errored;
+  LOGI("ReloadSounds. manager._works = %d", (int)m._works);
 }
 
 void StartAudioOnce() {  ///
+  if (!ge.meta._soundManager._works)
+    return;
+
   static bool once = false;
   if (once)
     return;
@@ -3686,8 +3675,11 @@ SDL_AppResult EngineUpdate() {  ///
 
       f32 target = v;
       if ((volumeTypeIndex == VolumeType_MASTER)
-          && (ge.meta.shouldGameplayStop.ShouldStop() || !ge.events.canStartSound))
+          && ge.meta.shouldGameplayStop.ShouldStop())
+      {
+        LOGI("Updating master volume. Setting target = 0");
         target = 0;
+      }
 
       switch ((VolumeType)volumeTypeIndex) {
       case VolumeType_MASTER: {
