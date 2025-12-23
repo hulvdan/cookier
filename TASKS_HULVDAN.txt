@@ -22,8 +22,8 @@ x fix a problem repeatedly occurred safari
 x проверить остановку звука при смене вкладки
 x адаптив доп блоки
 x ui: mouse works
+x ui: shop: horizontal spacer слева и справа от карточек
 
-* ui: shop: horizontal spacer слева и справа от карточек
 * ui: shop: stats2 посередине карточки
   (вставить элем в этот ряд - он отбивается слева spacer-ом,
   а на этот элемент навесить stats2)

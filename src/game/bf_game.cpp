@@ -10325,13 +10325,13 @@ void DoUI() {
 
         // 2. Items to buy.
         CLAY({.layout{BF_CLAY_SIZING_GROW_X}}) {
-          CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG * 1.75f)}}}) {}
-
           int toPickIndex = -1;
 
           const int selectNextIndices[SHOP_SELLING_ITEMS][3]{
             {1, 2, 3}, {2, 0, 3}, {3, 1, 0}, {2, 1, 0}
           };
+
+          BF_CLAY_SPACER_HORIZONTAL;
 
           for (auto& x : g.run.state.shop.toPick) {
             toPickIndex++;
@@ -10362,6 +10362,13 @@ void DoUI() {
             if (toPickIndex < g.run.state.shop.toPick.count - 1)
               CLAY({.layout{.sizing{.width = CLAY_SIZING_FIXED(GAP_BIG)}}}) {}
           }
+
+          BF_CLAY_SPACER_HORIZONTAL;
+
+          CLAY({.layout{.sizing{
+            .width  = CLAY_SIZING_FIXED(GAP_BIG * 1.0f),
+            .height = CLAY_SIZING_GROW(0),
+          }}}) {}
 
           for (auto i : DEFAULT_BUYING_INDICES) {
             const auto& x = g.run.state.shop.toPick[i];
