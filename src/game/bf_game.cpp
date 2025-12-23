@@ -6325,7 +6325,7 @@ void DoUI() {
       (g.meta.screenSizeUI.y - LOGICAL_RESOLUTION.y) / 2.0f,
     };
 
-    pos = Vector2(pos.x, LOGICAL_RESOLUTION.y - pos.y) - g.meta.screenSizeUIMargin;
+    pos = Vector2(pos.x, LOGICAL_RESOLUTION.y - pos.y) + g.meta.screenSizeUIMargin;
     Clay_SetPointerState({pos.x, pos.y}, false);
   }
 
@@ -15796,7 +15796,9 @@ void GameDraw() {
       p   = Clamp01(p);
       p   = EaseInQuad(p);
       pos = Vector2Lerp(
-        pos, g.ui.notPickedUpCoinsLogicalPos + g.meta.screenSizeUIMargin, p
+        pos,
+        g.ui.notPickedUpCoinsLogicalPos + Vector2(-1, 1) * g.meta.screenSizeUIMargin,
+        p
       );
     }
 
