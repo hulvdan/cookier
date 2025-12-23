@@ -30,10 +30,10 @@ x ui: shop: stats2 посередине карточки
 x ui: mouse WHEN WIDE
 x adaptive gameplay: flying coins y offset
 x скриншоты 4 штуки
+- less range bonus
+x адаптив projectile-ы удалять позже
 
 * sfx explosion громче
-* адаптив projectile-ы удалять позже
-* less range bonus
 * проверить андроид норм работает сейчас?
   -> отметить галочку в яндексе
 * проверить требования модерации
@@ -41,6 +41,8 @@ x скриншоты 4 штуки
 *
 * RELEASED!
 =======================
+* IMGUI VIDEO MODE (БЕЗ СЛОВАРНЫХ DAMAGE NUMBERS - ЧТОБЫ ПРОЩЕ БЫЛО ЗАПИСЫВАТЬ ВИДЕО)
+  - отрубает музыку
 * yandex: видео
   СМ ТЕХНИЧЕСКИЕ УСЛОВИЯ ПРОМО МАТЕРИАЛОВ В ЧЕРНОВИКЕ ЯНДЕКСА
   NOTES:

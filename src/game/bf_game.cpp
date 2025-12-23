@@ -14164,14 +14164,9 @@ void GameFixedUpdate() {
     {  ///
       ZoneScopedN("Updating projectiles.");
 
-      constexpr f32 projectilesAliveBoundsMargin = 3;
-
       constexpr Rect projectilesAliveBounds{
-        .pos{-projectilesAliveBoundsMargin, -projectilesAliveBoundsMargin},
-        .size{
-          (f32)WORLD_X + 2 * projectilesAliveBoundsMargin,
-          (f32)WORLD_Y + 2 * projectilesAliveBoundsMargin,
-        },
+        .pos{-2 * WORLD_X, -2 * WORLD_Y},
+        .size{(f32)WORLD_X * 5, (f32)WORLD_Y * 5},
       };
 
       int projectileIndex = -1;
