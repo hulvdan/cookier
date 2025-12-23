@@ -1158,7 +1158,8 @@ struct GameData {
 
     LoadFontsResult loadedFonts = {};
 
-    Vector2 screenSizeUI = {};
+    Vector2 screenSizeUI       = {};
+    Vector2 screenSizeUIMargin = {};
 
     struct {
       bool    controlling   = false;
@@ -6319,11 +6320,12 @@ void DoUI() {
       }
     }
 
-    pos = {
-      pos.x + (g.meta.screenSizeUI.x - LOGICAL_RESOLUTION.x) / 2.0f,
-      LOGICAL_RESOLUTION.y - pos.y
-        + (g.meta.screenSizeUI.y - LOGICAL_RESOLUTION.y) / 2.0f,
+    g.meta.screenSizeUIMargin = {
+      (g.meta.screenSizeUI.x - LOGICAL_RESOLUTION.x) / 2.0f,
+      (g.meta.screenSizeUI.y - LOGICAL_RESOLUTION.y) / 2.0f,
     };
+
+    pos = Vector2(pos.x, LOGICAL_RESOLUTION.y - pos.y) - g.meta.screenSizeUIMargin;
     Clay_SetPointerState({pos.x, pos.y}, false);
   }
 
@@ -15941,8 +15943,10 @@ void GameDraw() {
 
   DoUI();
 
+#if 0
   EngineApplyStrips();
   EngineApplyVignette();
+#endif
   FlushDrawCommands();
 
   // Debug info.

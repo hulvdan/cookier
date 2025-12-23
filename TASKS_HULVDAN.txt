@@ -26,8 +26,9 @@ x ui: shop: horizontal spacer слева и справа от карточек
 x ui: shop: stats2 посередине карточки
   (вставить элем в этот ряд - он отбивается слева spacer-ом,
   а на этот элемент навесить stats2)
+- adaptive gameplay: ограничить offset карты?
 
-* адаптив: gameplay
+* adaptive gameplay: flying coins y offset
 * yandex:
   СМ ТЕХНИЧЕСКИЕ УСЛОВИЯ ПРОМО МАТЕРИАЛОВ В ЧЕРНОВИКЕ ЯНДЕКСА
   + ГЛЯНУТЬ ПО СКРИНАМ ЧО КАК
