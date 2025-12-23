@@ -3064,13 +3064,37 @@ void _OutlineFonts(
   if (shouldReturnIfNoOutliningIsNeeded)
     return;
 
+  for (auto& font : fonts) {
+    if (font.outlineWidth <= 0)
+      continue;
+
+    FOR_RANGE (int, codepointIndex, font.codepointsCount) {
+      auto& c = font.chars[codepointIndex];
+      if ((c.x1 <= c.x0) || (c.y1 <= c.y0))
+        continue;
+      c.x0 -= font.outlineWidth;
+      c.x1 += font.outlineWidth;
+      c.y0 -= font.outlineWidth;
+      c.y1 += font.outlineWidth;
+      c.xadvance += font.outlineAdvance;
+    }
+  }
+
   int maxCodepointWidth  = 0;
   int maxCodepointHeight = 0;
   for (const auto& font : fonts) {
     FOR_RANGE (int, i, font.codepointsCount) {
-      const auto& c      = font.chars[i];
-      maxCodepointWidth  = MAX(maxCodepointWidth, c.x1 - c.x0 + 2 * font.outlineWidth);
-      maxCodepointHeight = MAX(maxCodepointHeight, c.y1 - c.y0 + 2 * font.outlineWidth);
+      const auto& c = font.chars[i];
+      if (c.x1 <= c.x0) {
+        ASSERT(c.x1 == c.x0);
+        continue;
+      }
+      if (c.y1 <= c.y0) {
+        ASSERT(c.y1 == c.y0);
+        continue;
+      }
+      maxCodepointWidth  = MAX(maxCodepointWidth, c.x1 - c.x0);
+      maxCodepointHeight = MAX(maxCodepointHeight, c.y1 - c.y0);
     }
   }
 
@@ -3078,33 +3102,17 @@ void _OutlineFonts(
   View<f32> dist{.count = maxCodepointWidth * maxCodepointHeight, .base = dist_};
 
   for (auto& font : fonts) {
-    if (font.outlineWidth > 0) {
-      FOR_RANGE (int, codepointIndex, font.codepointsCount) {
-        auto& fontChar = font.chars[codepointIndex];
-        fontChar.x0 -= font.outlineWidth;
-        fontChar.x1 += font.outlineWidth;
-        fontChar.y0 -= font.outlineWidth;
-        fontChar.y1 += font.outlineWidth;
-        fontChar.xadvance += font.outlineAdvance;
-      }
-    }
-  }
-
-  for (auto& font : fonts) {
     if (font.outlineWidth <= 0)
       continue;
 
     FOR_RANGE (int, codepointIndex, font.codepointsCount) {
-      auto& fontChar = font.chars[codepointIndex];
-
-      const Vector2Int codepointSize{
-        fontChar.x1 - fontChar.x0, fontChar.y1 - fontChar.y0
-      };
+      const auto&      c = font.chars[codepointIndex];
+      const Vector2Int codepointSize{c.x1 - c.x0, c.y1 - c.y0};
 
       for (int oy = 0; oy < codepointSize.y; oy++) {
         for (int ox = 0; ox < codepointSize.x; ox++) {
           int distT  = oy * maxCodepointWidth + ox;
-          int atlasT = (fontChar.y0 + oy) * atlasSize.x + fontChar.x0 + ox;
+          int atlasT = (c.y0 + oy) * atlasSize.x + c.x0 + ox;
           if (oneChannelAtlasData[atlasT])
             dist[distT] = 1 - (f32)oneChannelAtlasData[atlasT] / 255.0f;
           else
@@ -3181,7 +3189,7 @@ void _OutlineFonts(
       FOR_RANGE (int, y, codepointSize.y) {
         FOR_RANGE (int, x, codepointSize.x) {
           auto distT  = y * maxCodepointWidth + x;
-          auto atlasT = (y + fontChar.y0) * atlasSize.x + x + fontChar.x0;
+          auto atlasT = (y + c.y0) * atlasSize.x + x + c.x0;
 
           auto v                    = oneChannelAtlasData[atlasT];
           atlasData[atlasT * 4 + 0] = v;

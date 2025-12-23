@@ -18,6 +18,31 @@ else()
     add_compile_definitions("BF_DEBUG=0")
 endif()
 
+# Enabling address sanitizer.
+if (0)
+    #
+    # After ENABLING run following commands:
+    #
+    #   cd vendor/bgfx
+    #   del /f/s/q .build
+    #   make
+    #   msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug /p:EnableAddressSanitizer=true
+    #
+    # After DISABLING run following commands:
+    #
+    #   cd vendor/bgfx
+    #   del /f/s/q .build
+    #   make
+    #   msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
+    #   msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
+    #
+    if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
+        if ("${PLATFORM}" STREQUAL "Win")
+            add_compile_options(/fsanitize=address)
+        endif()
+    endif()
+endif()
+
 # Adding:
 # BF_PLATFORM_Web
 # BF_PLATFORM_WebItch
@@ -280,7 +305,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
             "-sINITIAL_MEMORY=246022144" # X MB heap.
             "-sSTACK_SIZE=2097152" # 2MB stack.
             --preload-file resources
-            --bind
+            -lembind
     )
     set_target_properties(game
         PROPERTIES
@@ -291,16 +316,19 @@ elseif ("${PLATFORM}" MATCHES "^Web")
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
         target_compile_options(game
             PRIVATE
-                "-O0"
-                "-oASSERTIONS=2"
+                "-O1"
+                "-oASSERTIONS=1"
+                "-fsanitize=undefined"
         )
         target_link_options(game
             PRIVATE
-                "-sASSERTIONS=2"
+                "-sASSERTIONS=1"
                 "-g"
-                "-O0"
+                "-O1"
                 "-sFORCE_FILESYSTEM=1"
                 "--shell-file=${CMAKE_SOURCE_DIR}/vendor/shell_debug.html"
+                # "-sSAFE_HEAP=1"
+                "-fsanitize=undefined"
         )
     else()
         target_compile_options(game
@@ -311,10 +339,8 @@ elseif ("${PLATFORM}" MATCHES "^Web")
         target_link_options(game
             PRIVATE
                 "-O3"
-                "-sASSERTIONS=0"
-                "-sEXIT_RUNTIME=0"
                 "--closure 1"
-                "-gsource-map"
+                "-sASSERTIONS=0"
         )
         if ("${PLATFORM}" STREQUAL "WebItch")
             target_link_options(game PRIVATE
@@ -323,6 +349,23 @@ elseif ("${PLATFORM}" MATCHES "^Web")
             target_link_options(game PRIVATE
                 "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release_yandex.html")
         elseif ("${PLATFORM}" STREQUAL "Web")
+            target_compile_options(game
+                PRIVATE
+                    # "-oASSERTIONS=2"
+                    # "-gsource-map"
+                    "-fsanitize=undefined"
+                    # "-fsanitize-minimal-runtime"
+                    # "-fsanitize=address"
+            )
+            target_link_options(game
+                PRIVATE
+                    # "-sSAFE_HEAP=1"
+                    # "-sASSERTIONS=2"
+                    # "-gsource-map"
+                    "-fsanitize=undefined"
+                    # "-fsanitize-minimal-runtime"
+                    # "-fsanitize=address"
+            )
             target_link_options(game PRIVATE
                 "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release.html")
         else()

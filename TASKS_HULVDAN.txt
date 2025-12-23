@@ -7,18 +7,12 @@ x прикрут аналитики
 - РЕЛИЗ
 - ФИКСЫ + БАЛАНС
 
-x CHECK ysdk set is mobile
-  На айпаде должно проставиться touch управление
-x confirmation modal clicking outside should CANCEL it !!!
-x naysayer theme
-x windows sounds don't get initialized
-x fix: weapon breathing must work ONLY IN SHOP
-x python ws server
-x separate itch shell
-x +дебаггинг айпад. streaming логов на пк
-x гарантированно получаю логи со старта приложения в вебе (жду подключения ws)
+x обновить айпад браузеры
+x fix arena alignment issues
 
-* fix win web не работает звук
+* проверить ipad
+* проверить macos (chrome + safari)
+* забить на ipad -> снять галку о мобилках в яндексе
 * ipad safari не работает звук
 * больше gap в паузе между кнопками и оружиями/предметами
 * ipad chrome не работает звук

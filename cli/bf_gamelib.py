@@ -1328,26 +1328,39 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                         const oldLog = console.log;
                         console.log = (...args) => {
                             if (LOG_WS.readyState === WebSocket.OPEN)
-                                LOG_WS.send(args.join(" "));
+                                LOG_WS.send("log: " + args.join(" "));
                             oldLog(...args);
+                        };
+                        const oldWarn = console.warn;
+                        console.warn = (...args) => {
+                            if (LOG_WS.readyState === WebSocket.OPEN)
+                                LOG_WS.send("warn: " + args.join(" "));
+                            oldWarn(...args);
                         };
                         const oldError = console.error;
                         console.error = (...args) => {
                             if (LOG_WS.readyState === WebSocket.OPEN)
-                                LOG_WS.send(args.join(" "));
+                                LOG_WS.send("error: " + args.join(" "));
                             oldError(...args);
                         };
+                        window.addEventListener("error", (e) => {
+                          console.error(e.message);
+                        });
+                        window.addEventListener("unhandledrejection", (e) => {
+                          console.error("unhandledrejection:", e.reason);
+                        });
                     },
                 """.replace("THIS_PC_LOCAL_IP", get_local_ip()),
                 "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
                 "EXTEND_MAIN_SCRIPT": "",
-                "EXTEND_HTML_END": """
-                    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-                    <script>
-                        eruda.init();
-                        eruda.position({x: 0, y: 0});
-                    </script>
-                """,
+                "EXTEND_HTML_END": "",
+                # "EXTEND_HTML_END": """
+                #     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+                #     <script>
+                #         eruda.init();
+                #         eruda.position({x: 0, y: 0});
+                #     </script>
+                # """,
             },
             BuildPlatform.WebItch: {
                 "EXTEND_BODY_START": "",

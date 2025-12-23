@@ -56,15 +56,18 @@ Optionally create a desktop shortcut to it (RMB -> Send to -> Desktop (create sh
 Execute the following in terminal
 
 ```shell
-pip install poetry pre-commit
+# https://docs.astral.sh/uv/getting-started/installation/#installation-methods
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+uv python install 3.11
 pre-commit install
 pre-commit install --install-hooks
 poetry install
 cd vendor
 cd bgfx
+del /f/s/q .build
 make
-msbuild .build/proects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
-msbuild .build/proects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
+msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Debug
+msbuild .build/projects/vs2022/bgfx.sln /t:Build /p:Configuration=Release
 make wasm
 cd ..
 cd ..
