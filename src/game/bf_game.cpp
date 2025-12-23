@@ -10309,13 +10309,13 @@ void DoUI() {
 
             // Stats.
             // componentButtonStats(groupTop);
-            componentStats2Wrapped(
-              {
-                .element = CLAY_ATTACH_POINT_RIGHT_TOP,
-                .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-              },
-              {GAP_FLEX, 32}
-            );
+            // componentStats2Wrapped(
+            //   {
+            //     .element = CLAY_ATTACH_POINT_RIGHT_TOP,
+            //     .parent  = CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+            //   },
+            //   {GAP_FLEX, 32}
+            // );
           }
 
           componentScreenName_floatingInTheCenter(Loc_UI_SHOP, []() {});
@@ -10368,7 +10368,15 @@ void DoUI() {
           CLAY({.layout{.sizing{
             .width  = CLAY_SIZING_FIXED(GAP_BIG * 1.0f),
             .height = CLAY_SIZING_GROW(0),
-          }}}) {}
+          }}}) {
+            componentStats2Wrapped(
+              {
+                .element = CLAY_ATTACH_POINT_RIGHT_CENTER,
+                .parent  = CLAY_ATTACH_POINT_RIGHT_CENTER,
+              },
+              {}
+            );
+          }
 
           for (auto i : DEFAULT_BUYING_INDICES) {
             const auto& x = g.run.state.shop.toPick[i];
