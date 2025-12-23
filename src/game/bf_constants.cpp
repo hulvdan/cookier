@@ -63,6 +63,9 @@ constexpr f32 MELEE_WEAPON_COLLIDER_PHANTOM_RANGE_METERS = 0.12f;
 
 constexpr f32 WALKING_TUTORIAL_RADIUS_METERS = 4;
 
+constexpr f32 UI_ASPECT_RATIO_MIN = 4 / 3.0f;
+constexpr f32 UI_ASPECT_RATIO_MAX = 20 / 9.0f;
+
 // Other.
 // ============================================================
 constexpr auto IDLE_OR_WALKING_BONUS_FRAMES = FIXED_FPS / 8;

@@ -1158,6 +1158,8 @@ struct GameData {
 
     LoadFontsResult loadedFonts = {};
 
+    Vector2 screenSizeUI = {};
+
     struct {
       bool    controlling   = false;
       Vector2 startPos      = {};
@@ -6292,7 +6294,19 @@ void DoUI() {
     }
   };
 
+  // Clay. Set UI dimensions + update mouse pos.
   if (!draw) {
+    {
+      auto res = ge.meta.scaledLogicalResolution;
+      auto r   = res.x / res.y;
+      if (r > UI_ASPECT_RATIO_MAX)
+        res.x = res.y * UI_ASPECT_RATIO_MAX;
+      else if (r < UI_ASPECT_RATIO_MIN)
+        res.y = res.x / UI_ASPECT_RATIO_MIN;
+      g.meta.screenSizeUI = res;
+      Clay_SetLayoutDimensions({res.x, res.y});
+    }
+
     auto pos = ScreenPosToLogical(GetMouseScreenPos());
 
     if (ge.events.last == LastEventType_TOUCH) {
@@ -6305,7 +6319,11 @@ void DoUI() {
       }
     }
 
-    pos = {pos.x, LOGICAL_RESOLUTION.y - pos.y};
+    pos = {
+      pos.x + (g.meta.screenSizeUI.x - LOGICAL_RESOLUTION.x) / 2.0f,
+      LOGICAL_RESOLUTION.y - pos.y
+        + (g.meta.screenSizeUI.y - LOGICAL_RESOLUTION.y) / 2.0f,
+    };
     Clay_SetPointerState({pos.x, pos.y}, false);
   }
 
@@ -11839,6 +11857,9 @@ void DoUI() {
           beautifierScale *= beautifier.scale;
         }
         ASSERT(beautifierAlpha <= 1.0f);
+
+        cmd.boundingBox.x -= (g.meta.screenSizeUI.x - LOGICAL_RESOLUTION.x) / 2.0f;
+        cmd.boundingBox.y -= (g.meta.screenSizeUI.y - LOGICAL_RESOLUTION.y) / 2.0f;
 
         cmd.boundingBox.x += beautifierTranslate.x;
         cmd.boundingBox.y += beautifierTranslate.y;
