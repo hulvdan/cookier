@@ -11953,7 +11953,7 @@ void DoUI() {
               const auto size  = ToVector2(glib->original_texture_sizes()->Get(texID))
                                 * ASSETS_TO_LOGICAL_RATIO;
 
-              const int rectsXToSide = 10;
+              const int rectsXToSide = 9;
               const int rectsYToSide = 5;
 
 #define BF_BACKGROUND_CYCLE_ENABLED 1
@@ -11970,6 +11970,9 @@ void DoUI() {
                   FOR_RANGE (int, x, rectsXToSide) {
                     FOR_RANGE (int, m, 2) {
                       if (!x && m)
+                        continue;
+
+                      if ((x == rectsXToSide - 1) && (y >= rectsYToSide - 1))
                         continue;
 
                       f32 offY = (size.y + gap) / 2.0f;
