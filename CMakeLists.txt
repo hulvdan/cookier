@@ -353,7 +353,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
                 PRIVATE
                     # "-oASSERTIONS=2"
                     # "-gsource-map"
-                    "-fsanitize=undefined"
+                    # "-fsanitize=undefined"
                     # "-fsanitize-minimal-runtime"
                     # "-fsanitize=address"
             )
@@ -362,7 +362,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
                     # "-sSAFE_HEAP=1"
                     # "-sASSERTIONS=2"
                     # "-gsource-map"
-                    "-fsanitize=undefined"
+                    # "-fsanitize=undefined"
                     # "-fsanitize-minimal-runtime"
                     # "-fsanitize=address"
             )

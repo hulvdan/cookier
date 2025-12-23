@@ -634,6 +634,11 @@ void LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
 }
 
 void ReloadSounds() {  ///
+  if (BF_DISABLE_AUDIO) {
+    LOGI("ReloadSounds. BF_DISABLE_AUDIO");
+    return;
+  }
+
   LOGI("ReloadSounds...");
   DEFER {
     LOGI("ReloadSounds... Finished!");
@@ -815,11 +820,15 @@ void StartAudioOnce() {  ///
 
   // ReloadSounds();
 
-  if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
-    LOGI("Started miniaudio engine");
+  if (BF_DISABLE_AUDIO)
+    LOGI("BF_DISABLE_AUDIO");
   else {
-    ge.meta._soundManager._works = false;
-    LOGE("Failed to start miniaudio engine");
+    if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
+      LOGI("Started miniaudio engine");
+    else {
+      ge.meta._soundManager._works = false;
+      LOGE("Failed to start miniaudio engine");
+    }
   }
 
   LOGI("StartAudioOnce... Finished!");

@@ -14,10 +14,13 @@ x проверить, что alignment на ipad ок
 x забить на ipad -> снять галку о мобилках в яндексе
 x проверить macos chrome
 x проверить macos safari
+x check safari with AUDIO disabled and UBSAN enabled
+  это не АУДИО
+x fix a problem repeatedly occurred safari
+  - МБ ЭТО ПРОСТО SANITIZE UNDEFINED ?
+- увеличивать громкость звука только когда аудио девайс подключится
+x проверить остановку звука при смене вкладки
 
-* fix a problem repeatedly occurred safari
-* увеличивать громкость звука только когда аудио девайс подключится
-* проверить остановку звука при смене вкладки
 * адаптив: ui
 * адаптив: gameplay
 * yandex:
