@@ -15795,7 +15795,9 @@ void GameDraw() {
         );
       p   = Clamp01(p);
       p   = EaseInQuad(p);
-      pos = Vector2Lerp(pos, g.ui.notPickedUpCoinsLogicalPos, p);
+      pos = Vector2Lerp(
+        pos, g.ui.notPickedUpCoinsLogicalPos + g.meta.screenSizeUIMargin, p
+      );
     }
 
     DrawGroup_Begin(DrawZ_PICKUPABLES);
