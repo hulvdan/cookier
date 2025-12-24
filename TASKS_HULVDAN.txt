@@ -1,4 +1,5 @@
-WORKING SINCE 2025-09-07
+WORKING SINCE 2025-09-07 https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
+108 дней (3 месяца 17 дней) (2025-12-24 11:16) отправил на модерацию 1-ый раз
 
 ПЛАН
 x допилка эффектов
@@ -23,10 +24,9 @@ x guarantee MarkGameplay gets called even when launching game in shop
 x double check черновик
 x СБИЛДИТЬ ЯНДЕКС
 x ЗАГРУЗИТЬ ЯНДЕКС БИЛД
+x яндекс проставить версию
+x отправить на модерацию
 
-* яндекс проставить версию
-* отправить на модерацию
-*
 * RELEASED!
 =======================
 * посмотреть, на какие ещё платформы можно закинуть игру (crazy games)
