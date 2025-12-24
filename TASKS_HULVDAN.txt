@@ -26,6 +26,7 @@ x снять markgameplay, когда нет фокуса
 *
 * RELEASED!
 =======================
+* отображать версию игры clean + dirty (смотреть на git status во время codegen-а)
 * фикс звуков для андроид
 * повышение денег после заработка: apple developer license
 * yandex: sticky banner справа?
