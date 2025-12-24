@@ -3762,7 +3762,7 @@ SDL_AppResult EngineUpdate() {  ///
 
 #ifdef BF_PLATFORM_WebYandex
       // clang-format off
-      if (value)
+      if (ge.meta.markGameplay)
         EM_ASM({ window.ysdk.features.GameplayAPI?.start(); });
       else
         EM_ASM({ window.ysdk.features.GameplayAPI?.stop(); });
