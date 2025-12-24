@@ -7,40 +7,27 @@ x прикрут аналитики
 - РЕЛИЗ
 - ФИКСЫ + БАЛАНС
 
-x обновить айпад браузеры
-x fix arena alignment issues
-x проверить, что alignment на пк ок
-x проверить, что alignment на ipad ок
-x забить на ipad -> снять галку о мобилках в яндексе
-x проверить macos chrome
-x проверить macos safari
-x check safari with AUDIO disabled and UBSAN enabled
-  это не АУДИО
-x fix a problem repeatedly occurred safari
-  - МБ ЭТО ПРОСТО SANITIZE UNDEFINED ?
-- увеличивать громкость звука только когда аудио девайс подключится
-x проверить остановку звука при смене вкладки
-x адаптив доп блоки
-x ui: mouse works
-x ui: shop: horizontal spacer слева и справа от карточек
-x ui: shop: stats2 посередине карточки
-  (вставить элем в этот ряд - он отбивается слева spacer-ом,
-  а на этот элемент навесить stats2)
-- adaptive gameplay: ограничить offset карты?
-x ui: mouse WHEN WIDE
-x adaptive gameplay: flying coins y offset
-x скриншоты 4 штуки
-- less range bonus
-x адаптив projectile-ы удалять позже
+x load sounds without spatialization
 
 * sfx explosion громче
+* проверить, норм ли работает хром с огнесферой?
+  (она издаёт звуки при рестарте игры на туториале)
 * проверить андроид норм работает сейчас?
   -> отметить галочку в яндексе
 * проверить требования модерации
+  * есть ли что-то про логи?
+* double check черновик
+* СБИЛДИТЬ ЯНДЕКС
+* ЗАГРУЗИТЬ ЯНДЕКС БИЛД
 * отправить на модерацию
 *
 * RELEASED!
 =======================
+* повышение денег после заработка: apple developer license
+* yandex: sticky banner справа?
+* собрать супер-чеклист для публикации игры
+  - минимальный релиз
+    - 4 горизонтальных скрина 1920x1080
 * IMGUI VIDEO MODE (БЕЗ СЛОВАРНЫХ DAMAGE NUMBERS - ЧТОБЫ ПРОЩЕ БЫЛО ЗАПИСЫВАТЬ ВИДЕО)
   - отрубает музыку
 * yandex: видео

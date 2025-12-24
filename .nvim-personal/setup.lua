@@ -1,14 +1,10 @@
 local opts = { remap = false, silent = true }
 
-vim.keymap.set("n", "gD", "<C-w>o:vs<CR>gd", opts)
 vim.keymap.set("n", "<leader>fc", ":e codegen/hands/bf_codegen.cpp<CR>", opts)
 vim.keymap.set("n", "<leader>fl", ":e src/bf_lib.cpp<CR>", opts)
 vim.keymap.set("n", "<C-S-g>v", function()
     vim.fn.system([[start .cmake/vs17/game.sln]])
 end, opts)
-
-vim.keymap.set("n", "<leader>C", "o  continue;<ESC>", opts)
-vim.keymap.set("n", "<leader>B", "o  break;<ESC>", opts)
 
 function cli_command(cmd)
     return [[uvx ruff check --output-format concise cli && uv run mypy --check-untyped-defs cli && uv run cli\bf_cli.py ]]
@@ -121,12 +117,14 @@ end
 
 rebuild_tasks()
 
+-- Insert ZoneScopedN below comment line.
 vim.keymap.set(
     "n",
     "<leader>z",
     '^wy$o<BS><BS><BS>ZoneScopedN("<ESC>pa");<ESC>VJ>o<ESC>',
     { remap = true, silent = true }
 )
+
 vim.keymap.set("n", "<F4>", "<leader>aa", { remap = true, silent = true })
 vim.keymap.set("n", "<F5>", "<leader>ae", { remap = true, silent = true })
 vim.keymap.set("n", "<F6>", "<leader>ad", { remap = true, silent = true })

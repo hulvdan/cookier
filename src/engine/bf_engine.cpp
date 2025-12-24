@@ -611,7 +611,7 @@ struct EngineData {
   } draw;
 } ge = {};
 
-void LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
+void _LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
   switch (level) {
   case MA_LOG_LEVEL_DEBUG: {
 #if BF_DEBUG || defined(BF_PLATFORM_Web)
@@ -633,15 +633,28 @@ void LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
   }
 }
 
-void ReloadSounds() {  ///
+void _StartAudioEngine() {  ///
+  if (BF_DISABLE_AUDIO)
+    LOGI("BF_DISABLE_AUDIO");
+  else {
+    if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
+      LOGI("Started miniaudio engine");
+    else {
+      ge.meta._soundManager._works = false;
+      LOGE("Failed to start miniaudio engine");
+    }
+  }
+}
+
+void _ReloadSounds() {  ///
   if (BF_DISABLE_AUDIO) {
-    LOGI("ReloadSounds. BF_DISABLE_AUDIO");
+    LOGI("_ReloadSounds. BF_DISABLE_AUDIO");
     return;
   }
 
-  LOGI("ReloadSounds...");
+  LOGI("_ReloadSounds...");
   DEFER {
-    LOGI("ReloadSounds... Finished!");
+    LOGI("_ReloadSounds... Finished!");
   };
 
   auto& m = ge.meta._soundManager;
@@ -656,7 +669,8 @@ void ReloadSounds() {  ///
   while (m.soundsToUninitialize.try_dequeue(sound_))
     continue;
 
-  m._works = false;
+  const bool wasWorking = m._works;
+  m._works              = false;
 
   // Initializing audio only if there are sounds in project.
   const auto fb_sounds = glib->sounds();
@@ -668,7 +682,7 @@ void ReloadSounds() {  ///
   ma_log log{};
   if (ma_log_init(nullptr, &log) != MA_SUCCESS)
     INVALID_PATH;
-  if (ma_log_register_callback(&log, ma_log_callback_init(LogMiniaudio, nullptr))
+  if (ma_log_register_callback(&log, ma_log_callback_init(_LogMiniaudio, nullptr))
       != MA_SUCCESS)
     INVALID_PATH;
 
@@ -760,11 +774,11 @@ void ReloadSounds() {  ///
       customFlags |= MA_SOUND_FLAG_NO_PITCH;
 
     static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
-    u32             flags = MA_SOUND_FLAG_ASYNC | customFlags;
+    u32 flags = MA_SOUND_FLAG_ASYNC | MA_SOUND_FLAG_NO_SPATIALIZATION | customFlags;
     ma_sound_group* group = nullptr;
 
     if (fb->is_music()) {
-      flags |= MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM;
+      flags |= MA_SOUND_FLAG_STREAM;
       group = &m.groupMusic;
     }
     else {
@@ -804,10 +818,13 @@ void ReloadSounds() {  ///
   checkErr(ma_fence_wait(&fence));
 
   m._works = !_errored;
-  LOGI("ReloadSounds. manager._works = %d", (int)m._works);
+  LOGI("_ReloadSounds. manager._works = %d", (int)m._works);
+
+  if (wasWorking && m._works)
+    _StartAudioEngine();
 }
 
-void StartAudioOnce() {  ///
+void _StartAudioOnce() {  ///
   if (!ge.meta._soundManager._works)
     return;
 
@@ -816,22 +833,11 @@ void StartAudioOnce() {  ///
     return;
   once = true;
 
-  LOGI("StartAudioOnce...");
+  LOGI("_StartAudioOnce...");
 
-  // ReloadSounds();
+  _StartAudioEngine();
 
-  if (BF_DISABLE_AUDIO)
-    LOGI("BF_DISABLE_AUDIO");
-  else {
-    if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
-      LOGI("Started miniaudio engine");
-    else {
-      ge.meta._soundManager._works = false;
-      LOGE("Failed to start miniaudio engine");
-    }
-  }
-
-  LOGI("StartAudioOnce... Finished!");
+  LOGI("_StartAudioOnce... Finished!");
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
@@ -1041,6 +1047,9 @@ void SetVolume(VolumeType type, f32 v) {  ///
 // * ma_sound_set_stop_time_in_pcm_frames()
 // * ma_sound_set_stop_time_in_milliseconds()
 PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
+  if (BF_DISABLE_AUDIO)
+    return {};
+
   static int nextSoundGeneration = 1;
 
   if (!soundHashValue)
@@ -2909,21 +2918,21 @@ void SetMusicLowpassFactor(f32 factor) {  ///
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
-bool OnEmscriptenClick(
+bool _OnEmscriptenClick(
   int                         eventType,
   const EmscriptenMouseEvent* _event,
   void*                       _userData
 ) {  ///
-  StartAudioOnce();
+  _StartAudioOnce();
   return false;
 }
 
-bool OnEmscriptenTouchEnd(
+bool _OnEmscriptenTouchEnd(
   int                         eventType,
   const EmscriptenTouchEvent* _event,
   void*                       _userData
 ) {  ///
-  StartAudioOnce();
+  _StartAudioOnce();
   return false;
 }
 #endif
@@ -3026,10 +3035,10 @@ void InitEngine() {  ///
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
-  if (emscripten_set_click_callback("#canvas", 0, false, OnEmscriptenClick)
+  if (emscripten_set_click_callback("#canvas", 0, false, _OnEmscriptenClick)
       != EMSCRIPTEN_RESULT_SUCCESS)
     INVALID_PATH;
-  if (emscripten_set_touchend_callback("#canvas", 0, false, OnEmscriptenTouchEnd)
+  if (emscripten_set_touchend_callback("#canvas", 0, false, _OnEmscriptenTouchEnd)
       != EMSCRIPTEN_RESULT_SUCCESS)
     INVALID_PATH;
 #endif
@@ -3667,11 +3676,11 @@ SDL_AppResult EngineUpdate() {  ///
 
   if (reloadSounds) {
     reloadSounds = 0;
-    ReloadSounds();
+    _ReloadSounds();
   }
 
 #ifndef SDL_PLATFORM_EMSCRIPTEN
-  StartAudioOnce();
+  _StartAudioOnce();
 #endif
 
   static bool initialized = false;
