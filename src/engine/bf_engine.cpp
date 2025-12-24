@@ -3998,12 +3998,12 @@ void _Save(Arena* arena) {
 // }
 
 SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
-  TEMP_USAGE(arena);
-
   LOGI("LoadSaveDataOnce...");
   DEFER {
     LOGI("LoadSaveDataOnce... Finished!");
   };
+
+  TEMP_USAGE(arena);
 
   if (ge.meta.loading == SavedataLoadingType_JUST_FISNIHED)
     ge.meta.loading = SavedataLoadingType_FISNIHED;
