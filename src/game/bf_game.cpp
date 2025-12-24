@@ -16050,17 +16050,24 @@ void GameDraw() {
         IM::InputTextWithHint(
           "##items-search", "Search by name or code", searchBuf, ARRAY_COUNT(searchBuf)
         );
+        zpl_str_to_upper(searchBuf);
 
         FOR_RANGE (int, i, ItemType_COUNT) {
           if (!i)
             continue;
 
-          auto fb   = glib->items()->Get(i);
-          auto name = localizationEn->Get(fb->name_locale())->c_str();
+          auto fb = glib->items()->Get(i);
+
+          TEMP_USAGE(&g.meta.trashArena);
+          auto name = PushTextToArena(
+            &g.meta.trashArena, localizationEn->Get(fb->name_locale())->c_str()
+          );
+          zpl_str_to_upper(name);
 
           // Search filtering.
-          if (searchBuf[0]) {
-            if (!(strstr(name, searchBuf) || strstr(fb->type()->c_str(), searchBuf)))
+          auto s = zpl_str_trim(searchBuf, false);
+          if (s) {
+            if (!(strstr(name, s) || strstr(fb->type()->c_str(), s)))
               continue;
           }
 
@@ -16079,17 +16086,24 @@ void GameDraw() {
         IM::InputTextWithHint(
           "##weapons-search", "Search by name or code", searchBuf, ARRAY_COUNT(searchBuf)
         );
+        zpl_str_to_upper(searchBuf);
 
         FOR_RANGE (int, i, WeaponType_COUNT) {
           if (!i)
             continue;
 
-          auto fb   = fb_weapons->Get(i);
-          auto name = localizationEn->Get(fb->name_locale())->c_str();
+          auto fb = fb_weapons->Get(i);
+
+          TEMP_USAGE(&g.meta.trashArena);
+          auto name = PushTextToArena(
+            &g.meta.trashArena, localizationEn->Get(fb->name_locale())->c_str()
+          );
+          zpl_str_to_upper(name);
 
           // Search filtering.
-          if (searchBuf[0]) {
-            if (!(strstr(name, searchBuf) || strstr(fb->type()->c_str(), searchBuf)))
+          auto s = zpl_str_trim(searchBuf, false);
+          if (s) {
+            if (!(strstr(name, s) || strstr(fb->type()->c_str(), s)))
               continue;
           }
 
