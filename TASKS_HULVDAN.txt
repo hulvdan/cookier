@@ -19,8 +19,8 @@ x разметка геймплея
 x проверить в яндексе изменение размеров окна
 x проверить в яндексе разметка геймплея
 x сохранение норм работает? почему мой firefox сдох?
-x guarantee MarkGameplay gets called eve whenlaunching game in shop
 
+* guarantee MarkGameplay gets called eve whenlaunching game in shop
 * double check черновик
 * СБИЛДИТЬ ЯНДЕКС
 * ЗАГРУЗИТЬ ЯНДЕКС БИЛД

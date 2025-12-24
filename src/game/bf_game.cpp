@@ -15994,7 +15994,7 @@ void GameDraw() {
 
         IM::Text("");
 
-        IM::Text(ge.meta.markGameplay ? "MarkGameplay: 1" : "MarkGameplay: 0");
+        IM::Text("MarkGameplay: %d", ge.meta.markGameplay);
 
         IM::Text("F3 change localization");
         IM::Text("F4 change device");
