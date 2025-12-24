@@ -12667,11 +12667,11 @@ void GameFixedUpdate() {
   {
     ZoneScopedN("Updating gameplay.");
 
+    MarkGameplay();
+
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
-      MarkGameplay();
-
       // Stick controls.
       {  ///
         auto& c = g.meta.stickControl;
