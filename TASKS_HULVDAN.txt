@@ -10,6 +10,7 @@ x прикрут аналитики
 x load sounds without spatialization
 x fix reaper hot reload
 x sfx explosion громче
+x fix chrome sfx spike
 
 * проверить, норм ли работает хром с огнесферой?
   (она издаёт звуки при рестарте игры на туториале)

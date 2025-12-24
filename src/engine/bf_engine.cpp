@@ -525,10 +525,11 @@ struct EngineData {
       Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
       Vector<_SoundVariationRange>   soundVariationRanges           = {};
 
-      bool _works = false;
+      bool _works   = false;
+      bool _started = false;
 
-      bool Works() const {
-        return _works;
+      bool CanPlaySound() const {
+        return _works && _started;
       }
 
       union {
@@ -634,15 +635,18 @@ void _LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
 }
 
 void _StartAudioEngine() {  ///
-  if (BF_DISABLE_AUDIO)
-    LOGI("BF_DISABLE_AUDIO");
+  if (BF_DISABLE_AUDIO) {
+    LOGI("_StartAudioEngine: BF_DISABLE_AUDIO");
+    return;
+  }
+
+  if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS) {
+    LOGI("_StartAudioEngine: Started");
+    ge.meta._soundManager._started = true;
+  }
   else {
-    if (ma_engine_start(&ge.meta._soundManager.engine) == MA_SUCCESS)
-      LOGI("Started miniaudio engine");
-    else {
-      ge.meta._soundManager._works = false;
-      LOGE("Failed to start miniaudio engine");
-    }
+    ge.meta._soundManager._works = false;
+    LOGE("_StartAudioEngine: Failed");
   }
 }
 
@@ -669,8 +673,9 @@ void _ReloadSounds() {  ///
   while (m.soundsToUninitialize.try_dequeue(sound_))
     continue;
 
-  const bool wasWorking = m._works;
-  m._works              = false;
+  const bool couldPlaySound = m.CanPlaySound();
+  m._works                  = false;
+  m._started                = false;
 
   // Initializing audio only if there are sounds in project.
   const auto fb_sounds = glib->sounds();
@@ -820,7 +825,7 @@ void _ReloadSounds() {  ///
   m._works = !_errored;
   LOGI("_ReloadSounds. manager._works = %d", (int)m._works);
 
-  if (wasWorking && m._works)
+  if (couldPlaySound && m._works)
     _StartAudioEngine();
 }
 
@@ -1014,7 +1019,7 @@ void _OnSoundEnd(void* userData, ma_sound* sound) {  ///
   ASSERT(sound);
 
   auto& m = ge.meta._soundManager;
-  ASSERT(m.Works());
+  ASSERT(m.CanPlaySound());
 
   const auto loadedFileIndex = *(size_t*)&userData;
 
@@ -1062,7 +1067,7 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   ASSERT_FALSE(ge.meta._drawing);
   auto& m = ge.meta._soundManager;
 
-  if (!m.Works())
+  if (!m.CanPlaySound())
     return {};
 
   const auto fb_sounds = glib->sounds();
@@ -2897,8 +2902,8 @@ void SetMusicLowpassFactor(f32 factor) {  ///
   ASSERT(factor <= 1);
 
   auto& m = ge.meta._soundManager;
-  ASSERT(m.Works());
-  if (!m.Works())
+  ASSERT(m.CanPlaySound());
+  if (!m.CanPlaySound())
     return;
 
   const auto sampleRate = ma_engine_get_sample_rate(&m.engine);
@@ -3694,7 +3699,7 @@ SDL_AppResult EngineUpdate() {  ///
 
   // Updating master, sfx, music volumes.
   auto& m = ge.meta._soundManager;
-  if (m.Works()) {
+  if (m.CanPlaySound()) {
     int volumeTypeIndex = -1;
     for (auto& v : m.volumes) {
       volumeTypeIndex++;

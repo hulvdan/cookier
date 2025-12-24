@@ -13538,7 +13538,7 @@ void GameFixedUpdate() {
       static bool once = false;
       if (!once                                        //
           && g.run.walkingTutorialCompletedAt.IsSet()  //
-          && ge.meta._soundManager.Works())
+          && ge.meta._soundManager.CanPlaySound())
       {
         once = true;
         PlaySound(Sound_MUSIC_BATTLE);
@@ -14734,7 +14734,7 @@ void GameFixedUpdate() {
     FIXED_DT
   );
 
-  if (ge.meta._soundManager.Works())
+  if (ge.meta._soundManager.CanPlaySound())
     SetMusicLowpassFactor(g.meta.musicLowpassFactor);
 
   // Setting audio listener position to player's world pos.
