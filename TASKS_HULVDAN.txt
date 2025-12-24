@@ -8,8 +8,9 @@ x прикрут аналитики
 - ФИКСЫ + БАЛАНС
 
 x load sounds without spatialization
+x fix reaper hot reload
+x sfx explosion громче
 
-* sfx explosion громче
 * проверить, норм ли работает хром с огнесферой?
   (она издаёт звуки при рестарте игры на туториале)
 * проверить андроид норм работает сейчас?
