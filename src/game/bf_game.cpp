@@ -5291,6 +5291,11 @@ void GameInit() {
 }
 
 void GameInitAfterLoadingSavedata() {
+  LOGI("GameInitAfterLoadingSavedata...");
+  DEFER {
+    LOGI("GameInitAfterLoadingSavedata... Finished!");
+  };
+
   // Recalculating unlocked builds, items and weapons based off achievements.
   {  ///
     g.player.achievementStepsCompleted = 0;
