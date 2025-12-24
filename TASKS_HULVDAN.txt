@@ -19,6 +19,7 @@ x разметка геймплея
 x проверить в яндексе изменение размеров окна
 x проверить в яндексе разметка геймплея
 
+* guarantee MarkGameplay gets called eve whenlaunching game in shop
 * double check черновик
 * СБИЛДИТЬ ЯНДЕКС
 * ЗАГРУЗИТЬ ЯНДЕКС БИЛД

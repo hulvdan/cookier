@@ -558,8 +558,8 @@ struct EngineData {
     } shouldGameplayStop;
 
     bool ysdkLoaded       = false;
-    bool markGameplayPrev = false;
-    bool markGameplay     = false;
+    int  markGameplayPrev = 0;
+    int  markGameplay     = 0;
     bool quitRequested    = false;
     bool quitScheduled    = false;
 
@@ -915,7 +915,7 @@ void Metric(const char* goalId) {  ///
 }
 
 void MarkGameplay() {  ///
-  ge.meta.markGameplay = true;
+  ge.meta.markGameplay = 2;
 }
 
 #define GRAND (ge.meta.logicRand)
@@ -3753,7 +3753,7 @@ SDL_AppResult EngineUpdate() {  ///
       }
     }
 
-    ge.meta.markGameplay = false;
+    ge.meta.markGameplay = 1;
 
     GameFixedUpdate();
 
@@ -3762,7 +3762,7 @@ SDL_AppResult EngineUpdate() {  ///
 
 #ifdef BF_PLATFORM_WebYandex
       // clang-format off
-      if (ge.meta.markGameplay)
+      if (ge.meta.markGameplay == 2)
         EM_ASM({ window.ysdk.features.GameplayAPI?.start(); });
       else
         EM_ASM({ window.ysdk.features.GameplayAPI?.stop(); });
