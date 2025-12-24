@@ -3998,17 +3998,12 @@ void _Save(Arena* arena) {
 // }
 
 SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
-  LOGI("LoadSaveDataOnce...");
-  DEFER {
-    LOGI("LoadSaveDataOnce... Finished!");
-  };
-
-  TEMP_USAGE(arena);
-
   if (ge.meta.loading == SavedataLoadingType_JUST_FISNIHED)
     ge.meta.loading = SavedataLoadingType_FISNIHED;
   if (ge.meta.loading == SavedataLoadingType_FISNIHED)
     return SavedataLoadingType_FISNIHED;
+
+  TEMP_USAGE(arena);
 
   if (ge.meta.loading == SavedataLoadingType_NOT_LOADED) {
 #if defined(SDL_PLATFORM_DESKTOP)
