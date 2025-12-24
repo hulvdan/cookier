@@ -1681,7 +1681,6 @@ void TriggerWaveCompleted(bool instant) {  ///
     g.run.waveStartedAt.SetNow();
 
   g.run.scheduledWaveCompleted.SetNow();
-  MarkGameplayStop();
 
   if (instant)
     g.run.scheduledWaveCompleted._value -= WAVE_COMPLETED_FRAMES.value;
@@ -2254,8 +2253,6 @@ void OnWaveStarted() {  ///
       Weapon* w, int wi, auto fb_effect, int tierOffset, int times, int thisWaveAddedCount
     ) BF_FORCE_INLINE_LAMBDA { ApplyStatEffect(fb_effect, tierOffset, times); }
   );
-
-  MarkGameplayStart();
 }
 
 void SwitchScreen(ScreenType screen) {  ///
@@ -2410,9 +2407,6 @@ void GameLoad(const BFSave::Save* save) {  ///
     g.run.scheduledShop = true;
   else if (s.screen == ScreenType_END)
     g.run.scheduledEnd = true;
-
-  if (s.screen != ScreenType_GAMEPLAY)
-    MarkGameplayStop();
 
   g.player.lockedBuilds  = {};
   g.player.lockedWeapons = {};
@@ -12641,10 +12635,6 @@ void GameFixedUpdate() {
     g.meta.scheduledTogglePause = false;
 
     g.meta.paused = !g.meta.paused;
-    if (g.meta.paused)
-      MarkGameplayStop();
-    else
-      MarkGameplayStart();
 
     Save();
   }
@@ -12680,6 +12670,8 @@ void GameFixedUpdate() {
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
+      MarkGameplay();
+
       // Stick controls.
       {  ///
         auto& c = g.meta.stickControl;

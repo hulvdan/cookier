@@ -557,10 +557,11 @@ struct EngineData {
       }
     } shouldGameplayStop;
 
-    bool ysdkLoaded    = false;
-    bool markGameplay  = false;
-    bool quitRequested = false;
-    bool quitScheduled = false;
+    bool ysdkLoaded       = false;
+    bool markGameplayPrev = false;
+    bool markGameplay     = false;
+    bool quitRequested    = false;
+    bool quitScheduled    = false;
 
     bool debugEnabled = false;
 
@@ -913,24 +914,8 @@ void Metric(const char* goalId) {  ///
 #endif
 }
 
-void MarkGameplayStop() {  ///
-  ge.meta.markGameplay = false;
-
-#ifdef BF_PLATFORM_WebYandex
-  // clang-format off
-  EM_ASM({ window.ysdk.features.GameplayAPI?.stop(); });
-  // clang-format on
-#endif
-}
-
-void MarkGameplayStart() {  ///
+void MarkGameplay() {  ///
   ge.meta.markGameplay = true;
-
-#ifdef BF_PLATFORM_WebYandex
-  // clang-format off
-  EM_ASM({ window.ysdk.features.GameplayAPI?.start(); });
-  // clang-format on
-#endif
 }
 
 #define GRAND (ge.meta.logicRand)
@@ -3768,7 +3753,22 @@ SDL_AppResult EngineUpdate() {  ///
       }
     }
 
+    ge.meta.markGameplay = false;
+
     GameFixedUpdate();
+
+    if (ge.meta.markGameplayPrev != ge.meta.markGameplay) {
+      ge.meta.markGameplayPrev = ge.meta.markGameplay;
+
+#ifdef BF_PLATFORM_WebYandex
+      // clang-format off
+      if (value)
+        EM_ASM({ window.ysdk.features.GameplayAPI?.start(); });
+      else
+        EM_ASM({ window.ysdk.features.GameplayAPI?.stop(); });
+        // clang-format on
+#endif
+    }
 
     // Uninitializing ended sounds.
     {
