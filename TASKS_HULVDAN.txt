@@ -6,29 +6,12 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 ПЛАН
 x допилка эффектов
 x прикрут аналитики
-- ФИКСЫ ТОЛЬКО НУЖНОГО ДЛЯ РЕЛИЗА
-- РЕЛИЗ
+x ФИКСЫ ТОЛЬКО НУЖНОГО ДЛЯ РЕЛИЗА
+x РЕЛИЗ
+* ДОКАТИТЬ ИГРУ ДО ЯНДЕКСА
 - ФИКСЫ + БАЛАНС
 
-x load sounds without spatialization
-x fix reaper hot reload
-x sfx explosion громче
-x fix chrome sfx spike
-x проверить, норм ли работает хром с огнесферой?
-  (она издаёт звуки при рестарте игры на туториале)
-x fix yandex min acpect ratio ~1:1
-x снять markgameplay, когда нет фокуса
-x разметка геймплея
-x проверить в яндексе изменение размеров окна
-x проверить в яндексе разметка геймплея
-x сохранение норм работает? почему мой firefox сдох?
-x guarantee MarkGameplay gets called even when launching game in shop
-x double check черновик
-x СБИЛДИТЬ ЯНДЕКС
-x ЗАГРУЗИТЬ ЯНДЕКС БИЛД
-x яндекс проставить версию
-x отправить на модерацию
-x imgui isearch weapons and items
+* merge game exe + engine
 
 * RELEASED!
 =======================
