@@ -259,7 +259,7 @@ target_compile_definitions(imgui
 
 # game.
 #-----------------------------------------------------------------------------------
-add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
+add_executable(game "${CMAKE_SOURCE_DIR}/src/engine/bf_engine.cpp")
 target_link_libraries(game
     PRIVATE
         # GameAnalytics
@@ -400,7 +400,7 @@ endif()
 
 # Tests.
 #-----------------------------------------------------------------------------------
-add_executable(tests "${CMAKE_SOURCE_DIR}/src/engine/bf_game_exe.cpp")
+add_executable(tests "${CMAKE_SOURCE_DIR}/src/engine/bf_engine.cpp")
 target_link_libraries(tests
     PRIVATE
         # GameAnalytics
