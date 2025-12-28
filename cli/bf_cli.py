@@ -182,7 +182,7 @@ def do_lint() -> None:
     run_command(
         rf"""
             "{CLANG_TIDY_PATH}"
-            src/engine/bf_game_exe.cpp
+            src/engine/bf_engine.cpp
         """
         # Убираем абсолютный путь к проекту из выдачи линтинга.
         # Тут куча экранирования происходит, поэтому нужно дублировать обратные слеши.

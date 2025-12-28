@@ -1451,10 +1451,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
     if platform.lower().startswith("web"):
         bind_function_names: set[str] = set()
-        for f in (
-            SRC_DIR / "engine" / "bf_engine.cpp",
-            SRC_DIR / "engine" / "bf_game_exe.cpp",
-        ):
+        for f in (SRC_DIR / "engine" / "bf_engine.cpp",):
             m = re.findall(r"\s+(fromJS_\w+)", f.read_text(encoding="utf-8"))
             if m:
                 bind_function_names |= set(m)
