@@ -2970,6 +2970,16 @@ bool _OnEmscriptenTouchEnd(
   _StartAudioOnce();
   return false;
 }
+
+bool _OnEmscriptenKeyDown(
+  int                            eventType,
+  const EmscriptenKeyboardEvent* _event,
+  void*                          _userData
+) {  ///
+  if (!ge.meta.shouldGameplayStop.windowIsNotFocused)
+    _StartAudioOnce();
+  return false;
+}
 #endif
 
 void InitEngine() {  ///
@@ -3074,6 +3084,9 @@ void InitEngine() {  ///
       != EMSCRIPTEN_RESULT_SUCCESS)
     INVALID_PATH;
   if (emscripten_set_touchend_callback("#canvas", 0, false, _OnEmscriptenTouchEnd)
+      != EMSCRIPTEN_RESULT_SUCCESS)
+    INVALID_PATH;
+  if (emscripten_set_keydown_callback("#canvas", 0, false, _OnEmscriptenKeyDown)
       != EMSCRIPTEN_RESULT_SUCCESS)
     INVALID_PATH;
 #endif
