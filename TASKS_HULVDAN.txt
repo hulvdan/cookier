@@ -12,7 +12,10 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 x узнать, нужен ли звук в видео
 x скрытие текстовых UI элементов для видео (damage numbers dodge level up)
 x hideUIForVideo: не воспроизводить звуки для level up
+x debug: change biome
 
+* record videos for promo
+* debug: build presets (class, difficulty, wave, weapons, items) for fast video recordings
 * ВИДЕО ДЛЯ ПРОДВИЖЕНИЯ
 * кнопка старта для мышки? как для пк гарантировать включение звука?
   стартануть движок заранее?

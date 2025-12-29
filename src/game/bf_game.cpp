@@ -15994,6 +15994,9 @@ void GameDraw() {
 
         IM::SliderFloat("Mob Spawn Rate", &gdebug.mobSpawnRate, -2, 2, "%.1f", 0);
 
+        if (IM::Button("Next biome"))
+          g.player.biome = (BiomeType)(((int)g.player.biome + 1) % BiomeType_COUNT);
+
         IM::Checkbox("Cycling Stuff In Shop", &gdebug.cyclingStuffInShop);
 
         IM::Text("");
