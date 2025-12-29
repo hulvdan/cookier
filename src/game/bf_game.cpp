@@ -2789,7 +2789,8 @@ void AddXP(f32 xp) {  ///
   }
 
   if (addedLevels > 0) {
-    PlaySound(Sound_GAME_LEVEL_UP);
+    if (!gdebug.hideUIForVideo)
+      PlaySound(Sound_GAME_LEVEL_UP);
 
     IterateOverEffects(
       EffectConditionType_STAT__UPON_LEVEL_UP,
