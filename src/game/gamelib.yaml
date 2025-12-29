@@ -4318,10 +4318,12 @@ numbers: # {  ###
     color: 0xe63d45ff
   - type: DODGE
     color: 0x7a7576ff
+    gets_hidden_by_debug_option: true
   - type: PICKUPABLE
     color: 0x66a650ff
   - type: LEVEL_UP
     color: 0x75ca58ff
+    gets_hidden_by_debug_option: true
 # }
 
 stats: # {  ###
@@ -5209,7 +5211,7 @@ debug_variables: # {  ###
     type: f32
   - name: cyclingStuffInShop
     type: bool
-  - name: hideHUD
+  - name: hideUIForVideo
     type: bool
 # }
 

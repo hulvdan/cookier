@@ -384,6 +384,7 @@ table Pickupable {
 table Number {
     type: string (required);
     color: uint = 0xffffffff;
+    gets_hidden_by_debug_option: bool;
 }
 
 table PreSpawn {

@@ -9252,7 +9252,7 @@ void DoUI() {
   // ╚══════╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝
 
   // Gameplay.
-  if (!gdebug.hideHUD && (g.run.waveStartedAt.IsSet()  //
+  if (!gdebug.hideUIForVideo && (g.run.waveStartedAt.IsSet()  //
         && (g.run.state.screen == ScreenType_GAMEPLAY)
       || (g.run.state.screen == ScreenType_WAVE_END_ANIMATION)))
   {
@@ -11807,7 +11807,7 @@ void DoUI() {
   }
 
   // Game's version.
-  if (!gdebug.hideHUD) {  ///
+  if (!gdebug.hideUIForVideo) {  ///
     bool showVersion = ge.meta.debugEnabled;
 #if BF_SHOW_VERSION
     showVersion = true;
@@ -15511,6 +15511,9 @@ void GameDraw() {
       ASSERT(number.type);
       const auto fb = fb_numbers->Get(number.type);
 
+      if (gdebug.hideUIForVideo && fb->gets_hidden_by_debug_option())
+        continue;
+
       const char* buffer     = nullptr;
       int         bytesCount = 0;
 
@@ -15911,7 +15914,7 @@ void GameDraw() {
   if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
       && !g.meta.paused                            //
       && g.meta.stickControl.controlling           //
-      && !gdebug.hideHUD)
+      && !gdebug.hideUIForVideo)
   {  ///
     DrawGroup_Begin(DrawZ_TOUCH_CONTROLS);
     DrawGroup_SetSortY(0);
@@ -15968,7 +15971,7 @@ void GameDraw() {
         IM::Checkbox("Disable Mob Spawns", &gdebug.disableMobSpawns);
         IM::Checkbox("Disable Boss Spawn", &gdebug.disableBossSpawn);
 
-        IM::Checkbox("Hide HUD", &gdebug.hideHUD);
+        IM::Checkbox("Hide UI For Video", &gdebug.hideUIForVideo);
 
         {
           IM::Text("Wave Duration: ");
