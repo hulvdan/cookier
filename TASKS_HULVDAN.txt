@@ -13,9 +13,13 @@ x record videos for promo
 x banner remap colors
 x outline banner with SHADOW
   TRY WHITE OR BLACK
+x banner gradient
+x draw text
+x outline text
+x text position
 
-* draw text
-  outline text
+* text outline same as banner and looks good
+* text font
 *
 * команда процессинга скриншотов
   - рисует тектовый баннер снизу

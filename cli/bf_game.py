@@ -44,7 +44,7 @@ from bf_lib import (
     transform_color,
 )
 from bf_typer import command, timing
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from rich.console import Console
 from rich.table import Table
 
@@ -1396,28 +1396,74 @@ def process_images():
     banner = bf_image.outline(
         bf_image.remap(
             Image.open(ART_DIR / "src" / "screenshot_text_banner.png"),
+            (0, 0, 0),
             (255, 255, 255),
-            tuple([255 * 3 / 4] * 3),
         ),
         radius=120,
         color=(0, 0, 0, int(255 * 1 / 4)),
         is_shadow=True,
         extend=False,
-    )
+    ).transpose(Image.FLIP_LEFT_RIGHT)  # type: ignore[attr-defined]
     recursive_mkdir(ART_DIR / "src" / "screenshots_processed")
     banner_colors = [
-        "b9d850",
+        "e7ae4b",
         "b59a66",
-        "dc9824",
+        "b9d850",
         "d78b98",
     ]
 
-    for banner_color, f in zip(
-        banner_colors, (ART_DIR / "src" / "screenshots").glob("*.png"), strict=True
-    ):
-        bf_image.draw_on_top(
-            Image.open(f), banner, (*hex_to_rgb_ints(banner_color), 255)
-        ).save(ART_DIR / "src" / "screenshots_processed" / f.name)
+    screenshot_texts = {
+        "ru": [
+            "ОТБИВАЙ ВОЛНЫ ПЕЧЕНЕК!",
+            "50+ ОРУЖИЙ   100+ ПРЕДМЕТОВ",
+            "10 ПЕРСОНАЖЕЙ",
+            "40+ ДОСТИЖЕНИЙ",
+        ],
+        "en": [
+            "FIGHT OFF COOKIES' ATTACKS!",
+            "50+ WEAPONS   100+ ITEMS",
+            "10 CHARACTERS",
+            "40+ ACHIEVEMENTS",
+        ],
+    }
+
+    font = ImageFont.truetype(
+        ART_DIR / "src" / "screenshots" / "SeymourOne-Regular.ttf", size=160
+    )
+
+    for locale_prefix, texts in screenshot_texts.items():
+        out_dir = ART_DIR / "src" / "screenshots_processed" / locale_prefix
+        recursive_mkdir(out_dir)
+
+        for banner_color_, text, f in zip(
+            banner_colors,
+            texts,
+            (ART_DIR / "src" / "screenshots").glob("*.png"),
+            strict=True,
+        ):
+            banner_color = hex_to_rgb_ints(banner_color_)
+
+            text_image = Image.new("RGBA", (3840, 1750))
+            draw = ImageDraw.Draw(text_image)
+            draw.text(
+                (1920, 1670),
+                text,
+                fill="white",
+                anchor="ms",
+                font=font,
+                stroke_width=14,
+                stroke_fill=tuple(
+                    int(x / 255)
+                    for x in transform_color(
+                        tuple(x / 255 for x in banner_color), value_scale=0.5
+                    )
+                ),
+            )
+
+            bf_image.draw_on_top(
+                bf_image.draw_on_top(Image.open(f), banner, (*banner_color, 255)),
+                text_image.resize((1920, 1080)),
+            ).save(out_dir / f.name)
 
     # }
 
