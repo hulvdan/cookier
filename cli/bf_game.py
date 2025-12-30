@@ -1394,13 +1394,32 @@ def process_images():
         bf_image.conveyor_prefix("game_particle"),
     )
 
+    if 1:
+        banner = Image.new("RGBA", (1920, 1080))
+        h = 185
+        # margin = 20
+        margin = 0
+        outline_width = 7
+        w = 1920 + 2 * outline_width
+        rect = bf_image.rectangle(
+            (w - margin * 2, h - margin),
+            fill="white",
+            # radius=80,
+            width=outline_width,
+            outline="black",
+        )
+        banner.paste(rect, ((1920 - w) // 2 + margin, 1080 - h + outline_width))
+    else:
+        banner = Image.open(ART_DIR / "src" / "screenshot_text_banner.png")
+
     banner = bf_image.outline(
-        Image.open(ART_DIR / "src" / "screenshot_text_banner.png"),
+        banner,
         radius=80,
         color=(0, 0, 0, int(255 * 5 / 16)),
         is_shadow=True,
         extend=False,
     )
+
     recursive_mkdir(ART_DIR / "src" / "screenshots_processed")
     banner_colors = [
         "e7ae4b",
