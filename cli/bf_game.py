@@ -36,6 +36,7 @@ from bf_lib import (
     hex_to_rgb_ints,
     load_gamelib_cached,
     only_one_is_not_none,
+    read_localization_csv,
     recursive_flattenizer,
     recursive_mkdir,
     recursive_replace_transform,
@@ -44,7 +45,7 @@ from bf_lib import (
     transform_color,
 )
 from bf_typer import command, timing
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 from rich.console import Console
 from rich.table import Table
 
@@ -1394,50 +1395,38 @@ def process_images():
     )
 
     banner = bf_image.outline(
-        bf_image.remap(
-            Image.open(ART_DIR / "src" / "screenshot_text_banner.png"),
-            (0, 0, 0),
-            (255, 255, 255),
-        ),
+        Image.open(ART_DIR / "src" / "screenshot_text_banner.png"),
         radius=120,
         color=(0, 0, 0, int(255 * 1 / 4)),
         is_shadow=True,
         extend=False,
-    ).transpose(Image.FLIP_LEFT_RIGHT)  # type: ignore[attr-defined]
+    )
     recursive_mkdir(ART_DIR / "src" / "screenshots_processed")
     banner_colors = [
         "e7ae4b",
         "b59a66",
-        "b9d850",
-        "d78b98",
+        "66a650",
+        "c95d9c",
     ]
 
-    screenshot_texts = {
-        "ru": [
-            "ОТБИВАЙ ВОЛНЫ ПЕЧЕНЕК!",
-            "50+ ОРУЖИЙ   100+ ПРЕДМЕТОВ",
-            "10 ПЕРСОНАЖЕЙ",
-            "40+ ДОСТИЖЕНИЙ",
-        ],
-        "en": [
-            "FIGHT OFF COOKIES' ATTACKS!",
-            "50+ WEAPONS   100+ ITEMS",
-            "10 CHARACTERS",
-            "40+ ACHIEVEMENTS",
-        ],
-    }
-
-    font = ImageFont.truetype(
-        ART_DIR / "src" / "screenshots" / "SeymourOne-Regular.ttf", size=160
+    _result = read_localization_csv()
+    screenshot_loc_id_indices = sorted(
+        i for i, x in enumerate(_result.loc_ids) if x.startswith("YANDEX_SCREENSHOT_")
     )
 
-    for locale_prefix, texts in screenshot_texts.items():
-        out_dir = ART_DIR / "src" / "screenshots_processed" / locale_prefix
+    font = ImageFont.truetype(
+        ART_DIR / "src" / "screenshots" / "SeymourOne-Regular.ttf", size=150
+    )
+
+    for language, texts in _result.loc_by_languages.items():
+        out_dir = ART_DIR / "src" / "screenshots_processed" / language
+        for f in out_dir.glob("*.png"):
+            f.unlink()
         recursive_mkdir(out_dir)
 
-        for banner_color_, text, f in zip(
+        for banner_color_, loc_id_index, f in zip(
             banner_colors,
-            texts,
+            screenshot_loc_id_indices,
             (ART_DIR / "src" / "screenshots").glob("*.png"),
             strict=True,
         ):
@@ -1447,7 +1436,7 @@ def process_images():
             draw = ImageDraw.Draw(text_image)
             draw.text(
                 (1920, 1670),
-                text,
+                texts[loc_id_index],
                 fill="white",
                 anchor="ms",
                 font=font,
@@ -1460,8 +1449,20 @@ def process_images():
                 ),
             )
 
+            brightness = 1.0
+            contrast = 1.0
+            if 1:
+                brightness = 1.06
+                contrast = 1.1
+
             bf_image.draw_on_top(
-                bf_image.draw_on_top(Image.open(f), banner, (*banner_color, 255)),
+                bf_image.draw_on_top(
+                    ImageEnhance.Brightness(
+                        ImageEnhance.Contrast(Image.open(f)).enhance(contrast)
+                    ).enhance(brightness),
+                    banner,
+                    (*banner_color, 255),
+                ),
                 text_image.resize((1920, 1080)),
             ).save(out_dir / f.name)
 

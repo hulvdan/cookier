@@ -1,10 +1,12 @@
 # Imports.  {  ###
 import colorsys
+import csv
 import hashlib
 import re
 import socket
 import subprocess
 import sys
+from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -852,6 +854,36 @@ def test_bannerify():
 
 
 # }
+
+
+@dataclass
+class LocalizationResult:
+    loc_ids: list[str] = field(default_factory=list)
+    loc_by_languages: dict[str, list[str]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
+
+def read_localization_csv() -> LocalizationResult:
+    # {  ###
+    result = LocalizationResult()
+
+    with open(ASSETS_DIR / "localization.csv", encoding="utf-8") as in_file:
+        not_language_columns = ("id", "\ufeffid", "comment")
+        for row in csv.DictReader(in_file, delimiter=";"):
+            row_id = row.get("id") or row.get("\ufeffid")
+            assert isinstance(row_id, str)
+            result.loc_ids.append(row_id)
+            for c in row:
+                if c not in not_language_columns:
+                    assert c in game_settings.languages
+                    translation = row[c]
+                    result.loc_by_languages[c].append(
+                        translation.strip() or "<<NOT_TRANSLATED>>"
+                    )
+
+    return result
+    # }
 
 
 from bf_game import *  # noqa

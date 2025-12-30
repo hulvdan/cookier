@@ -17,9 +17,12 @@ x banner gradient
 x draw text
 x outline text
 x text position
+x text font
+x get screenshot locales from csv
 
 * text outline same as banner and looks good
-* text font
+*
+* saturate gameplay video
 *
 * команда процессинга скриншотов
   - рисует тектовый баннер снизу

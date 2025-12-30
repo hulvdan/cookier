@@ -1,5 +1,4 @@
 # Imports.  {  ###
-import csv
 import json
 import os
 import re
@@ -40,6 +39,7 @@ from bf_lib import (
     get_local_ip,
     load_gamelib_cached,
     log,
+    read_localization_csv,
     recursive_mkdir,
     recursive_replace_transform,
     replace_double_spaces,
@@ -429,22 +429,9 @@ def test_process_string(string: str, result: list[StringLine]) -> None:
 
 def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
     # {  ###
-    loc_ids: list[str] = []
-    loc_by_languages: dict[str, list[str]] = defaultdict(list)
-
-    with open(ASSETS_DIR / "localization.csv", encoding="utf-8") as in_file:
-        not_language_columns = ("id", "\ufeffid", "comment")
-        for row in csv.DictReader(in_file, delimiter=";"):
-            row_id = row.get("id") or row.get("\ufeffid")
-            assert isinstance(row_id, str)
-            loc_ids.append(row_id)
-            for c in row:
-                if c not in not_language_columns:
-                    assert c in game_settings.languages
-                    translation = row[c]
-                    loc_by_languages[c].append(
-                        translation.strip() or "<<NOT_TRANSLATED>>"
-                    )
+    _result = read_localization_csv()
+    loc_ids = _result.loc_ids
+    loc_by_languages = _result.loc_by_languages
 
     locale_caps_offset = -1
 
