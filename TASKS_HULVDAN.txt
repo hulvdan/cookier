@@ -2,7 +2,13 @@ WORKING SINCE 2025-09-07
 https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 2025-12-24 11:16
   отправил на модерацию 1-ый раз
+  релиз на ПК без промо матриалов
 2025-12-25 Опубликована (v1.63)
+2025-12-30 16:15
+  отправил на модерацию 2-ой раз
+  - binami-like скрины
+  - видео геймплея
+  - видео для рекламы
 
 ПЛАН
 * ВИДЕО ДЛЯ ПРОДВИЖЕНИЯ
@@ -25,19 +31,13 @@ x команда процессинга скриншотов
   - рисует тектовый баннер снизу
   - рисует текст (на англе и на рус)
 x uploaded screenshots
-
-YANDEX_SCREENSHOT_0;ОТБИВАЙ  ВОЛНЫ  ПЕЧЕНЕК!;FIGHT  OFF  COOKIES'  ATTACKS!;
-YANDEX_SCREENSHOT_1;ВООРУЖАЙСЯ!;LOAD  UP!;
-YANDEX_SCREENSHOT_2;ПРОКАЧИВАЙСЯ!;GET  STRONGER!;
-YANDEX_SCREENSHOT_3;ОСТАВАЙСЯ  В  ЖИВЫХ!;STAY  ALIVE!;
-
-* enhance (+saturate +contrast) gameplay video
-* upload enhanced gameplay video
+x enhance (+saturate +contrast) gameplay video
+x upload enhanced gameplay video
   BOTH LANGUAGES!!!
-*
+x make promo video
+
 * gather info about promo video
-* make promo video
-  кнопка "играть"?
+  - нужна ли кнопка "играть"?
 *
 * мб на мелких сложностях волн меньше?
 *
