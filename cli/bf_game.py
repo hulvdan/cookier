@@ -37,6 +37,7 @@ from bf_lib import (
     load_gamelib_cached,
     only_one_is_not_none,
     recursive_flattenizer,
+    recursive_mkdir,
     recursive_replace_transform,
     replace_double_spaces,
     rgb_floats_to_hex,
@@ -1391,6 +1392,32 @@ def process_images():
         bf_image.conveyor_white,
         bf_image.conveyor_prefix("game_particle"),
     )
+
+    banner = bf_image.outline(
+        bf_image.remap(
+            Image.open(ART_DIR / "src" / "screenshot_text_banner.png"),
+            (255, 255, 255),
+            tuple([255 * 3 / 4] * 3),
+        ),
+        radius=120,
+        color=(0, 0, 0, int(255 * 1 / 4)),
+        is_shadow=True,
+        extend=False,
+    )
+    recursive_mkdir(ART_DIR / "src" / "screenshots_processed")
+    banner_colors = [
+        "b9d850",
+        "b59a66",
+        "dc9824",
+        "d78b98",
+    ]
+
+    for banner_color, f in zip(
+        banner_colors, (ART_DIR / "src" / "screenshots").glob("*.png"), strict=True
+    ):
+        bf_image.draw_on_top(
+            Image.open(f), banner, (*hex_to_rgb_ints(banner_color), 255)
+        ).save(ART_DIR / "src" / "screenshots_processed" / f.name)
 
     # }
 

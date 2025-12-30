@@ -457,7 +457,6 @@ def _credit_sfx(_folder: Path, _credit: str = "") -> None:
 #     while stack:
 #         p = stack.pop(0)
 #         stack = stack[1:]
-# }
 
 
 @command

@@ -53,6 +53,7 @@ def outline(
     is_shadow: bool = False,
     threshold: int = 0,
     blend_image_on_top: bool = True,
+    extend: bool = True,
 ) -> Image.Image:
     # {  ###
     assert threshold >= 0
@@ -68,17 +69,26 @@ def outline(
     padding = radius
     alpha = img[:, :, 3]
     rgb_img = img[:, :, 0:3]
+    extend_padding = padding
+    if not extend:
+        extend_padding = 0
     bigger_img = cv2.copyMakeBorder(
         rgb_img,
-        padding,
-        padding,
-        padding,
-        padding,
+        extend_padding,
+        extend_padding,
+        extend_padding,
+        extend_padding,
         cv2.BORDER_CONSTANT,
         value=(0, 0, 0, 0),
     )
     alpha = cv2.copyMakeBorder(  #  type: ignore  # noqa
-        alpha, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=0
+        alpha,
+        extend_padding,
+        extend_padding,
+        extend_padding,
+        extend_padding,
+        cv2.BORDER_CONSTANT,
+        value=0,
     )
     bigger_img = cv2.merge((bigger_img, alpha))
     h, w, _ = bigger_img.shape
@@ -423,6 +433,35 @@ def spritesheetify(
 
     log.info(f"spritesheetify: {image_path}... Success!")
     # }
+
+
+def draw_on_top(
+    background: Image.Image,
+    overlay: Image.Image,
+    overlay_color: tuple[int, int, int, int] = (255, 255, 255, 255),
+) -> Image.Image:
+    # {  ###
+    assert (
+        background.size[0] / background.size[1] - overlay.size[0] / overlay.size[1]
+    ) <= 0.0001, "Aspect ratios of images must be the same!"
+
+    arr = np.asarray(overlay.resize(background.size), dtype=np.float32)
+    arr *= np.array(overlay_color, dtype=np.float32) / 255.0
+    o = Image.fromarray(arr.clip(0, 255).astype("uint8"), "RGBA")
+
+    return Image.alpha_composite(background.convert("RGBA"), o)
+    # }
+
+
+# def draw_banner_and_text_over_screenshot(
+#     screenshot_path: Path | str,
+#     text: str,
+#     font: Path | str,
+#     banner_path: Path | str,
+#     banner_color: tuple[int, int, int],
+# ) -> Image:
+#     screenshot = Image.open(screenshot_path)
+#     banner = Image.open(banner_path)
 
 
 ###
