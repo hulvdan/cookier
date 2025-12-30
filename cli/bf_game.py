@@ -1432,21 +1432,30 @@ def process_images():
         ):
             banner_color = hex_to_rgb_ints(banner_color_)
 
-            text_image = Image.new("RGBA", (3840, 1750))
+            text_image = Image.new("RGBA", (3840, 1550))
             draw = ImageDraw.Draw(text_image)
             draw.text(
-                (1920, 1670),
+                (1920, 1478),
                 texts[loc_id_index],
-                fill="white",
+                fill=tuple(
+                    int(x * 255)
+                    for x in transform_color(
+                        hex_to_rgb_floats(banner_color_),
+                        saturation_scale=0.23,
+                        value_scale=2.5,
+                    )
+                ),
                 anchor="ms",
                 font=font,
                 stroke_width=14,
-                stroke_fill=tuple(
-                    int(x / 255)
-                    for x in transform_color(
-                        tuple(x / 255 for x in banner_color), value_scale=0.5
-                    )
-                ),
+                stroke_fill="black",
+            )
+            text_image = bf_image.outline(
+                text_image,
+                radius=40,
+                color=(0, 0, 0, 255 * 3 / 16),
+                is_shadow=True,
+                extend=False,
             )
 
             brightness = 1.0

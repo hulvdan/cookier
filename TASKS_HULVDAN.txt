@@ -19,8 +19,9 @@ x outline text
 x text position
 x text font
 x get screenshot locales from csv
+x text fill + outline same as banner and looks good
 
-* text outline same as banner and looks good
+* text shadow
 *
 * saturate gameplay video
 *

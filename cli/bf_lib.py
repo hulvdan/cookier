@@ -656,11 +656,7 @@ def hex_to_rgb_floats(hex_color: str) -> tuple[float, float, float]:
     r = int(hex_color[0:2], 16)
     g = int(hex_color[2:4], 16)
     b = int(hex_color[4:6], 16)
-    r_float = r / 255.0
-    g_float = g / 255.0
-    b_float = b / 255.0
-    r_float = min(1, r_float)
-    return (r_float, g_float, b_float)
+    return (r / 255, g / 255, b / 255)
     # }
 
 
@@ -681,13 +677,6 @@ def transform_color(
     value_scale: float = 1.0,
 ) -> tuple[float, float, float]:
     # {  ###
-    """
-    Saturate an RGB color (tuple of 3 floats in 0-1) by a given amount.
-
-    :param rgb: (r, g, b) tuple, each component in [0, 1]
-    :param amount: How much to increase saturation (e.g., 1.2 = 20% more saturated)
-    :return: new (r, g, b) tuple
-    """
     assert saturation_scale >= 0
     assert value_scale >= 0
     r, g, b = rgb
