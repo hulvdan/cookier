@@ -20,25 +20,29 @@ x text position
 x text font
 x get screenshot locales from csv
 x text fill + outline same as banner and looks good
-
-* text shadow
-*
-* saturate gameplay video
-*
-* команда процессинга скриншотов
+x text shadow
+x команда процессинга скриншотов
   - рисует тектовый баннер снизу
   - рисует текст (на англе и на рус)
-* ОТБИВАЙ АТАКИ ПЕЧЕНЕК | FIGHT OFF COOKIES' ATTACKS
-* 50+ ОРУЖИЙ, 100+ ПРЕДМЕТОВ | 50+ WEAPONS, 100+ ITEMS
-* 10 ПЕРСОНАЖЕЙ | 10 CHARACTERS
-* 48 ДОСТИЖЕНИЙ | 48 ACHIEVEMENTS
+x uploaded screenshots
+
+YANDEX_SCREENSHOT_0;ОТБИВАЙ  ВОЛНЫ  ПЕЧЕНЕК!;FIGHT  OFF  COOKIES'  ATTACKS!;
+YANDEX_SCREENSHOT_1;ВООРУЖАЙСЯ!;LOAD  UP!;
+YANDEX_SCREENSHOT_2;ПРОКАЧИВАЙСЯ!;GET  STRONGER!;
+YANDEX_SCREENSHOT_3;ОСТАВАЙСЯ  В  ЖИВЫХ!;STAY  ALIVE!;
+
+* enhance (+saturate +contrast) gameplay video
+* upload enhanced gameplay video
+  BOTH LANGUAGES!!!
 *
-* вырезать лишнее из видео
-* облагородить
+* gather info about promo video
+* make promo video
+  кнопка "играть"?
+*
+* мб на мелких сложностях волн меньше?
+*
 * посмотреть у сортировки по полочкам какое промо
 * ВИДЕО ДЛЯ ПРОДВИЖЕНИЯ
-* обновить скриншоты игры
-  сделать их, как в сортировке по полочкам - красивые надписи
 * debug: build presets (class, difficulty, wave, weapons, items) for fast video recordings
 * кнопка старта для мышки? как для пк гарантировать включение звука?
   стартануть движок заранее?

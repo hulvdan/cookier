@@ -1396,8 +1396,8 @@ def process_images():
 
     banner = bf_image.outline(
         Image.open(ART_DIR / "src" / "screenshot_text_banner.png"),
-        radius=120,
-        color=(0, 0, 0, int(255 * 1 / 4)),
+        radius=80,
+        color=(0, 0, 0, int(255 * 5 / 16)),
         is_shadow=True,
         extend=False,
     )
