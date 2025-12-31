@@ -82,8 +82,6 @@ x beard
 * breathing только у самой высокой сложности в new run
 * галочки у пройденных сложностей
 *
-* интенсив как делать игры, чтобы зарабатывать:
-  https://youtu.be/bCwodUDyhDc?t=5020
 * Unity Conf 2024 — 1 день. Илья Яковлев, Стас Ветохин.
   https://youtu.be/E7Ze-E8l_HM
 * ян байнами: https://www.youtube.com/watch?v=Z0u0wmM92EI
