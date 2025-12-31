@@ -9,9 +9,12 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
   - binami-like скрины
   - видео геймплея
   - видео для рекламы
+2025-12-31
+  отправил новый баннер и иконку на AB
 
 ПЛАН
-* MINIAUDIO IOS
+* FIX TOUCH
+* OPTIMIZE MOBILE
 * ФИКСЫ
 * БАЛАНС
 
@@ -23,9 +26,8 @@ x manually submit audio in EMSCRIPTEN
 x sound works on ipad
 x imgui: emulating mobile
 
-* disable music low pass on mobile
-* touch: can upgrade weapon
-* touch:
+* touch: fix: can upgrade weapon
+* touch: fix
   - IN SHOP
   - click on class
   - click on achievements
@@ -34,7 +36,15 @@ x imgui: emulating mobile
 * test yandex build opens good on ipad
 * android works good
 * enable web profiling
-* delay music download
+*
+* mobile optimization: don't submit excessive decorations / mobs / particles for drawing
+* mobile optimization: disable music low pass for mobile specifically
+* mobile optimization:
+* mobile optimization:
+* mobile optimization:
+* mobile optimization:
+*
+* optimization: delay music download
 *
 * рекламу на все кона навесить
 * название Арена Выживания Молочника
