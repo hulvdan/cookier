@@ -12,12 +12,14 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 
 ПЛАН
 * ВИДЕО ДЛЯ ПРОДВИЖЕНИЯ
+* MINIAUDIO IOS
 * ФИКСЫ
 * БАЛАНС
 
 x fix отправлять metric g_Run0_Wave1_Won
 x баннер, иконка A/B
 x убрать неконсистентность цвет пушек и баннер
+x beard
 
 * рекламу на все кона навесить
 * название Арена Выживания Молочника

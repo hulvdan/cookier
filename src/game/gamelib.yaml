@@ -5161,8 +5161,8 @@ player_layer_texture_anchors:
     x: 0.5
     y: -0.19
   - # beard
-    x: 0.45
-    y: -0.67
+    x: 0.51
+    y: -0.72
   - # arms
     x: 0.50
     y: -0.75
