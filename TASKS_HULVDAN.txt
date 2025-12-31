@@ -15,29 +15,10 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * ФИКСЫ
 * БАЛАНС
 
-x record videos for promo
-x banner remap colors
-x outline banner with SHADOW
-  TRY WHITE OR BLACK
-x banner gradient
-x draw text
-x outline text
-x text position
-x text font
-x get screenshot locales from csv
-x text fill + outline same as banner and looks good
-x text shadow
-x команда процессинга скриншотов
-  - рисует тектовый баннер снизу
-  - рисует текст (на англе и на рус)
-x uploaded screenshots
-x enhance (+saturate +contrast) gameplay video
-x upload enhanced gameplay video
-  BOTH LANGUAGES!!!
-x make promo video
-x ян байнами: https://www.youtube.com/watch?v=vYMPJ6gCKV4
+x fix отправлять metric g_Run0_Wave1_Won
 
-* иконку+баннке переделать?
+* баннер A/B
+* иконку A/B
 * мобилка! (sound start + android optimizaion)
 * no ads показывать
 *

@@ -1670,6 +1670,8 @@ void SetWaveWonTrue() {  ///
   g.run.state.waveWon = true;
   if (PLAYER_CREATURE.health == 1)
     AchievementMax(AchievementType_FINISH_A_WAVE_WITH_1_HP, 1);
+  if ((g.player.runsWon == 0) && (g.run.state.waveIndex == 0))
+    Metric("g_Run0_Wave1_Won");
 }
 
 void TriggerWaveCompleted(bool instant) {  ///
