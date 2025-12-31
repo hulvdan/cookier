@@ -20,6 +20,12 @@ x баннер, иконка A/B
 x убрать неконсистентность цвет пушек и баннер
 x beard
 
+* manually submit audio in EMSCRIPTEN
+* sound works on ipad
+* test yandex build opens good on ipad
+* android works good
+* delay music download
+*
 * рекламу на все кона навесить
 * название Арена Выживания Молочника
 * Советы:
@@ -72,7 +78,6 @@ x beard
     9. называем «пинай младенца»
   -
 * НУЖЕН НАСТАВНИК
-* мобилка! (sound start + android optimizaion)
 *
 * правильно нарисовать бороду
 * загружать музыку после game ready
@@ -84,8 +89,6 @@ x beard
 *
 * Unity Conf 2024 — 1 день. Илья Яковлев, Стас Ветохин.
   https://youtu.be/E7Ze-E8l_HM
-* ян байнами: https://www.youtube.com/watch?v=Z0u0wmM92EI
-* ян байнами: https://www.youtube.com/watch?v=KMgPDABwktQ
 * ян байнами: https://www.youtube.com/watch?v=BnLPnkFd0tI
 * ян байнами: https://www.youtube.com/watch?v=-23MamI6FxE
 * ян байнами: https://www.youtube.com/watch?v=-23MamI6FxE
