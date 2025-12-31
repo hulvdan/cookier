@@ -19,9 +19,10 @@ x fix отправлять metric g_Run0_Wave1_Won
 x баннер, иконка A/B
 x убрать неконсистентность цвет пушек и баннер
 x beard
+x manually submit audio in EMSCRIPTEN
+x sound works on ipad
 
-* manually submit audio in EMSCRIPTEN
-* sound works on ipad
+* fix touchscreen shit
 * test yandex build opens good on ipad
 * android works good
 * enable web profiling

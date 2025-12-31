@@ -4332,6 +4332,7 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
       return SDL_APP_FAILURE;
     }
 
+#ifdef MA_NO_DEVICE_IO
     if (SDL_Init(SDL_INIT_AUDIO)) {
       SDL_AudioSpec spec{
         .format   = SDL_AUDIO_F32,
@@ -4353,6 +4354,7 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
       ge.meta._soundManager._sdlFailedToInitAudio = true;
       INVALID_PATH;
     }
+#endif
   }
 
   SDL_WindowFlags flags
