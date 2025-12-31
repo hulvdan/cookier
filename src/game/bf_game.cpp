@@ -15968,13 +15968,14 @@ void GameDraw() {
           gdebug = {};
 
         IM::Checkbox("Gizmos", &gdebug.gizmos);
+        IM::Checkbox("Emulating Mobile", &gdebug.emulatingMobile);
+        IM::Checkbox("Hide UI For Video", &gdebug.hideUIForVideo);
+
         IM::Checkbox("Mobs Burn", &gdebug.mobsBurn);
         IM::Checkbox("Mobs Slow", &gdebug.mobsSlow);
 
         IM::Checkbox("Disable Mob Spawns", &gdebug.disableMobSpawns);
         IM::Checkbox("Disable Boss Spawn", &gdebug.disableBossSpawn);
-
-        IM::Checkbox("Hide UI For Video", &gdebug.hideUIForVideo);
 
         {
           IM::Text("Wave Duration: ");
@@ -16004,8 +16005,6 @@ void GameDraw() {
         }
 
         IM::Checkbox("Cycling Stuff In Shop", &gdebug.cyclingStuffInShop);
-
-        IM::Checkbox("Emulating Mobile", &gdebug.emulatingMobile);
 
         ge.meta.device
           = (gdebug.emulatingMobile ? DeviceType_MOBILE : DeviceType_DESKTOP);

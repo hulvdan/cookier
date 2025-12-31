@@ -5193,8 +5193,14 @@ sounds:
     pitch_min: 1
     pitch_max: 1
 debug_variables: # {  ###
+  # Engine stuff:
   - name: gizmos
     type: bool
+  - name: emulatingMobile
+    type: bool
+  - name: hideUIForVideo
+    type: bool
+  # Game stuff:
   - name: mobsBurn
     type: bool
   - name: mobsSlow
@@ -5210,10 +5216,6 @@ debug_variables: # {  ###
   - name: mobSpawnRate
     type: f32
   - name: cyclingStuffInShop
-    type: bool
-  - name: hideUIForVideo
-    type: bool
-  - name: emulatingMobile
     type: bool
 # }
 
