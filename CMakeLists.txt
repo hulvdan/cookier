@@ -218,6 +218,11 @@ target_link_libraries(miniaudio
         stb_vorbis
 )
 
+# target_compile_definitions(miniaudio PUBLIC MA_NO_DEVICE_IO)
+# if ("${PLATFORM}" MATCHES "^Web")
+#     target_compile_definitions(miniaudio PUBLIC MA_NO_DEVICE_IO)
+# endif()
+
 # readerwriterqueue.
 #-----------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/readerwriterqueue")

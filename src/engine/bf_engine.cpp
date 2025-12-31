@@ -30,9 +30,6 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
-#  define MA_NO_DEVICE_IO
-#endif
 #include "miniaudio.h"
 
 #include <bgfx/bgfx.h>
@@ -50,7 +47,7 @@
 #include "engine/bf_engine_config.cpp"
 #include "flatbuffers/bf_save_generated.h"
 
-// Functions that MUST be implemented by the user of the engine in `bf_game.cpp`:
+// Functions that MUST be implemented by the user of the engine:
 void                           GameInit();
 void                           GameFixedUpdate();
 void                           GameDraw();
@@ -573,11 +570,12 @@ struct EngineData {
       Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
       Vector<_SoundVariationRange>   soundVariationRanges           = {};
 
-      bool _works   = false;
-      bool _started = false;
+      bool _works                = false;
+      bool _started              = false;
+      bool _sdlFailedToInitAudio = false;
 
       bool CanPlaySound() const {
-        return _works && _started;
+        return _works && _started && !_sdlFailedToInitAudio;
       }
 
       union {
@@ -594,9 +592,7 @@ struct EngineData {
 
       Vector<_LaunchedSound> launchedSounds = {};
 
-      bool              sdlFailedToInitAudio = false;
-      SDL_AudioDeviceID deviceID             = {};
-      SDL_AudioStream*  stream               = {};
+      SDL_AudioStream* stream = {};
     } _soundManager = {};
 
     struct ShouldGameplayStop {
@@ -692,13 +688,15 @@ void _StartAudioEngine() {  ///
     LOGI("_StartAudioEngine: BF_DISABLE_AUDIO");
     return;
   }
-
-  if (ge.meta._soundManager.sdlFailedToInitAudio)
+  if (ge.meta._soundManager._sdlFailedToInitAudio)
     return;
 
   auto& m = ge.meta._soundManager;
-  SDL_ResumeAudioDevice(m.deviceID);
+  if (m._started)
+    return;
+
   m._started = true;
+  SDL_ResumeAudioStreamDevice(m.stream);
 }
 
 void _ReloadSounds() {  ///
@@ -707,7 +705,7 @@ void _ReloadSounds() {  ///
     return;
   }
 
-  if (ge.meta._soundManager.sdlFailedToInitAudio)
+  if (ge.meta._soundManager._sdlFailedToInitAudio)
     return;
 
   LOGI("_ReloadSounds...");
@@ -749,18 +747,29 @@ void _ReloadSounds() {  ///
   auto config                               = ma_engine_config_init();
   config.pLog                               = &log;
   config.defaultVolumeSmoothTimeInPCMFrames = 120;
-  config.noDevice                           = MA_TRUE;
 
-  int samples = 512;
+#ifdef MA_NO_DEVICE_IO
+  config.noDevice   = MA_TRUE;
+  config.channels   = 2;
+  config.sampleRate = 44100;
+#endif
+
+  bool highLatency = false;
 
   if (ge.meta.device == DeviceType_MOBILE) {
     LOGI("Audio. High latency mode (mobile device)");
-    config.periodSizeInMilliseconds = 100;
+    highLatency = true;
   }
   else {
+#ifdef MA_NO_DEVICE_IO
+    LOGI("Audio. High latency mode (MA_NO_DEVICE_IO)");
+    highLatency = true;
+#else
     LOGI("Audio. Low latency mode");
-    samples *= 8;
+#endif
   }
+
+  config.periodSizeInMilliseconds = (highLatency ? 100 : 10);
 
   LOGI("Audio. ma_engine_init...");
 
@@ -4220,6 +4229,41 @@ void UpdateWindowSizeData(SDL_Window* window) {  ///
   ge.meta.screenSize              = {pw, ph};
 }
 
+void FillSDLAudioStreamCallback(
+  void*            _userdata,
+  SDL_AudioStream* stream,
+  int              additionalRequestedBytes,
+  int              totalRequestedBytes
+) {
+  auto& m = ge.meta._soundManager;
+  if (!m.CanPlaySound())
+    return;
+
+  static int   channels       = 0;
+  static int   frameBytesSize = 0;
+  static int   sampleRate     = 0;
+  static void* buffer         = nullptr;
+
+  if (!buffer) {
+    channels       = ma_engine_get_channels(&m.engine);
+    frameBytesSize = ma_get_bytes_per_frame(ma_format_f32, channels);
+    sampleRate     = ma_engine_get_sample_rate(&m.engine);
+    buffer         = BF_ALLOC(frameBytesSize * sampleRate);
+  }
+
+  auto bufferSizeInFrames = totalRequestedBytes / frameBytesSize;
+
+  u64 readFrames = 0;
+  if (ma_engine_read_pcm_frames(&m.engine, buffer, bufferSizeInFrames, &readFrames)
+      == MA_SUCCESS)
+  {
+    if (!SDL_PutAudioStreamData(m.stream, buffer, (int)readFrames * frameBytesSize))
+      INVALID_PATH;
+  }
+  else
+    INVALID_PATH;
+}
+
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 void EmscriptenLog(
   void*           userdata,
@@ -4290,26 +4334,23 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
 
     if (SDL_Init(SDL_INIT_AUDIO)) {
       SDL_AudioSpec spec{
-        .format   = SDL_AUDIO_F32LE,
+        .format   = SDL_AUDIO_F32,
         .channels = 2,
         .freq     = 44100,
       };
 
-      auto& m    = ge.meta._soundManager;
-      m.deviceID = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
-      if (m.deviceID) {
-        SDL_AudioSpec src{};
-        m.stream = SDL_CreateAudioStream(&src, &spec);
-        SDL_BindAudioStream(m.deviceID, m.stream);
-      }
-      else {
+      auto& m  = ge.meta._soundManager;
+      m.stream = SDL_OpenAudioDeviceStream(
+        SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, FillSDLAudioStreamCallback, nullptr
+      );
+      if (!m.stream) {
         LOGE("Failed to open SDL audio device.");
         INVALID_PATH;
       }
     }
     else {
       LOGE("SDL_Init failed to init audio!");
-      ge.meta._soundManager.sdlFailedToInitAudio = true;
+      ge.meta._soundManager._sdlFailedToInitAudio = true;
       INVALID_PATH;
     }
   }
@@ -4531,9 +4572,6 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
     result = EngineUpdate();
 
     if (result == SDL_APP_CONTINUE) {
-#ifdef SDL_PLATFORM_EMSCRIPTEN
-#endif
-
       ZoneScopedN("bgfx. bgfx::frame()");
       bgfx::frame(false);
     }
@@ -4798,7 +4836,8 @@ void SDL_AppQuit(void* _appstate, SDL_AppResult _result) {  ///
   // Shutting down audio.
   auto& m = ge.meta._soundManager;
   ma_engine_uninit(&m.engine);
-  SDL_CloseAudioDevice(m.deviceID);
+  SDL_DestroyAudioStream(m.stream);
+  m.stream = {};
   SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
   ImGui_ImplSDL3_Shutdown();
