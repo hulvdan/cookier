@@ -23,7 +23,14 @@ x manually submit audio in EMSCRIPTEN
 x sound works on ipad
 x imgui: emulating mobile
 
-* fix touchscreen shit
+* disable music low pass on mobile
+* touch: can upgrade weapon
+* touch:
+  - IN SHOP
+  - click on class
+  - click on achievements
+  - click on top left achievement
+  - CLASS SHOWS UP BUT IS SHOULDN'T
 * test yandex build opens good on ipad
 * android works good
 * enable web profiling
@@ -393,8 +400,6 @@ x imgui: emulating mobile
 *
 * slashing melee attacks
 * stats: % Burning Speed: Increases or decreases the rate of which Burn ticks for damage.
-* pause: unpause on touch
-* pause: touch support
 * fb effects: using `value_multiplier` with stat that has `is_percent=true`
   will mislead players / developer.
   assert that `value_multiplier && is_percent` is false during codegen
