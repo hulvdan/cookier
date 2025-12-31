@@ -16005,6 +16005,11 @@ void GameDraw() {
 
         IM::Checkbox("Cycling Stuff In Shop", &gdebug.cyclingStuffInShop);
 
+        IM::Checkbox("Emulating Mobile", &gdebug.emulatingMobile);
+
+        ge.meta.device
+          = (gdebug.emulatingMobile ? DeviceType_MOBILE : DeviceType_DESKTOP);
+
         IM::Text("");
 
         IM::Text("MarkGameplay: %d", ge.meta.markGameplay);

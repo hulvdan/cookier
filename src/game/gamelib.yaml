@@ -5213,6 +5213,8 @@ debug_variables: # {  ###
     type: bool
   - name: hideUIForVideo
     type: bool
+  - name: emulatingMobile
+    type: bool
 # }
 
 ###

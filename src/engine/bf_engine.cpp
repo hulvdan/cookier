@@ -3785,9 +3785,13 @@ SDL_AppResult EngineUpdate() {  ///
     if (IsKeyPressed(SDL_SCANCODE_F3))
       IncrementSetZeroOn(&ge.meta.localization, 2);
 
-    if (IsKeyPressed(SDL_SCANCODE_F4))
+    if (IsKeyPressed(SDL_SCANCODE_F4)) {
       IncrementSetZeroOn((int*)&ge.meta.device, (int)DeviceType_COUNT);
+      gdebug.emulatingMobile = (ge.meta.device == DeviceType_MOBILE);
+    }
   }
+  if (gdebug.emulatingMobile)
+    ge.meta.device = DeviceType_MOBILE;
 
   int simulated = 0;
 
