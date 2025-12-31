@@ -24,6 +24,7 @@ x beard
 * sound works on ipad
 * test yandex build opens good on ipad
 * android works good
+* enable web profiling
 * delay music download
 *
 * рекламу на все кона навесить
@@ -89,11 +90,6 @@ x beard
 *
 * Unity Conf 2024 — 1 день. Илья Яковлев, Стас Ветохин.
   https://youtu.be/E7Ze-E8l_HM
-* ян байнами: https://www.youtube.com/watch?v=BnLPnkFd0tI
-* ян байнами: https://www.youtube.com/watch?v=-23MamI6FxE
-* ян байнами: https://www.youtube.com/watch?v=-23MamI6FxE
-* ян байнами: https://www.youtube.com/watch?v=2vBD5OwAJgc
-* ян байнами: https://www.youtube.com/watch?v=wygxlYzd0Wg
 * ян байнами: https://www.youtube.com/watch?v=QD69M4bPevU
 * ян байнами: https://www.youtube.com/watch?v=1mKYpdnvGaw
 * ян байнами: https://www.youtube.com/watch?v=YX6LCVC2c9w
