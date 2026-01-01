@@ -82,6 +82,7 @@ if ("${PLATFORM}" MATCHES "^Web")
             -O3
             "--closure 1"
             "-sASSERTIONS=0"
+            "-s WASM_ASYNC_COMPILATION=1"
         )
     endif()
 endif()

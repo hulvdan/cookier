@@ -15840,11 +15840,16 @@ void GameDraw() {
 
   // Drawing danger hp level vignette.
   if (g.run.dangerHPLevelOverlayValue > 0) {  ///
+    f32 vignetteScale
+      = (f32)ge.meta.screenSize.x / (f32)ge.meta.screenSize.y * 9.0f / 16.0f;
+    if (vignetteScale < 1)
+      vignetteScale = 1 / vignetteScale;
+
     DrawGroup_OneShotTexture(
       {
         .texID = glib->ui_vignette_danger_hp_level_texture_id(),
         .pos   = LOGICAL_RESOLUTIONf / 2.0f,
-        .scale = Vector2One() * 4.2f,
+        .scale = Vector2One() * (4.2f * vignetteScale),
         .color = Fade(palRed, MIN(1, g.run.dangerHPLevelOverlayValue)),
       },
       DrawZ_DANGER_HP_LEVEL_VIGNETTE

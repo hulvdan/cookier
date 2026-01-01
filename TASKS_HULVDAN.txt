@@ -31,6 +31,7 @@ x enabled optimization _ReloadSounds() -52% time
 x android works good
 x web sfx loading 14.2s -> 0.705s (-95.04%, x20.16)
 x молочник в игре такой же как на баннере
+x fix vignette
 
 * реклама при окончании волны
 * test yandex build opens good on ipad
