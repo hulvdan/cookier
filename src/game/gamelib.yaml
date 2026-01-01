@@ -4628,8 +4628,8 @@ builds: # {  ###
       - 0x885A44ff # beard
       - 0xefcb84ff # arms
     starting_weapon_types:
-      - RANGED_0_PISTOL
       - RANGED_0_SMG
+      - RANGED_0_PISTOL
       - MELEE_0_FIST
     effects:
       - stat_type: HP
