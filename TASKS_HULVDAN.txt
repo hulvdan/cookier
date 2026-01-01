@@ -18,9 +18,6 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * ФИКСЫ
 * БАЛАНС
 
-* rate game после победы над самой высокой сложностью
-* поискать/поизучать улучшалки для икобложек
-  * gradient map
 * touch: fix: can upgrade weapon
 * touch: fix
   - IN SHOP
@@ -32,6 +29,12 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * android works good
 * enable web profiling
 *
+* удержание: не давать играть на самой низкой сложности?
+* удержание: меньше волн на начальных сложностях
+* удержание:
+* удержание:
+* удержание:
+*
 * mobile optimization: don't submit excessive decorations / mobs / particles for drawing
 * mobile optimization: disable music low pass for mobile specifically
 * mobile optimization:
@@ -41,8 +44,13 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 *
 * optimization: delay music download
 *
-* рекламу на все кона навесить
+* rate game после победы над самой высокой сложностью
+* поискать/поизучать улучшалки для икобложек
+  * gradient map
+*
 * название Арена Выживания Молочника
+* рекламу на все окна навесить
+*
 * Советы:
   - готовьтесь к поражениям, низким доходам, доширакам
     ПОКА ЧТО-ТО НЕ НАЩУПАЕШЬ
