@@ -6100,18 +6100,19 @@ void RemoveImmediateWeaponEffects() {  ///
     currentContext = _prevContext;                 \
   };
 
-#define SCOPED_CONTEXT_IF(context_, enabled_)            \
-  const auto _prevContext = currentContext;              \
-  currentContext          = (context_);                  \
-  if (!draw) {                                           \
-    if (enabled_)                                        \
-      controlsContexts[(context_)].thisFrame = true;     \
-    controlsContexts[(context_)].disabled = !(enabled_); \
-    if (!controlsContexts[(context_)].prevFrame)         \
-      controlsContexts[(context_)].focused = {};         \
-  }                                                      \
-  DEFER {                                                \
-    currentContext = _prevContext;                       \
+#define SCOPED_CONTEXT_IF(context_, enabled_)              \
+  const auto _prevContext = currentContext;                \
+  if (!draw) {                                             \
+    if (enabled_) {                                        \
+      currentContext                         = (context_); \
+      controlsContexts[(context_)].thisFrame = true;       \
+    }                                                      \
+    controlsContexts[(context_)].disabled = !(enabled_);   \
+    if (!controlsContexts[(context_)].prevFrame)           \
+      controlsContexts[(context_)].focused = {};           \
+  }                                                        \
+  DEFER {                                                  \
+    currentContext = _prevContext;                         \
   };
 
 #define CURRENT_CONTEXT (controlsContexts[currentContext])
@@ -6830,7 +6831,7 @@ void DoUI() {
     }
   };
 
-  // Closing slot details if touchedThisComponent outside of it.
+  // Closing slot details if touched outside of it.
   DEFER {                                                ///
     if (!draw                                            //
         && IsTouchPressed(ge.meta._latestActiveTouchID)  //
@@ -8510,6 +8511,9 @@ void DoUI() {
         },
       }) {
         FLOATING_BEAUTIFY;
+
+        if (!draw && Clay_Hovered() && IsTouchPressed(ge.meta._latestActiveTouchID))
+          touchedInsideSlot = true;
 
         if (isSelected) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
