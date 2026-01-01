@@ -19,16 +19,17 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * БАЛАНС
 
 x touch: fix: can upgrade/sell weapon
-
-* touch: fix
+x touch: fix
   - IN SHOP
   - click on class
   - click on achievements
   - click on top left achievement
   - CLASS SHOWS UP BUT IS SHOULDN'T
+
+* enable web profiling
+*
 * test yandex build opens good on ipad
 * android works good
-* enable web profiling
 *
 * удержание: не давать играть на самой низкой сложности?
 * удержание: меньше волн на начальных сложностях

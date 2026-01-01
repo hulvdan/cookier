@@ -8654,19 +8654,21 @@ void DoUI() {
               if (data.markFirstAsDefault && (t == 0))
                 markControlAsDefault(slotID);
 
-              processShowingOrNotShowingSlotDetails(slotID);
+              if (!g.meta.showingAchievements) {
+                processShowingOrNotShowingSlotDetails(slotID);
 
-              gridEntryDetails(GridEntryDetailsData{
-                .id                 = slotID,
-                .difficulty         = difficultyType,
-                .build              = buildType,
-                .item               = itemType,
-                .count              = count,
-                .thisWaveAddedCount = thisWaveAddedCount,
-                .affectedByGame     = data.affectedByGame,
-                .detailsRight       = data.detailsRight,
-                .detailsBelow       = data.detailsBelow,
-              });
+                gridEntryDetails(GridEntryDetailsData{
+                  .id                 = slotID,
+                  .difficulty         = difficultyType,
+                  .build              = buildType,
+                  .item               = itemType,
+                  .count              = count,
+                  .thisWaveAddedCount = thisWaveAddedCount,
+                  .affectedByGame     = data.affectedByGame,
+                  .detailsRight       = data.detailsRight,
+                  .detailsBelow       = data.detailsBelow,
+                });
+              }
             }
           }
 
@@ -8844,7 +8846,7 @@ void DoUI() {
           }
 
           // Hovering modal.
-          if (weapon.type) {
+          if (!g.meta.showingAchievements && weapon.type) {
             processShowingOrNotShowingSlotDetails(slotID);
 
             gridEntryDetails(GridEntryDetailsData{
