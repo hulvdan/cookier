@@ -29,7 +29,9 @@ x enable web profiling
 x startup optimization: does music make it slow?
 x enabled optimization _ReloadSounds() -52% time
 x android works good
+x web sfx loading 14.2s -> 0.705s (-95.04%, x20.16)
 
+* реклама при окончании волны
 * test yandex build opens good on ipad
 *
 * mobile optimization:
