@@ -26,6 +26,9 @@ x manually submit audio in EMSCRIPTEN
 x sound works on ipad
 x imgui: emulating mobile
 
+* rate game после победы над самой высокой сложностью
+* поискать/поизучать улучшалки для икобложек
+  * gradient map
 * touch: fix: can upgrade weapon
 * touch: fix
   - IN SHOP
