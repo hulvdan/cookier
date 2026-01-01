@@ -1063,6 +1063,7 @@ def process_images():
             "hat_beanie",
             "hat_top",
             "hat_kepka",
+            "hat_milker",
         ],
         out_dir=ART_TEXTURES_DIR,
     )

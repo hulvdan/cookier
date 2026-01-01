@@ -4617,14 +4617,14 @@ difficulties: # {  ###
 builds: # {  ###
   - type: INVALID
   - type: DEFAULT
-    hat_type: GOPNIK
-    hat_color: 0xcec7b1ff
+    hat_type: MILKER
+    hat_color: 0xedefe2ff
     layer_colors:
       # Upon changing - check MakeParticles! Player's particles have beard's color!
       - 0xefcb84ff # head
       - 0x885A44ff # feet
       - 0x208CB2ff # shirt
-      - 0xCEC7B1ff # phartuk
+      - 0xedefe2ff # phartuk
       - 0x885A44ff # beard
       - 0xefcb84ff # arms
     starting_weapon_types:
@@ -4824,7 +4824,7 @@ builds: # {  ###
       - effectcondition_type: WEAPONS_ARE_DESTROYED_UPON_ENTERING_SHOP
     unlocks_item_type: RICOCHET
   - type: GOLEM
-    hat_type: GOPNIK
+    hat_type: MILKER
     hat_color: 0xb8560fff
     layer_colors:
       - 0xefcb84ff # head
@@ -4893,7 +4893,7 @@ builds: # {  ###
         value: -50
     unlocks_item_type: WOLF_HELMET
   - type: LEARNER
-    hat_type: GOPNIK
+    hat_type: MILKER
     hat_color: 0xa13d77ff
     layer_colors:
       - 0xefcb84ff # head
@@ -5140,6 +5140,11 @@ hats:
     anchor:
       x: 0.52
       y: -1.78
+  - type: MILKER
+    texture_id: game_hat_milker
+    anchor:
+      x: 0.62
+      y: -1.42
 player_layer_texture_ids:
   - game_player_layer_head
   - game_player_layer_feet
