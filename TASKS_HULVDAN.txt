@@ -32,8 +32,15 @@ x android works good
 x web sfx loading 14.2s -> 0.705s (-95.04%, x20.16)
 x молочник в игре такой же как на баннере
 x fix vignette
+x show "infinite mode is in development"
 
+* banner: https://chatgpt.com/c/695687fa-933c-8321-9707-2b8f916859cc
+  """
+  characters must be clearly recognizable when player looks from afar - they don't really "pop up" with such bright background
+  also remove aim cross
+  """
 * реклама при окончании волны
+* AB тест не 60, а 45 секунд длительность
 * test yandex build opens good on ipad
 *
 * mobile optimization:

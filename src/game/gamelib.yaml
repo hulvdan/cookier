@@ -343,6 +343,7 @@ effect_condition_variables: # {  ###
 effect_conditions: # {  ###
   - type: DEFAULT_GET__STAT
   - type: SMALLEST_DIFFICULTY_DESCRIPTION
+  - type: HIGHEST_DIFFICULTY_INFINITE_MODE
   - type: STAT__EVERY__X__KILLED_ENEMIES
   - type: END_OF_THE_WAVE_GET__STAT
   - type: START_OF_THE_WAVE_GET__STAT
@@ -4589,6 +4590,7 @@ difficulties: # {  ###
         value: 35
       - stat_type: ENEMY_SPEED
         value: 12
+      - effectcondition_type: HIGHEST_DIFFICULTY_INFINITE_MODE
         # - type: D3
         #   texture_id: ui_difficulty_3
         #   effects:

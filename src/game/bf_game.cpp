@@ -7415,7 +7415,12 @@ void DoUI() {
           }
         }
 
-        BF_CLAY_TEXT_BROKEN_LOCALIZED(fb_cond->name_locale());
+        auto color = palTextWhite;
+        if (fb_effect->effectcondition_type()
+            == EffectConditionType_HIGHEST_DIFFICULTY_INFINITE_MODE)
+          color = palTextYellow;
+
+        BF_CLAY_TEXT_BROKEN_LOCALIZED(fb_cond->name_locale(), {.color = color});
 
         FlexEnd();
       }

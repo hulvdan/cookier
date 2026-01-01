@@ -54,6 +54,9 @@ UI_SURE_NEW_RUN;Вы уверены, что хотите Начать Новый
 UI_SURE_QUIT;Вы уверены, что хотите Выйти?;Are you sure you want to Quit?;
 EFFECT_DEFAULT_GET__STAT;{MODIFIER} {STAT};{MODIFIER} {STAT};
 EFFECT_SMALLEST_DIFFICULTY_DESCRIPTION;Лучшая сложность для обучения игре;The best difficulty for getting the hang of the game;
+EFFECT_HIGHEST_DIFFICULTY_INFINITE_MODE;"
+Бесконечный режим в разработке";"
+Infinite mode is currently in development";
 EFFECT_STAT__EVERY__X__KILLED_ENEMIES;{MODIFIER} {STAT} каждые {X} убийств;{MODIFIER} {STAT} every {X} kills;
 EFFECT_START_OF_THE_WAVE_GET__STAT;{MODIFIER} {STAT} в начале волны;{MODIFIER} {STAT} at the start of the wave;
 EFFECT_END_OF_THE_WAVE_GET__STAT;{MODIFIER} {STAT} в конце волны;{MODIFIER} {STAT} at the end of the wave;
