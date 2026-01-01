@@ -9,7 +9,7 @@
 #ifdef SDL_PLATFORM_WIN32
 #  define BF_PROFILING (BF_DEBUG && 0)
 #else
-#  define BF_PROFILING (0)
+#  define BF_PROFILING (1)
 #endif
 
 #define BF_ENABLE_ASSERTS (1 && BF_DEBUG)

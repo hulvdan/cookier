@@ -572,7 +572,7 @@ struct EngineData {
 
       bool _works                = false;
       bool _started              = false;
-      bool _sdlFailedToInitAudio = false;
+      bool _sdlFailedToInitAudio = false;  // NOTE: Used when MA_NO_DEVICE_IO is defined.
 
       bool CanPlaySound() const {
         return _works && _started && !_sdlFailedToInitAudio;
@@ -592,7 +592,9 @@ struct EngineData {
 
       Vector<_LaunchedSound> launchedSounds = {};
 
-      SDL_AudioStream* stream = {};
+#ifdef MA_NO_DEVICE_IO
+      SDL_AudioStream* sdlStream = {};
+#endif
     } _soundManager = {};
 
     struct ShouldGameplayStop {
@@ -695,8 +697,12 @@ void _StartAudioEngine() {  ///
   if (m._started)
     return;
 
+  ZoneScoped;
+
   m._started = true;
-  SDL_ResumeAudioStreamDevice(m.stream);
+#ifdef MA_NO_DEVICE_IO
+  SDL_ResumeAudioStreamDevice(m.sdlStream);
+#endif
 }
 
 void _ReloadSounds() {  ///
@@ -707,6 +713,8 @@ void _ReloadSounds() {  ///
 
   if (ge.meta._soundManager._sdlFailedToInitAudio)
     return;
+
+  ZoneScoped;
 
   LOGI("_ReloadSounds...");
   DEFER {
@@ -1062,6 +1070,15 @@ void GameReady() {  ///
 #ifdef BF_PLATFORM_WebYandex
   // clang-format off
   EM_ASM({ window.ysdk.features.LoadingAPI.ready(); });
+  // clang-format on
+#endif
+
+#ifdef BF_PLATFORM_Web
+  // clang-format off
+  EM_ASM({
+      performance.mark("GameReady");
+      performance.measure("Game Startup", "jsBeforeWASM", "GameReady");
+  });
   // clang-format on
 #endif
 }
@@ -4149,7 +4166,7 @@ struct FBFlattened {  ///
 #  include "hands/bf_emscripten_binds.cpp"
 #endif
 
-struct EngineAppState {
+struct EngineAppState {  ///
   SDL_Window* window               = {};
   bool        resizedWindow        = false;
   Vector2     sizeToPixelSizeRatio = {};
@@ -4233,12 +4250,13 @@ void UpdateWindowSizeData(SDL_Window* window) {  ///
   ge.meta.screenSize              = {pw, ph};
 }
 
+#ifdef MA_NO_DEVICE_IO
 void FillSDLAudioStreamCallback(
   void*            _userdata,
   SDL_AudioStream* stream,
   int              additionalRequestedBytes,
   int              totalRequestedBytes
-) {
+) {  ///
   auto& m = ge.meta._soundManager;
   if (!m.CanPlaySound())
     return;
@@ -4261,12 +4279,13 @@ void FillSDLAudioStreamCallback(
   if (ma_engine_read_pcm_frames(&m.engine, buffer, bufferSizeInFrames, &readFrames)
       == MA_SUCCESS)
   {
-    if (!SDL_PutAudioStreamData(m.stream, buffer, (int)readFrames * frameBytesSize))
+    if (!SDL_PutAudioStreamData(stream, buffer, (int)readFrames * frameBytesSize))
       INVALID_PATH;
   }
   else
     INVALID_PATH;
 }
+#endif
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 void EmscriptenLog(
@@ -4319,12 +4338,10 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
   EM_ASM({
     let canvas = document.createElement('canvas');
     let gl     = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    if (gl) {
+    if (gl)
       console.log("GL_VERSION: " + gl.getParameter(gl.VERSION));
-    }
-    else {
+    else
       console.log("No WebGL context available.");
-    }
   });
   // clang-format on
 #endif
@@ -4344,11 +4361,11 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
         .freq     = 44100,
       };
 
-      auto& m  = ge.meta._soundManager;
-      m.stream = SDL_OpenAudioDeviceStream(
+      auto& m     = ge.meta._soundManager;
+      m.sdlStream = SDL_OpenAudioDeviceStream(
         SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, FillSDLAudioStreamCallback, nullptr
       );
-      if (!m.stream) {
+      if (!m.sdlStream) {
         LOGE("Failed to open SDL audio device.");
         INVALID_PATH;
       }
@@ -4602,7 +4619,7 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
   case SDL_EVENT_QUIT:
     return SDL_APP_SUCCESS;
 
-  case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+  case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {  ///
     ge.meta.quitRequested = true;
   } break;
 
@@ -4840,11 +4857,13 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
 
 void SDL_AppQuit(void* _appstate, SDL_AppResult _result) {  ///
   // Shutting down audio.
+#ifdef MA_NO_DEVICE_IO
+  SDL_DestroyAudioStream(m.sdlStream);
+  m.sdlStream = {};
+  SDL_QuitSubSystem(SDL_INIT_AUDIO);
+#endif
   auto& m = ge.meta._soundManager;
   ma_engine_uninit(&m.engine);
-  SDL_DestroyAudioStream(m.stream);
-  m.stream = {};
-  SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
   ImGui_ImplSDL3_Shutdown();
   ImGui_Implbgfx_Shutdown();

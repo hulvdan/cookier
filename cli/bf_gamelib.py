@@ -1301,16 +1301,34 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         variables = {
             BuildPlatform.Web: {
                 "EXTEND_BODY_START": "",
+                "EXTEND_BEFORE_WASM": """
+                    performance.mark("jsBeforeWASM");
+                """,
                 "EXTEND_PRE_RUN": """
                     function() {
+                        performance.mark("jsPreRun");
+                    },
+                    function() {
+                        performance.mark("jsWebsocketConnecting");
+
                         const dep = "websocket";
                         Module.addRunDependency(dep);
 
                         const wsUrl = "ws://THIS_PC_LOCAL_IP:8003";
                         const LOG_WS = new WebSocket(wsUrl);
-                        LOG_WS.onopen = () => { Module.removeRunDependency(dep); };
-                        LOG_WS.onerror = (err) => { Module.removeRunDependency(dep); };
-                        LOG_WS.onclose = (err) => { Module.removeRunDependency(dep); };
+
+                        const finish = () => {
+                            performance.mark("jsWebsocketConnectionFinished");
+                            performance.measure(
+                                "Websocket Connection",
+                                "jsWebsocketConnecting",
+                                "jsWebsocketConnectionFinished"
+                            );
+                            Module.removeRunDependency(dep);
+                        };
+                        LOG_WS.onopen = finish;
+                        LOG_WS.onerror = (err) => { finish(); };
+                        LOG_WS.onclose = (err) => { finish(); };
 
                         const oldLog = console.log;
                         console.log = (...args) => {
@@ -1336,21 +1354,28 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                         window.addEventListener("unhandledrejection", (e) => {
                           console.error("unhandledrejection:", e.reason);
                         });
+
                     },
                 """.replace("THIS_PC_LOCAL_IP", get_local_ip()),
                 "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
-                "EXTEND_MAIN_SCRIPT": "",
+                "EXTEND_MAIN_SCRIPT": """
+                    const moduleReady = new Promise(resolve => {
+                        Module.onRuntimeInitialized = resolve;
+                    });
+
+                    (async () => {
+                        await moduleReady;
+                        performance.mark("jsRuntimeInitialized");
+                        performance.measure(
+                            "WASM Startup", "jsBeforeWASM", "jsRuntimeInitialized"
+                        );
+                    })();
+                """,
                 "EXTEND_HTML_END": "",
-                # "EXTEND_HTML_END": """
-                #     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-                #     <script>
-                #         eruda.init();
-                #         eruda.position({x: 0, y: 0});
-                #     </script>
-                # """,
             },
             BuildPlatform.WebItch: {
                 "EXTEND_BODY_START": "",
+                "EXTEND_BEFORE_WASM": "",
                 "EXTEND_PRE_RUN": "",
                 "EXTEND_POST_RUN": NOT_YANDEX_WEB_POST_RUN,
                 "EXTEND_MAIN_SCRIPT": "",
@@ -1377,6 +1402,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                     "YANDEX_METRIC_COUNTER_ID",
                     str(game_settings.yandex_metrica_counter_id),
                 ),
+                "EXTEND_BEFORE_WASM": "",
                 "EXTEND_PRE_RUN": "",
                 "EXTEND_POST_RUN": "",
                 "EXTEND_MAIN_SCRIPT": """

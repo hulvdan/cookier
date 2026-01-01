@@ -364,6 +364,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
             )
             target_link_options(game
                 PRIVATE
+                    --profiling-funcs
                     # "-sSAFE_HEAP=1"
                     # "-sASSERTIONS=2"
                     # "-gsource-map"
