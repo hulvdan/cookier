@@ -3,12 +3,17 @@ import asyncio
 import datetime
 import os
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 import bf_lib
 import websockets
 from bf_game import *  # noqa
-from bf_gamelib import do_generate, regenerate_shaders
+from bf_gamelib import (
+    do_generate,
+    get_sounds_that_reaper_would_export,
+    regenerate_shaders,
+)
 from bf_lib import (
     ALLOWED_BUILDS,
     BUTLER_PATH,
@@ -472,6 +477,13 @@ def banner(filepath: Path) -> None:
         "utf-8",
     )
     # }
+
+
+@command
+def list_sounds() -> None:
+    a = Counter()  # type: ignore[var-annotated]
+    a.update(x.split("__", 1)[0] for x in get_sounds_that_reaper_would_export())
+    print(a)
 
 
 def main() -> None:

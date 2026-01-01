@@ -105,6 +105,7 @@ function rebuild_tasks()
             end,
         },
         { "w_temp", cli_command("temp") },
+        -- { "list_sounds", cli_command("list_sounds") },
         -- { "z_clean_cmake", [[del /f/s/q .cmake]] },
         -- { "x_clean_temp", [[del /f/s/q .temp]] },
         -- ----------
