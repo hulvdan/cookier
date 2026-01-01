@@ -6423,7 +6423,7 @@ void DoUI() {
 
   bool _alreadyHandledClickOrTouch = false;
 
-  LAMBDA (bool, touched, (bool preventFutureDispatch = true)) {  ///
+  LAMBDA (bool, touchedThisComponent, (bool preventFutureDispatch = true)) {  ///
     if (draw)
       return false;
     if (_alreadyHandledClickOrTouch)
@@ -6436,7 +6436,7 @@ void DoUI() {
     return result;
   };
 
-  LAMBDA (bool, clickOrTouchPressed, (bool preventFutureDispatch = true)) {  ///
+  LAMBDA (bool, clickedOrTouchedThisComponent, (bool preventFutureDispatch = true)) {  ///
     if (draw)
       return false;
     if (_alreadyHandledClickOrTouch)
@@ -6586,7 +6586,7 @@ void DoUI() {
         ButtonSFX(draw, data.id, true);
 
       if (!draw && isCurrentContextActive()) {
-        result |= clickOrTouchPressed();
+        result |= clickedOrTouchedThisComponent();
         if (result)
           disallowTouch();
 
@@ -6782,7 +6782,7 @@ void DoUI() {
         if (ge.events.thisFrame.Mouse())
           g.run.hideSlotDetails = false;
 
-        bool justTouched = touched(false);
+        bool justTouched = touchedThisComponent(false);
         if (justTouched)
           touchedInsideSlot = true;
         bool justHidDetailsViaTouch = false;
@@ -6830,7 +6830,7 @@ void DoUI() {
     }
   };
 
-  // Closing slot details if touched outside of it.
+  // Closing slot details if touchedThisComponent outside of it.
   DEFER {                                                ///
     if (!draw                                            //
         && IsTouchPressed(ge.meta._latestActiveTouchID)  //
@@ -6976,7 +6976,7 @@ void DoUI() {
               || IsKeyDown(SDL_SCANCODE_LCTRL)
               || IsKeyDown(SDL_SCANCODE_RCTRL)
             )
-            && clickOrTouchPressed())
+            && clickedOrTouchedThisComponent())
           g.run.cheatWeaponIndex = data.weaponIndex;
 
         if (!onlyOneOrNone) {
@@ -6992,7 +6992,7 @@ void DoUI() {
           );
 
           if (isCurrentContextActive()) {
-            result |= clickOrTouchPressed();
+            result |= clickedOrTouchedThisComponent();
 
             const auto& focused = controlsContexts[currentContext].focused;
             if (focused.id && (focused.id == data.id.id)) {
@@ -8513,7 +8513,7 @@ void DoUI() {
 
         if (isSelected) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-            if (clickOrTouchPressed())
+            if (clickedOrTouchedThisComponent())
               g.run.shopActivatedModalWeaponIndex = -1;
           });
         }
@@ -8888,7 +8888,7 @@ void DoUI() {
         }}) {
           // Increasing stat by clicking on it in debug mode.
           if (stat && (ge.meta.debugEnabled || BF_DEBUG)) {
-            if (clickOrTouchPressed())
+            if (clickedOrTouchedThisComponent())
               ChangeStaticAndDynamicStatBy(stat, 1);
             if (wheel && Clay_Hovered())
               ChangeStaticAndDynamicStatBy(stat, wheel);
@@ -9475,7 +9475,7 @@ void DoUI() {
             .color = Fade(color, EaseOutQuad(g.meta.pauseButtonFadeProgress)),
           },
           [&]() BF_FORCE_INLINE_LAMBDA {
-            if (clickOrTouchPressed() && canPause) {
+            if (clickedOrTouchedThisComponent() && canPause) {
               g.meta.scheduledTogglePause = true;
               PlaySound(Sound_UI_CLICK);
             }
@@ -11217,7 +11217,7 @@ void DoUI() {
     // TODO: move inside component below? AND CHANGE `pointerCaptureMode`.
     componentOverlay(
       [&]() BF_FORCE_INLINE_LAMBDA {
-        if (clickOrTouchPressed())
+        if (clickedOrTouchedThisComponent())
           closeStats |= true;
       },
       EaseOutQuad(p)
@@ -11318,7 +11318,7 @@ void DoUI() {
             }}) {
               // Increasing stat by clicking on it in debug mode.
               if (stat && ge.meta.debugEnabled) {
-                if (clickOrTouchPressed())
+                if (clickedOrTouchedThisComponent())
                   ChangeStaticAndDynamicStatBy(stat, 1);
                 if (wheel && Clay_Hovered())
                   ChangeStaticAndDynamicStatBy(stat, wheel);
@@ -11444,7 +11444,7 @@ void DoUI() {
           } BF_CLAY_CUSTOM_END,
         }) {
           componentOverlay([&]() BF_FORCE_INLINE_LAMBDA {
-            if (clickOrTouchPressed())
+            if (clickedOrTouchedThisComponent())
               result = ConfirmModalResultType_CANCELLED;
           });
 
