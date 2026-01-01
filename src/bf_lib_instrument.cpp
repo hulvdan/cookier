@@ -6,10 +6,12 @@
 // Other stuff.
 // ============================================================
 
-#ifdef SDL_PLATFORM_WIN32
+#if defined(SDL_PLATFORM_WIN32)
 #  define BF_PROFILING (BF_DEBUG && 0)
-#else
+#elif defined(BF_PLATFORM_Web)
 #  define BF_PROFILING (1)
+#else
+#  define BF_PROFILING (0)
 #endif
 
 #define BF_ENABLE_ASSERTS (1 && BF_DEBUG)
