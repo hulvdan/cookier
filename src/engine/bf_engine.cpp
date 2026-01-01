@@ -890,9 +890,13 @@ void _ReloadSounds() {  ///
         auto fencePtr = &fence;
         if (fb->is_music())
           fencePtr = nullptr;
-        checkErr(ma_sound_init_from_file(
-          &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
-        ));
+
+        {
+          ZoneScopedN("ma_sound_init_from_file");
+          checkErr(ma_sound_init_from_file(
+            &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
+          ));
+        }
       }
     }
 
