@@ -31,6 +31,7 @@ sounds initialization - iteration 0 - 14.9s
 sounds initialization - iteration 1 -  7.2s (48%)
 sounds initialization - iteration 2 -  7.2s (48%)
 sounds initialization - iteration 3 -  7.3s
+sounds initialization - iteration 4 -  7.1s
 
 
 * startup optimization: does music make it slow?
