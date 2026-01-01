@@ -25,17 +25,22 @@ x touch: fix
   - click on achievements
   - click on top left achievement
   - CLASS SHOWS UP BUT IS SHOULDN'T
+x enable web profiling
 
-* enable web profiling
+sounds initialization - iteration 0 - 14.9s
+sounds initialization - iteration 1 -  7.2s (48%)
+sounds initialization - iteration 2 -  7.2s (48%)
+sounds initialization - iteration 3 -  7.3s
+
+
+* startup optimization: does music make it slow?
+* startup optimization: less sfx files
+* startup optimization:
+* startup optimization:
+* startup optimization:
 *
 * test yandex build opens good on ipad
 * android works good
-*
-* удержание: не давать играть на самой низкой сложности?
-* удержание: меньше волн на начальных сложностях
-* удержание:
-* удержание:
-* удержание:
 *
 * mobile optimization: don't submit excessive decorations / mobs / particles for drawing
 * mobile optimization: disable music low pass for mobile specifically
@@ -45,6 +50,12 @@ x touch: fix
 * mobile optimization:
 *
 * optimization: delay music download
+*
+* удержание: не давать играть на самой низкой сложности?
+* удержание: меньше волн на начальных сложностях
+* удержание:
+* удержание:
+* удержание:
 *
 * rate game после победы над самой высокой сложностью
 * поискать/поизучать улучшалки для икобложек

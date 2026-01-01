@@ -848,54 +848,57 @@ void _ReloadSounds() {  ///
     );
   }
 
-  for (auto fb : *fb_sounds) {
-    u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
-    if (fb->pitch_min() == fb->pitch_max())
-      customFlags |= MA_SOUND_FLAG_NO_PITCH;
+  {
+    ZoneScopedN("Sounds initialization");
 
-    static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
-    u32 flags = MA_SOUND_FLAG_ASYNC | MA_SOUND_FLAG_NO_SPATIALIZATION | customFlags;
-    ma_sound_group* group = nullptr;
+    for (auto fb : *fb_sounds) {
+      u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
+      if (fb->pitch_min() == fb->pitch_max())
+        customFlags |= MA_SOUND_FLAG_NO_PITCH;
 
-    if (fb->is_music()) {
-      flags |= MA_SOUND_FLAG_STREAM;
-      group = &m.groupMusic;
-    }
-    else {
-      flags |= MA_SOUND_FLAG_DECODE;
-      group = &m.groupSFX;
-    }
+      static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
+      u32 flags = MA_SOUND_FLAG_ASYNC | MA_SOUND_FLAG_NO_SPATIALIZATION | customFlags;
+      ma_sound_group* group = nullptr;
 
-    *m.soundVariationRanges.Add() = {
-      .start = m.soundVariationsLoadedFromFiles.count,
-      .end   = m.soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
-    };
+      if (fb->is_music()) {
+        flags |= MA_SOUND_FLAG_STREAM;
+        group = &m.groupMusic;
+      }
+      else {
+        flags |= MA_SOUND_FLAG_DECODE;
+        group = &m.groupSFX;
+      }
 
-    int variationIndex = -1;
-    for (auto fb_variation : *fb->variations()) {
-      variationIndex++;
-
-      auto slot = m.soundVariationsLoadedFromFiles.Add();
-
-      *slot = {
-        .filepath       = fb_variation->filepath()->c_str(),
-        .soundHashValue = fb->enum_value_id(),
-        .variation      = variationIndex,
-        .flags          = customFlags,
+      *m.soundVariationRanges.Add() = {
+        .start = m.soundVariationsLoadedFromFiles.count,
+        .end   = m.soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
       };
 
-      auto fencePtr = &fence;
-      if (fb->is_music())
-        fencePtr = nullptr;
-      checkErr(ma_sound_init_from_file(
-        &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
-      ));
+      int variationIndex = -1;
+      for (auto fb_variation : *fb->variations()) {
+        variationIndex++;
+
+        auto slot = m.soundVariationsLoadedFromFiles.Add();
+
+        *slot = {
+          .filepath       = fb_variation->filepath()->c_str(),
+          .soundHashValue = fb->enum_value_id(),
+          .variation      = variationIndex,
+          .flags          = customFlags,
+        };
+
+        auto fencePtr = &fence;
+        if (fb->is_music())
+          fencePtr = nullptr;
+        checkErr(ma_sound_init_from_file(
+          &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
+        ));
+      }
     }
+
+    ASSERT(oldBase == m.soundVariationsLoadedFromFiles.base);
+    checkErr(ma_fence_wait(&fence));
   }
-
-  ASSERT(oldBase == m.soundVariationsLoadedFromFiles.base);
-
-  checkErr(ma_fence_wait(&fence));
 
   m._works = !_errored;
   LOGI("_ReloadSounds. manager._works = %d", (int)m._works);

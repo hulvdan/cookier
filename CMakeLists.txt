@@ -50,6 +50,44 @@ endif()
 # BF_PLATFORM_Win
 add_compile_definitions("BF_PLATFORM_${PLATFORM}=1")
 
+if ("${PLATFORM}" MATCHES "^Web")
+    if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
+    else()
+        set(CMAKE_C_FLAGS_RELEASE "-O3 -flto -s WASM=1 -msimd128 -s ASSERTIONS=0 -s SAFE_HEAP=0")
+        set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto -s WASM=1 -msimd128 -s ASSERTIONS=0 -s SAFE_HEAP=0")
+    endif()
+endif()
+
+add_library(optimization INTERFACE)
+if ("${PLATFORM}" MATCHES "^Web")
+    if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
+        target_compile_options(optimization INTERFACE
+            "-O1"
+            "-oASSERTIONS=1"
+            "-fsanitize=undefined"
+        )
+        target_link_options(optimization INTERFACE
+            "-sASSERTIONS=1"
+            "-g"
+            "-O1"
+            "-fsanitize=undefined"
+            --profiling-funcs
+        )
+    else()
+        target_compile_options(optimization INTERFACE
+            -msimd128
+            # -mrelaxed-simd  # WARNING: DANGEROUS!
+            -O3
+            "-oASSERTIONS=0"
+        )
+        target_link_options(optimization INTERFACE
+            -O3
+            "--closure 1"
+            "-sASSERTIONS=0"
+        )
+    endif()
+endif()
+
 # vendor and codegen.
 #-----------------------------------------------------------------------------------
 add_library(vendor_and_codegen INTERFACE)
@@ -152,6 +190,7 @@ endif()
 # sdl.
 #-----------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/SDL3")
+# target_link_libraries(SDL3-static PRIVATE optimization)
 
 # box2d.
 #-----------------------------------------------------------------------------------
@@ -160,6 +199,7 @@ set_target_properties(box2d
     PROPERTIES
         COMPILE_WARNING_AS_ERROR OFF
 )
+# target_link_libraries(box2d PRIVATE optimization)
 
 # zstd.
 #-----------------------------------------------------------------------------------
@@ -168,6 +208,7 @@ add_library(zstd STATIC
     "${CMAKE_SOURCE_DIR}/vendor/zstd/zstd.c"
 )
 target_include_directories(zstd PUBLIC "${CMAKE_SOURCE_DIR}/vendor/zstd")
+target_link_libraries(zstd PRIVATE optimization)
 
 # basisu_transcoder.
 #-----------------------------------------------------------------------------------
@@ -179,7 +220,7 @@ target_include_directories(basisu_transcoder
     PUBLIC
         "${CMAKE_SOURCE_DIR}/vendor/basis_universal/transcoder"
 )
-target_link_libraries(basisu_transcoder PRIVATE zstd)
+target_link_libraries(basisu_transcoder PRIVATE zstd optimization)
 
 if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
     target_compile_definitions(basisu_transcoder
@@ -191,6 +232,7 @@ endif()
 # tracy.
 #-----------------------------------------------------------------------------------
 add_subdirectory(vendor/tracy)
+target_compile_definitions(TracyClient PRIVATE optimization)
 
 # stb_vorbis.
 #-----------------------------------------------------------------------------------
@@ -198,8 +240,14 @@ add_library(stb_vorbis STATIC
     "${CMAKE_SOURCE_DIR}/vendor/stb_vorbis.c"
 )
 target_compile_definitions(stb_vorbis
+    # PUBLIC
+    #     STB_VORBIS_NO_PULLDATA_API
     INTERFACE
         STB_VORBIS_HEADER_ONLY
+)
+target_link_libraries(stb_vorbis PRIVATE optimization)
+set_target_properties(stb_vorbis PROPERTIES
+    INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
 )
 
 # miniaudio.
@@ -216,6 +264,10 @@ target_link_libraries(miniaudio
     PRIVATE
         vendor_and_codegen
         stb_vorbis
+        optimization
+)
+set_target_properties(miniaudio PROPERTIES
+    INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
 )
 
 # target_compile_definitions(miniaudio PUBLIC MA_NO_DEVICE_IO)
@@ -226,6 +278,7 @@ target_link_libraries(miniaudio
 # readerwriterqueue.
 #-----------------------------------------------------------------------------------
 add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/readerwriterqueue")
+# target_link_libraries(readerwriterqueue PRIVATE optimization)
 
 # # freetype.
 # #-----------------------------------------------------------------------------------
@@ -253,7 +306,8 @@ target_include_directories(imgui
 target_link_libraries(imgui
     PUBLIC
         SDL3-static
-    # PRIVATE
+    PRIVATE
+        optimization
     #     freetype
 )
 target_compile_definitions(imgui
@@ -278,6 +332,7 @@ target_link_libraries(game
         readerwriterqueue
         vendor_and_codegen
         zstd
+        optimization
 )
 if ("${PLATFORM}" STREQUAL "Win")
     target_link_libraries(game
@@ -319,34 +374,13 @@ elseif ("${PLATFORM}" MATCHES "^Web")
     )
 
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
-        target_compile_options(game
-            PRIVATE
-                "-O1"
-                "-oASSERTIONS=1"
-                "-fsanitize=undefined"
-        )
         target_link_options(game
             PRIVATE
-                "-sASSERTIONS=1"
-                "-g"
-                "-O1"
                 "-sFORCE_FILESYSTEM=1"
                 "--shell-file=${CMAKE_SOURCE_DIR}/vendor/shell_debug.html"
                 # "-sSAFE_HEAP=1"
-                "-fsanitize=undefined"
         )
     else()
-        target_compile_options(game
-            PRIVATE
-                "-O3"
-                "-oASSERTIONS=0"
-        )
-        target_link_options(game
-            PRIVATE
-                "-O3"
-                "--closure 1"
-                "-sASSERTIONS=0"
-        )
         if ("${PLATFORM}" STREQUAL "WebItch")
             target_link_options(game PRIVATE
                 "--shell-file=${CMAKE_SOURCE_DIR}/.temp/shell_release_itch.html")
@@ -364,7 +398,6 @@ elseif ("${PLATFORM}" MATCHES "^Web")
             )
             target_link_options(game
                 PRIVATE
-                    --profiling-funcs
                     # "-sSAFE_HEAP=1"
                     # "-sASSERTIONS=2"
                     # "-gsource-map"
