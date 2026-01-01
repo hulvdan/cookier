@@ -53,8 +53,8 @@ add_compile_definitions("BF_PLATFORM_${PLATFORM}=1")
 if ("${PLATFORM}" MATCHES "^Web")
     if (CMAKE_CONFIGURATION_TYPES STREQUAL "Debug")
     else()
-        set(CMAKE_C_FLAGS_RELEASE "-O3 -flto -s WASM=1 -msimd128 -s ASSERTIONS=0 -s SAFE_HEAP=0")
-        set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto -s WASM=1 -msimd128 -s ASSERTIONS=0 -s SAFE_HEAP=0")
+        set(CMAKE_C_FLAGS_RELEASE "-O3 -flto -s WASM=1 -msimd128 -s ASSERTIONS=0 -s SAFE_HEAP=0 -fno-exceptions -fno-rtti")
+        set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto -s WASM=1 -msimd128 -s ASSERTIONS=0 -s SAFE_HEAP=0 -fno-exceptions -fno-rtti")
     endif()
 endif()
 
@@ -269,7 +269,12 @@ target_link_libraries(miniaudio
 set_target_properties(miniaudio PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
 )
-
+target_compile_definitions(miniaudio PUBLIC
+    MA_NO_FLAC
+    MA_NO_MP3
+    MA_NO_GENERATION
+    MA_NO_ENCODING
+)
 # target_compile_definitions(miniaudio PUBLIC MA_NO_DEVICE_IO)
 # if ("${PLATFORM}" MATCHES "^Web")
 #     target_compile_definitions(miniaudio PUBLIC MA_NO_DEVICE_IO)
