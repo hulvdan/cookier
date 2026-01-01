@@ -26,29 +26,18 @@ x touch: fix
   - click on top left achievement
   - CLASS SHOWS UP BUT IS SHOULDN'T
 x enable web profiling
+x startup optimization: does music make it slow?
+x enabled optimization _ReloadSounds() -52% time
+x android works good
 
-sounds initialization - iteration 0 - 14.9s
-sounds initialization - iteration 1 -  7.2s (48%)
-sounds initialization - iteration 2 -  7.2s (48%)
-sounds initialization - iteration 3 -  7.3s
-sounds initialization - iteration 4 -  7.1s
-
-
-* startup optimization: does music make it slow?
-* startup optimization: less sfx files
-* startup optimization:
-* startup optimization:
-* startup optimization:
-*
 * test yandex build opens good on ipad
-* android works good
 *
-* mobile optimization: don't submit excessive decorations / mobs / particles for drawing
-* mobile optimization: disable music low pass for mobile specifically
 * mobile optimization:
 * mobile optimization:
 * mobile optimization:
-* mobile optimization:
+* startup optimization:
+* startup optimization:
+* startup optimization:
 *
 * optimization: delay music download
 *

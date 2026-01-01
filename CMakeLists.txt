@@ -75,8 +75,6 @@ if ("${PLATFORM}" MATCHES "^Web")
         )
     else()
         target_compile_options(optimization INTERFACE
-            -msimd128
-            # -mrelaxed-simd  # WARNING: DANGEROUS!
             -O3
             "-oASSERTIONS=0"
         )
