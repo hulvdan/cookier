@@ -9530,7 +9530,9 @@ void DoUI() {
   }
 
   // Start button for web (to enable audio).
-  if (!ge.meta._soundManager.unlocked.IsSet()) {  ///
+  if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
+      && !ge.meta._soundManager.unlocked.IsSet())
+  {  ///
     CLAY({
       .floating{
         .offset{0, 130},
