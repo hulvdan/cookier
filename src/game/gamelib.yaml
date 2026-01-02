@@ -4590,7 +4590,7 @@ difficulties: # {  ###
         value: 35
       - stat_type: ENEMY_SPEED
         value: 12
-      - effectcondition_type: HIGHEST_DIFFICULTY_INFINITE_MODE
+        # - effectcondition_type: HIGHEST_DIFFICULTY_INFINITE_MODE
         # - type: D3
         #   texture_id: ui_difficulty_3
         #   effects:
