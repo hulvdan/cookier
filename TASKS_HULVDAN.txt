@@ -18,28 +18,9 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * ФИКСЫ
 * БАЛАНС
 
-x touch: fix: can upgrade/sell weapon
-x touch: fix
-  - IN SHOP
-  - click on class
-  - click on achievements
-  - click on top left achievement
-  - CLASS SHOWS UP BUT IS SHOULDN'T
-x enable web profiling
-x startup optimization: does music make it slow?
-x enabled optimization _ReloadSounds() -52% time
-x android works good
-x web sfx loading 14.2s -> 0.705s (-95.04%, x20.16)
-x молочник в игре такой же как на баннере
-x fix vignette
-x show "infinite mode is in development"
+x icon + banner
 
 * fix strange mushroom in shop when buying +0% xp gain
-* banner: https://chatgpt.com/c/695687fa-933c-8321-9707-2b8f916859cc
-  """
-  characters must be clearly recognizable when player looks from afar - they don't really "pop up" with such bright background
-  also remove aim cross
-  """
 * реклама при окончании волны
 * AB тест не 60, а 45 секунд длительность
 * test yandex build opens good on ipad
