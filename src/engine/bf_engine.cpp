@@ -600,8 +600,8 @@ struct EngineData {
       bool windowIsInactive   = false;
       bool windowIsNotFocused = false;
       bool adIsPlaying        = false;
-      bool emscriptenFocused  = false;
-      bool emscriptenVisible  = false;
+      bool emscriptenFocused  = true;
+      bool emscriptenVisible  = true;
 
       bool ShouldStop() const {
         return windowIsInactive       //
