@@ -3018,8 +3018,8 @@ void InitEngine() {  ///
         (document.hidden || (document.visibilityState === "hidden")) ? 0 : 1
       );
     });
-    window.addEventListener("blur", () => { Module.fromJS_setWindowFocused(0); });
-    window.addEventListener("focus", () => { Module.fromJS_setWindowFocused(1); });
+    // window.addEventListener("blur", () => { Module.fromJS_setWindowFocused(0); });
+    // window.addEventListener("focus", () => { Module.fromJS_setWindowFocused(1); });
   });
   // clang-format on
 #endif
