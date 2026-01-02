@@ -44,7 +44,6 @@
 
 #include "bf_version.cpp"
 #include "hands/bf_codegen.cpp"
-#include "engine/bf_engine_config.cpp"
 #include "flatbuffers/bf_save_generated.h"
 
 // Functions that MUST be implemented by the user of the engine:
@@ -690,19 +689,27 @@ void _StartAudioEngine() {  ///
     LOGI("_StartAudioEngine: BF_DISABLE_AUDIO");
     return;
   }
-  if (ge.meta._soundManager._sdlFailedToInitAudio)
-    return;
-
   auto& m = ge.meta._soundManager;
   if (m._started)
+    return;
+  if (!m._works)
+    return;
+  if (m._sdlFailedToInitAudio)
     return;
 
   ZoneScoped;
 
-  m._started = true;
 #ifdef MA_NO_DEVICE_IO
   SDL_ResumeAudioStreamDevice(m.sdlStream);
 #endif
+  m._started = true;
+}
+
+void _OnMiniaudioNotification(const ma_device_notification* notification) {  ///
+  if (notification->type == ma_device_notification_type_unlocked) {
+    LOGI("_OnMiniaudioNotification: unlocked");
+    _StartAudioEngine();
+  }
 }
 
 void _ReloadSounds() {  ///
@@ -760,6 +767,10 @@ void _ReloadSounds() {  ///
   config.noDevice   = MA_TRUE;
   config.channels   = 2;
   config.sampleRate = 44100;
+#endif
+
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+  config.notificationCallback = _OnMiniaudioNotification;
 #endif
 
   bool highLatency = false;
@@ -907,24 +918,7 @@ void _ReloadSounds() {  ///
   m._works = !_errored;
   LOGI("_ReloadSounds. manager._works = %d", (int)m._works);
 
-  if (couldPlaySound && m._works)
-    _StartAudioEngine();
-}
-
-void _StartAudioOnce() {  ///
-  if (!ge.meta._soundManager._works)
-    return;
-
-  static bool once = false;
-  if (once)
-    return;
-  once = true;
-
-  LOGI("_StartAudioOnce...");
-
   _StartAudioEngine();
-
-  LOGI("_StartAudioOnce... Finished!");
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
@@ -2997,26 +2991,6 @@ void SetMusicLowpassFactor(f32 factor) {  ///
     INVALID_PATH;
 }
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
-bool _OnEmscriptenClick(
-  int                         eventType,
-  const EmscriptenMouseEvent* _event,
-  void*                       _userData
-) {  ///
-  _StartAudioOnce();
-  return false;
-}
-
-bool _OnEmscriptenTouchEnd(
-  int                         eventType,
-  const EmscriptenTouchEvent* _event,
-  void*                       _userData
-) {  ///
-  _StartAudioOnce();
-  return false;
-}
-#endif
-
 void InitEngine() {  ///
   ZoneScopedN("InitEngine");
 
@@ -3113,15 +3087,6 @@ void InitEngine() {  ///
   ge.meta.uniformTexture = bgfx::createUniform("u_texture", bgfx::UniformType::Sampler);
 
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
-
-#ifdef SDL_PLATFORM_EMSCRIPTEN
-  if (emscripten_set_click_callback("#canvas", 0, false, _OnEmscriptenClick)
-      != EMSCRIPTEN_RESULT_SUCCESS)
-    INVALID_PATH;
-  if (emscripten_set_touchend_callback("#canvas", 0, false, _OnEmscriptenTouchEnd)
-      != EMSCRIPTEN_RESULT_SUCCESS)
-    INVALID_PATH;
-#endif
 
   LOGI("Initialized engine");
 }

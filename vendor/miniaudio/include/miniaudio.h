@@ -42336,16 +42336,21 @@ static ma_result ma_context_init__webaudio(ma_context* pContext, const ma_contex
                         device.webaudio != null &&
                         device.state === miniaudio.device_state.started) {
 
-                        device.webaudio.resume().then(() => {
-                            _ma_device__on_notification_unlocked(device.pDevice);
-                        },
-                        (error) => {console.error("Failed to resume audiocontext", error);
-                        });
+                        device.webaudio.resume().then(
+                            () => {
+                                if (device.webaudio.state === "running") {
+                                    _ma_device__on_notification_unlocked(device.pDevice);
+                                    miniaudio.unlock_event_types.map(function(event_type) {
+                                        document.removeEventListener(event_type, miniaudio.unlock, true);
+                                    });
+                                }
+                            },
+                            (error) => {
+                                console.error("Failed to resume audiocontext", error);
+                            }
+                        );
                     }
                 }
-                miniaudio.unlock_event_types.map(function(event_type) {
-                    document.removeEventListener(event_type, miniaudio.unlock, true);
-                });
             };
 
             miniaudio.unlock_event_types.map(function(event_type) {
