@@ -23,6 +23,7 @@ x safari ipad guarantee audio starts
 x tried debugging android - this shit doesn't work
 
 * FIX fromJS_setDeviceType is not a function
+* fix android too load sound start
 
 * test android YANDEX link with KIWI BROWSER AND EXTENSIONS
   WHY YANDEX DOESN'T GET OPENED

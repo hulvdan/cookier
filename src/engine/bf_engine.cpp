@@ -601,12 +601,14 @@ struct EngineData {
       bool windowIsNotFocused   = false;
       bool adIsPlaying          = false;
       bool emscriptenWindowBlur = false;
+      bool emscriptenNotVisible = false;
 
       bool ShouldStop() const {
-        return windowIsInactive       //
-               || windowIsNotFocused  //
-               || adIsPlaying         //
-               || emscriptenWindowBlur;
+        return windowIsInactive         //
+               || windowIsNotFocused    //
+               || adIsPlaying           //
+               || emscriptenWindowBlur  //
+               || emscriptenNotVisible;
       }
     } shouldGameplayStop;
 
@@ -926,6 +928,10 @@ void _ReloadSounds() {  ///
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
+
+void fromJS_setVisible(bool visible) {  ///
+  ge.meta.shouldGameplayStop.emscriptenNotVisible = !visible;
+}
 
 void fromJS_setWindowFocused(bool focused) {  ///
   ge.meta.shouldGameplayStop.emscriptenWindowBlur = focused;
@@ -3005,6 +3011,9 @@ void InitEngine() {  ///
 #ifdef SDL_PLATFORM_EMSCRIPTEN
   // clang-format off
   EM_ASM({
+    document.addEventListener("visibilitychange", () => {
+      Module.fromJS_setVisible(document.hidden ? false : true);
+    });
     window.addEventListener("blur", () => { Module.fromJS_setWindowFocused(false); });
     window.addEventListener("focus", () => { Module.fromJS_setWindowFocused(true); });
   });
