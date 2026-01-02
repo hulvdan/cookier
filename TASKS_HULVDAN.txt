@@ -25,9 +25,11 @@ x FIX fromJS_setDeviceType is not a function
 x test android YANDEX link with KIWI BROWSER AND EXTENSIONS
   WHY YANDEX DOESN'T GET OPENED
 x fix emscripten tab switch -> mute
+- fix android too load sound start
+x fix press volume
 
-* fix android too load sound start
 * fix strange mushroom in shop when buying +0% xp gain
+*
 * реклама при окончании волны
 * AB тест не 60, а 45 секунд длительность
 * test yandex build opens good on ipad

@@ -764,10 +764,10 @@ void _ReloadSounds() {  ///
       != MA_SUCCESS)
     INVALID_PATH;
 
-  m.engine                                  = {};
-  auto config                               = ma_engine_config_init();
-  config.pLog                               = &log;
-  config.defaultVolumeSmoothTimeInPCMFrames = 120;
+  m.engine    = {};
+  auto config = ma_engine_config_init();
+  config.pLog = &log;
+  // config.defaultVolumeSmoothTimeInPCMFrames = 120;
 
 #ifdef MA_NO_DEVICE_IO
   config.noDevice   = MA_TRUE;
