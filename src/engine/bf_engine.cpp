@@ -3014,7 +3014,9 @@ void InitEngine() {  ///
   // clang-format off
   EM_ASM({
     document.addEventListener("visibilitychange", () => {
-      Module.fromJS_setVisible(document.hidden ? 0 : 1);
+      Module.fromJS_setVisible(
+        (document.hidden || (document.visibilityState === "hidden")) ? 0 : 1
+      );
     });
     window.addEventListener("blur", () => { Module.fromJS_setWindowFocused(0); });
     window.addEventListener("focus", () => { Module.fromJS_setWindowFocused(1); });
