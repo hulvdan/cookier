@@ -1420,10 +1420,10 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
                         Module.fromJS_markYsdkLoaded();
 
                         window.ysdk.on('game_api_pause', () => {
-                            Module.fromJS_setWindowIsInactive(true);
+                            Module.fromJS_setWindowIsInactive(1);
                         });
                         window.ysdk.on('game_api_resume', () => {
-                            Module.fromJS_setWindowIsInactive(false);
+                            Module.fromJS_setWindowIsInactive(0);
                         });
 
                         var lang = 1;

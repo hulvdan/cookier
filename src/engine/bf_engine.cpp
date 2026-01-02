@@ -924,17 +924,19 @@ void _ReloadSounds() {  ///
   m._works = !_errored;
   LOGI("_ReloadSounds. manager._works = %d", (int)m._works);
 
+#ifndef SDL_PLATFORM_EMSCRIPTEN
   _StartAudioEngine();
+#endif
 }
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 
-void fromJS_setVisible(bool visible) {  ///
-  ge.meta.shouldGameplayStop.emscriptenNotVisible = !visible;
+void fromJS_setVisible(int visible) {  ///
+  ge.meta.shouldGameplayStop.emscriptenNotVisible = !(bool)visible;
 }
 
-void fromJS_setWindowFocused(bool focused) {  ///
-  ge.meta.shouldGameplayStop.emscriptenWindowBlur = focused;
+void fromJS_setWindowFocused(int focused) {  ///
+  ge.meta.shouldGameplayStop.emscriptenWindowBlur = (bool)focused;
 }
 
 void fromJS_markYsdkLoaded() {  ///
@@ -3012,10 +3014,10 @@ void InitEngine() {  ///
   // clang-format off
   EM_ASM({
     document.addEventListener("visibilitychange", () => {
-      Module.fromJS_setVisible(document.hidden ? false : true);
+      Module.fromJS_setVisible(document.hidden ? 0 : 1);
     });
-    window.addEventListener("blur", () => { Module.fromJS_setWindowFocused(false); });
-    window.addEventListener("focus", () => { Module.fromJS_setWindowFocused(true); });
+    window.addEventListener("blur", () => { Module.fromJS_setWindowFocused(0); });
+    window.addEventListener("focus", () => { Module.fromJS_setWindowFocused(1); });
   });
   // clang-format on
 #endif
@@ -3745,10 +3747,6 @@ SDL_AppResult EngineUpdate() {  ///
     reloadSounds = 0;
     _ReloadSounds();
   }
-
-#ifndef SDL_PLATFORM_EMSCRIPTEN
-  _StartAudioEngine();
-#endif
 
   static bool initialized = false;
   if (!initialized) {
