@@ -19,6 +19,7 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * БАЛАНС
 
 x icon + banner
+x safari ipad guarantee audio starts
 
 * fix strange mushroom in shop when buying +0% xp gain
 * реклама при окончании волны

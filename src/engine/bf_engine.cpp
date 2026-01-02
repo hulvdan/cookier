@@ -3721,7 +3721,7 @@ SDL_AppResult EngineUpdate() {  ///
   }
 
 #ifndef SDL_PLATFORM_EMSCRIPTEN
-  _StartAudioOnce();
+  _StartAudioEngine();
 #endif
 
   static bool initialized = false;
