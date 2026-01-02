@@ -1383,11 +1383,6 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
             },
             BuildPlatform.WebYandex: {
                 "EXTEND_BODY_START": """
-                    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-                    <script>
-                        eruda.init();
-                        eruda.position({x: 0, y: 0});
-                    </script>
                     <script src="/sdk.js"></script>
                     <!-- Yandex.Metrika counter -->
                     <script type="text/javascript">
@@ -1417,10 +1412,10 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
                     (async () => {
                         window.ysdk = await YaGames.init();
+                        await moduleReady;
                         if (window.ysdk.deviceInfo.isMobile()
                             || window.ysdk.deviceInfo.isTablet())
                             Module.fromJS_setDeviceType(1);
-                        await moduleReady;
                         window.player = await window.ysdk.getPlayer();
                         Module.fromJS_markYsdkLoaded();
 
