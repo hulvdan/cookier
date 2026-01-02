@@ -11,10 +11,14 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
   - видео для рекламы
 2025-12-31
   отправил новый баннер и иконку на AB
+2026-01-02 18:30
+  отправил v1.78
+    + mobile support
+    + startup_time
+    + critical Module loading fix
+    + chatgpt иконка и баннер
 
 ПЛАН
-* FIX TOUCH
-* OPTIMIZE MOBILE
 * ФИКСЫ
 * БАЛАНС
 
