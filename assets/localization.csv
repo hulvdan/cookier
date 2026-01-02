@@ -1,4 +1,5 @@
 id;russian;english;comment
+UI_WEB_AUDIO_BUTTON_PROMPT;Нажмите, Чтобы Начать;Tap To Start;
 UI_SECONDS_SUFFIX;с;s;
 UI_WAVE;Волна;Wave;
 UI_STATS;Характеристики;Stats;

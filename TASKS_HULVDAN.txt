@@ -30,8 +30,7 @@ x fix press volume
 - ipad chrome too big
 
 * reliably start audio
-  в геймплее надевать шапку на персонажа при клике?
-  или просто кнопка «начать игру», что отрубается после unlock-а
+  кнопка «начать игру», что отрубается после unlock-а
 *
 * fix strange mushroom in shop when buying +0% xp gain
 *

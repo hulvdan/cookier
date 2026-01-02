@@ -569,6 +569,8 @@ struct EngineData {
       Vector<_SoundVariation>        soundVariationsLoadedFromFiles = {};
       Vector<_SoundVariationRange>   soundVariationRanges           = {};
 
+      FrameVisual unlocked = {};
+
       bool _works                = false;
       bool _started              = false;
       bool _sdlFailedToInitAudio = false;  // NOTE: Used when MA_NO_DEVICE_IO is defined.
@@ -715,6 +717,8 @@ void _OnMiniaudioNotification(const ma_device_notification* notification) {  ///
   if (notification->type == ma_device_notification_type_unlocked) {
     LOGI("_OnMiniaudioNotification: unlocked");
     _StartAudioEngine();
+    if (!ge.meta._soundManager.unlocked.IsSet())
+      ge.meta._soundManager.unlocked.SetNow();
   }
 }
 
@@ -929,6 +933,8 @@ void _ReloadSounds() {  ///
   EM_ASM({ window.miniaudio.unlock(); });
   // clang-format on
 #else
+  if (!ge.meta._soundManager.unlocked.IsSet())
+    ge.meta._soundManager.unlocked.SetNow();
   _StartAudioEngine();
 #endif
 }

@@ -9529,6 +9529,27 @@ void DoUI() {
     }
   }
 
+  // Start button for web (to enable audio).
+  if (!ge.meta._soundManager.unlocked.IsSet()) {  ///
+    CLAY({
+      .floating{
+        .offset{0, 130},
+        .zIndex = zIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .attachTo = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+
+      FontBegin(&g.meta.fontUIBigOutlined);
+      BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEB_AUDIO_BUTTON_PROMPT__CAPS);
+      FontEnd();
+    }
+  }
+
   // New run.
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
     SCOPED_CONTEXT(ControlsContext_NEW_RUN);
@@ -12690,9 +12711,11 @@ void GameFixedUpdate() {
 
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
+    const bool playerCanMove = ge.meta._soundManager.unlocked.IsSet();
+
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
       // Stick controls.
-      {  ///
+      if (playerCanMove) {  ///
         auto& c = g.meta.stickControl;
 
         if (IsMousePressed(L)) {
@@ -12749,7 +12772,7 @@ void GameFixedUpdate() {
 
       if (!PLAYER_CREATURE.diedAt.IsSet()) {
         // Player actions. Moving.
-        {  ///
+        if (playerCanMove) {  ///
           Vector2 move{};
 
           if (g.meta.stickControl.controlling)
@@ -12772,7 +12795,8 @@ void GameFixedUpdate() {
         }
 
         // Player HP regen.
-        if (!PLAYER_CREATURE.diedAt.IsSet()
+        if (g.run.waveStartedAt.IsSet()         //
+            && !PLAYER_CREATURE.diedAt.IsSet()  //
             && (PLAYER_CREATURE.health < PLAYER_CREATURE.maxHealth))
         {  ///
           const auto interval = GetRegenInterval(g.run.dynamicStats[StatType_REGEN]);
@@ -15604,7 +15628,16 @@ void GameDraw() {
     DrawGroup_End();
   }
 
-  f32 walkingTutorialFade = 1;
+  f32 walkingTutorialFade = 0;
+  if (ge.meta._soundManager.unlocked.IsSet()) {
+    if (ge.meta._soundManager.unlocked._value == 0)
+      walkingTutorialFade = 1;
+    else {
+      walkingTutorialFade
+        = MIN(1, ge.meta._soundManager.unlocked.Elapsed().Progress(ANIMATION_2_FRAMES));
+    }
+  }
+
   if (g.run.walkingTutorialCompletedAt.IsSet()) {
     walkingTutorialFade = MAX(
       0, 1 - g.run.walkingTutorialCompletedAt.Elapsed().Progress(ANIMATION_1_FRAMES)
@@ -15615,8 +15648,9 @@ void GameDraw() {
   if (walkingTutorialFade > 0) {  ///
     const Color color = Fade({239, 203, 132, 255}, EaseOutQuad(walkingTutorialFade));
 
-    const f32 breathingP
-      = (sinf(2 * PI32 * (f32)(ge.meta.frameGame % (2 * FIXED_FPS)) / 2 / (f32)FIXED_FPS)
+    const auto elapsedSinceUnlock = ge.meta._soundManager.unlocked.Elapsed().value;
+    const f32  breathingP
+      = (sinf(2 * PI32 * (f32)(elapsedSinceUnlock % (2 * FIXED_FPS)) / 2 / (f32)FIXED_FPS)
          + 1)
         / 2.0f;
 
