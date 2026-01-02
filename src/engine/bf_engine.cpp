@@ -597,18 +597,18 @@ struct EngineData {
     } _soundManager = {};
 
     struct ShouldGameplayStop {
-      bool windowIsInactive     = false;
-      bool windowIsNotFocused   = false;
-      bool adIsPlaying          = false;
-      bool emscriptenWindowBlur = false;
-      bool emscriptenNotVisible = false;
+      bool windowIsInactive   = false;
+      bool windowIsNotFocused = false;
+      bool adIsPlaying        = false;
+      bool emscriptenFocused  = false;
+      bool emscriptenVisible  = false;
 
       bool ShouldStop() const {
-        return windowIsInactive         //
-               || windowIsNotFocused    //
-               || adIsPlaying           //
-               || emscriptenWindowBlur  //
-               || emscriptenNotVisible;
+        return windowIsInactive       //
+               || windowIsNotFocused  //
+               || adIsPlaying         //
+               || !emscriptenFocused  //
+               || !emscriptenVisible;
       }
     } shouldGameplayStop;
 
@@ -932,11 +932,11 @@ void _ReloadSounds() {  ///
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 
 void fromJS_setVisible(int visible) {  ///
-  ge.meta.shouldGameplayStop.emscriptenNotVisible = !(bool)visible;
+  ge.meta.shouldGameplayStop.emscriptenVisible = (bool)visible;
 }
 
 void fromJS_setWindowFocused(int focused) {  ///
-  ge.meta.shouldGameplayStop.emscriptenWindowBlur = (bool)focused;
+  ge.meta.shouldGameplayStop.emscriptenFocused = (bool)focused;
 }
 
 void fromJS_markYsdkLoaded() {  ///
