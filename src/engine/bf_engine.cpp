@@ -924,7 +924,11 @@ void _ReloadSounds() {  ///
   m._works = !_errored;
   LOGI("_ReloadSounds. manager._works = %d", (int)m._works);
 
-#ifndef SDL_PLATFORM_EMSCRIPTEN
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+  // clang-format off
+  EM_ASM({ window.miniaudio.unlock(); });
+  // clang-format on
+#else
   _StartAudioEngine();
 #endif
 }

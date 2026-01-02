@@ -27,10 +27,9 @@ x test android YANDEX link with KIWI BROWSER AND EXTENSIONS
 x fix emscripten tab switch -> mute
 - fix android too load sound start
 x fix press volume
+- ipad chrome too big
 
 * reliably start audio
-* ipad chrome too big
-* test yandex ipad
 *
 * fix strange mushroom in shop when buying +0% xp gain
 *

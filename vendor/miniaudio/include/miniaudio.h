@@ -42356,8 +42356,6 @@ static ma_result ma_context_init__webaudio(ma_context* pContext, const ma_contex
             miniaudio.unlock_event_types.map(function(event_type) {
                 document.addEventListener(event_type, miniaudio.unlock, true);
             });
-
-            miniaudio.unlock();
         }
 
         window.miniaudio.referenceCount += 1;
