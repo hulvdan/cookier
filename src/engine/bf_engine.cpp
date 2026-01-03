@@ -46,14 +46,6 @@
 #include "hands/bf_codegen.cpp"
 #include "flatbuffers/bf_save_generated.h"
 
-// Functions that MUST be implemented by the user of the engine:
-void                           GameInit();
-void                           GameInitAfterLoadingSavedata();
-void                           GameFixedUpdate();
-void                           GameDraw();
-flatbuffers::FlatBufferBuilder GameDumpStateForSaving();
-void                           GameLoad(const BFSave::Save* save);
-
 void BF_IM_ReadLine(ImGuiContext*, ImGuiSettingsHandler*, void* entry, const char* line);
 void BF_IM_WriteAll(ImGuiContext*, ImGuiSettingsHandler*, ImGuiTextBuffer* buf);
 
@@ -67,6 +59,367 @@ void* BF_IM_ReadOpen(ImGuiContext*, ImGuiSettingsHandler*, const char* name) {
 #  define STB_IMAGE_WRITE_IMPLEMENTATION
 #  include "stb_image_write.h"
 #endif
+
+struct lframe {  ///
+  i64 value = i64_max;
+
+  constexpr static lframe Scaled(i64 v) {
+    return {.value = v * _BF_LOGICAL_FPS_SCALE};
+  }
+
+  constexpr static lframe Unscaled(i64 v) {
+    return {.value = v};
+  }
+
+  constexpr static lframe FromSeconds(f32 seconds) {
+    return {.value = (i64)(seconds * (f32)FIXED_FPS)};
+  }
+
+  f32 Progress(const lframe duration) const {
+    return (f32)value / (f32)duration.value;
+  }
+
+  bool operator==(const lframe& other) const {
+    return value == other.value;
+  }
+
+  bool operator>(const lframe& other) const {
+    return value > other.value;
+  }
+
+  bool operator<(const lframe& other) const {
+    return value < other.value;
+  }
+
+  bool operator>=(const lframe& other) const {
+    return value >= other.value;
+  }
+
+  bool operator<=(const lframe& other) const {
+    return value <= other.value;
+  }
+
+  const lframe operator+(const lframe& other) const {
+    return lframe::Unscaled(value + other.value);
+  }
+
+  const lframe operator-(const lframe& other) const {
+    return lframe::Unscaled(value - other.value);
+  }
+
+  void SetRand(lframe v);
+  void SetRand(lframe v1, lframe v2);
+  void SetRandSeconds(f32 v);
+  void SetRandSeconds(f32 v1, f32 v2);
+};
+
+struct FrameGame {  ///
+  i64 _value = i64_max;
+
+  [[nodiscard]] static FrameGame Now() {
+    FrameGame frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {
+    return _value != i64_max;
+  }
+
+  void SetNow();
+
+  lframe Elapsed() const;
+};
+
+struct FrameVisual {  ///
+  i64 _value = i64_max;
+
+  [[nodiscard]] static FrameVisual Now() {
+    FrameVisual frame{};
+    frame.SetNow();
+    return frame;
+  }
+
+  bool IsSet() const {
+    return _value != i64_max;
+  }
+
+  void SetNow();
+
+  lframe Elapsed() const;
+};
+
+struct Margins {  ///
+  f32 left, right, top, bottom = {};
+};
+
+// !banner: clay
+//  ██████╗██╗      █████╗ ██╗   ██╗
+// ██╔════╝██║     ██╔══██╗╚██╗ ██╔╝
+// ██║     ██║     ███████║ ╚████╔╝
+// ██║     ██║     ██╔══██║  ╚██╔╝
+// ╚██████╗███████╗██║  ██║   ██║
+//  ╚═════╝╚══════╝╚═╝  ╚═╝   ╚═╝
+
+// {  ///
+#define CLAY_IMPLEMENTATION
+#include "clay.h"
+
+Clay_Color ToClayColor(Color color) {
+  return {
+    .r = (f32)color.r,
+    .g = (f32)color.g,
+    .b = (f32)color.b,
+    .a = (f32)color.a,
+  };
+}
+
+#define BF_CLAY_SPACER_VERTICAL \
+  CLAY({.layout{.sizing{CLAY_SIZING_FIXED(1), CLAY_SIZING_GROW(0)}}}) {}
+#define BF_CLAY_SPACER_HORIZONTAL \
+  CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(1)}}}) {}
+
+#define BF_CLAY_SIZING_GROW_XY               \
+  .sizing {                                  \
+    CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) \
+  }
+
+#define BF_CLAY_SIZING_GROW_X    \
+  .sizing {                      \
+    .width = CLAY_SIZING_GROW(0) \
+  }
+
+#define BF_CLAY_SIZING_GROW_Y     \
+  .sizing {                       \
+    .height = CLAY_SIZING_GROW(0) \
+  }
+
+#define BF_CLAY_PADDING_ALL(v)             \
+  .padding {                               \
+    (u16)(v), (u16)(v), (u16)(v), (u16)(v) \
+  }
+#define BF_CLAY_PADDING_HORIZONTAL_VERTICAL(h, v) \
+  .padding {                                      \
+    (u16)(h), (u16)(h), (u16)(v), (u16)(v)        \
+  }
+#define BF_CLAY_PADDING_HORIZONTAL(v) \
+  .padding {                          \
+    (u16)(v), (u16)(v), 0, 0          \
+  }
+#define BF_CLAY_PADDING_VERTICAL(v) \
+  .padding {                        \
+    0, 0, (u16)(v), (u16)(v)        \
+  }
+#define BF_CLAY_PADDING_LEFT(v) \
+  .padding {                    \
+    (u16)(v), 0, 0, 0           \
+  }
+#define BF_CLAY_PADDING_RIGHT(v) \
+  .padding {                     \
+    0, (u16)(v), 0, 0            \
+  }
+#define BF_CLAY_PADDING_TOP(v) \
+  .padding {                   \
+    0, 0, (u16)(v), 0          \
+  }
+#define BF_CLAY_PADDING_BOTTOM(v) \
+  .padding {                      \
+    0, 0, 0, (u16)(v)             \
+  }
+
+#define BF_CLAY_CHILD_ALIGNMENT_LEFT_TOP          \
+  .childAlignment {                               \
+    .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_TOP \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP          \
+  .childAlignment {                                 \
+    .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_TOP \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_RIGHT_TOP          \
+  .childAlignment {                                \
+    .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_TOP \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER          \
+  .childAlignment {                                  \
+    .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_CENTER \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER          \
+  .childAlignment {                                    \
+    .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER          \
+  .childAlignment {                                   \
+    .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_CENTER \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_LEFT_BOTTOM          \
+  .childAlignment {                                  \
+    .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_BOTTOM \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_CENTER_BOTTOM          \
+  .childAlignment {                                    \
+    .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_BOTTOM \
+  }
+#define BF_CLAY_CHILD_ALIGNMENT_RIGHT_BOTTOM          \
+  .childAlignment {                                   \
+    .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_BOTTOM \
+  }
+
+#define BF_CLAY_CUSTOM_BEGIN \
+  .custom {                  \
+    .customData = PushClayCustomData(
+
+#define BF_CLAY_CUSTOM_END ) \
+  }
+
+#define BF_CLAY_CUSTOM_SHADOW(gamelibNineSlicePtr_, enabled_) \
+  .shadow {                                                   \
+    .set = (enabled_), .nineSlice = (gamelibNineSlicePtr_),   \
+  }
+
+struct Breathing {
+  bool        set            = false;
+  FrameVisual bonusBreatheAt = {};
+};
+
+#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_, enabled_, breathing_) \
+  .nineSlice {                                                                       \
+    .set = enabled_, .breathing = breathing_, .nineSlice = (gamelibNineSlicePtr_),   \
+    .nineSliceColor = slotColors[(tier_) * 2],                                       \
+    .nineSliceFlash = slotColors[(tier_) * 2 + 1],                                   \
+  }
+
+#define BF_CLAY_CUSTOM_OVERLAY(color_) \
+  .overlay {                           \
+    .set = true, .color = (color_)     \
+  }
+
+#define BF_CLAY_CUSTOM_SCREEN_BACKGROUND \
+  .screenBackground {                    \
+    .set = true                          \
+  }
+
+struct Beautify {
+  f32     alpha     = 1;
+  Vector2 translate = {0, 0};
+  Vector2 scale     = {1, 1};
+};
+
+#define BEAUTIFY(beautify_)                                                         \
+  ASSERT((beautify_).alpha >= 0);                                                   \
+  ASSERT((beautify_).alpha <= 1);                                                   \
+                                                                                    \
+  CLAY({                                                                            \
+    BF_CLAY_CUSTOM_BEGIN{                                                           \
+      .beautifierStart{                                                             \
+        .set       = true,                                                          \
+        .alpha     = (beautify_).alpha,                                             \
+        .translate = (beautify_).translate,                                         \
+        .scale     = (beautify_).scale,                                             \
+      },                                                                            \
+    } BF_CLAY_CUSTOM_END,                                                           \
+  }) {}                                                                             \
+  beautifiers[beautifiersCount++] = (beautify_);                                    \
+                                                                                    \
+  DEFER {                                                                           \
+    CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierEnd{.set = true}} BF_CLAY_CUSTOM_END}) {} \
+    beautifiersCount--;                                                             \
+  };
+
+#define FLOATING_BEAUTIFY FLOATING_BEAUTIFY_CONDITIONAL(true)
+
+#define FLOATING_BEAUTIFY_CONDITIONAL(cond)    \
+  f32     currentAlpha_ = 1;                   \
+  Vector2 currentTranslate_{0, 0};             \
+  Vector2 currentScale_{1, 1};                 \
+  if (cond) {                                  \
+    FOR_RANGE (int, i, beautifiersCount) {     \
+      auto& b = beautifiers[i];                \
+      currentAlpha_ *= b.alpha;                \
+      currentTranslate_ += b.translate;        \
+      currentScale_ *= b.scale;                \
+    }                                          \
+  }                                            \
+  Beautify currentBeautify_{                   \
+    .alpha     = currentAlpha_,                \
+    .translate = currentTranslate_,            \
+    .scale     = currentScale_,                \
+  };                                           \
+                                               \
+  CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierStart{ \
+    .set       = true,                         \
+    .alpha     = currentBeautify_.alpha,       \
+    .translate = currentBeautify_.translate,   \
+    .scale     = currentBeautify_.scale,       \
+  }} BF_CLAY_CUSTOM_END}) {}                   \
+  DEFER{CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierEnd{.set = true}} BF_CLAY_CUSTOM_END}){}};
+
+#define BEAUTIFY_WIGGLING_DANGER_SCOPED(value_, amplitude_, frames_, times_)         \
+  f32 _wigglingP = 0;                                                                \
+  if ((value_).IsSet())                                                              \
+    _wigglingP = (value_).Elapsed().Progress(frames_);                               \
+  if ((_wigglingP >= 1) && !draw)                                                    \
+    value_ = {};                                                                     \
+  if (_wigglingP >= 1)                                                               \
+    _wigglingP = 0;                                                                  \
+  Beautify b{.translate{(amplitude_) * sinf((f32)(times_) * PI32 * _wigglingP), 0}}; \
+  BEAUTIFY(b);
+
+struct ClayImageData {
+  int     texID         = {};
+  Vector2 offset        = {};
+  Vector2 scale         = {1, 1};
+  Vector2 anchor        = {0.5f, 0.5f};
+  Margins sourceMargins = {0, 0};
+  Color   color         = WHITE;
+  Color   flash         = TRANSPARENT_BLACK;
+
+  bool    dontCareAboutScaleWhenCalculatingSize = false;
+  Vector2 overriddenSize                        = {};  // Values must be > 0 to override.
+
+  // f32   scale     = {};
+  // ImageFitType fitType   = {};
+};
+
+struct ClayCustomData {
+  struct {
+    bool    set       = false;
+    f32     alpha     = 1;
+    Vector2 translate = {0, 0};
+    Vector2 scale     = {1, 1};
+  } beautifierStart = {};
+
+  struct {
+    bool set = false;
+  } beautifierEnd = {};
+
+  struct {
+    bool  set   = false;
+    Color color = MAGENTA;
+  } overlay = {};
+
+  struct {
+    bool set = false;
+  } screenBackground;
+
+  struct {
+    bool                     set       = false;
+    const BFGame::NineSlice* nineSlice = nullptr;
+  } shadow = {};
+
+  struct {
+    bool                     set            = false;
+    Breathing                breathing      = {};
+    const BFGame::NineSlice* nineSlice      = nullptr;
+    Color                    nineSliceColor = WHITE;
+    Color                    nineSliceFlash = TRANSPARENT_BLACK;
+  } nineSlice = {};
+};
+
+Clay_Vector2 ToClayVector2(Vector2 value) {  ///
+  return {value.x, value.y};
+}
+
+// ============================================================ }
 
 struct Rect {  ///
   Vector2 pos  = {};
@@ -169,10 +522,6 @@ enum _TouchDataState : u32 {  ///
 struct _TouchData {  ///
   TouchData data  = {};
   u32       state = {};
-};
-
-struct Margins {  ///
-  f32 left, right, top, bottom = {};
 };
 
 struct DrawTextureData {  ///
@@ -357,95 +706,6 @@ struct _ReceivedEvents {  ///
   }
 };
 
-struct lframe {  ///
-  i64 value = i64_max;
-
-  constexpr static lframe Scaled(i64 v) {
-    return {.value = v * _BF_LOGICAL_FPS_SCALE};
-  }
-
-  constexpr static lframe Unscaled(i64 v) {
-    return {.value = v};
-  }
-
-  constexpr static lframe FromSeconds(f32 seconds) {
-    return {.value = (i64)(seconds * (f32)FIXED_FPS)};
-  }
-
-  f32 Progress(const lframe duration) const {
-    return (f32)value / (f32)duration.value;
-  }
-
-  bool operator==(const lframe& other) const {
-    return value == other.value;
-  }
-
-  bool operator>(const lframe& other) const {
-    return value > other.value;
-  }
-
-  bool operator<(const lframe& other) const {
-    return value < other.value;
-  }
-
-  bool operator>=(const lframe& other) const {
-    return value >= other.value;
-  }
-
-  bool operator<=(const lframe& other) const {
-    return value <= other.value;
-  }
-
-  const lframe operator+(const lframe& other) const {
-    return lframe::Unscaled(value + other.value);
-  }
-
-  const lframe operator-(const lframe& other) const {
-    return lframe::Unscaled(value - other.value);
-  }
-
-  void SetRand(lframe v);
-  void SetRand(lframe v1, lframe v2);
-  void SetRandSeconds(f32 v);
-  void SetRandSeconds(f32 v1, f32 v2);
-};
-
-struct FrameGame {  ///
-  i64 _value = i64_max;
-
-  [[nodiscard]] static FrameGame Now() {
-    FrameGame frame{};
-    frame.SetNow();
-    return frame;
-  }
-
-  bool IsSet() const {
-    return _value != i64_max;
-  }
-
-  void SetNow();
-
-  lframe Elapsed() const;
-};
-
-struct FrameVisual {  ///
-  i64 _value = i64_max;
-
-  [[nodiscard]] static FrameVisual Now() {
-    FrameVisual frame{};
-    frame.SetNow();
-    return frame;
-  }
-
-  bool IsSet() const {
-    return _value != i64_max;
-  }
-
-  void SetNow();
-
-  lframe Elapsed() const;
-};
-
 struct _SoundVariation;
 
 int _CmpSoundVariation(  ///
@@ -518,6 +778,105 @@ enum _ShouldGameplayStopType {  ///
   _ShouldGameplayStopType_COUNT,
 };
 
+constexpr int MAX_BEAUTIFIERS = 32;
+
+enum Direction {  ///
+  Direction_NONE,
+  Direction_RIGHT,
+  Direction_UP,
+  Direction_LEFT,
+  Direction_DOWN,
+};
+
+using ControlsGroupID = int;
+
+struct ControlsEntry {  ///
+  Clay_ElementId id = {};
+
+  ControlsEntry* next = {};
+  ControlsEntry* prev = {};
+};
+
+struct ControlsDimension {  ///
+  ControlsEntry* first = {};
+  ControlsEntry* last  = {};
+
+  ControlsDimension* next = {};
+  ControlsDimension* prev = {};
+};
+
+struct ControlsGroup {  ///
+  ControlsGroupID id = {};
+
+  int currentDimension = {};
+
+  ControlsDimension* first = {};
+  ControlsDimension* last  = {};
+
+  // NOTE: Use `(int)direction - 1` to index.
+  ControlsGroupID connectionsPerDirection[4] = {};
+
+  ControlsGroup* next = {};
+  ControlsGroup* prev = {};
+};
+
+struct Placeholder {  ///
+  PlaceholderType type = {};
+  Placeholder*    next = nullptr;
+
+  union {
+    struct {
+      const char* value;
+      Color       color;
+    } string;
+
+    struct {
+      int   value;
+      Color color;
+    } brokenLocale;
+
+    struct {
+      int texID;
+    } image;
+  } _u;
+
+  const auto& string() const {
+    ASSERT(type == PlaceholderType_STRING);
+    return _u.string;
+  }
+
+  const auto& brokenLocale() const {
+    ASSERT(type == PlaceholderType_BROKEN_LOCALE);
+    return _u.brokenLocale;
+  }
+
+  const auto& image() const {
+    ASSERT(type == PlaceholderType_IMAGE);
+    return _u.image;
+  }
+};
+
+struct PlaceholderGroup {  ///
+  const char*       placeholder = {};
+  PlaceholderGroup* next        = nullptr;
+
+  Placeholder* first = nullptr;
+  Placeholder* last  = nullptr;
+};
+
+struct GamePreInitOpts {  ///
+  const Font** baseFont = {};
+};
+
+// Functions that MUST be implemented by the user of the engine:
+void                           GamePreInit(GamePreInitOpts opts);
+void                           GameInit();
+void                           GameInitAfterLoadingSavedata();
+void                           GameFixedUpdate();
+void                           GameDraw();
+flatbuffers::FlatBufferBuilder GameDumpStateForSaving();
+void                           GameLoad(const BFSave::Save* save);
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -558,8 +917,9 @@ struct EngineData {
     f64 prevFrameTime = {};
     f64 frameTime     = {};
 
-    Arena _arena     = {};
-    Arena trashArena = {};
+    Arena _arena              = {};
+    Arena trashArena          = {};
+    Arena _transientDataArena = {};
 
     DeviceType device = DeviceType_DESKTOP;
 
@@ -657,8 +1017,9 @@ struct EngineData {
     //   std::vector<std::string> resources  = {};
     // } gameanalytics;
 
-    size_t additionalArenaSize = 0;
-    size_t trashArenaSize      = 128 * 1024;
+    size_t additionalArenaSize     = 0;
+    size_t trashArenaSize          = 128 * 1024;
+    size_t _transientDataArenaSize = 128 * 1024;
   } settings;
 
   struct Draw {
@@ -667,7 +1028,635 @@ struct EngineData {
     int                 currentGroupIndex = -1;
     bool                flushedThisFrame  = false;
   } draw;
+
+  struct UI {
+    const Font* baseFont       = nullptr;
+    const Font* overriddenFont = nullptr;
+
+    i16                              clayZIndex = 0;
+    Array<Beautify, MAX_BEAUTIFIERS> clayBeautifiers{};
+    int                              clayBeautifiersCount = 0;
+
+    ControlsGroup* controlsGroupsFirst = {};
+    ControlsGroup* controlsGroupsLast  = {};
+
+    struct Flex {  ///
+      bool active        = false;
+      bool addedChildren = false;
+      u16  childGap      = {};
+      int  currentWidth  = 0;
+      int  maxWidth      = {};
+
+      PlaceholderGroup* pgroupsFirst        = nullptr;
+      PlaceholderGroup* pgroupsLast         = nullptr;
+      bool              pgroupsLastIsActive = false;
+    } flex;
+  } _ui;
 } ge = {};
+
+void HandleClayErrors(Clay_ErrorData errorData) {  ///
+  LOGE("%s", errorData.errorText.chars);
+
+  switch (errorData.errorType) {
+  default:
+    INVALID_PATH;
+    break;
+  }
+}
+
+static BF_FORCE_INLINE Clay_Dimensions MeasureText(
+  Clay_StringSlice        text,
+  Clay_TextElementConfig* config,
+  void*                   userData
+) noexcept {  ///
+  ASSERT(config);
+  // TODO: fontSize, letterSpacing
+  const auto font  = ge._ui.baseFont + config->fontId;
+  f32        width = 0;
+
+  IterateOverCodepoints(
+    text.chars,
+    text.length,
+    [&font, &width](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
+      if (!codepoint)
+        return;
+
+      stbtt_aligned_quad _q{};
+      f32                _y{};
+
+      auto glyphIndex
+        = ArrayBinaryFind(font->codepoints, font->codepointsCount, (int)codepoint);
+      ASSERT(glyphIndex >= 0);
+
+      f32 w{};
+
+      stbtt_GetPackedQuad(
+        font->chars,
+        font->atlasTexture.size.x,
+        font->atlasTexture.size.y,
+        glyphIndex,
+        &w,
+        &_y,
+        &_q,
+        1  // 1=opengl & d3d10+,0=d3d9
+      );
+
+      width += w / font->_scaleToFit;
+    }
+  );
+
+  return {(f32)width, (f32)font->size / font->_scaleToFit};
+}
+
+void FlexBegin(int maxWidth, u16 childGap) {  ///
+  ASSERT_FALSE(ge._ui.flex.active);
+  ge._ui.flex = {
+    .active   = true,
+    .childGap = childGap,
+    .maxWidth = maxWidth,
+  };
+}
+
+void FlexEnd() {  ///
+  if (ge._ui.flex.addedChildren)
+    Clay__CloseElement();
+  ge._ui.flex = {};
+}
+
+bool FlexShouldAddRowForChild(int childWidth) {  ///
+  bool shouldAddRow = !ge._ui.flex.addedChildren;
+  if (ge._ui.flex.addedChildren
+      && (ge._ui.flex.currentWidth + childWidth > ge._ui.flex.maxWidth))
+    shouldAddRow = true;
+  return shouldAddRow;
+}
+
+void FlexAddRowForChildIfNeeded(int childWidth) {  ///
+  if (FlexShouldAddRowForChild(childWidth)) {
+    if (ge._ui.flex.addedChildren)
+      Clay__CloseElement();
+
+    Clay__OpenElement();
+    Clay__ConfigureOpenElement(CLAY__CONFIG_WRAPPER(
+      Clay_ElementDeclaration,
+      {
+        .layout{
+          .childGap = ge._ui.flex.childGap,
+          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
+        },
+      }
+    ));
+    ge._ui.flex.currentWidth = 0;
+  }
+
+  ge._ui.flex.addedChildren = true;
+  ge._ui.flex.currentWidth += childWidth + ge._ui.flex.childGap;
+}
+
+bool IsAlreadyPlaceholded(const char* placeholder) {  ///
+  auto pp = ge._ui.flex.pgroupsFirst;
+  while (pp) {
+    if (!strcmp(pp->placeholder, placeholder))
+      return true;
+    pp = pp->next;
+  }
+  return false;
+}
+
+void _AddPlaceholder(Placeholder p) {  ///
+  ASSERT(ge._ui.flex.pgroupsLastIsActive);
+
+  auto pp = ALLOCATE_FOR(&ge.meta.trashArena, Placeholder);
+  *pp     = p;
+
+  auto& group = *ge._ui.flex.pgroupsLast;
+  if (!group.first)
+    group.first = pp;
+  if (group.last)
+    group.last->next = pp;
+  group.last = pp;
+}
+
+// `placeholder` must be statically allocated or live in trashArena.
+void PlaceholdGroupBegin(const char* placeholder) {  ///
+  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
+  ASSERT_FALSE(ge._ui.flex.pgroupsLastIsActive);
+  ge._ui.flex.pgroupsLastIsActive = true;
+
+  ASSERT((bool)ge._ui.flex.pgroupsFirst == (bool)ge._ui.flex.pgroupsLast);
+
+  auto pp = ALLOCATE_FOR(&ge.meta.trashArena, PlaceholderGroup);
+  *pp     = {.placeholder = placeholder};
+
+  if (!ge._ui.flex.pgroupsFirst)
+    ge._ui.flex.pgroupsFirst = pp;
+  if (ge._ui.flex.pgroupsLast)
+    ge._ui.flex.pgroupsLast->next = pp;
+  ge._ui.flex.pgroupsLast = pp;
+}
+
+void PlaceholdGroupEnd() {  ///
+  ASSERT(ge._ui.flex.pgroupsFirst);
+  ASSERT(ge._ui.flex.pgroupsLast);
+  ASSERT(ge._ui.flex.pgroupsLastIsActive);
+  ge._ui.flex.pgroupsLastIsActive = false;
+}
+
+struct PlaceholdStringOpts {
+  Color color = WHITE;
+};
+
+// `value` must be statically allocated or live in trashArena.
+void PlaceholdString(const char* value, PlaceholdStringOpts opts = {}) {  ///
+  ASSERT(ge._ui.flex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_STRING,
+    ._u{.string{.value = value, .color = opts.color}},
+  });
+}
+
+void PlaceholdFormattedString(const char* value, PlaceholdStringOpts opts = {}) {  ///
+  PlaceholdString(PushTextToArena(&ge.meta.trashArena, value), opts);
+}
+
+// `placeholder` and `value` must be statically allocated or live in trashArena.
+void PlaceholdString(
+  const char*         placeholder,
+  const char*         value,
+  PlaceholdStringOpts opts = {}
+) {  ///
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdString(value, opts);
+  PlaceholdGroupEnd();
+}
+
+void PlaceholdBrokenLocale(int locale, PlaceholdStringOpts opts = {}) {  ///
+  ASSERT(ge._ui.flex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_BROKEN_LOCALE,
+    ._u{.brokenLocale{
+      .value = locale,
+      .color = opts.color,
+    }},
+  });
+}
+
+// `placeholder` must be statically allocated or live in trashArena.
+void PlaceholdBrokenLocale(
+  const char*         placeholder,
+  int                 locale,
+  PlaceholdStringOpts opts = {}
+) {  ///
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdBrokenLocale(locale, opts);
+  PlaceholdGroupEnd();
+}
+
+void PlaceholdImage(int texID) {  ///
+  ASSERT(ge._ui.flex.pgroupsLastIsActive);
+  _AddPlaceholder({
+    .type = PlaceholderType_IMAGE,
+    ._u{.image{.texID = texID}},
+  });
+}
+
+// `placeholder` must be statically allocated or live in trashArena.
+void PlaceholdImage(const char* placeholder, int texID) {  ///
+  PlaceholdGroupBegin(placeholder);
+  PlaceholdImage(texID);
+  PlaceholdGroupEnd();
+}
+
+void* PushClayImageData(ClayImageData data) {  ///
+  auto result = ALLOCATE_FOR(&ge.meta.trashArena, ClayImageData);
+  *result     = data;
+  return (void*)result;
+}
+
+void* PushClayCustomData(ClayCustomData data) {  ///
+  auto result = ALLOCATE_FOR(&ge.meta.trashArena, ClayCustomData);
+  *result     = data;
+  return (void*)result;
+}
+
+void ResetPlaceholders() {  ///
+  ASSERT_FALSE(ge._ui.flex.pgroupsLastIsActive);
+  ge._ui.flex.pgroupsFirst = nullptr;
+  ge._ui.flex.pgroupsLast  = nullptr;
+}
+
+void BF_CLAY_IMAGE(
+  ClayImageData data,
+  auto          innerLambda,
+  bool          _resetPlaceholders = true
+) {  ///
+  if (!Vector2Equals(data.overriddenSize, Vector2Zero()))
+    ASSERT_FALSE(data.dontCareAboutScaleWhenCalculatingSize);
+  if (data.dontCareAboutScaleWhenCalculatingSize)
+    ASSERT(Vector2Equals(data.overriddenSize, Vector2Zero()));
+
+  const auto texture      = glib->atlas_textures()->Get(data.texID);
+  const auto originalSize = glib->original_texture_sizes()->Get(data.texID);
+
+  f32 w = (f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO;
+  f32 h = (f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO;
+
+  if (!data.dontCareAboutScaleWhenCalculatingSize) {
+    w *= data.scale.x;
+    h *= data.scale.y;
+  }
+
+  ASSERT(data.overriddenSize.x >= 0);
+  ASSERT(data.overriddenSize.y >= 0);
+  if (data.overriddenSize.x > 0)
+    w = data.overriddenSize.x;
+  if (data.overriddenSize.y > 0)
+    h = data.overriddenSize.y;
+
+  if (ge._ui.flex.active)
+    FlexAddRowForChildIfNeeded(Ceil(w));
+
+  auto& beautifiers      = ge._ui.clayBeautifiers;
+  auto& beautifiersCount = ge._ui.clayBeautifiersCount;
+
+  CLAY({
+    .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
+  }) {
+    CLAY({
+      .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
+      .floating{
+        .zIndex = ge._ui.clayZIndex,
+        .attachPoints{
+          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
+          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
+        },
+        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+        .attachTo           = CLAY_ATTACH_TO_PARENT,
+      },
+    }) {
+      FLOATING_BEAUTIFY;
+      CLAY({
+        .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
+        .image{.imageData = PushClayImageData(data)},
+      }) {
+        innerLambda();
+      }
+    }
+  }
+
+  if (_resetPlaceholders)
+    ResetPlaceholders();
+}
+
+void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
+  BF_CLAY_IMAGE(data, [] {}, _resetPlaceholders);
+}
+
+struct ClayTextOptions {  ///
+  Color color = WHITE;
+
+  // Others: CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_WRAP_NONE.
+  Clay_TextElementConfigWrapMode wrapMode = CLAY_TEXT_WRAP_WORDS;
+};
+
+// NOTE: This overload DOESN'T SAVE string to trash arena.
+void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
+  u16 fontID = 0;
+  if (ge._ui.overriddenFont)
+    fontID = (UINT_FROM_PTR(ge._ui.overriddenFont) - UINT_FROM_PTR(ge._ui.baseFont))
+             / sizeof(Font);
+  ASSERT(fontID >= 0);
+
+  if (ge._ui.flex.active) {
+    Clay_StringSlice s{
+      .length    = string.length,
+      .chars     = string.chars,
+      .baseChars = string.chars,
+    };
+    Clay_TextElementConfig cfg{
+      .fontId   = fontID,
+      .wrapMode = opts.wrapMode,
+    };
+    auto dim = MeasureText(s, &cfg, nullptr);
+
+    // In flex space shouldn't break the line.
+    // It's only other elements (which need more width) break the line.
+    if (FlexShouldAddRowForChild(dim.width)) {
+      if ((string.length == 1) && (string.chars[0] == ' '))
+        return;
+    }
+
+    FlexAddRowForChildIfNeeded(dim.width);
+  }
+
+  CLAY_TEXT(
+    string,
+    CLAY_TEXT_CONFIG({
+      .textColor = ToClayColor(opts.color),
+      .fontId    = fontID,
+      // fontSize fixes clay's incorrect MeasureText cache
+      .fontSize = (u16)Hash32((u8*)&fontID, sizeof(fontID)),
+      .wrapMode = opts.wrapMode,
+    })
+  );
+}
+
+// NOTE: This overload SAVES string to trash arena.
+void BF_CLAY_TEXT(const char* text, ClayTextOptions opts = {}) {  ///
+  int         len           = 0;
+  const char* allocatedText = PushTextToArena(&ge.meta.trashArena, text, &len);
+  Clay_String string{
+    .length = (i32)len,
+    .chars  = allocatedText,
+  };
+  BF_CLAY_TEXT(string, opts);
+}
+
+void BF_CLAY_TEXT_BROKEN_LOCALIZED(
+  int             locale_,
+  ClayTextOptions opts               = {},
+  bool            _resetPlaceholders = true
+) {                                  ///
+  const auto locale = (Loc)locale_;  // NOTE: For debug.
+
+  const auto localization              = glib->localizations()->Get(ge.meta.localization);
+  const auto localization_broken_lines = localization->broken_lines();
+
+  if (BF_DEBUG) {
+    // Checking that all required placeholders were set.
+    for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
+      for (auto group : *line->groups()) {
+        for (auto string : *group->strings()) {
+          if (!string->placeholder())
+            continue;
+
+          const auto requiredPlaceholder = string->placeholder()->c_str();
+
+          bool found = false;
+          auto group = ge._ui.flex.pgroupsFirst;
+          while (group) {
+            if (!strcmp(group->placeholder, requiredPlaceholder)) {
+              found = true;
+              break;
+            }
+            group = group->next;
+          }
+          ASSERT(found);
+        }
+      }
+    }
+  }
+
+  for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
+    // TODO: Proper lines support!
+    for (auto group : *line->groups()) {
+      for (auto string : *group->strings()) {
+        if (string->type() == BrokenStringDatumType_SPACE) {
+          Clay_String text{.isStaticallyAllocated = true, .length = 1, .chars = " "};
+          BF_CLAY_TEXT(text, opts);
+          continue;
+        }
+
+        if (string->placeholder()) {
+          const auto placeholderString = string->placeholder()->c_str();
+
+          auto group = ge._ui.flex.pgroupsFirst;
+          bool found = false;
+          while (group) {
+            if (!strcmp(group->placeholder, placeholderString)) {
+              found = true;
+              break;
+            }
+            group = group->next;
+          }
+          ASSERT(found);
+
+          auto pp = group->first;
+          while (pp) {
+            ASSERT(pp->type);
+            clayPlaceholderFunctions[(int)pp->type - 1](pp);
+            pp = pp->next;
+          }
+        }
+        else {
+          Clay_String text{
+            .isStaticallyAllocated = true,
+            .length                = (i32)string->string()->size(),
+            .chars                 = string->string()->c_str(),
+          };
+          BF_CLAY_TEXT(text, opts);
+        }
+      }
+    }
+  }
+
+  if (_resetPlaceholders)
+    ResetPlaceholders();
+}
+
+void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
+  const auto& string = placeholder->string();
+  BF_CLAY_TEXT(string.value, {.color = string.color});
+}
+
+void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
+  const auto& d = placeholder->brokenLocale();
+  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, {.color = d.color}, false);
+}
+
+void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
+  const auto& d = placeholder->image();
+
+  auto fb = glib->original_texture_sizes()->Get(d.texID);
+
+  auto font = ge._ui.overriddenFont;
+  if (!font)
+    font = ge._ui.baseFont;
+
+  f32 h              = (f32)font->size;
+  f32 fontScaleToFit = font->_scaleToFit;
+
+  f32 scale = h / ((f32)fb->y() * ASSETS_TO_LOGICAL_RATIO);
+  BF_CLAY_IMAGE(
+    {
+      .texID = d.texID,
+      .scale{scale, scale},
+      .overriddenSize{0, h / fontScaleToFit},
+    },
+    false
+  );
+}
+
+void FontBegin(Font* font) {  ///
+  ASSERT_FALSE(ge._ui.overriddenFont);
+  ge._ui.overriddenFont = font;
+}
+
+void FontEnd() {  ///
+  ASSERT(ge._ui.overriddenFont);
+  ge._ui.overriddenFont = nullptr;
+}
+
+ControlsGroup* _GetControlsGroup(ControlsGroupID id) {  ///
+  auto group = ge._ui.controlsGroupsLast;
+  while (group) {
+    if (group->id == id)
+      return group;
+    group = group->prev;
+  }
+  INVALID_PATH;
+  return nullptr;
+}
+
+ControlsEntry* _GetPreferredControlsEntry(ControlsEntry* first, int preferredIndex) {  ///
+  ASSERT(preferredIndex >= 0);
+  while ((preferredIndex > 0) && first->next) {
+    first = first->next;
+    preferredIndex--;
+  }
+  return first;
+}
+
+ControlsDimension*
+_GetPreferredControlsDimension(ControlsDimension* first, int preferredIndex) {  ///
+  ASSERT(preferredIndex >= 0);
+  while ((preferredIndex > 0) && first->next) {
+    first = first->next;
+    preferredIndex--;
+  }
+  return first;
+}
+
+ControlsGroupID MakeControlsGroup() {  ///
+  static ControlsGroupID nextID = 1;
+
+  auto p = ALLOCATE_FOR(&ge.meta._transientDataArena, ControlsGroup);
+  *p     = {
+        .id   = nextID++,
+        .prev = ge._ui.controlsGroupsLast,
+  };
+
+  if (p->prev)
+    p->prev->next = p;
+  if (!ge._ui.controlsGroupsFirst)
+    ge._ui.controlsGroupsFirst = p;
+  ge._ui.controlsGroupsLast = p;
+
+  return p->id;
+}
+
+void ControlsGroupNewRow(ControlsGroupID groupID) {  ///
+  auto group = _GetControlsGroup(groupID);
+  if (!group || (group->last && !group->last->first))
+    return;
+
+  auto dim = ALLOCATE_FOR(&ge.meta._transientDataArena, ControlsDimension);
+  *dim     = {
+        .prev = group->last,
+  };
+
+  if (dim->prev)
+    dim->prev->next = dim;
+  if (!group->first)
+    group->first = dim;
+  group->last = dim;
+}
+
+void ControlsGroupAdd(ControlsGroupID groupID, Clay_ElementId id) {  ///
+  ASSERT(id.id);
+
+  auto group = _GetControlsGroup(groupID);
+  if (!group)
+    return;
+
+  auto dim = group->last;
+  if (!dim) {
+    ControlsGroupNewRow(groupID);
+    dim = group->last;
+  }
+
+  auto elem = ALLOCATE_FOR(&ge.meta._transientDataArena, ControlsEntry);
+  *elem     = {
+        .id   = id,
+        .prev = dim->last,
+  };
+
+  if (elem->prev)
+    elem->prev->next = elem;
+  if (!dim->first)
+    dim->first = elem;
+  dim->last = elem;
+}
+
+void ControlsGroupConnect(
+  ControlsGroupID from,
+  Direction       dir,
+  ControlsGroupID to,
+  bool            bidirectional = true
+) {  ///
+  ASSERT(dir);
+
+  auto g1 = _GetControlsGroup(from);
+  auto g2 = _GetControlsGroup(to);
+  if (!g1 || !g2)
+    return;
+
+  // Can't connect groups where at least one of them is empty.
+  if (!g1->first || !g1->first->first || !g2->first || !g2->first->first)
+    return;
+
+  const int d = (int)dir - 1;
+
+  if (!g1->connectionsPerDirection[d])
+    g1->connectionsPerDirection[d] = to;
+
+  if (bidirectional) {
+    auto opposite = (d + 2) % 4;
+
+    if (!g2->connectionsPerDirection[opposite])
+      g2->connectionsPerDirection[opposite] = from;
+  }
+}
 
 bool ShouldGameplayStop() {  ///
   return ge.meta._shouldGameplayStop.Contains(true);
@@ -3169,6 +4158,18 @@ void InitEngine() {  ///
 
   ge.meta.screenScale = ScaleToFit(ASSETS_REFERENCE_RESOLUTION, LOGICAL_RESOLUTION);
 
+  // Initializing Clay.
+  {  ///
+    auto size = Clay_MinMemorySize();
+    Clay_Initialize(
+      Clay_CreateArenaWithCapacityAndMemory(size, BF_ALLOC(size)),
+      Clay_Dimensions{(f32)LOGICAL_RESOLUTION.x, (f32)LOGICAL_RESOLUTION.y},
+      Clay_ErrorHandler{HandleClayErrors}
+    );
+    Clay_SetCullingEnabled(false);
+    Clay_SetMeasureTextFunction(MeasureText, 0);
+  }
+
   LOGI("Initialized engine");
 }
 
@@ -3985,6 +4986,8 @@ SDL_AppResult EngineUpdate() {  ///
   static bool initialized = false;
   if (!initialized) {
     initialized = true;
+    TEMP_USAGE(&ge.meta.trashArena);
+    TEMP_USAGE(&ge.meta._transientDataArena);
     GameInit();
   }
 
@@ -4053,6 +5056,7 @@ SDL_AppResult EngineUpdate() {  ///
 
       if (canFixedUpdate) {
         TEMP_USAGE(&ge.meta.trashArena);
+        TEMP_USAGE(&ge.meta._transientDataArena);
         GameFixedUpdate();
       }
     }
@@ -4152,8 +5156,9 @@ SDL_AppResult EngineUpdate() {  ///
     ge.meta._drawing         = true;
     ge.draw.flushedThisFrame = false;
 
-    if (ge.meta._loaded) {
+    if (ge.meta._loaded && (ge.meta.screenSize.x > 0) && (ge.meta.screenSize.y > 0)) {
       TEMP_USAGE(&ge.meta.trashArena);
+      TEMP_USAGE(&ge.meta._transientDataArena);
       GameDraw();
     }
 
@@ -4400,8 +5405,9 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
   SDL_SetLogPriorityPrefix(SDL_LOG_PRIORITY_CRITICAL, "C: ");
 #endif
 
-  GamePreInit();
-  ge.meta.trashArena = MakeArena(ge.settings.trashArenaSize);
+  GamePreInit({.baseFont = &ge._ui.baseFont});
+  ge.meta.trashArena          = MakeArena(ge.settings.trashArenaSize);
+  ge.meta._transientDataArena = MakeArena(ge.settings._transientDataArenaSize);
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   // clang-format off

@@ -31,277 +31,9 @@
 
 #include "box2d/box2d.h"
 
-// !banner: clay
-//  ██████╗██╗      █████╗ ██╗   ██╗
-// ██╔════╝██║     ██╔══██╗╚██╗ ██╔╝
-// ██║     ██║     ███████║ ╚████╔╝
-// ██║     ██║     ██╔══██║  ╚██╔╝
-// ╚██████╗███████╗██║  ██║   ██║
-//  ╚═════╝╚══════╝╚═╝  ╚═╝   ╚═╝
-
-// {  ///
-#define CLAY_IMPLEMENTATION
-#include "clay.h"
-
-Clay_Color ToClayColor(Color color) {
-  return {
-    .r = (f32)color.r,
-    .g = (f32)color.g,
-    .b = (f32)color.b,
-    .a = (f32)color.a,
-  };
-}
-
-#define BF_CLAY_SPACER_VERTICAL \
-  CLAY({.layout{.sizing{CLAY_SIZING_FIXED(1), CLAY_SIZING_GROW(0)}}}) {}
-#define BF_CLAY_SPACER_HORIZONTAL \
-  CLAY({.layout{.sizing{CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(1)}}}) {}
-
-#define BF_CLAY_SIZING_GROW_XY               \
-  .sizing {                                  \
-    CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) \
-  }
-
-#define BF_CLAY_SIZING_GROW_X    \
-  .sizing {                      \
-    .width = CLAY_SIZING_GROW(0) \
-  }
-
-#define BF_CLAY_SIZING_GROW_Y     \
-  .sizing {                       \
-    .height = CLAY_SIZING_GROW(0) \
-  }
-
-#define BF_CLAY_PADDING_ALL(v)             \
-  .padding {                               \
-    (u16)(v), (u16)(v), (u16)(v), (u16)(v) \
-  }
-#define BF_CLAY_PADDING_HORIZONTAL_VERTICAL(h, v) \
-  .padding {                                      \
-    (u16)(h), (u16)(h), (u16)(v), (u16)(v)        \
-  }
-#define BF_CLAY_PADDING_HORIZONTAL(v) \
-  .padding {                          \
-    (u16)(v), (u16)(v), 0, 0          \
-  }
-#define BF_CLAY_PADDING_VERTICAL(v) \
-  .padding {                        \
-    0, 0, (u16)(v), (u16)(v)        \
-  }
-#define BF_CLAY_PADDING_LEFT(v) \
-  .padding {                    \
-    (u16)(v), 0, 0, 0           \
-  }
-#define BF_CLAY_PADDING_RIGHT(v) \
-  .padding {                     \
-    0, (u16)(v), 0, 0            \
-  }
-#define BF_CLAY_PADDING_TOP(v) \
-  .padding {                   \
-    0, 0, (u16)(v), 0          \
-  }
-#define BF_CLAY_PADDING_BOTTOM(v) \
-  .padding {                      \
-    0, 0, 0, (u16)(v)             \
-  }
-
-#define BF_CLAY_CHILD_ALIGNMENT_LEFT_TOP          \
-  .childAlignment {                               \
-    .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_TOP \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP          \
-  .childAlignment {                                 \
-    .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_TOP \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_RIGHT_TOP          \
-  .childAlignment {                                \
-    .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_TOP \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER          \
-  .childAlignment {                                  \
-    .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_CENTER \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER          \
-  .childAlignment {                                    \
-    .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER          \
-  .childAlignment {                                   \
-    .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_CENTER \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_LEFT_BOTTOM          \
-  .childAlignment {                                  \
-    .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_BOTTOM \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_CENTER_BOTTOM          \
-  .childAlignment {                                    \
-    .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_BOTTOM \
-  }
-#define BF_CLAY_CHILD_ALIGNMENT_RIGHT_BOTTOM          \
-  .childAlignment {                                   \
-    .x = CLAY_ALIGN_X_RIGHT, .y = CLAY_ALIGN_Y_BOTTOM \
-  }
-
-#define BF_CLAY_CUSTOM_BEGIN \
-  .custom {                  \
-    .customData = PushClayCustomData(
-
-#define BF_CLAY_CUSTOM_END ) \
-  }
-
-#define BF_CLAY_CUSTOM_SHADOW(gamelibNineSlicePtr_, enabled_) \
-  .shadow {                                                   \
-    .set = (enabled_), .nineSlice = (gamelibNineSlicePtr_),   \
-  }
-
-struct Breathing {  ///
-  bool        set            = false;
-  FrameVisual bonusBreatheAt = {};
-};
-
-#define BF_CLAY_CUSTOM_NINE_SLICE(gamelibNineSlicePtr_, tier_, enabled_, breathing_) \
-  .nineSlice {                                                                       \
-    .set = enabled_, .breathing = breathing_, .nineSlice = (gamelibNineSlicePtr_),   \
-    .nineSliceColor = slotColors[(tier_) * 2],                                       \
-    .nineSliceFlash = slotColors[(tier_) * 2 + 1],                                   \
-  }
-
-#define BF_CLAY_CUSTOM_OVERLAY(color_) \
-  .overlay {                           \
-    .set = true, .color = (color_)     \
-  }
-
-#define BF_CLAY_CUSTOM_SCREEN_BACKGROUND \
-  .screenBackground {                    \
-    .set = true                          \
-  }
-
-struct Beautify {
-  f32     alpha     = 1;
-  Vector2 translate = {0, 0};
-  Vector2 scale     = {1, 1};
-};
-
-#define BEAUTIFY(beautify_)                                                         \
-  ASSERT((beautify_).alpha >= 0);                                                   \
-  ASSERT((beautify_).alpha <= 1);                                                   \
-                                                                                    \
-  CLAY({                                                                            \
-    BF_CLAY_CUSTOM_BEGIN{                                                           \
-      .beautifierStart{                                                             \
-        .set       = true,                                                          \
-        .alpha     = (beautify_).alpha,                                             \
-        .translate = (beautify_).translate,                                         \
-        .scale     = (beautify_).scale,                                             \
-      },                                                                            \
-    } BF_CLAY_CUSTOM_END,                                                           \
-  }) {}                                                                             \
-  beautifiers[beautifiersCount++] = (beautify_);                                    \
-                                                                                    \
-  DEFER {                                                                           \
-    CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierEnd{.set = true}} BF_CLAY_CUSTOM_END}) {} \
-    beautifiersCount--;                                                             \
-  };
-
-#define FLOATING_BEAUTIFY FLOATING_BEAUTIFY_CONDITIONAL(true)
-
-#define FLOATING_BEAUTIFY_CONDITIONAL(cond)    \
-  f32     currentAlpha_ = 1;                   \
-  Vector2 currentTranslate_{0, 0};             \
-  Vector2 currentScale_{1, 1};                 \
-  if (cond) {                                  \
-    FOR_RANGE (int, i, beautifiersCount) {     \
-      auto& b = beautifiers[i];                \
-      currentAlpha_ *= b.alpha;                \
-      currentTranslate_ += b.translate;        \
-      currentScale_ *= b.scale;                \
-    }                                          \
-  }                                            \
-  Beautify currentBeautify_{                   \
-    .alpha     = currentAlpha_,                \
-    .translate = currentTranslate_,            \
-    .scale     = currentScale_,                \
-  };                                           \
-                                               \
-  CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierStart{ \
-    .set       = true,                         \
-    .alpha     = currentBeautify_.alpha,       \
-    .translate = currentBeautify_.translate,   \
-    .scale     = currentBeautify_.scale,       \
-  }} BF_CLAY_CUSTOM_END}) {}                   \
-  DEFER{CLAY({BF_CLAY_CUSTOM_BEGIN{.beautifierEnd{.set = true}} BF_CLAY_CUSTOM_END}){}};
-
-#define BEAUTIFY_WIGGLING_DANGER_SCOPED(value_, amplitude_, frames_, times_)         \
-  f32 _wigglingP = 0;                                                                \
-  if ((value_).IsSet())                                                              \
-    _wigglingP = (value_).Elapsed().Progress(frames_);                               \
-  if ((_wigglingP >= 1) && !draw)                                                    \
-    value_ = {};                                                                     \
-  if (_wigglingP >= 1)                                                               \
-    _wigglingP = 0;                                                                  \
-  Beautify b{.translate{(amplitude_) * sinf((f32)(times_) * PI32 * _wigglingP), 0}}; \
-  BEAUTIFY(b);
-
-struct ClayImageData {
-  int     texID         = {};
-  Vector2 offset        = {};
-  Vector2 scale         = {1, 1};
-  Vector2 anchor        = {0.5f, 0.5f};
-  Margins sourceMargins = {0, 0};
-  Color   color         = WHITE;
-  Color   flash         = TRANSPARENT_BLACK;
-
-  bool    dontCareAboutScaleWhenCalculatingSize = false;
-  Vector2 overriddenSize                        = {};  // Values must be > 0 to override.
-
-  // f32   scale     = {};
-  // ImageFitType fitType   = {};
-};
-
-struct ClayCustomData {
-  struct {
-    bool    set       = false;
-    f32     alpha     = 1;
-    Vector2 translate = {0, 0};
-    Vector2 scale     = {1, 1};
-  } beautifierStart = {};
-
-  struct {
-    bool set = false;
-  } beautifierEnd = {};
-
-  struct {
-    bool  set   = false;
-    Color color = MAGENTA;
-  } overlay = {};
-
-  struct {
-    bool set = false;
-  } screenBackground;
-
-  struct {
-    bool                     set       = false;
-    const BFGame::NineSlice* nineSlice = nullptr;
-  } shadow = {};
-
-  struct {
-    bool                     set            = false;
-    Breathing                breathing      = {};
-    const BFGame::NineSlice* nineSlice      = nullptr;
-    Color                    nineSliceColor = WHITE;
-    Color                    nineSliceFlash = TRANSPARENT_BLACK;
-  } nineSlice = {};
-};
-
-// ============================================================ }
-
 #include "bf_constants.cpp"
 
 b2Vec2 ToB2Vec2(Vector2 value) {  ///
-  return {value.x, value.y};
-}
-
-Clay_Vector2 ToClayVector2(Vector2 value) {  ///
   return {value.x, value.y};
 }
 
@@ -898,50 +630,6 @@ struct ThisWaveMob {  ///
   f32          accumulatedFactor = {};
 };
 
-struct Placeholder {  ///
-  PlaceholderType type = {};
-  Placeholder*    next = nullptr;
-
-  union {
-    struct {
-      const char* value;
-      Color       color;
-    } string;
-
-    struct {
-      int   value;
-      Color color;
-    } brokenLocale;
-
-    struct {
-      int texID;
-    } image;
-  } _u;
-
-  const auto& string() const {
-    ASSERT(type == PlaceholderType_STRING);
-    return _u.string;
-  }
-
-  const auto& brokenLocale() const {
-    ASSERT(type == PlaceholderType_BROKEN_LOCALE);
-    return _u.brokenLocale;
-  }
-
-  const auto& image() const {
-    ASSERT(type == PlaceholderType_IMAGE);
-    return _u.image;
-  }
-};
-
-struct PlaceholderGroup {  ///
-  const char*       placeholder = {};
-  PlaceholderGroup* next        = nullptr;
-
-  Placeholder* first = nullptr;
-  Placeholder* last  = nullptr;
-};
-
 struct Particle {  ///
   ParticleType type          = {};
   u16          variation     = {};
@@ -1009,48 +697,6 @@ struct JustUnlockedAchievement {  ///
 #define EFFECT_Y_FLOAT (fb_effect->placeholders()->Get(1)->floats()->Get(tierOffset))
 #define EFFECT_Z_FLOAT (fb_effect->placeholders()->Get(2)->floats()->Get(tierOffset))
 #define EFFECT_W_FLOAT (fb_effect->placeholders()->Get(3)->floats()->Get(tierOffset))
-
-constexpr int MAX_BEAUTIFIERS = 32;
-
-enum Direction {  ///
-  Direction_NONE,
-  Direction_RIGHT,
-  Direction_UP,
-  Direction_LEFT,
-  Direction_DOWN,
-};
-
-using ControlsGroupID = int;
-
-struct ControlsEntry {  ///
-  Clay_ElementId id = {};
-
-  ControlsEntry* next = {};
-  ControlsEntry* prev = {};
-};
-
-struct ControlsDimension {  ///
-  ControlsEntry* first = {};
-  ControlsEntry* last  = {};
-
-  ControlsDimension* next = {};
-  ControlsDimension* prev = {};
-};
-
-struct ControlsGroup {  ///
-  ControlsGroupID id = {};
-
-  int currentDimension = {};
-
-  ControlsDimension* first = {};
-  ControlsDimension* last  = {};
-
-  // NOTE: Use `(int)direction - 1` to index.
-  ControlsGroupID connectionsPerDirection[4] = {};
-
-  ControlsGroup* next = {};
-  ControlsGroup* prev = {};
-};
 
 enum ControlsContext {  ///
   ControlsContext_INVALID,
@@ -1142,9 +788,6 @@ struct RotatedRect {  ///
 
 struct GameData {
   struct Meta {  ///
-    Arena trashArena         = {};
-    Arena transientDataArena = {};
-
     // NOTE: Reorder loading upon reordering fonts.
     Font fontUI                 = {};
     Font fontUIOutlined         = {};
@@ -1355,23 +998,10 @@ struct GameData {
 #undef X
   } run;
 
-  struct UIFlex {  ///
-    bool active        = false;
-    bool addedChildren = false;
-    u16  childGap      = {};
-    int  currentWidth  = 0;
-    int  maxWidth      = {};
-
-    PlaceholderGroup* pgroupsFirst        = nullptr;
-    PlaceholderGroup* pgroupsLast         = nullptr;
-    bool              pgroupsLastIsActive = false;
-  } uiFlex;
-
   struct UI {            ///
     int newRunStep = 0;  // 0 - difficulty, 1 - build, 2 - starting weapon.
 
     Vector2                   notPickedUpCoinsLogicalPos = {};
-    const Font*               overriddenFont             = {};
     Array<UIButtonState, 128> buttonStates               = {};
     int                       buttonStatesCount          = 0;
 
@@ -1385,14 +1015,7 @@ struct GameData {
 
     Vector<JustUnlockedAchievement> justUnlockedAchievements = {};
 
-    i16                              clayZIndex = 0;
-    Array<Beautify, MAX_BEAUTIFIERS> clayBeautifiers{};
-    int                              clayBeautifiersCount = 0;
-
     f32 touchControlMaxLogicalOffset = {};
-
-    ControlsGroup* controlsGroupsFirst = {};
-    ControlsGroup* controlsGroupsLast  = {};
 
     FrameVisual changedCoinsAt            = {};
     FrameVisual changedNotPickedUpCoinsAt = {};
@@ -1464,127 +1087,6 @@ int GetRandomTier() {  ///
   }
   INVALID_PATH;
   return 0;
-}
-
-ControlsGroup* _GetControlsGroup(ControlsGroupID id) {  ///
-  auto group = g.ui.controlsGroupsLast;
-  while (group) {
-    if (group->id == id)
-      return group;
-    group = group->prev;
-  }
-  INVALID_PATH;
-  return nullptr;
-}
-
-ControlsEntry* _GetPreferredControlsEntry(ControlsEntry* first, int preferredIndex) {  ///
-  ASSERT(preferredIndex >= 0);
-  while ((preferredIndex > 0) && first->next) {
-    first = first->next;
-    preferredIndex--;
-  }
-  return first;
-}
-
-ControlsDimension*
-_GetPreferredControlsDimension(ControlsDimension* first, int preferredIndex) {  ///
-  ASSERT(preferredIndex >= 0);
-  while ((preferredIndex > 0) && first->next) {
-    first = first->next;
-    preferredIndex--;
-  }
-  return first;
-}
-
-ControlsGroupID MakeControlsGroup() {  ///
-  static ControlsGroupID nextID = 1;
-
-  auto p = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsGroup);
-  *p     = {
-        .id   = nextID++,
-        .prev = g.ui.controlsGroupsLast,
-  };
-
-  if (p->prev)
-    p->prev->next = p;
-  if (!g.ui.controlsGroupsFirst)
-    g.ui.controlsGroupsFirst = p;
-  g.ui.controlsGroupsLast = p;
-
-  return p->id;
-}
-
-void ControlsGroupNewRow(ControlsGroupID groupID) {  ///
-  auto group = _GetControlsGroup(groupID);
-  if (!group || (group->last && !group->last->first))
-    return;
-
-  auto dim = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsDimension);
-  *dim     = {
-        .prev = group->last,
-  };
-
-  if (dim->prev)
-    dim->prev->next = dim;
-  if (!group->first)
-    group->first = dim;
-  group->last = dim;
-}
-
-void ControlsGroupAdd(ControlsGroupID groupID, Clay_ElementId id) {  ///
-  ASSERT(id.id);
-
-  auto group = _GetControlsGroup(groupID);
-  if (!group)
-    return;
-
-  auto dim = group->last;
-  if (!dim) {
-    ControlsGroupNewRow(groupID);
-    dim = group->last;
-  }
-
-  auto elem = ALLOCATE_FOR(&g.meta.transientDataArena, ControlsEntry);
-  *elem     = {
-        .id   = id,
-        .prev = dim->last,
-  };
-
-  if (elem->prev)
-    elem->prev->next = elem;
-  if (!dim->first)
-    dim->first = elem;
-  dim->last = elem;
-}
-
-void ControlsGroupConnect(
-  ControlsGroupID from,
-  Direction       dir,
-  ControlsGroupID to,
-  bool            bidirectional = true
-) {  ///
-  ASSERT(dir);
-
-  auto g1 = _GetControlsGroup(from);
-  auto g2 = _GetControlsGroup(to);
-  if (!g1 || !g2)
-    return;
-
-  // Can't connect groups where at least one of them is empty.
-  if (!g1->first || !g1->first->first || !g2->first || !g2->first->first)
-    return;
-
-  const int d = (int)dir - 1;
-
-  if (!g1->connectionsPerDirection[d])
-    g1->connectionsPerDirection[d] = to;
-
-  if (bidirectional) {
-    auto opposite = (d + 2) % 4;
-
-    if (!g2->connectionsPerDirection[opposite])
-      g2->connectionsPerDirection[opposite] = from;
-  }
 }
 
 #define PLAYER_CREATURE (g.run.creatures[0])
@@ -2583,160 +2085,6 @@ void ChangeCoins(int amount) {  ///
   AchievementMax(AchievementType_HOLD_N_COINS, PLAYER_COINS);
 
   Save();
-}
-
-void FlexBegin(int maxWidth, u16 childGap) {  ///
-  ASSERT_FALSE(g.uiFlex.active);
-  g.uiFlex = {
-    .active   = true,
-    .childGap = childGap,
-    .maxWidth = maxWidth,
-  };
-}
-
-void FlexEnd() {  ///
-  if (g.uiFlex.addedChildren)
-    Clay__CloseElement();
-  g.uiFlex = {};
-}
-
-bool FlexShouldAddRowForChild(int childWidth) {  ///
-  bool shouldAddRow = !g.uiFlex.addedChildren;
-  if (g.uiFlex.addedChildren && (g.uiFlex.currentWidth + childWidth > g.uiFlex.maxWidth))
-    shouldAddRow = true;
-  return shouldAddRow;
-}
-
-void FlexAddRowForChildIfNeeded(int childWidth) {  ///
-  if (FlexShouldAddRowForChild(childWidth)) {
-    if (g.uiFlex.addedChildren)
-      Clay__CloseElement();
-
-    Clay__OpenElement();
-    Clay__ConfigureOpenElement(CLAY__CONFIG_WRAPPER(
-      Clay_ElementDeclaration,
-      {
-        .layout{
-          .childGap = g.uiFlex.childGap,
-          BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
-        },
-      }
-    ));
-    g.uiFlex.currentWidth = 0;
-  }
-
-  g.uiFlex.addedChildren = true;
-  g.uiFlex.currentWidth += childWidth + g.uiFlex.childGap;
-}
-
-bool IsAlreadyPlaceholded(const char* placeholder) {  ///
-  auto pp = g.uiFlex.pgroupsFirst;
-  while (pp) {
-    if (!strcmp(pp->placeholder, placeholder))
-      return true;
-    pp = pp->next;
-  }
-  return false;
-}
-
-void _AddPlaceholder(Placeholder p) {  ///
-  ASSERT(g.uiFlex.pgroupsLastIsActive);
-
-  auto pp = ALLOCATE_FOR(&ge.meta.trashArena, Placeholder);
-  *pp     = p;
-
-  auto& group = *g.uiFlex.pgroupsLast;
-  if (!group.first)
-    group.first = pp;
-  if (group.last)
-    group.last->next = pp;
-  group.last = pp;
-}
-
-// `placeholder` must be statically allocated or live in trashArena.
-void PlaceholdGroupBegin(const char* placeholder) {  ///
-  ASSERT_FALSE(IsAlreadyPlaceholded(placeholder));
-  ASSERT_FALSE(g.uiFlex.pgroupsLastIsActive);
-  g.uiFlex.pgroupsLastIsActive = true;
-
-  ASSERT((bool)g.uiFlex.pgroupsFirst == (bool)g.uiFlex.pgroupsLast);
-
-  auto pp = ALLOCATE_FOR(&ge.meta.trashArena, PlaceholderGroup);
-  *pp     = {.placeholder = placeholder};
-
-  if (!g.uiFlex.pgroupsFirst)
-    g.uiFlex.pgroupsFirst = pp;
-  if (g.uiFlex.pgroupsLast)
-    g.uiFlex.pgroupsLast->next = pp;
-  g.uiFlex.pgroupsLast = pp;
-}
-
-void PlaceholdGroupEnd() {  ///
-  ASSERT(g.uiFlex.pgroupsFirst);
-  ASSERT(g.uiFlex.pgroupsLast);
-  ASSERT(g.uiFlex.pgroupsLastIsActive);
-  g.uiFlex.pgroupsLastIsActive = false;
-}
-
-// `value` must be statically allocated or live in trashArena.
-void PlaceholdString(const char* value, Color color = palTextGreen) {  ///
-  ASSERT(g.uiFlex.pgroupsLastIsActive);
-  _AddPlaceholder({
-    .type = PlaceholderType_STRING,
-    ._u{.string{.value = value, .color = color}},
-  });
-}
-
-void PlaceholdFormattedString(const char* value, Color color = palTextGreen) {  ///
-  PlaceholdString(PushTextToArena(&ge.meta.trashArena, value), color);
-}
-
-// `placeholder` and `value` must be statically allocated or live in trashArena.
-void PlaceholdString(
-  const char* placeholder,
-  const char* value,
-  Color       color = palTextGreen
-) {  ///
-  PlaceholdGroupBegin(placeholder);
-  PlaceholdString(value, color);
-  PlaceholdGroupEnd();
-}
-
-void PlaceholdBrokenLocale(int locale, Color color = palTextWhite) {  ///
-  ASSERT(g.uiFlex.pgroupsLastIsActive);
-  _AddPlaceholder({
-    .type = PlaceholderType_BROKEN_LOCALE,
-    ._u{.brokenLocale{
-      .value = locale,
-      .color = color,
-    }},
-  });
-}
-
-// `placeholder` must be statically allocated or live in trashArena.
-void PlaceholdBrokenLocale(
-  const char* placeholder,
-  int         locale,
-  Color       color = palTextWhite
-) {  ///
-  PlaceholdGroupBegin(placeholder);
-  PlaceholdBrokenLocale(locale, color);
-  PlaceholdGroupEnd();
-}
-
-void PlaceholdImage(int texID) {  ///
-  ASSERT(g.uiFlex.pgroupsLastIsActive);
-  _AddPlaceholder({
-    .type = PlaceholderType_IMAGE,
-    ._u{.image{.texID = texID}},
-  });
-}
-
-// `placeholder` must be statically allocated or live in trashArena.
-void PlaceholdImage(const char* placeholder, int texID) {  ///
-  PlaceholdGroupBegin(placeholder);
-  PlaceholdImage(texID);
-  PlaceholdGroupEnd();
 }
 
 void MakeNumber(MakeNumberData data) {  ///
@@ -3812,277 +3160,6 @@ void CheckCollisionsRect(
   );
 }
 
-static BF_FORCE_INLINE Clay_Dimensions MeasureText(
-  Clay_StringSlice        text,
-  Clay_TextElementConfig* config,
-  void*                   userData
-) noexcept {  ///
-  ASSERT(config);
-  // TODO: fontSize, letterSpacing
-  const auto font  = &g.meta.fontUI + config->fontId;
-  f32        width = 0;
-
-  IterateOverCodepoints(
-    text.chars,
-    text.length,
-    [&font, &width](u32 codepoint, u32 _codepointSize) BF_FORCE_INLINE_LAMBDA {
-      if (!codepoint)
-        return;
-
-      stbtt_aligned_quad _q{};
-      f32                _y{};
-
-      auto glyphIndex
-        = ArrayBinaryFind(font->codepoints, font->codepointsCount, (int)codepoint);
-      ASSERT(glyphIndex >= 0);
-
-      f32 w{};
-
-      stbtt_GetPackedQuad(
-        font->chars,
-        font->atlasTexture.size.x,
-        font->atlasTexture.size.y,
-        glyphIndex,
-        &w,
-        &_y,
-        &_q,
-        1  // 1=opengl & d3d10+,0=d3d9
-      );
-
-      width += w / font->_scaleToFit;
-    }
-  );
-
-  return {(f32)width, (f32)font->size / font->_scaleToFit};
-}
-
-void* PushClayImageData(ClayImageData data) {  ///
-  auto result = ALLOCATE_FOR(&ge.meta.trashArena, ClayImageData);
-  *result     = data;
-  return (void*)result;
-}
-
-void* PushClayCustomData(ClayCustomData data) {  ///
-  auto result = ALLOCATE_FOR(&ge.meta.trashArena, ClayCustomData);
-  *result     = data;
-  return (void*)result;
-}
-
-void ResetPlaceholders() {  ///
-  ASSERT_FALSE(g.uiFlex.pgroupsLastIsActive);
-  g.uiFlex.pgroupsFirst = nullptr;
-  g.uiFlex.pgroupsLast  = nullptr;
-}
-
-void BF_CLAY_IMAGE(
-  ClayImageData data,
-  auto          innerLambda,
-  bool          _resetPlaceholders = true
-) {  ///
-  if (!Vector2Equals(data.overriddenSize, Vector2Zero()))
-    ASSERT_FALSE(data.dontCareAboutScaleWhenCalculatingSize);
-  if (data.dontCareAboutScaleWhenCalculatingSize)
-    ASSERT(Vector2Equals(data.overriddenSize, Vector2Zero()));
-
-  const auto texture      = glib->atlas_textures()->Get(data.texID);
-  const auto originalSize = glib->original_texture_sizes()->Get(data.texID);
-
-  f32 w = (f32)originalSize->x() * ASSETS_TO_LOGICAL_RATIO;
-  f32 h = (f32)originalSize->y() * ASSETS_TO_LOGICAL_RATIO;
-
-  if (!data.dontCareAboutScaleWhenCalculatingSize) {
-    w *= data.scale.x;
-    h *= data.scale.y;
-  }
-
-  ASSERT(data.overriddenSize.x >= 0);
-  ASSERT(data.overriddenSize.y >= 0);
-  if (data.overriddenSize.x > 0)
-    w = data.overriddenSize.x;
-  if (data.overriddenSize.y > 0)
-    h = data.overriddenSize.y;
-
-  if (g.uiFlex.active)
-    FlexAddRowForChildIfNeeded(Ceil(w));
-
-  auto& beautifiers      = g.ui.clayBeautifiers;
-  auto& beautifiersCount = g.ui.clayBeautifiersCount;
-
-  CLAY({
-    .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
-  }) {
-    CLAY({
-      .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
-      .floating{
-        .zIndex = g.ui.clayZIndex,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-        },
-        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-        .attachTo           = CLAY_ATTACH_TO_PARENT,
-      },
-    }) {
-      FLOATING_BEAUTIFY;
-      CLAY({
-        .layout{.sizing{.width = CLAY_SIZING_FIXED(w), .height = CLAY_SIZING_FIXED(h)}},
-        .image{.imageData = PushClayImageData(data)},
-      }) {
-        innerLambda();
-      }
-    }
-  }
-
-  if (_resetPlaceholders)
-    ResetPlaceholders();
-}
-
-void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
-  BF_CLAY_IMAGE(data, [] {}, _resetPlaceholders);
-}
-
-struct ClayTextOptions {  ///
-  Color color = palTextWhite;
-
-  // Others: CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_WRAP_NONE.
-  Clay_TextElementConfigWrapMode wrapMode = CLAY_TEXT_WRAP_WORDS;
-};
-
-// NOTE: This overload DOESN'T SAVE string to trash arena.
-void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
-  u16 fontID = 0;
-  if (g.ui.overriddenFont)
-    fontID = (UINT_FROM_PTR(g.ui.overriddenFont) - UINT_FROM_PTR(&g.meta.fontUI))
-             / sizeof(Font);
-  ASSERT(fontID >= 0);
-
-  if (g.uiFlex.active) {
-    Clay_StringSlice s{
-      .length    = string.length,
-      .chars     = string.chars,
-      .baseChars = string.chars,
-    };
-    Clay_TextElementConfig cfg{
-      .fontId   = fontID,
-      .wrapMode = opts.wrapMode,
-    };
-    auto dim = MeasureText(s, &cfg, nullptr);
-
-    // In flex space shouldn't break the line.
-    // It's only other elements (which need more width) break the line.
-    if (FlexShouldAddRowForChild(dim.width)) {
-      if ((string.length == 1) && (string.chars[0] == ' '))
-        return;
-    }
-
-    FlexAddRowForChildIfNeeded(dim.width);
-  }
-
-  CLAY_TEXT(
-    string,
-    CLAY_TEXT_CONFIG({
-      .textColor = ToClayColor(opts.color),
-      .fontId    = fontID,
-      // fontSize fixes clay's incorrect MeasureText cache
-      .fontSize = (u16)Hash32((u8*)&fontID, sizeof(fontID)),
-      .wrapMode = opts.wrapMode,
-    })
-  );
-}
-
-// NOTE: This overload SAVES string to trash arena.
-void BF_CLAY_TEXT(const char* text, ClayTextOptions opts = {}) {  ///
-  int         len           = 0;
-  const char* allocatedText = PushTextToArena(&ge.meta.trashArena, text, &len);
-  Clay_String string{
-    .length = (i32)len,
-    .chars  = allocatedText,
-  };
-  BF_CLAY_TEXT(string, opts);
-}
-
-void BF_CLAY_TEXT_BROKEN_LOCALIZED(
-  int             locale_,
-  ClayTextOptions opts               = {},
-  bool            _resetPlaceholders = true
-) {                                  ///
-  const auto locale = (Loc)locale_;  // NOTE: For debug.
-
-  const auto localization              = glib->localizations()->Get(ge.meta.localization);
-  const auto localization_broken_lines = localization->broken_lines();
-
-  if (BF_DEBUG) {
-    // Checking that all required placeholders were set.
-    for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
-      for (auto group : *line->groups()) {
-        for (auto string : *group->strings()) {
-          if (!string->placeholder())
-            continue;
-
-          const auto requiredPlaceholder = string->placeholder()->c_str();
-
-          bool found = false;
-          auto group = g.uiFlex.pgroupsFirst;
-          while (group) {
-            if (!strcmp(group->placeholder, requiredPlaceholder)) {
-              found = true;
-              break;
-            }
-            group = group->next;
-          }
-          ASSERT(found);
-        }
-      }
-    }
-  }
-
-  for (auto line : *localization_broken_lines->Get(locale_)->lines()) {
-    // TODO: Proper lines support!
-    for (auto group : *line->groups()) {
-      for (auto string : *group->strings()) {
-        if (string->type() == BrokenStringDatumType_SPACE) {
-          Clay_String text{.isStaticallyAllocated = true, .length = 1, .chars = " "};
-          BF_CLAY_TEXT(text, opts);
-          continue;
-        }
-
-        if (string->placeholder()) {
-          const auto placeholderString = string->placeholder()->c_str();
-
-          auto group = g.uiFlex.pgroupsFirst;
-          bool found = false;
-          while (group) {
-            if (!strcmp(group->placeholder, placeholderString)) {
-              found = true;
-              break;
-            }
-            group = group->next;
-          }
-          ASSERT(found);
-
-          auto pp = group->first;
-          while (pp) {
-            ASSERT(pp->type);
-            clayPlaceholderFunctions[(int)pp->type - 1](pp);
-            pp = pp->next;
-          }
-        }
-        else {
-          Clay_String text{
-            .isStaticallyAllocated = true,
-            .length                = (i32)string->string()->size(),
-            .chars                 = string->string()->c_str(),
-          };
-          BF_CLAY_TEXT(text, opts);
-        }
-      }
-    }
-  }
-
-  if (_resetPlaceholders)
-    ResetPlaceholders();
-}
-
 void DestroyBody(Body* body) {  ///
   b2DestroyBody(body->id);
   for (auto& shape : g.run.bodyShapes) {
@@ -4155,16 +3232,6 @@ MakeBodyResult MakeBody(Vector2 pos, MakeBodyData data) {  ///
   };
 
   return result;
-}
-
-void HandleClayErrors(Clay_ErrorData errorData) {  ///
-  LOGE("%s", errorData.errorText.chars);
-
-  switch (errorData.errorType) {
-  default:
-    INVALID_PATH;
-    break;
-  }
 }
 
 struct MakeRectBodyData {  ///
@@ -4333,7 +3400,8 @@ void MakeProjectile(MakeProjectileData data) {  ///
   *g.run.projectilesToMake.Add() = data;
 }
 
-void GamePreInit() {  ///
+void GamePreInit(GamePreInitOpts opts) {  ///
+  *opts.baseFont              = &g.meta.fontUI;
   ge.meta.logicRand           = Random(SDL_GetPerformanceCounter());
   ge.settings.backgroundColor = ColorFromRGBA(0x241207ff);
 }
@@ -5250,23 +4318,6 @@ void GameInit() {
     }
   }
 
-  // Setup. {  ///
-  g.meta.transientDataArena = MakeArena(128 * 1024);
-  TEMP_USAGE(&ge.meta.trashArena);
-
-  // Initializing Clay.
-  {
-    auto size = Clay_MinMemorySize();
-    Clay_Initialize(
-      Clay_CreateArenaWithCapacityAndMemory(size, BF_ALLOC(size)),
-      Clay_Dimensions{(f32)LOGICAL_RESOLUTION.x, (f32)LOGICAL_RESOLUTION.y},
-      Clay_ErrorHandler{HandleClayErrors}
-    );
-    Clay_SetCullingEnabled(false);
-    Clay_SetMeasureTextFunction(MeasureText, 0);
-  }
-  // }
-
   ReloadFontsIfNeeded();  // TODO: remove this line?
 
   // Setting `g.ui.touchControlMaxLogicalOffset`.
@@ -5983,49 +5034,6 @@ Vector2 GetWeaponPos(int weaponIndex) {  ///
   return PLAYER_CREATURE.pos + offset;
 }
 
-void ClayPlaceholderFunction_STRING(const Placeholder* placeholder) {  ///
-  const auto& string = placeholder->string();
-  BF_CLAY_TEXT(string.value, {.color = string.color});
-}
-
-void ClayPlaceholderFunction_BROKEN_LOCALE(const Placeholder* placeholder) {  ///
-  const auto& d = placeholder->brokenLocale();
-  BF_CLAY_TEXT_BROKEN_LOCALIZED(d.value, {.color = d.color}, false);
-}
-
-void ClayPlaceholderFunction_IMAGE(const Placeholder* placeholder) {  ///
-  const auto& d = placeholder->image();
-
-  auto fb = glib->original_texture_sizes()->Get(d.texID);
-
-  f32 h              = (f32)g.meta.fontUI.size;
-  f32 fontScaleToFit = g.meta.fontUI._scaleToFit;
-  if (g.ui.overriddenFont) {
-    h              = (f32)g.ui.overriddenFont->size;
-    fontScaleToFit = g.ui.overriddenFont->_scaleToFit;
-  }
-
-  f32 scale = h / ((f32)fb->y() * ASSETS_TO_LOGICAL_RATIO);
-  BF_CLAY_IMAGE(
-    {
-      .texID = d.texID,
-      .scale{scale, scale},
-      .overriddenSize{0, h / fontScaleToFit},
-    },
-    false
-  );
-}
-
-void FontBegin(Font* font) {  ///
-  ASSERT_FALSE(g.ui.overriddenFont);
-  g.ui.overriddenFont = font;
-}
-
-void FontEnd() {  ///
-  ASSERT(g.ui.overriddenFont);
-  g.ui.overriddenFont = nullptr;
-}
-
 void ButtonSFX(bool draw, Clay_ElementId id, bool hovered) {  ///
   ASSERT(id.id);
   if (draw)
@@ -6077,35 +5085,6 @@ void RemoveImmediateWeaponEffects() {  ///
       _UpdateImmediateWeaponEffects(weaponIndex, -1);
   }
 }
-
-#define SCOPED_CONTEXT(context_)                   \
-  const auto _prevContext = currentContext;        \
-  currentContext          = (context_);            \
-  if (!draw) {                                     \
-    controlsContexts[(context_)].thisFrame = true; \
-    if (!controlsContexts[(context_)].prevFrame)   \
-      controlsContexts[(context_)].focused = {};   \
-  }                                                \
-  DEFER {                                          \
-    currentContext = _prevContext;                 \
-  };
-
-#define SCOPED_CONTEXT_IF(context_, enabled_)              \
-  const auto _prevContext = currentContext;                \
-  if (!draw) {                                             \
-    if (enabled_) {                                        \
-      currentContext                         = (context_); \
-      controlsContexts[(context_)].thisFrame = true;       \
-    }                                                      \
-    controlsContexts[(context_)].disabled = !(enabled_);   \
-    if (!controlsContexts[(context_)].prevFrame)           \
-      controlsContexts[(context_)].focused = {};           \
-  }                                                        \
-  DEFER {                                                  \
-    currentContext = _prevContext;                         \
-  };
-
-#define CURRENT_CONTEXT (controlsContexts[currentContext])
 
 f32 ScaleDamageNumbersByProgress(f32 p) {  ///
   return Lerp(5 / 2.0f, 1, EaseOutQuad(MIN(1, p * 3)));
@@ -6191,278 +5170,8 @@ Color BreatheColor(Color color, BreatheColorData data) {  ///
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 void DoUI() {
-  if ((ge.meta.screenSize.x <= 0) || (ge.meta.screenSize.y <= 0))
-    return;
-
-  ZoneScoped;
-
-  enum UIZIndexOffset {  ///
-    UIZIndexOffset_HOVER_DETAILS              = 2,
-    UIZIndexOffset_STATS                      = 4,
-    UIZIndexOffset_CONFIRM_MODAL              = 6,
-    UIZIndexOffset_JUST_UNLOCKED_ACHIEVEMENTS = 8,
-  };
-
-  // Setup.
-  // {  ///
-  TEMP_USAGE(&ge.meta.trashArena);
-  TEMP_USAGE(&g.meta.transientDataArena);
-
-  const auto draw = ge.meta._drawing;
-
-  static ControlsContext lastFrameActiveControlsContext{};
-  ControlsContext        currentContext{};
-
-  static struct {
-    bool           thisFrame = false;
-    bool           prevFrame = false;
-    Clay_ElementId focused   = {};
-    bool           disabled  = false;
-  } controlsContexts[ControlsContext_COUNT];
-
-  static Direction uiElementSwitchDirectionPrevFrame = Direction_NONE;
-
-  Direction uiElementSwitchDirection = Direction_NONE;
-  if (!draw) {
-    if (IsKeyPressed(SDL_SCANCODE_D) || IsKeyPressed(SDL_SCANCODE_RIGHT))
-      uiElementSwitchDirection = Direction_RIGHT;
-    if (IsKeyPressed(SDL_SCANCODE_W) || IsKeyPressed(SDL_SCANCODE_UP))
-      uiElementSwitchDirection = Direction_UP;
-    if (IsKeyPressed(SDL_SCANCODE_A) || IsKeyPressed(SDL_SCANCODE_LEFT))
-      uiElementSwitchDirection = Direction_LEFT;
-    if (IsKeyPressed(SDL_SCANCODE_S) || IsKeyPressed(SDL_SCANCODE_DOWN))
-      uiElementSwitchDirection = Direction_DOWN;
-  }
-
-  DEFER {
-    if (!draw)
-      uiElementSwitchDirectionPrevFrame = uiElementSwitchDirection;
-  };
-
-  bool justFocusedDefaultControl = false;
-
-  LAMBDA (void, markControlAsDefault, (Clay_ElementId id)) {
-    if (draw)
-      return;
-
-    const bool allowed = (CURRENT_CONTEXT.thisFrame || CURRENT_CONTEXT.disabled);
-    ASSERT(allowed);
-
-    if ((uiElementSwitchDirection || g.meta.playerUsesKeyboardOrController)
-        && !CURRENT_CONTEXT.focused.id  //
-        && !CURRENT_CONTEXT.disabled)
-    {
-      CURRENT_CONTEXT.focused   = id;
-      justFocusedDefaultControl = true;
-    }
-
-    if (!CURRENT_CONTEXT.prevFrame                //
-        && g.meta.playerUsesKeyboardOrController  //
-        && !CURRENT_CONTEXT.focused.id            //
-        && !CURRENT_CONTEXT.disabled)
-      CURRENT_CONTEXT.focused = id;
-  };
-
-  const auto fb_atlas_textures      = glib->atlas_textures();
-  const auto original_texture_sizes = glib->original_texture_sizes();
-  const auto fb_items               = glib->items();
-  const auto fb_stats               = glib->stats();
-  const auto fb_weapon_properties   = glib->weapon_properties();
-  const auto fb_weapons             = glib->weapons();
-  const auto fb_projectiles         = glib->projectiles();
-  const auto fb_pickupables         = glib->pickupables();
-  const auto fb_difficulties        = glib->difficulties();
-  const auto fb_achievements        = glib->achievements();
-  const auto fb_builds              = glib->builds();
-  const auto fb_effectConditions    = glib->effect_conditions();
-  const auto fb_creatures           = glib->creatures();
-  const auto fb_damageScalings      = glib->damage_scalings();
-
-  static int _disallowTouchNumber = {};
-
-  LAMBDA (void, disallowTouch, ()) {
-    ASSERT_FALSE(draw);
-    if (GetTouchIDs().count) {
-      ASSERT(ge.meta._latestActiveTouchID != InvalidTouchID);
-      _disallowTouchNumber = GetTouchData(ge.meta._latestActiveTouchID).number;
-    }
-  };
-
-  // Clay. Set UI dimensions + update mouse pos.
-  if (!draw) {
-    {
-      auto res = ge.meta.scaledLogicalResolution;
-      auto r   = res.x / res.y;
-      if (r > UI_ASPECT_RATIO_MAX)
-        res.x = res.y * UI_ASPECT_RATIO_MAX;
-      else if (r < UI_ASPECT_RATIO_MIN)
-        res.y = res.x / UI_ASPECT_RATIO_MIN;
-      g.meta.screenSizeUI = res;
-      Clay_SetLayoutDimensions({res.x, res.y});
-    }
-
-    auto pos = ScreenPosToLogical(GetMouseScreenPos());
-
-    if (ge.events.last == LastEventType_TOUCH) {
-      pos = Vector2Inf();
-
-      if (ge.meta._latestActiveTouchID != InvalidTouchID) {
-        const auto td = GetTouchData(ge.meta._latestActiveTouchID);
-        if (_disallowTouchNumber != td.number)
-          pos = ScreenPosToLogical(td.screenPos);
-      }
-    }
-
-    g.meta.screenSizeUIMargin = {
-      (g.meta.screenSizeUI.x - LOGICAL_RESOLUTION.x) / 2.0f,
-      (g.meta.screenSizeUI.y - LOGICAL_RESOLUTION.y) / 2.0f,
-    };
-
-    pos = Vector2(pos.x, LOGICAL_RESOLUTION.y - pos.y) + g.meta.screenSizeUIMargin;
-    Clay_SetPointerState({pos.x, pos.y}, false);
-  }
-
-  const auto localization              = glib->localizations()->Get(ge.meta.localization);
-  const auto localization_strings      = localization->strings();
-  const auto localization_broken_lines = localization->broken_lines();
-
-  Clay_BeginLayout();
-
-  auto& beautifiers      = g.ui.clayBeautifiers;
-  auto& beautifiersCount = g.ui.clayBeautifiersCount;
-
-#define GAP_FLEX (2)
-#define GAP_SMALL (8)
-#define GAP_BIG (20)
-#define PADDING_FRAME (12)
-#define PADDING_FRAME_SHADOW (94 * ASSETS_TO_LOGICAL_RATIO)
-#define PADDING_OUTER_VERTICAL (10)
-#define PADDING_OUTER_HORIZONTAL (12)
-
-  int _wheel = 0;
-  if (!draw) {
-    _wheel = GetMouseWheel();
-    if (IsKeyDown(SDL_SCANCODE_LSHIFT) || IsKeyDown(SDL_SCANCODE_RSHIFT))
-      _wheel *= 10;
-  }
-  const int wheel = _wheel;
-
-  auto& zIndex = g.ui.clayZIndex;
-
-  const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
-
-  const auto fb_slotColors = glib->ui_itemslot_colors();
-  auto slotColors_ = ALLOCATE_ARRAY(&ge.meta.trashArena, Color, fb_slotColors->size());
-  FOR_RANGE (int, i, fb_slotColors->size())
-    slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
-
-  const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
-
-  constexpr int CARD_WIDTH          = 240;
-  constexpr int CARD_HEIGHT         = 400;
-  constexpr int UPGRADE_FRAME_WIDTH = 200;
-  constexpr int ACHIEVEMENT_WIDTH   = CARD_WIDTH;
-
-  const f32 ACHIEVEMENT_HEIGHT =                      //
-    0                                                 //
-    + g.meta.fontUI.size / g.meta.fontUI._scaleToFit  // Name.
-    + GAP_SMALL                                       // Gap between name and description.
-    + 2 * g.meta.fontStats.size / g.meta.fontUI._scaleToFit  // 2 lines of description.
-    + GAP_FLEX;                                              // Gap between them.
-
-  const auto slotSize
-    = ToVector2(glib->original_texture_sizes()->Get(glib->ui_itemslot_texture_id()))
-      * ASSETS_TO_LOGICAL_RATIO;
-  // }
-
-  LAMBDA (void, BF_CLAY_TEXT_LOCALIZED, (int locale, ClayTextOptions opts = {})) {  ///
-    ASSERT((int)locale >= 0);
-    ASSERT((int)locale < Loc_COUNT);
-    auto        string = localization_strings->Get(locale);
-    Clay_String text{
-      .isStaticallyAllocated = true,
-      .length                = (i32)string->size(),
-      .chars                 = string->c_str(),
-    };
-    BF_CLAY_TEXT(text, opts);
-  };
-
-  LAMBDA (void, componentOverlay, (auto innerLambda, f32 fade = 1)) {  ///
-    CLAY({
-      .layout{
-        .sizing{
-          .width  = CLAY_SIZING_FIXED(LOGICAL_RESOLUTION.x * 2),
-          .height = CLAY_SIZING_FIXED(LOGICAL_RESOLUTION.y * 2),
-        },
-      },
-      .floating{
-        .zIndex = (i16)(zIndex - 1),
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-        },
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-      BF_CLAY_CUSTOM_BEGIN{
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE * fade)
-        ),
-      } BF_CLAY_CUSTOM_END,
-    }) {
-      innerLambda();
-    }
-  };
-
-  bool _alreadyHandledClickOrTouch = false;
-
-  LAMBDA (bool, touchedThisComponent, (bool preventFutureDispatch = true)) {  ///
-    if (draw)
-      return false;
-    if (_alreadyHandledClickOrTouch)
-      return false;
-    const bool result = !g.meta.playerUsesKeyboardOrController  //
-                        && Clay_Hovered()                       //
-                        && IsTouchPressed(ge.meta._latestActiveTouchID);
-    if (result && preventFutureDispatch)
-      _alreadyHandledClickOrTouch = true;
-    return result;
-  };
-
-  LAMBDA (bool, clickedOrTouchedThisComponent, (bool preventFutureDispatch = true)) {  ///
-    if (draw)
-      return false;
-    if (_alreadyHandledClickOrTouch)
-      return false;
-    const bool result
-      = !g.meta.playerUsesKeyboardOrController  //
-        && Clay_Hovered()                       //
-        && (IsMousePressed(L) || IsTouchPressed(ge.meta._latestActiveTouchID));
-    if (result && preventFutureDispatch)
-      _alreadyHandledClickOrTouch = true;
-    return result;
-  };
-
-  bool _alreadyHandledActivation = false;
-
-  LAMBDA (bool, isCurrentContextActive, ()) {  ///
-    return lastFrameActiveControlsContext == currentContext;
-  };
-
-  LAMBDA (bool, IsKeyPressedInCurrentContext, (SDL_Scancode key)) {  ///
-    if (!isCurrentContextActive())
-      return false;
-    return IsKeyPressed(key);
-  };
-
-  LAMBDA (bool, didActivate, (SDL_Scancode key)) {  ///
-    if (draw)
-      return false;
-    if (_alreadyHandledActivation)
-      return false;
-    bool result = IsKeyPressedInCurrentContext(key);
-    if (result)
-      _alreadyHandledActivation = true;
-    return result;
-  };
+#define BF_UI_PRE
+#include "bf_clay_ui.cpp"
 
   LAMBDA (void, processShowingOrNotShowingSlotDetails, (Clay_ElementId slotID)) {  ///
     if (draw)
@@ -6568,7 +5277,7 @@ void DoUI() {
         }}) {
           innerLambda(
             (hovered || isSelected) && canShowAsSelected,
-            ((hovered || isSelected) && canShowAsSelected ? palTextBlack : palTextWhite)
+            ((hovered || isSelected) && canShowAsSelected ? BLACK : WHITE)
           );
         }
       }
@@ -6602,7 +5311,7 @@ void DoUI() {
   {  ///
     FontBegin(&g.meta.fontUIBigOutlined);
     const bool result = componentButton(data, [&](bool hovered, Color textColor) {
-      innerLambda(hovered, palTextWhite);
+      innerLambda(hovered, WHITE);
     });
     FontEnd();
     return result;
@@ -6655,8 +5364,7 @@ void DoUI() {
 
                 FontBegin(&g.meta.fontUIBigOutlined);
                 BF_CLAY_TEXT(
-                  TextFormat("%d", price),
-                  {.color = (canReroll ? palTextWhite : palTextRed)}
+                  TextFormat("%d", price), {.color = (canReroll ? WHITE : palTextRed)}
                 );
                 BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
                 FontEnd();
@@ -6708,7 +5416,7 @@ void DoUI() {
               FLOATING_BEAUTIFY;
 
               FontBegin(&g.meta.fontUIBigOutlined);
-              BF_CLAY_TEXT(TextFormat("%d", data.price), {.color = palTextWhite});
+              BF_CLAY_TEXT(TextFormat("%d", data.price), {.color = WHITE});
               BF_CLAY_IMAGE({
                 .texID = glib->ui_coin_texture_id(),
                 .scale = Vector2One() * 0.75f,
@@ -7139,7 +5847,7 @@ void DoUI() {
             || fb_effect->all_weapons())
         {
           // auto color = secondaryTextColor;
-          auto color = palTextWhite;
+          auto color = WHITE;
           // if (fb_effect->only_this_weapon()) {
           //   BF_CLAY_TEXT_BROKEN_LOCALIZED(Loc_UI_ONLY_THIS_WEAPON, {.color = color});
           //   BF_CLAY_TEXT(": ", {.color = color});
@@ -7198,7 +5906,8 @@ void DoUI() {
 
           PlaceholdFormattedString(
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
-            ((isPositive == fb_stat->negative_is_good()) ? palTextRed : palTextGreen)
+            {.color
+             = ((isPositive == fb_stat->negative_is_good()) ? palTextRed : palTextGreen)}
           );
 
           if (fb_stat->small_icon_texture_id()) {
@@ -7247,13 +5956,15 @@ void DoUI() {
               &ge.meta.trashArena,
               TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v)))
             ),
-            palTextGreen
+            {.color = palTextGreen}
           );
         }
 
         if (fb_effect->pickupable_type()) {
           auto fb_pickupable = fb_pickupables->Get(fb_effect->pickupable_type());
-          PlaceholdBrokenLocale("PICKUPABLE", fb_pickupable->name_locale(), palTextGreen);
+          PlaceholdBrokenLocale(
+            "PICKUPABLE", fb_pickupable->name_locale(), {.color = palTextGreen}
+          );
         }
 
         if (fb_condPlaceholders) {
@@ -7303,7 +6014,7 @@ void DoUI() {
                   color = palTextRed;
               }
 
-              PlaceholdFormattedString(formatted, color);
+              PlaceholdFormattedString(formatted, {.color = color});
             } break;
 
             case CondVarType_FLOAT: {
@@ -7322,7 +6033,7 @@ void DoUI() {
               if (fb_placeholder->is_percent())
                 formatted = TextFormat("%s%%", formatted);
 
-              PlaceholdFormattedString(formatted);
+              PlaceholdFormattedString(formatted, {.color = palTextGreen});
             } break;
 
             case CondVarType_DAMAGE: {
@@ -7347,11 +6058,11 @@ void DoUI() {
               }
 
               if (baseDamage) {
-                PlaceholdFormattedString(FormatInt(baseDamage));
+                PlaceholdFormattedString(FormatInt(baseDamage), {.color = palTextGreen});
 
                 if (totalScalings) {
                   PlaceholdString(" ");
-                  PlaceholdString("+ ");
+                  PlaceholdString("+ ", {.color = palTextGreen});
                 }
               }
 
@@ -7368,7 +6079,9 @@ void DoUI() {
                   if (!v)
                     continue;
 
-                  PlaceholdFormattedString(TextFormat("%d%%", v));
+                  PlaceholdFormattedString(
+                    TextFormat("%d%%", v), {.color = palTextGreen}
+                  );
                   PlaceholdImage(
                     fb_stats->Get(fb_scaling->stat_type())->small_icon_texture_id()
                   );
@@ -7376,7 +6089,7 @@ void DoUI() {
 
                   if (totalScalings > 0) {
                     PlaceholdString(" ");
-                    PlaceholdString("+ ");
+                    PlaceholdString("+ ", {.color = palTextGreen});
                   }
                 }
               }
@@ -7393,7 +6106,7 @@ void DoUI() {
               else
                 INVALID_PATH;
 
-              PlaceholdBrokenLocale(locale, palTextGreen);
+              PlaceholdBrokenLocale(locale, {.color = palTextGreen});
             } break;
 
             default:
@@ -7405,7 +6118,7 @@ void DoUI() {
           }
         }
 
-        auto color = palTextWhite;
+        auto color = WHITE;
         if (fb_effect->effectcondition_type()
             == EffectConditionType_HIGHEST_DIFFICULTY_INFINITE_MODE)
           color = palTextYellow;
@@ -7461,13 +6174,15 @@ void DoUI() {
         PlaceholdString(
           "VALUE",
           localization_strings->Get(fb_difficulties->Get(stepIndex + 1)->name_locale())
-            ->c_str()
+            ->c_str(),
+          {.color = palTextGreen}
         );
       }
       else {
         PlaceholdString(
           "VALUE",
-          PushTextToArena(&ge.meta.trashArena, TextFormat("%d", fb_step->value()))
+          PushTextToArena(&ge.meta.trashArena, TextFormat("%d", fb_step->value())),
+          {.color = palTextGreen}
         );
       }
 
@@ -7489,7 +6204,9 @@ void DoUI() {
           description = 0;
         else {
           PlaceholdBrokenLocale(
-            "BUILD", fb_builds->Get(fb->build_type())->name_locale(), palTextGreen
+            "BUILD",
+            fb_builds->Get(fb->build_type())->name_locale(),
+            {.color = palTextGreen}
           );
         }
       }
@@ -7865,29 +6582,30 @@ void DoUI() {
 
               LAMBDA (void, showPelletsCount, (Color color)) {
                 if (times > 1)
-                  PlaceholdFormattedString(TextFormat("x%d", times), color);
+                  PlaceholdFormattedString(TextFormat("x%d", times), {.color = color});
               };
 
               if (data.affectedByGame) {
-                PlaceholdFormattedString(TextFormat("%d", actualDamage));
+                PlaceholdFormattedString(
+                  TextFormat("%d", actualDamage), {.color = palTextGreen}
+                );
                 showPelletsCount(palTextGreen);
 
                 PlaceholdString(" ");
-                PlaceholdString("| ", palTextWhite);
+                PlaceholdString("| ");
               }
 
-              PlaceholdFormattedString(TextFormat("%d", baseDamage), palTextWhite);
-              showPelletsCount(palTextWhite);
+              PlaceholdFormattedString(TextFormat("%d", baseDamage));
+              showPelletsCount(WHITE);
 
               for (const int scalingIndex : FBFlattened{damageScalings}.Iter()) {
                 PlaceholdString(" ");
-                PlaceholdString("+ ", palTextWhite);
+                PlaceholdString("+ ");
 
                 const auto fb_scaling = fb_damageScalings->Get(scalingIndex);
                 const auto fb_stat    = fb_stats->Get(fb_scaling->stat_type());
                 PlaceholdFormattedString(
-                  TextFormat("%d%%", fb_scaling->percents_per_tier()->Get(tierOffset)),
-                  palTextWhite
+                  TextFormat("%d%%", fb_scaling->percents_per_tier()->Get(tierOffset))
                 );
                 PlaceholdImage(fb_stat->small_icon_texture_id());
               }
@@ -8059,7 +6777,7 @@ void DoUI() {
             componentWeaponStatEntry(
               Loc_UI_THIS_WAVE_DAMAGE,
               [&]() BF_FORCE_INLINE_LAMBDA {
-                BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), {.color = palTextWhite});
+                BF_CLAY_TEXT(TextFormat("%d", thisWaveDamage), {.color = WHITE});
               }
             );
           };
@@ -8124,7 +6842,7 @@ void DoUI() {
                   FontBegin(&g.meta.fontPricesOutlined);
                   BF_CLAY_TEXT(
                     TextFormat("%d ", price),
-                    {.color = ((price <= PLAYER_COINS) ? palTextWhite : palTextRed)}
+                    {.color = ((price <= PLAYER_COINS) ? WHITE : palTextRed)}
                   );
                   FontEnd();
                   BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
@@ -8882,10 +7600,7 @@ void DoUI() {
     }
 
     CLAY({.layout{.childGap = GAP_FLEX, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
-      LAMBDA (
-        void, entry, (StatType stat, int texID, int value, Color color = palTextWhite)
-      )
-      {
+      LAMBDA (void, entry, (StatType stat, int texID, int value, Color color = WHITE)) {
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_X,
           BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER,
@@ -8928,7 +7643,7 @@ void DoUI() {
 
         int v = GetStatValue((StatType)statIndex);
 
-        auto color = palTextWhite;
+        auto color = WHITE;
         if (v > 0)
           color = (fb_stat->negative_is_good() ? palTextRed : palTextGreen);
         else if (v < 0)
@@ -9151,7 +7866,7 @@ void DoUI() {
       BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
 
       auto color = GetFlashingColor(
-        palTextWhite,
+        WHITE,
         palTextRed,
         g.ui.errorGold,
         ERROR_WIGGLING_FRAMES,
@@ -9446,8 +8161,7 @@ void DoUI() {
           }
 
           BF_CLAY_TEXT(
-            TextFormat("%d", g.run.state.notPickedUpCoins),
-            {.color = Fade(palTextWhite, fade)}
+            TextFormat("%d", g.run.state.notPickedUpCoins), {.color = Fade(WHITE, fade)}
           );
         }
       }
@@ -10430,12 +9144,12 @@ void DoUI() {
 
               BF_CLAY_TEXT_LOCALIZED(
                 Loc_UI_WEAPONS__CAPS,
-                {.color = (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)}
+                {.color = (weaponsCount > 0 ? WHITE : TRANSPARENT_BLACK)}
               );
 
               // BF_CLAY_TEXT(
               //   TextFormat(" (%d/%d)", weaponsCount, g.run.state.weapons.count),
-              //   (weaponsCount > 0 ? palTextWhite : TRANSPARENT_BLACK)
+              //   (weaponsCount > 0 ? WHITE : TRANSPARENT_BLACK)
               // );
             }
 
@@ -11663,469 +10377,8 @@ void DoUI() {
     }
   }
 
-  ASSERT_FALSE(currentContext);
-
-  // Control groups navigation.
-  if (!draw) {  ///
-    ControlsGroupConnect(groupDetails, Direction_RIGHT, groupDetails);
-
-    ControlsContext shownScreen{};
-    ControlsContext shownModal{};
-    for (int i = 1; i < ControlsContext_COUNT; i++) {
-      auto& context = controlsContexts[i];
-
-      if (context.prevFrame && !context.thisFrame)
-        context.focused = {};
-
-      if (!context.disabled) {
-        auto c = (ControlsContext)i;
-        if (context.thisFrame) {
-          if (CONTROLS_CONTEXT_MODALS.Contains(c))
-            shownModal = c;
-          else {
-            ASSERT_FALSE(shownScreen);
-            shownScreen = c;
-          }
-        }
-      }
-
-      context.prevFrame = context.thisFrame;
-      context.thisFrame = false;
-    }
-
-    // if (shownModal)
-    //   ASSERT(shownScreen);
-
-    ControlsContext currentContext = shownModal;
-    if (!currentContext)
-      currentContext = shownScreen;
-
-    lastFrameActiveControlsContext = currentContext;
-
-    if (uiElementSwitchDirection && currentContext && !justFocusedDefaultControl) {
-      auto toSelect = controlsContexts[currentContext].focused;
-
-      auto group = g.ui.controlsGroupsFirst;
-      while (group) {
-        ASSERT(group->next != group);
-        ASSERT(group->prev != group);
-
-        auto dim = group->first;
-
-        int preferredDimIndex = -1;
-        while (dim) {
-          preferredDimIndex++;
-
-          ASSERT(dim->next != dim);
-          ASSERT(dim->prev != dim);
-
-          auto elem = dim->first;
-
-          int preferredElemIndex = -1;
-          while (elem) {
-            preferredElemIndex++;
-
-            ASSERT(elem->next != elem);
-            ASSERT(elem->prev != elem);
-
-            if (elem->id.id == controlsContexts[currentContext].focused.id) {
-              if (uiElementSwitchDirection == Direction_RIGHT) {
-                if (elem->next)
-                  toSelect = elem->next->id;
-                else {
-                  auto to = group->connectionsPerDirection[(int)Direction_RIGHT - 1];
-                  if (to) {
-                    auto gto = _GetControlsGroup(to);
-                    toSelect = gto->first->first->id;
-                  }
-                }
-              }
-              else if (uiElementSwitchDirection == Direction_LEFT) {
-                if (elem->prev)
-                  toSelect = elem->prev->id;
-                else {
-                  auto to = group->connectionsPerDirection[(int)Direction_LEFT - 1];
-                  if (to) {
-                    auto gto = _GetControlsGroup(to);
-                    toSelect = gto->first->last->id;
-                  }
-                }
-              }
-              else if (uiElementSwitchDirection == Direction_DOWN) {
-                if (dim->next && dim->next->first) {
-                  toSelect
-                    = _GetPreferredControlsEntry(dim->next->first, preferredElemIndex)
-                        ->id;
-                }
-                else {
-                  auto to = group->connectionsPerDirection[(int)Direction_DOWN - 1];
-                  if (to) {
-                    auto gto = _GetControlsGroup(to);
-                    toSelect = gto->first->first->id;
-                  }
-                }
-              }
-              else if (uiElementSwitchDirection == Direction_UP) {
-                if (dim->prev) {
-                  toSelect
-                    = _GetPreferredControlsEntry(dim->prev->first, preferredElemIndex)
-                        ->id;
-                }
-                else {
-                  auto to = group->connectionsPerDirection[(int)Direction_UP - 1];
-                  if (to) {
-                    auto gto = _GetControlsGroup(to);
-                    toSelect = gto->last->first->id;
-                  }
-                }
-              }
-              else
-                INVALID_PATH;
-            }
-
-            elem = elem->next;
-          }
-          dim = dim->next;
-        }
-        group = group->next;
-      }
-
-      if (!draw && (controlsContexts[currentContext].focused.id != toSelect.id)) {
-        controlsContexts[currentContext].focused = toSelect;
-        PlaySound(Sound_UI_HOVER_SMALL);
-      }
-    }
-
-    g.ui.controlsGroupsFirst = nullptr;
-    g.ui.controlsGroupsLast  = nullptr;
-  }
-
-  // Game's version.
-  if (!gdebug.hideUIForVideo) {  ///
-    bool showVersion = ge.meta.debugEnabled;
-#if BF_SHOW_VERSION
-    showVersion = true;
-#endif
-
-    FontBegin(&g.meta.fontUIOutlined);
-
-    CLAY({
-      .floating{
-        .offset{PADDING_OUTER_HORIZONTAL, -PADDING_OUTER_VERTICAL},
-        .zIndex = i16_max,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
-          .parent  = CLAY_ATTACH_POINT_LEFT_BOTTOM,
-        },
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-    }) {
-      FLOATING_BEAUTIFY;
-
-      if (showVersion)
-        BF_CLAY_TEXT(g_gameVersion);
-
-      if (IsEmulatingMobile())
-        BF_CLAY_TEXT("[EMULATING MOBILE]");
-
-      if (BUILD_WARNINGS)
-        BF_CLAY_TEXT(TextFormat("[WARNINGS: %d]", BUILD_WARNINGS));
-    }
-
-    FontEnd();
-  }
-
-  ASSERT(g.ui.clayZIndex == 0);
-  ASSERT_FALSE(g.ui.overriddenFont);
-  auto drawCommands = Clay_EndLayout();
-
-  // Drawing UI.
-  if (draw) {  ///
-    ZoneScopedN("Drawing UI");
-
-    auto& beautifiers      = g.ui.clayBeautifiers;
-    auto& beautifiersCount = g.ui.clayBeautifiersCount;
-    ASSERT(beautifiersCount == 0);
-
-    FOR_RANGE (int, mode, 2) {
-      // 0 - drawing ui.
-      // 1 - drawing gizmos.
-
-      DrawGroup_Begin(mode ? DrawZ_GIZMOS : DrawZ_UI);
-      DrawGroup_SetSortY(0);
-
-      FOR_RANGE (int, i, drawCommands.length) {
-        auto& cmd = drawCommands.internalArray[i];
-
-        auto    beautifierAlpha = 1.0f;
-        Vector2 beautifierTranslate{0, 0};
-        Vector2 beautifierScale{1, 1};
-        FOR_RANGE (int, k, beautifiersCount) {
-          auto& beautifier = beautifiers[k];
-          beautifierAlpha *= beautifier.alpha;
-          beautifierTranslate += beautifier.translate;
-          beautifierScale *= beautifier.scale;
-        }
-        ASSERT(beautifierAlpha <= 1.0f);
-
-        cmd.boundingBox.x -= (g.meta.screenSizeUI.x - LOGICAL_RESOLUTION.x) / 2.0f;
-        cmd.boundingBox.y -= (g.meta.screenSizeUI.y - LOGICAL_RESOLUTION.y) / 2.0f;
-
-        cmd.boundingBox.x += beautifierTranslate.x;
-        cmd.boundingBox.y += beautifierTranslate.y;
-
-        auto bb = cmd.boundingBox;
-        bb.y    = LOGICAL_RESOLUTION.y - bb.y - bb.height;
-
-        if (!mode) {
-          switch (cmd.commandType) {
-          case CLAY_RENDER_COMMAND_TYPE_NONE:
-            break;
-
-          case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-            const auto& d = cmd.renderData.rectangle;
-            DrawGroup_CommandRect({
-              .pos{bb.x, bb.y},
-              .size{bb.width, bb.height},
-              .anchor{},
-              .color{
-                (u8)d.backgroundColor.r,
-                (u8)d.backgroundColor.g,
-                (u8)d.backgroundColor.b,
-                (u8)((f32)d.backgroundColor.a * beautifierAlpha)
-              },
-            });
-          } break;
-
-          case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-            const auto& d    = cmd.renderData.image;
-            const auto& data = *(ClayImageData*)d.imageData;
-            DrawGroup_CommandTexture({
-              .texID = data.texID,
-              .pos{
-                bb.x + bb.width / 2 + data.offset.x,
-                bb.y + bb.height / 2 + data.offset.y,
-              },
-              .anchor        = data.anchor,
-              .scale         = data.scale,
-              .sourceMargins = data.sourceMargins,
-              .color{
-                data.color.r,
-                data.color.g,
-                data.color.b,
-                (u8)((f32)data.color.a * beautifierAlpha)
-              },
-              .flash = data.flash,
-            });
-          } break;
-
-          case CLAY_RENDER_COMMAND_TYPE_TEXT: {
-            // TODO: uint16_t text.fontSize
-            // TODO: letterSpacing
-            // TODO: lineHeight
-            auto& d    = cmd.renderData.text;
-            auto  font = &g.meta.fontUI + d.fontId;
-
-            Color c{
-              (u8)d.textColor.r,
-              (u8)d.textColor.g,
-              (u8)d.textColor.b,
-              (u8)((f32)d.textColor.a * beautifierAlpha),
-            };
-            DrawGroup_CommandText({
-              .pos{bb.x, bb.y},
-              .anchor{},
-              .font       = font,
-              .text       = d.stringContents.chars,
-              .bytesCount = d.stringContents.length,
-              .color      = c,
-            });
-          } break;
-
-          case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
-            const auto& d    = cmd.renderData.custom;
-            const auto& data = *(ClayCustomData*)d.customData;
-
-            if (data.beautifierStart.set) {
-              ASSERT_FALSE(data.beautifierEnd.set);
-              const auto& d                   = data.beautifierStart;
-              beautifiers[beautifiersCount++] = {
-                .alpha     = d.alpha,
-                .translate = d.translate,
-                .scale     = d.scale,
-              };
-            }
-
-            if (data.beautifierEnd.set) {
-              ASSERT_FALSE(data.beautifierStart.set);
-              ASSERT(beautifiersCount > 0);
-              beautifiersCount--;
-            }
-
-            if (data.overlay.set) {
-              const auto& d = data.overlay;
-
-              DrawGroup_CommandRect({
-                .pos   = LOGICAL_RESOLUTIONf / 2.0f,
-                .size  = ge.meta.scaledLogicalResolution,
-                .color = d.color,
-              });
-            }
-
-            if (data.screenBackground.set) {
-              DrawGroup_CommandRect({
-                .pos   = LOGICAL_RESOLUTIONf / 2.0f,
-                .size  = ge.meta.scaledLogicalResolution,
-                .color = Darken({49, 25, 23, 255}, 0.3f),
-              });
-
-              const int  texID = glib->ui_background_rect_texture_id();
-              const auto gap   = GAP_SMALL;
-              const auto size  = ToVector2(glib->original_texture_sizes()->Get(texID))
-                                * ASSETS_TO_LOGICAL_RATIO;
-
-              const int rectsXToSide = 9;
-              const int rectsYToSide = 5;
-
-#define BF_BACKGROUND_CYCLE_ENABLED 1
-
-#if BF_BACKGROUND_CYCLE_ENABLED
-              const int cycleDur = 20 * FIXED_FPS;
-              const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) / (f32)cycleDur;
-#endif
-
-              const Color rectColor{22, 16, 13, 255};
-
-              FOR_RANGE (int, y, rectsYToSide) {
-                FOR_RANGE (int, n, 2) {
-                  FOR_RANGE (int, x, rectsXToSide) {
-                    FOR_RANGE (int, m, 2) {
-                      if (!x && m)
-                        continue;
-
-                      if ((x == rectsXToSide - 1) && (y >= rectsYToSide - 1))
-                        continue;
-
-                      f32 offY = (size.y + gap) / 2.0f;
-                      if (x % 2)
-                        offY = 0;
-
-                      auto center = LOGICAL_RESOLUTIONf / 2.0f;
-                      auto off = Vector2(x * (size.x + gap), offY + y * (size.y + gap));
-                      if (n)
-                        off.y *= -1;
-
-                      f32 angle = -PI32 / 6;
-
-                      f32 fade = 1;
-
-#if BF_BACKGROUND_CYCLE_ENABLED
-                      off.y += (((x + m) % 2) ? 1 : -1) * (size.y + gap) * 0.1f
-                               * cosf(2 * PI32 * cycleP);
-
-                      // if ((y == rectsYToSide - 1) && ((x + m + n) % 2)) {
-                      //   const f32 p = 10 * cycleP - 9;
-                      //   if (p > 0)
-                      //     fade = 1 - p;
-                      // }
-#endif
-
-                      DrawGroup_CommandTexture({
-                        .texID    = texID,
-                        .rotation = angle,
-                        .pos      = center + Vector2Rotate(off, angle + (m ? PI32 : 0)),
-                        .color    = Fade(rectColor, fade),
-                      });
-                    }
-                  }
-                }
-              }
-            }
-
-            if (data.shadow.set) {
-              const auto& d = data.shadow;
-
-              const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
-              const auto fb              = d.nineSlice;
-
-              DrawGroup_CommandTextureNineSlice({
-                .texID = fb->texture_id(),
-                .pos{
-                  bb.x - (f32)fb->outer_left() / downscaleFactor,
-                  bb.y - (f32)fb->outer_bottom() / downscaleFactor,
-                },
-                .anchor{},
-                .color = Fade(WHITE, beautifierAlpha * 3.0f / 5.0f),
-                .nineSliceMargins{
-                  (f32)fb->left() / downscaleFactor,
-                  (f32)fb->right() / downscaleFactor,
-                  (f32)fb->top() / downscaleFactor,
-                  (f32)fb->bottom() / downscaleFactor,
-                },
-                .nineSliceSize{
-                  (f32)bb.width
-                    + (f32)(fb->outer_left() + fb->outer_right()) / downscaleFactor,
-                  (f32)bb.height
-                    + (f32)(fb->outer_top() + fb->outer_bottom()) / downscaleFactor,
-                },
-              });
-            }
-
-            if (data.nineSlice.set) {
-              const auto& d = data.nineSlice;
-
-              const auto downscaleFactor = (f32)glib->atlas_downscale_factor();
-              const auto fb              = d.nineSlice;
-
-              Color color{
-                d.nineSliceColor.r, d.nineSliceColor.g, d.nineSliceColor.b, 255
-              };
-              if (d.breathing.set)
-                color = BreatheColor(color, {.breathing = d.breathing});
-              color.a = (u8)((f32)d.nineSliceColor.a * beautifierAlpha);
-
-              DrawGroup_CommandTextureNineSlice({
-                .texID = fb->texture_id(),
-                .pos{bb.x, bb.y},
-                .anchor{},
-                .color = color,
-                .flash = d.nineSliceFlash,
-                .nineSliceMargins{
-                  (f32)fb->left() / downscaleFactor,
-                  (f32)fb->right() / downscaleFactor,
-                  (f32)fb->top() / downscaleFactor,
-                  (f32)fb->bottom() / downscaleFactor,
-                },
-                .nineSliceSize{(f32)bb.width, (f32)bb.height},
-              });
-            }
-          } break;
-          }
-        }
-        else {
-          // UI elements' gizmos.
-          if (gdebug.gizmos && bb.width && bb.height) {
-            DrawGroup_CommandRectLines({
-              .pos{bb.x, bb.y},
-              .size{bb.width, bb.height},
-              .anchor{0, 0},
-              .color = GREEN,
-            });
-          }
-        }
-      }
-
-      DrawGroup_End();
-    }
-  }
-
-#undef GAP_FLEX
-#undef GAP_SMALL
-#undef GAP_BIG
-#undef PADDING_FRAME
-#undef PADDING_FRAME_SHADOW
-#undef PADDING_OUTER_VERTICAL
-#undef PADDING_OUTER_HORIZONTAL
+#define BF_UI_POST
+#include "bf_clay_ui.cpp"
 }
 
 int GetMobDamage(CreatureType type) {  ///
@@ -12187,8 +10440,6 @@ void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
 
 void GameFixedUpdate() {
   ZoneScoped;
-
-  TEMP_USAGE(&g.meta.transientDataArena);
 
   SetVolume(VolumeType_MASTER, 0.85f);
   SetVolume(VolumeType_SFX, (f32)g.player.volumeSFX / 3.0f);
@@ -14747,8 +12998,6 @@ int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
 void GameDraw() {
   ZoneScoped;
 
-  TEMP_USAGE(&g.meta.transientDataArena);
-
   // Setup.
   // {  ///
   TEMP_USAGE(&ge.meta.trashArena);
@@ -15842,7 +14091,7 @@ void GameDraw() {
     auto p
       = Clamp01(g.run.scheduledWaveCompleted.Elapsed().Progress(WAVE_COMPLETED_FRAMES));
 
-    auto textColor = palTextWhite;
+    auto textColor = WHITE;
 
     int locale = Loc_UI_WAVE_WON__CAPS;
     if (!g.run.state.waveWon) {
@@ -16034,7 +14283,7 @@ void GameDraw() {
 
         debugTextArena("ge.meta._arena", ge.meta._arena);
         debugTextArena("ge.meta.trashArena", ge.meta.trashArena);
-        debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
+        debugTextArena("ge.meta._transientDataArena", ge.meta._transientDataArena);
 
 #define X(type_, name_) \
   IM::Text("g.run." #name_ ": %d/%d", g.run.name_.count, g.run.name_.maxCount);

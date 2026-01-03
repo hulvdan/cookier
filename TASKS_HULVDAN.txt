@@ -32,6 +32,7 @@ x fix strange mushroom in shop when buying +0% xp gain
 x пробежаться по браузерам с ссылкой на яндекс (ЧЕКЛИСТ ВНИЗУ)
 x ref: move dim to engine
 x ref move debounced save to engine
+x ref move more stuff to engine
 
 * пробежаться по требованиям
 *
