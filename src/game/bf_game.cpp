@@ -670,7 +670,6 @@ struct JustUnlockedAchievement {  ///
 
 enum ControlsContext {  ///
   ControlsContext_INVALID,
-  ControlsContext_ACHIEVEMENTS,
   ControlsContext_NEW_RUN,
   ControlsContext_PICKED_UP_ITEM,
   ControlsContext_UPGRADES,
@@ -679,6 +678,7 @@ enum ControlsContext {  ///
   ControlsContext_PAUSE,
   ControlsContext_SHOP_WEAPON_DETAILS,
   ControlsContext_STATS,
+  ControlsContext_ACHIEVEMENTS,
   ControlsContext_CONFIRM_RESTART,
   ControlsContext_CONFIRM_NEW_RUN,
   ControlsContext_CONFIRM_QUIT,
@@ -746,12 +746,12 @@ struct RotatedRect {  ///
 struct GameData {
   struct Meta {  ///
     // NOTE: Reorder loading upon reordering fonts.
-    Font fontUI                 = {};
-    Font fontUIOutlined         = {};
-    Font fontUIBig              = {};
-    Font fontUIBigOutlined      = {};
-    Font fontStats              = {};
-    Font fontPricesOutlined     = {};
+    Font fontUI            = {};
+    Font fontUIOutlined    = {};
+    Font fontUIBig         = {};
+    Font fontUIBigOutlined = {};
+    Font fontStats         = {};
+    // Font fontPricesOutlined     = {};
     Font fontItemCountsOutlined = {};
     Font fontUIGiganticOutlined = {};
     Font fontUINextWave         = {};
@@ -3959,7 +3959,7 @@ void ReloadFontsIfNeeded() {  ///
     // fontUIBigOutlined.
     {
       .filepath        = fontpath,
-      .size            = 22,
+      .size            = 26,
       .FIXME_sizeScale = 45.0f / 30.0f,
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
@@ -3974,16 +3974,16 @@ void ReloadFontsIfNeeded() {  ///
       .codepoints      = g_codepoints,
       .codepointsCount = ARRAY_COUNT(g_codepoints),
     },
-    // fontPricesOutlined.
-    {
-      .filepath        = fontpath,
-      .size            = 20,
-      .FIXME_sizeScale = 45.0f / 30.0f,
-      .codepoints      = numberCodepoints,
-      .codepointsCount = ARRAY_COUNT(numberCodepoints),
-      .outlineWidth    = 3,
-      .outlineAdvance  = 1,
-    },
+    // // fontPricesOutlined.
+    // {
+    //   .filepath        = fontpath,
+    //   .size            = 20,
+    //   .FIXME_sizeScale = 45.0f / 30.0f,
+    //   .codepoints      = numberCodepoints,
+    //   .codepointsCount = ARRAY_COUNT(numberCodepoints),
+    //   .outlineWidth    = 3,
+    //   .outlineAdvance  = 1,
+    // },
     // fontItemCountsOutlined.
     {
       .filepath        = fontpath,
@@ -5260,6 +5260,7 @@ void DoUI() {
   )
   {  ///
     FontBegin(&g.meta.fontUIBigOutlined);
+    data.paddingVertical *= 2;
     const bool result = componentButton(data, [&](bool hovered, Color textColor) {
       innerLambda(hovered, WHITE);
     });
@@ -5314,10 +5315,10 @@ void DoUI() {
 
                 FontBegin(&g.meta.fontUIBigOutlined);
                 BF_CLAY_TEXT(
-                  TextFormat("%d", price), {.color = (canReroll ? WHITE : palTextRed)}
+                  FormatInt(price), {.color = (canReroll ? WHITE : palTextRed)}
                 );
-                BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
                 FontEnd();
+                BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
               }
             }
           );
@@ -5352,7 +5353,7 @@ void DoUI() {
           {.texID = glib->ui_icon_sell_texture_id(), .color = data.color},
           [&]() BF_FORCE_INLINE_LAMBDA {
             CLAY({
-              .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
+              .layout{BF_CLAY_CHILD_ALIGNMENT_CENTER_TOP},
               .floating{
                 .zIndex = zIndex,
                 .attachPoints{
@@ -5369,7 +5370,7 @@ void DoUI() {
               BF_CLAY_TEXT(TextFormat("%d", data.price), {.color = WHITE});
               BF_CLAY_IMAGE({
                 .texID = glib->ui_coin_texture_id(),
-                .scale = Vector2One() * 0.75f,
+                .scale = Vector2One() * 0.85f,
               });
               FontEnd();
             }
@@ -6789,7 +6790,8 @@ void DoUI() {
                   BF_CLAY_SIZING_GROW_X,
                   BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
                 }}) {
-                  FontBegin(&g.meta.fontPricesOutlined);
+                  // FontBegin(&g.meta.fontPricesOutlined);
+                  FontBegin(&g.meta.fontUIBigOutlined);
                   BF_CLAY_TEXT(
                     TextFormat("%d ", price),
                     {.color = ((price <= PLAYER_COINS) ? WHITE : palTextRed)}
@@ -7564,7 +7566,7 @@ void DoUI() {
           }
 
           if (value)
-            BF_CLAY_TEXT(TextFormat("%d", value), {.color = color});
+            BF_CLAY_TEXT(FormatInt(value), {.color = color});
           else {
             Beautify b{.translate{0, -GAP_FLEX}};
             BEAUTIFY(b);
@@ -7882,7 +7884,7 @@ void DoUI() {
               .padding{.top = GAP_SMALL / 2},
               BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
             }}) {
-              BF_CLAY_TEXT(TextFormat("%d", g.run.state.waveIndex + 1));
+              BF_CLAY_TEXT(FormatInt(g.run.state.waveIndex + 1));
             }
           }
         );
@@ -7905,7 +7907,7 @@ void DoUI() {
               if (g.run.state.screen != ScreenType_GAMEPLAY)
                 remainingSeconds = 0;
 
-              BF_CLAY_TEXT(TextFormat("%d", remainingSeconds));
+              BF_CLAY_TEXT(FormatInt(remainingSeconds));
             }
           }
         );
@@ -8060,7 +8062,7 @@ void DoUI() {
                 },
               }) {
                 FLOATING_BEAUTIFY;
-                BF_CLAY_TEXT(TextFormat("%d", g.run.state.staticStats[StatType_LEVEL]));
+                BF_CLAY_TEXT(FormatInt(g.run.state.staticStats[StatType_LEVEL]));
               }
             }
           });
@@ -8084,7 +8086,7 @@ void DoUI() {
               .scale = Vector2One() * GetScaleOfCoins(g.ui.changedCoinsAt),
               .dontCareAboutScaleWhenCalculatingSize = true,
             });
-            BF_CLAY_TEXT(TextFormat("%d", PLAYER_COINS));
+            BF_CLAY_TEXT(FormatInt(PLAYER_COINS));
           }
         }
 
@@ -8111,7 +8113,7 @@ void DoUI() {
           }
 
           BF_CLAY_TEXT(
-            TextFormat("%d", g.run.state.notPickedUpCoins), {.color = Fade(WHITE, fade)}
+            FormatInt(g.run.state.notPickedUpCoins), {.color = Fade(WHITE, fade)}
           );
         }
       }
@@ -8794,7 +8796,7 @@ void DoUI() {
                 .id = id,
                 .layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
               }) {
-                BF_CLAY_TEXT(TextFormat("+%d", amount), {.color = palTextGreen});
+                BF_CLAY_TEXT(FormatSignedInt(amount), {.color = palTextGreen});
 
                 // BF_CLAY_IMAGE({.texID = fb->small_icon_texture_id()});
 
@@ -9490,7 +9492,7 @@ void DoUI() {
         // Columns. Wave + buttons, weapons + items, stats.
         CLAY({.layout{
           BF_CLAY_SIZING_GROW_XY,
-          .childGap = GAP_BIG * 2,
+          .childGap = GAP_BIG * 4,
           BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         }}) {
           // 1. Buttons.
@@ -10021,7 +10023,7 @@ void DoUI() {
               BF_CLAY_TEXT_LOCALIZED(locale);
               BF_CLAY_SPACER_HORIZONTAL;
               BF_CLAY_TEXT(" ");
-              BF_CLAY_TEXT(TextFormat("%d", value));
+              BF_CLAY_TEXT(FormatInt(value));
 
               FontEnd();
             }
@@ -10097,8 +10099,8 @@ void DoUI() {
         CLAY({
           .layout{
             .sizing{
-              .width  = CLAY_SIZING_FIXED(450),
-              .height = CLAY_SIZING_FIXED(200),
+              .width  = CLAY_SIZING_FIXED(330),
+              .height = CLAY_SIZING_FIXED(300),
             },
             BF_CLAY_PADDING_ALL(PADDING_FRAME),
             BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -10118,14 +10120,14 @@ void DoUI() {
 
           BF_CLAY_SPACER_VERTICAL;
 
-          FontBegin(&g.meta.fontUIBig);
+          FontBegin(&g.meta.fontUIBigOutlined);
           BF_CLAY_TEXT_LOCALIZED(Loc_UI_ARE_YOU_SURE__CAPS);
           FontEnd();
 
           BF_CLAY_SPACER_VERTICAL;
 
           CLAY({.layout{
-            .childGap        = GAP_SMALL,
+            .childGap        = GAP_BIG,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
           }}) {
             const bool confirmed = componentOutlinedTextButton(
