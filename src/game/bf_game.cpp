@@ -5121,7 +5121,7 @@ Color BreatheColor(Color color, BreatheColorData data) {  ///
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 void DoUI() {
 #define BF_UI_PRE
-#include "bf_clay_ui.cpp"
+#include "engine/bf_clay_ui.cpp"
 
   LAMBDA (void, processShowingOrNotShowingSlotDetails, (Clay_ElementId slotID)) {  ///
     if (draw)
@@ -10328,7 +10328,7 @@ void DoUI() {
   }
 
 #define BF_UI_POST
-#include "bf_clay_ui.cpp"
+#include "engine/bf_clay_ui.cpp"
 }
 
 int GetMobDamage(CreatureType type) {  ///

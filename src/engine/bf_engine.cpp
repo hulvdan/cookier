@@ -4801,57 +4801,7 @@ lframe FrameVisual::Elapsed() const {  ///
   return lframe::Unscaled(ge.meta.frameVisual - _value);
 }
 
-SavedataLoadedType LoadSaveDataOnce() {  ///
-  if (ge.meta._loaded == SavedataLoadedType_JUST_FISNIHED)
-    ge.meta._loaded = SavedataLoadedType_FISNIHED;
-  if (ge.meta._loaded == SavedataLoadedType_FISNIHED)
-    return SavedataLoadedType_FISNIHED;
-
-  TEMP_USAGE(&ge.meta.trashArena);
-
-  const u8* decodedSavedata = {};
-
-  if (ge.meta._loaded == SavedataLoadedType_NOT_LOADED) {
-#if defined(SDL_PLATFORM_DESKTOP)
-
-    // Desktop loads immediately.
-    decodedSavedata = (const u8*)TryLoadFile("save.bin", nullptr);
-    ge.meta._loaded = SavedataLoadedType_JUST_FISNIHED;
-
-#elif defined(SDL_PLATFORM_EMSCRIPTEN)
-
-    // JS loads asynchronously.
-    const char* savedata = jsLoad();
-    if (ge.meta._jsLoadedSavedata)
-      ge.meta._loaded = SavedataLoadedType_JUST_FISNIHED;
-    else
-      return SavedataLoadedType_NOT_LOADED;
-
-    if (ge.meta._jsLoadedSavedata == 2) {
-      decodedSavedata = DecodeFromAscii(savedata, &ge.meta.trashArena);
-      free((void*)savedata);
-    }
-
-#else
-#  error "Not implemented yet"
-#endif
-  }
-  else
-    INVALID_PATH;
-
-  if (decodedSavedata) {
-    GameLoad(BFSave::GetSave(decodedSavedata));
-
-#if defined(SDL_PLATFORM_DESKTOP)
-    UnloadFile((void*)decodedSavedata);
-#endif
-  }
-
-  ASSERT(ge.meta._loaded == SavedataLoadedType_JUST_FISNIHED);
-  return ge.meta._loaded;
-}
-
-flatbuffers::FlatBufferBuilder _DumpStateForSaving() {
+flatbuffers::FlatBufferBuilder _DumpStateForSaving() {  ///
   BFSave::SaveT save{};
   GameDumpStateForSaving(save);
 
@@ -4903,7 +4853,7 @@ void _Save() {
 
 #elif defined(SDL_PLATFORM_EMSCRIPTEN)
 
-void fromJS_markReturnedSavedata(int value) {  ///
+void fromJS_markReturnedSavedata(int value) {
   ge.meta._jsLoadedSavedata = value;
 }
 
@@ -4993,6 +4943,56 @@ void _Save() {
 #  error "_Save() is not implemented for your platform"
 #endif
 // }
+
+SavedataLoadedType LoadSaveDataOnce() {  ///
+  if (ge.meta._loaded == SavedataLoadedType_JUST_FISNIHED)
+    ge.meta._loaded = SavedataLoadedType_FISNIHED;
+  if (ge.meta._loaded == SavedataLoadedType_FISNIHED)
+    return SavedataLoadedType_FISNIHED;
+
+  TEMP_USAGE(&ge.meta.trashArena);
+
+  const u8* decodedSavedata = {};
+
+  if (ge.meta._loaded == SavedataLoadedType_NOT_LOADED) {
+#if defined(SDL_PLATFORM_DESKTOP)
+
+    // Desktop loads immediately.
+    decodedSavedata = (const u8*)TryLoadFile("save.bin", nullptr);
+    ge.meta._loaded = SavedataLoadedType_JUST_FISNIHED;
+
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
+
+    // JS loads asynchronously.
+    const char* savedata = jsLoad();
+    if (ge.meta._jsLoadedSavedata)
+      ge.meta._loaded = SavedataLoadedType_JUST_FISNIHED;
+    else
+      return SavedataLoadedType_NOT_LOADED;
+
+    if (ge.meta._jsLoadedSavedata == 2) {
+      decodedSavedata = DecodeFromAscii(savedata, &ge.meta.trashArena);
+      free((void*)savedata);
+    }
+
+#else
+#  error "Not implemented yet"
+#endif
+  }
+  else
+    INVALID_PATH;
+
+  if (decodedSavedata) {
+    GameLoad(BFSave::GetSave(decodedSavedata));
+
+#if defined(SDL_PLATFORM_DESKTOP)
+    UnloadFile((void*)decodedSavedata);
+#endif
+  }
+
+  ASSERT(ge.meta._loaded == SavedataLoadedType_JUST_FISNIHED);
+  return ge.meta._loaded;
+}
 
 SDL_AppResult EngineUpdate() {  ///
   ZoneScoped;
