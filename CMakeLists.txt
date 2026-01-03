@@ -239,8 +239,6 @@ add_library(stb_vorbis STATIC
     "${CMAKE_SOURCE_DIR}/vendor/stb_vorbis.c"
 )
 target_compile_definitions(stb_vorbis
-    # PUBLIC
-    #     STB_VORBIS_NO_PULLDATA_API
     INTERFACE
         STB_VORBIS_HEADER_ONLY
 )

@@ -3347,6 +3347,8 @@ void MakeProjectile(MakeProjectileData data) {  ///
 }
 
 void GamePreInit(GamePreInitOpts opts) {  ///
+  ZoneScoped;
+
   *opts.baseFont              = &g.meta.fontUI;
   ge.meta.logicRand           = Random(SDL_GetPerformanceCounter());
   ge.settings.backgroundColor = ColorFromRGBA(0x241207ff);
@@ -4283,6 +4285,8 @@ void GameInit() {
 }
 
 void GameInitAfterLoadingSavedata() {
+  ZoneScoped;
+
   LOGI("GameInitAfterLoadingSavedata...");
   DEFER {
     LOGI("GameInitAfterLoadingSavedata... Finished!");
@@ -14157,6 +14161,36 @@ void GameDraw() {
         IM::Checkbox("Gizmos", &gdebug.gizmos);
         IM::Checkbox("Emulating Mobile", &gdebug.emulatingMobile);
         IM::Checkbox("Hide UI For Video", &gdebug.hideUIForVideo);
+        ge.meta.device
+          = (gdebug.emulatingMobile ? DeviceType_MOBILE : DeviceType_DESKTOP);
+
+        IM::Text("MarkGameplay: %d", ge.meta.markGameplay);
+
+        IM::Text("F3 change localization");
+        IM::Text("F4 change device");
+
+        LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
+          IM::Text(
+            "%s: %d %d (%.1f%%) (max: %d, %.1f%%)",
+            name,
+            (int)arena.used,
+            (int)arena.size,
+            100.0f * (f32)arena.used / (f32)arena.size,
+            (int)arena.maxUsed,
+            100.0f * (f32)arena.maxUsed / (f32)arena.size
+          );
+        };
+
+        debugTextArena("ge.meta._arena", ge.meta._arena);
+        debugTextArena("ge.meta.trashArena", ge.meta.trashArena);
+        debugTextArena("ge.meta._transientDataArena", ge.meta._transientDataArena);
+
+#define X(type_, name_) \
+  IM::Text("g.run." #name_ ": %d/%d", g.run.name_.count, g.run.name_.maxCount);
+        VECTORS_TABLE;
+#undef X
+
+        IM::Text("");
 
         IM::Checkbox("Mobs Burn", &gdebug.mobsBurn);
         IM::Checkbox("Mobs Slow", &gdebug.mobsSlow);
@@ -14193,15 +14227,6 @@ void GameDraw() {
 
         IM::Checkbox("Cycling Stuff In Shop", &gdebug.cyclingStuffInShop);
 
-        ge.meta.device
-          = (gdebug.emulatingMobile ? DeviceType_MOBILE : DeviceType_DESKTOP);
-
-        IM::Text("");
-
-        IM::Text("MarkGameplay: %d", ge.meta.markGameplay);
-
-        IM::Text("F3 change localization");
-        IM::Text("F4 change device");
         IM::Text("F5 +10 coins");
 
         if (g.run.state.screen == ScreenType_GAMEPLAY) {
@@ -14215,26 +14240,6 @@ void GameDraw() {
         IM::Text("F10 unlock all achievements");
         IM::Text("N - increase wave. Shift N - decrease wave");
 
-        LAMBDA (void, debugTextArena, (const char* name, const Arena& arena)) {
-          IM::Text(
-            "%s: %d %d (%.1f%%) (max: %d, %.1f%%)",
-            name,
-            (int)arena.used,
-            (int)arena.size,
-            100.0f * (f32)arena.used / (f32)arena.size,
-            (int)arena.maxUsed,
-            100.0f * (f32)arena.maxUsed / (f32)arena.size
-          );
-        };
-
-        debugTextArena("ge.meta._arena", ge.meta._arena);
-        debugTextArena("ge.meta.trashArena", ge.meta.trashArena);
-        debugTextArena("ge.meta._transientDataArena", ge.meta._transientDataArena);
-
-#define X(type_, name_) \
-  IM::Text("g.run." #name_ ": %d/%d", g.run.name_.count, g.run.name_.maxCount);
-        VECTORS_TABLE;
-#undef X
         IM::EndTabItem();
       }
 
