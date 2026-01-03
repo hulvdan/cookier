@@ -15712,7 +15712,8 @@ void GameDraw() {
     // 3. Mouse fade
     const int mouseSteps = 4;
 
-    const auto fr = ge.meta.frameGame % (mouseSteps * mouseDurPerStep);
+    const auto fr
+      = ge.meta._soundManager.unlocked.Elapsed().value % (mouseSteps * mouseDurPerStep);
 
     const int step = fr / mouseDurPerStep;
     ASSERT(step >= 0);
