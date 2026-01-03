@@ -30,8 +30,8 @@ x fix focus
 x text web audio tap prompt breathing
 x fix strange mushroom in shop when buying +0% xp gain
 x пробежаться по браузерам с ссылкой на яндекс (ЧЕКЛИСТ ВНИЗУ)
+x ref: move dim to engine
 
-* ref: move dim to engine
 * пробежаться по требованиям
 *
 * реклама при окончании волны
