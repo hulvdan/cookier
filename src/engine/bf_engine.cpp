@@ -995,7 +995,8 @@ void fromJS_setVisible(int visible) {  ///
 }
 
 void fromJS_setWindowFocused(int focused) {  ///
-  _SetShouldGameplayStop(_ShouldGameplayStopType_EMSCRIPTEN_UNFOCUSED, !((bool)focused));
+  // _SetShouldGameplayStop(_ShouldGameplayStopType_EMSCRIPTEN_UNFOCUSED,
+  // !((bool)focused));
 }
 
 void fromJS_setWindowIsInactive(int value) {  ///
@@ -4865,13 +4866,13 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
     ge.events.last                 = LastEventType_TOUCH;
   } break;
 
-  case SDL_EVENT_WINDOW_FOCUS_LOST:
-  case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
-    _SetShouldGameplayStop(
-      _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_EVENT,
-      (event->type == SDL_EVENT_WINDOW_FOCUS_LOST)
-    );
-  } break;
+    // case SDL_EVENT_WINDOW_FOCUS_LOST:
+    // case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
+    //   _SetShouldGameplayStop(
+    //     _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_EVENT,
+    //     (event->type == SDL_EVENT_WINDOW_FOCUS_LOST)
+    //   );
+    // } break;
 
   default:
     break;

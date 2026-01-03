@@ -22,7 +22,17 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * ФИКСЫ
 * БАЛАНС
 
-* yandex browser: fix focus: windows ipad android
+x focus: PC chrome
+x focus: PC firefox
+x focus: PC yandex
+x focus: ipad chrome
+x focus: ipad safari
+x focus: ipad yandex
+x focus: android chrome
+x focus: android firefox
+x focus: android yandex
+* focus: PC Debug
+*
 * fix strange mushroom in shop when buying +0% xp gain
 *
 * реклама при окончании волны
