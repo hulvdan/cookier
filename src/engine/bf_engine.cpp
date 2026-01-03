@@ -510,12 +510,10 @@ enum VolumeType {  ///
 };
 
 enum _ShouldGameplayStopType {  ///
-  _ShouldGameplayStopType_WINDOW_IS_INACTIVE,
-  _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_EVENT,
   _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_QUERY,
-  _ShouldGameplayStopType_AD_IS_PLAYING,
-  _ShouldGameplayStopType_EMSCRIPTEN_UNFOCUSED,
   _ShouldGameplayStopType_EMSCRIPTEN_NOT_VISIBLE,
+  _ShouldGameplayStopType_YSDK_PAUSED,
+  _ShouldGameplayStopType_AD_IS_PLAYING,
   _ShouldGameplayStopType_COUNT,
 };
 
@@ -994,8 +992,8 @@ void fromJS_setVisible(int visible) {  ///
   );
 }
 
-void fromJS_setWindowIsInactive(int value) {  ///
-  _SetShouldGameplayStop(_ShouldGameplayStopType_WINDOW_IS_INACTIVE, (bool)value);
+void fromJS_setYsdkPaused(int value) {  ///
+  _SetShouldGameplayStop(_ShouldGameplayStopType_YSDK_PAUSED, (bool)value);
 }
 
 void fromJS_setAdIsPlaying(int value) {  ///
