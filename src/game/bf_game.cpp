@@ -41,36 +41,6 @@ Vector2 ToVector2(b2Vec2 value) {  ///
   return {value.x, value.y};
 }
 
-Vector2 ToVector2(const BFGame::Posf* value) {  ///
-  return {value->x(), value->y()};
-}
-
-Vector2 ToVector2(const BFGame::Pos* value) {  ///
-  return {(f32)value->x(), (f32)value->y()};
-}
-
-Vector2Int ToVector2Int(const BFGame::Pos* value) {  ///
-  return {value->x(), value->y()};
-}
-
-f32 Vector2AngleOrRandom(Vector2 v) {  ///
-  if (v == Vector2Zero())
-    return GRAND.Angle();
-  return Vector2Angle(v);
-}
-
-Vector2 Vector2DirectionOrRandom(Vector2 from, Vector2 to) {  ///
-  if (from == to)
-    return Vector2Rotate({1, 0}, GRAND.Angle());
-  return Vector2Normalize(to - from);
-}
-
-Vector2 Vector2DirectionOrZero(Vector2 from, Vector2 to) {  ///
-  if (from == to)
-    return Vector2Zero();
-  return Vector2Normalize(to - from);
-}
-
 const char* GetWindowTitle() {  ///
   return "The Game"
 #if BF_DEBUG
