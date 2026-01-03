@@ -1872,42 +1872,42 @@ void GameLoad(const BFSave::Save* save) {  ///
   SwitchScreen(g.run.state.screen);
 }
 
-void GameDumpStateForSaving(BFSave::SaveT& fb_save) {  ///
+void GameDumpStateForSaving(BFSave::SaveT& save) {  ///
   const auto& s = g.run.state;
 
   for (const auto& x : g.player.achievements) {
-    fb_save.achievements.push_back(
+    save.achievements.push_back(
       std::make_unique<BFSave::AchievementT>(BFSave::AchievementT{.value = x.value})
     );
   }
   for (const auto& x : g.player.builds) {
-    fb_save.builds.push_back(std::make_unique<BFSave::BuildT>(
+    save.builds.push_back(std::make_unique<BFSave::BuildT>(
       BFSave::BuildT{.max_difficulty_beaten = x.maxDifficultyBeaten}
     ));
   }
 
-  fb_save.runs_won  = g.player.runsWon;
-  fb_save.runs_lost = g.player.runsLost;
+  save.runs_won  = g.player.runsWon;
+  save.runs_lost = g.player.runsLost;
 
-  fb_save.difficulty = (int)g.player.difficulty;
-  fb_save.build      = (int)g.player.build;
-  fb_save.weapon     = (int)g.player.weapon;
-  fb_save.biome      = (int)g.player.biome;
+  save.difficulty = (int)g.player.difficulty;
+  save.build      = (int)g.player.build;
+  save.weapon     = (int)g.player.weapon;
+  save.biome      = (int)g.player.biome;
 
-  fb_save.health                     = PLAYER_CREATURE.health;
-  fb_save.won                        = s.won;
-  fb_save.screen                     = s.screen;
-  fb_save.wave_index                 = s.waveIndex;
-  fb_save.wave_won                   = s.waveWon;
-  fb_save.level_on_start_of_the_wave = s.levelOnStartOfTheWave;
-  fb_save.xp                         = s.xp;
-  fb_save.player_killed_enemies      = s.playerKilledEnemies;
-  fb_save.not_picked_up_coins        = s.notPickedUpCoins;
-  fb_save.chests                     = s.chests;
-  fb_save.to_spawn                   = s.toSpawn;
+  save.health                     = PLAYER_CREATURE.health;
+  save.won                        = s.won;
+  save.screen                     = s.screen;
+  save.wave_index                 = s.waveIndex;
+  save.wave_won                   = s.waveWon;
+  save.level_on_start_of_the_wave = s.levelOnStartOfTheWave;
+  save.xp                         = s.xp;
+  save.player_killed_enemies      = s.playerKilledEnemies;
+  save.not_picked_up_coins        = s.notPickedUpCoins;
+  save.chests                     = s.chests;
+  save.to_spawn                   = s.toSpawn;
 
   for (const auto& weapon : g.run.state.weapons) {
-    fb_save.weapons.push_back(std::make_unique<BFSave::WeaponT>(BFSave::WeaponT{
+    save.weapons.push_back(std::make_unique<BFSave::WeaponT>(BFSave::WeaponT{
       .type           = weapon.type,
       .tier           = weapon.tier,
       .killed_enemies = weapon.thisWaveKilledEnemies,
@@ -1915,7 +1915,7 @@ void GameDumpStateForSaving(BFSave::SaveT& fb_save) {  ///
   }
 
   for (const auto& item : g.run.state.items) {
-    fb_save.items.push_back(std::make_unique<BFSave::ItemT>(BFSave::ItemT{
+    save.items.push_back(std::make_unique<BFSave::ItemT>(BFSave::ItemT{
       .type                  = item.type,
       .count                 = item.count,
       .this_wave_added_count = item.thisWaveAddedCount,
@@ -1923,25 +1923,25 @@ void GameDumpStateForSaving(BFSave::SaveT& fb_save) {  ///
   }
 
   for (const auto& x : g.run.state.staticStats)
-    fb_save.stats.push_back(x);
+    save.stats.push_back(x);
 
-  fb_save.screen_picked_up_item__to_pick = s.pickedUpItem.toPick;
+  save.screen_picked_up_item__to_pick = s.pickedUpItem.toPick;
 
   for (const auto& x : g.run.state.upgrades.toPick) {
-    fb_save.screen_upgrades__to_pick.push_back(
+    save.screen_upgrades__to_pick.push_back(
       std::make_unique<BFSave::UpgradeT>(BFSave::UpgradeT{
         .stat = (i32)x.stat,
         .tier = x.tier,
       })
     );
   }
-  fb_save.screen_upgrades__rerolls = std::make_unique<BFSave::RerollsT>(BFSave::RerollsT{
+  save.screen_upgrades__rerolls = std::make_unique<BFSave::RerollsT>(BFSave::RerollsT{
     .rerolled_free_times = s.upgrades.rerolls.rerolledFreeTimes,
     .rerolled_times      = s.upgrades.rerolls.rerolledTimes,
   });
 
   for (const auto& x : g.run.state.shop.toPick) {
-    fb_save.screen_shop__to_pick.push_back(
+    save.screen_shop__to_pick.push_back(
       std::make_unique<BFSave::ShopItemT>(BFSave::ShopItemT{
         .weapon = x.weapon,
         .item   = x.item,
@@ -1949,21 +1949,21 @@ void GameDumpStateForSaving(BFSave::SaveT& fb_save) {  ///
       })
     );
   }
-  fb_save.screen_shop__rerolls = std::make_unique<BFSave::RerollsT>(BFSave::RerollsT{
+  save.screen_shop__rerolls = std::make_unique<BFSave::RerollsT>(BFSave::RerollsT{
     .rerolled_free_times = s.shop.rerolls.rerolledFreeTimes,
     .rerolled_times      = s.shop.rerolls.rerolledTimes,
   });
 
   if (s.screen == ScreenType_GAMEPLAY) {
-    fb_save.stats[StatType_COINS] = s.previousCoins;
+    save.stats[StatType_COINS] = s.previousCoins;
 
-    fb_save.level  = fb_save.level_on_start_of_the_wave;
-    fb_save.xp     = s.xpOnStartOfTheWave;
-    fb_save.chests = 0;
+    save.level  = save.level_on_start_of_the_wave;
+    save.xp     = s.xpOnStartOfTheWave;
+    save.chests = 0;
   }
 
-  fb_save.volume_music = g.player.volumeMusic;
-  fb_save.volume_sfx   = g.player.volumeSFX;
+  save.volume_music = g.player.volumeMusic;
+  save.volume_sfx   = g.player.volumeSFX;
 }
 
 struct MakeLandmineData {  ///

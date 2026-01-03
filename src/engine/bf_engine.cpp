@@ -874,7 +874,7 @@ void GameInit();
 void GameInitAfterLoadingSavedata();
 void GameFixedUpdate();
 void GameDraw();
-void GameDumpStateForSaving(BFSave::SaveT& fb_save);
+void GameDumpStateForSaving(BFSave::SaveT& save);
 void GameLoad(const BFSave::Save* save);
 
 struct EngineData {
@@ -4852,13 +4852,13 @@ SavedataLoadedType LoadSaveDataOnce() {  ///
 }
 
 flatbuffers::FlatBufferBuilder _DumpStateForSaving() {
-  BFSave::SaveT fb_save{};
-  GameDumpStateForSaving(fb_save);
+  BFSave::SaveT save{};
+  GameDumpStateForSaving(save);
 
-  fb_save.random_state = ge.meta.logicRand._state;
+  save.random_state = ge.meta.logicRand._state;
 
   flatbuffers::FlatBufferBuilder fbb{};
-  auto                           packed = BFSave::Save::Pack(fbb, &fb_save);
+  auto                           packed = BFSave::Save::Pack(fbb, &save);
   fbb.Finish(packed);
   return fbb;
 }
