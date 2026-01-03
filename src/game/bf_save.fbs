@@ -3,6 +3,7 @@
 
 namespace BFSave;
 
+// GAME STUFF
 table Item {
     type: int;
     count: int;
@@ -38,11 +39,13 @@ table Achievement {
 table Build {
     max_difficulty_beaten: int;
 }
+// GAME STUFF END
 
 table Save {
     version: int = 1;
-
     random_state: uint;
+
+    // GAME STUFF
     runs_won: int;
     runs_lost: int;
 
@@ -83,6 +86,7 @@ table Save {
 
     volume_sfx: int;
     volume_music: int;
+    // GAME STUFF END
 }
 
 file_identifier "SAVE";

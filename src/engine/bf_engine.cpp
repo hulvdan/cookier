@@ -869,13 +869,13 @@ struct GamePreInitOpts {  ///
 };
 
 // Functions that MUST be implemented by the user of the engine:
-void                           GamePreInit(GamePreInitOpts opts);
-void                           GameInit();
-void                           GameInitAfterLoadingSavedata();
-void                           GameFixedUpdate();
-void                           GameDraw();
-flatbuffers::FlatBufferBuilder GameDumpStateForSaving();
-void                           GameLoad(const BFSave::Save* save);
+void GamePreInit(GamePreInitOpts opts);
+void GameInit();
+void GameInitAfterLoadingSavedata();
+void GameFixedUpdate();
+void GameDraw();
+void GameDumpStateForSaving(BFSave::SaveT& fb_save);
+void GameLoad(const BFSave::Save* save);
 
 struct EngineData {
   struct Meta {
@@ -4851,6 +4851,18 @@ SavedataLoadedType LoadSaveDataOnce() {  ///
   return ge.meta._loaded;
 }
 
+flatbuffers::FlatBufferBuilder _DumpStateForSaving() {
+  BFSave::SaveT fb_save{};
+  GameDumpStateForSaving(fb_save);
+
+  fb_save.random_state = ge.meta.logicRand._state;
+
+  flatbuffers::FlatBufferBuilder fbb{};
+  auto                           packed = BFSave::Save::Pack(fbb, &fb_save);
+  fbb.Finish(packed);
+  return fbb;
+}
+
 // void _Save() {  ///
 #if defined(SDL_PLATFORM_WIN32)
 
@@ -4865,7 +4877,7 @@ void _Save() {
 
   bool saved = false;
   {
-    auto fbb = GameDumpStateForSaving();
+    auto fbb = _DumpStateForSaving();
     FOR_RANGE (int, i, 5) {
       if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
         saved = true;
@@ -4944,7 +4956,7 @@ EM_JS(const char*, jsLoad, (), {
 void _Save() {
   ZoneScoped;
   TEMP_USAGE(&ge.meta.trashArena);
-  auto fbb = GameDumpStateForSaving();
+  auto fbb = _DumpStateForSaving();
   auto encoded
     = EncodeToAscii(fbb.GetBufferPointer(), fbb.GetSize(), &ge.meta.trashArena);
 
