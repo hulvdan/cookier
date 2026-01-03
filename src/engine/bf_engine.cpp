@@ -509,6 +509,16 @@ enum VolumeType {  ///
   VolumeType_COUNT,
 };
 
+enum _ShouldGameplayStopType {  ///
+  _ShouldGameplayStopType_WINDOW_IS_INACTIVE,
+  _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_EVENT,
+  _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_QUERY,
+  _ShouldGameplayStopType_AD_IS_PLAYING,
+  _ShouldGameplayStopType_EMSCRIPTEN_UNFOCUSED,
+  _ShouldGameplayStopType_EMSCRIPTEN_NOT_VISIBLE,
+  _ShouldGameplayStopType_COUNT,
+};
+
 struct EngineData {
   struct Meta {
     i64 frameGame   = 0;
@@ -598,21 +608,8 @@ struct EngineData {
 #endif
     } _soundManager = {};
 
-    struct ShouldGameplayStop {
-      bool windowIsInactive   = false;
-      bool windowIsNotFocused = false;
-      bool adIsPlaying        = false;
-      bool emscriptenFocused  = true;
-      bool emscriptenVisible  = true;
-
-      bool ShouldStop() const {
-        return windowIsInactive       //
-               || windowIsNotFocused  //
-               || adIsPlaying         //
-               || !emscriptenFocused  //
-               || !emscriptenVisible;
-      }
-    } shouldGameplayStop;
+    bool _shouldGameplayStop_[_ShouldGameplayStopType_COUNT] = {};
+    VIEW_FROM_ARRAY_DANGER(_shouldGameplayStop);
 
     bool ysdkLoaded       = false;
     int  markGameplayPrev = 0;
@@ -669,6 +666,52 @@ struct EngineData {
     bool                flushedThisFrame  = false;
   } draw;
 } ge = {};
+
+bool ShouldGameplayStop() {  ///
+  return ge.meta._shouldGameplayStop.Contains(true);
+}
+
+void _UpdateVolumes() {  ///
+  // Updating master, sfx, music volumes.
+  auto& m = ge.meta._soundManager;
+  if (m.CanPlaySound()) {
+    int volumeTypeIndex = -1;
+    for (auto& v : m.volumes) {
+      volumeTypeIndex++;
+
+      f32 target = v;
+      if ((volumeTypeIndex == VolumeType_MASTER) && ShouldGameplayStop())
+        target = 0;
+
+      switch ((VolumeType)volumeTypeIndex) {
+      case VolumeType_MASTER: {
+        ma_engine_set_volume(&ge.meta._soundManager.engine, target);
+      } break;
+
+      case VolumeType_SFX: {
+        ma_sound_set_volume(&ge.meta._soundManager.groupSFX, target);
+      } break;
+
+      case VolumeType_MUSIC: {
+        ma_sound_set_volume(&ge.meta._soundManager.groupMusic, target);
+      } break;
+
+      default:
+        INVALID_PATH;
+        break;
+      }
+    }
+  }
+}
+
+void _SetShouldGameplayStop(_ShouldGameplayStopType type, bool value) {  ///
+  auto& v = ge.meta._shouldGameplayStop[type];
+  if (v != value) {
+    v = value;
+    LOGI("_SetShouldGameplayStop %d %d", (int)type, (int)value);
+    _UpdateVolumes();
+  }
+}
 
 void _LogMiniaudio(void* _userData, ma_uint32 level, const char* message) {  ///
   switch (level) {
@@ -941,20 +984,26 @@ void _ReloadSounds() {  ///
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 
-void fromJS_setVisible(int visible) {  ///
-  ge.meta.shouldGameplayStop.emscriptenVisible = (bool)visible;
-}
-
-void fromJS_setWindowFocused(int focused) {  ///
-  ge.meta.shouldGameplayStop.emscriptenFocused = (bool)focused;
-}
-
 void fromJS_markYsdkLoaded() {  ///
   ge.meta.ysdkLoaded = true;
 }
 
+void fromJS_setVisible(int visible) {  ///
+  _SetShouldGameplayStop(
+    _ShouldGameplayStopType_EMSCRIPTEN_NOT_VISIBLE, !((bool)visible)
+  );
+}
+
+void fromJS_setWindowFocused(int focused) {  ///
+  _SetShouldGameplayStop(_ShouldGameplayStopType_EMSCRIPTEN_UNFOCUSED, !((bool)focused));
+}
+
 void fromJS_setWindowIsInactive(int value) {  ///
-  ge.meta.shouldGameplayStop.windowIsInactive = (bool)value;
+  _SetShouldGameplayStop(_ShouldGameplayStopType_WINDOW_IS_INACTIVE, (bool)value);
+}
+
+void fromJS_setAdIsPlaying(int value) {  ///
+  _SetShouldGameplayStop(_ShouldGameplayStopType_AD_IS_PLAYING, (bool)value);
 }
 
 void fromJS_saved() {  ///
@@ -966,12 +1015,8 @@ void fromJS_setLocalization(int localization) {  ///
 }
 
 void fromJS_setDeviceType(int type) {  ///
-  ge.meta.device = (DeviceType)type;
   LOGI("fromJS_setDeviceType: %d", type);
-}
-
-void fromJS_setAdIsPlaying(int value) {  ///
-  ge.meta.shouldGameplayStop.adIsPlaying = (bool)value;
+  ge.meta.device = (DeviceType)type;
 }
 
 #endif
@@ -3769,37 +3814,7 @@ SDL_AppResult EngineUpdate() {  ///
   static f32 frameTime = 0.0f;
   frameTime += FrameTime();
 
-  // Updating master, sfx, music volumes.
-  auto& m = ge.meta._soundManager;
-  if (m.CanPlaySound()) {
-    int volumeTypeIndex = -1;
-    for (auto& v : m.volumes) {
-      volumeTypeIndex++;
-
-      f32 target = v;
-      if ((volumeTypeIndex == VolumeType_MASTER)
-          && ge.meta.shouldGameplayStop.ShouldStop())
-        target = 0;
-
-      switch ((VolumeType)volumeTypeIndex) {
-      case VolumeType_MASTER: {
-        ma_engine_set_volume(&ge.meta._soundManager.engine, target);
-      } break;
-
-      case VolumeType_SFX: {
-        ma_sound_set_volume(&ge.meta._soundManager.groupSFX, target);
-      } break;
-
-      case VolumeType_MUSIC: {
-        ma_sound_set_volume(&ge.meta._soundManager.groupMusic, target);
-      } break;
-
-      default:
-        INVALID_PATH;
-        break;
-      }
-    }
-  }
+  _UpdateVolumes();
 
 #ifndef BF_PLATFORM_WebYandex
   if (IsKeyDown(SDL_SCANCODE_F1) && IsKeyPressed(SDL_SCANCODE_F2))
@@ -4547,7 +4562,9 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
       else if (f & SDL_WINDOW_MOUSE_FOCUS)
         hasFocus = true;
 
-      ge.meta.shouldGameplayStop.windowIsNotFocused = !hasFocus;
+      _SetShouldGameplayStop(
+        _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_QUERY, !hasFocus
+      );
     }
     EngineOnFrameStart();
 
@@ -4848,12 +4865,12 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
     ge.events.last                 = LastEventType_TOUCH;
   } break;
 
-  case SDL_EVENT_WINDOW_FOCUS_LOST: {  ///
-    ge.meta.shouldGameplayStop.windowIsNotFocused = true;
-  } break;
-
+  case SDL_EVENT_WINDOW_FOCUS_LOST:
   case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
-    ge.meta.shouldGameplayStop.windowIsNotFocused = false;
+    _SetShouldGameplayStop(
+      _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_EVENT,
+      (event->type == SDL_EVENT_WINDOW_FOCUS_LOST)
+    );
   } break;
 
   default:
