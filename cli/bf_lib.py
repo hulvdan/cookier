@@ -598,13 +598,13 @@ def _git_get_current_branch() -> str:
     # }
 
 
-def git_bump_tag() -> None:
+def git_bump_tag() -> str:
     # {  ###
     assert _git_get_current_branch() in ("master", "main")
 
-    if _git_get_current_commit_version_tag():
+    if version := _git_get_current_commit_version_tag():
         log.info("Skipping bumping tag")
-        return
+        return version
 
     version_tags = subprocess.run(
         'git tag -l "v1\\.*"', check=True, shell=True, capture_output=True, text=True
@@ -628,6 +628,7 @@ def git_bump_tag() -> None:
     run_command(f"git tag v1.{next_version}")
     # run_command("git push")
     # run_command(f"git push origin v1.{next_version}")
+    return f"v1.{next_version}"
     # }
 
 
