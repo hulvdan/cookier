@@ -17,22 +17,18 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
     + startup_time
     + critical Module loading fix
     + chatgpt иконка и баннер
+2026-01-02 23:00 Развернула модерация
+  При сворачивании страницы с игрой,
+  звук/музыка в игре продолжает воспроизводиться
+  - это не соответствует пункту 1.3 требований платформы.
 
 ПЛАН
 * ФИКСЫ
 * БАЛАНС
 
-x focus: PC chrome
-x focus: PC firefox
-x focus: PC yandex
-x focus: ipad chrome
-x focus: ipad safari
-x focus: ipad yandex
-x focus: android chrome
-x focus: android firefox
-x focus: android yandex
-* focus: PC Debug
-*
+x fix focus
+x text web audio tap prompt breathing
+
 * fix strange mushroom in shop when buying +0% xp gain
 *
 * реклама при окончании волны

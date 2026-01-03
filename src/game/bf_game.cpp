@@ -9529,29 +9529,6 @@ void DoUI() {
     }
   }
 
-  // Start button for web (to enable audio).
-  if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
-      && !ge.meta._soundManager.unlocked.IsSet())
-  {  ///
-    CLAY({
-      .floating{
-        .offset{0, 130},
-        .zIndex = zIndex,
-        .attachPoints{
-          .element = CLAY_ATTACH_POINT_CENTER_CENTER,
-          .parent  = CLAY_ATTACH_POINT_CENTER_CENTER,
-        },
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-    }) {
-      FLOATING_BEAUTIFY;
-
-      FontBegin(&g.meta.fontUIBigOutlined);
-      BF_CLAY_TEXT_LOCALIZED(Loc_UI_WEB_AUDIO_BUTTON_PROMPT__CAPS);
-      FontEnd();
-    }
-  }
-
   // New run.
   if (g.run.state.screen == ScreenType_NEW_RUN) {  ///
     SCOPED_CONTEXT(ControlsContext_NEW_RUN);
@@ -15627,6 +15604,30 @@ void GameDraw() {
         .color    = Fade(particle.color, fade),
       });
     }
+    DrawGroup_End();
+  }
+
+  // Start button for web (to enable audio).
+  if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
+      && !ge.meta._soundManager.unlocked.IsSet())
+  {  ///
+    DrawGroup_Begin(DrawZ_UI);
+    DrawGroup_SetSortY(0);
+
+    auto text = localization_strings->Get(Loc_UI_WEB_AUDIO_BUTTON_PROMPT__CAPS);
+
+    const auto breathingDur = ANIMATION_2_FRAMES.value;
+    const f32  p    = (f32)(ge.meta.frameVisual % breathingDur) / (f32)breathingDur;
+    const f32  pSin = sinf(p * 2 * PI32);
+
+    DrawGroup_CommandText({
+      .pos        = WORLD_SIZEf / 2.0f - Vector2(0, 2),
+      .scale      = Vector2One() * (1.25f + 0.1f * pSin),
+      .font       = &g.meta.fontUIBigOutlined,
+      .text       = text->c_str(),
+      .bytesCount = (int)text->size(),
+    });
+
     DrawGroup_End();
   }
 
