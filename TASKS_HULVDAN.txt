@@ -28,9 +28,8 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 
 x fix focus
 x text web audio tap prompt breathing
+x fix strange mushroom in shop when buying +0% xp gain
 
-* fix strange mushroom in shop when buying +0% xp gain
-*
 * реклама при окончании волны
 * AB тест не 60, а 45 секунд длительность
 * test yandex build opens good on ipad
