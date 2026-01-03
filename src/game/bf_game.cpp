@@ -4685,7 +4685,8 @@ void RunInit() {
 
   g.run.camera.pos = GetCameraTargetPos();
 
-  {
+  // Setting weapon.
+  {  ///
     if (!g.player.weapon) {
       g.player.weapon = (WeaponType)glib->builds()
                           ->Get(g.player.build)
@@ -4694,7 +4695,7 @@ void RunInit() {
     }
     auto& weapon = g.run.state.weapons[0];
     weapon.type  = g.player.weapon;
-    weapon.tier  = 0;
+    weapon.tier  = glib->weapons()->Get(g.player.weapon)->min_tier_index();
   }
 
   // Placing walls.
@@ -15621,7 +15622,7 @@ void GameDraw() {
   }
 
   f32 walkingTutorialFade = 0;
-  if (ge.soundManager.unlocked.IsSet()) {
+  if (ge.soundManager.unlocked.IsSet()) {  ///
     if (ge.soundManager.unlocked._value == 0)
       walkingTutorialFade = 1;
     else {
@@ -15629,8 +15630,7 @@ void GameDraw() {
         = MIN(1, ge.soundManager.unlocked.Elapsed().Progress(ANIMATION_2_FRAMES));
     }
   }
-
-  if (g.run.walkingTutorialCompletedAt.IsSet()) {
+  if (g.run.walkingTutorialCompletedAt.IsSet()) {  ///
     walkingTutorialFade = MAX(
       0, 1 - g.run.walkingTutorialCompletedAt.Elapsed().Progress(ANIMATION_1_FRAMES)
     );
