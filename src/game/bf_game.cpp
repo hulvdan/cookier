@@ -15616,7 +15616,7 @@ void GameDraw() {
 
     auto text = localization_strings->Get(Loc_UI_WEB_AUDIO_BUTTON_PROMPT__CAPS);
 
-    const auto breathingDur = ANIMATION_2_FRAMES.value;
+    const auto breathingDur = 2 * FIXED_FPS;
     const f32  p    = (f32)(ge.meta.frameVisual % breathingDur) / (f32)breathingDur;
     const f32  pSin = sinf(p * 2 * PI32);
 
