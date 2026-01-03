@@ -15648,7 +15648,7 @@ void GameDraw() {
   }
 
   // Drawing walking tutorial area.
-  if (walkingTutorialFade > 0) {  ///
+  if (ge.meta._soundManager.unlocked.IsSet() && (walkingTutorialFade > 0)) {  ///
     const Color color = Fade({239, 203, 132, 255}, EaseOutQuad(walkingTutorialFade));
 
     const auto elapsedSinceUnlock = ge.meta._soundManager.unlocked.Elapsed().value;
