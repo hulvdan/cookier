@@ -11809,19 +11809,6 @@ void DoUI() {
     g.ui.controlsGroupsLast  = nullptr;
   }
 
-  // Window is inactive.
-  if (ShouldGameplayStop()) {  ///
-    CLAY({
-      .floating{
-        .zIndex   = zIndex,
-        .attachTo = CLAY_ATTACH_TO_PARENT,
-      },
-      BF_CLAY_CUSTOM_BEGIN{
-        BF_CLAY_CUSTOM_OVERLAY(Fade(MODAL_OVERLAY_COLOR, MODAL_OVERLAY_COLOR_FADE)),
-      } BF_CLAY_CUSTOM_END,
-    }) {}
-  }
-
   // Game's version.
   if (!gdebug.hideUIForVideo) {  ///
     bool showVersion = ge.meta.debugEnabled;
@@ -12692,7 +12679,7 @@ void GameFixedUpdate() {
 
     constexpr f32 CREATURES_MOVE_MARGIN = 2;
 
-    const bool playerCanMove = ge.meta._soundManager.unlocked.IsSet();
+    const bool playerCanMove = ge.soundManager.unlocked.IsSet();
 
     if (g.run.state.screen == ScreenType_GAMEPLAY) {
       // Stick controls.
@@ -13554,7 +13541,7 @@ void GameFixedUpdate() {
       static bool once = false;
       if (!once                                        //
           && g.run.walkingTutorialCompletedAt.IsSet()  //
-          && ge.meta._soundManager.CanPlaySound())
+          && ge.soundManager.CanPlaySound())
       {
         once = true;
         PlaySound(Sound_MUSIC_BATTLE);
@@ -14750,12 +14737,12 @@ void GameFixedUpdate() {
     FIXED_DT
   );
 
-  if (ge.meta._soundManager.CanPlaySound())
+  if (ge.soundManager.CanPlaySound())
     SetMusicLowpassFactor(g.meta.musicLowpassFactor);
 
   // Setting audio listener position to player's world pos.
   {  ///
-    auto engine = &ge.meta._soundManager.engine;
+    auto engine = &ge.soundManager.engine;
     ma_engine_listener_set_position(
       engine, 0, PLAYER_CREATURE.pos.x, PLAYER_CREATURE.pos.y, 0
     );
@@ -15611,7 +15598,7 @@ void GameDraw() {
 
   // Start button for web (to enable audio).
   if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
-      && !ge.meta._soundManager.unlocked.IsSet())
+      && !ge.soundManager.unlocked.IsSet())
   {  ///
     DrawGroup_Begin(DrawZ_UI);
     DrawGroup_SetSortY(0);
@@ -15634,12 +15621,12 @@ void GameDraw() {
   }
 
   f32 walkingTutorialFade = 0;
-  if (ge.meta._soundManager.unlocked.IsSet()) {
-    if (ge.meta._soundManager.unlocked._value == 0)
+  if (ge.soundManager.unlocked.IsSet()) {
+    if (ge.soundManager.unlocked._value == 0)
       walkingTutorialFade = 1;
     else {
       walkingTutorialFade
-        = MIN(1, ge.meta._soundManager.unlocked.Elapsed().Progress(ANIMATION_2_FRAMES));
+        = MIN(1, ge.soundManager.unlocked.Elapsed().Progress(ANIMATION_2_FRAMES));
     }
   }
 
@@ -15650,10 +15637,10 @@ void GameDraw() {
   }
 
   // Drawing walking tutorial area.
-  if (ge.meta._soundManager.unlocked.IsSet() && (walkingTutorialFade > 0)) {  ///
+  if (ge.soundManager.unlocked.IsSet() && (walkingTutorialFade > 0)) {  ///
     const Color color = Fade({239, 203, 132, 255}, EaseOutQuad(walkingTutorialFade));
 
-    const auto elapsedSinceUnlock = ge.meta._soundManager.unlocked.Elapsed().value;
+    const auto elapsedSinceUnlock = ge.soundManager.unlocked.Elapsed().value;
     const f32  breathingP
       = (sinf(2 * PI32 * (f32)(elapsedSinceUnlock % (2 * FIXED_FPS)) / 2 / (f32)FIXED_FPS)
          + 1)
@@ -15715,7 +15702,7 @@ void GameDraw() {
     const int mouseSteps = 4;
 
     const auto fr
-      = ge.meta._soundManager.unlocked.Elapsed().value % (mouseSteps * mouseDurPerStep);
+      = ge.soundManager.unlocked.Elapsed().value % (mouseSteps * mouseDurPerStep);
 
     const int step = fr / mouseDurPerStep;
     ASSERT(step >= 0);
