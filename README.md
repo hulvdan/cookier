@@ -61,7 +61,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 uv python install 3.11
 pre-commit install
 pre-commit install --install-hooks
-poetry install
+uv sync
 cd vendor
 cd bgfx
 del /f/s/q .build
@@ -89,14 +89,17 @@ git add a.txt
 git commit -m "f"
 git remote add template https://github.com/Hulvdan/game-template.git
 git fetch template
-git merge template/template
+git rebase template/template
 mklink src\bf_lib.cpp c:\Users\user\dev\.dotfiles\bf_lib\bf_lib.cpp
-poetry install
+uv python install 3.11
+uv sync
 pre-commit install
 pre-commit install --install-hooks
 go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 git remote add "origin" https://github.com/Hulvdan/NEWGAME.git
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # FOR HULVDAN: REOPEN REPO IN NVIM SO THAT CMAKE WORKS
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 cd vendor
 cd bgfx
 make
