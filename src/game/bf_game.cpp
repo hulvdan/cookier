@@ -12188,7 +12188,6 @@ void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
-  TEMP_USAGE(&ge.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
   SetVolume(VolumeType_MASTER, 0.85f);
@@ -14748,7 +14747,6 @@ int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
 void GameDraw() {
   ZoneScoped;
 
-  TEMP_USAGE(&ge.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
   // Setup.
