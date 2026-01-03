@@ -994,11 +994,6 @@ void fromJS_setVisible(int visible) {  ///
   );
 }
 
-void fromJS_setWindowFocused(int focused) {  ///
-  // _SetShouldGameplayStop(_ShouldGameplayStopType_EMSCRIPTEN_UNFOCUSED,
-  // !((bool)focused));
-}
-
 void fromJS_setWindowIsInactive(int value) {  ///
   _SetShouldGameplayStop(_ShouldGameplayStopType_WINDOW_IS_INACTIVE, (bool)value);
 }
@@ -3074,8 +3069,6 @@ void InitEngine() {  ///
         (document.hidden || (document.visibilityState === "hidden")) ? 0 : 1
       );
     });
-    window.addEventListener("blur", () => { Module.fromJS_setWindowFocused(0); });
-    window.addEventListener("focus", () => { Module.fromJS_setWindowFocused(1); });
   });
   // clang-format on
 #endif
@@ -4865,14 +4858,6 @@ SDL_AppResult SDL_AppEvent(void* _appstate, SDL_Event* event) {
     ge.events.thisFrame.touchMoved = true;
     ge.events.last                 = LastEventType_TOUCH;
   } break;
-
-    // case SDL_EVENT_WINDOW_FOCUS_LOST:
-    // case SDL_EVENT_WINDOW_FOCUS_GAINED: {  ///
-    //   _SetShouldGameplayStop(
-    //     _ShouldGameplayStopType_WINDOW_IS_UNFOCUSED_BY_EVENT,
-    //     (event->type == SDL_EVENT_WINDOW_FOCUS_LOST)
-    //   );
-    // } break;
 
   default:
     break;
