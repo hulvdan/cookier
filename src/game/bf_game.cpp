@@ -1175,9 +1175,6 @@ struct GameData {
     int         achievementsHoveredAchievementStep = 0;
     FrameVisual showingStats                       = {};
 
-    bool        scheduledSave = false;
-    FrameVisual lastSaveAt    = {};
-
     bool playerUsesKeyboardOrController = false;
     f32  pauseButtonFadeProgress        = 1;
 
@@ -1591,10 +1588,6 @@ void ControlsGroupConnect(
 }
 
 #define PLAYER_CREATURE (g.run.creatures[0])
-
-void Save() {  ///
-  g.meta.scheduledSave = true;
-}
 
 void AchievementStepUnlock(
   AchievementType                achievement,
@@ -2649,7 +2642,7 @@ bool IsAlreadyPlaceholded(const char* placeholder) {  ///
 void _AddPlaceholder(Placeholder p) {  ///
   ASSERT(g.uiFlex.pgroupsLastIsActive);
 
-  auto pp = ALLOCATE_FOR(&g.meta.trashArena, Placeholder);
+  auto pp = ALLOCATE_FOR(&ge.meta.trashArena, Placeholder);
   *pp     = p;
 
   auto& group = *g.uiFlex.pgroupsLast;
@@ -2668,7 +2661,7 @@ void PlaceholdGroupBegin(const char* placeholder) {  ///
 
   ASSERT((bool)g.uiFlex.pgroupsFirst == (bool)g.uiFlex.pgroupsLast);
 
-  auto pp = ALLOCATE_FOR(&g.meta.trashArena, PlaceholderGroup);
+  auto pp = ALLOCATE_FOR(&ge.meta.trashArena, PlaceholderGroup);
   *pp     = {.placeholder = placeholder};
 
   if (!g.uiFlex.pgroupsFirst)
@@ -2695,7 +2688,7 @@ void PlaceholdString(const char* value, Color color = palTextGreen) {  ///
 }
 
 void PlaceholdFormattedString(const char* value, Color color = palTextGreen) {  ///
-  PlaceholdString(PushTextToArena(&g.meta.trashArena, value), color);
+  PlaceholdString(PushTextToArena(&ge.meta.trashArena, value), color);
 }
 
 // `placeholder` and `value` must be statically allocated or live in trashArena.
@@ -3864,13 +3857,13 @@ static BF_FORCE_INLINE Clay_Dimensions MeasureText(
 }
 
 void* PushClayImageData(ClayImageData data) {  ///
-  auto result = ALLOCATE_FOR(&g.meta.trashArena, ClayImageData);
+  auto result = ALLOCATE_FOR(&ge.meta.trashArena, ClayImageData);
   *result     = data;
   return (void*)result;
 }
 
 void* PushClayCustomData(ClayCustomData data) {  ///
-  auto result = ALLOCATE_FOR(&g.meta.trashArena, ClayCustomData);
+  auto result = ALLOCATE_FOR(&ge.meta.trashArena, ClayCustomData);
   *result     = data;
   return (void*)result;
 }
@@ -4000,7 +3993,7 @@ void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
 // NOTE: This overload SAVES string to trash arena.
 void BF_CLAY_TEXT(const char* text, ClayTextOptions opts = {}) {  ///
   int         len           = 0;
-  const char* allocatedText = PushTextToArena(&g.meta.trashArena, text, &len);
+  const char* allocatedText = PushTextToArena(&ge.meta.trashArena, text, &len);
   Clay_String string{
     .length = (i32)len,
     .chars  = allocatedText,
@@ -5258,10 +5251,8 @@ void GameInit() {
   }
 
   // Setup. {  ///
-  g.meta.trashArena         = MakeArena(128 * 1024);
   g.meta.transientDataArena = MakeArena(128 * 1024);
-  g.run.arena               = MakeArena(4 * 1024);
-  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&ge.meta.trashArena);
 
   // Initializing Clay.
   {
@@ -5400,8 +5391,6 @@ void RunReset() {  ///
     VECTORS_TABLE
 #undef X
   };
-
-  g.run.arena.used = 0;
 }
 
 int GetRerollPrice(int waveIndex, int rerolledTimes) {  ///
@@ -6216,7 +6205,7 @@ void DoUI() {
 
   // Setup.
   // {  ///
-  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&ge.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
 
   const auto draw = ge.meta._drawing;
@@ -6363,7 +6352,7 @@ void DoUI() {
   const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
 
   const auto fb_slotColors = glib->ui_itemslot_colors();
-  auto slotColors_ = ALLOCATE_ARRAY(&g.meta.trashArena, Color, fb_slotColors->size());
+  auto slotColors_ = ALLOCATE_ARRAY(&ge.meta.trashArena, Color, fb_slotColors->size());
   FOR_RANGE (int, i, fb_slotColors->size())
     slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
 
@@ -7255,7 +7244,7 @@ void DoUI() {
           PlaceholdString(
             "MODIFIER",
             PushTextToArena(
-              &g.meta.trashArena,
+              &ge.meta.trashArena,
               TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v)))
             ),
             palTextGreen
@@ -7280,7 +7269,7 @@ void DoUI() {
             char placeholderName[2]{'X', '\0'};
             placeholderName[0] += index;
 
-            PlaceholdGroupBegin(PushTextToArena(&g.meta.trashArena, placeholderName));
+            PlaceholdGroupBegin(PushTextToArena(&ge.meta.trashArena, placeholderName));
 
             switch ((CondVarType)fb_placeholder->condvar_type()) {
             case CondVarType_INTEGER: {
@@ -7477,7 +7466,8 @@ void DoUI() {
       }
       else {
         PlaceholdString(
-          "VALUE", PushTextToArena(&g.meta.trashArena, TextFormat("%d", fb_step->value()))
+          "VALUE",
+          PushTextToArena(&ge.meta.trashArena, TextFormat("%d", fb_step->value()))
         );
       }
 
@@ -12198,19 +12188,8 @@ void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
 void GameFixedUpdate() {
   ZoneScoped;
 
-  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&ge.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
-
-  // Waiting for completion of save data loading.
-  {  ///
-    auto loaded = LoadSaveDataOnce(&g.meta.trashArena);
-    if (loaded == SavedataLoadingType_JUST_FISNIHED) {
-      GameInitAfterLoadingSavedata();
-      GameReady();
-    }
-    else if (loaded != SavedataLoadingType_FISNIHED)
-      return;
-  }
 
   SetVolume(VolumeType_MASTER, 0.85f);
   SetVolume(VolumeType_SFX, (f32)g.player.volumeSFX / 3.0f);
@@ -12247,30 +12226,6 @@ void GameFixedUpdate() {
     (g.meta.playerUsesKeyboardOrController ? 0 : 1),
     FIXED_DT * 2
   );
-
-  // Save.
-  if (g.meta.scheduledSave && !ge.meta.previousSaveIsNotCompletedYet) {  ///
-#ifdef BF_PLATFORM_WebYandex
-    const int SAVE_FRAMES_PERIOD = 3 * FIXED_FPS;
-#else
-    const int SAVE_FRAMES_PERIOD = FIXED_FPS / 2;
-#endif
-
-    if (!g.meta.lastSaveAt.IsSet()
-        || (g.meta.lastSaveAt.Elapsed().value >= SAVE_FRAMES_PERIOD))
-    {
-      g.meta.scheduledSave = false;
-      g.meta.lastSaveAt    = {};
-      g.meta.lastSaveAt.SetNow();
-
-#ifndef BF_PLATFORM_WebYandex
-      LOGI("Saving...");
-#endif
-
-      ge.meta.previousSaveIsNotCompletedYet = true;
-      _Save(&g.meta.trashArena);
-    }
-  }
 
   // Reloading game.
   if (g.run.reload) {  ///
@@ -14793,16 +14748,12 @@ int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
 void GameDraw() {
   ZoneScoped;
 
-  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&ge.meta.trashArena);
   TEMP_USAGE(&g.meta.transientDataArena);
-
-  // Waiting for completion of save data loading.
-  if (!ge.meta.loading)
-    return;
 
   // Setup.
   // {  ///
-  TEMP_USAGE(&g.meta.trashArena);
+  TEMP_USAGE(&ge.meta.trashArena);
 
   const auto localization         = glib->localizations()->Get(ge.meta.localization);
   const auto localization_strings = localization->strings();
@@ -15541,7 +15492,7 @@ void GameDraw() {
 
         const auto text = TextFormat(format, MAX(1, number.value));
         bytesCount      = strlen(text);
-        buffer          = ALLOCATE_ARRAY(&g.meta.trashArena, char, bytesCount + 1);
+        buffer          = ALLOCATE_ARRAY(&ge.meta.trashArena, char, bytesCount + 1);
         memcpy((void*)buffer, text, bytesCount + 1);
       }
 
@@ -16084,8 +16035,7 @@ void GameDraw() {
         };
 
         debugTextArena("ge.meta._arena", ge.meta._arena);
-        debugTextArena("g.run.arena", g.run.arena);
-        debugTextArena("g.meta.trashArena", g.meta.trashArena);
+        debugTextArena("ge.meta.trashArena", ge.meta.trashArena);
         debugTextArena("g.meta.transientDataArena", g.meta.transientDataArena);
 
 #define X(type_, name_) \
@@ -16118,9 +16068,9 @@ void GameDraw() {
 
           auto fb = glib->items()->Get(i);
 
-          TEMP_USAGE(&g.meta.trashArena);
+          TEMP_USAGE(&ge.meta.trashArena);
           auto name = PushTextToArena(
-            &g.meta.trashArena, localizationEn->Get(fb->name_locale())->c_str()
+            &ge.meta.trashArena, localizationEn->Get(fb->name_locale())->c_str()
           );
           zpl_str_to_upper(name);
 
@@ -16157,9 +16107,9 @@ void GameDraw() {
 
           auto fb = fb_weapons->Get(i);
 
-          TEMP_USAGE(&g.meta.trashArena);
+          TEMP_USAGE(&ge.meta.trashArena);
           auto name = PushTextToArena(
-            &g.meta.trashArena, localizationEn->Get(fb->name_locale())->c_str()
+            &ge.meta.trashArena, localizationEn->Get(fb->name_locale())->c_str()
           );
           zpl_str_to_upper(name);
 

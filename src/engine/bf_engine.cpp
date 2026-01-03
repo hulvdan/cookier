@@ -48,6 +48,7 @@
 
 // Functions that MUST be implemented by the user of the engine:
 void                           GameInit();
+void                           GameInitAfterLoadingSavedata();
 void                           GameFixedUpdate();
 void                           GameDraw();
 flatbuffers::FlatBufferBuilder GameDumpStateForSaving();
@@ -316,10 +317,10 @@ struct Camera {  ///
   f32     texturesScale = 1;
 };
 
-enum SavedataLoadingType {  ///
-  SavedataLoadingType_NOT_LOADED,
-  SavedataLoadingType_JUST_FISNIHED,
-  SavedataLoadingType_FISNIHED,
+enum SavedataLoadedType {  ///
+  SavedataLoadedType_NOT_LOADED,
+  SavedataLoadedType_JUST_FISNIHED,
+  SavedataLoadedType_FISNIHED,
 };
 
 enum LastEventType {  ///
@@ -557,7 +558,8 @@ struct EngineData {
     f64 prevFrameTime = {};
     f64 frameTime     = {};
 
-    Arena _arena = {};
+    Arena _arena     = {};
+    Arena trashArena = {};
 
     DeviceType device = DeviceType_DESKTOP;
 
@@ -582,15 +584,16 @@ struct EngineData {
 
     const Camera* _currentCamera = nullptr;
 
-    bool previousSaveIsNotCompletedYet = false;
+    bool _previousSaveIsNotCompletedYet = false;
 
-    SavedataLoadingType loading  = {};
-    const u8*           savedata = {};
+    SavedataLoadedType _loaded = {};
 
-    // 0 - not loaded yet, 1 - savedata is empty (null), 2 - got savedata.
-    int jsLoadedSavedata = 0;
+    // 0 - not loaded yet, 1 - _savedata is empty (null), 2 - got _savedata.
+    int _jsLoadedSavedata = 0;
 
-    bool _drawing = false;
+    bool        _drawing       = false;
+    bool        _scheduledSave = false;
+    FrameVisual _lastSaveAt    = {};
   } meta;
 
   struct SoundManager {
@@ -655,6 +658,7 @@ struct EngineData {
     // } gameanalytics;
 
     size_t additionalArenaSize = 0;
+    size_t trashArenaSize      = 128 * 1024;
   } settings;
 
   struct Draw {
@@ -1001,7 +1005,7 @@ void fromJS_setAdIsPlaying(int value) {  ///
 }
 
 void fromJS_saved() {  ///
-  ge.meta.previousSaveIsNotCompletedYet = false;
+  ge.meta._previousSaveIsNotCompletedYet = false;
 }
 
 void fromJS_setLocalization(int localization) {  ///
@@ -3766,6 +3770,187 @@ lframe FrameVisual::Elapsed() const {  ///
   return lframe::Unscaled(ge.meta.frameVisual - _value);
 }
 
+SavedataLoadedType LoadSaveDataOnce() {  ///
+  if (ge.meta._loaded == SavedataLoadedType_JUST_FISNIHED)
+    ge.meta._loaded = SavedataLoadedType_FISNIHED;
+  if (ge.meta._loaded == SavedataLoadedType_FISNIHED)
+    return SavedataLoadedType_FISNIHED;
+
+  TEMP_USAGE(&ge.meta.trashArena);
+
+  const u8* decodedSavedata = {};
+
+  if (ge.meta._loaded == SavedataLoadedType_NOT_LOADED) {
+#if defined(SDL_PLATFORM_DESKTOP)
+
+    // Desktop loads immediately.
+    decodedSavedata = (const u8*)TryLoadFile("save.bin", nullptr);
+    ge.meta._loaded = SavedataLoadedType_JUST_FISNIHED;
+
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
+
+    // JS loads asynchronously.
+    const char* savedata = jsLoad();
+    if (ge.meta._jsLoadedSavedata)
+      ge.meta._loaded = SavedataLoadedType_JUST_FISNIHED;
+    else
+      return SavedataLoadedType_NOT_LOADED;
+
+    if (ge.meta._jsLoadedSavedata == 2) {
+      decodedSavedata = DecodeFromAscii(savedata, &ge.meta.trashArena);
+      free((void*)savedata);
+    }
+
+#else
+#  error "Not implemented yet"
+#endif
+  }
+  else
+    INVALID_PATH;
+
+  if (decodedSavedata) {
+    GameLoad(BFSave::GetSave(decodedSavedata));
+
+#if defined(SDL_PLATFORM_DESKTOP)
+    UnloadFile((void*)decodedSavedata);
+#endif
+  }
+
+  ASSERT(ge.meta._loaded == SavedataLoadedType_JUST_FISNIHED);
+  return ge.meta._loaded;
+}
+
+// void _Save() {  ///
+#if defined(SDL_PLATFORM_WIN32)
+
+void _Save() {
+  ZoneScoped;
+
+  DEFER {
+    ge.meta._previousSaveIsNotCompletedYet = false;
+  };
+
+  const auto toSwapPath = "save_to_swap.bin";
+
+  bool saved = false;
+  {
+    auto fbb = GameDumpStateForSaving();
+    FOR_RANGE (int, i, 5) {
+      if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
+        saved = true;
+        break;
+      }
+    }
+  }
+  if (!saved) {
+    LOGE("Temp save failed");
+    return;
+  }
+
+  bool swapped = false;
+  FOR_RANGE (int, i, 5) {
+    if (SDL_RenamePath(toSwapPath, "save.bin")) {
+      swapped = true;
+      break;
+    }
+  }
+  if (!swapped)
+    LOGI("Save swap failed");
+}
+
+#elif defined(SDL_PLATFORM_EMSCRIPTEN)
+
+void fromJS_markReturnedSavedata(int value) {  ///
+  ge.meta._jsLoadedSavedata = value;
+}
+
+// clang-format off
+
+// NOTE: Returned string must be `free`-d when `ge.meta._jsLoadedSavedata == 2`
+EM_JS(const char*, jsLoad, (), {
+#  if defined(BF_PLATFORM_WebYandex)
+  if (!window.jsLoadCalled) {
+    window.jsLoadCalled = true;
+    window.jsLoad_savedataLoaded = false;
+    window.jsLoad_savedataLoadingStarted = false;
+    window.jsLoad_savedata = null;
+  }
+
+  if (!window.jsLoad_savedataLoadingStarted) {
+    window.jsLoad_savedataLoadingStarted = true;
+
+    window.player.getData(['save']).then((obj) => {
+      window.jsLoad_savedata = obj?.save;
+      window.jsLoad_savedataLoaded = true;
+    }).catch(() => {
+      window.jsLoad_savedataLoaded = true;
+    });
+  }
+
+  if (!window.jsLoad_savedataLoaded)
+    return null;
+
+#  elif defined(BF_PLATFORM_Web) || defined(BF_PLATFORM_WebItch)
+  window.jsLoad_savedata = localStorage.getItem('save');
+#  else
+#    error "Not implemented"
+#  endif
+
+  if (!window.jsLoad_savedata) {
+    Module.fromJS_markReturnedSavedata(1);
+    return null;
+  }
+
+  Module.fromJS_markReturnedSavedata(2);
+
+  var len            = lengthBytesUTF8(window.jsLoad_savedata) + 1;
+  var string_on_heap = _malloc(len);
+  stringToUTF8(window.jsLoad_savedata, string_on_heap, len + 1);
+  return string_on_heap;
+});
+// clang-format on
+
+void _Save() {
+  ZoneScoped;
+  TEMP_USAGE(&ge.meta.trashArena);
+  auto fbb = GameDumpStateForSaving();
+  auto encoded
+    = EncodeToAscii(fbb.GetBufferPointer(), fbb.GetSize(), &ge.meta.trashArena);
+
+#  if defined(BF_PLATFORM_WebYandex)
+
+  // clang-format off
+  EM_ASM({
+    window.player
+      .setData({save: UTF8ToString($0)}, /* flush */ true)
+      .then(() => {
+        Module.fromJS_saved();
+      })
+      .catch(() => {
+        Module.fromJS_saved();
+      });
+  }, encoded);
+  // clang-format on
+
+#  elif defined(BF_PLATFORM_Web) || defined(BF_PLATFORM_WebItch)
+
+  // clang-format off
+  EM_ASM({
+    localStorage.setItem('save', UTF8ToString($0));
+    Module.fromJS_saved();
+  }, encoded);
+  // clang-format on
+
+#  else
+#    error "Not implemented"
+#  endif
+}
+
+#else
+#  error "_Save() is not implemented for your platform"
+#endif
+// }
+
 SDL_AppResult EngineUpdate() {  ///
   ZoneScoped;
 
@@ -3853,7 +4038,47 @@ SDL_AppResult EngineUpdate() {  ///
 
     ge.meta.markGameplay = 1;
 
-    GameFixedUpdate();
+    // Waiting for completion of save data _loaded.
+    {  ///
+      bool canFixedUpdate = false;
+
+      auto loaded = LoadSaveDataOnce();
+      if (loaded == SavedataLoadedType_JUST_FISNIHED) {
+        GameInitAfterLoadingSavedata();
+        GameReady();
+        canFixedUpdate = true;
+      }
+      else if (loaded == SavedataLoadedType_FISNIHED)
+        canFixedUpdate = true;
+
+      if (canFixedUpdate) {
+        TEMP_USAGE(&ge.meta.trashArena);
+        GameFixedUpdate();
+      }
+    }
+
+    if (ge.meta._scheduledSave && !ge.meta._previousSaveIsNotCompletedYet) {  ///
+#ifdef BF_PLATFORM_WebYandex
+      const int SAVE_FRAMES_PERIOD = 3 * FIXED_FPS;
+#else
+      const int SAVE_FRAMES_PERIOD = FIXED_FPS / 2;
+#endif
+
+      if (!ge.meta._lastSaveAt.IsSet()
+          || (ge.meta._lastSaveAt.Elapsed().value >= SAVE_FRAMES_PERIOD))
+      {
+        ge.meta._scheduledSave = false;
+        ge.meta._lastSaveAt    = {};
+        ge.meta._lastSaveAt.SetNow();
+
+#ifndef BF_PLATFORM_WebYandex
+        LOGI("Saving...");
+#endif
+
+        ge.meta._previousSaveIsNotCompletedYet = true;
+        _Save();
+      }
+    }
 
     if (ge.meta.markGameplayPrev != ge.meta.markGameplay) {
       ge.meta.markGameplayPrev = ge.meta.markGameplay;
@@ -3926,7 +4151,12 @@ SDL_AppResult EngineUpdate() {  ///
     ge.meta.logicRand._raise = true;
     ge.meta._drawing         = true;
     ge.draw.flushedThisFrame = false;
-    GameDraw();
+
+    if (ge.meta._loaded) {
+      TEMP_USAGE(&ge.meta.trashArena);
+      GameDraw();
+    }
+
     ge.meta._drawing         = false;
     ge.meta.logicRand._raise = false;
 
@@ -3965,184 +4195,8 @@ SDL_AppResult EngineUpdate() {  ///
 // }
 #endif
 
-// void _Save(Arena* arena) {  ///
-#if defined(SDL_PLATFORM_WIN32)
-
-void _Save(Arena* _) {
-  ZoneScoped;
-
-  DEFER {
-    ge.meta.previousSaveIsNotCompletedYet = false;
-  };
-
-  const auto toSwapPath = "save_to_swap.bin";
-
-  bool saved = false;
-  {
-    auto fbb = GameDumpStateForSaving();
-    FOR_RANGE (int, i, 5) {
-      if (SDL_SaveFile(toSwapPath, (u8*)fbb.GetBufferPointer(), fbb.GetSize())) {
-        saved = true;
-        break;
-      }
-    }
-  }
-  if (!saved) {
-    LOGE("Temp save failed");
-    return;
-  }
-
-  bool swapped = false;
-  FOR_RANGE (int, i, 5) {
-    if (SDL_RenamePath(toSwapPath, "save.bin")) {
-      swapped = true;
-      break;
-    }
-  }
-  if (!swapped)
-    LOGI("Save swap failed");
-}
-
-#elif defined(SDL_PLATFORM_EMSCRIPTEN)
-
-void fromJS_markReturnedSavedata(int value) {  ///
-  ge.meta.jsLoadedSavedata = value;
-}
-
-// clang-format off
-
-// NOTE: Returned string must be `free`-d when `ge.meta.jsLoadedSavedata == 2`
-EM_JS(const char*, jsLoad, (), {
-#  if defined(BF_PLATFORM_WebYandex)
-  if (!window.jsLoadCalled) {
-    window.jsLoadCalled = true;
-    window.jsLoad_savedataLoaded = false;
-    window.jsLoad_savedataLoadingStarted = false;
-    window.jsLoad_savedata = null;
-  }
-
-  if (!window.jsLoad_savedataLoadingStarted) {
-    window.jsLoad_savedataLoadingStarted = true;
-
-    window.player.getData(['save']).then((obj) => {
-      window.jsLoad_savedata = obj?.save;
-      window.jsLoad_savedataLoaded = true;
-    }).catch(() => {
-      window.jsLoad_savedataLoaded = true;
-    });
-  }
-
-  if (!window.jsLoad_savedataLoaded)
-    return null;
-
-#  elif defined(BF_PLATFORM_Web) || defined(BF_PLATFORM_WebItch)
-  window.jsLoad_savedata = localStorage.getItem('save');
-#  else
-#    error "Not implemented"
-#  endif
-
-  if (!window.jsLoad_savedata) {
-    Module.fromJS_markReturnedSavedata(1);
-    return null;
-  }
-
-  Module.fromJS_markReturnedSavedata(2);
-
-  var len            = lengthBytesUTF8(window.jsLoad_savedata) + 1;
-  var string_on_heap = _malloc(len);
-  stringToUTF8(window.jsLoad_savedata, string_on_heap, len + 1);
-  return string_on_heap;
-});
-// clang-format on
-
-void _Save(Arena* arena) {
-  ZoneScoped;
-  TEMP_USAGE(arena);
-  auto fbb     = GameDumpStateForSaving();
-  auto encoded = EncodeToAscii(fbb.GetBufferPointer(), fbb.GetSize(), arena);
-
-#  if defined(BF_PLATFORM_WebYandex)
-
-  // clang-format off
-  EM_ASM({
-    window.player
-      .setData({save: UTF8ToString($0)}, /* flush */ true)
-      .then(() => {
-        Module.fromJS_saved();
-      })
-      .catch(() => {
-        Module.fromJS_saved();
-      });
-  }, encoded);
-  // clang-format on
-
-#  elif defined(BF_PLATFORM_Web) || defined(BF_PLATFORM_WebItch)
-
-  // clang-format off
-  EM_ASM({
-    localStorage.setItem('save', UTF8ToString($0));
-    Module.fromJS_saved();
-  }, encoded);
-  // clang-format on
-
-#  else
-#    error "Not implemented"
-#  endif
-}
-
-#else
-#  error "_Save(Arena* arena) is not implemented for your platform"
-#endif
-// }
-
-SavedataLoadingType LoadSaveDataOnce(Arena* arena) {  ///
-  if (ge.meta.loading == SavedataLoadingType_JUST_FISNIHED)
-    ge.meta.loading = SavedataLoadingType_FISNIHED;
-  if (ge.meta.loading == SavedataLoadingType_FISNIHED)
-    return SavedataLoadingType_FISNIHED;
-
-  TEMP_USAGE(arena);
-
-  if (ge.meta.loading == SavedataLoadingType_NOT_LOADED) {
-#if defined(SDL_PLATFORM_DESKTOP)
-
-    // Desktop loads immediately.
-    ge.meta.savedata = (const u8*)TryLoadFile("save.bin", nullptr);
-    ge.meta.loading  = SavedataLoadingType_JUST_FISNIHED;
-
-#elif defined(SDL_PLATFORM_EMSCRIPTEN)
-
-    // JS loads asynchronously.
-    const char* savedata = jsLoad();
-    if (ge.meta.jsLoadedSavedata)
-      ge.meta.loading = SavedataLoadingType_JUST_FISNIHED;
-    else
-      return SavedataLoadingType_NOT_LOADED;
-
-    if (ge.meta.jsLoadedSavedata == 2) {
-      ge.meta.savedata = DecodeFromAscii(savedata, arena);
-      free((void*)savedata);
-    }
-
-#else
-#  error "Not implemented yet"
-#endif
-  }
-  else
-    INVALID_PATH;
-
-  if (ge.meta.savedata) {
-    GameLoad(BFSave::GetSave(ge.meta.savedata));
-
-#if defined(SDL_PLATFORM_DESKTOP)
-    UnloadFile((void*)ge.meta.savedata);
-#endif
-
-    ge.meta.savedata = nullptr;
-  }
-
-  ASSERT(ge.meta.loading == SavedataLoadingType_JUST_FISNIHED);
-  return ge.meta.loading;
+void Save() {  ///
+  ge.meta._scheduledSave = true;
 }
 
 bool IsEmulatingMobile() {  ///
@@ -4347,6 +4401,7 @@ SDL_AppResult SDL_AppInit(void** _appstate, int _argc, char** _argv) {  ///
 #endif
 
   GamePreInit();
+  ge.meta.trashArena = MakeArena(ge.settings.trashArenaSize);
 
 #if defined(SDL_PLATFORM_EMSCRIPTEN)
   // clang-format off
