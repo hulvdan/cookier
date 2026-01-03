@@ -113,7 +113,7 @@ def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType
 
                 if platform == BuildPlatform.WebYandex:
                     make_web_build_archive(
-                        TEMP_DIR / f"yandex.zip", Path(f".cmake/{platform}_{build_type}")
+                        TEMP_DIR / "yandex.zip", Path(f".cmake/{platform}_{build_type}")
                     )
 
             else:
