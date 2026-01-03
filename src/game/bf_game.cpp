@@ -676,28 +676,15 @@ enum ControlsContext {  ///
   ControlsContext_UPGRADES,
   ControlsContext_SHOP,
   ControlsContext_END,
-  ControlsContext_MODAL_PAUSE,
-  ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
-  ControlsContext_MODAL_STATS,
-  ControlsContext_MODAL_CONFIRM_RESTART,
-  ControlsContext_MODAL_CONFIRM_NEW_RUN,
-  ControlsContext_MODAL_CONFIRM_QUIT,
-  ControlsContext_MODAL_CHEAT_WEAPON,
+  ControlsContext_PAUSE,
+  ControlsContext_SHOP_WEAPON_DETAILS,
+  ControlsContext_STATS,
+  ControlsContext_CONFIRM_RESTART,
+  ControlsContext_CONFIRM_NEW_RUN,
+  ControlsContext_CONFIRM_QUIT,
+  ControlsContext_CHEAT_WEAPON,
   ControlsContext_COUNT,
 };
-
-const ControlsContext CONTROLS_CONTEXT_MODALS_[]{
-  // Lower = more priority.
-  ControlsContext_MODAL_SHOP_WEAPON_DETAILS,
-  ControlsContext_MODAL_STATS,
-  ControlsContext_MODAL_PAUSE,
-  ControlsContext_ACHIEVEMENTS,
-  ControlsContext_MODAL_CONFIRM_RESTART,
-  ControlsContext_MODAL_CONFIRM_NEW_RUN,
-  ControlsContext_MODAL_CONFIRM_QUIT,
-  ControlsContext_MODAL_CHEAT_WEAPON,
-};
-VIEW_FROM_ARRAY_DANGER(CONTROLS_CONTEXT_MODALS);
 
 struct LockInfo {  ///
   AchievementType achievement = {};
@@ -6891,7 +6878,7 @@ void DoUI() {
 
         if (data.shopSelling && data.weapon) {  ///
           SCOPED_CONTEXT_IF(
-            ControlsContext_MODAL_SHOP_WEAPON_DETAILS, data.shopDetailsContextIsActive
+            ControlsContext_SHOP_WEAPON_DETAILS, data.shopDetailsContextIsActive
           );
 
           auto alignX = CLAY_ALIGN_X_RIGHT;
@@ -9483,7 +9470,7 @@ void DoUI() {
     }) {
       FLOATING_BEAUTIFY;
 
-      SCOPED_CONTEXT(ControlsContext_MODAL_PAUSE);
+      SCOPED_CONTEXT(ControlsContext_PAUSE);
 
       componentStats2Wrapped();
 
@@ -9894,7 +9881,7 @@ void DoUI() {
 
   // Stats.
   if (g.meta.showingStats.IsSet()) {  ///
-    SCOPED_CONTEXT(ControlsContext_MODAL_STATS);
+    SCOPED_CONTEXT(ControlsContext_STATS);
 
     zIndex += UIZIndexOffset_STATS;
 
@@ -10193,21 +10180,21 @@ void DoUI() {
     confirmationModal(
       &ge.meta.quitRequested,
       &ge.meta.quitScheduled,
-      ControlsContext_MODAL_CONFIRM_QUIT,
+      ControlsContext_CONFIRM_QUIT,
       Loc_UI_QUIT__CAPS
     );
 
     confirmationModal(
       &g.meta.confirmingRestart,
       &g.run.reload,
-      ControlsContext_MODAL_CONFIRM_RESTART,
+      ControlsContext_CONFIRM_RESTART,
       Loc_UI_RESTART__CAPS
     );
 
     confirmationModal(
       &g.meta.confirmingNewRun,
       &g.run.scheduledNewRun,
-      ControlsContext_MODAL_CONFIRM_NEW_RUN,
+      ControlsContext_CONFIRM_NEW_RUN,
       Loc_UI_NEW_RUN__CAPS
     );
   }
@@ -10288,7 +10275,7 @@ void DoUI() {
 
   // Cheat. Selecting weapon.
   if ((BF_DEBUG || ge.meta.debugEnabled) && (g.run.cheatWeaponIndex >= 0)) {  ///
-    SCOPED_CONTEXT(ControlsContext_MODAL_CHEAT_WEAPON);
+    SCOPED_CONTEXT(ControlsContext_CHEAT_WEAPON);
 
     const int WEAPONS_X = 8;
     const int WEAPONS_Y = CeilDivision((int)WeaponType_COUNT - 1, WEAPONS_X);

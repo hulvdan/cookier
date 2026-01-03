@@ -331,8 +331,7 @@ ASSERT_FALSE(currentContext);
 if (!draw) {  ///
   ControlsGroupConnect(groupDetails, Direction_RIGHT, groupDetails);
 
-  ControlsContext shownScreen{};
-  ControlsContext shownModal{};
+  ControlsContext currentContext = {};
   for (int i = 1; i < ControlsContext_COUNT; i++) {
     auto& context = controlsContexts[i];
 
@@ -341,26 +340,13 @@ if (!draw) {  ///
 
     if (!context.disabled) {
       auto c = (ControlsContext)i;
-      if (context.thisFrame) {
-        if (CONTROLS_CONTEXT_MODALS.Contains(c))
-          shownModal = c;
-        else {
-          ASSERT_FALSE(shownScreen);
-          shownScreen = c;
-        }
-      }
+      if (context.thisFrame && (currentContext < c))
+        currentContext = c;
     }
 
     context.prevFrame = context.thisFrame;
     context.thisFrame = false;
   }
-
-  // if (shownModal)
-  //   ASSERT(shownScreen);
-
-  ControlsContext currentContext = shownModal;
-  if (!currentContext)
-    currentContext = shownScreen;
 
   lastFrameActiveControlsContext = currentContext;
 
