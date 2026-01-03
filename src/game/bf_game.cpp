@@ -7815,7 +7815,9 @@ void DoUI() {
             fb_items->Get(data.item)->effects(),
             0,
             data.count,
-            (data.affectedByGame ? data.thisWaveAddedCount : 1),
+            (((data.shopBuyingIndex >= 0) || !data.affectedByGame)
+               ? 1
+               : data.thisWaveAddedCount),
             CARD_WIDTH
           );
         }
@@ -16143,7 +16145,10 @@ void GameDraw() {
           }
 
           if (IM::Button(TextFormat("%d: %s - %s", i, fb->type()->c_str(), name))) {
-            AddItem((ItemType)i);
+            g.run.state.shop.toPick[1] = {
+              .item = (ItemType)i,
+              .tier = fb->tier(),
+            };
             Save();
           }
         }
