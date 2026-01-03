@@ -87,12 +87,7 @@ def do_cmake(platform: BuildPlatform, build_type: BuildType) -> None:
 
 
 @timing
-def do_build(
-    target: BuildTarget,
-    platform: BuildPlatform,
-    build_type: BuildType,
-    version: str | None = None,
-):
+def do_build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
     # {  ###
     build_id = (target, platform, build_type)
     assert build_id in ALLOWED_BUILDS, "{} is not allowed!".format(build_id)
@@ -117,12 +112,8 @@ def do_build(
                 run_command(rf"cmake --build .cmake/{platform}_{build_type} -t {target}")
 
                 if platform == BuildPlatform.WebYandex:
-                    version_suffix = ""
-                    if version:
-                        version_suffix += "-" + version
                     make_web_build_archive(
-                        TEMP_DIR / f"yandex{version_suffix}.zip",
-                        Path(f".cmake/{platform}_{build_type}"),
+                        TEMP_DIR / f"yandex.zip", Path(f".cmake/{platform}_{build_type}")
                     )
 
             else:
@@ -319,16 +310,11 @@ def codegen(platform: BuildPlatform, build_type: BuildType):
 
 
 @command
-def build(
-    target: BuildTarget,
-    platform: BuildPlatform,
-    build_type: BuildType,
-    version: str | None = None,
-):
+def build(target: BuildTarget, platform: BuildPlatform, build_type: BuildType):
     # {  ###
     do_cmake(platform, build_type)
     do_generate(platform, build_type)
-    do_build(target, platform, build_type, version)
+    do_build(target, platform, build_type)
     # }
 
 
@@ -408,10 +394,10 @@ def deploy_yandex():
     # {  ###
     git_check_no_unstashed()
 
-    version = git_bump_tag()
+    git_bump_tag()
 
     with git_stash():
-        build(BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release, version)
+        build(BuildTarget.game, BuildPlatform.WebYandex, BuildType.Release)
     # }
 
 
