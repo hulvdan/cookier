@@ -954,6 +954,8 @@ struct EngineData {
     bool        _drawing       = false;
     bool        _scheduledSave = false;
     FrameVisual _lastSaveAt    = {};
+
+    int postloading = -1;
   } meta;
 
   struct SoundManager {
@@ -2286,6 +2288,13 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   const int variationIndex = loadedFileIndex - variationRange.start;
   ASSERT(variationIndex >= 0);
   auto& original = m._soundVariationsLoadedFromFiles[loadedFileIndex];
+
+  const auto fb_variation = fb_sound->variations()->Get(variationIndex);
+  if (fb_variation->postload_index() && ge.meta.postloading) {
+    INVALID_PATH;
+    LOGE("PlaySound: Called before postloading finished!");
+    return;
+  }
 
   ma_sound* s = nullptr;
 

@@ -32,7 +32,7 @@ x make build smaller
     -D SDL_HAPTIC_DISABLED=1
     -D SDL_SENSOR_DISABLED=1
 
-* make build smaller:
+* make build smaller: postload music + launch it after postloading finished
 * make build smaller:
 * make build smaller:
 * make build smaller:

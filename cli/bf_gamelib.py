@@ -656,14 +656,19 @@ def convert_gamelib_json_to_binary(
                     raise NotImplementedError
         genline("}\n")
 
+    postload_files = []
+
+    def next_postload_file_index(path: str | Path) -> int:
+        postload_files.append(str(path))
+        return len(postload_files)
+
     # Enriching gamelib with sounds.
     if 1:
         do_audio(platform)
 
-        sound_paths = [
-            *RESOURCES_DIR.glob("*.ogg"),
-            *(PROJECT_DIR / "resources_postload").glob("*.ogg"),
-        ]
+        sound_paths = [*RESOURCES_DIR.glob("*.ogg")]
+        if str(platform).lower().startswith("web"):
+            sound_paths.extend((PROJECT_DIR / "resources_postload").glob("*.ogg"))
 
         m = 2**32
         sound_types_ = [
@@ -693,8 +698,15 @@ def convert_gamelib_json_to_binary(
 
         sound_variations_per_type: dict[str, list[Any]] = defaultdict(list)
         for sound_path in sound_paths:
+            filepath = sound_path.relative_to(PROJECT_DIR)
+            postload_index = 0
+            if sound_path.parent.name == "resources_postload":
+                postload_index = next_postload_file_index(filepath)
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
-                {"filepath": "resources/" + sound_path.name}
+                {
+                    "filepath": str(filepath),
+                    "postload_index": postload_index,
+                }
             )
 
         existing_sounds_by_type = {x.pop("type"): x for x in gamelib.get("sounds", [])}
@@ -771,6 +783,11 @@ def convert_gamelib_json_to_binary(
 
     recursive_replace_transform(gamelib, "locale", "locales", locale_to_index)
     recursive_replace_transform(gamelib, "sound_hash", "sound_hashes", dict(sound_types_))
+
+    genline(
+        f"constexpr int BF_TOTAL_POSTLOAD_FILES_PLUS_ONE = {len(postload_files) + 1};\n"
+    )
+    gamelib["postload_files"] = postload_files
 
     # Creation of `gamelib.bin`.
     intermediate_path = TEMP_DIR / "gamelib.intermediate.jsonc"

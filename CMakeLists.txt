@@ -366,6 +366,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
     )
     target_link_options(game
         PRIVATE
+            "-sFILESYSTEM=1"
             "-sUSE_WEBGL2=1"
             "-sMIN_WEBGL_VERSION=1"
             "-sMAX_WEBGL_VERSION=2"
