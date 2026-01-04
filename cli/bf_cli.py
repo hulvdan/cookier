@@ -51,7 +51,7 @@ def make_web_build_archive(zip_path: Path, cmake_build_out_path: Path) -> None:
             "index.wasm",
         ):
             archive.write(cmake_build_out_path / filepath, filepath)
-        RESOURCES_POSTLOAD_DIR = PROJECT_DIR / "resources_postload"
+        RESOURCES_POSTLOAD_DIR = PROJECT_DIR / "resp"
         for f in RESOURCES_POSTLOAD_DIR.glob("*"):
             archive.write(f, "{}/{}".format(RESOURCES_POSTLOAD_DIR.name, f.name))
     # }
