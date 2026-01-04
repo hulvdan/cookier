@@ -1791,6 +1791,106 @@ void _OnMiniaudioNotification(const ma_device_notification* notification) {  ///
   }
 }
 
+bool _LoadSounds(bool postload) {  ///
+  ZoneScopedN("Sounds initialization");
+
+  auto&      m       = ge.soundManager;
+  const auto oldBase = m._soundVariationsLoadedFromFiles.base;
+
+  ma_fence fence{};
+  if (ma_fence_init(&fence) != MA_SUCCESS) {
+    LOGW("Error during ma_fence_init");
+    INVALID_PATH;
+    return true;
+  }
+  DEFER {
+    ma_fence_uninit(&fence);
+  };
+
+  bool errored = false;
+
+  for (auto fb : *glib->sounds()) {
+    u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
+    if (fb->pitch_min() == fb->pitch_max())
+      customFlags |= MA_SOUND_FLAG_NO_PITCH;
+
+    static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
+    u32 flags = MA_SOUND_FLAG_ASYNC | MA_SOUND_FLAG_NO_SPATIALIZATION | customFlags;
+    ma_sound_group* group = nullptr;
+
+    if (fb->is_music()) {
+      flags |= MA_SOUND_FLAG_STREAM;
+      group = &m._groupMusic;
+    }
+    else {
+      flags |= MA_SOUND_FLAG_DECODE;
+      group = &m._groupSFX;
+    }
+
+    *m._soundVariationRanges.Add() = {
+      .start = m._soundVariationsLoadedFromFiles.count,
+      .end   = m._soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
+    };
+
+    int variationIndex = -1;
+    for (auto fb_variation : *fb->variations()) {
+      variationIndex++;
+
+      _SoundVariation* slot = nullptr;
+      if (postload)
+        slot = m._soundVariationsLoadedFromFiles.base + variationIndex;
+      else {
+        slot  = m._soundVariationsLoadedFromFiles.Add();
+        *slot = {
+          .filepath       = fb_variation->filepath()->c_str(),
+          .soundHashValue = fb->enum_value_id(),
+          .variation      = variationIndex,
+          .flags          = customFlags,
+        };
+      }
+
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+      if (postload != (bool)fb_variation->postload_index())
+        continue;
+#endif
+
+      auto fencePtr = &fence;
+      if (fb->is_music())
+        fencePtr = nullptr;
+
+      {
+        ZoneScopedN("ma_sound_init_from_file");
+
+        if (ma_sound_init_from_file(
+              &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
+            )
+            != MA_SUCCESS)
+        {
+          INVALID_PATH;
+          LOGE(
+            "_LoadSounds(postload=%d): Couldn't load sound: %s",
+            (int)postload,
+            slot->filepath
+          );
+          errored = true;
+        }
+      }
+    }
+  }
+
+  ASSERT(oldBase == m._soundVariationsLoadedFromFiles.base);
+  if (ma_fence_wait(&fence) != MA_SUCCESS) {
+    INVALID_PATH;
+    LOGE("_LoadSounds(postload=%d): Fence failed", (int)postload);
+    errored = true;
+  }
+
+  if (errored)
+    m._works = false;
+
+  return errored;
+}
+
 void _ReloadSounds() {  ///
   if (BF_DISABLE_AUDIO) {
     LOGI("_ReloadSounds. BF_DISABLE_AUDIO");
@@ -1896,23 +1996,12 @@ void _ReloadSounds() {  ///
     &m.engine, MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT, nullptr, &m._groupMusic
   );
 
-  ma_fence fence{};
-  if (ma_fence_init(&fence) != MA_SUCCESS) {
-    LOGW("Error during ma_fence_init");
-    INVALID_PATH;
-    return;
-  }
-  DEFER {
-    ma_fence_uninit(&fence);
-  };
-
   int filesToLoad = 0;
   for (auto fb : *fb_sounds)
     filesToLoad += fb->variations()->size();
 
   m._soundVariationsLoadedFromFiles.Reset();
   m._soundVariationsLoadedFromFiles.Reserve(filesToLoad);
-  const auto oldBase = m._soundVariationsLoadedFromFiles.base;
 
   bool _errored = false;
   LAMBDA (bool, checkErr, (ma_result res)) {
@@ -1938,61 +2027,7 @@ void _ReloadSounds() {  ///
     ));
   }
 
-  {
-    ZoneScopedN("Sounds initialization");
-
-    for (auto fb : *fb_sounds) {
-      u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
-      if (fb->pitch_min() == fb->pitch_max())
-        customFlags |= MA_SOUND_FLAG_NO_PITCH;
-
-      static_assert(sizeof(MA_SOUND_FLAG_DECODE) == sizeof(u32));
-      u32 flags = MA_SOUND_FLAG_ASYNC | MA_SOUND_FLAG_NO_SPATIALIZATION | customFlags;
-      ma_sound_group* group = nullptr;
-
-      if (fb->is_music()) {
-        flags |= MA_SOUND_FLAG_STREAM;
-        group = &m._groupMusic;
-      }
-      else {
-        flags |= MA_SOUND_FLAG_DECODE;
-        group = &m._groupSFX;
-      }
-
-      *m._soundVariationRanges.Add() = {
-        .start = m._soundVariationsLoadedFromFiles.count,
-        .end   = m._soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
-      };
-
-      int variationIndex = -1;
-      for (auto fb_variation : *fb->variations()) {
-        variationIndex++;
-
-        auto slot = m._soundVariationsLoadedFromFiles.Add();
-
-        *slot = {
-          .filepath       = fb_variation->filepath()->c_str(),
-          .soundHashValue = fb->enum_value_id(),
-          .variation      = variationIndex,
-          .flags          = customFlags,
-        };
-
-        auto fencePtr = &fence;
-        if (fb->is_music())
-          fencePtr = nullptr;
-
-        {
-          ZoneScopedN("ma_sound_init_from_file");
-          checkErr(ma_sound_init_from_file(
-            &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
-          ));
-        }
-      }
-    }
-
-    ASSERT(oldBase == m._soundVariationsLoadedFromFiles.base);
-    checkErr(ma_fence_wait(&fence));
-  }
+  _errored |= _LoadSounds(false);
 
   m._works = !_errored;
   LOGI("_ReloadSounds. manager._works = %d", (int)m._works);
@@ -5006,7 +5041,7 @@ SavedataLoadedType LoadSaveDataOnce() {  ///
 void _FetchSuccess(emscripten_fetch_t* fetch) {  ///
   FILE* f = fopen((const char*)fetch->userData, "wb");
   if (!f) {
-    LOGE("_FetchSuccess: Failed to open file");
+    LOGE("_FetchSuccess: Failed to open file: %s", fetch->userData);
     return;
   }
 
@@ -5068,7 +5103,8 @@ SDL_AppResult EngineUpdate() {  ///
 #endif
 
   if (reloadSounds) {
-    reloadSounds = 0;
+    reloadSounds        = 0;
+    ge.meta.postloading = (int)glib->postload_files()->size();
     _ReloadSounds();
   }
 
@@ -5150,7 +5186,12 @@ SDL_AppResult EngineUpdate() {  ///
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
         if (loaded == SavedataLoadedType_JUST_FISNIHED) {
-          ge.meta.postloading = (int)glib->postload_files()->size();
+          EM_ASM({
+            if (!FS.analyzePath('/resp').exists)
+              FS.mkdir('/resp');
+          });
+
+          _LoadSounds(false);
           for (const auto f : *glib->postload_files())
             _FetchFileAsync(f->c_str());
         }

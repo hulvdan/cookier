@@ -538,7 +538,7 @@ def do_audio(platform: BuildPlatform) -> None:
     AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
     AUDIO_DST_DIR = RES_DIR
     AUDIO_POST_DST_DIR = RES_DIR
-    if str(platform).lower().startswith("web"):
+    if platform.is_web():
         AUDIO_POST_DST_DIR = PROJECT_DIR / "resp"
     recursive_mkdir(AUDIO_DST_DIR)
     recursive_mkdir(AUDIO_POST_DST_DIR)
@@ -668,7 +668,7 @@ def convert_gamelib_json_to_binary(
         do_audio(platform)
 
         sound_paths = [*RES_DIR.glob("*.ogg")]
-        if str(platform).lower().startswith("web"):
+        if platform.is_web():
             sound_paths.extend((PROJECT_DIR / "resp").glob("*.ogg"))
 
         m = 2**32
@@ -701,7 +701,7 @@ def convert_gamelib_json_to_binary(
         for sound_path in sound_paths:
             filepath = sound_path.relative_to(PROJECT_DIR)
             postload_index = 0
-            if sound_path.parent.name == "resp":
+            if (sound_path.parent.name == "resp") and platform.is_web():
                 postload_index = next_postload_file_index(filepath)
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
                 {
@@ -1115,7 +1115,7 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
             target_dir_ = f".cmake/vs17/{build_type}/res"
 
         case _:
-            if platform.lower().startswith("web"):
+            if platform.is_web():
                 target_dir_ = f".cmake/{platform}_{build_type}/res"
             else:
                 assert False, f"Not supported platform: {platform}"
@@ -1292,7 +1292,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     cfy_fonts()
 
     # Generating shell.
-    if build_type == BuildType.Release and platform.lower().startswith("web"):
+    if build_type == BuildType.Release and platform.is_web():
         shell_file = VENDOR_DIR / "shell_release.html"
         shell_contents = shell_file.read_text(encoding="utf-8")
 
@@ -1461,7 +1461,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         assert "##" not in shell_contents
 
         name = "shell_release"
-        if suffix := str(platform).lower().removeprefix("web"):
+        if suffix := platform.lower().removeprefix("web"):
             name += "_" + suffix
         (TEMP_DIR / f"{name}.html").write_text(shell_contents, encoding="utf-8")
 
@@ -1470,7 +1470,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
     recursive_mkdir(HANDS_GENERATED_DIR)
 
-    if platform.lower().startswith("web"):
+    if platform.is_web():
         bind_function_names: set[str] = set()
         for f in (SRC_DIR / "engine" / "bf_engine.cpp",):
             m = re.findall(r"\s+(fromJS_\w+)", f.read_text(encoding="utf-8"))
@@ -1549,14 +1549,14 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
     recursive_mkdir(dist_dir)
 
     resources_folders = ["res"]
-    if str(platform).lower().startswith("web"):
+    if platform.is_web():
         resources_folders.append("resp")
 
     if (platform, build_type) in symlink_resources_for:
         for folder in resources_folders:
             p = Path(dist_dir + folder)
             if not p.exists():
-                p.symlink_to(folder, target_is_directory=True)
+                p.symlink_to(PROJECT_DIR / folder, target_is_directory=True)
     else:
         dst_resources = dist_dir + "res/"
         remove_excessive_files_by_pattern(RES_DIR, dst_resources, "*")

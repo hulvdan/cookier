@@ -75,6 +75,9 @@ class BuildPlatform(StrEnum):
     WebYandex = "WebYandex"
     WebItch = "WebItch"
 
+    def is_web(self) -> bool:
+        return self.startswith("web")
+
 
 class BuildTarget(StrEnum):
     game = "game"

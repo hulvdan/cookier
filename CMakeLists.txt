@@ -194,7 +194,6 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/vendor/SDL3")
 target_compile_definitions(SDL3-static PRIVATE
     -D SDL_AUDIO_DISABLED=1
     -D SDL_HAPTIC_DISABLED=1
-    -D SDL_SENSOR_DISABLED=1
 )
 
 # box2d.

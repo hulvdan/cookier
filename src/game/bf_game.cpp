@@ -13750,9 +13750,10 @@ void GameDraw() {
 
   // Start button for web (to enable audio).
   if ((g.run.state.screen == ScreenType_GAMEPLAY)  //
-      && !ge.soundManager.unlocked.IsSet())
+      && !ge.soundManager.unlocked.IsSet()         //
+      && ge.soundManager._works)
   {  ///
-    DrawGroup_Begin(DrawZ_UI);
+    DrawGroup_Begin(DrawZ_TUTORIAL_CONTROLS);
     DrawGroup_SetSortY(0);
 
     auto text = localization_strings->Get(Loc_UI_WEB_AUDIO_BUTTON_PROMPT__CAPS);
