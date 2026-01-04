@@ -1792,7 +1792,9 @@ void _OnMiniaudioNotification(const ma_device_notification* notification) {  ///
 }
 
 bool _LoadSounds(bool postload) {  ///
-  ZoneScopedN("Sounds initialization");
+  ZoneScopedN("_LoadSounds");
+
+  LOGI("_LoadSounds(%d)", (int)postload);
 
   auto&      m       = ge.soundManager;
   const auto oldBase = m._soundVariationsLoadedFromFiles.base;
@@ -1808,6 +1810,8 @@ bool _LoadSounds(bool postload) {  ///
   };
 
   bool errored = false;
+
+  int lastVariationIndex = -1;
 
   for (auto fb : *glib->sounds()) {
     u32 customFlags = MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
@@ -1827,18 +1831,21 @@ bool _LoadSounds(bool postload) {  ///
       group = &m._groupSFX;
     }
 
-    *m._soundVariationRanges.Add() = {
-      .start = m._soundVariationsLoadedFromFiles.count,
-      .end   = m._soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
-    };
+    if (!postload) {
+      *m._soundVariationRanges.Add() = {
+        .start = m._soundVariationsLoadedFromFiles.count,
+        .end   = m._soundVariationsLoadedFromFiles.count + (int)fb->variations()->size(),
+      };
+    }
 
     int variationIndex = -1;
     for (auto fb_variation : *fb->variations()) {
       variationIndex++;
+      lastVariationIndex++;
 
       _SoundVariation* slot = nullptr;
       if (postload)
-        slot = m._soundVariationsLoadedFromFiles.base + variationIndex;
+        slot = m._soundVariationsLoadedFromFiles.base + lastVariationIndex;
       else {
         slot  = m._soundVariationsLoadedFromFiles.Add();
         *slot = {
@@ -1849,10 +1856,8 @@ bool _LoadSounds(bool postload) {  ///
         };
       }
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
       if (postload != (bool)fb_variation->postload_index())
         continue;
-#endif
 
       auto fencePtr = &fence;
       if (fb->is_music())
@@ -1860,6 +1865,12 @@ bool _LoadSounds(bool postload) {  ///
 
       {
         ZoneScopedN("ma_sound_init_from_file");
+
+#if 0
+        LOGI(
+          "_LoadSounds(%d): ma_sound_init_from_file: %s", (int)postload, slot->filepath
+        );
+#endif
 
         if (ma_sound_init_from_file(
               &m.engine, slot->filepath, flags, group, fencePtr, &slot->ma_sound
@@ -5045,11 +5056,27 @@ void _FetchSuccess(emscripten_fetch_t* fetch) {  ///
     return;
   }
 
-  fwrite(fetch->data, 1, fetch->numBytes, f);
+  bool errored = false;
+
+  auto wrote = fwrite(fetch->data, 1, fetch->numBytes, f);
+  if (wrote != fetch->numBytes) {
+    LOGE(
+      "_FetchSuccess: Wrote incorrect number of bytes for %s %d != %d",
+      fetch->userData,
+      (int)fetch->numBytes,
+      (int)wrote
+    );
+    errored = true;
+  }
+  else if (0)
+    LOGI("_FetchSuccess: Wrote %s", fetch->userData);
+
   fclose(f);
+
   emscripten_fetch_close(fetch);
 
-  ge.meta.postloading--;
+  if (!errored)
+    ge.meta.postloading--;
   if (!ge.meta.postloading)
     LOGI("Postloading finished successfully!");
 }
@@ -5066,7 +5093,7 @@ void _FetchFileAsync(const char* url) {  ///
   emscripten_fetch_attr_init(&attr);
 
   strcpy(attr.requestMethod, "GET");
-  attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+  attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_PERSIST_FILE;
   attr.onsuccess  = _FetchSuccess;
   attr.onerror    = _FetchFailed;
   attr.userData   = (void*)url;
@@ -5174,16 +5201,8 @@ SDL_AppResult EngineUpdate() {  ///
       if (loaded == SavedataLoadedType_JUST_FISNIHED) {
         GameInitAfterLoadingSavedata();
         GameReady();
-        canFixedUpdate = true;
-      }
-      else if (loaded == SavedataLoadedType_FISNIHED)
-        canFixedUpdate = true;
 
-      if (canFixedUpdate) {
-        TEMP_USAGE(&ge.meta.trashArena);
-        TEMP_USAGE(&ge.meta._transientDataArena);
-        GameFixedUpdate();
-
+// Starting async loading of postload files.
 #ifdef SDL_PLATFORM_EMSCRIPTEN
         if (loaded == SavedataLoadedType_JUST_FISNIHED) {
           EM_ASM({
@@ -5191,11 +5210,28 @@ SDL_AppResult EngineUpdate() {  ///
               FS.mkdir('/resp');
           });
 
-          _LoadSounds(false);
           for (const auto f : *glib->postload_files())
             _FetchFileAsync(f->c_str());
         }
 #endif
+
+        canFixedUpdate = true;
+      }
+      else if (loaded == SavedataLoadedType_FISNIHED)
+        canFixedUpdate = true;
+
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+      static bool once = false;
+      if (!ge.meta.postloading && !once) {
+        once = true;
+        _LoadSounds(true);
+      }
+#endif
+
+      if (canFixedUpdate) {
+        TEMP_USAGE(&ge.meta.trashArena);
+        TEMP_USAGE(&ge.meta._transientDataArena);
+        GameFixedUpdate();
       }
     }
 

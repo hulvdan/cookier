@@ -698,11 +698,14 @@ def convert_gamelib_json_to_binary(
         genline("VIEW_FROM_ARRAY_DANGER(SOUND_TO_HASH_VALUE);\n")
 
         sound_variations_per_type: dict[str, list[Any]] = defaultdict(list)
+
         for sound_path in sound_paths:
             filepath = sound_path.relative_to(PROJECT_DIR)
+
             postload_index = 0
             if (sound_path.parent.name == "resp") and platform.is_web():
                 postload_index = next_postload_file_index(filepath)
+
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
                 {
                     "filepath": filepath.as_posix(),

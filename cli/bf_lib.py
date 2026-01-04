@@ -76,7 +76,7 @@ class BuildPlatform(StrEnum):
     WebItch = "WebItch"
 
     def is_web(self) -> bool:
-        return self.startswith("web")
+        return self.lower().startswith("web")
 
 
 class BuildTarget(StrEnum):
