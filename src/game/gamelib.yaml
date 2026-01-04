@@ -24,6 +24,7 @@ draw_z: # {  ###
   - SCREEN_FADE
   - UI
   - TOUCH_CONTROLS
+  - INACTIVE_WINDOW_DIM
   - GIZMOS
 # }
 

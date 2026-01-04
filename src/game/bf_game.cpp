@@ -12970,6 +12970,23 @@ void GameDraw() {
   const auto fb_builds        = glib->builds();
   // }
 
+  g.run.camera.zoom = METER_LOGICAL_SIZE;
+  {
+    constexpr f32 MAX_ZOOM = 1.25f;
+    auto&         u        = ge.soundManager.unlocked;
+    if (u.IsSet()) {
+      if (u._value != 0) {
+        auto p = u.Elapsed().Progress(ANIMATION_2_FRAMES);
+        p      = MIN(1, p);
+        p      = EaseInOutQuad(p);
+        g.run.camera.zoom *= Lerp(MAX_ZOOM, 1, p);
+      }
+    }
+    else {
+      g.run.camera.zoom *= MAX_ZOOM;
+    }
+  }
+
   BeginMode2D(&g.run.camera);
 
   // Drawing floor.

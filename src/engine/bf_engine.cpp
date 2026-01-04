@@ -5832,7 +5832,7 @@ SDL_AppResult SDL_AppIterate(void* /* appstate */) {  ///
             .size  = ge.meta.scaledLogicalResolution,
             .color = Fade(ge.settings.screenFadeColor, MODAL_OVERLAY_COLOR_FADE),
           },
-          DrawZ_SCREEN_FADE
+          DrawZ_INACTIVE_WINDOW_DIM
         );
       }
 

@@ -31,8 +31,9 @@ x make build smaller
     -D SDL_AUDIO_DISABLED=1
     -D SDL_HAPTIC_DISABLED=1
     -D SDL_SENSOR_DISABLED=1
+x make build smaller: postload music + launch it after postloading finished
 
-* make build smaller: postload music + launch it after postloading finished
+* camera dynamic zoom on start
 * make build smaller:
 * make build smaller:
 * make build smaller:
