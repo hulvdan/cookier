@@ -9,6 +9,7 @@
 /.scannerwork/
 /.temp/
 /assets/art/src/main*.png
+/assets/art/src/screenshots_processed/
 /codegen/
 /compile_commands.json
 /resources/*.basis
@@ -16,8 +17,8 @@
 /resources/*.wav
 /resources/atlas.png
 /resources/gamelib.bin
+/resources_postload/
 /vendor/basis_universal/bin/
 /vendor/gameanalytics-sdk-cpp/gtest_build/
 CMakeFiles/
 __pycache__/
-/assets/art/src/screenshots_processed

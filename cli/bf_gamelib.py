@@ -533,14 +533,21 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
 
 
 @timing
-def do_audio() -> None:
+def do_audio(platform: BuildPlatform) -> None:
     # {  ###
     AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
     AUDIO_DST_DIR = RESOURCES_DIR
+    AUDIO_POST_DST_DIR = RESOURCES_DIR
+    if str(platform).lower().startswith("web"):
+        AUDIO_POST_DST_DIR = PROJECT_DIR / "resources_postload"
+
+    for folder in {AUDIO_DST_DIR, AUDIO_POST_DST_DIR}:
+        for f in folder.glob("*.ogg"):
+            f.unlink()
 
     src_files = {p for p in AUDIO_SRC_DIR.glob("*.ogg") if p.is_file()}
 
-    # Removing sounds files that wouldn't be exported by reaper.
+    # Removing sound files that wouldn't be exported by reaper.
     allowed_sounds = get_sounds_that_reaper_would_export()
     for src_file in src_files:
         if src_file.stem.startswith("music_"):
@@ -553,48 +560,24 @@ def do_audio() -> None:
         if (x.stem in allowed_sounds) or (x.stem.startswith("music_"))
     }
 
-    if 1:
-        # Making symlinks.
-        for src_file in src_files:
-            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
-            if dst_file.exists():
-                if dst_file.is_symlink():
-                    continue
-                else:
-                    dst_file.unlink()
-            dst_file.symlink_to(src_file)
+    # Making symlinks.
+    for src_file in src_files:
+        dst_folder = AUDIO_DST_DIR
+        if src_file.name.startswith("music_"):
+            dst_folder = AUDIO_POST_DST_DIR
+        dst_file = dst_folder / (src_file.stem + ".ogg")
+        dst_file.symlink_to(src_file)
 
-        log.info(f"Make symlinks for {len(src_files)} audio files")
-
-    else:
-        # Copying.
-        copied = 0
-        for src_file in src_files:
-            dst_file = AUDIO_DST_DIR / (src_file.stem + ".ogg")
-
-            if dst_file.exists():
-                src_mtime = src_file.stat().st_mtime_ns
-                dst_mtime = dst_file.stat().st_mtime_ns
-                if dst_mtime == src_mtime:
-                    continue
-
-            copied += 1
-            log.info(f"Copying {src_file} -> {dst_file}")
-
-            shutil.copyfile(src_file, dst_file)
-            shutil.copystat(src_file, dst_file)
-
-        log.info(
-            f"Found {len(src_files)} total files. (copied {copied}, others have the same modified time)"
-        )
+    log.info(f"Make symlinks for {len(src_files)} audio files")
 
     # Removing orphan audio files from `resources` dir.
     orphans = []
-    for dst_file in AUDIO_DST_DIR.glob("*.ogg"):
-        src_file = AUDIO_SRC_DIR / dst_file.relative_to(AUDIO_DST_DIR)
-        if not src_file.exists():
-            orphans.append(dst_file.name)
-            dst_file.unlink()
+    for folder in {AUDIO_DST_DIR, AUDIO_POST_DST_DIR}:
+        for dst_file in folder.glob("*.ogg"):
+            src_file = AUDIO_SRC_DIR / dst_file.relative_to(folder)
+            if not src_file.exists():
+                orphans.append(dst_file)
+                dst_file.unlink()
     if orphans:
         log.info(
             "Removed {} orphan audio files:\n{}".format(
@@ -606,7 +589,11 @@ def do_audio() -> None:
 
 @timing
 def convert_gamelib_json_to_binary(
-    texture_name_2_id: dict[str, int], genline, atlas_data, original_texture_sizes
+    platform: BuildPlatform,
+    texture_name_2_id: dict[str, int],
+    genline,
+    atlas_data,
+    original_texture_sizes,
 ) -> None:
     # {  ###
     gamelib = load_gamelib_cached()
@@ -671,9 +658,12 @@ def convert_gamelib_json_to_binary(
 
     # Enriching gamelib with sounds.
     if 1:
-        do_audio()
+        do_audio(platform)
 
-        sound_paths = list(RESOURCES_DIR.glob("*.ogg"))
+        sound_paths = [
+            *RESOURCES_DIR.glob("*.ogg"),
+            *(PROJECT_DIR / "resources_postload").glob("*.ogg"),
+        ]
 
         m = 2**32
         sound_types_ = [
@@ -1514,7 +1504,7 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
         texture_name_2_id, atlases_data = make_atlases(downscale_factors)
         assert len(downscale_factors) == 1
         convert_gamelib_json_to_binary(
-            texture_name_2_id, genline, atlases_data[0], original_texture_sizes
+            platform, texture_name_2_id, genline, atlases_data[0], original_texture_sizes
         )
 
         genline("///")
