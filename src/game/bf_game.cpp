@@ -12972,7 +12972,7 @@ void GameDraw() {
 
   g.run.camera.zoom = METER_LOGICAL_SIZE;
   {
-    constexpr f32 MAX_ZOOM = 1.25f;
+    constexpr f32 MAX_ZOOM = 1.4f;
     auto&         u        = ge.soundManager.unlocked;
     if (u.IsSet()) {
       if (u._value != 0) {
@@ -13781,7 +13781,7 @@ void GameDraw() {
 
     DrawGroup_CommandText({
       .pos        = WORLD_SIZEf / 2.0f - Vector2(0, 2),
-      .scale      = Vector2One() * (1.25f + 0.1f * pSin),
+      .scale      = Vector2One() * (1.5f + 0.1f * pSin),
       .font       = &g.meta.fontUIBigOutlined,
       .text       = text->c_str(),
       .bytesCount = (int)text->size(),
