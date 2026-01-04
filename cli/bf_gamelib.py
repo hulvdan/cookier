@@ -25,7 +25,7 @@ from bf_lib import (
     GAME_DIR,
     HANDS_GENERATED_DIR,
     PROJECT_DIR,
-    RESOURCES_DIR,
+    RES_DIR,
     SHADERC_PATH,
     SRC_DIR,
     TEMP_ART_DIR,
@@ -536,11 +536,12 @@ def _do_localization(genline, gamelib) -> tuple[set[int], dict[str, int]]:
 def do_audio(platform: BuildPlatform) -> None:
     # {  ###
     AUDIO_SRC_DIR = ASSETS_DIR / "sfx"
-    AUDIO_DST_DIR = RESOURCES_DIR
-    AUDIO_POST_DST_DIR = RESOURCES_DIR
+    AUDIO_DST_DIR = RES_DIR
+    AUDIO_POST_DST_DIR = RES_DIR
     if str(platform).lower().startswith("web"):
-        AUDIO_POST_DST_DIR = PROJECT_DIR / "resources_postload"
-
+        AUDIO_POST_DST_DIR = PROJECT_DIR / "resp"
+    recursive_mkdir(AUDIO_DST_DIR)
+    recursive_mkdir(AUDIO_POST_DST_DIR)
     for folder in {AUDIO_DST_DIR, AUDIO_POST_DST_DIR}:
         for f in folder.glob("*.ogg"):
             f.unlink()
@@ -570,7 +571,7 @@ def do_audio(platform: BuildPlatform) -> None:
 
     log.info(f"Make symlinks for {len(src_files)} audio files")
 
-    # Removing orphan audio files from `resources` dir.
+    # Removing orphan audio files from `res` dir.
     orphans = []
     for folder in {AUDIO_DST_DIR, AUDIO_POST_DST_DIR}:
         for dst_file in folder.glob("*.ogg"):
@@ -658,17 +659,17 @@ def convert_gamelib_json_to_binary(
 
     postload_files = []
 
-    def next_postload_file_index(path: str | Path) -> int:
-        postload_files.append(str(path))
+    def next_postload_file_index(path: Path) -> int:
+        postload_files.append(path.as_posix())
         return len(postload_files)
 
     # Enriching gamelib with sounds.
     if 1:
         do_audio(platform)
 
-        sound_paths = [*RESOURCES_DIR.glob("*.ogg")]
+        sound_paths = [*RES_DIR.glob("*.ogg")]
         if str(platform).lower().startswith("web"):
-            sound_paths.extend((PROJECT_DIR / "resources_postload").glob("*.ogg"))
+            sound_paths.extend((PROJECT_DIR / "resp").glob("*.ogg"))
 
         m = 2**32
         sound_types_ = [
@@ -700,11 +701,11 @@ def convert_gamelib_json_to_binary(
         for sound_path in sound_paths:
             filepath = sound_path.relative_to(PROJECT_DIR)
             postload_index = 0
-            if sound_path.parent.name == "resources_postload":
+            if sound_path.parent.name == "resp":
                 postload_index = next_postload_file_index(filepath)
             sound_variations_per_type[sound_path.stem.split("__", 1)[0].upper()].append(
                 {
-                    "filepath": str(filepath),
+                    "filepath": filepath.as_posix(),
                     "postload_index": postload_index,
                 }
             )
@@ -804,7 +805,7 @@ def convert_gamelib_json_to_binary(
     )
 
     intermediate_binary_path = Path(str(intermediate_path).rsplit(".", 1)[0] + ".bin")
-    shutil.move(intermediate_binary_path, RESOURCES_DIR / "gamelib.bin")
+    shutil.move(intermediate_binary_path, RES_DIR / "gamelib.bin")
     # }}
 
 
@@ -920,9 +921,9 @@ def make_atlases(downscale_factors: list[int]) -> tuple[dict[str, int], list[dic
                 name = texture["debug_name"].removeprefix(f"d{factor}/")
                 texture_name_2_id[name] = i
 
-        recursive_mkdir(RESOURCES_DIR)
+        recursive_mkdir(RES_DIR)
 
-        out_atlas_path = RESOURCES_DIR / (path.stem + ".basis")
+        out_atlas_path = RES_DIR / (path.stem + ".basis")
         if not out_atlas_path.exists() or should_regenerate_atlas:
             run_command(
                 [
@@ -1111,15 +1112,15 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
     # {  ###
     match platform:
         case BuildPlatform.Win:
-            target_dir_ = f".cmake/vs17/{build_type}/resources"
+            target_dir_ = f".cmake/vs17/{build_type}/res"
 
         case _:
             if platform.lower().startswith("web"):
-                target_dir_ = f".cmake/{platform}_{build_type}/resources"
+                target_dir_ = f".cmake/{platform}_{build_type}/res"
             else:
                 assert False, f"Not supported platform: {platform}"
 
-    src_files = {f.name for f in RESOURCES_DIR.iterdir() if f.is_file()}
+    src_files = {f.name for f in RES_DIR.iterdir() if f.is_file()}
 
     target_dir = Path(target_dir_)
 
@@ -1129,7 +1130,7 @@ def remove_orphan_resources_files(platform: BuildPlatform, build_type: BuildType
     for file in target_dir.iterdir():
         if file.is_file() and file.name not in src_files:
             file.unlink()
-            log.info(f"Removed orphan resources/ file '{file}'")
+            log.info(f"Removed orphan res/ file '{file}'")
     # }
 
 
@@ -1547,14 +1548,19 @@ def do_generate(platform: BuildPlatform, build_type: BuildType) -> None:
 
     recursive_mkdir(dist_dir)
 
+    resources_folders = ["res"]
+    if str(platform).lower().startswith("web"):
+        resources_folders.append("resp")
+
     if (platform, build_type) in symlink_resources_for:
-        p = Path(dist_dir + "resources")
-        if not p.exists():
-            p.symlink_to(RESOURCES_DIR, target_is_directory=True)
+        for folder in resources_folders:
+            p = Path(dist_dir + folder)
+            if not p.exists():
+                p.symlink_to(folder, target_is_directory=True)
     else:
-        dst_resources = dist_dir + "resources/"
-        remove_excessive_files_by_pattern(RESOURCES_DIR, dst_resources, "*")
-        shutil.copytree(RESOURCES_DIR, dst_resources, dirs_exist_ok=True)
+        dst_resources = dist_dir + "res/"
+        remove_excessive_files_by_pattern(RES_DIR, dst_resources, "*")
+        shutil.copytree(RES_DIR, dst_resources, dirs_exist_ok=True)
     # }
 
 

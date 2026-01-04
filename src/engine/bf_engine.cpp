@@ -451,7 +451,7 @@ struct Texture2D {  ///
   bgfx::TextureHandle handle = {};
 };
 
-constexpr auto             GAMELIB_PATH = "resources/gamelib.bin";
+constexpr auto             GAMELIB_PATH = "res/gamelib.bin";
 void*                      glibFile     = nullptr;
 const BFGame::GameLibrary* glib         = nullptr;
 SDL_Time                   glibTime     = {};
@@ -2290,10 +2290,11 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
   auto& original = m._soundVariationsLoadedFromFiles[loadedFileIndex];
 
   const auto fb_variation = fb_sound->variations()->Get(variationIndex);
+
   if (fb_variation->postload_index() && ge.meta.postloading) {
     INVALID_PATH;
     LOGE("PlaySound: Called before postloading finished!");
-    return;
+    return {};
   }
 
   ma_sound* s = nullptr;
@@ -2384,8 +2385,6 @@ PlayingSound PlaySound(u32 soundHashValue, PlaySoundData data = {}) {  ///
       s, Lerp(fb_sound->pitch_min(), fb_sound->pitch_max(), VRAND.FRand11())
     );
   }
-
-  auto fb_variation = fb_sound->variations()->Get(variationIndex);
 
   ASSERT_FALSE(strcmp(
     fb_variation->filepath()->c_str(),
@@ -4156,9 +4155,8 @@ void InitEngine() {  ///
   glibFile = LoadFile(GAMELIB_PATH, nullptr);
   glib     = BFGame::GetGameLibrary(glibFile);
 
-  ge.meta.atlas = _LoadTexture(
-    "resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
-  );
+  ge.meta.atlas
+    = _LoadTexture("res/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()});
 
   static const bgfx::EmbeddedShader s_embeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(quad_tex_vs),
@@ -5003,6 +5001,46 @@ SavedataLoadedType LoadSaveDataOnce() {  ///
   return ge.meta._loaded;
 }
 
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+
+void _FetchSuccess(emscripten_fetch_t* fetch) {  ///
+  FILE* f = fopen((const char*)fetch->userData, "wb");
+  if (!f) {
+    LOGE("_FetchSuccess: Failed to open file");
+    return;
+  }
+
+  fwrite(fetch->data, 1, fetch->numBytes, f);
+  fclose(f);
+  emscripten_fetch_close(fetch);
+
+  ge.meta.postloading--;
+  if (!ge.meta.postloading)
+    LOGI("Postloading finished successfully!");
+}
+
+void _FetchFailed(emscripten_fetch_t* fetch) {  ///
+  LOGE("Postload: Fetch failed for %s", (const char*)fetch->userData);
+  emscripten_fetch_close(fetch);
+}
+
+// NOTE: url must be in static memory!
+// Or guaranteed to live until _FetchSuccess / _FetchFailed is called.
+void _FetchFileAsync(const char* url) {  ///
+  emscripten_fetch_attr_t attr;
+  emscripten_fetch_attr_init(&attr);
+
+  strcpy(attr.requestMethod, "GET");
+  attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+  attr.onsuccess  = _FetchSuccess;
+  attr.onerror    = _FetchFailed;
+  attr.userData   = (void*)url;
+
+  emscripten_fetch(&attr, url);
+}
+
+#endif
+
 SDL_AppResult EngineUpdate() {  ///
   ZoneScoped;
 
@@ -5021,7 +5059,7 @@ SDL_AppResult EngineUpdate() {  ///
       glib = BFGame::GetGameLibrary(glibFile);
       _UnloadTexture(&ge.meta.atlas);
       ge.meta.atlas = _LoadTexture(
-        "../../../resources/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
+        "../../../res/atlas_d2.basis", {glib->atlas_size_x(), glib->atlas_size_y()}
       );
       reloadSounds = 1;
       LOGI("Gamelib reloaded!");
@@ -5109,6 +5147,14 @@ SDL_AppResult EngineUpdate() {  ///
         TEMP_USAGE(&ge.meta.trashArena);
         TEMP_USAGE(&ge.meta._transientDataArena);
         GameFixedUpdate();
+
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+        if (loaded == SavedataLoadedType_JUST_FISNIHED) {
+          ge.meta.postloading = (int)glib->postload_files()->size();
+          for (const auto f : *glib->postload_files())
+            _FetchFileAsync(f->c_str());
+        }
+#endif
       }
     }
 

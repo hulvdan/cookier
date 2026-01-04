@@ -366,6 +366,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
     )
     target_link_options(game
         PRIVATE
+            "-sFETCH=1"
             "-sFILESYSTEM=1"
             "-sUSE_WEBGL2=1"
             "-sMIN_WEBGL_VERSION=1"
@@ -373,7 +374,7 @@ elseif ("${PLATFORM}" MATCHES "^Web")
             "-sALLOW_MEMORY_GROWTH=1"
             "-sINITIAL_MEMORY=246022144" # X MB heap.
             "-sSTACK_SIZE=2097152" # 2MB stack.
-            --preload-file resources
+            --preload-file res
             -lembind
     )
     set_target_properties(game

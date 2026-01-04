@@ -3924,7 +3924,7 @@ void ReloadFontsIfNeeded() {  ///
     return;
   }
 
-  static auto fontpath = "resources/arialnb.ttf";
+  static auto fontpath = "res/arialnb.ttf";
   static int  numberCodepoints[]{
     ' ', '+', '-', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x'
   };
@@ -11698,6 +11698,7 @@ void GameFixedUpdate() {
     {  ///
       static bool once = false;
       if (!once                                        //
+          && !ge.meta.postloading                      //
           && g.run.walkingTutorialCompletedAt.IsSet()  //
           && ge.soundManager.CanPlaySound())
       {
