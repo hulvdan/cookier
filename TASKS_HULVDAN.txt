@@ -21,23 +21,12 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
   При сворачивании страницы с игрой,
   звук/музыка в игре продолжает воспроизводиться
   - это не соответствует пункту 1.3 требований платформы.
+2026-01-03 12:30 published 1.86
 
 ПЛАН
 * ФИКСЫ
 * БАЛАНС
 
-x отправить на модерацию
-x make build smaller
-    -D SDL_AUDIO_DISABLED=1
-    -D SDL_HAPTIC_DISABLED=1
-    -D SDL_SENSOR_DISABLED=1
-x make build smaller: postload music + launch it after postloading finished
-x camera dynamic zoom on start
-
-* make build smaller:
-* make build smaller:
-* make build smaller:
-*
 * реклама при окончании волны
 * AB тест не 60, а 45 секунд длительность
 * test yandex build opens good on ipad
