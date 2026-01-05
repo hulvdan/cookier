@@ -27,6 +27,8 @@ https://www.timeanddate.com/date/durationresult.html?d1=7&m1=9&y1=2025
 * ФИКСЫ
 * БАЛАНС
 
+x отправить AB билд
+
 * реклама при окончании волны
 * AB тест не 60, а 45 секунд длительность
 * test yandex build opens good on ipad
