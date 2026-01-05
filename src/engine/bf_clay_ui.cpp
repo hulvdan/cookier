@@ -408,7 +408,7 @@ if (!gdebug.hideUIForVideo) {  ///
 
   CLAY({
     .floating{
-      .offset{PADDING_OUTER_HORIZONTAL, -PADDING_OUTER_VERTICAL},
+      .offset{UI_PADDING_OUTER_HORIZONTAL, -UI_PADDING_OUTER_VERTICAL},
       .zIndex = i16_max,
       .attachPoints{
         .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,

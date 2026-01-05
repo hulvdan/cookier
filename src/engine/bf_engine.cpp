@@ -1,3 +1,5 @@
+#include "engine/bf_engine_config.cpp"
+
 #include "basisu_transcoder.h"
 
 #include "flatbuffers/flatbuffers.h"
@@ -379,13 +381,6 @@ struct ClayImageData {
   // f32   scale     = {};
   // ImageFitType fitType   = {};
 };
-
-struct ClayCustomScreenBackground {  ///
-  bool set = false;
-};
-
-// nocheckin
-#define BF_ENGINE_EXTEND_CLAY_CUSTOM_DATA X(ClayCustomScreenBackground, screenBackground)
 
 struct ClayCustomData {
   struct {
