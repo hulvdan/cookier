@@ -5116,10 +5116,60 @@ Color BreatheColor(Color color, BreatheColorData data) {  ///
   );
 }
 
+#define BF_CLAY_CUSTOM_SCREEN_BACKGROUND \
+  .screenBackground {                    \
+    .set = true                          \
+  }
+
 // NOTE: Logic must be executed only when `ge.meta._drawing` (`draw`) is false!
 // e.g. updating mouse position, processing `clicked()`,
 // logically reacting to `Clay_Hovered()`, changing game's state, etc.
 void DoUI() {
+  // Setup. {  ///
+#define GAP_FLEX (2)
+#define GAP_SMALL (8)
+#define GAP_BIG (20)
+#define PADDING_FRAME (12)
+#define PADDING_FRAME_SHADOW (94 * ASSETS_TO_LOGICAL_RATIO)
+  const auto fb_items             = glib->items();
+  const auto fb_stats             = glib->stats();
+  const auto fb_weapon_properties = glib->weapon_properties();
+  const auto fb_weapons           = glib->weapons();
+  const auto fb_projectiles       = glib->projectiles();
+  const auto fb_pickupables       = glib->pickupables();
+  const auto fb_difficulties      = glib->difficulties();
+  const auto fb_achievements      = glib->achievements();
+  const auto fb_builds            = glib->builds();
+  const auto fb_effectConditions  = glib->effect_conditions();
+  const auto fb_creatures         = glib->creatures();
+  const auto fb_damageScalings    = glib->damage_scalings();
+
+  const Color secondaryTextColor{0xef, 0xcb, 0x84, 255};
+
+  const auto fb_slotColors = glib->ui_itemslot_colors();
+  auto slotColors_ = ALLOCATE_ARRAY(&ge.meta.trashArena, Color, fb_slotColors->size());
+  FOR_RANGE (int, i, fb_slotColors->size())
+    slotColors_[i] = ColorFromRGBA(fb_slotColors->Get(i));
+
+  const View<Color> slotColors{.count = (int)fb_slotColors->size(), .base = slotColors_};
+
+  constexpr int CARD_WIDTH          = 240;
+  constexpr int CARD_HEIGHT         = 400;
+  constexpr int UPGRADE_FRAME_WIDTH = 200;
+  constexpr int ACHIEVEMENT_WIDTH   = CARD_WIDTH;
+
+  const f32 ACHIEVEMENT_HEIGHT =                      //
+    0                                                 //
+    + g.meta.fontUI.size / g.meta.fontUI._scaleToFit  // Name.
+    + GAP_SMALL                                       // Gap between name and description.
+    + 2 * g.meta.fontStats.size / g.meta.fontUI._scaleToFit  // 2 lines of description.
+    + GAP_FLEX;                                              // Gap between them.
+
+  const auto slotSize
+    = ToVector2(glib->original_texture_sizes()->Get(glib->ui_itemslot_texture_id()))
+      * ASSETS_TO_LOGICAL_RATIO;
+  // }
+
 #define BF_UI_PRE
 #include "engine/bf_clay_ui.cpp"
 
@@ -5187,6 +5237,11 @@ void DoUI() {
     const bool canShowAsSelected = (ge.events.last != LastEventType_TOUCH);
 
     CLAY({.id = data.id, .layout{.sizing{sizing}}}) {
+      const int tier = (((!g.meta.playerUsesKeyboardOrController && Clay_Hovered() || isSelected)
+              && canShowAsSelected)
+               ? 6
+               : data.tier);
+
       CLAY({
         .layout{
           BF_CLAY_SIZING_GROW_XY,
@@ -5201,12 +5256,9 @@ void DoUI() {
         BF_CLAY_CUSTOM_BEGIN{
           BF_CLAY_CUSTOM_NINE_SLICE(
             glib->ui_button_nine_slice(),
-            (((!g.meta.playerUsesKeyboardOrController && Clay_Hovered() || isSelected)
-              && canShowAsSelected)
-               ? 6
-               : data.tier),
-            !data.hideBackground,
-            data.breathing
+            BreatheColor(slotColors[tier * 2], {.breathing = data.breathing}),
+            slotColors[tier * 2 + 1],
+            !data.hideBackground
           ),
         } BF_CLAY_CUSTOM_END,
       }) {
@@ -6354,7 +6406,10 @@ void DoUI() {
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_big_nine_slice(), data.shadow),
             BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), tier, true, {.set = false}
+              glib->ui_frame_nine_slice(),
+              slotColors[tier * 2],
+              slotColors[tier * 2 + 1],
+              true
             ),
           } BF_CLAY_CUSTOM_END,
         }
@@ -7023,7 +7078,10 @@ void DoUI() {
       BF_CLAY_CUSTOM_BEGIN{
         BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), shadow),
         BF_CLAY_CUSTOM_NINE_SLICE(
-          glib->ui_frame_nine_slice(), tier, true, {.set = false}
+          glib->ui_frame_nine_slice(),
+          slotColors[tier * 2],
+          slotColors[tier * 2 + 1],
+          true
         ),
       } BF_CLAY_CUSTOM_END,
     }) {
@@ -7941,7 +7999,7 @@ void DoUI() {
         .layout{
           BF_CLAY_SIZING_GROW_XY,
           BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-            PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+            UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
           ),
         },
         .floating{
@@ -8211,7 +8269,9 @@ void DoUI() {
         },
         BF_CLAY_CUSTOM_BEGIN{
           BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
-          BF_CLAY_CUSTOM_NINE_SLICE(glib->ui_frame_nine_slice(), 0, true, {.set = false}),
+          BF_CLAY_CUSTOM_NINE_SLICE(
+            glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
+          ),
         } BF_CLAY_CUSTOM_END,
       }) {
         innerLambda();
@@ -8222,7 +8282,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -8584,7 +8644,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -8695,7 +8755,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
         .childGap = GAP_BIG,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -8743,7 +8803,10 @@ void DoUI() {
             BF_CLAY_CUSTOM_BEGIN{
               BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
               BF_CLAY_CUSTOM_NINE_SLICE(
-                glib->ui_frame_nine_slice(), upgrade.tier, true, {.set = false}
+                glib->ui_frame_nine_slice(),
+                slotColors[upgrade.tier * 2],
+                slotColors[upgrade.tier * 2 + 1],
+                true
               ),
             } BF_CLAY_CUSTOM_END,
           }) {
@@ -8924,7 +8987,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
         .childGap = GAP_BIG,
       },
@@ -9270,7 +9333,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
         .childGap = GAP_BIG,
         BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER,
@@ -9448,7 +9511,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
       },
       .floating{
@@ -9674,7 +9737,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
       },
       .floating{
@@ -9753,7 +9816,7 @@ void DoUI() {
               BF_CLAY_CUSTOM_BEGIN{
                 BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
                 BF_CLAY_CUSTOM_NINE_SLICE(
-                  glib->ui_frame_nine_slice(), 0, true, {.set = false}
+                  glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
                 ),
               } BF_CLAY_CUSTOM_END,
             }) {
@@ -9897,7 +9960,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
         BF_CLAY_CHILD_ALIGNMENT_RIGHT_CENTER,
         .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -9964,7 +10027,7 @@ void DoUI() {
           },
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), 0, true, {.set = false}
+              glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
             ),
           } BF_CLAY_CUSTOM_END,
         }) {
@@ -10109,7 +10172,7 @@ void DoUI() {
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
             BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), 0, true, {.set = false}
+              glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
             ),
           } BF_CLAY_CUSTOM_END,
         }) {
@@ -10279,7 +10342,7 @@ void DoUI() {
       .layout{
         BF_CLAY_SIZING_GROW_XY,
         BF_CLAY_PADDING_HORIZONTAL_VERTICAL(
-          PADDING_OUTER_HORIZONTAL, PADDING_OUTER_VERTICAL
+          UI_PADDING_OUTER_HORIZONTAL, UI_PADDING_OUTER_VERTICAL
         ),
         BF_CLAY_CHILD_ALIGNMENT_LEFT_CENTER,
       },
@@ -10329,8 +10392,15 @@ void DoUI() {
     }
   }
 
+#undef GAP_FLEX
+#undef GAP_SMALL
+#undef GAP_BIG
+#undef PADDING_FRAME
+#undef PADDING_FRAME_SHADOW
+
 #define BF_UI_POST
 #include "engine/bf_clay_ui.cpp"
+#undef BF_UI_POST
 }
 
 int GetMobDamage(CreatureType type) {  ///
@@ -14373,6 +14443,76 @@ void GameDraw() {
   }
 
   g.run.meleeWeaponColliderGizmos.Reset();
+}
+
+void ClayRender_screenBackground(Clay_BoundingBox _bb, Beautify _beautify) {  ///
+  DrawGroup_CommandRect({
+    .pos   = LOGICAL_RESOLUTIONf / 2.0f,
+    .size  = ge.meta.scaledLogicalResolution,
+    .color = Darken({49, 25, 23, 255}, 0.3f),
+  });
+
+  const int     texID = glib->ui_background_rect_texture_id();
+  constexpr int gap   = 8;
+  const auto    size
+    = ToVector2(glib->original_texture_sizes()->Get(texID)) * ASSETS_TO_LOGICAL_RATIO;
+
+  const int rectsXToSide = 9;
+  const int rectsYToSide = 5;
+
+#define BF_BACKGROUND_CYCLE_ENABLED 1
+
+#if BF_BACKGROUND_CYCLE_ENABLED
+  const int cycleDur = 20 * FIXED_FPS;
+  const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) / (f32)cycleDur;
+#endif
+
+  const Color rectColor{22, 16, 13, 255};
+
+  FOR_RANGE (int, y, rectsYToSide) {
+    FOR_RANGE (int, n, 2) {
+      FOR_RANGE (int, x, rectsXToSide) {
+        FOR_RANGE (int, m, 2) {
+          if (!x && m)
+            continue;
+
+          if ((x == rectsXToSide - 1) && (y >= rectsYToSide - 1))
+            continue;
+
+          f32 offY = (size.y + gap) / 2.0f;
+          if (x % 2)
+            offY = 0;
+
+          auto center = LOGICAL_RESOLUTIONf / 2.0f;
+          auto off    = Vector2(x * (size.x + gap), offY + y * (size.y + gap));
+          if (n)
+            off.y *= -1;
+
+          f32 angle = -PI32 / 6;
+
+          f32 fade = 1;
+
+#if BF_BACKGROUND_CYCLE_ENABLED
+          off.y
+            += (((x + m) % 2) ? 1 : -1) * (size.y + gap) * 0.1f * cosf(2 * PI32 * cycleP);
+
+          // if ((y == rectsYToSide - 1) && ((x + m + n) % 2)) {
+          //   const f32 p = 10 * cycleP - 9;
+          //   if (p > 0)
+          //     fade = 1 - p;
+          // }
+#endif
+
+          DrawGroup_CommandTexture({
+            .texID    = texID,
+            .rotation = angle,
+            .pos      = center + Vector2Rotate(off, angle + (m ? PI32 : 0)),
+            .color    = Fade(rectColor, fade),
+          });
+        }
+      }
+    }
+  }
 }
 
 ///
