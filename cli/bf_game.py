@@ -15,8 +15,23 @@ USAGE:
 """
 
 # Imports.  {  ###
+from itertools import groupby
+
 import bf_lib as bf
+import bf_swatch
+from bf_typer import command, timing
 
 # }
+
+bf.game_settings.itch_target = "hulvdan/"
+bf.game_settings.languages = ["russian", "english"]
+bf.game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
+bf.game_settings.yandex_metrica_counter_id = 0
+
+
+@command
+def temp():
+    pass
+
 
 ###
