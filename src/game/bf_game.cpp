@@ -4284,7 +4284,7 @@ void GameInit() {
   RunInit();
 }
 
-void GameInitAfterLoadingSavedata() {
+void GameInitAfterLoadingSavedata() {  ///
   ZoneScoped;
 
   LOGI("GameInitAfterLoadingSavedata...");
