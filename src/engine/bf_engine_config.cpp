@@ -7,6 +7,12 @@ struct ClayScreenBackground {  ///
   bool set = false;
 };
 
+// Example:
+// #define BF_ENGINE_EXTEND_CLAY_CUSTOM_DATA \
+//   X(ClayScreenBackground, screenBackground)
+//
+// ClayScreenBackground would need to have `bool set = false;`
+//
 #define BF_ENGINE_EXTEND_CLAY_CUSTOM_DATA X(ClayScreenBackground, screenBackground)
 
 ///
