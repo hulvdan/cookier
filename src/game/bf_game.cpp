@@ -8270,7 +8270,7 @@ void DoUI() {
         BF_CLAY_CUSTOM_BEGIN{
           BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
           BF_CLAY_CUSTOM_NINE_SLICE(
-            glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
+            glib->ui_frame_nine_slice(), slotColors[0], slotColors[1], true
           ),
         } BF_CLAY_CUSTOM_END,
       }) {
@@ -9816,7 +9816,7 @@ void DoUI() {
               BF_CLAY_CUSTOM_BEGIN{
                 BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
                 BF_CLAY_CUSTOM_NINE_SLICE(
-                  glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
+                  glib->ui_frame_nine_slice(), slotColors[0], slotColors[1], true
                 ),
               } BF_CLAY_CUSTOM_END,
             }) {
@@ -10027,7 +10027,7 @@ void DoUI() {
           },
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
+              glib->ui_frame_nine_slice(), slotColors[0], slotColors[1], true
             ),
           } BF_CLAY_CUSTOM_END,
         }) {
@@ -10172,7 +10172,7 @@ void DoUI() {
           BF_CLAY_CUSTOM_BEGIN{
             BF_CLAY_CUSTOM_SHADOW(glib->ui_frame_shadow_small_nine_slice(), true),
             BF_CLAY_CUSTOM_NINE_SLICE(
-              glib->ui_frame_nine_slice(), slotColors[0], slotColors[2], true
+              glib->ui_frame_nine_slice(), slotColors[0], slotColors[1], true
             ),
           } BF_CLAY_CUSTOM_END,
         }) {
