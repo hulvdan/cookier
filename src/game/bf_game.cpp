@@ -12885,40 +12885,6 @@ void GameFixedUpdate() {
       }
     }
 
-    // Updating particles.
-    for (auto& p : g.run.particles) {  ///
-      p.pos += p.velocity * FIXED_DT;
-      p.rotation += p.rotationSpeed * FIXED_DT;
-    }
-
-    // Removing old particles.
-    {  ///
-      ZoneScopedN("Removing old particles.");
-
-      const auto total = g.run.particles.count;
-      int        off   = 0;
-      FOR_RANGE (int, i, total) {
-        const auto& particle = g.run.particles[i - off];
-        const auto  fb       = fb_particles->Get(particle.type);
-        if (particle.createdAt.Elapsed() >= particle.duration) {
-          g.run.particles.UnstableRemoveAt(i - off);
-          off++;
-        }
-      }
-    }
-
-    // Sorting particles.
-    {  ///
-      ZoneScopedN("Sorting particles.");
-
-      qsort(
-        (void*)g.run.particles.base,
-        g.run.particles.count,
-        sizeof(*g.run.particles.base),
-        (int (*)(const void*, const void*))ParticleCmp
-      );
-    }
-
     g.run.camera.pos = GetCameraTargetPos();
     ge.meta.frameGame++;
   }
