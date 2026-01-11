@@ -15,4 +15,6 @@ struct ClayScreenBackground {  ///
 //
 #define BF_ENGINE_EXTEND_CLAY_CUSTOM_DATA X(ClayScreenBackground, screenBackground)
 
+#define BF_MAX_PARTICLES_COUNT (2048)
+
 ///
