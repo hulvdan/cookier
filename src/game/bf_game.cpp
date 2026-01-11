@@ -13804,36 +13804,10 @@ void GameDraw() {
     DrawGroup_End();
   }
 
-  // Drawing particles.
-  {  ///
-    DrawGroup_Begin(DrawZ_PARTICLES);
-    DrawGroup_SetSortY(0);
-    for (const auto& particle : g.run.particles) {
-      ASSERT(particle.type);
-      const auto fb = fb_particles->Get(particle.type);
-
-      auto       e = particle.createdAt.Elapsed();
-      const auto p = Clamp01(e.Progress(particle.duration));
-
-      f32 fade = EaseOutQuad(1 - p);
-      if (fb->fades_in())
-        fade *= MIN(1, EaseOutQuad(e.Progress(ANIMATION_0_FRAMES)));
-
-      if (fade < 0)
-        continue;
-
-      DrawGroup_CommandTexture({
-        .texID = GetTextureIDByProgress(
-          fb->variations()->Get(particle.variation)->texture_ids(), p
-        ),
-        .rotation = particle.rotation,
-        .pos      = particle.pos,
-        .scale    = Vector2(fb->scale_x(), fb->scale_y()) * particle.scale,
-        .color    = Fade(particle.color, fade),
-      });
-    }
-    DrawGroup_End();
-  }
+  DrawGroup_Begin(DrawZ_PARTICLES);
+  DrawGroup_SetSortY(0);
+  DrawParticles();
+  DrawGroup_End();
 
   // Start button for web (to enable audio).
   if ((g.run.state.screen == ScreenType_GAMEPLAY)  //

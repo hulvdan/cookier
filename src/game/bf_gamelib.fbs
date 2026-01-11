@@ -82,8 +82,8 @@ table Sound {
 }
 
 table Flattened {
-  start: int;
-  end: int;
+    start: int;
+    end: int;
 }
 
 // GAME STUFF
