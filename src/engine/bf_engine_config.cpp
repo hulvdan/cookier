@@ -17,4 +17,6 @@ struct ClayScreenBackground {  ///
 
 #define BF_MAX_PARTICLES_COUNT (2048)
 
+#define BF_MAX_PARTICLES_COUNT (2048)
+
 ///
