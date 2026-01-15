@@ -600,31 +600,6 @@ struct ThisWaveMob {  ///
   f32          accumulatedFactor = {};
 };
 
-struct Particle {  ///
-  ParticleType type          = {};
-  u16          variation     = {};
-  Vector2      pos           = {};
-  Vector2      velocity      = {};
-  f32          rotation      = {};
-  f32          rotationSpeed = 0;
-  f32          scale         = 1;
-  Color        color         = {};
-  lframe       duration      = {};
-  FrameGame    createdAt     = {};
-};
-
-int ParticleCmp(const Particle* v1, const Particle* v2) {  ///
-  if (v1->createdAt._value > v2->createdAt._value)
-    return 1;
-  if (v1->createdAt._value < v2->createdAt._value)
-    return -1;
-  if (v1->pos.y > v2->pos.y)
-    return -1;
-  if (v1->pos.y < v2->pos.y)
-    return 1;
-  return 0;
-}
-
 struct Landmine {  ///
   Vector2     pos                 = {};
   FrameGame   startedDetonationAt = {};
@@ -695,30 +670,6 @@ enum ConfirmModalResultType {  ///
   ConfirmModalResultType_NONE,
   ConfirmModalResultType_CANCELLED,
   ConfirmModalResultType_CONFIRMED,
-};
-
-struct MakeParticlesData {  ///
-  ParticleType type = {};
-
-  int count = 1;
-
-  Vector2 pos = {};
-
-  f32 velocity          = 0;
-  f32 velocityPlusMinus = 0;
-
-  f32 velocityAngle          = 0;
-  f32 velocityAnglePlusMinus = 0;
-
-  f32               initialOffset          = 0;
-  f32               initialOffsetPlusMinus = 0;
-  Easing_function_t initialOffsetEasing    = EaseLinear;
-
-  f32 scale          = 1;
-  f32 scalePlusMinus = 0.2f;
-
-  f32   rotationSpeedPlusMinus = PI32;
-  Color color                  = WHITE;
 };
 
 struct Prop {  ///
@@ -945,7 +896,6 @@ struct GameData {
   X(int, justDamagedCreatures)             \
   X(Number, numbers)                       \
   X(Pickupable, pickupables)               \
-  X(Particle, particles)                   \
   X(TurretToSpawn, turretsToSpawn)         \
   X(GardenToSpawn, gardensToSpawn)         \
   X(RotatedRect, meleeWeaponColliderGizmos)
@@ -2237,68 +2187,6 @@ f32 GetLifestealChance(
   }
 
   return lifesteal;
-}
-
-void MakeParticles(MakeParticlesData data) {  ///
-  ASSERT(data.type);
-
-  ASSERT(data.velocityAnglePlusMinus >= 0);
-  ASSERT(data.velocityAnglePlusMinus <= PI32);
-
-  ASSERT(data.count >= 0);
-
-  auto fb = glib->particles()->Get(data.type);
-
-  auto color = ColorFromRGBA(fb->color());
-  if (data.color != WHITE)
-    color = ColorTint(color, data.color);
-
-  const int maxCount = MAX(0, MAX_PARTICLES_COUNT - g.run.particles.count);
-  data.count         = MIN(data.count, maxCount);
-
-  if (data.count > 0)
-    g.run.particles.Reserve(g.run.particles.count + data.count);
-
-  FOR_RANGE (int, particleIndex, data.count) {
-    const auto variation = (u16)(GRAND.Rand() % fb->variations()->size());
-
-    const f32 vel   = data.velocity + data.velocityPlusMinus * GRAND.FRand11();
-    const f32 angle = data.velocityAngle + data.velocityAnglePlusMinus * GRAND.FRand11();
-
-    const f32 initialOffset = data.initialOffset
-                              + Lerp(
-                                -data.initialOffsetPlusMinus,
-                                data.initialOffsetPlusMinus,
-                                data.initialOffsetEasing(GRAND.FRand())
-                              );
-
-    f32 rotation = (fb->disable_rotation() ? 0 : GRAND.Angle());
-
-    f32 rotationSpeed = data.rotationSpeedPlusMinus * GRAND.FRand11();
-
-    const f32 scale = data.scale + data.scalePlusMinus * GRAND.FRand11();
-
-    const f32 durationSeconds
-      = fb->duration_seconds() + fb->duration_plus_minus() * GRAND.FRand11();
-
-    ASSERT(durationSeconds > 0);
-    if (durationSeconds <= 0)
-      continue;
-
-    Particle p{
-      .type          = data.type,
-      .variation     = variation,
-      .pos           = data.pos + Vector2Rotate({initialOffset, 0}, angle),
-      .velocity      = Vector2Rotate({vel, 0}, angle),
-      .rotation      = rotation,
-      .rotationSpeed = rotationSpeed,
-      .scale         = scale,
-      .color         = color,
-      .duration      = lframe::FromSeconds(durationSeconds),
-    };
-    p.createdAt.SetNow();
-    *g.run.particles.Add() = p;
-  }
 }
 
 void MakePickupable(MakePickupableData data);
@@ -4875,8 +4763,8 @@ void MakeAOE(
     .initialOffset          = baseRadius * sizeMultiplier / 2.0f,
     .initialOffsetPlusMinus = baseRadius * sizeMultiplier / 2.0f,
     .initialOffsetEasing    = EaseOutQuart,
-    .scale                  = 1.3f,
-    .scalePlusMinus         = 0.15f,
+    .scale                  = Vector2One() * 1.3f,
+    .scalePlusMinus         = Vector2One() * 0.15f,
   });
   PlaySound(Sound_GAME_EXPLOSION);
 }
@@ -9242,7 +9130,7 @@ void DoUI() {
             );
 
             if (nextWavePressed) {
-              ShowInterAd();
+              ShowAdInter();
 
               g.run.scheduledNextWave = true;
               PlaySound(Sound_UI_CLICK);
@@ -10413,42 +10301,6 @@ int GetMobDamage(CreatureType type) {  ///
          );
 }
 
-struct EmitParticlesData {  ///
-  const BFGame::ParticleEmitter* fb_emitter           = {};
-  Vector2                        pos                  = {};
-  Vector2                        offsetScale          = {1, 1};
-  Vector2                        offsetPlusMinusScale = {1, 1};
-  f32                            offsetRotation       = 0;
-  f32                            velocity             = 0;
-  f32                            velocityAngle        = 0;
-};
-
-void EmitParticles(EmitParticlesData data) {  ///
-  if (!data.fb_emitter)
-    return;
-
-  const auto interval = lframe::FromSeconds(data.fb_emitter->interval_seconds()).value;
-  if ((interval > 0) && ((ge.meta.frameGame % interval) != 0))
-    return;
-
-  Vector2 off{};
-  if (data.fb_emitter->offset())
-    off = ToVector2(data.fb_emitter->offset()) * data.offsetScale;
-  data.pos += Vector2Rotate(off, data.offsetRotation);
-  data.pos += ToVector2(data.fb_emitter->offset_plus_minus())
-              * Vector2(GRAND.FRand11(), GRAND.FRand11()) * data.offsetPlusMinusScale;
-
-  MakeParticles({
-    .type           = (ParticleType)data.fb_emitter->particle_type(),
-    .pos            = data.pos,
-    .velocity       = data.velocity,
-    .velocityAngle  = data.velocityAngle,
-    .scale          = 1.0f,
-    .scalePlusMinus = 0.1f,
-    .color          = Fade(WHITE, data.fb_emitter->fade()),
-  });
-}
-
 void UpdateTrailSound(i64* nextTrailSoundVisualFrame, int trailSoundType) {  ///
   if (!trailSoundType)
     return;
@@ -10780,7 +10632,7 @@ void GameFixedUpdate() {
 
     g.run.projectiles.Reset();
     g.run.numbers.Reset();
-    g.run.particles.Reset();
+    ge.other.particles.Reset();
     g.run.landmines.Reset();
     g.run.gardens.Reset();
 
@@ -12975,13 +12827,6 @@ void GameFixedUpdate() {
   }
 
   ge.meta.frameVisual++;
-}
-
-int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
-  ASSERT(p >= 0);
-  int index = p * texs->size();
-  index     = MIN(index, texs->size() - 1);
-  return texs->Get(index);
 }
 
 void GameDraw() {

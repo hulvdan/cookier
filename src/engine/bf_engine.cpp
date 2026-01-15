@@ -5534,11 +5534,7 @@ SDL_AppResult EngineUpdate() {  ///
         TEMP_USAGE(&ge.meta._transientDataArena);
         GameFixedUpdate();
 
-        // Updating particles.
-        for (auto& p : g.run.particles) {
-          p.pos += p.velocity * FIXED_DT;
-          p.rotation += p.rotationSpeed * FIXED_DT;
-        }
+        auto fb_particles = glib->particles();
 
         // Removing old particles.
         {  ///

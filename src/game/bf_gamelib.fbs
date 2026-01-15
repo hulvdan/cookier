@@ -310,14 +310,6 @@ table Ailment {
     // duration_seconds: float;
 }
 
-table ParticleEmitter {
-    particle_type: int;
-    offset: Posf;
-    offset_plus_minus: Posf;
-    interval_seconds: float;
-    fade: float = 1;
-}
-
 table Weapon {
     type: string (required);
     name_locale: int;
@@ -389,22 +381,6 @@ table Projectile {
     damage_sound_hash: uint;
     spawn_sound_hash: uint;
     trailsound_type: int;
-}
-
-table ParticleVariation {
-    texture_ids: [int];
-}
-
-table Particle {
-    type: string (required);
-    duration_seconds: float;
-    duration_plus_minus: float;
-    disable_rotation: bool;
-    scale_x: float = 1;
-    scale_y: float = 1;
-    fades_in: bool = false;
-    color: uint = 0xffffffff;
-    variations: [ParticleVariation];
 }
 
 table Pickupable {

@@ -4484,6 +4484,8 @@ stats: # {  ###
     is_hidden: true
 # }
 
+colors:
+  - type: INVALID
 placeholders: # {  ###
   - type: INVALID
   - type: STRING
@@ -5119,7 +5121,6 @@ sounds:
   - type: GAME_RUN_WON
     pitch_min: 1
     pitch_max: 1
-=======
 particles: # {  ###
   - type: INVALID
   - type: EXPLOSION
