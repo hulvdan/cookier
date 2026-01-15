@@ -86,6 +86,38 @@ table Flattened {
     end: int;
 }
 
+table ParticleEmitter {
+    particle_type: int;
+    offset: Posf;
+    offset_plus_minus: Posf;
+    interval_seconds: float;
+    fade: float = 1;
+}
+
+table ParticleVariation {
+    texture_ids: [int];
+}
+
+table Particle {
+    type: string (required);
+    duration_seconds: float;
+    duration_plus_minus: float;
+    disable_rotation: bool;
+    scale_x: float = 1;
+    scale_y: float = 1;
+    scale_target: float = inf;
+    scale_target_x: float = inf;
+    scale_target_y: float = inf;
+    fades_in: bool = false;
+    color: uint = 0xffffffff;
+    variations: [ParticleVariation];
+}
+
+table Color {
+    type: string (required);
+    color: uint;
+}
+
 // GAME STUFF
 table Stat {
     type: string (required);
@@ -548,6 +580,9 @@ table GameLibrary {
     // It goes through the field names in the following TABLE_GEN_START/END region.
     // Then makes code generation magic (enums in `bf_codegen.cpp`, recursive replaces)
     // TABLE_GEN_START
+    placeholders: [Placeholder] (required);
+    particles: [Particle] (required);
+    colors: [Color] (required);
     biomes: [Biome] (required);
     hostilities: [Hostility] (required);
     pre_spawns: [PreSpawn] (required);
@@ -559,11 +594,9 @@ table GameLibrary {
     items: [Item] (required);
     weapons: [Weapon] (required);
     projectiles: [Projectile] (required);
-    particles: [Particle] (required);
     pickupables: [Pickupable] (required);
     numbers: [Number] (required);
     stats: [Stat] (required);
-    placeholders: [Placeholder] (required);
     difficulties: [Difficulty] (required);
     builds: [Build] (required);
     achievements: [Achievement] (required);

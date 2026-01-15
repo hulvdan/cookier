@@ -20,30 +20,7 @@ import subprocess
 from itertools import groupby
 from typing import Any, TypeAlias
 
-import bf_image
-import bf_swatch
-from bf_lib import (
-    ART_DIR,
-    ART_TEXTURES_DIR,
-    SRC_DIR,
-    all_are_none,
-    all_are_not_none,
-    check_duplicates,
-    game_settings,
-    gamelib_processor,
-    genenum,
-    hex_to_rgb_floats,
-    hex_to_rgb_ints,
-    load_gamelib_cached,
-    only_one_is_not_none,
-    read_localization_csv,
-    recursive_flattenizer,
-    recursive_mkdir,
-    recursive_replace_transform,
-    replace_double_spaces,
-    rgb_floats_to_hex,
-    transform_color,
-)
+import bf_lib as bf
 from bf_typer import command, timing
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 from rich.console import Console
@@ -51,14 +28,14 @@ from rich.table import Table
 
 # }
 
-game_settings.itch_target = "hulvdan/cookier"
-game_settings.languages = ["russian", "english"]
-game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
-game_settings.yandex_metrica_counter_id = 105874717
+bf.game_settings.itch_target = "hulvdan/cookier"
+bf.game_settings.languages = ["russian", "english"]
+bf.game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
+bf.game_settings.yandex_metrica_counter_id = 105874717
 
 
 ACHIEVEMENTS_X = 8
-ACHIEVEMENTS_ORDER_FILEPATH = SRC_DIR / "game" / "gamelib_achievements_order.json"
+ACHIEVEMENTS_ORDER_FILEPATH = bf.SRC_DIR / "game" / "gamelib_achievements_order.json"
 
 
 def field_to_list(container, field: str, ensure_length: int | None = None) -> None:
@@ -71,7 +48,7 @@ def field_to_list(container, field: str, ensure_length: int | None = None) -> No
     if isinstance(container[field], list):
         return
     if isinstance(container[field], str):
-        val = replace_double_spaces(container[field]).strip()
+        val = bf.replace_double_spaces(container[field]).strip()
         try:
             container[field] = [int(v) for v in val.split(" ")]
         except ValueError:
@@ -102,7 +79,7 @@ def does_require(effect_condition_name: str, v: str) -> bool:
 scoped_processing_args = ["None", "None"]
 
 
-@gamelib_processor
+@bf.gamelib_processor
 def process_gamelib(*args, **kwargs) -> None:
     # {  ###
     try:
@@ -338,7 +315,7 @@ def _process_gamelib(
             x.get("burning_times"),
             x.get("burning_damage_scalings"),
         ]
-        assert all_are_not_none(burning_fields) or all_are_none(burning_fields)
+        assert bf.all_are_not_none(burning_fields) or bf.all_are_none(burning_fields)
 
         weapon_type, min_tier_index, name = x["type"].split("_", 2)
         min_tier_index = int(min_tier_index)
@@ -529,7 +506,7 @@ def _process_gamelib(
             process_effects_of(x, 1)
             x["name_locale"] = "BUILD_{}".format(x["type"])
             max_weapons = max(max_weapons, len(x["starting_weapon_types"]))
-            check_duplicates(x["starting_weapon_types"])
+            bf.check_duplicates(x["starting_weapon_types"])
 
             assert len(x["layer_colors"]) == len(gamelib["player_layer_texture_ids"])
 
@@ -543,7 +520,7 @@ def _process_gamelib(
             item = x.get("unlocks_item_type")
             weapon = x.get("unlocks_weapon_type")
 
-            assert only_one_is_not_none((item, weapon)), (
+            assert bf.only_one_is_not_none((item, weapon)), (
                 f"Build {x['type']} must have `unlocks_item_type` or `unlocks_weapon_type`"
             )
 
@@ -696,7 +673,7 @@ def _process_gamelib(
         for biome in gamelib["biomes"][1:]:
             prop_texture_ids: list[str] = []
             biome["prop_texture_ids"] = prop_texture_ids
-            for file in ART_TEXTURES_DIR.glob(
+            for file in bf.ART_TEXTURES_DIR.glob(
                 "game_prop_*_{}.png".format(biome["type"].lower())
             ):
                 prop_texture_ids.append(file.stem)
@@ -724,7 +701,7 @@ def _process_gamelib(
         )
     # }
 
-    with open(SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
+    with open(bf.SRC_DIR / "game" / "bf_gamelib.fbs", encoding="utf-8") as in_file:
         gamelib_fbs_lines = [l.strip() for l in in_file if l.strip()]
 
     # Texture bind.
@@ -777,8 +754,8 @@ def _process_gamelib(
                 assert t.upper() == t, (
                     "{}. {}. `type` fields must be in CONSTANT_CASE".format(field_name, t)
                 )
-            check_duplicates(types)
-            genenum(genline, type_name + "Type", types, add_count=True)
+            bf.check_duplicates(types)
+            bf.genenum(genline, type_name + "Type", types, add_count=True)
             transforms.append(
                 (
                     field_name,
@@ -842,9 +819,11 @@ def _process_gamelib(
     # ============================================================
     # {  ###
     for v in transforms:
-        recursive_replace_transform(gamelib, *(v[1:]))
+        bf.recursive_replace_transform(gamelib, *(v[1:]))
 
-    recursive_flattenizer(gamelib, "damage_scaling", "damage_scalings", "damage_scalings")
+    bf.recursive_flattenizer(
+        gamelib, "damage_scaling", "damage_scalings", "damage_scalings"
+    )
     # }
 
 
@@ -856,59 +835,53 @@ def process_images():
     UI_SLOT_OR_FRAME_RADIUS = 30
 
     # `ui_itemslot`.
-    slot_image = bf_image.rectangle(SLOT_SIZE, radius=UI_SLOT_OR_FRAME_RADIUS)
-    slot_image.save(ART_TEXTURES_DIR / "ui_itemslot.png")
+    slot_image = bf.rectangle(SLOT_SIZE, radius=UI_SLOT_OR_FRAME_RADIUS)
+    slot_image.save(bf.ART_TEXTURES_DIR / "ui_itemslot.png")
 
     # `ui_frame`.
-    bf_image.rectangle(
+    bf.rectangle(
         112,
         radius=UI_SLOT_OR_FRAME_RADIUS,
         width=10,
-        outline=hex_to_rgb_ints("969696"),
-        fill=hex_to_rgb_ints("5a5a5a"),
-    ).save(ART_TEXTURES_DIR / "ui_frame.png")
+        outline=bf.hex_to_rgb_ints("969696"),
+        fill=bf.hex_to_rgb_ints("5a5a5a"),
+    ).save(bf.ART_TEXTURES_DIR / "ui_frame.png")
 
     DEBUG_SHADOWS = 0
 
     # `ui_frame_shadow_small`.
-    bf_image.outline(
-        image=bf_image.red(slot_image),
+    bf.outline(
+        image=bf.red(slot_image),
         radius=60,
         color=(0, 0, 0, 255),
         is_shadow=True,
         blend_image_on_top=DEBUG_SHADOWS,
-    ).save(ART_TEXTURES_DIR / "ui_frame_shadow_small.png")
+    ).save(bf.ART_TEXTURES_DIR / "ui_frame_shadow_small.png")
 
     # `ui_frame_shadow_big`.
-    bf_image.outline(
-        image=bf_image.red(slot_image),
+    bf.outline(
+        image=bf.red(slot_image),
         radius=120,
         color=(0, 0, 0, 255),
         is_shadow=True,
         blend_image_on_top=DEBUG_SHADOWS,
-    ).save(ART_TEXTURES_DIR / "ui_frame_shadow_big.png")
+    ).save(bf.ART_TEXTURES_DIR / "ui_frame_shadow_big.png")
 
     # `ui_player_bar_back`.
-    bf_image.rectangle((634, 92), radius=30).save(
-        ART_TEXTURES_DIR / "ui_player_bar_back.png"
+    bf.rectangle((634, 92), radius=30).save(
+        bf.ART_TEXTURES_DIR / "ui_player_bar_back.png"
     )
     # `ui_player_bar_top`.
-    bf_image.rectangle((604, 64), radius=20).save(
-        ART_TEXTURES_DIR / "ui_player_bar_top.png"
-    )
+    bf.rectangle((604, 64), radius=20).save(bf.ART_TEXTURES_DIR / "ui_player_bar_top.png")
     # `ui_boss_bar_back`.
-    bf_image.rectangle((280, 40), radius=14).save(
-        ART_TEXTURES_DIR / "ui_boss_bar_back.png"
-    )
+    bf.rectangle((280, 40), radius=14).save(bf.ART_TEXTURES_DIR / "ui_boss_bar_back.png")
     # `ui_boss_bar_top`.
-    bf_image.rectangle((260, 22), radius=10).save(
-        ART_TEXTURES_DIR / "ui_boss_bar_top.png"
-    )
+    bf.rectangle((260, 22), radius=10).save(bf.ART_TEXTURES_DIR / "ui_boss_bar_top.png")
 
     # `game_shadow_*.png`.
     for i in range(3):
         size = (312 // (2**i), 96 // (2**i))
-        bf_image.ellipse(size).save(ART_TEXTURES_DIR / f"game_shadow_{i + 1}.png")
+        bf.ellipse(size).save(bf.ART_TEXTURES_DIR / f"game_shadow_{i + 1}.png")
 
     TOUCH_OUTLINE = 10
 
@@ -916,90 +889,90 @@ def process_images():
     TOUCH_COLOR = (255, 255, 255, 255)
 
     # `ui_controls_touch_base`.
-    bf_image.ellipse(
-        460, width=TOUCH_OUTLINE, outline=(0, 0, 0, 255), fill=(0, 0, 0, 0)
-    ).save(ART_TEXTURES_DIR / "ui_controls_touch_base.png")
+    bf.ellipse(460, width=TOUCH_OUTLINE, outline=(0, 0, 0, 255), fill=(0, 0, 0, 0)).save(
+        bf.ART_TEXTURES_DIR / "ui_controls_touch_base.png"
+    )
 
     # `ui_controls_touch_handle`.
-    bf_image.outline(
-        bf_image.ellipse(128, fill=TOUCH_COLOR),
+    bf.outline(
+        bf.ellipse(128, fill=TOUCH_COLOR),
         radius=TOUCH_OUTLINE,
-    ).save(ART_TEXTURES_DIR / "ui_controls_touch_handle.png")
+    ).save(bf.ART_TEXTURES_DIR / "ui_controls_touch_handle.png")
 
     # Making volume band icons.
-    for f in (ART_TEXTURES_DIR / "to_outline").glob("ui_icon_volume_band_*.png"):
+    for f in (bf.ART_TEXTURES_DIR / "to_outline").glob("ui_icon_volume_band_*.png"):
         f.unlink()
-    bf_image.conveyor(
+    bf.conveyor(
         "to_volume_band",
         "Outlining",
-        bf_image.conveyor_outline(radius=10, color=(255, 255, 255, 255)),
-        bf_image.conveyor_scale(0.2127),
-        out_dir=ART_TEXTURES_DIR / "to_outline",
+        bf.conveyor_outline(radius=10, color=(255, 255, 255, 255)),
+        bf.conveyor_scale(0.2127),
+        out_dir=bf.ART_TEXTURES_DIR / "to_outline",
     )
 
     # Outlining ui icons.
-    bf_image.conveyor(
+    bf.conveyor(
         "to_outline",
         "Outlining",
-        bf_image.conveyor_outline(radius=8, color=(0, 0, 0, 255), is_shadow=False),
+        bf.conveyor_outline(radius=8, color=(0, 0, 0, 255), is_shadow=False),
     )
 
     # Extracting white and black of floor sprites.
-    for f in ART_TEXTURES_DIR.glob("game_floor_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("game_floor_*.png"):
         f.unlink()
-    bf_image.conveyor(
+    bf.conveyor(
         "to_split",
         "Extracting white",
-        bf_image.conveyor_extract_white(),
-        bf_image.conveyor_suffix("front"),
+        bf.conveyor_extract_white(),
+        bf.conveyor_suffix("front"),
     )
-    bf_image.conveyor(
+    bf.conveyor(
         "to_split",
         "Extracting black",
-        bf_image.conveyor_extract_black(),
-        bf_image.conveyor_suffix("back"),
+        bf.conveyor_extract_black(),
+        bf.conveyor_suffix("back"),
     )
 
     # Making input images.
-    bf_image.outline(
-        bf_image.rectangle(160, radius=20, width=10),
+    bf.outline(
+        bf.rectangle(160, radius=20, width=10),
         radius=1,
         color=(0, 0, 0, 0),
-    ).save(ART_DIR / "src" / "ui_input_key.png")
+    ).save(bf.ART_DIR / "src" / "ui_input_key.png")
 
     # Spritesheetifying props.
-    for f in (ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):
+    for f in (bf.ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):
         f.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_003.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_003.png",
         gap=14,
         cell_size=100,
         size=(5, 5),
         out_filename_prefix="game_prop_",
-        out_dir=ART_TEXTURES_DIR / "to_biome",
+        out_dir=bf.ART_TEXTURES_DIR / "to_biome",
     )
 
     # Biomefying props.
-    for f in ART_TEXTURES_DIR.glob("game_prop_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("game_prop_*.png"):
         f.unlink()
-    gamelib = load_gamelib_cached()
-    get_color = lambda biome, x: hex_to_rgb_ints(hex(biome[x])[2:-2])
+    gamelib = bf.load_gamelib_cached()
+    get_color = lambda biome, x: bf.hex_to_rgb_ints(hex(biome[x])[2:-2])
     for biome in gamelib["biomes"][1:]:
         t = biome["type"]
-        bf_image.conveyor(
+        bf.conveyor(
             "to_biome",
             f"{t}: Remapping",
-            bf_image.conveyor_remap(
+            bf.conveyor_remap(
                 get_color(biome, "outline_color"), get_color(biome, "fill_color")
             ),
-            bf_image.conveyor_suffix(t.lower()),
+            bf.conveyor_suffix(t.lower()),
         )
 
     # Spritesheetifying stat icons.
-    for f in (ART_TEXTURES_DIR / "stat_icons").glob("*.png"):
+    for f in (bf.ART_TEXTURES_DIR / "stat_icons").glob("*.png"):
         f.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_005.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 5),
         gap=10,
@@ -1023,30 +996,30 @@ def process_images():
             "luck",
             "harvesting",
         ],
-        out_dir=ART_TEXTURES_DIR / "stat_icons",
+        out_dir=bf.ART_TEXTURES_DIR / "stat_icons",
     )
 
     # Transforming stat icons into big and small.
-    for f in ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
         f.unlink()
-    bf_image.conveyor("stat_icons", "Copying Big", bf_image.conveyor_suffix("big"))
-    bf_image.conveyor(
+    bf.conveyor("stat_icons", "Copying Big", bf.conveyor_suffix("big"))
+    bf.conveyor(
         "stat_icons",
         "Downscaling Small",
-        bf_image.conveyor_scale(0.65),
-        bf_image.conveyor_brightness(1 + 3 / 8),
-        # bf_image.conveyor_outline(radius=1, color=(0, 0, 0, 255), is_shadow=False),
-        # bf_image.conveyor_outline(radius=2, color=(255, 255, 255, 255), is_shadow=False),
-        bf_image.conveyor_suffix("small"),
+        bf.conveyor_scale(0.65),
+        bf.conveyor_brightness(1 + 3 / 8),
+        # conveyor_outline(radius=1, color=(0, 0, 0, 255), is_shadow=False),
+        # conveyor_outline(radius=2, color=(255, 255, 255, 255), is_shadow=False),
+        bf.conveyor_suffix("small"),
     )
 
     # Spritesheetifying player parts and hats.
-    for f in ART_TEXTURES_DIR.glob("game_player_layer_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("game_player_layer_*.png"):
         f.unlink()
-    for f in ART_TEXTURES_DIR.glob("game_hat_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("game_hat_*.png"):
         f.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_005.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 5),
         origin=(870, 0),
@@ -1065,11 +1038,11 @@ def process_images():
             "hat_kepka",
             "hat_milker",
         ],
-        out_dir=ART_TEXTURES_DIR,
+        out_dir=bf.ART_TEXTURES_DIR,
     )
 
     # Spritesheetifying clip studio items.
-    for f in ART_TEXTURES_DIR.glob("ui_item_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("ui_item_*.png"):
         f.unlink()
     item_names = [
         "cloud_in_a_bottle",
@@ -1182,17 +1155,17 @@ def process_images():
         *["difficulty_{}".format(i + 1) for i in range(len(gamelib["difficulties"]) - 1)],
     ]
     assert len(item_names) == 110, len(item_names)
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_002.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_002.png",
         cell_size=200,
         size=(15, 8),
         gap=24,
         out_filename_prefix="ui_item_",
         out_filenames=item_names,
-        out_dir=ART_TEXTURES_DIR,
+        out_dir=bf.ART_TEXTURES_DIR,
     )
 
-    for f in ART_TEXTURES_DIR.glob("game_projectile_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("game_projectile_*.png"):
         f.unlink()
 
     other_filenames = [
@@ -1214,20 +1187,20 @@ def process_images():
         "game_creature_player",
     ]
     for f in other_filenames:
-        fi = ART_TEXTURES_DIR / (f + ".png")
+        fi = bf.ART_TEXTURES_DIR / (f + ".png")
         if fi.exists():
             fi.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_004.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_004.png",
         cell_size=440,
         size=(8, 4),
         gap=16,
         out_filenames=other_filenames,
-        out_dir=ART_TEXTURES_DIR,
+        out_dir=bf.ART_TEXTURES_DIR,
     )
 
     # Game weapons (not ui icons).
-    for f in ART_TEXTURES_DIR.glob("game_weapon_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("game_weapon_*.png"):
         f.unlink()
     weapon_names = [
         "cacti_club",
@@ -1283,8 +1256,8 @@ def process_images():
     custom_weapon_parts = [
         "crossbow_string",
     ]
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_006.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_006.png",
         cell_size=300,
         size=(12, 6),
         gap=10,
@@ -1292,27 +1265,27 @@ def process_images():
         out_filenames=[
             f"{i + 1:02}_{x}" for i, x in enumerate(weapon_names + custom_weapon_parts)
         ],
-        out_dir=ART_TEXTURES_DIR,
+        out_dir=bf.ART_TEXTURES_DIR,
     )
 
     # Weapon icons.
-    for f in ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
         f.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_007.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_007.png",
         cell_size=200,
         size=(17, 8),
         gap=24,
         out_filename_prefix="ui_weapon_",
         out_filenames=[f"{i + 1:02}_{x}" for i, x in enumerate(weapon_names)],
-        out_dir=ART_TEXTURES_DIR,
+        out_dir=bf.ART_TEXTURES_DIR,
     )
 
     # Spritesheetifying projectiles.
-    for f in (ART_TEXTURES_DIR / "projectiles").glob("*.png"):
+    for f in (bf.ART_TEXTURES_DIR / "projectiles").glob("*.png"):
         f.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_005.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 5),
         origin=(1740, 0),
@@ -1330,69 +1303,69 @@ def process_images():
             "rocket_milk",
             "lightning",
         ],
-        out_dir=ART_TEXTURES_DIR / "projectiles",
+        out_dir=bf.ART_TEXTURES_DIR / "projectiles",
     )
-    bf_image.conveyor("projectiles", "Copying")
+    bf.conveyor("projectiles", "Copying")
 
-    bf_image.outline(
-        bf_image.white(
+    bf.outline(
+        bf.white(
             Image.open(
-                ART_TEXTURES_DIR / "projectiles" / "game_projectile_magical_bullet.png"
+                bf.ART_TEXTURES_DIR / "projectiles" / "game_projectile_magical_bullet.png"
             )
         ),
         radius=16,
         color=(255, 255, 255),
         is_shadow=True,
-    ).save(ART_TEXTURES_DIR / "game_projectile_magical_bullet.png")
+    ).save(bf.ART_TEXTURES_DIR / "game_projectile_magical_bullet.png")
 
-    bf_image.outline(
-        Image.open(ART_TEXTURES_DIR / "projectiles" / "game_projectile_lightning.png"),
+    bf.outline(
+        Image.open(bf.ART_TEXTURES_DIR / "projectiles" / "game_projectile_lightning.png"),
         radius=16,
         color=(255, 255, 72, int(255 * 2 / 5)),
         is_shadow=True,
-    ).save(ART_TEXTURES_DIR / "game_projectile_lightning.png")
+    ).save(bf.ART_TEXTURES_DIR / "game_projectile_lightning.png")
 
-    bf_image.outline(
-        bf_image.ellipse(80),
+    bf.outline(
+        bf.ellipse(80),
         radius=28,
         color=(207, 200, 178),
         is_shadow=True,
-    ).save(ART_TEXTURES_DIR / "game_projectile_bullet.png")
+    ).save(bf.ART_TEXTURES_DIR / "game_projectile_bullet.png")
 
-    bf_image.outline(
-        bf_image.ellipse(80),
+    bf.outline(
+        bf.ellipse(80),
         radius=28,
         color=(255, 123, 239),
         is_shadow=True,
-    ).save(ART_TEXTURES_DIR / "game_projectile_laser.png")
+    ).save(bf.ART_TEXTURES_DIR / "game_projectile_laser.png")
 
-    bf_image.outline(
-        bf_image.ellipse(80, fill=(255, 255, 255)),
+    bf.outline(
+        bf.ellipse(80, fill=(255, 255, 255)),
         radius=28,
         color=(255, 255, 255),
         is_shadow=True,
-    ).save(ART_TEXTURES_DIR / "game_projectile_fireball.png")
+    ).save(bf.ART_TEXTURES_DIR / "game_projectile_fireball.png")
 
     # Spritesheetifying fire.
-    for f in ART_TEXTURES_DIR.glob("game_particle_fire_*.png"):
+    for f in bf.ART_TEXTURES_DIR.glob("game_particle_fire_*.png"):
         f.unlink()
-    for f in (ART_TEXTURES_DIR / "fire").glob("game_particle_fire_*.png"):
+    for f in (bf.ART_TEXTURES_DIR / "fire").glob("game_particle_fire_*.png"):
         f.unlink()
-    bf_image.spritesheetify(
-        ART_DIR / "src" / "main_005.png",
+    bf.spritesheetify(
+        bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 1),
         origin=(2610, 340),
         gap=10,
         out_filename_prefix="fire_",
-        out_dir=ART_TEXTURES_DIR / "fire",
+        out_dir=bf.ART_TEXTURES_DIR / "fire",
     )
-    bf_image.conveyor(
+    bf.conveyor(
         "fire",
         "Making particles",
-        bf_image.conveyor_outline(radius=24, color=(255, 255, 255, 128), is_shadow=True),
-        bf_image.conveyor_white,
-        bf_image.conveyor_prefix("game_particle"),
+        bf.conveyor_outline(radius=24, color=(255, 255, 255, 128), is_shadow=True),
+        bf.conveyor_white,
+        bf.conveyor_prefix("game_particle"),
     )
 
     if 1:
@@ -1402,7 +1375,7 @@ def process_images():
         margin = 0
         outline_width = 7
         w = 1920 + 2 * outline_width
-        rect = bf_image.rectangle(
+        rect = bf.rectangle(
             (w - margin * 2, h - margin),
             fill="white",
             # radius=80,
@@ -1411,9 +1384,9 @@ def process_images():
         )
         banner.paste(rect, ((1920 - w) // 2 + margin, 1080 - h + outline_width))
     else:
-        banner = Image.open(ART_DIR / "src" / "screenshot_text_banner.png")
+        banner = Image.open(bf.ART_DIR / "src" / "screenshot_text_banner.png")
 
-    banner = bf_image.outline(
+    banner = bf.outline(
         banner,
         radius=80,
         color=(0, 0, 0, int(255 * 5 / 16)),
@@ -1421,7 +1394,7 @@ def process_images():
         extend=False,
     )
 
-    recursive_mkdir(ART_DIR / "src" / "screenshots_processed")
+    bf.recursive_mkdir(bf.ART_DIR / "src" / "screenshots_processed")
     banner_colors = [
         "e7ae4b",
         "b59a66",
@@ -1429,28 +1402,28 @@ def process_images():
         "c95d9c",
     ]
 
-    _result = read_localization_csv()
+    _result = bf.read_localization_csv()
     screenshot_loc_id_indices = sorted(
         i for i, x in enumerate(_result.loc_ids) if x.startswith("YANDEX_SCREENSHOT_")
     )
 
     font = ImageFont.truetype(
-        ART_DIR / "src" / "screenshots" / "SeymourOne-Regular.ttf", size=150
+        bf.ART_DIR / "src" / "screenshots" / "SeymourOne-Regular.ttf", size=150
     )
 
     for language, texts in _result.loc_by_languages.items():
-        out_dir = ART_DIR / "src" / "screenshots_processed" / language
+        out_dir = bf.ART_DIR / "src" / "screenshots_processed" / language
         for f in out_dir.glob("*.png"):
             f.unlink()
-        recursive_mkdir(out_dir)
+        bf.recursive_mkdir(out_dir)
 
         for banner_color_, loc_id_index, f in zip(
             banner_colors,
             screenshot_loc_id_indices,
-            (ART_DIR / "src" / "screenshots").glob("*.png"),
+            (bf.ART_DIR / "src" / "screenshots").glob("*.png"),
             strict=True,
         ):
-            banner_color = hex_to_rgb_ints(banner_color_)
+            banner_color = bf.hex_to_rgb_ints(banner_color_)
 
             text_image = Image.new("RGBA", (3840, 1550))
             draw = ImageDraw.Draw(text_image)
@@ -1459,8 +1432,8 @@ def process_images():
                 texts[loc_id_index],
                 fill=tuple(
                     int(x * 255)
-                    for x in transform_color(
-                        hex_to_rgb_floats(banner_color_),
+                    for x in bf.transform_color(
+                        bf.hex_to_rgb_floats(banner_color_),
                         saturation_scale=0.23,
                         value_scale=2.5,
                     )
@@ -1470,7 +1443,7 @@ def process_images():
                 stroke_width=14,
                 stroke_fill="black",
             )
-            text_image = bf_image.outline(
+            text_image = bf.outline(
                 text_image,
                 radius=40,
                 color=(0, 0, 0, 255 * 3 / 16),
@@ -1484,8 +1457,8 @@ def process_images():
                 brightness = 1.06
                 contrast = 1.1
 
-            bf_image.draw_on_top(
-                bf_image.draw_on_top(
+            bf.draw_on_top(
+                bf.draw_on_top(
                     ImageEnhance.Brightness(
                         ImageEnhance.Contrast(Image.open(f)).enhance(contrast)
                     ).enhance(brightness),
@@ -1536,9 +1509,9 @@ def make_swatch():
         color = colors[i]
         if color in ("#000000", "#ffffff"):
             continue
-        c = rgb_floats_to_hex(
-            transform_color(
-                hex_to_rgb_floats(color),
+        c = bf.rgb_floats_to_hex(
+            bf.transform_color(
+                bf.hex_to_rgb_floats(color),
                 saturation_scale=1.2,
                 value_scale=0.52,
             )
@@ -1553,15 +1526,15 @@ def make_swatch():
             "type": "Global",
             "data": {
                 "mode": "RGB",
-                "values": hex_to_rgb_floats(color),
+                "values": bf.hex_to_rgb_floats(color),
             },
         }
 
     swatch_data = [process_color(c) for c in colors]
-    bf_swatch.write(swatch_data, "aboba.ase")
+    bf.bf_swatch.write(swatch_data, "aboba.ase")
 
-    def process_color2(color: str) -> bf_swatch.RawColor:
-        r, g, b = hex_to_rgb_ints(color)
+    def process_color2(color: str) -> bf.bf_swatch.RawColor:
+        r, g, b = bf.hex_to_rgb_ints(color)
         r = int(r * 65535 / 255)
         g = int(g * 65535 / 255)
         b = int(b * 65535 / 255)
@@ -1572,9 +1545,9 @@ def make_swatch():
         assert g >= 0, g
         assert b >= 0, b
 
-        return bf_swatch.RawColor(
+        return bf.bf_swatch.RawColor(
             name=color,
-            color_space=bf_swatch.ColorSpace.RGB,
+            color_space=bf.bf_swatch.ColorSpace.RGB,
             component_1=r,
             component_2=g,
             component_3=b,
@@ -1582,7 +1555,7 @@ def make_swatch():
         )
 
     with open("aboba.aco", "wb") as out_file:
-        bf_swatch.save_aco_file([process_color2(c) for c in new_colors], out_file)
+        bf.bf_swatch.save_aco_file([process_color2(c) for c in new_colors], out_file)
 
     with open("aboba.pal", "w") as out_file_2:
         out_file_2.write(
@@ -1592,7 +1565,7 @@ def make_swatch():
         )
         color_lines = []
         for color in new_colors:
-            r, g, b = hex_to_rgb_ints(color)
+            r, g, b = bf.hex_to_rgb_ints(color)
             color_lines.append(f"{r} {g} {b}")
         color_lines = color_lines[2:] + color_lines[:2]
         out_file_2.write("\n".join(color_lines))
@@ -1602,7 +1575,7 @@ def make_swatch():
 @command
 def reorder_achievements():
     # {  ###
-    gamelib = load_gamelib_cached()
+    gamelib = bf.load_gamelib_cached()
     explode_achievements(gamelib)
 
     AchievementIndex: TypeAlias = int

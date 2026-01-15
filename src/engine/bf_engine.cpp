@@ -45,22 +45,10 @@
 #include "zpl.h"
 
 #include "bf_version.cpp"
-#include "hands/bf_codegen.cpp"
-#include "flatbuffers/bf_save_generated.h"
 
-void BF_IM_ReadLine(ImGuiContext*, ImGuiSettingsHandler*, void* entry, const char* line);
-void BF_IM_WriteAll(ImGuiContext*, ImGuiSettingsHandler*, ImGuiTextBuffer* buf);
-
-void* BF_IM_ReadOpen(ImGuiContext*, ImGuiSettingsHandler*, const char* name) {
-  if (strcmp(name, "Main") == 0)
-    return (void*)1;
-  return nullptr;
-}
-
-#if BF_DEBUG
-#  define STB_IMAGE_WRITE_IMPLEMENTATION
-#  include "stb_image_write.h"
-#endif
+struct ParticleRenderData {  ///
+  Color* color = {};
+};
 
 struct lframe {  ///
   i64 value = i64_max;
@@ -114,6 +102,33 @@ struct lframe {  ///
   void SetRandSeconds(f32 v);
   void SetRandSeconds(f32 v1, f32 v2);
 };
+
+#include "hands/bf_codegen.cpp"
+
+#define X(hex_, value_, name_) constexpr auto PAL_##name_ = ColorFromRGBA(value_);
+PAL_COLORS_TABLE;
+#undef X
+
+#define X(hex_, value_, name_) \
+  const auto PAL_TEXT_##name_ = TextifyColor(ColorFromRGBA(value_));
+PAL_COLORS_TABLE;
+#undef X
+
+#include "flatbuffers/bf_save_generated.h"
+
+void BF_IM_ReadLine(ImGuiContext*, ImGuiSettingsHandler*, void* entry, const char* line);
+void BF_IM_WriteAll(ImGuiContext*, ImGuiSettingsHandler*, ImGuiTextBuffer* buf);
+
+void* BF_IM_ReadOpen(ImGuiContext*, ImGuiSettingsHandler*, const char* name) {
+  if (strcmp(name, "Main") == 0)
+    return (void*)1;
+  return nullptr;
+}
+
+#if BF_DEBUG
+#  define STB_IMAGE_WRITE_IMPLEMENTATION
+#  include "stb_image_write.h"
+#endif
 
 struct FrameGame {  ///
   i64 _value = i64_max;
@@ -362,6 +377,7 @@ struct Beautify {
 
 struct ClayImageData {
   int     texID         = {};
+  f32     rotation      = {};
   Vector2 offset        = {};
   Vector2 scale         = {1, 1};
   Vector2 anchor        = {0.5f, 0.5f};
@@ -828,7 +844,7 @@ struct Particle {  ///
   Vector2      velocity      = {};
   f32          rotation      = {};
   f32          rotationSpeed = 0;
-  f32          scale         = 1;
+  Vector2      scale         = {1, 1};
   Color        color         = {};
   lframe       duration      = {};
   FrameGame    createdAt     = {};
@@ -863,8 +879,8 @@ struct MakeParticlesData {  ///
   f32               initialOffsetPlusMinus = 0;
   Easing_function_t initialOffsetEasing    = EaseLinear;
 
-  f32 scale          = 1;
-  f32 scalePlusMinus = 0.2f;
+  Vector2 scale          = {1, 1};
+  Vector2 scalePlusMinus = {0.2f, 0.2f};
 
   f32   rotation               = 0;
   f32   rotationSpeedPlusMinus = PI32;
@@ -1147,8 +1163,7 @@ void MakeParticles(MakeParticlesData data) {  ///
     const auto variation = (u16)(GRAND.Rand() % fb->variations()->size());
 
     const f32 vel   = data.velocity + data.velocityPlusMinus * GRAND.FRand11();
-    const f32 angle = data.fixedRotation + data.velocityAngle
-                      + data.velocityAnglePlusMinus * GRAND.FRand11();
+    const f32 angle = data.velocityAngle + data.velocityAnglePlusMinus * GRAND.FRand11();
 
     const f32 initialOffset = data.initialOffset
                               + Lerp(
@@ -1157,11 +1172,11 @@ void MakeParticles(MakeParticlesData data) {  ///
                                 data.initialOffsetEasing(GRAND.FRand())
                               );
 
-    f32 rotation = (fb->disable_rotation() ? 0 : GRAND.Angle());
-
+    f32 rotation      = (fb->disable_rotation() ? 0 : GRAND.Angle()) + data.rotation;
     f32 rotationSpeed = data.rotationSpeedPlusMinus * GRAND.FRand11();
 
-    const f32 scale = data.scale + data.scalePlusMinus * GRAND.FRand11();
+    const auto scale
+      = data.scale + data.scalePlusMinus * Vector2(GRAND.FRand11(), GRAND.FRand11());
 
     const f32 durationSeconds
       = fb->duration_seconds() + fb->duration_plus_minus() * GRAND.FRand11();
@@ -1212,12 +1227,12 @@ void EmitParticles(EmitParticlesData data) {  ///
               * Vector2(GRAND.FRand11(), GRAND.FRand11()) * data.offsetPlusMinusScale;
 
   MakeParticles({
-    .type           = (ParticleType)data.fb_emitter->particle_type(),
-    .pos            = data.pos,
-    .velocity       = data.velocity,
-    .velocityAngle  = data.velocityAngle,
-    .scale          = 1.0f,
-    .scalePlusMinus = 0.1f,
+    .type          = (ParticleType)data.fb_emitter->particle_type(),
+    .pos           = data.pos,
+    .velocity      = data.velocity,
+    .velocityAngle = data.velocityAngle,
+    .scale{1, 1},
+    .scalePlusMinus = Vector2One() * 0.1f,
     .color          = Fade(WHITE, data.fb_emitter->fade()),
   });
 }
@@ -1539,10 +1554,12 @@ void BF_CLAY_IMAGE(ClayImageData data, bool _resetPlaceholders = true) {  ///
 }
 
 struct ClayTextOptions {  ///
-  Color color = WHITE;
+  Vector2 scale = {1, 1};
+  Color   color = WHITE;
 
   // Others: CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_WRAP_NONE.
-  Clay_TextElementConfigWrapMode wrapMode = CLAY_TEXT_WRAP_WORDS;
+  Clay_TextElementConfigWrapMode wrapMode      = CLAY_TEXT_WRAP_WORDS;
+  Clay_TextAlignment             textAlignment = CLAY_TEXT_ALIGN_LEFT;
 };
 
 // NOTE: This overload DOESN'T SAVE string to trash arena.
@@ -1560,8 +1577,9 @@ void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
       .baseChars = string.chars,
     };
     Clay_TextElementConfig cfg{
-      .fontId   = fontID,
-      .wrapMode = opts.wrapMode,
+      .fontId        = fontID,
+      .wrapMode      = opts.wrapMode,
+      .textAlignment = opts.textAlignment,
     };
     auto dim = MeasureText(s, &cfg, nullptr);
 
@@ -1575,14 +1593,18 @@ void BF_CLAY_TEXT(Clay_String string, ClayTextOptions opts = {}) {  ///
     FlexAddRowForChildIfNeeded(dim.width);
   }
 
+  const auto hulvdanScale = opts.scale - Vector2One();
+
   CLAY_TEXT(
     string,
     CLAY_TEXT_CONFIG({
       .textColor = ToClayColor(opts.color),
       .fontId    = fontID,
       // fontSize fixes clay's incorrect MeasureText cache
-      .fontSize = (u16)Hash32((u8*)&fontID, sizeof(fontID)),
-      .wrapMode = opts.wrapMode,
+      .fontSize      = (u16)Hash32((u8*)&fontID, sizeof(fontID)),
+      .wrapMode      = opts.wrapMode,
+      .textAlignment = opts.textAlignment,
+      .hulvdanScale{hulvdanScale.x, hulvdanScale.y},
     })
   );
 }
@@ -2240,7 +2262,7 @@ void fromJS_setDeviceType(int type) {  ///
 
 #endif
 
-void ShowInterAd() {  ///
+void ShowAdInter() {  ///
 #ifdef BF_PLATFORM_WebYandex
   // TODO: Мб тут заранее (до вызова ysdk-ем callback-а onOpen)
   // проставить `adIsPlaying = true`?
@@ -2255,6 +2277,23 @@ void ShowInterAd() {  ///
       },
     });
   });
+// clang-format on
+#endif
+}
+
+void ShowAdReward(bool* asyncResult) {  ///
+#ifdef BF_PLATFORM_WebYandex
+  // clang-format off
+  EM_ASM({
+    ysdk.adv.showRewardedVideo({
+      callbacks: {
+        onOpen: () => { Module.fromJS_setAdIsPlaying(1); },
+        onRewarded: () => { HEAPU8[$0] = 1; },
+        onClose: () => { Module.fromJS_setAdIsPlaying(0); },
+        onError: (e) => { Module.fromJS_setAdIsPlaying(0); },
+      },
+    });
+  }, asyncResult);
 // clang-format on
 #endif
 }
@@ -2661,33 +2700,6 @@ Vector2 LogicalPosToWorld(Vector2 pos, Camera* camera) {  ///
   pos /= camera->zoom;
   pos += camera->pos;
   return pos;
-}
-
-void DrawParticles() {  ///
-  for (const auto& particle : ge.run.particles) {
-    ASSERT(particle.type);
-    const auto fb = fb_particles->Get(particle.type);
-
-    auto       e = particle.createdAt.Elapsed();
-    const auto p = Clamp01(e.Progress(particle.duration));
-
-    f32 fade = EaseOutQuad(1 - p);
-    if (fb->fades_in())
-      fade *= MIN(1, EaseOutQuad(e.Progress(ANIMATION_0_FRAMES)));
-
-    if (fade < 0)
-      continue;
-
-    DrawGroup_CommandTexture({
-      .texID = GetTextureIDByProgress(
-        fb->variations()->Get(particle.variation)->texture_ids(), p
-      ),
-      .rotation = particle.rotation,
-      .pos      = particle.pos,
-      .scale    = Vector2(fb->scale_x(), fb->scale_y()) * particle.scale,
-      .color    = Fade(particle.color, fade),
-    });
-  }
 }
 
 void _ApplyCurrentCamera(Vector2* point, Vector2* size, bool isTexture = false) {  ///
@@ -4549,7 +4561,7 @@ struct LoadFontData {  ///
   const char* filepath = {};
 
   int size            = {};
-  f32 FIXME_sizeScale = {};
+  f32 FIXME_sizeScale = 1;
 
   // `codepoints` must be in the same memory spot throughout the lifetime of their font.
   int* codepoints      = {};
@@ -5532,13 +5544,13 @@ SDL_AppResult EngineUpdate() {  ///
         {  ///
           ZoneScopedN("Removing old particles.");
 
-          const auto total = g.run.particles.count;
+          const auto total = ge.other.particles.count;
           int        off   = 0;
           FOR_RANGE (int, i, total) {
-            const auto& particle = g.run.particles[i - off];
-            const auto  fb       = fb_particles->Get(particle.type);
+            const auto& particle = ge.other.particles[i - off];
+            auto        fb       = fb_particles->Get(particle.type);
             if (particle.createdAt.Elapsed() >= particle.duration) {
-              g.run.particles.UnstableRemoveAt(i - off);
+              ge.other.particles.UnstableRemoveAt(i - off);
               off++;
             }
           }
@@ -5549,9 +5561,9 @@ SDL_AppResult EngineUpdate() {  ///
           ZoneScopedN("Sorting particles.");
 
           qsort(
-            (void*)g.run.particles.base,
-            g.run.particles.count,
-            sizeof(*g.run.particles.base),
+            (void*)ge.other.particles._base,
+            ge.other.particles.count,
+            sizeof(*ge.other.particles._base),
             (int (*)(const void*, const void*))ParticleCmp
           );
         }
@@ -5737,7 +5749,63 @@ BF_ENGINE_EXTEND_CLAY_CUSTOM_DATA
 #  undef X
 #endif
 
+void DrawParticles();
+
+int GetTextureIDByProgress(const flatbuffers::Vector<int>* texs, f32 p) {  ///
+  ASSERT(p >= 0);
+  int index = p * texs->size();
+  index     = MIN(index, texs->size() - 1);
+  return texs->Get(index);
+}
+
 #include "game/bf_game.cpp"
+
+void DrawParticles() {  ///
+  auto fb_particles = glib->particles();
+
+  for (const auto& particle : ge.other.particles) {
+    ASSERT(particle.type);
+    const auto fb = fb_particles->Get(particle.type);
+
+    auto       e = particle.createdAt.Elapsed();
+    const auto p = Clamp01(e.Progress(particle.duration));
+
+    f32 fade = EaseOutQuad(1 - p);
+    if (fb->fades_in())
+      fade *= MIN(1, EaseOutQuad(e.Progress(ANIMATION_0_FRAMES)));
+
+    if (fade < 0)
+      continue;
+
+    Vector2 scale{fb->scale_x(), fb->scale_y()};
+    if (fb->scale_target() != f32_inf)
+      scale *= Lerp(1, fb->scale_target(), p);
+    if (fb->scale_target_x() != f32_inf)
+      scale.x *= Lerp(1, fb->scale_target_x(), p);
+    if (fb->scale_target_y() != f32_inf)
+      scale.y *= Lerp(1, fb->scale_target_y(), p);
+
+    const f32 elapsedSeconds
+      = particle.createdAt.Elapsed().Progress(lframe::Unscaled(FIXED_FPS));
+
+    auto color = particle.color;
+    color.a *= fade;
+
+    const auto f = particleRenderFunctions[particle.type];
+    if (f)
+      f(p, e, {.color = &color});
+
+    DrawGroup_CommandTexture({
+      .texID = GetTextureIDByProgress(
+        fb->variations()->Get(particle.variation)->texture_ids(), p
+      ),
+      .rotation = particle.rotation + particle.rotationSpeed * elapsedSeconds,
+      .pos      = particle.pos + particle.velocity * elapsedSeconds,
+      .scale    = scale * particle.scale,
+      .color    = color,
+    });
+  }
+}
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
 #  include "hands/bf_emscripten_binds.cpp"

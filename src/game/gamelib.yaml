@@ -4209,87 +4209,6 @@ projectiles: # {  ###
       - game_particle_fire_5
 # }
 
-particles: # {  ###
-  - type: INVALID
-  - type: EXPLOSION
-    color: 0x7b7c74ff
-    duration_seconds: 0.4
-    duration_plus_minus: 0.15
-    fades_in: true
-    variations:
-      - texture_ids:
-          - game_particle_4_1
-      - texture_ids:
-          - game_particle_4_2
-      - texture_ids:
-          - game_particle_4_3
-      - texture_ids:
-          - game_particle_4_4
-      - texture_ids:
-          - game_particle_4_5
-  - type: COIN
-    color: 0xf3bc5eff
-    duration_seconds: 0.22
-    duration_plus_minus: 0.12
-    variations:
-      - texture_ids:
-          - game_particle_3_1
-      - texture_ids:
-          - game_particle_3_2
-      - texture_ids:
-          - game_particle_3_3
-      - texture_ids:
-          - game_particle_3_4
-      - texture_ids:
-          - game_particle_3_5
-      - texture_ids:
-          - game_particle_3_6
-  - type: HIT
-    duration_seconds: 0.3
-    duration_plus_minus: 0.15
-    variations:
-      - texture_ids:
-          - game_particle_4_1
-      - texture_ids:
-          - game_particle_4_2
-      - texture_ids:
-          - game_particle_4_3
-      - texture_ids:
-          - game_particle_4_4
-      - texture_ids:
-          - game_particle_4_5
-          # - texture_ids:
-          #     - game_particle_4_6
-  - type: FIRE
-    duration_seconds: 0.15
-    duration_plus_minus: 0.05
-    color: 0xdc9824ff
-    scale_x: 0.8
-    scale_y: 0.8
-    disable_rotation: true
-    variations:
-      - texture_ids:
-          - game_particle_fire_1
-          - game_particle_fire_2
-          - game_particle_fire_3
-          - game_particle_fire_4
-          - game_particle_fire_5
-  - type: FIRE_WHITE
-    duration_seconds: 0.15
-    duration_plus_minus: 0.05
-    color: 0xedefe2ff
-    scale_x: 0.8
-    scale_y: 0.8
-    disable_rotation: true
-    variations:
-      - texture_ids:
-          - game_particle_fire_1
-          - game_particle_fire_2
-          - game_particle_fire_3
-          - game_particle_fire_4
-          - game_particle_fire_5
-# }
-
 pickupables: # {  ###
   - type: INVALID
   - type: COIN
@@ -5200,6 +5119,88 @@ sounds:
   - type: GAME_RUN_WON
     pitch_min: 1
     pitch_max: 1
+=======
+particles: # {  ###
+  - type: INVALID
+  - type: EXPLOSION
+    color: 0x7b7c74ff
+    duration_seconds: 0.4
+    duration_plus_minus: 0.15
+    fades_in: true
+    variations:
+      - texture_ids:
+          - game_particle_4_1
+      - texture_ids:
+          - game_particle_4_2
+      - texture_ids:
+          - game_particle_4_3
+      - texture_ids:
+          - game_particle_4_4
+      - texture_ids:
+          - game_particle_4_5
+  - type: COIN
+    color: 0xf3bc5eff
+    duration_seconds: 0.22
+    duration_plus_minus: 0.12
+    variations:
+      - texture_ids:
+          - game_particle_3_1
+      - texture_ids:
+          - game_particle_3_2
+      - texture_ids:
+          - game_particle_3_3
+      - texture_ids:
+          - game_particle_3_4
+      - texture_ids:
+          - game_particle_3_5
+      - texture_ids:
+          - game_particle_3_6
+  - type: HIT
+    duration_seconds: 0.3
+    duration_plus_minus: 0.15
+    variations:
+      - texture_ids:
+          - game_particle_4_1
+      - texture_ids:
+          - game_particle_4_2
+      - texture_ids:
+          - game_particle_4_3
+      - texture_ids:
+          - game_particle_4_4
+      - texture_ids:
+          - game_particle_4_5
+          # - texture_ids:
+          #     - game_particle_4_6
+  - type: FIRE
+    duration_seconds: 0.15
+    duration_plus_minus: 0.05
+    color: 0xdc9824ff
+    scale_x: 0.8
+    scale_y: 0.8
+    disable_rotation: true
+    variations:
+      - texture_ids:
+          - game_particle_fire_1
+          - game_particle_fire_2
+          - game_particle_fire_3
+          - game_particle_fire_4
+          - game_particle_fire_5
+  - type: FIRE_WHITE
+    duration_seconds: 0.15
+    duration_plus_minus: 0.05
+    color: 0xedefe2ff
+    scale_x: 0.8
+    scale_y: 0.8
+    disable_rotation: true
+    variations:
+      - texture_ids:
+          - game_particle_fire_1
+          - game_particle_fire_2
+          - game_particle_fire_3
+          - game_particle_fire_4
+          - game_particle_fire_5
+# }
+
 debug_variables: # {  ###
   # Engine stuff:
   - name: gizmos
