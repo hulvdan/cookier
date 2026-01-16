@@ -14239,73 +14239,11 @@ void GameDraw() {
 }
 
 void ClayRender_screenBackground(Clay_BoundingBox _bb, Beautify _beautify) {  ///
-  DrawGroup_CommandRect({
-    .pos   = LOGICAL_RESOLUTIONf / 2.0f,
-    .size  = ge.meta.scaledLogicalResolution,
-    .color = Darken({49, 25, 23, 255}, 0.3f),
+  DrawTiledBackgroundRects({
+    .backgroundColor = Darken({49, 25, 23, 255}, 0.3f),
+    .rectColor{22, 16, 13, 255},
+    .rectTexID = glib->ui_background_rect_texture_id(),
   });
-
-  const int     texID = glib->ui_background_rect_texture_id();
-  constexpr int gap   = 8;
-  const auto    size
-    = ToVector2(glib->original_texture_sizes()->Get(texID)) * ASSETS_TO_LOGICAL_RATIO;
-
-  const int rectsXToSide = 9;
-  const int rectsYToSide = 5;
-
-#define BF_BACKGROUND_CYCLE_ENABLED 1
-
-#if BF_BACKGROUND_CYCLE_ENABLED
-  const int cycleDur = 20 * FIXED_FPS;
-  const f32 cycleP   = (f32)(ge.meta.frameVisual % cycleDur) / (f32)cycleDur;
-#endif
-
-  const Color rectColor{22, 16, 13, 255};
-
-  FOR_RANGE (int, y, rectsYToSide) {
-    FOR_RANGE (int, n, 2) {
-      FOR_RANGE (int, x, rectsXToSide) {
-        FOR_RANGE (int, m, 2) {
-          if (!x && m)
-            continue;
-
-          if ((x == rectsXToSide - 1) && (y >= rectsYToSide - 1))
-            continue;
-
-          f32 offY = (size.y + gap) / 2.0f;
-          if (x % 2)
-            offY = 0;
-
-          auto center = LOGICAL_RESOLUTIONf / 2.0f;
-          auto off    = Vector2(x * (size.x + gap), offY + y * (size.y + gap));
-          if (n)
-            off.y *= -1;
-
-          f32 angle = -PI32 / 6;
-
-          f32 fade = 1;
-
-#if BF_BACKGROUND_CYCLE_ENABLED
-          off.y
-            += (((x + m) % 2) ? 1 : -1) * (size.y + gap) * 0.1f * cosf(2 * PI32 * cycleP);
-
-          // if ((y == rectsYToSide - 1) && ((x + m + n) % 2)) {
-          //   const f32 p = 10 * cycleP - 9;
-          //   if (p > 0)
-          //     fade = 1 - p;
-          // }
-#endif
-
-          DrawGroup_CommandTexture({
-            .texID    = texID,
-            .rotation = angle,
-            .pos      = center + Vector2Rotate(off, angle + (m ? PI32 : 0)),
-            .color    = Fade(rectColor, fade),
-          });
-        }
-      }
-    }
-  }
 }
 
 ///
