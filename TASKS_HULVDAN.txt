@@ -34,15 +34,6 @@ x отправить AB билд
 * AB тест не 60, а 45 секунд длительность
 * test yandex build opens good on ipad
 *
-* mobile optimization:
-* mobile optimization:
-* mobile optimization:
-* startup optimization:
-* startup optimization:
-* startup optimization:
-*
-* optimization: delay music download
-*
 * удержание: не давать играть на самой низкой сложности?
 * удержание: меньше волн на начальных сложностях
 * удержание:

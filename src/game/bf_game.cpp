@@ -5233,7 +5233,7 @@ void DoUI() {
           BF_CLAY_IMAGE(
             {
               .texID = glib->ui_icon_refresh_texture_id(),
-              .color = (canReroll ? WHITE : palGray),
+              .color = (canReroll ? WHITE : PAL_TAPA),
             },
             [&]() BF_FORCE_INLINE_LAMBDA {
               if (price <= 0)
@@ -5255,7 +5255,8 @@ void DoUI() {
 
                 FontBegin(&g.meta.fontUIBigOutlined);
                 BF_CLAY_TEXT(
-                  FormatInt(price), {.color = (canReroll ? WHITE : palTextRed)}
+                  FormatInt(price),
+                  {.color = (canReroll ? WHITE : PAL_TEXT_FLUSH_MAHOGANY)}
                 );
                 FontEnd();
                 BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
@@ -5354,13 +5355,13 @@ void DoUI() {
       if (draw && data.breathing.set)
         color = BreatheColor(color, {.breathing = data.breathing});
 
-      auto flash = ColorLerp(slotColors[2 * data.tier + 1], palWhite, data.flashWhite);
+      auto flash = ColorLerp(slotColors[2 * data.tier + 1], WHITE, data.flashWhite);
 
       if (data.uiBouncedAt.IsSet()) {
         f32 p = data.uiBouncedAt.Elapsed().Progress(ANIMATION_2_FRAMES);
         p     = EaseOutQuad(MIN(1, p));
-        color = ColorLerp(palWhite, color, p);
-        flash = ColorLerp(palWhite, flash, p);
+        color = ColorLerp(WHITE, color, p);
+        flash = ColorLerp(WHITE, flash, p);
       }
 
       const bool hovered
@@ -5412,7 +5413,7 @@ void DoUI() {
           && (focused.id == data.id.id)  //
           && (showAsSelected || data.touchPreservesSelection))
       {
-        color = palWhite;
+        color = WHITE;
         flash = TRANSPARENT_BLACK;
       }
 
@@ -5798,7 +5799,8 @@ void DoUI() {
           PlaceholdFormattedString(
             TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v))),
             {.color
-             = ((isPositive == fb_stat->negative_is_good()) ? palTextRed : palTextGreen)}
+             = ((isPositive == fb_stat->negative_is_good()) ? PAL_TEXT_FLUSH_MAHOGANY : PAL_TEXT_ASPARAGUS)
+            }
           );
 
           if (fb_stat->small_icon_texture_id()) {
@@ -5847,14 +5849,14 @@ void DoUI() {
               &ge.meta.trashArena,
               TextFormat(format, StripLeadingZerosInFloat(TextFormat("%.1f", v)))
             ),
-            {.color = palTextGreen}
+            {.color = PAL_TEXT_ASPARAGUS}
           );
         }
 
         if (fb_effect->pickupable_type()) {
           auto fb_pickupable = fb_pickupables->Get(fb_effect->pickupable_type());
           PlaceholdBrokenLocale(
-            "PICKUPABLE", fb_pickupable->name_locale(), {.color = palTextGreen}
+            "PICKUPABLE", fb_pickupable->name_locale(), {.color = PAL_TEXT_ASPARAGUS}
           );
         }
 
@@ -5890,19 +5892,19 @@ void DoUI() {
               if (fb_placeholder->is_percent())
                 formatted = TextFormat("%s%%", formatted);
 
-              auto color = palTextGreen;
+              auto color = PAL_TEXT_ASPARAGUS;
 
               if (fb_placeholder->color_by_stat()) {
                 bool green = fb_stats->Get(fb_effect->stat_type())->negative_is_good()
                              != (fb_effect->value()->Get(tierOffset) >= 0);
                 if (!green)
-                  color = palTextRed;
+                  color = PAL_TEXT_FLUSH_MAHOGANY;
               }
               else if (fb_placeholder->color_by_stat_2()) {
                 bool green = fb_stats->Get(fb_effect->stat_type_2())->negative_is_good()
                              != (cv >= 0);
                 if (!green)
-                  color = palTextRed;
+                  color = PAL_TEXT_FLUSH_MAHOGANY;
               }
 
               PlaceholdFormattedString(formatted, {.color = color});
@@ -5924,7 +5926,7 @@ void DoUI() {
               if (fb_placeholder->is_percent())
                 formatted = TextFormat("%s%%", formatted);
 
-              PlaceholdFormattedString(formatted, {.color = palTextGreen});
+              PlaceholdFormattedString(formatted, {.color = PAL_TEXT_ASPARAGUS});
             } break;
 
             case CondVarType_DAMAGE: {
@@ -5949,11 +5951,13 @@ void DoUI() {
               }
 
               if (baseDamage) {
-                PlaceholdFormattedString(FormatInt(baseDamage), {.color = palTextGreen});
+                PlaceholdFormattedString(
+                  FormatInt(baseDamage), {.color = PAL_TEXT_ASPARAGUS}
+                );
 
                 if (totalScalings) {
                   PlaceholdString(" ");
-                  PlaceholdString("+ ", {.color = palTextGreen});
+                  PlaceholdString("+ ", {.color = PAL_TEXT_ASPARAGUS});
                 }
               }
 
@@ -5971,7 +5975,7 @@ void DoUI() {
                     continue;
 
                   PlaceholdFormattedString(
-                    TextFormat("%d%%", v), {.color = palTextGreen}
+                    TextFormat("%d%%", v), {.color = PAL_TEXT_ASPARAGUS}
                   );
                   PlaceholdImage(
                     fb_stats->Get(fb_scaling->stat_type())->small_icon_texture_id()
@@ -5980,7 +5984,7 @@ void DoUI() {
 
                   if (totalScalings > 0) {
                     PlaceholdString(" ");
-                    PlaceholdString("+ ", {.color = palTextGreen});
+                    PlaceholdString("+ ", {.color = PAL_TEXT_ASPARAGUS});
                   }
                 }
               }
@@ -5997,7 +6001,7 @@ void DoUI() {
               else
                 INVALID_PATH;
 
-              PlaceholdBrokenLocale(locale, {.color = palTextGreen});
+              PlaceholdBrokenLocale(locale, {.color = PAL_TEXT_ASPARAGUS});
             } break;
 
             default:
@@ -6012,7 +6016,7 @@ void DoUI() {
         auto color = WHITE;
         if (fb_effect->effectcondition_type()
             == EffectConditionType_HIGHEST_DIFFICULTY_INFINITE_MODE)
-          color = palTextYellow;
+          color = PAL_TEXT_NUGGET;
 
         BF_CLAY_TEXT_BROKEN_LOCALIZED(fb_cond->name_locale(), {.color = color});
 
@@ -6066,14 +6070,14 @@ void DoUI() {
           "VALUE",
           localization_strings->Get(fb_difficulties->Get(stepIndex + 1)->name_locale())
             ->c_str(),
-          {.color = palTextGreen}
+          {.color = PAL_TEXT_ASPARAGUS}
         );
       }
       else {
         PlaceholdString(
           "VALUE",
           PushTextToArena(&ge.meta.trashArena, TextFormat("%d", fb_step->value())),
-          {.color = palTextGreen}
+          {.color = PAL_TEXT_ASPARAGUS}
         );
       }
 
@@ -6097,7 +6101,7 @@ void DoUI() {
           PlaceholdBrokenLocale(
             "BUILD",
             fb_builds->Get(fb->build_type())->name_locale(),
-            {.color = palTextGreen}
+            {.color = PAL_TEXT_ASPARAGUS}
           );
         }
       }
@@ -6114,7 +6118,7 @@ void DoUI() {
           BF_CLAY_TEXT(
             TextFormat("(%d / %d)", (int)v, (int)fb_step->value()),
             {
-              .color    = palTextBezhevy,
+              .color    = PAL_TEXT_TEAK,
               .wrapMode = CLAY_TEXT_WRAP_NONE,
             }
           );
@@ -6481,9 +6485,9 @@ void DoUI() {
 
               if (data.affectedByGame) {
                 PlaceholdFormattedString(
-                  TextFormat("%d", actualDamage), {.color = palTextGreen}
+                  TextFormat("%d", actualDamage), {.color = PAL_TEXT_ASPARAGUS}
                 );
-                showPelletsCount(palTextGreen);
+                showPelletsCount(PAL_TEXT_ASPARAGUS);
 
                 PlaceholdString(" ");
                 PlaceholdString("| ");
@@ -6506,7 +6510,7 @@ void DoUI() {
 
               PlaceholdGroupEnd();
 
-              BF_CLAY_TEXT_BROKEN_LOCALIZED(locale, {.color = palTextBezhevy});
+              BF_CLAY_TEXT_BROKEN_LOCALIZED(locale, {.color = PAL_TEXT_TEAK});
 
               FlexEnd();
             }
@@ -6566,8 +6570,10 @@ void DoUI() {
           // Cooldown.
           componentWeaponStatEntry(Loc_UI_COOLDOWN, [&]() BF_FORCE_INLINE_LAMBDA {
             const f32 cooldownSeconds = fb->cooldown()->Get(tierOffset);
-            BF_CLAY_TEXT(TextFormat("%.2f", cooldownSeconds), {.color = palTextGreen});
-            BF_CLAY_TEXT_LOCALIZED(Loc_UI_SECONDS_SUFFIX, {.color = palTextGreen});
+            BF_CLAY_TEXT(
+              TextFormat("%.2f", cooldownSeconds), {.color = PAL_TEXT_ASPARAGUS}
+            );
+            BF_CLAY_TEXT_LOCALIZED(Loc_UI_SECONDS_SUFFIX, {.color = PAL_TEXT_ASPARAGUS});
           });
 
           // Knockback.
@@ -6656,7 +6662,7 @@ void DoUI() {
                       "%s%%",
                       StripLeadingZerosInFloat(TextFormat("%.1f", chance * 100.0f))
                     ),
-                    {.color = palTextGreen}
+                    {.color = PAL_TEXT_ASPARAGUS}
                   );
                 }
               );
@@ -6737,7 +6743,7 @@ void DoUI() {
                   FontBegin(&g.meta.fontUIBigOutlined);
                   BF_CLAY_TEXT(
                     TextFormat("%d ", price),
-                    {.color = ((price <= PLAYER_COINS) ? WHITE : palTextRed)}
+                    {.color = ((price <= PLAYER_COINS) ? WHITE : PAL_TEXT_FLUSH_MAHOGANY)}
                   );
                   FontEnd();
                   BF_CLAY_IMAGE({.texID = glib->ui_coin_texture_id()});
@@ -7543,9 +7549,11 @@ void DoUI() {
 
         auto color = WHITE;
         if (v > 0)
-          color = (fb_stat->negative_is_good() ? palTextRed : palTextGreen);
+          color
+            = (fb_stat->negative_is_good() ? PAL_TEXT_FLUSH_MAHOGANY : PAL_TEXT_ASPARAGUS);
         else if (v < 0)
-          color = (fb_stat->negative_is_good() ? palTextGreen : palTextRed);
+          color
+            = (fb_stat->negative_is_good() ? PAL_TEXT_ASPARAGUS : PAL_TEXT_FLUSH_MAHOGANY);
 
         entry((StatType)statIndex, fb_stat->small_icon_texture_id(), v, color);
       }
@@ -7609,9 +7617,9 @@ void DoUI() {
             if (percent <= 0)
               return;
 
-            auto color = palTextBezhevy;
+            auto color = PAL_TEXT_TEAK;
             if (percent >= 100)
-              color = palTextGreen;
+              color = PAL_TEXT_ASPARAGUS;
 
             CLAY({.layout{
               BF_CLAY_SIZING_GROW_XY,
@@ -7765,7 +7773,7 @@ void DoUI() {
 
       auto color = GetFlashingColor(
         WHITE,
-        palTextRed,
+        PAL_TEXT_FLUSH_MAHOGANY,
         g.ui.errorGold,
         ERROR_WIGGLING_FRAMES,
         ERROR_GOLD_FLASHING_TIMES,
@@ -7952,7 +7960,7 @@ void DoUI() {
                 .sourceMargins{
                   .right = Clamp01(1.0f - (f32)health / (f32)PLAYER_CREATURE.maxHealth)
                 },
-                .color = palRed,
+                .color = PAL_FLUSH_MAHOGANY,
               });
 
               CLAY({
@@ -7994,7 +8002,7 @@ void DoUI() {
                     - (f32)g.run.state.xp
                         / (f32)GetNextLevelXp(g.run.state.staticStats[StatType_LEVEL])
                 },
-                .color = palGreen,
+                .color = PAL_ASPARAGUS,
               });
 
               CLAY({
@@ -8083,7 +8091,7 @@ void DoUI() {
 
         auto color = WHITE;
         if (canPause && Clay_Hovered())
-          color = palGreen;
+          color = PAL_ASPARAGUS;
 
         BF_CLAY_IMAGE(
           {
@@ -8747,7 +8755,7 @@ void DoUI() {
                 .id = id,
                 .layout{.childGap = GAP_SMALL, BF_CLAY_CHILD_ALIGNMENT_CENTER_CENTER},
               }) {
-                BF_CLAY_TEXT(FormatSignedInt(amount), {.color = palTextGreen});
+                BF_CLAY_TEXT(FormatSignedInt(amount), {.color = PAL_TEXT_ASPARAGUS});
 
                 // BF_CLAY_IMAGE({.texID = fb->small_icon_texture_id()});
 
@@ -9119,7 +9127,7 @@ void DoUI() {
                       FLOATING_BEAUTIFY;
                       FontBegin(&g.meta.fontUINextWave);
 
-                      auto color = palTextPaleYellow;
+                      auto color = PAL_TEXT_PUTTY;
                       BF_CLAY_TEXT(TextFormat("%d", nextWaveNumber), {.color = color});
                       BF_CLAY_TEXT(TextFormat("/%d", TOTAL_WAVES), {.color = color});
                       FontEnd();
@@ -9671,9 +9679,9 @@ void DoUI() {
               int percent = GetAchievementsCompletedPercent();
 
               if (percent > 0) {
-                auto color = palTextBezhevy;
+                auto color = PAL_TEXT_TEAK;
                 if (percent >= 100)
-                  color = palTextGreen;
+                  color = PAL_TEXT_ASPARAGUS;
                 BF_CLAY_TEXT(TextFormat(" %d%%", percent), {.color = color});
               }
             }
@@ -13131,7 +13139,7 @@ void GameDraw() {
 
         t = Clamp01(t);
         scale *= Lerp(1, 1.2f, scaleEase(t));
-        color = ColorLerp(color, palRed, t);
+        color = ColorLerp(color, PAL_FLUSH_MAHOGANY, t);
       }
     }
     else if (creature.type == CreatureType_RUSHER) {
@@ -13147,7 +13155,7 @@ void GameDraw() {
                   .Progress(MOB_RUSHER_RUSH_POST_FRAMES);
         }
         t     = Clamp01(t);
-        color = ColorLerp(color, palRed, t);
+        color = ColorLerp(color, PAL_FLUSH_MAHOGANY, t);
       }
     }
     else if (creature.type == CreatureType_TURRET) {
@@ -13462,7 +13470,7 @@ void GameDraw() {
         .texID = texs[i],
         .pos   = creature.pos - Vector2(0, 1.35f),
         .sourceMargins{.right = rightMargin},
-        .color = (i ? palRed : palWhite),
+        .color = (i ? PAL_FLUSH_MAHOGANY : WHITE),
       });
     }
 
@@ -13876,7 +13884,7 @@ void GameDraw() {
         .texID = glib->game_coin_glow_texture_id(),
         .pos   = pos,
         .scale = scale,
-        .color = Fade(palYellow, fade / 6),
+        .color = Fade(PAL_NUGGET, fade / 6),
       });
     }
 
@@ -13906,7 +13914,7 @@ void GameDraw() {
         .texID = glib->ui_vignette_danger_hp_level_texture_id(),
         .pos   = LOGICAL_RESOLUTIONf / 2.0f,
         .scale = Vector2One() * (4.2f * vignetteScale),
-        .color = Fade(palRed, MIN(1, g.run.dangerHPLevelOverlayValue)),
+        .color = Fade(PAL_FLUSH_MAHOGANY, MIN(1, g.run.dangerHPLevelOverlayValue)),
       },
       DrawZ_DANGER_HP_LEVEL_VIGNETTE
     );
@@ -13922,7 +13930,7 @@ void GameDraw() {
     int locale = Loc_UI_WAVE_WON__CAPS;
     if (!g.run.state.waveWon) {
       locale    = Loc_UI_WAVE_LOST__CAPS;
-      textColor = palTextRed;
+      textColor = PAL_TEXT_FLUSH_MAHOGANY;
     }
     if (g.run.state.waveWon && (g.run.state.waveIndex >= TOTAL_WAVES - 1))
       locale = Loc_UI_WON__CAPS;

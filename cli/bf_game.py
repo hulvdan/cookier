@@ -32,6 +32,34 @@ bf.game_settings.itch_target = "hulvdan/cookier"
 bf.game_settings.languages = ["russian", "english"]
 bf.game_settings.generate_flatbuffers_api_for = ["bf_save.fbs"]
 bf.game_settings.yandex_metrica_counter_id = 105874717
+bf.game_settings.colors = [
+    "#ffffff",
+    "#2c4941",
+    "#66a650",
+    "#b9d850",
+    "#82dcd7",
+    "#208cb2",
+    "#253348",
+    "#1d1b24",
+    "#3a3a41",
+    "#7a7576",
+    "#b59a66",
+    "#cec7b1",
+    "#edefe2",
+    "#d78b98",
+    "#a13d77",
+    "#6d2047",
+    "#3c1c43",
+    "#2c2228",
+    "#5e3735",
+    "#885a44",
+    "#b8560f",
+    "#dc9824",
+    "#efcb84",
+    "#e68556",
+    "#c02931",
+    "#000000",
+]
 
 
 ACHIEVEMENTS_X = 8
@@ -103,6 +131,7 @@ def explode_achievements(gamelib: dict) -> None:
             x["description_locale"] = "ACHIEVEMENT_DESCRIPTION_FINISH_RUN_WITH_BUILD"
             x["hide_progress"] = True
 
+            build = None
             for build in gamelib["builds"]:
                 if build["type"] == build_name:
                     break
@@ -861,11 +890,11 @@ def process_images():
     UI_SLOT_OR_FRAME_RADIUS = 30
 
     # `ui_itemslot`.
-    slot_image = bf.rectangle(SLOT_SIZE, radius=UI_SLOT_OR_FRAME_RADIUS)
+    slot_image = bf.im_rectangle(SLOT_SIZE, radius=UI_SLOT_OR_FRAME_RADIUS)
     slot_image.save(bf.ART_TEXTURES_DIR / "ui_itemslot.png")
 
     # `ui_frame`.
-    bf.rectangle(
+    bf.im_rectangle(
         112,
         radius=UI_SLOT_OR_FRAME_RADIUS,
         width=10,
@@ -873,11 +902,11 @@ def process_images():
         fill=bf.hex_to_rgb_ints("5a5a5a"),
     ).save(bf.ART_TEXTURES_DIR / "ui_frame.png")
 
-    DEBUG_SHADOWS = 0
+    DEBUG_SHADOWS = bool(0)
 
     # `ui_frame_shadow_small`.
-    bf.outline(
-        image=bf.red(slot_image),
+    bf.im_outline(
+        image=bf.im_red(slot_image),
         radius=60,
         color=(0, 0, 0, 255),
         is_shadow=True,
@@ -885,8 +914,8 @@ def process_images():
     ).save(bf.ART_TEXTURES_DIR / "ui_frame_shadow_small.png")
 
     # `ui_frame_shadow_big`.
-    bf.outline(
-        image=bf.red(slot_image),
+    bf.im_outline(
+        image=bf.im_red(slot_image),
         radius=120,
         color=(0, 0, 0, 255),
         is_shadow=True,
@@ -894,20 +923,26 @@ def process_images():
     ).save(bf.ART_TEXTURES_DIR / "ui_frame_shadow_big.png")
 
     # `ui_player_bar_back`.
-    bf.rectangle((634, 92), radius=30).save(
+    bf.im_rectangle((634, 92), radius=30).save(
         bf.ART_TEXTURES_DIR / "ui_player_bar_back.png"
     )
     # `ui_player_bar_top`.
-    bf.rectangle((604, 64), radius=20).save(bf.ART_TEXTURES_DIR / "ui_player_bar_top.png")
+    bf.im_rectangle((604, 64), radius=20).save(
+        bf.ART_TEXTURES_DIR / "ui_player_bar_top.png"
+    )
     # `ui_boss_bar_back`.
-    bf.rectangle((280, 40), radius=14).save(bf.ART_TEXTURES_DIR / "ui_boss_bar_back.png")
+    bf.im_rectangle((280, 40), radius=14).save(
+        bf.ART_TEXTURES_DIR / "ui_boss_bar_back.png"
+    )
     # `ui_boss_bar_top`.
-    bf.rectangle((260, 22), radius=10).save(bf.ART_TEXTURES_DIR / "ui_boss_bar_top.png")
+    bf.im_rectangle((260, 22), radius=10).save(
+        bf.ART_TEXTURES_DIR / "ui_boss_bar_top.png"
+    )
 
     # `game_shadow_*.png`.
     for i in range(3):
         size = (312 // (2**i), 96 // (2**i))
-        bf.ellipse(size).save(bf.ART_TEXTURES_DIR / f"game_shadow_{i + 1}.png")
+        bf.im_ellipse(size).save(bf.ART_TEXTURES_DIR / f"game_shadow_{i + 1}.png")
 
     TOUCH_OUTLINE = 10
 
@@ -915,53 +950,53 @@ def process_images():
     TOUCH_COLOR = (255, 255, 255, 255)
 
     # `ui_controls_touch_base`.
-    bf.ellipse(460, width=TOUCH_OUTLINE, outline=(0, 0, 0, 255), fill=(0, 0, 0, 0)).save(
-        bf.ART_TEXTURES_DIR / "ui_controls_touch_base.png"
-    )
+    bf.im_ellipse(
+        460, width=TOUCH_OUTLINE, outline=(0, 0, 0, 255), fill=(0, 0, 0, 0)
+    ).save(bf.ART_TEXTURES_DIR / "ui_controls_touch_base.png")
 
     # `ui_controls_touch_handle`.
-    bf.outline(
-        bf.ellipse(128, fill=TOUCH_COLOR),
+    bf.im_outline(
+        bf.im_ellipse(128, fill=TOUCH_COLOR),
         radius=TOUCH_OUTLINE,
     ).save(bf.ART_TEXTURES_DIR / "ui_controls_touch_handle.png")
 
     # Making volume band icons.
     for f in (bf.ART_TEXTURES_DIR / "to_outline").glob("ui_icon_volume_band_*.png"):
         f.unlink()
-    bf.conveyor(
+    bf.im_conveyor(
         "to_volume_band",
         "Outlining",
-        bf.conveyor_outline(radius=10, color=(255, 255, 255, 255)),
-        bf.conveyor_scale(0.2127),
+        bf.imc_outline(radius=10, color=(255, 255, 255, 255)),
+        bf.imc_scale(0.2127),
         out_dir=bf.ART_TEXTURES_DIR / "to_outline",
     )
 
     # Outlining ui icons.
-    bf.conveyor(
+    bf.im_conveyor(
         "to_outline",
         "Outlining",
-        bf.conveyor_outline(radius=8, color=(0, 0, 0, 255), is_shadow=False),
+        bf.imc_outline(radius=8, color=(0, 0, 0, 255), is_shadow=False),
     )
 
     # Extracting white and black of floor sprites.
     for f in bf.ART_TEXTURES_DIR.glob("game_floor_*.png"):
         f.unlink()
-    bf.conveyor(
+    bf.im_conveyor(
         "to_split",
         "Extracting white",
-        bf.conveyor_extract_white(),
-        bf.conveyor_suffix("front"),
+        bf.imc_extract_white(),
+        bf.imc_suffix("front"),
     )
-    bf.conveyor(
+    bf.im_conveyor(
         "to_split",
         "Extracting black",
-        bf.conveyor_extract_black(),
-        bf.conveyor_suffix("back"),
+        bf.imc_extract_black(),
+        bf.imc_suffix("back"),
     )
 
     # Making input images.
-    bf.outline(
-        bf.rectangle(160, radius=20, width=10),
+    bf.im_outline(
+        bf.im_rectangle(160, radius=20, width=10),
         radius=1,
         color=(0, 0, 0, 0),
     ).save(bf.ART_DIR / "src" / "ui_input_key.png")
@@ -969,7 +1004,7 @@ def process_images():
     # Spritesheetifying props.
     for f in (bf.ART_TEXTURES_DIR / "to_biome").glob("game_prop_*.png"):
         f.unlink()
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_003.png",
         gap=14,
         cell_size=100,
@@ -985,19 +1020,19 @@ def process_images():
     get_color = lambda biome, x: bf.hex_to_rgb_ints(hex(biome[x])[2:-2])
     for biome in gamelib["biomes"][1:]:
         t = biome["type"]
-        bf.conveyor(
+        bf.im_conveyor(
             "to_biome",
             f"{t}: Remapping",
-            bf.conveyor_remap(
+            bf.imc_remap(
                 get_color(biome, "outline_color"), get_color(biome, "fill_color")
             ),
-            bf.conveyor_suffix(t.lower()),
+            bf.imc_suffix(t.lower()),
         )
 
     # Spritesheetifying stat icons.
     for f in (bf.ART_TEXTURES_DIR / "stat_icons").glob("*.png"):
         f.unlink()
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 5),
@@ -1028,15 +1063,15 @@ def process_images():
     # Transforming stat icons into big and small.
     for f in bf.ART_TEXTURES_DIR.glob("ui_stat_icon_*.png"):
         f.unlink()
-    bf.conveyor("stat_icons", "Copying Big", bf.conveyor_suffix("big"))
-    bf.conveyor(
+    bf.im_conveyor("stat_icons", "Copying Big", bf.imc_suffix("big"))
+    bf.im_conveyor(
         "stat_icons",
         "Downscaling Small",
-        bf.conveyor_scale(0.65),
-        bf.conveyor_brightness(1 + 3 / 8),
+        bf.imc_scale(0.65),
+        bf.imc_brightness(1 + 3 / 8),
         # conveyor_outline(radius=1, color=(0, 0, 0, 255), is_shadow=False),
         # conveyor_outline(radius=2, color=(255, 255, 255, 255), is_shadow=False),
-        bf.conveyor_suffix("small"),
+        bf.imc_suffix("small"),
     )
 
     # Spritesheetifying player parts and hats.
@@ -1044,7 +1079,7 @@ def process_images():
         f.unlink()
     for f in bf.ART_TEXTURES_DIR.glob("game_hat_*.png"):
         f.unlink()
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 5),
@@ -1181,7 +1216,7 @@ def process_images():
         *["difficulty_{}".format(i + 1) for i in range(len(gamelib["difficulties"]) - 1)],
     ]
     assert len(item_names) == 110, len(item_names)
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_002.png",
         cell_size=200,
         size=(15, 8),
@@ -1216,7 +1251,7 @@ def process_images():
         fi = bf.ART_TEXTURES_DIR / (f + ".png")
         if fi.exists():
             fi.unlink()
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_004.png",
         cell_size=440,
         size=(8, 4),
@@ -1282,7 +1317,7 @@ def process_images():
     custom_weapon_parts = [
         "crossbow_string",
     ]
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_006.png",
         cell_size=300,
         size=(12, 6),
@@ -1297,7 +1332,7 @@ def process_images():
     # Weapon icons.
     for f in bf.ART_TEXTURES_DIR.glob("ui_weapon_*.png"):
         f.unlink()
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_007.png",
         cell_size=200,
         size=(17, 8),
@@ -1310,7 +1345,7 @@ def process_images():
     # Spritesheetifying projectiles.
     for f in (bf.ART_TEXTURES_DIR / "projectiles").glob("*.png"):
         f.unlink()
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 5),
@@ -1331,10 +1366,10 @@ def process_images():
         ],
         out_dir=bf.ART_TEXTURES_DIR / "projectiles",
     )
-    bf.conveyor("projectiles", "Copying")
+    bf.im_conveyor("projectiles", "Copying")
 
-    bf.outline(
-        bf.white(
+    bf.im_outline(
+        bf.im_white(
             Image.open(
                 bf.ART_TEXTURES_DIR / "projectiles" / "game_projectile_magical_bullet.png"
             )
@@ -1344,29 +1379,29 @@ def process_images():
         is_shadow=True,
     ).save(bf.ART_TEXTURES_DIR / "game_projectile_magical_bullet.png")
 
-    bf.outline(
+    bf.im_outline(
         Image.open(bf.ART_TEXTURES_DIR / "projectiles" / "game_projectile_lightning.png"),
         radius=16,
         color=(255, 255, 72, int(255 * 2 / 5)),
         is_shadow=True,
     ).save(bf.ART_TEXTURES_DIR / "game_projectile_lightning.png")
 
-    bf.outline(
-        bf.ellipse(80),
+    bf.im_outline(
+        bf.im_ellipse(80),
         radius=28,
         color=(207, 200, 178),
         is_shadow=True,
     ).save(bf.ART_TEXTURES_DIR / "game_projectile_bullet.png")
 
-    bf.outline(
-        bf.ellipse(80),
+    bf.im_outline(
+        bf.im_ellipse(80),
         radius=28,
         color=(255, 123, 239),
         is_shadow=True,
     ).save(bf.ART_TEXTURES_DIR / "game_projectile_laser.png")
 
-    bf.outline(
-        bf.ellipse(80, fill=(255, 255, 255)),
+    bf.im_outline(
+        bf.im_ellipse(80, fill=(255, 255, 255)),
         radius=28,
         color=(255, 255, 255),
         is_shadow=True,
@@ -1377,7 +1412,7 @@ def process_images():
         f.unlink()
     for f in (bf.ART_TEXTURES_DIR / "fire").glob("game_particle_fire_*.png"):
         f.unlink()
-    bf.spritesheetify(
+    bf.im_spritesheetify(
         bf.ART_DIR / "src" / "main_005.png",
         cell_size=160,
         size=(5, 1),
@@ -1386,12 +1421,12 @@ def process_images():
         out_filename_prefix="fire_",
         out_dir=bf.ART_TEXTURES_DIR / "fire",
     )
-    bf.conveyor(
+    bf.im_conveyor(
         "fire",
         "Making particles",
-        bf.conveyor_outline(radius=24, color=(255, 255, 255, 128), is_shadow=True),
-        bf.conveyor_white,
-        bf.conveyor_prefix("game_particle"),
+        bf.imc_outline(radius=24, color=(255, 255, 255, 128), is_shadow=True),
+        bf.imc_white,
+        bf.imc_prefix("game_particle"),
     )
 
     if 1:
@@ -1401,7 +1436,7 @@ def process_images():
         margin = 0
         outline_width = 7
         w = 1920 + 2 * outline_width
-        rect = bf.rectangle(
+        rect = bf.im_rectangle(
             (w - margin * 2, h - margin),
             fill="white",
             # radius=80,
@@ -1412,7 +1447,7 @@ def process_images():
     else:
         banner = Image.open(bf.ART_DIR / "src" / "screenshot_text_banner.png")
 
-    banner = bf.outline(
+    banner = bf.im_outline(
         banner,
         radius=80,
         color=(0, 0, 0, int(255 * 5 / 16)),
@@ -1469,10 +1504,10 @@ def process_images():
                 stroke_width=14,
                 stroke_fill="black",
             )
-            text_image = bf.outline(
+            text_image = bf.im_outline(
                 text_image,
                 radius=40,
-                color=(0, 0, 0, 255 * 3 / 16),
+                color=(0, 0, 0, round(255 * 3 / 16)),
                 is_shadow=True,
                 extend=False,
             )
@@ -1483,8 +1518,8 @@ def process_images():
                 brightness = 1.06
                 contrast = 1.1
 
-            bf.draw_on_top(
-                bf.draw_on_top(
+            bf.im_draw_on_top(
+                bf.im_draw_on_top(
                     ImageEnhance.Brightness(
                         ImageEnhance.Contrast(Image.open(f)).enhance(contrast)
                     ).enhance(brightness),
@@ -1497,105 +1532,9 @@ def process_images():
     # }
 
 
-@command
-def make_swatch():
-    # {  ###
-    colors = [
-        "#ffffff",
-        "#2c4941",
-        "#66a650",
-        "#b9d850",
-        "#82dcd7",
-        "#208cb2",
-        "#253348",
-        "#1d1b24",
-        "#3a3a41",
-        "#7a7576",
-        "#b59a66",
-        "#cec7b1",
-        "#edefe2",
-        "#d78b98",
-        "#a13d77",
-        "#6d2047",
-        "#3c1c43",
-        "#2c2228",
-        "#5e3735",
-        "#885a44",
-        "#b8560f",
-        "#dc9824",
-        "#efcb84",
-        "#e68556",
-        "#c02931",
-        "#000000",
-    ]
-
-    new_colors = ["#ffffff", "#000000"]
-
-    for i in range(len(colors)):
-        color = colors[i]
-        if color in ("#000000", "#ffffff"):
-            continue
-        c = bf.rgb_floats_to_hex(
-            bf.transform_color(
-                bf.hex_to_rgb_floats(color),
-                saturation_scale=1.2,
-                value_scale=0.52,
-            )
-        )
-        new_colors.append(color)
-        new_colors.append(c)
-        colors.append(c)
-
-    def process_color(color: str) -> dict:
-        return {
-            "name": color,
-            "type": "Global",
-            "data": {
-                "mode": "RGB",
-                "values": bf.hex_to_rgb_floats(color),
-            },
-        }
-
-    swatch_data = [process_color(c) for c in colors]
-    bf.bf_swatch.write(swatch_data, "aboba.ase")
-
-    def process_color2(color: str) -> bf.bf_swatch.RawColor:
-        r, g, b = bf.hex_to_rgb_ints(color)
-        r = int(r * 65535 / 255)
-        g = int(g * 65535 / 255)
-        b = int(b * 65535 / 255)
-        assert r < 65536, r
-        assert g < 65536, g
-        assert b < 65536, b
-        assert r >= 0, r
-        assert g >= 0, g
-        assert b >= 0, b
-
-        return bf.bf_swatch.RawColor(
-            name=color,
-            color_space=bf.bf_swatch.ColorSpace.RGB,
-            component_1=r,
-            component_2=g,
-            component_3=b,
-            component_4=65535,
-        )
-
-    with open("aboba.aco", "wb") as out_file:
-        bf.bf_swatch.save_aco_file([process_color2(c) for c in new_colors], out_file)
-
-    with open("aboba.pal", "w") as out_file_2:
-        out_file_2.write(
-            "JASC-PAL\n0100\n{}\n".format(
-                len(new_colors),
-            )
-        )
-        color_lines = []
-        for color in new_colors:
-            r, g, b = bf.hex_to_rgb_ints(color)
-            color_lines.append(f"{r} {g} {b}")
-        color_lines = color_lines[2:] + color_lines[:2]
-        out_file_2.write("\n".join(color_lines))
-    # }
+AchievementIndex: TypeAlias = int
+AchievementStepIndex: TypeAlias = int
+AchievementReorderingEntry: TypeAlias = tuple[AchievementIndex, AchievementStepIndex]
 
 
 @command
@@ -1604,10 +1543,7 @@ def reorder_achievements():
     gamelib = bf.load_gamelib_cached()
     explode_achievements(gamelib)
 
-    AchievementIndex: TypeAlias = int
-    StepIndex: TypeAlias = int
-    Entry: TypeAlias = tuple[AchievementIndex, StepIndex]
-    entries: list[Entry] = []
+    entries: list[AchievementReorderingEntry] = []
 
     achs = gamelib["achievements"]
     for ach_index, ach in enumerate(achs[1:]):

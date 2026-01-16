@@ -48,8 +48,6 @@ constexpr f32 CAMERA_MAX_WORLD_Y
 // Using value that "feels" good.
 constexpr f32 RANGE_TO_METER_SCALE = 0.02f;
 
-#define SQR(v) ((v) * (v))
-
 constexpr f32 CREATURE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 LANDMINE_COLLIDER_RADIUS  = 0.5f;
 constexpr f32 PICKUPABLE_HURTBOX_RADIUS = 3.0f;
@@ -214,32 +212,6 @@ constexpr f32 STRUCTURE_MIN_RANGE_METERS = 2;
 constexpr int  SPAWNING_TURRETS_OR_GARDENS_EVERY_N_SECONDS = 2;
 constexpr auto LANDMINE_DETONATION_FRAMES                  = lframe::FromSeconds(0.4);
 
-// Colors.
-// ============================================================
-#define PAL_COLORS_TABLE \
-  X(Green, 0x66a650ff)   \
-  X(Lime, 0xb9d850ff)    \
-  X(Blue, 0xb9d850ff)    \
-  X(Purple, 0xb9d850ff)  \
-  X(Orange, 0xb9d850ff)  \
-  X(Red, 0xc02931ff)     \
-  X(Bezhevy, 0xb59a66ff) \
-  X(White, 0xedefe2ff)   \
-  X(Gray, 0x7a7576ff)    \
-  X(Yellow, 0xdc9824ff)  \
-  X(PaleYellow, 0xefcb84ff)
-
-#define X(name_, value_) constexpr auto pal##name_ = ColorFromRGBA(value_);
-PAL_COLORS_TABLE;
-#undef X
-
-#define X(name_, value_) const auto palText##name_ = TextifyColor(ColorFromRGBA(value_));
-// #define X(name_, value_) \
-//   constexpr auto palText##name_ = ColorContrast(ColorFromRGBA(value_), 0.5f);
-PAL_COLORS_TABLE;
-#undef X
-constexpr auto palTextBlack = BLACK;
-
 const Color textColorsPerTier_[]{
   WHITE,
   TextifyColor(ColorFromRGBA(0x208cb2ff)),
@@ -351,6 +323,6 @@ VIEW_FROM_ARRAY_DANGER(DEFAULT_BUYING_INDICES);
 
 constexpr f32 KNOCKBACK_SCALE = 1 / 7.0f;
 
-const Color TOP_BUTTON_NOT_HOVERED_COLOR = palTextBezhevy;
+const Color TOP_BUTTON_NOT_HOVERED_COLOR = PAL_TEXT_TEAK;
 
 ///
