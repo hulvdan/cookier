@@ -107,3 +107,54 @@ cd ..
 
 # Set alias in Github Desktop
 ```
+
+<!-- [[[cog
+from pathlib import Path
+for filepath in sorted(
+  list(Path("docs").glob("progress/*.png")), key=lambda x: -int(x.stem)
+):
+  print(f"![](docs/progress/{filepath.name})")
+cog]]] -->
+![](docs/progress/42.png)
+![](docs/progress/41.png)
+![](docs/progress/40.png)
+![](docs/progress/39.png)
+![](docs/progress/38.png)
+![](docs/progress/37.png)
+![](docs/progress/36.png)
+![](docs/progress/35.png)
+![](docs/progress/34.png)
+![](docs/progress/33.png)
+![](docs/progress/32.png)
+![](docs/progress/31.png)
+![](docs/progress/30.png)
+![](docs/progress/29.png)
+![](docs/progress/28.png)
+![](docs/progress/27.png)
+![](docs/progress/26.png)
+![](docs/progress/25.png)
+![](docs/progress/24.png)
+![](docs/progress/23.png)
+![](docs/progress/22.png)
+![](docs/progress/21.png)
+![](docs/progress/20.png)
+![](docs/progress/19.png)
+![](docs/progress/18.png)
+![](docs/progress/17.png)
+![](docs/progress/16.png)
+![](docs/progress/15.png)
+![](docs/progress/14.png)
+![](docs/progress/13.png)
+![](docs/progress/12.png)
+![](docs/progress/11.png)
+![](docs/progress/10.png)
+![](docs/progress/9.png)
+![](docs/progress/8.png)
+![](docs/progress/7.png)
+![](docs/progress/6.png)
+![](docs/progress/5.png)
+![](docs/progress/4.png)
+![](docs/progress/3.png)
+![](docs/progress/2.png)
+![](docs/progress/1.png)
+<!-- [[[end]]] -->
