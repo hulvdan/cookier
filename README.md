@@ -115,6 +115,8 @@ for filepath in sorted(
 ):
   print(f"![](docs/progress/{filepath.name})")
 cog]]] -->
+![](docs/progress/44.png)
+![](docs/progress/43.png)
 ![](docs/progress/42.png)
 ![](docs/progress/41.png)
 ![](docs/progress/40.png)
